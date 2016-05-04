@@ -6,3 +6,4 @@
 * Docker/Packer
 * Rocket (CoreOS)
 * [NIH Commons computing](https://datascience.nih.gov/commons)
+* [boutiques] (https://github.com/boutiques/schema)
