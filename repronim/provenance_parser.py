@@ -21,6 +21,11 @@ class ProvenanceParser(object):
         return
 
     @abc.abstractmethod
+    def get_create_date(self):
+        ''' Returns a hash containing a date string of when the worflow provenance was created '''
+        return
+
+    @abc.abstractmethod
     def get_environment_vars(self):
         ''' Returns a list of tuples containing ('variable name', 'variable value') '''
         return

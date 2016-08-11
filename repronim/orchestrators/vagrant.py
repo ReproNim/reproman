@@ -1,10 +1,10 @@
 """
-    A wrapper class to provide management of AWS services.
+    A wrapper class to provide management of Vagrant boxes.
 """
 
 from repronim.orchestrator import Orchestrator
 
-class AwsOrchestrator(Orchestrator):
+class VagrantOrchestrator(Orchestrator):
 
     def start_server(self):
         return

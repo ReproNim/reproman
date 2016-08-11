@@ -16,6 +16,9 @@ class TrigProvenanceParser(ProvenanceParser):
     def get_distribution(self):
         return dict(OS='Ubuntu', version='12.04')
 
+    def get_create_date(self):
+        return '20091004T111800Z'
+
     def get_environment_vars(self):
 
         results = self.graph.query(

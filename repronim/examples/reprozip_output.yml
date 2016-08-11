@@ -9,6 +9,7 @@ version: "0.8"
 runs:
 # Run 0
 - architecture: x86_64
+  date: 2016-02-22T22:19:01.735754
   argv: [python, run_demo_workflow.py, --key, 1yoVyou_tjJ48fl1xXugxBrISL674wya3KCZtQh17z9g]
   binary: /home/rbuccigrossi/miniconda2/envs/bh_demo/bin/python
   distribution: [Ubuntu, '12.04']

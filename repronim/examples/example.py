@@ -5,34 +5,39 @@
 
 from repronim import ProvenanceParser
 from repronim import Orchestrator
-from repronim import Provisioner
 
 # provenance = ProvenanceParser.factory('pipype_output.trig', format='trig')
 provenance = ProvenanceParser.factory('reprozip_output.yml', format='reprozip')
-orchestrator = Orchestrator.factory('localhost')
-provisioner = Provisioner.factory()
+# orchestrator = Orchestrator.factory('localhost', provenance)
+orchestrator = Orchestrator.factory('docker', provenance)
 
 
 # Add NeuroDebian repository to Ubuntu server.
 distribution = provenance.get_distribution()
+create_date = provenance.get_create_date()
+print 'create_date = ' + create_date
 
+# Add current NeuroDebian and archived NeuroDebian repos.
 print '\nAdding the NeuroDebian repository to the server for %s %s ...' % (distribution['OS'], distribution['version'])
-provisioner.add_command('apt_repository', dict(repo='deb http://neuro.debian.net/debian data main contrib non-free'))
+# provisioner.add_task('apt_repository', dict(repo='deb http://snapshot.debian.org/archive/debian/%s/ data main contrib non-free' % (create_date,)))
+orchestrator.add_task('apt_repository', dict(repo='deb http://neuro.debian.net/debian data main contrib non-free'))
 
 if distribution['version'] == '12.04':
-    provisioner.add_command('apt_repository', dict(repo='deb http://neuro.debian.net/debian precise main contrib non-free'))
+    # orchestrator.add_task('apt_repository', dict(repo='deb http://snapshot.debian.org/archive/debian/%s/ precise main' % (create_date,)))
+    orchestrator.add_task('apt_repository', dict(repo='deb http://neuro.debian.net/debian precise main contrib non-free'))
 else:
-    provisioner.add_command('apt_repository', dict(repo='deb http://neuro.debian.net/debian trusty main contrib non-free'))
+    # orchestrator.add_task('apt_repository', dict(repo='deb http://snapshot.debian.org/archive/debian/%s/ trusty main' % (create_date,)))
+    orchestrator.add_task('apt_repository', dict(repo='deb http://neuro.debian.net/debian trusty main contrib non-free'))
 
-provisioner.add_command('apt_key', dict(keyserver='hkp://pgp.mit.edu:80', id='0xA5D32F012649A5A9'))
-provisioner.add_command('apt', dict(update_cache='yes'))
+orchestrator.add_task('apt_key', dict(keyserver='hkp://pgp.mit.edu:80', id='0xA5D32F012649A5A9'))
+orchestrator.add_task('apt', dict(update_cache='yes'))
 
 
 # Add packages to task list.
 print '\nFound the following PACKAGES:\n'
 for package in provenance.get_packages():
 	print '%s=%s' % package
-	provisioner.add_command('apt', dict(name='%s=%s' % package))
+	orchestrator.add_task('apt', dict(name='%s=%s' % package))
 
-# Run the provisioner against the target host.
-provisioner.run(orchestrator.get_target_host())
+# Run the orchestrator against the target host.
+orchestrator.run()

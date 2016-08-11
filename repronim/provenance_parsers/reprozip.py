@@ -22,6 +22,10 @@ class ReprozipProvenanceParser(ProvenanceParser):
             'version': self.yaml['runs'][0]['distribution'][1]
         }
 
+    def get_create_date(self):
+        format = '%Y%m%dT%H%M%SZ'
+        return self.yaml['runs'][0]['date'].strftime(format)
+
     def get_environment_vars(self):
         return [(key, self.yaml['runs'][0]['environ'][key]) for key in self.yaml['runs'][0]['environ'].iterkeys()]
 
