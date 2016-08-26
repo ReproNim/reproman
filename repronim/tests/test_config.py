@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -18,7 +18,7 @@ def test_config_empty():
     # nevertheless we should be able to specify variables via env
 
     assert_raises(ValueError, config.getboolean, 'tests', 'somenonexistingone')
-    with patch.dict('os.environ', {'DATALAD_TESTS_NONETWORK': '1'}):
+    with patch.dict('os.environ', {'REPRONIM_TESTS_NONETWORK': '1'}):
         config.reload()
         ok_(config.getboolean('tests', 'nonetwork'))
         eq_(config.get_as_dtype('tests', 'nonetwork', int), 1)

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -154,7 +154,7 @@ def test_exc_str():
         estr2 = exc_str(e, 2)
         estr1 = exc_str(e, 1)
         # and we can control it via environ by default
-        with patch.dict('os.environ', {'DATALAD_EXC_STR_TBLIMIT': '3'}):
+        with patch.dict('os.environ', {'REPRONIM_EXC_STR_TBLIMIT': '3'}):
             estr3 = exc_str(e)
         with patch.dict('os.environ', {}, clear=True):
             estr_ = exc_str()

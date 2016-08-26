@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -59,9 +59,9 @@ def _with_tempfile_decorated_dummy(path):
 
 
 def test_with_tempfile_dir_via_env_variable():
-    target = os.path.join(os.path.expanduser("~"), "dataladtesttmpdir")
+    target = os.path.join(os.path.expanduser("~"), "repronimtesttmpdir")
     assert_false(os.path.exists(target), "directory %s already exists." % target)
-    with patch.dict('os.environ', {'DATALAD_TESTS_TEMPDIR': target}):
+    with patch.dict('os.environ', {'REPRONIM_TESTS_TEMPDIR': target}):
         filename = _with_tempfile_decorated_dummy()
         ok_startswith(filename, target)
 
@@ -124,8 +124,8 @@ def test_with_testrepos():
     check_with_testrepos()
 
     eq_(len(repos),
-        2 if on_windows  # TODO -- would fail now in DATALAD_TESTS_NONETWORK mode
-          else (15 if os.environ.get('DATALAD_TESTS_NONETWORK') else 16))  # local, local-url, clone, network
+        2 if on_windows  # TODO -- would fail now in REPRONIM_TESTS_NONETWORK mode
+          else (15 if os.environ.get('REPRONIM_TESTS_NONETWORK') else 16))  # local, local-url, clone, network
 
     for repo in repos:
         if not (repo.startswith('git://') or repo.startswith('http')):
@@ -149,14 +149,14 @@ def test_with_tempfile_mkdir():
             f.write("TEST LOAD")
 
     check_mkdir()
-    if not os.environ.get('DATALAD_TESTS_KEEPTEMP'):
+    if not os.environ.get('REPRONIM_TESTS_KEEPTEMP'):
         ok_(not os.path.exists(dnames[0]))  # got removed
 
 
 @with_tempfile()
 def test_with_tempfile_default_prefix(d1):
     d = basename(d1)
-    short = 'datalad_temp_'
+    short = 'repronim_temp_'
     full = short + \
            'test_with_tempfile_default_prefix'
     if on_windows:
@@ -166,9 +166,9 @@ def test_with_tempfile_default_prefix(d1):
         ok_startswith(d, full)
 
 
-@with_tempfile(prefix="nodatalad_")
+@with_tempfile(prefix="norepronim_")
 def test_with_tempfile_specified_prefix(d1):
-    ok_startswith(basename(d1), 'nodatalad_')
+    ok_startswith(basename(d1), 'norepronim_')
     ok_('test_with_tempfile_specified_prefix' not in d1)
 
 
@@ -183,7 +183,7 @@ def test_get_most_obscure_supported_name():
 
 def test_keeptemp_via_env_variable():
 
-    if os.environ.get('DATALAD_TESTS_KEEPTEMP'):
+    if os.environ.get('REPRONIM_TESTS_KEEPTEMP'):
         raise SkipTest("We have env variable set to preserve tempfiles")
 
     files = []
@@ -196,7 +196,7 @@ def test_keeptemp_via_env_variable():
     with patch.dict('os.environ', {}):
         check()
 
-    with patch.dict('os.environ', {'DATALAD_TESTS_KEEPTEMP': '1'}):
+    with patch.dict('os.environ', {'REPRONIM_TESTS_KEEPTEMP': '1'}):
         check()
 
     eq_(len(files), 2)
@@ -458,19 +458,19 @@ def test_assert_re_in():
 
 def test_skip_if_no_network():
     cleaned_env = os.environ.copy()
-    cleaned_env.pop('DATALAD_TESTS_NONETWORK', None)
+    cleaned_env.pop('REPRONIM_TESTS_NONETWORK', None)
     # we need to run under cleaned env to make sure we actually test in both conditions
     with patch('os.environ', cleaned_env):
         @skip_if_no_network
         def somefunc(a1):
             return a1
         eq_(somefunc.tags, ['network'])
-        with patch.dict('os.environ', {'DATALAD_TESTS_NONETWORK': '1'}):
+        with patch.dict('os.environ', {'REPRONIM_TESTS_NONETWORK': '1'}):
             assert_raises(SkipTest, somefunc, 1)
         with patch.dict('os.environ', {}):
             eq_(somefunc(1), 1)
         # and now if used as a function, not a decorator
-        with patch.dict('os.environ', {'DATALAD_TESTS_NONETWORK': '1'}):
+        with patch.dict('os.environ', {'REPRONIM_TESTS_NONETWORK': '1'}):
             assert_raises(SkipTest, skip_if_no_network)
         with patch.dict('os.environ', {}):
             eq_(skip_if_no_network(), None)

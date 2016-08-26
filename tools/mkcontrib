@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "The following people have contributed to DataLad:" > CONTRIBUTORS
+echo "The following people have contributed to ReproNim:" > CONTRIBUTORS
 echo >> CONTRIBUTORS
 
 # note: some exclusions to clean up botched git author tags that got fixed in

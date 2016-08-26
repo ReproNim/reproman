@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -19,18 +19,18 @@ from shlex import split as sh_split
 from os.path import isdir
 
 # !!! Do not import network here -- delay import, allows to shave off 50ms or so
-# on initial import datalad time
-# from datalad.support.network import RI, is_ssh
+# on initial import repronim time
+# from repronim.support.network import RI, is_ssh
 
-from datalad.support.exceptions import CommandError
-from datalad.dochelpers import exc_str
-from datalad.utils import not_supported_on_windows
-from datalad.utils import on_windows
-from datalad.utils import assure_dir
-from datalad.utils import auto_repr
-from datalad.cmd import Runner
+from repronim.support.exceptions import CommandError
+from repronim.dochelpers import exc_str
+from repronim.utils import not_supported_on_windows
+from repronim.utils import on_windows
+from repronim.utils import assure_dir
+from repronim.utils import auto_repr
+from repronim.cmd import Runner
 
-lgr = logging.getLogger('datalad.ssh')
+lgr = logging.getLogger('repronim.ssh')
 
 
 def _wrap_str(s):
@@ -183,9 +183,9 @@ class SSHManager(object):
     @property
     def socket_dir(self):
         if self._socket_dir is None:
-            # TODO: centralize AppDirs (=> datalad.config?)
+            # TODO: centralize AppDirs (=> repronim.config?)
             from appdirs import AppDirs
-            self._socket_dir = AppDirs('datalad', 'datalad.org').user_config_dir
+            self._socket_dir = AppDirs('repronim', 'repronim.org').user_config_dir
             assure_dir(self._socket_dir)
         return self._socket_dir
 
@@ -202,7 +202,7 @@ class SSHManager(object):
         SSHConnection
         """
         # parse url:
-        from datalad.support.network import RI, is_ssh
+        from repronim.support.network import RI, is_ssh
         sshri = RI(url)
 
         if not is_ssh(sshri):

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -21,6 +21,8 @@ __all__ = ['ColorFormatter']
 
 # Snippets from traceback borrowed from duecredit which was borrowed from
 # PyMVPA upstream/2.4.0-39-g69ad545  MIT license (the same copyright as DataLad)
+# and then from DataLad 0.2.3-427-g09ee8d7 (MIT license, copyright notice in
+# COPYING of repronim)
 
 
 def mbasename(s):
@@ -115,13 +117,13 @@ class ColorFormatter(logging.Formatter):
             use_color = is_interactive()
         self.use_color = use_color and platform.system() != 'Windows'  # don't use color on windows
         msg = self.formatter_msg(self._get_format(log_name, log_pid), self.use_color)
-        self._tb = TraceBack(collide=os.environ.get('DATALAD_LOGTRACEBACK', '') == 'collide') \
-            if os.environ.get('DATALAD_LOGTRACEBACK', False) else None
+        self._tb = TraceBack(collide=os.environ.get('REPRONIM_LOGTRACEBACK', '') == 'collide') \
+            if os.environ.get('REPRONIM_LOGTRACEBACK', False) else None
         logging.Formatter.__init__(self, msg)
 
     def _get_format(self, log_name=False, log_pid=False):
         # TODO: config log.timestamp=True
-        return (("" if not int(os.environ.get("DATALAD_LOG_TIMESTAMP", True)) else "$BOLD%(asctime)-15s$RESET ") +
+        return (("" if not int(os.environ.get("REPRONIM_LOG_TIMESTAMP", True)) else "$BOLD%(asctime)-15s$RESET ") +
                 ("%(name)-15s " if log_name else "") +
                 ("{%(process)d}" if log_pid else "") +
                 "[%(levelname)s] "
@@ -156,7 +158,7 @@ class ColorFormatter(logging.Formatter):
 class LoggerHelper(object):
     """Helper to establish and control a Logger"""
 
-    def __init__(self, name='datalad', logtarget=None):
+    def __init__(self, name='repronim', logtarget=None):
         """
 
         Parameters
@@ -176,7 +178,7 @@ class LoggerHelper(object):
     def set_level(self, level=None, default='INFO'):
         """Helper to set loglevel for an arbitrary logger
 
-        By default operates for 'datalad'.
+        By default operates for 'repronim'.
         TODO: deduce name from upper module name so it could be reused without changes
         """
         if level is None:

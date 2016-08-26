@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -25,7 +25,7 @@ from ..version import __version__
 from ..dochelpers import exc_str
 
 from logging import getLogger
-lgr = getLogger('datalad.cmdline')
+lgr = getLogger('repronim.cmdline')
 
 
 class HelpAction(argparse.Action):
@@ -34,7 +34,7 @@ class HelpAction(argparse.Action):
             # lets use the manpage on mature systems ...
             try:
                 import subprocess
-                # get the datalad manpage to use
+                # get the repronim manpage to use
                 manfile = os.environ.get('MANPATH', '/usr/share/man') \
                     + '/man1/{0}.1.gz'.format(parser.prog.replace(' ', '-'))
                 # extract version field from the manpage
@@ -44,7 +44,7 @@ class HelpAction(argparse.Action):
                     man_th = [line for line in f if line.startswith(".TH")][0]
                 man_version = man_th.split(' ')[5].strip(" '\"\t\n")
 
-                # don't show manpage if man_version not equal to current datalad_version
+                # don't show manpage if man_version not equal to current repronim_version
                 if __version__ != man_version:
                     raise ValueError
                 subprocess.check_call(
@@ -67,7 +67,7 @@ class HelpAction(argparse.Action):
             pos_args_str = '*Commands*'
             # tune up usage -- default one is way too heavy
             helpstr = re.sub('^[uU]sage: .*?\n\s*\n',
-                             'Usage: datalad [global-opts] command [command-opts]\n\n',
+                             'Usage: repronim [global-opts] command [command-opts]\n\n',
                              helpstr,
                              flags=re.MULTILINE | re.DOTALL)
             # and altogether remove sections with long list of commands
@@ -155,7 +155,7 @@ def run_via_pbs(args, pbs):
     assert(pbs in ('condor',))  # for now
 
     # TODO: RF to support multiple backends, parameters, etc, for now -- just condor, no options
-    f = NamedTemporaryFile('w', prefix='datalad-%s-' % pbs, suffix='.submit', delete=False)
+    f = NamedTemporaryFile('w', prefix='repronim-%s-' % pbs, suffix='.submit', delete=False)
     try:
         pwd = getpwd()
         logs = f.name.replace('.submit', '.log')
@@ -197,7 +197,7 @@ from os import curdir
 
 
 def get_repo_instance(path=curdir, class_=None):
-    """Returns an instance of appropriate datalad repository for path.
+    """Returns an instance of appropriate repronim repository for path.
     Check whether a certain path is inside a known type of repository and
     returns an instance representing it. May also check for a certain type
     instead of detecting the type of repository.
@@ -244,7 +244,7 @@ def get_repo_instance(path=curdir, class_=None):
                 try:
                     return GitRepo(dir_, create=False)
                 except InvalidGitRepositoryError as e:
-                    raise RuntimeError("No datalad repository found in %s" %
+                    raise RuntimeError("No repronim repository found in %s" %
                                        abspath_)
             else:
                 try:
@@ -258,10 +258,10 @@ def get_repo_instance(path=curdir, class_=None):
     if class_ is not None:
         raise RuntimeError("No %s repository found in %s" % (type_, abspath_))
     else:
-        raise RuntimeError("No datalad repository found in %s" % abspath_)
+        raise RuntimeError("No repronim repository found in %s" % abspath_)
 
 
 from appdirs import AppDirs
 from os.path import join as opj
 
-dirs = AppDirs("datalad", "datalad.org")
+dirs = AppDirs("repronim", "repronim.org")

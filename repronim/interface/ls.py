@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -28,7 +28,7 @@ from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 
 from logging import getLogger
-lgr = getLogger('datalad.api.ls')
+lgr = getLogger('repronim.api.ls')
 
 
 class Ls(Interface):
@@ -37,8 +37,8 @@ class Ls(Interface):
     Examples
     --------
 
-      $ datalad ls s3://openfmri/tarballs/ds202  # to list S3 bucket
-      $ datalad ls                               # to list current dataset
+      $ repronim ls s3://openfmri/tarballs/ds202  # to list S3 bucket
+      $ repronim ls                               # to list current dataset
     """
 
     _params_ = dict(
@@ -112,7 +112,7 @@ class Ls(Interface):
 # Dataset listing
 #
 
-from datalad.support.annexrepo import AnnexRepo
+from repronim.support.annexrepo import AnnexRepo
 
 
 @auto_repr
@@ -194,8 +194,8 @@ class DsModel(object):
 
 import string
 import humanize
-from datalad.log import ColorFormatter
-from datalad.utils import is_interactive
+from repronim.log import ColorFormatter
+from repronim.utils import is_interactive
 
 class LsFormatter(string.Formatter):
     # condition by interactive
@@ -353,7 +353,7 @@ def _ls_s3(loc, fast=False, recursive=False, all=False, config_file=None, list_c
     else:
         # TODO: expose credentials
         # We don't need any provider here really but only credentials
-        from datalad.downloaders.providers import Providers
+        from repronim.downloaders.providers import Providers
         providers = Providers.from_config_files()
         provider = providers.get_provider(loc)
 

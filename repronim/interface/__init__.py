@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -20,36 +20,36 @@ _group_dataset = (
     'Commands for dataset operations',
     [
         # source module, source object[, dest. cmdline name[, dest python name]]
-        # src module can be relative, but has to be relative to the main 'datalad' package
-        ('datalad.distribution.create', 'Create'),
-        ('datalad.distribution.install', 'Install'),
-        ('datalad.distribution.publish', 'Publish'),
-        ('datalad.distribution.uninstall', 'Uninstall'),
+        # src module can be relative, but has to be relative to the main 'repronim' package
+        ('repronim.distribution.create', 'Create'),
+        ('repronim.distribution.install', 'Install'),
+        ('repronim.distribution.publish', 'Publish'),
+        ('repronim.distribution.uninstall', 'Uninstall'),
         # N/I ATM
-        # ('datalad.distribution.move', 'Move'),
-        ('datalad.distribution.update', 'Update'),
-        ('datalad.distribution.create_publication_target_sshwebserver',
+        # ('repronim.distribution.move', 'Move'),
+        ('repronim.distribution.update', 'Update'),
+        ('repronim.distribution.create_publication_target_sshwebserver',
          'CreatePublicationTargetSSHWebserver',
          'create-publication-target-sshwebserver'),
-        ('datalad.distribution.add_sibling', 'AddSibling', 'add-sibling'),
-        ('datalad.distribution.modify_subdataset_urls', 'ModifySubdatasetURLs',
+        ('repronim.distribution.add_sibling', 'AddSibling', 'add-sibling'),
+        ('repronim.distribution.modify_subdataset_urls', 'ModifySubdatasetURLs',
          'modify-subdataset-urls'),
-        ('datalad.interface.unlock', 'Unlock', 'unlock'),
-        ('datalad.interface.save', 'Save', 'save'),
+        ('repronim.interface.unlock', 'Unlock', 'unlock'),
+        ('repronim.interface.save', 'Save', 'save'),
     ])
 
 _group_misc = (
     'Miscellaneous commands',
     [
-        ('datalad.interface.test', 'Test'),
-        ('datalad.interface.crawl', 'Crawl'),
-        ('datalad.interface.crawl_init', 'CrawlInit', 'crawl-init'),
-        ('datalad.interface.ls', 'Ls'),
-        ('datalad.interface.clean', 'Clean'),
-        ('datalad.interface.add_archive_content', 'AddArchiveContent',
+        ('repronim.interface.test', 'Test'),
+        ('repronim.interface.crawl', 'Crawl'),
+        ('repronim.interface.crawl_init', 'CrawlInit', 'crawl-init'),
+        ('repronim.interface.ls', 'Ls'),
+        ('repronim.interface.clean', 'Clean'),
+        ('repronim.interface.add_archive_content', 'AddArchiveContent',
          'add-archive-content'),
-        ('datalad.interface.download_url', 'DownloadURL', 'download-url'),
+        ('repronim.interface.download_url', 'DownloadURL', 'download-url'),
         # very optional ones
-        ('datalad.distribution.create_test_dataset', 'CreateTestDataset',
+        ('repronim.distribution.create_test_dataset', 'CreateTestDataset',
          'create-test-dataset'),
     ])

@@ -2,7 +2,7 @@
 .. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
-  #   See COPYING file distributed along with the datalad package for the
+  #   See COPYING file distributed along with the repronim package for the
   #   copyright and license terms.
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
@@ -15,7 +15,7 @@ Glossary
 
 Datalad purposefully uses a terminology that is different from the one used by
 its technological foundations Git_ and git-annex_. This glossary provides
-definitions for terms used in the datalad documentation and API, and relates
+definitions for terms used in the repronim documentation and API, and relates
 them to the corresponding Git_/git-annex_ concepts.
 
 .. glossary::

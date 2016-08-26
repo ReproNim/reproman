@@ -8,7 +8,7 @@ Python module reference
 ***********************
 
 This module reference extends the manual with a comprehensive overview of the
-available functionality built into datalad.  Each module in the package is
+available functionality built into repronim.  Each module in the package is
 documented by a general summary of its purpose and the list of classes and
 functions it provides.
 
@@ -16,7 +16,7 @@ functions it provides.
 High-level user interface
 =========================
 
-.. currentmodule:: datalad
+.. currentmodule:: repronim
 .. autosummary::
    :toctree: generated
 
@@ -25,7 +25,7 @@ High-level user interface
 Plumbing
 ========
 
-.. currentmodule:: datalad
+.. currentmodule:: repronim
 .. autosummary::
    :toctree: generated
 
@@ -46,7 +46,7 @@ Plumbing
 Configuration management
 ========================
 
-.. currentmodule:: datalad
+.. currentmodule:: repronim
 .. autosummary::
    :toctree: generated
 
@@ -55,7 +55,7 @@ Configuration management
 Crawler
 =======
 
-.. currentmodule:: datalad
+.. currentmodule:: repronim
 .. autosummary::
    :toctree: generated
 
@@ -66,7 +66,7 @@ Crawler
 Test infrastructure
 ===================
 
-.. currentmodule:: datalad
+.. currentmodule:: repronim
 .. autosummary::
    :toctree: generated
 
@@ -77,7 +77,7 @@ Test infrastructure
 Command line interface infrastructure
 =====================================
 
-.. currentmodule:: datalad
+.. currentmodule:: repronim
 .. autosummary::
    :toctree: generated
 

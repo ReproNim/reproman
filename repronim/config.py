@@ -2,7 +2,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -21,10 +21,10 @@ from os.path import join as opj
 from .support.configparserinc import SafeConfigParserWithIncludes
 
 class ConfigManager(SafeConfigParserWithIncludes, object):
-    """Central configuration registry for datalad.
+    """Central configuration registry for repronim.
 
     The purpose of this class is to collect all configurable settings
-    used by various parts of datalad. It is fairly simple and does
+    used by various parts of repronim. It is fairly simple and does
     only little more than the standard Python ConfigParser. Like
     ConfigParser it is blind to the data that it stores, i.e. no type
     checking is performed.
@@ -34,35 +34,35 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
     called later on.  Files are read and parsed in the following
     order:
 
-    1. '/etc/datalad/datalad.cfg'
-    2. 'datalad/config' in all directories defined by $XDG_CONFIG_DIRS
+    1. '/etc/repronim/repronim.cfg'
+    2. 'repronim/config' in all directories defined by $XDG_CONFIG_DIRS
        (by default: /etc/xdg/)
-    3. 'datalad.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
-    4. 'datalad.cfg' in the current directory
+    3. 'repronim.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
+    4. 'repronim.cfg' in the current directory
 
     Moreover, the constructor takes an optional argument with a list
     of additional file names to parse afterwards.
 
     In addition to configuration files, this class also looks for
     special environment variables to read settings from. Names of such
-    variables have to start with `DATALAD_` following by the an
+    variables have to start with `REPRONIM_` following by the an
     optional section name and the variable name itself ('_' as
     delimiter). If no section name is provided, the variables will be
     associated with section `general`. Some examples::
 
-        DATALAD_VERBOSE=1
+        REPRONIM_VERBOSE=1
 
     will become::
 
         [general]
         verbose = 1
 
-    However, `DATALAD_VERBOSE_OUTPUT=stdout` becomes::
+    However, `REPRONIM_VERBOSE_OUTPUT=stdout` becomes::
 
         [verbose]
         output = stdout
 
-    Any length of variable name as allowed, e.g. DATALAD_SEC1_LONG_NAME=1
+    Any length of variable name as allowed, e.g. REPRONIM_SEC1_LONG_NAME=1
     becomes::
 
         [sec1]
@@ -72,11 +72,11 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
     argument) have the highest priority and override settings found in any of
     the config files read from default locations (which are themselves read in
     the order stated above -- overwriting earlier configuration settings
-    accordingly). Finally, the content of any `DATALAD_*` environment variables
+    accordingly). Finally, the content of any `REPRONIM_*` environment variables
     overrides any settings read from any file.
     """
 
-    dirs = AppDirs("datalad", "datalad.org")
+    dirs = AppDirs("repronim", "repronim.org")
 
     # things we want to count on to be available
     _DEFAULTS = {'general': {'verbose': '1'}}
@@ -117,19 +117,19 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         homedir = os.path.expanduser('~')  # seems to be useless ???
         cfg_file_candidates = [
             # shipped-with config
-            # opj(os.path.dirname(__file__), 'datalad.cfg'),
+            # opj(os.path.dirname(__file__), 'repronim.cfg'),
             # system config
-            '/etc/datalad/datalad.cfg']
+            '/etc/repronim/repronim.cfg']
         # XDG system config
         cfg_file_candidates.append(opj(self.dirs.site_config_dir, 'config'))
 
         # XDG user config
         home_cfg_base_path = self.dirs.user_config_dir
         if os.path.isabs(home_cfg_base_path):
-            cfg_file_candidates.append(opj(home_cfg_base_path, 'datalad.cfg'))
+            cfg_file_candidates.append(opj(home_cfg_base_path, 'repronim.cfg'))
 
         # current dir config
-        cfg_file_candidates.append(opj('.datalad', 'config'))
+        cfg_file_candidates.append(opj('.repronim', 'config'))
         return cfg_file_candidates
 
     def _get_file_candidates(self):
@@ -150,8 +150,8 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         self.read(self._get_file_candidates())
 
         # now look for variables in the environment
-        for var in [v for v in os.environ.keys() if v.startswith('DATALAD_')]:
-            # strip leading 'DATALAD_' and lower case entries
+        for var in [v for v in os.environ.keys() if v.startswith('REPRONIM_')]:
+            # strip leading 'REPRONIM_' and lower case entries
             svar = var[8:].lower()
 
             # section is next element in name (or 'general' if simple name)

@@ -31,14 +31,14 @@ way that is traceable back to the original data producer and is therefore
 capable of establishing a strong connection between data consumers and the
 evolution of a dataset by future extension or error correction.
 
-Moreover, datalad aims to provide all tools necessary to create and publish
+Moreover, repronim aims to provide all tools necessary to create and publish
 *data distributions* |---| an analog to software distributions or app-stores
 that provide logistics middleware for software deployment. Scientific
 communities can use these tools to gather, curate, and make publicly available
 specialized collections of dataset handles for specific research topics or data
 modalities. All of this is possible by leveraging existing data sharing
 platforms and institutional resources without the need for funding extra
-infrastructure of duplicate storage. Specifically, datalad aims to provide a
+infrastructure of duplicate storage. Specifically, repronim aims to provide a
 comprehensive data distribution for neuroscientific datasets that is kept
 up-to-date by an automated service.
 
@@ -83,7 +83,7 @@ recording, identity tracking, and item-based resource locators. Consequently,
 instead of a from-scratch development, required features, such as dedicated
 support for existing data-sharing portals and dataset meta-information, can be
 added to a working solution that is already in production for several years.
-As a result, datalad focuses on the expansion of git-annex's functionality and
+As a result, repronim focuses on the expansion of git-annex's functionality and
 the development of tools that build atop Git and git-annex and enable the
 creation, management, use, and publication of dataset handles and collections
 thereof.
@@ -91,7 +91,7 @@ thereof.
 Objective
 =========
 
-Building atop git-annex, datalad aims to provide a single, uniform interface to
+Building atop git-annex, repronim aims to provide a single, uniform interface to
 access data from various data-sharing initiatives and data providers, and
 functionality to deliver, update, and share datasets. As a command-line tool,
 it provides an abstraction layer for the underlying Git-based middleware

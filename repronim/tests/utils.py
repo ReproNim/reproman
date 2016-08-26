@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -134,8 +134,8 @@ def create_tree(path, tree, archives_leading_dir=True):
 import git
 import os
 from os.path import exists, join
-from datalad.support.gitrepo import GitRepo
-from datalad.support.annexrepo import AnnexRepo, FileNotInAnnexError
+from repronim.support.gitrepo import GitRepo
+from repronim.support.annexrepo import AnnexRepo, FileNotInAnnexError
 from ..utils import chpwd, getpwd
 
 
@@ -365,7 +365,7 @@ def with_tree(t, tree=None, archives_leading_dir=True, delete=True, **tkwargs):
     return newfunc
 
 
-lgr = logging.getLogger('datalad.tests')
+lgr = logging.getLogger('repronim.tests')
 
 
 class SilentHTTPHandler(SimpleHTTPRequestHandler):
@@ -445,7 +445,7 @@ def with_memory_keyring(t):
     @wraps(t)
     def newfunc(*args, **kwargs):
         keyring = MemoryKeyring()
-        with patch("datalad.downloaders.credentials.keyring_", keyring):
+        with patch("repronim.downloaders.credentials.keyring_", keyring):
             return t(*(args + (keyring,)), **kwargs)
 
     return newfunc
@@ -478,7 +478,7 @@ def with_tempfile(t, **tkwargs):
     ----------
 
     To change the used directory without providing keyword argument 'dir' set
-    DATALAD_TESTS_TEMPDIR.
+    REPRONIM_TESTS_TEMPDIR.
 
     Examples
     --------
@@ -508,7 +508,7 @@ def _get_resolved_flavors(flavors):
     if not isinstance(flavors_, list):
         flavors_ = [flavors_]
 
-    if os.environ.get('DATALAD_TESTS_NONETWORK'):
+    if os.environ.get('REPRONIM_TESTS_NONETWORK'):
         flavors_ = [x for x in flavors_ if not x.startswith('network')]
     return flavors_
 
@@ -562,7 +562,7 @@ def _get_testrepos_uris(regex, flavors):
         _nested_submodule_annex_test_repo = NestedDataset()
         _inner_submodule_annex_test_repo = InnerSubmodule()
         _TESTREPOS = {'basic_annex':
-                        {'network': 'git://github.com/datalad/testrepo--basic--r1',
+                        {'network': 'git://github.com/repronim/testrepo--basic--r1',
                          'local': _basic_annex_test_repo.path,
                          'local-url': _basic_annex_test_repo.url},
                       'basic_git':
@@ -610,7 +610,7 @@ def _get_testrepos_uris(regex, flavors):
 def with_testrepos(t, regex='.*', flavors='auto', skip=False, count=None):
     """Decorator to provide a local/remote test repository
 
-    All tests under datalad/tests/testrepos are stored in two-level hierarchy,
+    All tests under repronim/tests/testrepos are stored in two-level hierarchy,
     where top-level name describes nature/identifier of the test repository,
     and there could be multiple instances (e.g. generated differently) of the
     same "content"
@@ -633,7 +633,7 @@ def with_testrepos(t, regex='.*', flavors='auto', skip=False, count=None):
     Examples
     --------
 
-    >>> from datalad.tests.utils import with_testrepos
+    >>> from repronim.tests.utils import with_testrepos
     >>> @with_testrepos('basic_annex')
     ... def test_write(repo):
     ...    assert(os.path.exists(os.path.join(repo, '.git', 'annex')))
@@ -649,7 +649,7 @@ def with_testrepos(t, regex='.*', flavors='auto', skip=False, count=None):
         testrepos_uris = _get_testrepos_uris(regex, flavors_)
         # we should always have at least one repo to test on, unless explicitly only
         # network was requested by we are running without networked tests
-        if not (os.environ.get('DATALAD_TESTS_NONETWORK') and flavors == ['network']):
+        if not (os.environ.get('REPRONIM_TESTS_NONETWORK') and flavors == ['network']):
             assert(testrepos_uris)
         else:
             if not testrepos_uris:
@@ -697,7 +697,7 @@ def skip_if_no_network(func=None):
     """
 
     def check_and_raise():
-        if os.environ.get('DATALAD_TESTS_NONETWORK'):
+        if os.environ.get('REPRONIM_TESTS_NONETWORK'):
             raise SkipTest("Skipping since no network settings")
 
     if func:
@@ -738,14 +738,14 @@ def skip_if(func, cond=True, msg=None):
 
 def skip_ssh(func):
     """Skips SSH tests if on windows or if environment variable
-    DATALAD_TESTS_SSH was not set
+    REPRONIM_TESTS_SSH was not set
     """
     @wraps(func)
     def newfunc(*args, **kwargs):
         if on_windows:
             raise SkipTest("SSH currently not available on windows.")
-        if not os.environ.get('DATALAD_TESTS_SSH'):
-            raise SkipTest("Run this test by setting DATALAD_TESTS_SSH")
+        if not os.environ.get('REPRONIM_TESTS_SSH'):
+            raise SkipTest("Run this test by setting REPRONIM_TESTS_SSH")
         return func(*args, **kwargs)
     return newfunc
 
@@ -861,7 +861,7 @@ def skip_httpretty_on_problematic_pythons(func):
     problematic combination detected
 
     References
-    https://travis-ci.org/datalad/datalad/jobs/94464988
+    https://travis-ci.org/repronim/repronim/jobs/94464988
     http://stackoverflow.com/a/29603206/1265472
     """
 
@@ -930,7 +930,7 @@ def with_testsui(t, responses=None):
 
     @wraps(t)
     def newfunc(*args, **kwargs):
-        from datalad.ui import ui
+        from repronim.ui import ui
         old_backend = ui.backend
         try:
             ui.set_backend('tests')

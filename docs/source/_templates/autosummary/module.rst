@@ -1,9 +1,9 @@
-{% if fullname == 'datalad.api' -%}
+{% if fullname == 'repronim.api' -%}
 `{{ name }}`
 =={%- for c in name %}={%- endfor %}
-.. automodule:: datalad.api
+.. automodule:: repronim.api
 
-.. currentmodule:: datalad.api
+.. currentmodule:: repronim.api
 
 {% for item in members if not item.startswith('_') %}
 `{{ item }}`

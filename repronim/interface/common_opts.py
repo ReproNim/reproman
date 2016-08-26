@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,8 +12,8 @@
 
 __docformat__ = 'restructuredtext'
 
-from datalad.support.param import Parameter
-from datalad.support.constraints import EnsureInt, EnsureNone, EnsureStr
+from repronim.support.param import Parameter
+from repronim.support.constraints import EnsureInt, EnsureNone, EnsureStr
 
 dataset_description = Parameter(
     args=("-D", "--description",),

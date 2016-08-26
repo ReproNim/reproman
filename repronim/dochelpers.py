@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,7 +16,7 @@ import logging
 import re
 import textwrap
 
-lgr = logging.getLogger("datalad.docutils")
+lgr = logging.getLogger("repronim.docutils")
 
 __add_init2doc = False
 __in_ipython = False  # TODO: determine exists('running ipython env')
@@ -312,7 +312,7 @@ def exc_str(exc=None, limit=None):
     out = str(exc)
     if limit is None:
         # TODO: config logging.exceptions.traceback_levels = 1
-        limit = int(os.environ.get('DATALAD_EXC_STR_TBLIMIT', '1'))
+        limit = int(os.environ.get('REPRONIM_EXC_STR_TBLIMIT', '1'))
     try:
         exctype, value, tb = sys.exc_info()
         if not exc:

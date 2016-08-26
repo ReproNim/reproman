@@ -2,7 +2,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the DataLad package for the
+#   See COPYING file distributed along with the ReproNim package for the
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,13 +15,13 @@ from nose.tools import assert_true, assert_false
 from nose import SkipTest
 from nose.tools import eq_
 
-from datalad.tests.utils import assert_in
+from repronim.tests.utils import assert_in
 
 
 def test_basic_setup():
     # the import alone will verify that all default values match their
     # constraints
-    from datalad import api
+    from repronim import api
     # random pick of something that should be there
     assert_true(hasattr(api, 'install'))
     assert_true(hasattr(api, 'test'))
@@ -51,14 +51,14 @@ def _test_consistent_order_of_args(intf, spec_posargs):
 
 
 def test_consistent_order_of_args():
-    from datalad.interface.base import get_interface_groups
+    from repronim.interface.base import get_interface_groups
 
     from importlib import import_module
 
     for grp_name, grp_descr, interfaces in get_interface_groups():
         for intfspec in interfaces:
             # turn the interface spec into an instance
-            mod = import_module(intfspec[0], package='datalad')
+            mod = import_module(intfspec[0], package='repronim')
             intf = getattr(mod, intfspec[1])
             spec = getattr(intf, '_params_', dict())
 

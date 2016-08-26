@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,7 +14,7 @@ from os import linesep
 import logging
 import time
 
-lgr = logging.getLogger('datalad.protocol')
+lgr = logging.getLogger('repronim.protocol')
 
 
 class ProtocolInterface(object):
@@ -221,7 +221,7 @@ class DryRunProtocol(ProtocolInterface):
         self._sections.append({'command': cmd})
         # TODO: it somewhat duplicates how currently all the dry running is
         # reported... but without it I seems to have no dry run logging at
-        # all for e.g. "datalad crawl" command
+        # all for e.g. "repronim crawl" command
         # lgr.info("DRY: %s" % cmd)
         return id_
 

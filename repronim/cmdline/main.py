@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import logging
-lgr = logging.getLogger('datalad.cmdline')
+lgr = logging.getLogger('repronim.cmdline')
 
 lgr.log(5, "Importing cmdline.main")
 
@@ -20,17 +20,17 @@ import sys
 import textwrap
 from importlib import import_module
 
-import datalad
+import repronim
 
-from datalad.cmdline import helpers
-from datalad.support.exceptions import InsufficientArgumentsError
+from repronim.cmdline import helpers
+from repronim.support.exceptions import InsufficientArgumentsError
 from ..utils import setup_exceptionhook, chpwd
 from ..dochelpers import exc_str
 
 
 def _license_info():
     return """\
-Copyright (c) 2013-2016 DataLad developers
+Copyright (c) 2016- Repronim developers (parts 2013-2016 DataLad developers)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -72,20 +72,18 @@ def setup_parser(
         fromfile_prefix_chars='@',
         # usage="%(prog)s ...",
         description=dedent_docstring("""\
-            DataLad provides a unified data distribution with the convenience of git-annex
-            repositories as a backend.  DataLad command line tools allow to manipulate
-            (obtain, create, update, publish, etc.) datasets and their collections."""),
+            ReproNim aims to ease construction and execution of computation environments
+            based on collected provenance data."""),
         epilog='"Control Your Data"',
         formatter_class=formatter_class,
         add_help=False)
     # common options
     helpers.parser_add_common_opt(parser, 'help')
     helpers.parser_add_common_opt(parser, 'log_level')
-    helpers.parser_add_common_opt(parser, 'pbs_runner')
     helpers.parser_add_common_opt(
         parser,
         'version',
-        version='datalad %s\n\n%s' % (datalad.__version__, _license_info()))
+        version='repronim %s\n\n%s' % (repronim.__version__, _license_info()))
     if __debug__:
         parser.add_argument(
             '--dbg', action='store_true', dest='common_debug',
@@ -95,7 +93,7 @@ def setup_parser(
             help="enter IPython debugger when uncaught exception happens")
     parser.add_argument(
         '-C', action='append', dest='change_path', metavar='PATH',
-        help="""run as if datalad was started in <path> instead
+        help="""run as if repronim was started in <path> instead
         of the current working directory.  When multiple -C options are given,
         each subsequent non-absolute -C <path> is interpreted relative to the
         preceding -C <path>.  This option affects the interpretations of the
@@ -130,7 +128,7 @@ def setup_parser(
         for _intfspec in _interfaces:
             # turn the interface spec into an instance
             lgr.log(5, "Importing module %s " % _intfspec[0])
-            _mod = import_module(_intfspec[0], package='datalad')
+            _mod = import_module(_intfspec[0], package='repronim')
             _intf = getattr(_mod, _intfspec[1])
             cmd_name = get_cmdline_command_name(_intfspec)
             # deal with optional parser args
@@ -146,12 +144,11 @@ def setup_parser(
             # all subparser can report the version
             helpers.parser_add_common_opt(
                 subparser, 'version',
-                version='datalad %s %s\n\n%s' % (cmd_name, datalad.__version__,
+                version='repronim %s %s\n\n%s' % (cmd_name, repronim.__version__,
                                                  _license_info()))
             # our own custom help for all commands
             helpers.parser_add_common_opt(subparser, 'help')
             helpers.parser_add_common_opt(subparser, 'log_level')
-            helpers.parser_add_common_opt(subparser, 'pbs_runner')
             # let module configure the parser
             _intf.setup_parser(subparser)
             # logger for command
@@ -195,9 +192,9 @@ def setup_parser(
            textwrap.fill(dedent_docstring("""\
     Detailed usage information for individual commands is
     available via command-specific --help, i.e.:
-    datalad <command> --help"""),
+    repronim <command> --help"""),
                          75, initial_indent='', subsequent_indent=''))
-    parts['datalad'] = parser
+    parts['repronim'] = parser
     lgr.log(5, "Finished setup_parser")
     if return_subparsers:
         return parts

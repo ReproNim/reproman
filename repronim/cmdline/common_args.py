@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -39,11 +39,3 @@ log_level = (
          default='warning',
          help="""level of verbosity.  Integers provide even more debugging information""")
 )
-
-pbs_runner = (
-    'pbs-runner', ('-p', '--pbs-runner'),
-    dict(choices=['condor'],
-         default=None,
-         help="""execute command by scheduling it via available PBS.  For settings, config file will be consulted""")
-)
-

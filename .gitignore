@@ -1,5 +1,5 @@
 .pybuild/
-datalad.build/
+repronim.build/
 /.idea
 .coverage
 /venv*

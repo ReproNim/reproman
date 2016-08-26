@@ -2,12 +2,12 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""DataLad aims to expose (scientific) data available online as a unified data
-distribution with the convenience of git-annex repositories as a backend."""
+"""Repronim - Reproducible Neuroimaging is a suite of tools to ease construction
+and execution of computation environments based on the provenance data."""
 
 from .log import lgr
 
@@ -28,8 +28,8 @@ atexit.register(lgr.log, 5, "Exiting")
 from .version import __version__
 
 
-def test(package='datalad', **kwargs):
-    """A helper to run datalad's tests.  Requires numpy and nose
+def test(package='repronim', **kwargs):
+    """A helper to run repronim's tests.  Requires numpy and nose
 
     See numpy.testing.Tester -- **kwargs are passed into the
     Tester().test call
@@ -40,16 +40,16 @@ def test(package='datalad', **kwargs):
         # we don't have any benchmarks atm
         # bench = Tester().bench
     except ImportError:
-        raise RuntimeError('Need numpy >= 1.2 for datalad.tests().  Nothing is done')
+        raise RuntimeError('Need numpy >= 1.2 for repronim.tests().  Nothing is done')
 test.__test__ = False
 
 # Following fixtures are necessary at the top level __init__ for fixtures which
-# would cover all **/tests and not just datalad/tests/
+# would cover all **/tests and not just repronim/tests/
 
 # To store settings which setup_package changes and teardown_package should return
 _test_states = {
     'loglevel': None,
-    'DATALAD_LOGLEVEL': None,
+    'REPRONIM_LOGLEVEL': None,
 }
 
 def setup_package():
@@ -69,16 +69,16 @@ def setup_package():
             lgr.debug("Removing %s from the environment since it is empty", ev)
             os.environ.pop(ev)
 
-    DATALAD_LOGLEVEL = os.environ.get('DATALAD_LOGLEVEL', None)
-    if DATALAD_LOGLEVEL is None:
+    REPRONIM_LOGLEVEL = os.environ.get('REPRONIM_LOGLEVEL', None)
+    if REPRONIM_LOGLEVEL is None:
         # very very silent.  Tests introspecting logs should use
         # swallow_logs(new_level=...)
         _test_states['loglevel'] = lgr.getEffectiveLevel()
         lgr.setLevel(100)
 
         # And we should also set it within environ so underlying commands also stay silent
-        _test_states['DATALAD_LOGLEVEL'] = DATALAD_LOGLEVEL
-        os.environ['DATALAD_LOGLEVEL'] = '100'
+        _test_states['REPRONIM_LOGLEVEL'] = REPRONIM_LOGLEVEL
+        os.environ['REPRONIM_LOGLEVEL'] = '100'
     else:
         # We are not overriding them, since explicitly were asked to have some log level
         _test_states['loglevel'] = None
@@ -86,18 +86,18 @@ def setup_package():
 
 def teardown_package():
     import os
-    if os.environ.get('DATALAD_TESTS_NOTEARDOWN'):
+    if os.environ.get('REPRONIM_TESTS_NOTEARDOWN'):
         return
 
     if _test_states['loglevel'] is not None:
         lgr.setLevel(_test_states['loglevel'])
-        if _test_states['DATALAD_LOGLEVEL'] is None:
-            os.environ.pop('DATALAD_LOGLEVEL')
+        if _test_states['REPRONIM_LOGLEVEL'] is None:
+            os.environ.pop('REPRONIM_LOGLEVEL')
         else:
-            os.environ['DATALAD_LOGLEVEL'] = _test_states['DATALAD_LOGLEVEL']
+            os.environ['REPRONIM_LOGLEVEL'] = _test_states['REPRONIM_LOGLEVEL']
 
-    from datalad.tests import _TEMP_PATHS_GENERATED
-    from datalad.tests.utils import rmtemp
+    from repronim.tests import _TEMP_PATHS_GENERATED
+    from repronim.tests.utils import rmtemp
     if len(_TEMP_PATHS_GENERATED):
         msg = "Removing %d dirs/files: %s" % (len(_TEMP_PATHS_GENERATED), ', '.join(_TEMP_PATHS_GENERATED))
     else:

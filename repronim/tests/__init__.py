@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,7 +12,7 @@ import shutil
 import tempfile
 from logging import getLogger
 
-lgr = getLogger("datalad.tests")
+lgr = getLogger("repronim.tests")
 
 # We will delay generation of some test files/directories until they are
 # actually used but then would remove them here

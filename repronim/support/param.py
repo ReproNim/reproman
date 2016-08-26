@@ -2,7 +2,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
@@ -52,8 +52,8 @@ class Parameter(object):
         Examples
         --------
         Ensure a parameter is a float
-        >>> from datalad.support.param import Parameter
-        >>> from datalad.support.constraints import (EnsureFloat, EnsureRange,
+        >>> from repronim.support.param import Parameter
+        >>> from repronim.support.constraints import (EnsureFloat, EnsureRange,
         ...                              AltConstraints, Constraints)
         >>> C = Parameter(constraints=EnsureFloat())
 

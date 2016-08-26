@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -29,11 +29,11 @@ import glob
 from functools import wraps
 from time import sleep
 from inspect import getargspec
-from datalad.dochelpers import get_docstring_split
+from repronim.dochelpers import get_docstring_split
 
-lgr = logging.getLogger("datalad.utils")
+lgr = logging.getLogger("repronim.utils")
 
-lgr.log(5, "Importing datalad.utils")
+lgr.log(5, "Importing repronim.utils")
 #
 # Some useful variables
 #
@@ -168,10 +168,10 @@ def sorted_files(dout):
 
 from os.path import sep as dirsep
 _VCS_REGEX = '%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)' % (dirsep, dirsep)
-_DATALAD_REGEX = '%s\.(?:datalad)(?:%s|$)' % (dirsep, dirsep)
+_REPRONIM_REGEX = '%s\.(?:repronim)(?:%s|$)' % (dirsep, dirsep)
 
 
-def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_datalad=False, dirs=False):
+def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_repronim=False, dirs=False):
     """Generator to find files matching regex
 
     Parameters
@@ -182,14 +182,14 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_dat
     exclude_vcs:
       If True, excludes commonly known VCS subdirectories.  If string, used
       as regex to exclude those files (regex: %r)
-    exclude_datalad:
-      If True, excludes files known to be datalad meta-data files (e.g. under
-      .datalad/ subdirectory) (regex: %r)
+    exclude_repronim:
+      If True, excludes files known to be repronim meta-data files (e.g. under
+      .repronim/ subdirectory) (regex: %r)
     topdir: basestring, optional
       Directory where to search
     dirs: bool, optional
       Either to match directories as well as files
-    """ % (_VCS_REGEX, _DATALAD_REGEX)
+    """ % (_VCS_REGEX, _REPRONIM_REGEX)
 
     for dirpath, dirnames, filenames in os.walk(topdir):
         names = (dirnames + filenames) if dirs else filenames
@@ -201,7 +201,7 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_dat
                 continue
             if exclude_vcs and re.search(_VCS_REGEX, path):
                 continue
-            if exclude_datalad and re.search(_DATALAD_REGEX, path):
+            if exclude_repronim and re.search(_REPRONIM_REGEX, path):
                 continue
             yield path
 
@@ -283,10 +283,10 @@ def rmtree(path, chmod_files='auto', *args, **kwargs):
 def rmtemp(f, *args, **kwargs):
     """Wrapper to centralize removing of temp files so we could keep them around
 
-    It will not remove the temporary file/directory if DATALAD_TESTS_KEEPTEMP
+    It will not remove the temporary file/directory if REPRONIM_TESTS_KEEPTEMP
     environment variable is defined
     """
-    if not os.environ.get('DATALAD_TESTS_KEEPTEMP'):
+    if not os.environ.get('REPRONIM_TESTS_KEEPTEMP'):
         if not os.path.lexists(f):
             lgr.debug("Path %s does not exist, so can't be removed" % f)
             return
@@ -499,12 +499,12 @@ def get_tempfile_kwargs(tkwargs={}, prefix="", wrapped=None):
     # if len(targs)<2 and \
     if not 'prefix' in tkwargs_:
         tkwargs_['prefix'] = '_'.join(
-            ['datalad_temp'] +
+            ['repronim_temp'] +
             ([prefix] if prefix else []) +
             ([''] if (on_windows or not wrapped)
                   else [wrapped.__name__]))
 
-    directory = os.environ.get('DATALAD_TESTS_TEMPDIR')
+    directory = os.environ.get('REPRONIM_TESTS_TEMPDIR')
     if directory and 'dir' not in tkwargs_:
         tkwargs_['dir'] = directory
 
@@ -623,7 +623,7 @@ def swallow_logs(new_level=None):
     """Context manager to consume all logs.
 
     """
-    lgr = logging.getLogger("datalad")
+    lgr = logging.getLogger("repronim")
 
     # Keep old settings
     old_level = lgr.level
@@ -694,7 +694,7 @@ def setup_exceptionhook(ipython=False):
        pdb.post_mortem; if not interactive, then invokes default handler.
     """
 
-    def _datalad_pdb_excepthook(type, value, tb):
+    def _repronim_pdb_excepthook(type, value, tb):
         import traceback
         traceback.print_exception(type, value, tb)
         print()
@@ -708,7 +708,7 @@ def setup_exceptionhook(ipython=False):
                                              # color_scheme='Linux',
                                              call_pdb=is_interactive())
     else:
-        sys.excepthook = _datalad_pdb_excepthook
+        sys.excepthook = _repronim_pdb_excepthook
 
 
 def assure_dir(*args):
@@ -795,7 +795,7 @@ def knows_annex(path):
     if not exists(path):
         lgr.debug("No annex: test path {0} doesn't exist".format(path))
         return False
-    from datalad.support.gitrepo import GitRepo
+    from repronim.support.gitrepo import GitRepo
     return GitRepo(path, init=False, create=False).is_with_annex()
 
 
@@ -819,12 +819,12 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
         '_').
 
     To change the used directory without providing keyword argument 'dir' set
-    DATALAD_TESTS_TEMPDIR.
+    REPRONIM_TESTS_TEMPDIR.
 
     Examples
     --------
         >>> from os.path import exists
-        >>> from datalad.utils import make_tempfile
+        >>> from repronim.utils import make_tempfile
         >>> with make_tempfile() as fname:
         ...    k = open(fname, 'w').write('silly test')
         >>> assert not exists(fname)  # was removed
@@ -838,7 +838,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
 
     tkwargs_ = get_tempfile_kwargs(tkwargs, wrapped=wrapped)
 
-    # if DATALAD_TESTS_TEMPDIR is set, use that as directory,
+    # if REPRONIM_TESTS_TEMPDIR is set, use that as directory,
     # let mktemp handle it otherwise. However, an explicitly provided
     # dir=... will override this.
     mkdir = tkwargs_.pop('mkdir', False)
@@ -883,4 +883,4 @@ def _path_(p):
         # Assume that all others as POSIX compliant so nothing to be done
         return p
 
-lgr.log(5, "Done importing datalad.utils")
+lgr.log(5, "Done importing repronim.utils")

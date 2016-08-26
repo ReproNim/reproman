@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,11 +16,11 @@ try:
 except ImportError:  # pragma: no cover
     # must be running from installed version where formatters is not present
     # These tests can be ran only with formatters, which is outside of the
-    # datalad module space in the root of the sourcebase
+    # repronim module space in the root of the sourcebase
     if not exists('formatters.py'):
         raise SkipTest
 
-from datalad.cmdline.main import setup_parser
+from repronim.cmdline.main import setup_parser
 from .utils import assert_equal, ok_, assert_raises, assert_in, ok_startswith
 
 demo_example = """
@@ -41,7 +41,7 @@ HOME=IS_MY_CASTLE
 # Lorem ipsum
 #%
 
-datalad install http://the.world.com
+repronim install http://the.world.com
 
 #%
 # Epilog -- with multiline rubish sdoifpwjefw
@@ -49,7 +49,7 @@ datalad install http://the.world.com
 # pfdsvja329u0fjpdsv sdpf9p93qk
 #%
 
-datalad imagine --too \\
+repronim imagine --too \\
         --much \\
         --too say \\
         yes=no

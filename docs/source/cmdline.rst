@@ -13,7 +13,7 @@ Main command
 .. toctree::
    :maxdepth: 1
 
-   generated/man/datalad
+   generated/man/repronim
 
 Dataset operations
 ==================
@@ -21,16 +21,16 @@ Dataset operations
 .. toctree::
    :maxdepth: 1
 
-   generated/man/datalad-add-sibling
-   generated/man/datalad-create
-   generated/man/datalad-create-publication-target-sshwebserver
-   generated/man/datalad-install
-   generated/man/datalad-modify-subdataset-urls
-   generated/man/datalad-publish
-   generated/man/datalad-uninstall
-   generated/man/datalad-update
-   generated/man/datalad-save
-   generated/man/datalad-unlock
+   generated/man/repronim-add-sibling
+   generated/man/repronim-create
+   generated/man/repronim-create-publication-target-sshwebserver
+   generated/man/repronim-install
+   generated/man/repronim-modify-subdataset-urls
+   generated/man/repronim-publish
+   generated/man/repronim-uninstall
+   generated/man/repronim-update
+   generated/man/repronim-save
+   generated/man/repronim-unlock
 
 Miscellaneous commands
 ======================
@@ -38,11 +38,11 @@ Miscellaneous commands
 .. toctree::
    :maxdepth: 1
 
-   generated/man/datalad-add-archive-content
-   generated/man/datalad-clean
-   generated/man/datalad-crawl
-   generated/man/datalad-crawl-init
-   generated/man/datalad-create-test-dataset
-   generated/man/datalad-download-url
-   generated/man/datalad-ls
-   generated/man/datalad-test
+   generated/man/repronim-add-archive-content
+   generated/man/repronim-clean
+   generated/man/repronim-crawl
+   generated/man/repronim-crawl-init
+   generated/man/repronim-create-test-dataset
+   generated/man/repronim-download-url
+   generated/man/repronim-ls
+   generated/man/repronim-test

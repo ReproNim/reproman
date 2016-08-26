@@ -1,6 +1,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the DataLad package for the
+#   See COPYING file distributed along with the ReproNim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,11 +16,11 @@ import formatters as fmt
 
 
 def get_version():
-    """Load version of datalad from version.py without entailing any imports
+    """Load version of repronim from version.py without entailing any imports
     """
     # This might entail lots of imports which might not yet be available
     # so let's do ad-hoc parsing of the version.py
-    with open(opj(dirname(__file__), 'datalad', 'version.py')) as f:
+    with open(opj(dirname(__file__), 'repronim', 'version.py')) as f:
         version_lines = list(filter(lambda x: x.startswith('__version__'), f))
     assert (len(version_lines) == 1)
     return version_lines[0].split('=')[1].strip(" '\"\t\n")
@@ -72,7 +72,7 @@ class BuildManPage(Command):
         dist = self.distribution
         #homepage = dist.get_url()
         #appname = self._parser.prog
-        appname = 'datalad'
+        appname = 'repronim'
 
         sections = {
             'Authors': """{0} is developed by {1} <{2}>.""".format(
@@ -87,7 +87,7 @@ class BuildManPage(Command):
             for cmdname in self._parser:
                 p = self._parser[cmdname]
                 cmdname = "{0}{1}".format(
-                    'datalad-' if cmdname != 'datalad' else '',
+                    'repronim-' if cmdname != 'repronim' else '',
                     cmdname)
                 format = cls(cmdname, ext_sections=sections, version=get_version())
                 formatted = format.format_man_page(p)

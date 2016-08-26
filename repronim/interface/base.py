@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -157,7 +157,7 @@ def alter_interface_docs_for_cmdline(docs):
         docs)
     # clean up sphinx API refs
     docs = re.sub(
-        '\~datalad\.api\.\S*',
+        '\~repronim\.api\.\S*',
         lambda match: "`{0}`".format(match.group(0)[13:]),
         docs)
     # Remove RST paragraph markup

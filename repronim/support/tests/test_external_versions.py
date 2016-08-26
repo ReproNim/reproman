@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -26,7 +26,7 @@ if PY3:
 
 def test_external_versions_basic():
     ev = ExternalVersions()
-    our_module = 'datalad'
+    our_module = 'repronim'
     assert_equal(ev.versions, {})
     assert_equal(ev[our_module], __version__)
     # and it could be compared
@@ -61,7 +61,7 @@ def test_external_versions_basic():
     # Code below is from original duecredit, and we don't care about
     # testing this one
     # And we can get versions based on modules themselves
-    from datalad.tests import mod
+    from repronim.tests import mod
     assert_equal(ev[mod], mod.__version__)
 
     # Check that we can get a copy of the versions

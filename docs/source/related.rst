@@ -1,7 +1,7 @@
 Related efforts and solutions
 *****************************
 
-To our knowledge, there is no other effort with as broad of a scope as datalad
+To our knowledge, there is no other effort with as broad of a scope as repronim
 that aims to unify access to vast arrays of scientific data in a domain and
 data modality agnostic fashion with as few and universally available software
 dependencies.
@@ -31,7 +31,7 @@ data management peculiarities (organization, updates, sharing).  Ad-hoc
 collections of pointers to available data, such as `reddit datasets`_ and
 `Inside-R datasets`_, do not provide any unified interface to acquire and
 manage such data.  Such portals can be used as seed information and data
-providers for datalad. These portal could in turn adopt datalad to expose
+providers for repronim. These portal could in turn adopt repronim to expose
 readily usable data collections via a federated infrastructure.
 
 .. _Human Connectome: http://www.humanconnectomeproject.org
@@ -64,7 +64,7 @@ distributed data management tools, such as git-media_, git-fat_, and others.
 None of the alternative frameworks provides all of the features of git-annex,
 such as integration with native Git workflows, distributed redundant storage,
 and partial checkouts in one project.  Additional features of git-annex which
-are not exercised directly by datalad (git-annex assistant, encryption support,
+are not exercised directly by repronim (git-annex assistant, encryption support,
 etc.) make it even more appealing for extended coverage of possible scenarios.
 Moreover, neither of the alternative solutions has already reached a maturity,
 availability, and level of adoption that would be comparable to that of

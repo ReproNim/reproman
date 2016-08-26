@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the DataLad package for the
+#   See COPYING file distributed along with the ReproNim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -18,97 +18,58 @@ from distutils.command.build_py import build_py
 from setup_support import BuildManPage, BuildRSTExamplesFromScripts
 from setup_support import get_version
 
-# datalad version to be installed
+# repronim version to be installed
 version = get_version()
 
 # Only recentish versions of find_packages support include
-# datalad_pkgs = find_packages('.', include=['datalad*'])
+# repronim_pkgs = find_packages('.', include=['repronim*'])
 # so we will filter manually for maximal compatibility
-datalad_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('datalad')]
-
-# keyring is a tricky one since it got split into two as of 8.0 and on older
-# systems there is a problem installing via pip (e.g. on wheezy) so for those we
-# would just ask for keyring
-keyring_requires = ['keyring>=8.0', 'keyrings.alt']
-pbar_requires = ['tqdm']
-
-dist = platform.dist()
-# on oldstable Debian let's ask for lower versions and progressbar instead
-if dist[0] == 'gentoo':
-    pbar_requires = ['progressbar']
-if dist[0] == 'debian' and dist[1].split('.', 1)[0] == '7':
-    keyring_requires = ['keyring<8.0']
-    pbar_requires = ['progressbar']
+repronim_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('repronim')]
 
 requires = {
     'core': [
         'appdirs',
-        'GitPython>=2.0.3',
-        'iso8601',
         'humanize',
         'mock',  # mock is also used for auto.py, not only for testing
-        'patool>=1.7',
         'six>=1.8.0',
-    ] + pbar_requires,
-    'downloaders': [
-        'boto',
-        'msgpack-python',
-        'requests>=1.2',
-    ] + keyring_requires,
-    'downloaders-extra': [
-       'requests_ftp',
-    ],
-    'crawl': [
-        'scrapy>=1.1.0rc3',  # versioning is primarily for python3 support
     ],
     'tests': [
-        'BeautifulSoup4',  # VERY weak requirement, still used in one of the tests
-        'httpretty>=0.8.14',
         'mock',
         'nose>=1.3.4',
-        'testtools',
-        'vcrpy',
     ]
 }
 requires['full'] = sum(list(requires.values()), [])
 
 
 # configure additional command for custom build steps
-class DataladBuild(build_py):
+class ReproNimBuild(build_py):
     def run(self):
         self.run_command('build_manpage')
-        self.run_command('build_examples')
+        #self.run_command('build_examples')
         build_py.run(self)
 
 cmdclass = {
     'build_manpage': BuildManPage,
-    'build_examples': BuildRSTExamplesFromScripts,
-    'build_py': DataladBuild
+    #'build_examples': BuildRSTExamplesFromScripts,
+    'build_py': ReproNimBuild
 }
 
 setup(
-    name="datalad",
-    author="The DataLad Team and Contributors",
-    author_email="team@datalad.org",
+    name="repronim",
+    author="The ReproNim Team and Contributors",
+    author_email="team@repronim.org",
     version=version,
-    description="data distribution geared toward scientific datasets",
-    packages=datalad_pkgs,
-    install_requires=requires['core'] + requires['downloaders'],
+    description="Tools for Reproducible Neuroimaging",
+    packages=repronim_pkgs,
+    install_requires=requires['core'],
     extras_require=requires,
     entry_points={
         'console_scripts': [
-            'datalad=datalad.cmdline.main:main',
-            'git-annex-remote-datalad-archives=datalad.customremotes.archives:main',
-            'git-annex-remote-datalad=datalad.customremotes.datalad:main',
+            'repronim=repronim.cmdline.main:main',
         ],
     },
     cmdclass=cmdclass,
     package_data={
-        'datalad': [
-            'resources/git_ssh.sh',
-            'resources/sshserver_cleanup_after_publish.sh',
-            'resources/sshserver_prepare_for_publish.sh',
-        ] +
-        [p.split(pathsep, 1)[1] for p in glob('datalad/downloaders/configs/*.cfg')]
+        'repronim': []
     }
 )

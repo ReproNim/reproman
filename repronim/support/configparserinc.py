@@ -2,12 +2,12 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 #   Originally written by Yaroslav Halchenko  for Fail2Ban and later
-#   adopted for use in DataLad and thus relicensed under MIT/Expat.
-#   Relicensing was conveied via email to other contributors.
+#   adopted for use in DataLad and ReproNim and thus relicensed under MIT/Expat.
+#   Relicensing was conveyed via email to other contributors.
 #
 #  ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 

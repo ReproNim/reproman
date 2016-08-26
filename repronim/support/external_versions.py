@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,8 +14,8 @@ from six import string_types
 
 from distutils.version import StrictVersion, LooseVersion
 
-from datalad.dochelpers import exc_str
-from datalad.log import lgr
+from repronim.dochelpers import exc_str
+from repronim.log import lgr
 
 __all__ = ['UnknownVersion', 'ExternalVersions', 'external_versions']
 
@@ -37,7 +37,7 @@ class UnknownVersion:
 #
 # Custom handlers
 #
-from datalad.cmd import Runner
+from repronim.cmd import Runner
 _runner = Runner()
 
 

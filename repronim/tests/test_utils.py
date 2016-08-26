@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -56,7 +56,7 @@ from .utils import skip_if_no_module
 
 
 def test_get_func_kwargs_doc():
-    from datalad.crawler.pipelines.openfmri import pipeline
+    from repronim.crawler.pipelines.openfmri import pipeline
     output = ['dataset', 'versioned_urls', 'topurl', 'leading_dirs_depth', 'prefix']
     eq_(get_func_kwargs_doc(pipeline), output)
 
@@ -101,7 +101,7 @@ def test_swallow_outputs():
 
 
 def test_swallow_logs():
-    lgr = logging.getLogger('datalad')
+    lgr = logging.getLogger('repronim')
     with swallow_logs(new_level=9) as cm:
         eq_(cm.out, '')
         lgr.log(8, "very heavy debug")
@@ -121,7 +121,7 @@ def _check_setup_exceptionhook(interactive):
         post_mortem_tb.append(tb)
 
     with patch('sys.excepthook'), \
-            patch('datalad.utils.is_interactive', lambda: interactive), \
+            patch('repronim.utils.is_interactive', lambda: interactive), \
             patch('pdb.post_mortem', our_post_mortem):
         setup_exceptionhook()
         our_exceptionhook = sys.excepthook
@@ -344,11 +344,11 @@ def test_line_profile():
 
 
 def test_not_supported_on_windows():
-    with patch('datalad.utils.on_windows', True):
+    with patch('repronim.utils.on_windows', True):
         assert_raises(NotImplementedError, not_supported_on_windows)
         assert_raises(NotImplementedError, not_supported_on_windows, "msg")
 
-    with patch('datalad.utils.on_windows', False):
+    with patch('repronim.utils.on_windows', False):
         assert_equal(not_supported_on_windows(), None)
         assert_equal(not_supported_on_windows("msg"), None)
 
@@ -385,8 +385,8 @@ def test_is_explicit_path():
 @with_tempfile
 @with_tempfile
 def test_knows_annex(here, there):
-    from datalad.support.gitrepo import GitRepo
-    from datalad.support.annexrepo import AnnexRepo
+    from repronim.support.gitrepo import GitRepo
+    from repronim.support.annexrepo import AnnexRepo
     GitRepo(path=here, create=True)
     assert_false(knows_annex(here))
     AnnexRepo(path=here, create=True)

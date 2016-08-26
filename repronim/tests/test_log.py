@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -17,18 +17,18 @@ from git.exc import GitCommandError
 
 from mock import patch
 
-from datalad.log import LoggerHelper
+from repronim.log import LoggerHelper
 
-from datalad.tests.utils import with_tempfile, ok_, assert_equal
+from repronim.tests.utils import with_tempfile, ok_, assert_equal
 
 # pretend we are in interactive mode so we could check if coloring is
 # disabled
-@patch("datalad.log.is_interactive", lambda: True)
+@patch("repronim.log.is_interactive", lambda: True)
 @with_tempfile
 def test_logging_to_a_file(dst):
     ok_(not exists(dst))
 
-    lgr = LoggerHelper("dataladtest").get_initialized_logger(logtarget=dst)
+    lgr = LoggerHelper("repronimtest").get_initialized_logger(logtarget=dst)
     ok_(exists(dst))
 
     msg = "Oh my god, they killed Kenny"
@@ -48,19 +48,19 @@ def test_logging_to_a_file(dst):
 
 @with_tempfile
 def test_logtarget_via_env_variable(dst):
-    with patch.dict('os.environ', {'DATALADTEST_LOGTARGET': dst}):
+    with patch.dict('os.environ', {'REPRONIMTEST_LOGTARGET': dst}):
         ok_(not exists(dst))
-        lgr = LoggerHelper("dataladtest").get_initialized_logger()
+        lgr = LoggerHelper("repronimtest").get_initialized_logger()
         ok_(exists(dst))
     # just to see that mocking patch worked
-    ok_(not 'DATALADTEST_LOGTARGET' in os.environ)
+    ok_(not 'REPRONIMTEST_LOGTARGET' in os.environ)
 
 @with_tempfile
 @with_tempfile
 def test_mutliple_targets(dst1, dst2):
     ok_(not exists(dst1))
     ok_(not exists(dst2))
-    lgr = LoggerHelper("dataladtest").get_initialized_logger(
+    lgr = LoggerHelper("repronimtest").get_initialized_logger(
         logtarget="%s,%s" % (dst1, dst2))
     ok_(exists(dst1))
     ok_(exists(dst2))

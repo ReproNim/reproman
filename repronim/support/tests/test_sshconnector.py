@@ -1,7 +1,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,11 +14,11 @@ from os.path import exists, isdir, getmtime, join as opj
 
 from nose.tools import ok_, assert_is_instance
 
-from datalad.support.sshconnector import SSHConnection, SSHManager
-from datalad.tests.utils import assert_raises, eq_
-from datalad.tests.utils import skip_ssh, with_tempfile, get_most_obscure_supported_name
-from datalad.tests.utils import swallow_logs
-from datalad.tests.utils import assert_in
+from repronim.support.sshconnector import SSHConnection, SSHManager
+from repronim.tests.utils import assert_raises, eq_
+from repronim.tests.utils import skip_ssh, with_tempfile, get_most_obscure_supported_name
+from repronim.tests.utils import swallow_logs
+from repronim.tests.utils import assert_in
 
 import logging
 
@@ -77,14 +77,14 @@ def test_ssh_manager_close():
 
     manager = SSHManager()
     manager.get_connection('ssh://localhost').open()
-    manager.get_connection('ssh://datalad-test').open()
+    manager.get_connection('ssh://repronim-test').open()
     ok_(exists(opj(manager.socket_dir, 'localhost')))
-    ok_(exists(opj(manager.socket_dir, 'datalad-test')))
+    ok_(exists(opj(manager.socket_dir, 'repronim-test')))
 
     manager.close()
 
     ok_(not exists(opj(manager.socket_dir, 'localhost')))
-    ok_(not exists(opj(manager.socket_dir, 'datalad-test')))
+    ok_(not exists(opj(manager.socket_dir, 'repronim-test')))
 
 
 def test_ssh_manager_close_no_throw():

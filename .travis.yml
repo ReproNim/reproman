@@ -15,22 +15,22 @@ matrix:
   - python: 2.7
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
-    - DATALAD_LOGLEVEL=INFO
+    - REPRONIM_LOGLEVEL=INFO
   - python: 2.7
     # By default no logs will be output. This one is to test with low level but dumped to /dev/null
     env:
-    - DATALAD_LOGLEVEL=2
-    - DATALAD_LOGTARGET=/dev/null
+    - REPRONIM_LOGLEVEL=2
+    - REPRONIM_LOGTARGET=/dev/null
   - python: 2.7
     env:
     # to test operation under root since also would consider FS "crippled" due to
     # ability to rewrite R/O files
     - NOSE_WRAPPER="sudo -E"
     # no key authentication for root:
-    - unset -v DATALAD_TESTS_SSH
+    - unset -v REPRONIM_TESTS_SSH
   - python: 2.7
     env:
-    - DATALAD_TESTS_NONETWORK=1
+    - REPRONIM_TESTS_NONETWORK=1
     # must operate nicely with those env variables set
     - http_proxy=
     - https_proxy=
@@ -51,7 +51,7 @@ env:
   # to overcome problem with system-wide installed boto on travis
   # see https://github.com/travis-ci/travis-ci/issues/5246
   - BOTO_CONFIG=/tmp/nowhere
-  - DATALAD_TESTS_SSH=1
+  - REPRONIM_TESTS_SSH=1
 
 before_install:
   # The ultimate one-liner setup for NeuroDebian repository
@@ -80,9 +80,9 @@ install:
   - pip install sphinx_rtd_theme
 
 script:
-  - if [ ! -z "$DATALAD_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
-  - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package datalad --logging-level=INFO
-  - if [ ! -z "$DATALAD_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
+  - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
+  - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package repronim --logging-level=INFO
+  - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # Generate documentation and run doctests
   - PYTHONPATH=$PWD make -C docs html doctest
 
@@ -93,6 +93,6 @@ after_success:
 # makes it only more difficult to comprehend the failing output.  Enable only when necessary
 # for a particular debugging
 #after_failure:
-#  - if [ ! -z "$DATALAD_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
-#  - DATALAD_LOGLEVEL=DEBUG $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package datalad --logging-level=DEBUG
-#  - if [ ! -z "$DATALAD_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
+#  - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
+#  - REPRONIM_LOGLEVEL=DEBUG $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package repronim --logging-level=DEBUG
+#  - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi

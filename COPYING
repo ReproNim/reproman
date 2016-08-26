@@ -1,12 +1,15 @@
 # Main Copyright/License
 
-DataLad, including all examples, code snippets and attached
-documentation is covered by the MIT license.
+ReproNim, including all examples, code snippets and attached
+documentation is covered by the MIT license.  A good portion of the source
+code base was bootstrapped with materials from the DataLad project 
+(http://datalad.org)
 
   The MIT License
 
-  Copyright (c) 2013-     Yaroslav Halchenko
-                2015-     DataLad Team
+  Copyright (c) 2013-2016 Yaroslav Halchenko
+                2015-2016 DataLad Team
+                2016-     ReproNim Team
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -26,16 +29,13 @@ documentation is covered by the MIT license.
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 
-See CONTRIBUTORS file for a full list of contributors.
+See CONTRIBUTORS file for a full list of contributors within ReproNim code-base.
 
 
 # 3rd Party Code
 
-Some code distributed within DataLad was not developed by the DataLad team,
+Some code distributed within ReproNim was not developed by the ReproNim team,
 hence you should adhere to the copyright and license terms of respective
 authors if you are to use corresponding parts.
 
-## TestKraut
-
-To migrate out anyways
 

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -32,7 +32,7 @@ from .support.protocol import NullProtocol, DryRunProtocol, \
 from .utils import on_windows
 from . import cfg
 
-lgr = logging.getLogger('datalad.cmd')
+lgr = logging.getLogger('repronim.cmd')
 
 _TEMP_std = sys.stdout, sys.stderr
 
@@ -52,7 +52,7 @@ class Runner(object):
     stdout/stderr during execution.
     This can be enabled or disabled for both of them independently.
     Additionally, a protocol object can be a used with the Runner. Such a
-    protocol has to implement datalad.support.protocol.ProtocolInterface, is
+    protocol has to implement repronim.support.protocol.ProtocolInterface, is
     able to record calls and allows for dry runs.
     """
 
@@ -76,7 +76,7 @@ class Runner(object):
         self.env = env
         if protocol is None:
             # TODO: config cmd.protocol = null
-            cfg = os.environ.get('DATALAD_CMD_PROTOCOL', 'null')
+            cfg = os.environ.get('REPRONIM_CMD_PROTOCOL', 'null')
             protocol = {
                 'externals-time': ExecutionTimeExternalsProtocol,
                 'time': ExecutionTimeProtocol,
@@ -86,7 +86,7 @@ class Runner(object):
                 # we need to dump it into a file at the end
                 # TODO: config cmd.protocol_prefix = protocol
                 filename = '%s-%s.log' % (
-                    os.environ.get('DATALAD_CMD_PROTOCOL_PREFIX', 'protocol'),
+                    os.environ.get('REPRONIM_CMD_PROTOCOL_PREFIX', 'protocol'),
                     id(self)
                 )
                 atexit.register(functools.partial(protocol.write_to_file, filename))
