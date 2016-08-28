@@ -15,22 +15,14 @@ Main command
 
    generated/man/repronim
 
-Dataset operations
-==================
+Environments operations
+=======================
 
 .. toctree::
    :maxdepth: 1
 
-   generated/man/repronim-add-sibling
+   generated/man/repronim-ls
    generated/man/repronim-create
-   generated/man/repronim-create-publication-target-sshwebserver
-   generated/man/repronim-install
-   generated/man/repronim-modify-subdataset-urls
-   generated/man/repronim-publish
-   generated/man/repronim-uninstall
-   generated/man/repronim-update
-   generated/man/repronim-save
-   generated/man/repronim-unlock
 
 Miscellaneous commands
 ======================
@@ -38,11 +30,4 @@ Miscellaneous commands
 .. toctree::
    :maxdepth: 1
 
-   generated/man/repronim-add-archive-content
-   generated/man/repronim-clean
-   generated/man/repronim-crawl
-   generated/man/repronim-crawl-init
-   generated/man/repronim-create-test-dataset
-   generated/man/repronim-download-url
-   generated/man/repronim-ls
    generated/man/repronim-test

@@ -29,19 +29,12 @@ Plumbing
 .. autosummary::
    :toctree: generated
 
-   auto
    cmd
    consts
-   db
    log
    utils
    version
-   support.annexrepo
-   support.archives
    support.configparserinc
-   customremotes.main
-   customremotes.base
-   customremotes.archives
 
 Configuration management
 ========================
@@ -52,17 +45,6 @@ Configuration management
 
    config
 
-Crawler
-=======
-
-.. currentmodule:: repronim
-.. autosummary::
-   :toctree: generated
-
-   crawler.base
-   crawler.db
-   crawler.pipeline
-
 Test infrastructure
 ===================
 
@@ -71,8 +53,6 @@ Test infrastructure
    :toctree: generated
 
    tests.utils
-   tests.utils_testrepos
-   tests.heavyoutput
 
 Command line interface infrastructure
 =====================================

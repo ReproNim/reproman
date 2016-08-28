@@ -1,5 +1,5 @@
-Datalad |---| data management and distribution suite: Documentation
-*******************************************************************
+ReproNim |---| tools for reproducible neuroimaging
+**************************************************
 
 .. toctree::
    :maxdepth: 1
@@ -25,14 +25,6 @@ Commands and API
 
    cmdline
    modref
-
-Automated data distributions
-============================
-
-.. toctree::
-   :maxdepth: 2
-
-   crawler/index
 
 Indices and tables
 ==================

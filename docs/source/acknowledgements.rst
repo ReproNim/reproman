@@ -1,19 +1,13 @@
 Acknowledgments
 ***************
 
-Datalad development is being performed as part of a US-German collaboration in
-computational neuroscience (CRCNS) project "DataGit: converging catalogues,
-warehouses, and deployment logistics into a federated 'data distribution'"
-(Halchenko_/Hanke_), co-funded by the US National Science Foundation (`NSF
-1429999`_) and the German Federal Ministry of Education and Research (`BMBF
-01GQ1411`_).
+ReproNim development is being performed as part of an NIH_ funded (1P41EB019936-01A1_)
+"Center for Reproducible Neuroimaging Computation (CRNC)". It's initial development
+aims to provide a suite of tools for management of computational
+environments, which is the TR&D 3 sub-project of the CRNC, and is lead
+by Dr. Halchenko_.
 
-Datalad is built atop the git-annex_ software that is being developed and
-maintained by `Joey Hess`_.
-
+.. _1P41EB019936-01A1: https://projectreporter.nih.gov/project_info_details.cfm?aid=8999833&map=y
+.. _Kennedy: http://haxbylab.dartmouth.edu/ppl/yarik.html
 .. _Halchenko: http://haxbylab.dartmouth.edu/ppl/yarik.html
-.. _Hanke: http://www.psychoinformatics.de
-.. _NSF 1429999: http://www.nsf.gov/awardsearch/showAward?AWD_ID=1429999
-.. _BMBF 01GQ1411: http://www.gesundheitsforschung-bmbf.de/de/2550.php
-.. _git-annex: http://git-annex.branchable.com
-.. _Joey Hess: https://joeyh.name
+.. _NIH : http://nih.gov
