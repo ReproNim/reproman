@@ -70,7 +70,9 @@ def setup_parser(
     # main parser
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars='@',
-        # usage="%(prog)s ...",
+        # TODO: theoretically should have been automatic but plugs nosetests
+        # instead of repronim for some reason... doesn't happen in datalad
+        usage="%(prog)s ...",
         description=dedent_docstring("""\
             ReproNim aims to ease construction and execution of computation environments
             based on collected provenance data."""),
@@ -229,14 +231,7 @@ def main(args=None):
             chpwd(path)
 
     ret = None
-    if cmdlineargs.pbs_runner:
-        from .helpers import run_via_pbs
-        from .helpers import strip_arg_from_argv
-        from .common_args import pbs_runner as pbs_runner_opt
-        args_ = strip_arg_from_argv(args or sys.argv, cmdlineargs.pbs_runner, pbs_runner_opt[1])
-        # run the function associated with the selected command
-        run_via_pbs(args_, cmdlineargs.pbs_runner)
-    elif cmdlineargs.common_debug or cmdlineargs.common_idebug:
+    if cmdlineargs.common_debug or cmdlineargs.common_idebug:
         # so we could see/stop clearly at the point of failure
         setup_exceptionhook(ipython=cmdlineargs.common_idebug)
         ret = cmdlineargs.func(cmdlineargs)

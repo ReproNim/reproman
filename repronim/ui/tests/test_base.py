@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the ReproNim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -80,7 +80,7 @@ def test_with_testsui():
     # responses were not used
     assert_raises(AssertionError, nothing, 1, k=2)
 
-    from datalad.ui import ui
+    from repronim.ui import ui
 
     @with_testsui(responses='a')
     def ask():

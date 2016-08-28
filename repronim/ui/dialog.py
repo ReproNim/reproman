@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the ReproNim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,7 +13,7 @@
 __docformat__ = 'restructuredtext'
 
 from logging import getLogger
-lgr = getLogger('datalad.ui.dialog')
+lgr = getLogger('repronim.ui.dialog')
 
 lgr.log(5, "Starting importing ui.dialog")
 

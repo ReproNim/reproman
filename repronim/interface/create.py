@@ -6,40 +6,47 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to list available environments
+"""Helper utility to create an environment
 """
 
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr, EnsureNone, EnsureBool
+from ..support.constraints import EnsureStr, EnsureNone
+from ..support.exceptions import InsufficientArgumentsError
 
 from logging import getLogger
-lgr = getLogger('repronim.api.ls')
+lgr = getLogger('repronim.api.create')
 
 
-class Ls(Interface):
-    """List known computation environments
+class Create(Interface):
+    """Create a computation environment out from provided specification(s)
 
     Examples
     --------
 
-      $ repronim ls
+      $ repronim create --spec recipe_for_failure.yml --name never_again
+
     """
 
     _params_ = dict(
-        names=Parameter(
-            doc="name of the specific environment(s) to be listed",
-            metavar='NAME(s)',
-            nargs="*",
-            constraints=EnsureStr() | EnsureNone(),
+        spec=Parameter(
+            args=("--spec",),
+            doc="file with specifications (in supported formats) of"
+                " an environment where execution was originally executed",
+            metavar='SPEC',
+            nargs="+",
+            constraints=EnsureStr(),
+            # TODO:  here we need to elaborate options for sub-parsers to
+            # provide options, like --no-exec, etc  per each spec
+            # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
-        verbose=Parameter(
-            args=("-v", "--verbose"),
-            action="store_true",
-            #constraints=EnsureBool() | EnsureNone(),
-            doc="provide more verbose listing",
+        name=Parameter(
+            args=("-n", "--name"),
+            metavar="NAME",
+            constraints=EnsureStr() | EnsureNone(),
+            doc="provide a name for the created environment",
         ),
         # fast=Parameter(
         #     args=("-F", "--fast"),
@@ -67,5 +74,7 @@ class Ls(Interface):
     )
 
     @staticmethod
-    def __call__(names, verbose=False):
+    def __call__(spec, name=None):
+        if not spec:
+            raise InsufficientArgumentsError("Need at least a single --spec")
         raise NotImplementedError

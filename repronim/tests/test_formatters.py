@@ -82,7 +82,7 @@ def test_parser_access():
     parsers = setup_parser(return_subparsers=True)
     # we have a bunch
     ok_(len(parsers) > 3)
-    assert_in('install', parsers.keys())
+    assert_in('create', parsers.keys())
 
 
 def test_manpage_formatter():

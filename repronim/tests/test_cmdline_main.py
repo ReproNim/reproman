@@ -77,12 +77,12 @@ def test_help_np():
     # see https://travis-ci.org/repronim/repronim/jobs/80519004
     # thus testing sets
     assert_equal(set(sections),
-                 {'Commands for dataset operations',
+                 {'Commands for computation environments manipulation',
                   'Miscellaneous commands',
                   'General information',
                   'Global options'})
 
 
 def test_usage_on_insufficient_args():
-    stdout, stderr = run_main(['install'], exit_code=1)
+    stdout, stderr = run_main(['create'], exit_code=1)
     ok_startswith(stdout, 'usage:')

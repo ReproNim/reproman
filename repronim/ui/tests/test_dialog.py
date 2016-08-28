@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the ReproNim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -22,7 +22,7 @@ from ...tests.utils import assert_in
 from ...tests.utils import ok_startswith
 from ...tests.utils import ok_endswith
 from ..dialog import DialogUI
-from datalad.ui.progressbars import progressbars
+from repronim.ui.progressbars import progressbars
 
 
 def patch_input(**kwargs):

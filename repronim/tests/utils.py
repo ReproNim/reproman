@@ -44,11 +44,8 @@ from nose import SkipTest
 from ..cmd import Runner
 from ..utils import *
 from ..support.exceptions import CommandNotAvailableError
-from ..support.vcr_ import *
-from ..support.keyring_ import MemoryKeyring
 from ..dochelpers import exc_str, borrowkwargs
 from ..cmdline.helpers import get_repo_instance
-from ..consts import ARCHIVES_TEMP_DIR
 from . import _TEMP_PATHS_GENERATED
 
 # temp paths used by clones
@@ -59,6 +56,7 @@ _TEMP_PATHS_CLONES = set()
 neq_ = assert_not_equal
 nok_ = assert_false
 
+
 def skip_if_no_module(module):
     try:
         imp = __import__(module)
@@ -66,36 +64,24 @@ def skip_if_no_module(module):
         raise SkipTest("Module %s fails to load: %s" % (module, exc_str(exc)))
 
 
-def skip_if_scrapy_without_selector():
-    """A little helper to skip some tests which require recent scrapy"""
-    try:
-        import scrapy
-        from scrapy.selector import Selector
-    except ImportError:
-        from nose import SkipTest
-        raise SkipTest(
-            "scrapy misses Selector (too old? version: %s)"
-            % getattr(scrapy, '__version__'))
-
-
-def create_tree_archive(path, name, load, overwrite=False, archives_leading_dir=True):
-    """Given an archive `name`, create under `path` with specified `load` tree
-    """
-    from ..support.archives import compress_files
-    dirname = file_basename(name)
-    full_dirname = opj(path, dirname)
-    os.makedirs(full_dirname)
-    create_tree(full_dirname, load, archives_leading_dir=archives_leading_dir)
-    # create archive
-    if archives_leading_dir:
-        compress_files([dirname], name, path=path, overwrite=overwrite)
-    else:
-        compress_files(list(map(basename, glob.glob(opj(full_dirname, '*')))),
-                       opj(pardir, name),
-                       path=opj(path, dirname),
-                       overwrite=overwrite)
-    # remove original tree
-    shutil.rmtree(full_dirname)
+# def create_tree_archive(path, name, load, overwrite=False, archives_leading_dir=True):
+#     """Given an archive `name`, create under `path` with specified `load` tree
+#     """
+#     from ..support.archives import compress_files
+#     dirname = file_basename(name)
+#     full_dirname = opj(path, dirname)
+#     os.makedirs(full_dirname)
+#     create_tree(full_dirname, load, archives_leading_dir=archives_leading_dir)
+#     # create archive
+#     if archives_leading_dir:
+#         compress_files([dirname], name, path=path, overwrite=overwrite)
+#     else:
+#         compress_files(list(map(basename, glob.glob(opj(full_dirname, '*')))),
+#                        opj(pardir, name),
+#                        path=opj(path, dirname),
+#                        overwrite=overwrite)
+#     # remove original tree
+#     shutil.rmtree(full_dirname)
 
 
 def create_tree(path, tree, archives_leading_dir=True):
@@ -114,9 +100,9 @@ def create_tree(path, tree, archives_leading_dir=True):
     for name, load in tree:
         full_name = opj(path, name)
         if isinstance(load, (tuple, list, dict)):
-            if name.endswith('.tar.gz') or name.endswith('.tar'):
-                create_tree_archive(path, name, load, archives_leading_dir=archives_leading_dir)
-            else:
+            # if name.endswith('.tar.gz') or name.endswith('.tar'):
+            #     create_tree_archive(path, name, load, archives_leading_dir=archives_leading_dir)
+            # else:
                 create_tree(full_name, load, archives_leading_dir=archives_leading_dir)
         else:
             #encoding = sys.getfilesystemencoding()
@@ -131,121 +117,9 @@ def create_tree(path, tree, archives_leading_dir=True):
 # Addition "checkers"
 #
 
-import git
 import os
 from os.path import exists, join
-from repronim.support.gitrepo import GitRepo
-from repronim.support.annexrepo import AnnexRepo, FileNotInAnnexError
 from ..utils import chpwd, getpwd
-
-
-def ok_clean_git_annex_proxy(path):
-    """Helper to check, whether an annex in direct mode is clean
-    """
-    # TODO: May be let's make a method of AnnexRepo for this purpose
-
-    ar = AnnexRepo(path)
-    cwd = getpwd()
-    chpwd(path)
-
-    try:
-        out = ar.proxy(['git', 'status'])
-    except CommandNotAvailableError as e:
-        raise SkipTest
-    finally:
-        chpwd(cwd)
-
-    assert_in("nothing to commit, working directory clean", out[0], "git-status output via proxy not plausible: %s" % out[0])
-
-
-def ok_clean_git(path, annex=True, untracked=[]):
-    """Verify that under given path there is a clean git repository
-
-    it exists, .git exists, nothing is uncommitted/dirty/staged
-    """
-    ok_(exists(path))
-    ok_(exists(join(path, '.git')))
-    if annex:
-        ok_(exists(join(path, '.git', 'annex')))
-    repo = git.Repo(path)
-
-    if repo.index.entries.keys():
-        ok_(repo.head.is_valid())
-
-        # get string representations of diffs with index to ease
-        # troubleshooting
-        index_diffs = [str(d) for d in repo.index.diff(None)]
-        head_diffs = [str(d) for d in repo.index.diff(repo.head.commit)]
-
-        eq_(sorted(repo.untracked_files), sorted(untracked))
-        eq_(index_diffs, [])
-        eq_(head_diffs, [])
-
-
-def ok_file_under_git(path, filename=None, annexed=False):
-    """Test if file is present and under git/annex control
-
-    If relative path provided, then test from current directory
-    """
-    annex, file_repo_path, filename, path, repo = _prep_file_under_git(path, filename)
-    assert_in(file_repo_path, repo.get_indexed_files())  # file is known to Git
-
-    if annex:
-        try:
-            # operates on relative to curdir path
-            repo.get_file_key(file_repo_path)
-            in_annex = True
-        except FileNotInAnnexError as e:
-            in_annex = False
-    else:
-        in_annex = False
-
-    assert(annexed == in_annex)
-
-
-def put_file_under_git(path, filename=None, content=None, annexed=False):
-    """Place file under git/annex and return used Repo
-    """
-    annex, file_repo_path, filename, path, repo = _prep_file_under_git(path, filename)
-    if content is None:
-        content = ""
-    with open(opj(repo.path, file_repo_path), 'w') as f_:
-        f_.write(content)
-
-    if annexed:
-        if not isinstance(repo, AnnexRepo):
-            repo = AnnexRepo(repo.path)
-        repo.add(file_repo_path, commit=True)
-    else:
-        repo.add(file_repo_path, git=True)
-    ok_file_under_git(repo.path, file_repo_path, annexed)
-    return repo
-
-
-def _prep_file_under_git(path, filename):
-    """Get instance of the repository for the given filename
-
-    Helper to be used by few functions
-    """
-    if filename is None:
-        # path provides the path and the name
-        path, filename = pathsplit(path)
-    try:
-        # if succeeds when must not (not `annexed`) -- fail
-        repo = get_repo_instance(path, class_=AnnexRepo)
-        annex = True
-    except RuntimeError as e:
-        # TODO: make a dedicated Exception
-        if "No annex repository found in" in str(e):
-            repo = get_repo_instance(path, class_=GitRepo)
-            annex = False
-        else:
-            raise
-
-    # path to the file within the repository
-    file_repo_dir = os.path.relpath(path, repo.path)
-    file_repo_path = filename if file_repo_dir == curdir else opj(file_repo_dir, filename)
-    return annex, file_repo_path, filename, path, repo
 
 
 #
@@ -289,55 +163,10 @@ def nok_startswith(s, prefix):
     assert_false(s.startswith(prefix),
         msg="String %r starts with %r" % (s, prefix))
 
-def ok_git_config_not_empty(ar):
-    """Helper to verify that nothing rewritten the config file"""
-    # TODO: we don't support bare -- do we?
-    assert_true(os.stat(opj(ar.path, '.git', 'config')).st_size)
-
-
-def ok_annex_get(ar, files, network=True):
-    """Helper to run .get decorated checking for correct operation
-
-    get passes through stderr from the ar to the user, which pollutes
-    screen while running tests
-    """
-    ok_git_config_not_empty(ar) # we should be working in already inited repo etc
-    with swallow_outputs() as cmo:
-        ar.get(files)
-        if network:
-            # wget or curl - just verify that annex spits out expected progress bar
-            ok_('100%' in cmo.err or '100.0%' in cmo.err or '100,0%' in cmo.err)
-    # verify that load was fetched
-    ok_git_config_not_empty(ar) # whatever we do shouldn't destroy the config file
-    has_content = ar.file_has_content(files)
-    if isinstance(has_content, bool):
-        ok_(has_content)
-    else:
-        ok_(all(has_content))
 
 def ok_generator(gen):
     assert_true(inspect.isgenerator(gen), msg="%s is not a generator" % gen)
 
-def ok_archives_caches(repopath, n=1, persistent=None):
-    """Given a path to repository verify number of archives
-
-    Parameters
-    ----------
-    repopath : str
-      Path to the repository
-    n : int, optional
-      Number of archives directories to expect
-    persistent: bool or None, optional
-      If None -- both persistent and not count.
-    """
-    # looking into subdirectories
-    glob_ptn = opj(repopath,
-                   ARCHIVES_TEMP_DIR + {None: '*', True: '', False: '-*'}[persistent],
-                   '*')
-    dirs = glob.glob(glob_ptn)
-    n2 = n * 2  # per each directory we should have a .stamp file
-    assert_equal(len(dirs), n2,
-                 msg="Found following dirs when needed %d of them: %s" % (n2, dirs))
 
 def ok_file_has_content(path, content):
     """Verify that file exists and has expected content"""
@@ -439,19 +268,6 @@ def serve_path_via_http(tfunc, *targs):
 
 
 @optional_args
-def with_memory_keyring(t):
-    """Decorator to use non-persistant MemoryKeyring instance
-    """
-    @wraps(t)
-    def newfunc(*args, **kwargs):
-        keyring = MemoryKeyring()
-        with patch("repronim.downloaders.credentials.keyring_", keyring):
-            return t(*(args + (keyring,)), **kwargs)
-
-    return newfunc
-
-
-@optional_args
 def without_http_proxy(tfunc):
     """Decorator to remove http*_proxy env variables for the duration of the test
     """
@@ -495,198 +311,6 @@ def with_tempfile(t, **tkwargs):
         with make_tempfile(wrapped=t, **tkwargs) as filename:
             return t(*(arg + (filename,)), **kw)
 
-    return newfunc
-
-
-def _get_resolved_flavors(flavors):
-    #flavors_ = (['local', 'clone'] + (['local-url'] if not on_windows else [])) \
-    #           if flavors == 'auto' else flavors
-    flavors_ = (['local', 'clone', 'local-url', 'network'] if not on_windows
-                else ['network', 'network-clone']) \
-               if flavors == 'auto' else flavors
-
-    if not isinstance(flavors_, list):
-        flavors_ = [flavors_]
-
-    if os.environ.get('REPRONIM_TESTS_NONETWORK'):
-        flavors_ = [x for x in flavors_ if not x.startswith('network')]
-    return flavors_
-
-def _get_repo_url(path):
-    """Return ultimate URL for this repo"""
-
-    if path.startswith('http') or path.startswith('git'):
-        # We were given a URL, so let's just return it
-        return path
-
-    if not exists(opj(path, '.git')):
-        # do the dummiest check so we know it is not git.Repo's fault
-        raise AssertionError("Path %s does not point to a git repository "
-                             "-- missing .git" % path)
-    repo = git.Repo(path)
-    if len(repo.remotes) == 1:
-        remote = repo.remotes[0]
-    else:
-        remote = repo.remotes.origin
-    return remote.config_reader.get('url')
-
-
-def clone_url(url):
-    # delay import of our code until needed for certain
-    from ..cmd import Runner
-    runner = Runner()
-    tdir = tempfile.mkdtemp(**get_tempfile_kwargs({}, prefix='clone_url'))
-    _ = runner(["git", "clone", url, tdir], expect_stderr=True)
-    _TEMP_PATHS_CLONES.add(tdir)
-    return tdir
-
-
-if not on_windows:
-    local_testrepo_flavors = ['local'] # 'local-url'
-else:
-    local_testrepo_flavors = ['network-clone']
-
-from .utils_testrepos import BasicAnnexTestRepo, BasicGitTestRepo, \
-    SubmoduleDataset, NestedDataset, InnerSubmodule
-
-_TESTREPOS = None
-
-def _get_testrepos_uris(regex, flavors):
-    global _TESTREPOS
-    # we should instantiate those whenever test repos actually asked for
-    # TODO: just absorb all this lazy construction within some class
-    if not _TESTREPOS:
-        _basic_annex_test_repo = BasicAnnexTestRepo()
-        _basic_git_test_repo = BasicGitTestRepo()
-        _submodule_annex_test_repo = SubmoduleDataset()
-        _nested_submodule_annex_test_repo = NestedDataset()
-        _inner_submodule_annex_test_repo = InnerSubmodule()
-        _TESTREPOS = {'basic_annex':
-                        {'network': 'git://github.com/repronim/testrepo--basic--r1',
-                         'local': _basic_annex_test_repo.path,
-                         'local-url': _basic_annex_test_repo.url},
-                      'basic_git':
-                        {'local': _basic_git_test_repo.path,
-                         'local-url': _basic_git_test_repo.url},
-                      'submodule_annex':
-                        {'local': _submodule_annex_test_repo.path,
-                         'local-url': _submodule_annex_test_repo.url},
-                      'nested_submodule_annex':
-                        {'local': _nested_submodule_annex_test_repo.path,
-                         'local-url': _nested_submodule_annex_test_repo.url},
-                      # TODO: append 'annex' to the name:
-                      # Currently doesn't work with some annex tests, despite
-                      # working manually. So, figure out how the tests' setup
-                      # messes things up with this one.
-                      'inner_submodule':
-                        {'local': _inner_submodule_annex_test_repo.path,
-                         'local-url': _inner_submodule_annex_test_repo.url}
-                      }
-        # assure that now we do have those test repos created -- delayed
-        # their creation until actually used
-        if not on_windows:
-            _basic_annex_test_repo.create()
-            _basic_git_test_repo.create()
-            _submodule_annex_test_repo.create()
-            _nested_submodule_annex_test_repo.create()
-            _inner_submodule_annex_test_repo.create()
-    uris = []
-    for name, spec in iteritems(_TESTREPOS):
-        if not re.match(regex, name):
-            continue
-        uris += [spec[x] for x in set(spec.keys()).intersection(flavors)]
-
-        # additional flavors which might have not been
-        if 'clone' in flavors and 'clone' not in spec:
-            uris.append(clone_url(spec['local']))
-
-        if 'network-clone' in flavors and 'network-clone' not in spec:
-            uris.append(clone_url(spec['network']))
-
-    return uris
-
-
-@optional_args
-def with_testrepos(t, regex='.*', flavors='auto', skip=False, count=None):
-    """Decorator to provide a local/remote test repository
-
-    All tests under repronim/tests/testrepos are stored in two-level hierarchy,
-    where top-level name describes nature/identifier of the test repository,
-    and there could be multiple instances (e.g. generated differently) of the
-    same "content"
-
-    Parameters
-    ----------
-    regex : string, optional
-      Regex to select which test repos to use
-    flavors : {'auto', 'local', 'local-url', 'clone', 'network', 'network-clone'} or list of thereof, optional
-      What URIs to provide.  E.g. 'local' would just provide path to the
-      repository, while 'network' would provide url of the remote location
-      available on Internet containing the test repository.  'clone' would
-      clone repository first to a temporary location. 'network-clone' would
-      first clone from the network location. 'auto' would include the list of
-      appropriate ones (e.g., no 'network*' flavors if network tests are
-      "forbidden").
-    count: int, optional
-      If specified, only up to that number of repositories to test with
-
-    Examples
-    --------
-
-    >>> from repronim.tests.utils import with_testrepos
-    >>> @with_testrepos('basic_annex')
-    ... def test_write(repo):
-    ...    assert(os.path.exists(os.path.join(repo, '.git', 'annex')))
-
-    """
-
-    @wraps(t)
-    def newfunc(*arg, **kw):
-        # TODO: would need to either avoid this "decorator" approach for
-        # parametric tests or again aggregate failures like sweepargs does
-        flavors_ = _get_resolved_flavors(flavors)
-
-        testrepos_uris = _get_testrepos_uris(regex, flavors_)
-        # we should always have at least one repo to test on, unless explicitly only
-        # network was requested by we are running without networked tests
-        if not (os.environ.get('REPRONIM_TESTS_NONETWORK') and flavors == ['network']):
-            assert(testrepos_uris)
-        else:
-            if not testrepos_uris:
-                raise SkipTest("No non-networked repos to test on")
-
-        ntested = 0
-        for uri in testrepos_uris:
-            if count and ntested >= count:
-                break
-            ntested += 1
-            if __debug__:
-                lgr.debug('Running %s on %s' % (t.__name__, uri))
-            try:
-                t(*(arg + (uri,)), **kw)
-            finally:
-                if uri in _TEMP_PATHS_CLONES:
-                    _TEMP_PATHS_CLONES.discard(uri)
-                    rmtemp(uri)
-                pass  # might need to provide additional handling so, handle
-    return newfunc
-with_testrepos.__test__ = False
-
-
-@optional_args
-def with_fake_cookies_db(func, cookies={}):
-    """mock original cookies db with a fake one for the duration of the test
-    """
-    from ..support.cookies import cookies_db
-
-    @wraps(func)
-    def newfunc(*args, **kwargs):
-        try:
-            orig_cookies_db = cookies_db._cookies_db
-            cookies_db._cookies_db = cookies.copy()
-            return func(*args, **kwargs)
-        finally:
-            cookies_db._cookies_db = orig_cookies_db
     return newfunc
 
 
@@ -795,6 +419,7 @@ def assert_cwd_unchanged(func, ok_to_chdir=False):
 
     return newfunc
 
+
 @optional_args
 def run_under_dir(func, newdir='.'):
     """Decorator to run tests under another directory
@@ -854,37 +479,6 @@ def ignore_nose_capturing_stdout(func):
             else:
                 raise
     return newfunc
-
-def skip_httpretty_on_problematic_pythons(func):
-    """As discovered some httpretty bug causes a side-effect
-    on other tests on some Pythons.  So we skip the test if such
-    problematic combination detected
-
-    References
-    https://travis-ci.org/repronim/repronim/jobs/94464988
-    http://stackoverflow.com/a/29603206/1265472
-    """
-
-    @make_decorator(func)
-    def newfunc(*args, **kwargs):
-        if sys.version_info[:3] == (3, 4, 2):
-            raise SkipTest("Known to cause trouble due to httpretty bug on this Python")
-        return func(*args, **kwargs)
-    return newfunc
-
-
-@optional_args
-def with_batch_direct(t):
-    """Helper to run parametric test with possible combinations of batch and direct
-    """
-    @wraps(t)
-    def newfunc():
-        for batch in (False, True):
-            for direct in (False, True) if not on_windows else (True,):
-                yield t, batch, direct
-
-    return newfunc
-
 
 
 # List of most obscure filenames which might or not be supported by different

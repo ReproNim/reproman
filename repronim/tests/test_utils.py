@@ -33,14 +33,12 @@ from ..utils import line_profile
 from ..utils import not_supported_on_windows
 from ..utils import file_basename
 from ..utils import expandpath, is_explicit_path
-from ..utils import knows_annex
 from ..utils import any_re_search
 from ..utils import unique
 from ..utils import get_func_kwargs_doc
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
-from ..support.annexrepo import AnnexRepo
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -55,21 +53,15 @@ from .utils import ok_startswith
 from .utils import skip_if_no_module
 
 
-def test_get_func_kwargs_doc():
-    from repronim.crawler.pipelines.openfmri import pipeline
-    output = ['dataset', 'versioned_urls', 'topurl', 'leading_dirs_depth', 'prefix']
-    eq_(get_func_kwargs_doc(pipeline), output)
-
-
 @with_tempfile(mkdir=True)
-def test_rotree(d):
+def __test_rotree(d):  # TODO: redo without AnnexRepo
     d2 = opj(d, 'd1', 'd2')  # deep nested directory
     f = opj(d2, 'f1')
     os.makedirs(d2)
     with open(f, 'w') as f_:
         f_.write("LOAD")
     with swallow_logs():
-        ar = AnnexRepo(d2)
+        pass # ar = AnnexRepo(d2)
     rotree(d)
     # we shouldn't be able to delete anything UNLESS in "crippled" situation:
     # root, or filesystem is FAT etc
@@ -160,10 +152,11 @@ def test_md5sum():
     _ = md5sum(__file__)
 
 
-@with_tree([('1.tar.gz', (('1 f.txt', '1 f load'),))])
-def test_md5sum_archive(d):
-    # just a smoke (encoding/decoding) test for md5sum
-    _ = md5sum(opj(d, '1.tar.gz'))
+# archives support in with_tree disabled in repronim's copy
+# @with_tree([('1.tar.gz', (('1 f.txt', '1 f load'),))])
+# def test_md5sum_archive(d):
+#     # just a smoke (encoding/decoding) test for md5sum
+#     _ = md5sum(opj(d, '1.tar.gz'))
 
 def test_updated():
     d = {}
@@ -380,19 +373,6 @@ def test_is_explicit_path():
     # by default expanded paths are absolute, hence explicit
     assert_true(is_explicit_path(expandpath('~')))
     assert_false(is_explicit_path("here"))
-
-
-@with_tempfile
-@with_tempfile
-def test_knows_annex(here, there):
-    from repronim.support.gitrepo import GitRepo
-    from repronim.support.annexrepo import AnnexRepo
-    GitRepo(path=here, create=True)
-    assert_false(knows_annex(here))
-    AnnexRepo(path=here, create=True)
-    assert_true(knows_annex(here))
-    GitRepo(path=there, url=here, create=True)
-    assert_true(knows_annex(there))
 
 
 def test_make_tempfile():

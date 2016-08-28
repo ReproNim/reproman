@@ -23,15 +23,11 @@ def test_basic_setup():
     # constraints
     from repronim import api
     # random pick of something that should be there
-    assert_true(hasattr(api, 'install'))
+    assert_true(hasattr(api, 'create'))
     assert_true(hasattr(api, 'test'))
-    assert_true(hasattr(api, 'crawl'))
     # make sure all helper utilities do not pollute the namespace
     # and we end up only with __...__ attributes
     assert_false(list(filter(lambda s: s.startswith('_') and not re.match('__.*__', s), dir(api))))
-
-    assert_in('Parameters', api.Dataset.install.__doc__)
-    assert_in('Parameters', api.Dataset.create.__doc__)
 
 
 def _test_consistent_order_of_args(intf, spec_posargs):

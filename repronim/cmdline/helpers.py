@@ -62,7 +62,7 @@ class HelpAction(argparse.Action):
         # better for help2man
         # for main command -- should be different sections. And since we are in
         # heavy output messaging mode...
-        if "commands for dataset operations" in helpstr.lower():
+        if "commands for computation environments" in helpstr.lower():
             opt_args_str = '*Global options*'
             pos_args_str = '*Commands*'
             # tune up usage -- default one is way too heavy

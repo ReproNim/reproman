@@ -32,6 +32,7 @@ requires = {
         'humanize',
         'mock',  # mock is also used for auto.py, not only for testing
         'six>=1.8.0',
+        'tqdm',
     ],
     'tests': [
         'mock',
