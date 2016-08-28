@@ -18,9 +18,9 @@ from .config import ConfigManager
 cfg = ConfigManager()
 
 # Main imports (for now ;) )
-from provenance_parser import ProvenanceParser
-from provisioner import Provisioner
-from orchestrator import Orchestrator
+from .provenance_parser import ProvenanceParser
+#from .provisioner import Provisioner
+from .orchestrator import Orchestrator
 
 # Not used (for now)
 # lgr.log(5, "Instantiating ssh manager")
