@@ -1,8 +1,8 @@
-Data management use cases
-=========================
+Environments management use cases
+=================================
 
+.. TODO migrate use cases from the google doc
 
 .. toctree::
    :maxdepth: 1
 
-   ../generated/examples/3rdparty_analysis_workflow
