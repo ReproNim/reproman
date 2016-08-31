@@ -1,11 +1,21 @@
-"""
-    Class to handle the management of target servers.
-"""
+# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# ex: set sts=4 ts=4 sw=4 noet:
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the repronim package for the
+#   copyright and license terms.
+#
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Orchestrators helping with management of target environments (remote or local)"""
 
 from importlib import import_module
 import abc
 
+
 class Orchestrator(object):
+    """Base class for handling management of target servers.
+    """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, provenance):

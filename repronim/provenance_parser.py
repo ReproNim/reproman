@@ -1,12 +1,21 @@
-"""
-    Class to handle the processing of provenance files and to
-    manage the provenance information.
-"""
+# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# ex: set sts=4 ts=4 sw=4 noet:
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the repronim package for the
+#   copyright and license terms.
+#
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Parsers of provenance information"""
 
 from importlib import import_module
 import abc
 
+
 class ProvenanceParser(object):
+    """Base (mostly abstract) class to handle the processing of provenance files.
+    """
+
     __metaclass__ = abc.ABCMeta
 
     @staticmethod
