@@ -48,7 +48,7 @@ before_install:
   - travis_retry sudo apt-get update -qq
 
 install:
-  - cd ..; pip install -q coveralls codecov; cd -
+  - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib
   - pip install --upgrade 'setuptools>=18.5'
@@ -70,7 +70,6 @@ script:
   - PYTHONPATH=$PWD make -C docs html doctest
 
 after_success:
-  - coveralls
   - codecov
 
 # makes it only more difficult to comprehend the failing output.  Enable only when necessary

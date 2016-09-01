@@ -21,8 +21,6 @@ internals and/or contributing to the project.
 
 * [![Travis tests status](https://secure.travis-ci.org/ReproNim/ReproNim.png?branch=master)](https://travis-ci.org/ReproNim/ReproNim) travis-ci.org (master branch)
 
-* [![Coverage Status](https://coveralls.io/repos/ReproNim/ReproNim/badge.png?branch=master)](https://coveralls.io/r/ReproNim/ReproNim)
-
 * [![codecov.io](https://codecov.io/github/ReproNim/ReproNim/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/ReproNim?branch=master)
 
 * [![Documentation](https://readthedocs.org/projects/ReproNim/badge/?version=latest)](http://repronim.rtfd.org)
