@@ -19,13 +19,13 @@ internals and/or contributing to the project.
 
 ## Code status:
 
-* [![Travis tests status](https://secure.travis-ci.org/repronim/repronim.png?branch=master)](https://travis-ci.org/repronim/repronim) travis-ci.org (master branch)
+* [![Travis tests status](https://secure.travis-ci.org/ReproNim/ReproNim.png?branch=master)](https://travis-ci.org/ReproNim/ReproNim) travis-ci.org (master branch)
 
-* [![Coverage Status](https://coveralls.io/repos/repronim/repronim/badge.png?branch=master)](https://coveralls.io/r/repronim/repronim)
+* [![Coverage Status](https://coveralls.io/repos/ReproNim/ReproNim/badge.png?branch=master)](https://coveralls.io/r/ReproNim/ReproNim)
 
-* [![codecov.io](https://codecov.io/github/repronim/repronim/coverage.svg?branch=master)](https://codecov.io/github/repronim/repronim?branch=master)
+* [![codecov.io](https://codecov.io/github/ReproNim/ReproNim/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/ReproNim?branch=master)
 
-* [![Documentation](https://readthedocs.org/projects/repronim/badge/?version=latest)](http://repronim.rtfd.org)
+* [![Documentation](https://readthedocs.org/projects/ReproNim/badge/?version=latest)](http://repronim.rtfd.org)
 
 # Installation
 
