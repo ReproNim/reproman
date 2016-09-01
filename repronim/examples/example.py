@@ -15,10 +15,11 @@ orchestrator = Orchestrator.factory('docker', provenance)
 # Add NeuroDebian repository to Ubuntu server.
 distribution = provenance.get_distribution()
 create_date = provenance.get_create_date()
-print 'create_date = ' + create_date
+print('create_date = {}'.format(create_date))
 
 # Add current NeuroDebian and archived NeuroDebian repos.
-print '\nAdding the NeuroDebian repository to the server for %s %s ...' % (distribution['OS'], distribution['version'])
+print('\nAdding the NeuroDebian repository to the server for %s %s ...'
+      % (distribution['OS'], distribution['version']))
 # provisioner.add_task('apt_repository', dict(repo='deb http://snapshot.debian.org/archive/debian/%s/ data main contrib non-free' % (create_date,)))
 orchestrator.add_task('apt_repository', dict(repo='deb http://neuro.debian.net/debian data main contrib non-free'))
 
@@ -34,10 +35,10 @@ orchestrator.add_task('apt', dict(update_cache='yes'))
 
 
 # Add packages to task list.
-print '\nFound the following PACKAGES:\n'
+print('\nFound the following PACKAGES:\n')
 for package in provenance.get_packages():
-	print '%s=%s' % package
-	orchestrator.add_task('apt', dict(name='%s=%s' % package))
+    print('%s=%s' % package)
+    orchestrator.add_task('apt', dict(name='%s=%s' % package))
 
 # Run the orchestrator against the target host.
 orchestrator.run()

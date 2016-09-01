@@ -21,13 +21,13 @@ class DockerOrchestrator(Orchestrator):
         self.create_requirements_file()
 
         # Run Ansible playbook.
-        print "\nRUNNING ANSIBLE PROVISIONER ****************************************************"
+        print("\nRUNNING ANSIBLE PROVISIONER ****************************************************")
         command = [
             '/usr/local/bin/ansible-container',
             'build'
         ]
         output = subprocess.call(command)
-        print output # Send the Ansible output to the screen.
+        print(output) # Send the Ansible output to the screen.
 
     def get_base_docker_image(self):
         distribution = self.provenance.get_distribution()
@@ -37,7 +37,7 @@ class DockerOrchestrator(Orchestrator):
 
     def create_container_file(self):
         base_docker_image = self.get_base_docker_image()
-    	file = open('ansible/container.yml', 'w')
+        file = open('ansible/container.yml', 'w')
         file.write('version: "1"\n')
         file.write('services:\n')
         file.write('  default:\n')

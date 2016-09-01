@@ -49,6 +49,9 @@ before_install:
 
 install:
   - cd ..; pip install -q coveralls codecov; cd -
+  - pip install --upgrade pip
+  # needed by html5lib
+  - pip install --upgrade 'setuptools>=18.5'
   - pip install -r requirements.txt
   # Verify that setup.py build doesn't puke
   - python setup.py build
