@@ -42,6 +42,12 @@ class Create(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
+        only_env=Parameter(
+            args=("--only-env",),
+            doc="only env spec",
+            nargs="+",
+            #action="store_true",
+        ),
         name=Parameter(
             args=("-n", "--name"),
             metavar="NAME",
@@ -74,7 +80,9 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(spec, name=None):
+    def __call__(spec, only_env=None, name=None):
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
+        print("SPEC: {}".format(spec))
+        print("only-env: {}".format(only_env))
         raise NotImplementedError

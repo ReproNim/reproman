@@ -34,6 +34,10 @@ requires = {
         'six>=1.8.0',
         'tqdm',
     ],
+    'meta': [
+        'pyyaml',
+        'rdflib',
+    ],
     'tests': [
         'mock',
         'nose>=1.3.4',
