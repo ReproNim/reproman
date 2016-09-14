@@ -48,8 +48,8 @@ def get_url_for_packages(provenance):
     Examples
     --------
 
-    >>> get_url_for_packages({'cmtk' : '3.2.2-1.4build1'])
-    ...
+    >>> get_url_for_packages({'cmtk' : '3.2.2-1.4build1'})
+    {'cmtk': 'http://example.com/cmtk_3.2.2-1.4build1.deb'}
 
     Parameters
     ----------
