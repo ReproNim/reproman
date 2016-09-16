@@ -16,6 +16,7 @@ Concepts and technologies
    related
    usecases/index
    glossary
+   sandbox/distributions
 
 Commands and API
 ================

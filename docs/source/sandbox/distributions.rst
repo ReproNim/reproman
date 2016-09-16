@@ -1,5 +1,10 @@
+High-level brain dumps
+**********************
+
+This is just a thinking aloud notes to motivate and structure design decisions.
+
 What ReproNim aims (not) to be
----------------------------------
+==============================
 
 We want to leverage existing solutions (such as existing containers, cloud
 providers etc), which we will call 'backends', and provide a very high level,
@@ -24,7 +29,7 @@ sufficient expressive power to be able to tune them quickly for most common
 cases (e.g. upgrade from release X to release Y)
 
 Distributions
--------------
+=============
 
 We would like to be able to cover various "distributions" of software (and
 data). Distribution as such is just a collection of units, usually called
@@ -85,7 +90,7 @@ Data and generic
 Note that "Core" OS could be deployed in "overlay" mode as well
 
 Backends
-~~~~~~~~
+--------
 
 - native
 - docker
@@ -98,7 +103,7 @@ Backends
 
 
 Image
-~~~~~
+-----
 
 (inspired by docker and singularity?) What represents a state of computation
 environment in a form which could be shared (natively or through some export
@@ -116,7 +121,7 @@ instances or derived environments.
 
 
 Instance
-~~~~~~~~
+--------
 
 - native -- none, i.e. there is a singleton instance of the current env
 - docker, singularity - container
@@ -127,7 +132,7 @@ Instance
 
 
 Overlays: Role of Environment
------------------------------
+=============================
 
 Pretty much in every "computational environment", environment variables are
 of paramount importance since they instrument invocation and possibly
@@ -147,21 +152,21 @@ It might come handy during `trace` operation.
 
 
 Overlays: within distro
------------------------
+=======================
 
 Many distributions are "overlayed" within, affecting not the environment variables,
-but rather the availability of the packages.  E.g. Debian itself provides:
+but rather the availability of the packages.  E.g., Debian itself provides:
 
 - multiple suites (`stable`, `testing`, `unstable`, etc) which are aliases to
- "codenames" (release names such as `jessie`, `stretch`, `sid`);
+  "codenames" (release names such as `jessie`, `stretch`, `sid`);
 - components (`main`, `contrib`, `non-free`)
 - additional repositories for security and other updates (which might come with
   its own components)
 
-so, Debian installation generally is internally an overlay on top of 'main' component of some
+so, Debian installation generally is internally an overlay on top of `main` component of some
 codename or suite.  And regular stock "debian" sid codename docker container is just that
--- 'main'.   But 'jessie' (stable) would come with "updates" and "security-updates".  It will be
-a pair of Label and Suite in *Release files to describe somewhat uniquely (somewhat) each
+-- `main`.   But `jessie` (stable) would come with "updates" and "security-updates".  It will be
+a pair of `Label` and `Suite` in `*Release` files to describe somewhat uniquely (somewhat) each
 APT source::
 
     root@7b7c55c74d38:/var/lib/apt/lists# grep -e  Label -e Suite -e Components *Release
@@ -184,34 +189,42 @@ be installed.  Note that if priorities are set, it is not necesarily that the "m
 package would get installed
 
 
-Main actions
-------------
+Perspective "agents/classes"
+============================
 
 Distribution
-~~~~~~~~~~~~
+------------
+
 - bootstrap(spec, backend, instance=None) -> instance/image
-  - initialize (stage 1) -- which might include batch installation of a number (or all)
-    of necessary packages; usually offloaded to some utility/backend.
-    (e.g. debootstrap into a dir, docker build from basic Dockerfile, initiate
-    aws ami from some image, etc).
-    Should return an "instance" we could work with in "customization" stage
-  - customize (stage 2) -- more interactive (or provisioned) which would tune
-    installation by interacting with the environment; so we should provide adapters on how such interaction
-    would happen (e.g., we could establish common mechanism via ssh, so every env in stage1
-    would then get openssh deployed; but that would not work e.g. for schroot as easily)
+
+    initialize (stage 1)
+       which might include batch installation of a number (or all)
+       of necessary packages; usually offloaded to some utility/backend.
+       (e.g. debootstrap into a dir, docker build from basic Dockerfile, initiate
+       aws ami from some image, etc).
+       Should return an "instance" we could work with in "customization" stage
+    customize (stage 2)
+       more interactive (or provisioned) which would tune
+       installation by interacting with the environment; so we should provide adapters on how such interaction
+       would happen (e.g., we could establish common mechanism via ssh, so every env in stage1
+       would then get openssh deployed; but that would not work e.g. for schroot as easily)
+
   - at the end it should generate backend-appropriate "instance" which could be reused
     for derived containers?
   - overlay distributions would need an existing 'instance' to operate on
 
 static methods (?)
 - get_package_url(package, version) -> urls
-  - find a URL providing the package of a given version. So, when necessary
-    we could download/install those packages
+
+   - find a URL providing the package of a given version. So, when necessary
+     we could download/install those packages
+
 - get_distribution_spec_from_package_list({package: version_spec}) -> spec
-  - given a set of desired packages (with version specs), figure out
-    distribution specification which would satisfy the specification.
-    E.g. to determine which snapshot (which codename, date, components) in
-    snapshots.d.o would carry specified packages
+
+   - given a set of desired packages (with version specs), figure out
+     distribution specification which would satisfy the specification.
+     E.g. to determine which snapshot (which codename, date, components) in
+     snapshots.d.o would carry specified packages
 
 # if instance would come out something completely agnostic of the distribution
 # since instance could actually "contain" multiple distributions.
@@ -224,10 +237,11 @@ static methods (?)
 - upgrade(instance)
 
 Probably not here but in instance...? and not now
+
 - activate() - for those which require changing of ENV.  If we are to allow
-  specification of multiple commands where some aren't using the specific
-  "distribution" we might want to spec which envs to be used and turn them
-  on/off for specific commands
+   specification of multiple commands where some aren't using the specific
+   "distribution" we might want to spec which envs to be used and turn them
+   on/off for specific commands
 - deactivate()
 
 
@@ -235,7 +249,9 @@ Image
 ~~~~~
 to be created by bootstrap or "exported" from instance (e.g. "docker commit"
 to create an image)
+
 - shrink(spec=None) -> image
+
   - given a specification (or just some generic cleaning operations) we might
     want to produce a derived image which would be
 
@@ -247,7 +263,9 @@ familiarize more
 
 Instance (bootstrapped, backend specific)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 (many commands inspired by docker?)
+
 - run(command) -> instantiate (possibly new container) environment and run a command
 - exec(command) -> run a command in running env
 - start(id)
@@ -262,6 +280,7 @@ Backend
 ~~~~~~~
 
 ???
+
 - should provide mapping from core Distributions specs to native base images
   (e.g. how to get base docker image for specific release of debian/ubuntu, ...;
   which AMIs to use as base, etc)
@@ -273,6 +292,7 @@ Backend
 Resource
 ~~~~~~~~
 - instantiate (image, ...) -> instance(s)
+
   - obtain instance and make it available for execution on the resource
   - some are deployed since were bootstrapped on the resource, but we want to be able to
     deploy new docker image,
@@ -281,7 +301,7 @@ Resource
 
 
 (Possibly naive) questions/TODOs
---------------------------
+--------------------------------
 
 - AMI -- could be generated by taking a "snapshot" of existing/running or shutdown instance?
 
