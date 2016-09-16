@@ -17,5 +17,8 @@ __docformat__ = 'restructuredtext'
 # from repronim.examples.example import
 from repronim.tests.utils import assert_equal
 
+
 def test_get_url_for_packages():
     assert_equal(get_url_for_packages({'cmtk': '3.2'}), {'cmtk': 'http://example.com/cmtk_3.2.deb'})
+    assert_equal(get_url_for_packages(
+        {'cmtk': '3.1'}), {'cmtk': 'http://example.com/cmtk_3.1.deb'})
