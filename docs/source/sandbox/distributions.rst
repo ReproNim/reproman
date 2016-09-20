@@ -54,7 +54,7 @@ GNU/Linux (Core? OS?)
 ~~~~~~~~~~~~~~~~~~~~~
 - Debian - dpkg, apt
 - Ubuntu - dpkg, apt
-- CentOS - rpm, yam???
+- CentOS - rpm, yum
 
 and additional "overlays" in terms of APT repositories
 
