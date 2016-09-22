@@ -10,6 +10,8 @@
 
 """
 
+from __future__ import absolute_import
+
 # Let's try to use attr module
 import attr
 

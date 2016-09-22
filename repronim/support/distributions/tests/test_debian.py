@@ -10,8 +10,8 @@
 
 """
 
-from ..debian_ import DebianReleaseSpec
-from ..debian_ import get_spec_from_release_file
+from ..debian import DebianReleaseSpec
+from ..debian import get_spec_from_release_file
 
 from repronim.tests.utils import with_tempfile
 from repronim.tests.utils import eq_
