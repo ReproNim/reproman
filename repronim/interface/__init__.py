@@ -22,6 +22,7 @@ _group_dataset = (
         # source module, source object[, dest. cmdline name[, dest python name]]
         # src module can be relative, but has to be relative to the main 'repronim' package
         ('repronim.interface.create', 'Create'),
+        ('repronim.interface.install', 'Install'),
         # ('repronim.distribution.run', 'Run'),
     ])
 

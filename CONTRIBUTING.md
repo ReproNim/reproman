@@ -124,7 +124,7 @@ On Debian-based systems we recommend to enable [NeuroDebian](http://neuro.debian
 since we use it to provide backports of recent fixed external modules we depend upon.
 
 ```sh
-apt-get install -y -q python-{appdirs,argcomplete,humanize,mock,setuptools,six}
+apt-get install -y -q python-{appdirs,argcomplete,humanize,mock,setuptools,six,yaml}
 ```
 
 and additionally, for development we suggest to use tox and new
