@@ -29,13 +29,18 @@ repronim_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('repronim')
 requires = {
     'core': [
         'appdirs',
+        'attrs',
         'humanize',
         'mock',  # mock is also used for auto.py, not only for testing
+        'pyyaml',
         'six>=1.8.0',
         'tqdm',
     ],
+    'debian': [
+        'python-debian',
+        'chardet',  # python-debian misses dependency on it
+    ],
     'meta': [
-        'pyyaml',
         'rdflib',
     ],
     'tests': [
