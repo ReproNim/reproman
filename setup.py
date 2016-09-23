@@ -37,7 +37,7 @@ requires = {
         'tqdm',
     ],
     'debian': [
-        'debian',
+        'python-debian',
     ],
     'meta': [
         'rdflib',
