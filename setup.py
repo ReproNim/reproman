@@ -38,6 +38,7 @@ requires = {
     ],
     'debian': [
         'python-debian',
+        'chardet',  # python-debian misses dependency on it
     ],
     'meta': [
         'rdflib',
