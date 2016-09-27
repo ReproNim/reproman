@@ -9,9 +9,13 @@
 
 from repronim.cmdline.main import main
 
+import os
+from os.path import dirname, abspath
+
 def test_install_main():
     """
     Install two packages locally: base-files and bash
     """
-    main(['install', '--spec', 'sample_reprozip_output_small.yml', '--platform', 'localhost'])
+    testfile = dirname(abspath(__file__)) + os.path.sep + 'sample_reprozip_output_small.yml'
+    main(['install', '--spec', testfile, '--platform', 'localhost'])
 

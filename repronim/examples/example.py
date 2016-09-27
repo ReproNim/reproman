@@ -3,13 +3,13 @@
     The provenance files in the repronim/examples directory are used for this example.
 """
 
-from repronim import ProvenanceParser
+from repronim.provenance import Provenance
 # from debian_package_manager import DebianPackageManager
 # from repronim import Orchestrator
 
 def create_reprozip_factor():
-    # provenance = ProvenanceParser.factory('pipype_output.trig', format='trig')
-    provenance = ProvenanceParser.factory('reprozip_output.yml', format='reprozip')
+    # provenance = Provenance.factory('pipype_output.trig', format='trig')
+    provenance = Provenance.factory('reprozip_output.yml', format='reprozip')
     # orchestrator = Orchestrator.factory('localhost', provenance)
     # orchestrator = Orchestrator.factory('docker', provenance)
     dpm = DebianPackageManager()
