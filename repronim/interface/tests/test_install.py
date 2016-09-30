@@ -12,19 +12,26 @@ from repronim.cmdline.main import main
 import os
 import logging
 from os.path import dirname, abspath
+from os.path import join as pathjoin
 
 from mock import patch, call
 
 from repronim.utils import swallow_logs
 from repronim.tests.utils import assert_equal
 from repronim.tests.utils import assert_in
+from repronim.tests.utils import with_tree
 
 
-def test_install_main():
+@with_tree(tree={
+    'sample.yml': """
+TODO:
+"""
+})
+def test_install_main(path):
     """
     Install two packages locally: base-files and bash
     """
-    testfile = dirname(abspath(__file__)) + os.path.sep + 'sample_reprozip_output_small.yml'
+    testfile = pathjoin(path, 'sample.yml')
     with patch('subprocess.call', return_value="installed smth") as mocked_call, \
         swallow_logs(new_level=logging.DEBUG) as cml:
         main(['install', '--spec', testfile, '--platform', 'localhost'])
