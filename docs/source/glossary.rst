@@ -1,5 +1,5 @@
-.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
-.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
+.. -*- mode: rst; fill-column: 76; indent-tabs-mode: nil -*-
+.. vi: set ft=rst sts=4 ts=4 sw=4 et tw=76:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
   #   See COPYING file distributed along with the repronim package for the
