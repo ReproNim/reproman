@@ -13,6 +13,7 @@ import abc
 
 from ..utils import file_basename
 from ..dochelpers import exc_str
+from ..support.exceptions import SpecLoadingError
 
 _known_formats = ['reprozip', 'repronim', 'trig']
 _known_extensions = {
@@ -43,7 +44,13 @@ class Provenance(object):
 
     @staticmethod
     def chain_factory(sources):
-        """Factory to load a chain of specifications"""
+        """Factory to load a chain of specifications
+
+        Raises
+        ------
+        SpecLoadingError
+          if none of the known provenance backends were able to load the sources
+        """
         fullspec = None
         for source in sources:
             if fullspec is not None:
@@ -62,8 +69,9 @@ class Provenance(object):
                 except Exception as exc:  # TODO: more specific etc
                     lgr.debug("Failed to load %s using %s: %s" % (
                               source, candidate, exc_str(exc)))
-        if fullspec is None:
-            raise IOError("Failed to load %s using any known parser" % source)
+            if fullspec is None:
+                raise SpecLoadingError(
+                    "Failed to load %s using any known parser" % source)
         return fullspec
 
     @abc.abstractmethod

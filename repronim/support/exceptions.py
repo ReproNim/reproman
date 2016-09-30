@@ -41,6 +41,9 @@ class InsufficientArgumentsError(ValueError):
     pass
 
 
+class SpecLoadingError(IOError):
+    """To be raised when spec file fails to load"""
+    pass
 #
 #
 #
