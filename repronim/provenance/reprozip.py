@@ -1,21 +1,28 @@
+# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# ex: set sts=4 ts=4 sw=4 noet:
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the repronim package for the
+#   copyright and license terms.
+#
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-    Plugin support for provenance YAML files produced by ReproZip utility.
+Plugin support for provenance YAML files produced by ReproZip utility.
 
-    See: https://vida-nyu.github.io/reprozip/
+See: https://vida-nyu.github.io/reprozip/
 """
 
-from repronim.dochelpers import exc_str
-from repronim.provenance_parser import ProvenanceParser
 import yaml
 
+from repronim.dochelpers import exc_str
+from .base import Provenance
+
 import logging
-lgr = logging.getLogger('repronim.prov.parsers.reprozip')
+lgr = logging.getLogger('repronim.provenance.reprozip')
 
 
-class ReprozipProvenanceParser(ProvenanceParser):
+class ReprozipProvenance(Provenance):
     """Parser for ReproZip provenance (YAML specification) """
-
-    _supports_chaining = False
 
     def __init__(self, source):
         self._yaml = None
@@ -43,4 +50,4 @@ class ReprozipProvenanceParser(ProvenanceParser):
         return [(key, self.yaml['runs'][0]['environ'][key]) for key in self.yaml['runs'][0]['environ'].iterkeys()]
 
     def get_packages(self):
-        return [(p['name'], p['version']) for p in self.yaml['packages']]
+        return [{'name': p['name'], 'version': p['version']} for p in self.yaml['packages']]

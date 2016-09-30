@@ -12,7 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
-from ..provenance_parser import ProvenanceParser
+from ..provenance.base import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
@@ -124,7 +124,7 @@ class Create(Interface):
 
         # Load, while possible merging/augmenting sequentially
         lgr.info("Loading the specs %s", specs)
-        spec = ProvenanceParser.chain_factory(specs)
+        spec = Provenance.chain_factory(specs)
         lgr.debug("SPEC: {}".format(spec))
 
         # Create

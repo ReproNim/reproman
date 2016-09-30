@@ -1,13 +1,21 @@
+# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# ex: set sts=4 ts=4 sw=4 noet:
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the repronim package for the
+#   copyright and license terms.
+#
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-    Plugin support for TriG formatted RDF provenance files.
+Plugin support for TriG formatted RDF provenance files.
 
-    See: https://en.wikipedia.org/wiki/TriG_(syntax)
+See: https://en.wikipedia.org/wiki/TriG_(syntax)
 """
 
-from repronim.provenance_parser import ProvenanceParser
+from repronim.provenance.base import Provenance
 from rdflib import ConjunctiveGraph
 
-class TrigProvenanceParser(ProvenanceParser):
+class TrigProvenance(Provenance):
 
     def __init__(self, source):
         self.graph = ConjunctiveGraph()

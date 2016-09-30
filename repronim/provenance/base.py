@@ -11,8 +11,8 @@
 from importlib import import_module
 import abc
 
-from .utils import file_basename
-from .dochelpers import exc_str
+from ..utils import file_basename
+from ..dochelpers import exc_str
 
 _known_formats = ['reprozip', 'repronim', 'trig']
 _known_extensions = {
@@ -24,16 +24,21 @@ import logging
 lgr = logging.getLogger('repronim.prov')
 
 
-class ProvenanceParser(object):
-    """Base (mostly abstract) class to handle the processing of provenance files.
-    """
+class Provenance(object):
+    """Base class to handle the collection and management of provenance information."""
 
     __metaclass__ = abc.ABCMeta
 
     @staticmethod
     def factory(source, format):
-        class_name = format.capitalize() + 'ProvenanceParser'
-        module = import_module('repronim.provenance_parsers.' + format)
+        """
+        Factory method for creating the appropriate Provenance sub-class based on format type.
+        :param source: File name or http endpoint containing provenance information.
+        :param format: Format standard of provenance source.
+        :return: Instance of the requested Provenance sub-class.
+        """
+        class_name = format.capitalize() + 'Provenance'
+        module = import_module('repronim.provenance.' + format)
         return getattr(module, class_name)(source)
 
     @staticmethod
@@ -53,7 +58,7 @@ class ProvenanceParser(object):
                 try:
                     # TODO: some will support 'chaining' where previous value
                     # of spec would be passed etc
-                    fullspec = ProvenanceParser.factory(source, format=candidate)
+                    fullspec = Provenance.factory(source, format=candidate)
                 except Exception as exc:  # TODO: more specific etc
                     lgr.debug("Failed to load %s using %s: %s" % (
                               source, candidate, exc_str(exc)))
@@ -63,20 +68,28 @@ class ProvenanceParser(object):
 
     @abc.abstractmethod
     def get_distribution(self):
-        ''' Returns a hash containing 'OS' and 'version' keys '''
+        """
+        :return: A dictionary containing 'OS' and 'version' keys
+        """
         return
 
     @abc.abstractmethod
     def get_create_date(self):
-        ''' Returns a hash containing a date string of when the worflow provenance was created '''
+        """
+        :return: A dictionary containing a date string of when the workflow provenance was created
+        """
         return
 
     @abc.abstractmethod
     def get_environment_vars(self):
-        ''' Returns a list of tuples containing ('variable name', 'variable value') '''
+        """
+        :return: A list of tuples containing ('variable name', 'variable value')
+        """
         return
 
     @abc.abstractmethod
     def get_packages(self):
-        ''' Returns a list of tuples containing ('package name', 'package version') '''
+        """
+        :return: A list of dictionaries containing, for each package: 'name', 'version')
+        """
         return

@@ -23,6 +23,7 @@ Environments operations
 
    generated/man/repronim-ls
    generated/man/repronim-create
+   generated/man/repronim-install
 
 Miscellaneous commands
 ======================
