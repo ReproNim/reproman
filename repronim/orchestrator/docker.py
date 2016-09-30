@@ -1,8 +1,14 @@
-"""
-    A wrapper class to provide management of Docker containers.
-"""
+# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# ex: set sts=4 ts=4 sw=4 noet:
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the repronim package for the
+#   copyright and license terms.
+#
+# ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Orchestrator sub-class to provide management of Docker containers."""
 
-from repronim.orchestrator import Orchestrator
+from repronim.orchestrator.base import Orchestrator
 import os
 import subprocess
 
@@ -11,7 +17,7 @@ class DockerOrchestrator(Orchestrator):
     def __init__(self, provenance):
         super(DockerOrchestrator, self).__init__(provenance)
 
-    def run(self):
+    def install_packages(self):
 
         # Create the ansible container context files.
         if not os.path.exists('ansible'):
