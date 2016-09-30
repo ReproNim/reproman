@@ -11,6 +11,8 @@
 from repronim.orchestrator.base import Orchestrator
 import subprocess
 
+from repronim.cmd import Runner
+
 class LocalhostOrchestrator(Orchestrator):
 
     def __init__(self, provenance):
@@ -22,6 +24,9 @@ class LocalhostOrchestrator(Orchestrator):
         # We'll get fancier later...
         for package in self.provenance.get_packages():
             self.lgr.debug("Installing package: %s" % package['name'])
+            # if we are under root already, no sudo needed
+            # otherwise we might refer to cfg.getboolean('orchestrator.localhost')
+            # as to allow or disallow sudo
             command = [
                 'sudo',
                 'apt-get',
@@ -29,5 +34,8 @@ class LocalhostOrchestrator(Orchestrator):
                 '-y',
                 package['name']
             ]
+            # Use (may be) Runner
+            #run = Runner()
+            #output = run(command) # subprocess.call(command)
             output = subprocess.call(command)
-            self.lgr.debug(output) # Send the call response to the screen.
+            self.lgr.debug(output)  # Send the call response to the screen.
