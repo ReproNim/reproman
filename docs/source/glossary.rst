@@ -1,4 +1,4 @@
-.. -*- mode: rst; fill-column: 78; indent-tabs-mode: nil -*-
+.. -*- mode: rst; fill-column: 79; indent-tabs-mode: nil -*-
 .. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
