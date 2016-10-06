@@ -12,12 +12,31 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
+from ..provenance.base import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
 
 from logging import getLogger
 lgr = getLogger('repronim.api.create')
+
+
+# STUBS for functionality to be moved into corresponding submodules
+
+def get_known_backends():
+    # TODO move
+    # stub for nwo
+    return 'docker', 'singularity', 'aws', 'native'
+
+
+def create_env_from_spec(spec):
+    # TODO
+    return "The environment/image descriptor"
+
+# Registry of already known/created environments.
+# Definitely will not be just a dict but should support basic
+# dict-like (associative array) interface
+registry = {}
 
 
 class Create(Interface):
@@ -31,8 +50,9 @@ class Create(Interface):
     """
 
     _params_ = dict(
-        spec=Parameter(
+        specs=Parameter(
             args=("--spec",),
+            dest="specs",
             doc="file with specifications (in supported formats) of"
                 " an environment where execution was originally executed",
             metavar='SPEC',
@@ -54,6 +74,16 @@ class Create(Interface):
             constraints=EnsureStr() | EnsureNone(),
             doc="provide a name for the created environment",
         ),
+        existing=Parameter(
+            args=("-e", "--existing"),
+            choices=("fail", "redefine"),
+            doc="Action to take if name is already known"
+        ),
+        backend=Parameter(
+            choices=get_known_backends(),
+            doc="""For which backend to create a new environment.""",
+        ),
+
         # fast=Parameter(
         #     args=("-F", "--fast"),
         #     action="store_true",
@@ -80,9 +110,31 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(spec, only_env=None, name=None):
-        if not spec:
+    def __call__(specs, only_env=None, name=None, existing='fail',
+                 backend=None):
+        if not specs:
             raise InsufficientArgumentsError("Need at least a single --spec")
-        print("SPEC: {}".format(spec))
-        print("only-env: {}".format(only_env))
-        raise NotImplementedError
+
+        if only_env:
+            raise NotImplementedError
+
+        if name in registry:
+            # already exists
+            raise ValueError("{} name is already known to the registry. ")
+
+        # Load, while possible merging/augmenting sequentially
+        lgr.info("Loading the specs %s", specs)
+        spec = Provenance.chain_factory(specs)
+        lgr.debug("SPEC: {}".format(spec))
+
+        # Create
+        env = create_env_from_spec(spec)
+
+        if name is None:
+            name = "some-fancy-unique-based-on-spec"
+
+        lgr.info("Created the environment %s=%s", name, env)
+        # Register within the registry
+        registry[name] = env
+
+        return env

@@ -12,17 +12,29 @@ Plugin support for provenance YAML files produced by ReproZip utility.
 See: https://vida-nyu.github.io/reprozip/
 """
 
-from repronim.provenance.base import Provenance
 import yaml
 
+from repronim.dochelpers import exc_str
+from .base import Provenance
+
+import logging
+lgr = logging.getLogger('repronim.provenance.reprozip')
+
+
 class ReprozipProvenance(Provenance):
+    """Parser for ReproZip provenance (YAML specification) """
 
     def __init__(self, source):
+        self._yaml = None
+        self._load(source)
+
+    def _load(self, source):
         with open(source, 'r') as stream:
             try:
                 self.yaml = yaml.load(stream)
             except yaml.YAMLError as exc:
-                print(exc)
+                lgr.error("Failed to load %s: %s", source, exc_str(exc))
+                raise  # TODO -- we might want a dedicated exception here
 
     def get_distribution(self):
         return {
