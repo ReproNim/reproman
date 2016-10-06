@@ -67,28 +67,35 @@ an experiment. Then to "create" an environment, ReproNim needs to reinstall the
 packages from the specification (ideally matching as many properties, such as
 version, architecture, size, and hash as possible).
 
-Known distributions
--------------------
-we might want to cover, and underlying distribution "toolkits"
+Support of Package Managers
+---------------------------
 
-GNU/Linux (Core? OS?)
-~~~~~~~~~~~~~~~~~~~~~
-- Debian - dpkg, apt
-- Ubuntu - dpkg, apt
-- CentOS - rpm, yum
+Here we discuss package managers and key distributions that ReproNim should
+cover (and list other potential package managers to consider)
 
-and additional "overlays" in terms of APT repositories
+OS Package Managers
+~~~~~~~~~~~~~~~~~~~
 
-- NeuroDebian
+- apt-get (dpkg) - Expected on Debian and Ubuntu Gnu/Linux distributions
+- yum (rpm) - Expected on CentOS/RHEL and other Red Hat Gnu/Linux distributions
+
+In addition, we should be aware of specific package repositories that will not
+stand on their own but depend upon specific OS distributions or configurations:
+
+- NeuroDebian - a key source for NeuroImaging Debian/Ubuntu packages
 - other PPAs/APT repositories, e.g. for cran
 
-which wouldn't be sufficient on their own.
-They "define" the ENV and do not "tune it" to "activate"
-They also provide "delivery mechanisms"
+Finally, OS package managers (and related repositories and distributions) are
+typically used to install the language-specific package managers described in
+the next section. Therefore, ReproNim "create" will need to install OS packages
+first, followed by language-specific packages. We may need to allow the
+ReproNim environment specification to allow the user to order the package
+installation across multiple package managers to ensure resolution of
+dependencies.
 
 
-Overlay distributions
-~~~~~~~~~~~~~~~~~~~~~
+Language-Specific Package Managers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Python
 
@@ -99,16 +106,31 @@ Python
 
 Others
 
-- ... - npm (for node.js apps)
+- npm - node.js
+- cpan - Perl
+- CRAN - R
 
-Data and generic
+Data Package Managers
+~~~~~~~~~~~~~~~~~~~~~
 
 - DataLad
+
+Alternate Installation Approaches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+While these are technically not package managers, we may wish to support other
+avenues for configuring software to be installed. These approaches may be
+impossible to detect automatically:
+
 - VCS in general (git, git-annex) repositories -- we can identify
   if particular files belong to which repo, where it is available from,
   what was the revision etc.
+- Generic URL download
+- File and directory copy, move, and rename
+- Execution of specific commands - may be highly dependent upon the environment
 
-Note that "Core" OS could be deployed in "overlay" mode as well
+NOTE: Packages that would generally be considered "Core OS" packages, could be
+installed using these alternate approaches
 
 Backends
 --------
