@@ -67,8 +67,8 @@ an experiment. Then to "create" an environment, ReproNim needs to reinstall the
 packages from the specification (ideally matching as many properties, such as
 version, architecture, size, and hash as possible).
 
-Support of Package Managers
----------------------------
+Package Management and Environment Configuration
+------------------------------------------------
 
 Here we discuss package managers and key distributions that ReproNim should
 cover (and list other potential package managers to consider)
@@ -108,11 +108,6 @@ Python
   - Anaconda Science Platform https://www.continuum.io/downloads
   - Conda-Forge https://conda-forge.github.io/
 
-- virtualenv 
-
-  - Not really a package manager but impacts configuration of python
-    environment (where execution is happening, custom python, ENV changes)
-
 Others
 
 - npm - node.js
@@ -123,6 +118,30 @@ Data Package Managers
 ~~~~~~~~~~~~~~~~~~~~~
 
 - DataLad
+
+Environment Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pretty much in every "computational environment", environment variables are of
+paramount importance since they instrument invocation and possibly pointers to
+where components would be located when executed. "Overlay" (Non-OS) packages
+rely on adjusting (at least) `PATH` env variable so that components they
+install, possibly overlaying OS-wide installation components, take precedence.
+
+- virtualenv 
+
+  - Impacts the configuration of python environment (where execution is
+    happening, custom python, ENV changes)
+
+- modules
+
+  - http://modules.sourceforge.net
+  - Commonly used on HPC, which is the way to "extend" a POSIX distribution.
+  - We might want to be aware of it (i.e., being able to detect etc), since it
+    could provide at least versioning information which is conventionally
+    specified for every installed "module". It might come handy during `trace`
+    operation.
+
 
 Alternate Installation Approaches
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,26 +200,6 @@ Instance
 - vagrant -- ???
 - aws -- instance
 - schroot -- session (chroot itself doesn't track anything AFAIK)
-
-
-Overlays: Role of Environment
-=============================
-
-Pretty much in every "computational environment", environment variables are
-of paramount importance since they instrument invocation and possibly
-pointers to where components would be located when executed.  "Overlay
-distributions" rely on adjusting (at least) `PATH`
-env variable so that components they install, possibly overlaying OS-wide
-installation components, take precedence.
-
-There is also `environment modules <http://modules.sourceforge.net>`_ commonly
-used on HPC, which is the way to "extend" a POSIX distribution.
-Unfortunately, it is not a "distribution" on its own, since it doesn't
-provide any means for installation. It just manages (enables/disables)
-pre-configured modules.  But I think we might want to be aware of it (i.e.,
-being able to detect etc), since it could provide at least versioning
-information which is conventionally specified for every installed "module".
-It might come handy during `trace` operation.
 
 
 Overlays: within distro
