@@ -51,11 +51,15 @@ Some distributions (such as Linux distros) are self-sufficient, in a sense
 that they could be deployed on a bare hardware or as an independent
 virtualized environment which would require nothing else.
 
-Some distributions (such as the ones based on PIP, Conda), do require some
-base environment on top of which they would work.  But also might require
-some minimal set of tools being provided by the base environment.  E.g.
+Some distributions (such as the ones based on PIP, Conda), do require some base
+environment on top of which they would work.  But also might require some
+minimal set of tools being provided by the base environment.  E.g.
 `conda` -based distribution would probably need nothing but basic shell (core
-OS dependent), and PIP-based would require Python to be installed.
+OS dependent), and PIP-based would require Python to be installed. Therefore,
+there will be a dependency **between** package managers: Operating system
+packages (yum & apt-get) will need to be installed first, enabling other
+package managers (pip, conda, npm) to then run and build upon the base
+packages.
 
 The fundamental challenge of ReproNim's "trace" ability is to identify and
 record the package managers, distributions, and packages from the files used in
