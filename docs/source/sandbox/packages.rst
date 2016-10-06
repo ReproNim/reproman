@@ -78,6 +78,7 @@ OS Package Managers
 
 - apt-get (dpkg) - Expected on Debian and Ubuntu Gnu/Linux distributions
 - yum (rpm) - Expected on CentOS/RHEL and other Red Hat Gnu/Linux distributions
+- snap - Linux packages (with sandboxed execution) - http://snapcraft.io/
 
 In addition, we should be aware of specific package repositories that will not
 stand on their own but depend upon specific OS distributions or configurations:
