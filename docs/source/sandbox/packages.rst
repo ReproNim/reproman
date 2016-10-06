@@ -94,15 +94,24 @@ installation across multiple package managers to ensure resolution of
 dependencies.
 
 
-Language-Specific Package Managers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Language-Related Package Managers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Python
 
-- pypi - pip (as the "delivery mechanism", might be used within conda)
-- virtualenv - virtualenv (as the environment where execution is happening, custom python, ENV changes)
-- Anaconda - conda (see https://www.continuum.io/downloads), ENV changes
-- Conda-Forge - conda (see https://conda-forge.github.io/), ENV changes
+- pip 
+
+  - PyPi Package Index: https://pypi.python.org/pypi
+
+- conda
+
+  - Anaconda Science Platform https://www.continuum.io/downloads
+  - Conda-Forge https://conda-forge.github.io/
+
+- virtualenv 
+
+  - Not really a package manager but impacts configuration of python
+    environment (where execution is happening, custom python, ENV changes)
 
 Others
 
