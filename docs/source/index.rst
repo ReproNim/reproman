@@ -16,7 +16,7 @@ Concepts and technologies
    related
    usecases/index
    glossary
-   sandbox/distributions
+   sandbox/packages
 
 Commands and API
 ================

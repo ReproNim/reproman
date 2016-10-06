@@ -1,7 +1,5 @@
-High-level brain dumps
-**********************
-
-This is just a thinking aloud notes to motivate and structure design decisions.
+High-level Package Handling (and ReproZip Architecture Discussion)
+******************************************************************
 
 What ReproNim aims (not) to be
 ==============================
@@ -11,31 +9,44 @@ providers etc), which we will call 'backends', and provide a very high level,
 unified API, to interface them with purpose of running computations or
 interactive sessions.
 
-We want to concentrate on (re)creation of such computation environments from
-a specification which is agnostic of a backend and concentrates on describing
-what constitutes the content of that environment relevant for the execution
-of computation.  Backend-specific details of construction, execution and
-interfacing with the backend should be "templated" (or otherwise
-parametrized in sufficient detail) so an advanced user could still provide
-his/her tune ups).  We will not aim at specification to be OS agnostic, i.e.
-terms will be Distribution(s) specific.
+We want to concentrate on (re)creation of such computation environments from a
+specification which is agnostic of a backend and concentrates on describing
+what constitutes the content of that environment relevant for the execution of
+computation.  Backend-specific details of construction, execution and
+interfacing with the backend should be "templated" (or otherwise parametrized
+in sufficient detail) so an advanced user could still provide their tune ups).
+We will not aim at the specification to be OS agnostic, i.e. the package
+configuration will have terms that are specific to an architecture or
+distribution.
 
 Construction of such environments would heavily depend on specification of
-"Distribution"s which contain sufficient information to reconstruct and
-execute in the environment. Such specifications could be constructed
-manually, by ReproNim from loose human description, or via automated
-provenance collection of "shell" command.  They also should provide
-sufficient expressive power to be able to tune them quickly for most common
-cases (e.g. upgrade from release X to release Y)
+"packages" which contain sufficient information to reconstruct and execute in
+the environment. Such specifications could be constructed manually, by ReproNim
+from loose human description, or via automated provenance collection of "shell"
+command.  They also should provide sufficient expressive power to be able to
+tune them quickly for most common cases (e.g. upgrade from release X to
+release Y)
 
-Distributions
-=============
+Packages, Package Managers, and Distributions
+=============================================
 
-We would like to be able to cover various "distributions" of software (and
-data). Distribution as such is just a collection of units, usually called
-packages, which allows to manage (install, uninstall, upgrade, ...) via a
-unified interface.
+We would like to be able to identify, record, and install various "packages" of
+software and data. A package is a collection of files, potentially platform
+specific (in the case of binary packages) or requiring reconstruction (such as
+compiling applications from source). In addition, installing a package may have
+dependencies (additional packages required by the initial package to correctly
+operate). 
 
+Packages are installed, removed, and queried through the use of "package
+managers." There are different package managers for different components of an
+environment and have slightly different capabilities.  For example, "yum" and
+"apt-get" are used to install binary and source files on a Linux operating
+system.  "pip" provides download and compilation capability for the Python
+interpreted language, while "conda" is another Python package manager that can
+supports "virtual environments" (essentially subdirectories) that provide
+separate parallel Python environments.
+
+A "distribution" is a set of packages (typically organized with their dependencies).
 Some distributions (such as Linux distros) are self-sufficient, in a sense
 that they could be deployed on a bare hardware or as an independent
 virtualized environment which would require nothing else.
@@ -45,6 +56,12 @@ base environment on top of which they would work.  But also might require
 some minimal set of tools being provided by the base environment.  E.g.
 `conda` -based distribution would probably need nothing but basic shell (core
 OS dependent), and PIP-based would require Python to be installed.
+
+The fundamental challenge of ReproNim's "trace" ability is to identify and
+record the package managers, distributions, and packages from the files used in
+an experiment. Then to "create" an environment, ReproNim needs to reinstall the
+packages from the specification (ideally matching as many properties, such as
+version, architecture, size, and hash as possible).
 
 Known distributions
 -------------------
