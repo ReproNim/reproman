@@ -9,49 +9,50 @@
 
 from repronim.cmdline.main import main
 
-import os
 import logging
-from os.path import dirname, abspath
 from os.path import join as pathjoin
-
 from mock import patch, call
 
 from repronim.utils import swallow_logs
-from repronim.tests.utils import assert_equal
 from repronim.tests.utils import assert_in
 from repronim.tests.utils import with_tree
+from repronim.cmd import Runner
 
-
-@with_tree(tree={
-    'sample.yml': """
-TODO:
+# Sample output from Reprozip.
+REPROZIP_OUTPUT = """
+packages:
+  - name: "base-files"
+    version: "6.5ubuntu6.8"
+    size: 429056
+    packfiles: true
+    files:
+      # Total files used: 103.0 bytes
+      # Installed package size: 419.00 KB
+      - "/etc/debian_version" # 11.0 bytes
+      - "/etc/host.conf" # 92.0 bytes
+  - name: "bash"
+    version: "4.2-2ubuntu2.6"
+    size: 1449984
+    packfiles: true
+    files:
+      # Total files used: 936.64 KB
+      # Installed package size: 1.38 MB
+      - "/bin/bash" # 936.64 KB
 """
-})
-def test_install_main(path):
-    """
-    Install two packages locally: base-files and bash
+
+@with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
+def test_install_packages(path):
+    """Test installing 2 packages on the localhost.
     """
     testfile = pathjoin(path, 'sample.yml')
-    with patch('subprocess.call', return_value="installed smth") as mocked_call, \
-        swallow_logs(new_level=logging.DEBUG) as cml:
+    with patch.object(Runner, 'run', return_value='installed package') as mocked_call, \
+        swallow_logs(new_level=logging.DEBUG) as log:
+
         main(['install', '--spec', testfile, '--platform', 'localhost'])
-        # mocked_call
 
-        # TODO: figure out why this one didn't work
-        #mocked_call.assert_has_calls(
-        assert_equal(
-            [
-                call(['sudo', 'apt-get', 'install', '-y', f])
-                for f in ('base-files', 'bash')
-            ],
-            mocked_call.call_args_list
-        )
-        assert_in("Installing package: base-files", cml.out)
-        assert_in("installed smth", cml.out)
+        calls = [call(['apt-get', 'install', '-y', package], shell=True) for package in ('base-files', 'bash')]
+        mocked_call.assert_has_calls(calls)
 
-
-        #import pdb; pdb.set_trace()
-        #mocked_call.assert_has_calls()
-        #assert_called_once_with(['sudo', 'apt-get', 'install'])
-
-
+        assert_in("Installing package: base-files", log.lines)
+        assert_in("Installing package: bash", log.lines)
+        assert_in("installed package", log.lines)

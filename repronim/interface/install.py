@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr, EnsureNone
+from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..provenance import Provenance
 from ..orchestrator import Orchestrator
@@ -49,41 +49,6 @@ class Install(Interface):
             doc="platform to install environment [localhost|docker|aws|vagrant]",
             constraints=EnsureStr(),
         ),
-        # only_env=Parameter(
-        #     args=("--only-env",),
-        #     doc="only env spec",
-        #     nargs="+",
-        #     #action="store_true",
-        # ),
-        # name=Parameter(
-        #     args=("-n", "--name"),
-        #     metavar="NAME",
-        #     constraints=EnsureStr() | EnsureNone(),
-        #     doc="provide a name for the created environment",
-        # ),
-        # fast=Parameter(
-        #     args=("-F", "--fast"),
-        #     action="store_true",
-        #     doc="only perform fast operations.  Would be overrident by --all",
-        # ),
-        # all=Parameter(
-        #     args=("-a", "--all"),
-        #     action="store_true",
-        #     doc="list all entries, not e.g. only latest entries in case of S3",
-        # ),
-        # config_file=Parameter(
-        #     doc="""path to config file which could help the 'ls'.  E.g. for s3://
-        #     URLs could be some ~/.s3cfg file which would provide credentials""",
-        #     constraints=EnsureStr() | EnsureNone()
-        # ),
-        # list_content=Parameter(
-        #     choices=(None, 'first10', 'md5', 'full'),
-        #     doc="""list also the content or only first 10 bytes (first10), or md5
-        #     checksum of an entry.  Might require expensive transfer and dump
-        #     binary output to your screen.  Do not enable unless you know what you
-        #     are after""",
-        #     default=None
-        # ),
     )
 
     @staticmethod
