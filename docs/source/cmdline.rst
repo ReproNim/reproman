@@ -13,7 +13,7 @@ Main command
 .. toctree::
    :maxdepth: 1
 
-   generated/man/repronim
+..   generated/man/repronim
 
 Environments operations
 =======================
@@ -21,7 +21,7 @@ Environments operations
 .. toctree::
    :maxdepth: 1
 
-   generated/man/repronim-ls
+..   generated/man/repronim-ls
    generated/man/repronim-create
    generated/man/repronim-install
 
@@ -31,4 +31,4 @@ Miscellaneous commands
 .. toctree::
    :maxdepth: 1
 
-   generated/man/repronim-test
+..   generated/man/repronim-test
