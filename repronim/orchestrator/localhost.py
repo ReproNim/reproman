@@ -9,14 +9,14 @@
 """Orchestrator sub-class to provide management of the localhost environment."""
 
 from repronim.orchestrator.base import Orchestrator
-import subprocess
-
 from repronim.cmd import Runner
+
 
 class LocalhostOrchestrator(Orchestrator):
 
-    def __init__(self, provenance):
+    def __init__(self, provenance, kwargs):
         super(LocalhostOrchestrator, self).__init__(provenance)
+        self.kwargs = kwargs
 
     def install_packages(self):
 

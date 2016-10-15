@@ -46,13 +46,24 @@ class Install(Interface):
         ),
         platform=Parameter(
             args=("--platform",),
-            doc="platform to install environment [localhost|docker|aws|vagrant]",
+            doc="platform environment to install on",
+            constraints=EnsureStr(),
+            choices=['localhost', 'dockerengine'],
+        ),
+        host=Parameter(
+            args=("--host",),
+            doc="host name or ip and port to install environment",
+            constraints=EnsureStr(),
+        ),
+        image=Parameter(
+            args=("--image",),
+            doc="image name of environment",
             constraints=EnsureStr(),
         ),
     )
 
     @staticmethod
-    def __call__(spec, platform='localhost'):
+    def __call__(spec, platform='localhost', host='unix:///var/run/docker.sock', image='repronim_env'):
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
         print("SPEC: {}".format(spec))
@@ -62,6 +73,6 @@ class Install(Interface):
         provenance = Provenance.factory(filename, format='reprozip')
 
         # Install the packages on the target platform
-        orchestrator = Orchestrator.factory(platform, provenance)
+        orchestrator = Orchestrator.factory(platform, provenance, host=host, image=image)
         orchestrator.install_packages()
 
