@@ -90,7 +90,7 @@ def test_install_packages_dockerengine(path):
         args = ['install',
                     '--spec', testfile,
                     '--platform', 'dockerengine',
-                    '--host', 'tcp://127.0.0.1:2375',
+                    '--host', 'unix:///var/run/docker.sock',
                     '--image', 'repronim_test']
         main(args)
 
