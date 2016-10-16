@@ -75,7 +75,7 @@ def test_install_packages_localhost(path):
 
 @with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
 def test_install_packages_dockerengine(path):
-    """Test installing 2 packages in a Docker container.
+    """Test installing 2 packages into a Docker container.
     """
     testfile = pathjoin(path, 'sample.yml')
     with patch('docker.Client') as MockClient, swallow_logs(new_level=logging.DEBUG) as log:
@@ -90,7 +90,7 @@ def test_install_packages_dockerengine(path):
         args = ['install',
                     '--spec', testfile,
                     '--platform', 'dockerengine',
-                    '--host', 'unix:///var/run/docker.sock',
+                    '--host', 'mock_host',
                     '--image', 'repronim_test']
         main(args)
 
