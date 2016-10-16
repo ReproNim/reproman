@@ -90,7 +90,7 @@ def test_install_packages_dockerengine(path):
         args = ['install',
                     '--spec', testfile,
                     '--platform', 'dockerengine',
-                    '--host', 'mock_host',
+                    '--host', 'unix://' + testfile,
                     '--image', 'repronim_test']
         main(args)
 
