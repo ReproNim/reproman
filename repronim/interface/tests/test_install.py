@@ -82,6 +82,7 @@ def test_install_packages_dockerengine(path):
 
         # Set up return values for mocked docker.Client methods.
         client = MockClient.return_value
+        client.__init__.return_value = None
         client.build.return_value = ['{"stream": "Successfully built 9a754690460d\\n"}']
         client.create_container.return_value = {u'Id': u'd4cb4ee', u'Warnings': None}
         client.start.return_value = None
@@ -90,7 +91,7 @@ def test_install_packages_dockerengine(path):
         args = ['install',
                     '--spec', testfile,
                     '--platform', 'dockerengine',
-                    '--host', 'unix://' + testfile,
+                    '--host', 'tcp://127.0.0.1:2375',
                     '--image', 'repronim_test']
         main(args)
 
