@@ -78,7 +78,7 @@ def test_install_packages_dockerengine(path):
     """Test installing 2 packages into a Docker container.
     """
     testfile = pathjoin(path, 'sample.yml')
-    with patch('docker.Client', autospec=True) as MockClient, swallow_logs(new_level=logging.DEBUG) as log:
+    with patch('docker.Client') as MockClient, swallow_logs(new_level=logging.DEBUG) as log:
 
         # Set up return values for mocked docker.Client methods.
         client = MockClient.return_value
