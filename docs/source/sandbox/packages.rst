@@ -117,6 +117,7 @@ Others
 - npm - node.js
 - cpan - Perl
 - CRAN - R
+- brew, linuxbrew, gems - Ruby
 
 Data Package Managers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -145,6 +146,14 @@ install, possibly overlaying OS-wide installation components, take precedence.
     could provide at least versioning information which is conventionally
     specified for every installed "module". It might come handy during `trace`
     operation.
+
+Others
+
+- ansible
+- chef
+- puppet
+- salt
+- fabric
 
 
 Alternate Installation Approaches
