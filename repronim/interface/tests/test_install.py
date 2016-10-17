@@ -56,6 +56,7 @@ packages:
       - "/bin/bash" # 936.64 KB
 """
 
+
 @with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
 def test_install_packages_localhost(path):
     """Test installing 2 packages on the localhost.
@@ -66,19 +67,22 @@ def test_install_packages_localhost(path):
 
         main(['install', '--spec', testfile, '--platform', 'localhost'])
 
-        calls = [call(['apt-get', 'install', '-y', package], shell=True) for package in ('base-files', 'bc')]
+        calls = [call(['apt-get', 'install', '-y', package], shell=True)
+                 for package in ('base-files', 'bc')]
         mocked_call.assert_has_calls(calls)
 
         assert_in("Installing package: base-files", log.lines)
         assert_in("Installing package: bc", log.lines)
         assert_in("installed package", log.lines)
 
+
 @with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
 def test_install_packages_dockerengine(path):
     """Test installing 2 packages into a Docker container.
     """
     testfile = pathjoin(path, 'sample.yml')
-    with patch('docker.Client') as MockClient, swallow_logs(new_level=logging.DEBUG) as log:
+    with patch('docker.Client') as MockClient, \
+            swallow_logs(new_level=logging.DEBUG) as log:
 
         # Set up return values for mocked docker.Client methods.
         client = MockClient.return_value
@@ -90,14 +94,19 @@ def test_install_packages_dockerengine(path):
         args = ['install',
                     '--spec', testfile,
                     '--platform', 'dockerengine',
-                    '--host', 'tcp://127.0.0.1:2375',
-                    '--image', 'repronim_test']
+                    #'--host', 'tcp://127.0.0.1:2375',
+                    #'--image', 'repronim_test'
+                ]
         main(args)
 
         assert client.build.called
         assert client.create_container.called
         assert client.start.called
-        calls = [call(environment={'MATH_EXPRESSION': '2+2', 'TERM': 'xterm'}, image='repronim_test', \
-                      name='repronim_test')]
+        calls = [call(environment={'MATH_EXPRESSION': '2+2', 'TERM': 'xterm'},
+                      image=None,
+                      name=None
+                      #image='repronim_test',
+                      #name='repronim_test'
+                    )]
         client.create_container.assert_has_calls(calls)
         assert_in("container standard output", log.lines)

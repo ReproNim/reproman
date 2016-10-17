@@ -9,19 +9,32 @@
 """Orchestrator sub-class to provide management of the localhost environment."""
 
 from io import BytesIO
-from docker import Client
+# import module entirely to ease mocking
+import docker
 import json
 
 from repronim.orchestrator.base import Orchestrator
 
 
 class DockerengineOrchestrator(Orchestrator):
+    """Orchestrator which talks to the docker
+    """
 
-    def __init__(self, provenance, kwargs):
+    def __init__(self, provenance, image=None, host='localhost', name=None):
+        """
+
+        Parameters
+        ----------
+        provenance : Provenance
+          Complete specification of the environment
+        kwargs : dict
+          Parameters specific to the Dockerengine
+        host :
+        """
         super(DockerengineOrchestrator, self).__init__(provenance)
-        self.client = Client(base_url=kwargs['host'])
-        self.image_tag = kwargs['image']
-        self.container_name = kwargs['image']
+        self.client = docker.Client(base_url=host)
+        self.image_tag = image
+        self.container_name = name or image
         self.dockerfile = ''
 
     def install_packages(self):
@@ -30,11 +43,20 @@ class DockerengineOrchestrator(Orchestrator):
         self.run_container()
 
     def build_dockerfile(self):
-        """Create a Dockerfile in memory from provenance info. The Dockerfile will be used to create a Docker image."""
+        """Create a Dockerfile in memory from provenance info.
+
+        The Dockerfile will be used to create a Docker image.  Resultant
+        Dockefile is assigned to `dockerfile` attribute.
+
+        Returns
+        -------
+        None
+        """
 
         # Configure base Docker image and maintainer.
         distribution = self.provenance.get_distribution()
-        self.dockerfile = 'FROM %s:%s\n' % (distribution['OS'].lower(), distribution['version'])
+        self.dockerfile = 'FROM %s:%s\n' % (distribution['OS'].lower(),
+                                            distribution['version'])
         self.dockerfile += 'MAINTAINER staff@repronim.org\n'
 
         # Set up package installs.
@@ -44,7 +66,7 @@ class DockerengineOrchestrator(Orchestrator):
             self.dockerfile += 'RUN apt-get update && apt-get install -y ' + ' '.join(package_names) + '\n'
 
         # Write CMD to run for container
-        command  = self.provenance.get_commandline()
+        command = self.provenance.get_commandline()
         self.dockerfile += 'CMD ' + ' '.join(command)
 
     def build_image(self):

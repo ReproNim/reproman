@@ -14,9 +14,8 @@ from repronim.cmd import Runner
 
 class LocalhostOrchestrator(Orchestrator):
 
-    def __init__(self, provenance, kwargs):
+    def __init__(self, provenance):
         super(LocalhostOrchestrator, self).__init__(provenance)
-        self.kwargs = kwargs
 
     def install_packages(self):
 

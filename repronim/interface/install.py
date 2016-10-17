@@ -17,6 +17,7 @@ from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..provenance import Provenance
 from ..orchestrator import Orchestrator
+from .. import cfg
 
 from logging import getLogger
 lgr = getLogger('repronim.api.install')
@@ -50,20 +51,20 @@ class Install(Interface):
             constraints=EnsureStr(),
             choices=['localhost', 'dockerengine'],
         ),
-        host=Parameter(
-            args=("--host",),
-            doc="host name or ip and port to install environment",
-            constraints=EnsureStr(),
-        ),
-        image=Parameter(
-            args=("--image",),
-            doc="image name of environment",
-            constraints=EnsureStr(),
-        ),
+        # host=Parameter(
+        #     args=("--host",),
+        #     doc="host name or ip and port to install environment",
+        #     constraints=EnsureStr(),
+        # ),
+        # image=Parameter(
+        #     args=("--image",),
+        #     doc="image name of environment",
+        #     constraints=EnsureStr(),
+        # ),
     )
 
     @staticmethod
-    def __call__(spec, platform='localhost', host='unix:///var/run/docker.sock', image='repronim_env'):
+    def __call__(spec, platform='localhost'):
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
         print("SPEC: {}".format(spec))
@@ -72,7 +73,13 @@ class Install(Interface):
         filename = spec[0]
         provenance = Provenance.factory(filename, format='reprozip')
 
+        platform_opts = {}
+        if platform == 'docker':
+            platform_opts = {
+                'host': cfg.get('docker', 'host', default='unix:///var/run/docker.sock'),
+                'image': 'repronim_env'
+            }
         # Install the packages on the target platform
-        orchestrator = Orchestrator.factory(platform, provenance, host=host, image=image)
+        orchestrator = Orchestrator.factory(platform, provenance, **platform_opts)
         orchestrator.install_packages()
 

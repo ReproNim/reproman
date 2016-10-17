@@ -31,7 +31,7 @@ class Orchestrator(object):
         """
         class_name = platform.capitalize() + 'Orchestrator'
         module = import_module('repronim.orchestrator.' + platform)
-        return getattr(module, class_name)(provenance, kwargs)
+        return getattr(module, class_name)(provenance, **kwargs)
 
     @abc.abstractmethod
     def install_packages(self):
