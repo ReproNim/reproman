@@ -80,6 +80,9 @@ OS Package Managers
 - yum (rpm) - Expected on CentOS/RHEL and other Red Hat Gnu/Linux distributions
 - snap - Linux packages (with sandboxed execution) - http://snapcraft.io/
 
+  - Snaps may prove difficult for tracing because commands to download
+    and build executibles can be embedded into snap packages
+
 In addition, we should be aware of specific package repositories that will not
 stand on their own but depend upon specific OS distributions or configurations:
 
