@@ -70,7 +70,9 @@ requires['full'] = sum(list(requires.values()), [])
 requires.update({
     'devel-docs': [
         # used for converting README.md -> .rst for long_description
-        'pypandoc',
+        #  TODO: enable whenever we are ready! otherwise requires installation
+        #        of pandoc first via apt-get
+        # 'pypandoc',
         # Documentation
         'sphinx',
         'sphinx-rtd-theme',
