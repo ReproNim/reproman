@@ -52,17 +52,13 @@ install:
   - pip install --upgrade pip
   # needed by html5lib
   - pip install --upgrade 'setuptools>=18.5'
-  - pip install -r requirements.txt
-  # Verify that setup.py build doesn't puke
-  - python setup.py build
-  - pip install -e .
+  - pip install -r requirements-devel.txt
   # So we could test under sudo -E with PATH pointing to installed location
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
-  # Install sphinx to build/test documentation.  Doesn't take a while, so doing in all envs
-  - pip install sphinx
-  - pip install sphinx_rtd_theme
 
 script:
+  # Verify that setup.py build doesn't puke
+  - python setup.py build
   - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package repronim --logging-level=INFO
   - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi

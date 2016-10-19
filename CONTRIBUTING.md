@@ -161,6 +161,15 @@ provided by [Sphinx].
 [Restructured Text]: http://docutils.sourceforge.net/docs/user/rst/quickstart.html
 [Sphinx]: http://www.sphinx-doc.org/en/stable/
 
+### HOWTO build documentation
+
+```sh
+PYTHONPATH=$PWD make -C docs html
+```
+
+in the top directory, and then built documentation should become available
+under `docs/build/html/` directory.
+
 Additional Hints
 ----------------
 
