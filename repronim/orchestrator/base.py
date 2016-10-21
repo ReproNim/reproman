@@ -22,18 +22,18 @@ class Orchestrator(object):
         self.lgr = logging.getLogger('repronim.orchestrator')
 
     @staticmethod
-    def factory(platform, provenance):
+    def factory(platform, provenance, **kwargs):
         """
         Factory method for creating the appropriate Orchestrator sub-class based on format type.
-        :param source: File name or http endpoint containing provenance information.
-        :param format: Format standard of provenance source.
-        :return: Instance of the requested provenance sub-class.
+        :param platform: Target platform to install environment.
+        :param provenance: File name or http endpoint containing provenance information.
+        :return: Instance of the requested orchestrator sub-class.
         """
         class_name = platform.capitalize() + 'Orchestrator'
         module = import_module('repronim.orchestrator.' + platform)
-        return getattr(module, class_name)(provenance)
+        return getattr(module, class_name)(provenance, **kwargs)
 
     @abc.abstractmethod
-    def install_packages(self, target_server):
+    def install_packages(self):
         """Install the packages listed in the provenance information."""
         return
