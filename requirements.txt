@@ -3,7 +3,6 @@
 # Since we use requirements.txt ATM only for development IMHO it is ok but
 # we need to figure out/complaint to pip folks
 -e .[full]
-docker-py
 
 # -- Optional for Testing
 nose-timer
