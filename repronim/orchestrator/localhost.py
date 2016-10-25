@@ -9,7 +9,8 @@
 """Orchestrator sub-class to provide management of the localhost environment."""
 
 from repronim.orchestrator.base import Orchestrator
-import subprocess
+from repronim.cmd import Runner
+
 
 class LocalhostOrchestrator(Orchestrator):
 
@@ -18,16 +19,14 @@ class LocalhostOrchestrator(Orchestrator):
 
     def install_packages(self):
 
-        # For now, just install most recent package via the command line.
-        # We'll get fancier later...
         for package in self.provenance.get_packages():
             self.lgr.debug("Installing package: %s" % package['name'])
             command = [
-                'sudo',
                 'apt-get',
                 'install',
                 '-y',
                 package['name']
             ]
-            output = subprocess.call(command)
-            self.lgr.debug(output) # Send the call response to the screen.
+            run = Runner()
+            output = run(command, shell=True)
+            self.lgr.debug(output)  # Send the call response to the screen.

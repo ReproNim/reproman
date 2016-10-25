@@ -47,7 +47,10 @@ class ReprozipProvenance(Provenance):
         return self.yaml['runs'][0]['date'].strftime(format)
 
     def get_environment_vars(self):
-        return [(key, self.yaml['runs'][0]['environ'][key]) for key in self.yaml['runs'][0]['environ'].iterkeys()]
+        return self.yaml['runs'][0]['environ']
 
     def get_packages(self):
         return [{'name': p['name'], 'version': p['version']} for p in self.yaml['packages']]
+
+    def get_commandline(self):
+        return self.yaml['runs'][0]['argv']

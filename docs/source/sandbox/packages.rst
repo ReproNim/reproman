@@ -110,8 +110,8 @@ Data and generic
 
 Note that "Core" OS could be deployed in "overlay" mode as well
 
-Backends
---------
+Backends  (engine)
+------------------
 
 - native
 - docker
@@ -122,6 +122,11 @@ Backends
 - chroot/schroot(somewhat Debian specific on my tries)
 - more cloud providers? google CE, azure, etc... ?
 
+Engines might need nesting, e.g.
+
+    vagrant > docker
+    aws > docker
+    ssh > singularity
 
 Image
 -----

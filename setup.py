@@ -55,6 +55,9 @@ requires = {
         'python-debian',
         'chardet',  # python-debian misses dependency on it
     ],
+    'docker': [
+        'docker-py',
+    ],
     'meta': [
         'rdflib',
     ],
