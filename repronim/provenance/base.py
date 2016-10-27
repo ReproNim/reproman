@@ -75,9 +75,16 @@ class Provenance(object):
         return fullspec
 
     @abc.abstractmethod
-    def get_distribution(self):
+    def get_os(self):
         """
-        :return: A dictionary containing 'OS' and 'version' keys
+        :return: OS distribution name
+        """
+        return
+
+    @abc.abstractmethod
+    def get_os_version(self):
+        """
+        :return: OS version string
         """
         return
 

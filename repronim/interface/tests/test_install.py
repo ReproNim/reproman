@@ -10,62 +10,24 @@
 from repronim.cmdline.main import main
 
 import logging
-from os.path import join as pathjoin
 from mock import patch, call
 
 from repronim.utils import swallow_logs
 from repronim.tests.utils import assert_in
-from repronim.tests.utils import with_tree
+from repronim.tests.test_constants import REPROZIP_OUTPUT
 from repronim.cmd import Runner
 
 
-# Sample output from Reprozip.
-REPROZIP_OUTPUT = """
-runs:
-# Run 0
-- architecture: x86_64
-  date: 2016-02-22T22:19:01.735754
-  argv: [echo, $MATH_EXPRESSION, '|', bc]
-  binary: /usr/bin/bc
-  distribution: [Ubuntu, '12.04']
-  environ: {TERM: xterm, MATH_EXPRESSION: '2+2'}
-  exitcode: 0
-  gid: 1003
-  hostname: nitrcce
-  id: run0
-  system: [Linux, 3.2.0-98-virtual]
-  uid: 1002
-  workingdir: /home/rbuccigrossi/simple_workflow
-packages:
-  - name: "base-files"
-    version: "6.5ubuntu6.8"
-    size: 429056
-    packfiles: true
-    files:
-      # Total files used: 103.0 bytes
-      # Installed package size: 419.00 KB
-      - "/etc/debian_version" # 11.0 bytes
-      - "/etc/host.conf" # 92.0 bytes
-  - name: "bc"
-    version: "1.06.95-2ubuntu1"
-    size: 1449984
-    packfiles: true
-    files:
-      # Total files used: 936.64 KB
-      # Installed package size: 1.38 MB
-      - "/bin/bash" # 936.64 KB
-"""
-
-
-@with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
-def test_install_packages_localhost(path):
+def test_install_packages_localhost(tmpdir):
     """Test installing 2 packages on the localhost.
     """
-    testfile = pathjoin(path, 'sample.yml')
+    provenance_file = tmpdir.join("reprozip.yml")
+    provenance_file.write(REPROZIP_OUTPUT)
+
     with patch.object(Runner, 'run', return_value='installed package') as mocked_call, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
-        main(['install', '--spec', testfile, '--platform', 'localhost'])
+        main(['install', '--spec', provenance_file.strpath, '--platform', 'localhost'])
 
         calls = [call(['apt-get', 'install', '-y', package], shell=True)
                  for package in ('base-files', 'bc')]
@@ -76,11 +38,12 @@ def test_install_packages_localhost(path):
         assert_in("installed package", log.lines)
 
 
-@with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
-def test_install_packages_dockerengine(path):
+def test_install_packages_dockerengine(tmpdir):
     """Test installing 2 packages into a Docker container.
     """
-    testfile = pathjoin(path, 'sample.yml')
+    provenance_file = tmpdir.join("reprozip.yml")
+    provenance_file.write(REPROZIP_OUTPUT)
+
     with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
@@ -92,7 +55,7 @@ def test_install_packages_dockerengine(path):
         client.logs.return_value = 'container standard output'
 
         args = ['install',
-                    '--spec', testfile,
+                    '--spec', provenance_file.strpath,
                     '--platform', 'dockerengine',
                     #'--host', 'tcp://127.0.0.1:2375',
                     #'--image', 'repronim_test'

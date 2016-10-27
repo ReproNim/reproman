@@ -36,11 +36,11 @@ class ReprozipProvenance(Provenance):
                 lgr.error("Failed to load %s: %s", source, exc_str(exc))
                 raise  # TODO -- we might want a dedicated exception here
 
-    def get_distribution(self):
-        return {
-            'OS': self.yaml['runs'][0]['distribution'][0],
-            'version': self.yaml['runs'][0]['distribution'][1]
-        }
+    def get_os(self):
+        return self.yaml['runs'][0]['distribution'][0]
+
+    def get_os_version(self):
+        return self.yaml['runs'][0]['distribution'][1]
 
     def get_create_date(self):
         format = '%Y%m%dT%H%M%SZ'
