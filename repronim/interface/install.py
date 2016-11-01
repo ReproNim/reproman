@@ -16,7 +16,7 @@ from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..provenance import Provenance
-from ..orchestrator import Orchestrator
+from ..container import Container
 from .. import cfg
 
 from logging import getLogger
@@ -64,22 +64,15 @@ class Install(Interface):
     )
 
     @staticmethod
-    def __call__(spec, platform='localhost'):
+    def __call__(spec, platform='dockerengine'):
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
         print("SPEC: {}".format(spec))
 
-        # Parse the provenance info in the spec to get the packages and their versions.
         filename = spec[0]
-        provenance = Provenance.factory(filename, format='reprozip')
+        provenance = Provenance.factory(filename)
 
-        platform_opts = {}
-        if platform == 'docker':
-            platform_opts = {
-                'host': cfg.get('docker', 'host', default='unix:///var/run/docker.sock'),
-                'image': 'repronim_env'
-            }
-        # Install the packages on the target platform
-        orchestrator = Orchestrator.factory(platform, provenance, **platform_opts)
-        orchestrator.install_packages()
-
+        with Container.factory(platform) as container:
+            for distribution in provenance.get_distributions():
+                distribution.initiate(container)
+                distribution.install_packages(container)

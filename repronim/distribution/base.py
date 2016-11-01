@@ -21,8 +21,12 @@ class Distribution(object):
 
     def __init__(self, provenance):
         """
-        Class constructor
-        :param provenance: Instance of a Provenance sub-class.
+        Class consturctor
+
+        Parameters
+        ----------
+        provenance : object
+            Provenance class instance
         """
         self.provenance = provenance
         self.lgr = logging.getLogger('repronim.distribution')
@@ -30,34 +34,47 @@ class Distribution(object):
     @staticmethod
     def factory(distribution_name, provenance):
         """
-        Factory method for creating the appropriate Orchestrator sub-class based on format type.
-        :param distribution_name: Keyword identifier for the target distribution. (e.g. debian, centos)
-        :param provenance: Instance of Provenance sub-class.
-        :return: Instance of the requested Distribution sub-class.
+        Factory method for creating the appropriate Orchestrator sub-class
+        based on format type.
+
+        Parameters
+        ----------
+        distribution_name : string
+            Name of distribution subclass to create. Current options are:
+            'conda', 'debian', 'neurodebian', 'pypi'
+        provenance : object
+            Provenance class instance.
+
+        Returns
+        -------
+        distribution : object
+            Instance of a Distribtion sub-class
         """
         class_name = distribution_name.capitalize() + 'Distribution'
         module = import_module('repronim.distribution.' + distribution_name)
         return getattr(module, class_name)(provenance)
 
-    def get_name(self):
+    @abc.abstractmethod
+    def initiate(self, container):
         """
-        Returns the environment operating system from provenance.
-        :return: Operating system string
-        """
-        return self.provenance.get_os().lower()
+        Perform any initialization commands needed in the container environment.
 
-    def get_version(self):
+        Parameters
+        ----------
+        container : object
+            The container sub-class object the hold the environment.
         """
-        Returns the version of the environment operating system from provenance.
-        :return: Operating system version string
-        """
-        return self.provenance.get_os_version()
+        return
 
     @abc.abstractmethod
-    def get_install_package_commands(self):
+    def install_packages(self, container):
         """
-        Returns a list of shell commands that install the packages specified
-        by the given provenance.
-        :return: Generator of shell commands. (Each command is a list of tokens.)
+        Install the packages associated to this distribution by the provenance
+        into the container environment.
+
+        Parameters
+        ----------
+        container : object
+            Container sub-class instance.
         """
         return

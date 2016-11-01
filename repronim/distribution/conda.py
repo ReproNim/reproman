@@ -11,9 +11,9 @@
 from repronim.distribution import Distribution
 
 
-class DebianDistribution(Distribution):
+class CondaDistribution(Distribution):
     """
-    Class to provide Debian-based shell commands.
+    Class to provide Conda package management.
     """
 
     def __init__(self, provenance):
@@ -25,7 +25,7 @@ class DebianDistribution(Distribution):
         provenance : dictionary
             Provenance information for the distribution.
         """
-        super(DebianDistribution, self).__init__(provenance)
+        super(CondaDistribution, self).__init__(provenance)
 
     def initiate(self, container):
         """
@@ -36,8 +36,6 @@ class DebianDistribution(Distribution):
         container : object
             The container sub-class object the hold the environment.
         """
-        self.lgr.debug("Adding Debian update to container command list.")
-        container.add_command(['apt-get', 'update'])
         return
 
     def install_packages(self, container):
@@ -51,8 +49,7 @@ class DebianDistribution(Distribution):
             Container sub-class instance.
         """
         for package in self.provenance['packages']:
-            container.add_command(['apt-get',
-                'install',
-                '-y',
-                package['name']])
+            container.add_command(['conda',
+                                   'install',
+                                   package['name']])
         return

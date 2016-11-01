@@ -8,10 +8,10 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
 
-from repronim.distribution import Distribution
+from repronim.distribution.debian import DebianDistribution
 
 
-class DebianDistribution(Distribution):
+class NeurodebianDistribution(DebianDistribution):
     """
     Class to provide Debian-based shell commands.
     """
@@ -25,7 +25,8 @@ class DebianDistribution(Distribution):
         provenance : dictionary
             Provenance information for the distribution.
         """
-        super(DebianDistribution, self).__init__(provenance)
+        super(NeurodebianDistribution, self).__init__(provenance)
+
 
     def initiate(self, container):
         """
@@ -36,23 +37,7 @@ class DebianDistribution(Distribution):
         container : object
             The container sub-class object the hold the environment.
         """
-        self.lgr.debug("Adding Debian update to container command list.")
-        container.add_command(['apt-get', 'update'])
-        return
 
-    def install_packages(self, container):
-        """
-        Install the packages associated to this distribution by the provenance
-        into the container environment.
+        # TODO: Add code to setup NeuroDebian repository setup.
 
-        Parameters
-        ----------
-        container : object
-            Container sub-class instance.
-        """
-        for package in self.provenance['packages']:
-            container.add_command(['apt-get',
-                'install',
-                '-y',
-                package['name']])
-        return
+        super(NeurodebianDistribution, self).initiate(container)

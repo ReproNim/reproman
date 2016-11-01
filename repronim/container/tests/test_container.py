@@ -8,29 +8,46 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from repronim.container import Container
-from repronim.distribution import Distribution
-from repronim.provenance import Provenance
 
 import logging
 from mock import patch, call
 
 from repronim.utils import swallow_logs
 from repronim.tests.utils import assert_in
-from repronim.tests.test_constants import REPROZIP_OUTPUT
+from repronim.cmd import Runner
 
 
-def test_installing_packages_to_docker(tmpdir):
+def test_sending_command_to_localhost():
+    """
+    Test installing 2 Debian packages to the localhost.
+    """
+    with patch.object(Runner, 'run', return_value='installed package') \
+        as MockRunner:
+
+        with Container.factory('localhost') as container:
+            container.add_command(['apt-get', 'update'])
+            container.add_command(['apt-get', 'install', '-y', 'base-files'])
+            container.add_command(['apt-get', 'install', '-y', 'bc'])
+
+        # Verify code output.
+        assert container.command_buffer == [
+            ['apt-get', 'update'],
+            ['apt-get', 'install', '-y', 'base-files'],
+            ['apt-get', 'install', '-y', 'bc']
+        ]
+
+        assert MockRunner.call_count == 3
+        calls = [
+            call(['apt-get', 'update'], shell=True),
+            call(['apt-get', 'install', '-y', 'base-files'], shell=True),
+            call(['apt-get', 'install', '-y', 'bc'], shell=True),
+        ]
+        MockRunner.assert_has_calls(calls, any_order=True)
+
+def test_sending_command_to_docker():
     """
     Test installing 2 Debian packages in a Docker instance.
     """
-
-    # Create the provenance file.
-    provenance_file = tmpdir.join("reprozip.yml")
-    provenance_file.write(REPROZIP_OUTPUT)
-
-    provenance = Provenance.factory(provenance_file.strpath, 'reprozip')
-    distribution = Distribution.factory('debian', provenance)
-
     with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
@@ -47,13 +64,14 @@ def test_installing_packages_to_docker(tmpdir):
         container_config = {
             'engine_url': 'tcp://127.0.0.1:2375'
         }
-        container = Container.factory('dockerengine', distribution, container_config)
-        image_id, container_id = container.create()
-        container.install_packages(container_id)
+        with Container.factory('dockerengine', container_config) as container:
+            container.add_command(['apt-get', 'update'])
+            container.add_command(['apt-get', 'install', '-y', 'base-files'])
+            container.add_command(['apt-get', 'install', '-y', 'bc'])
 
         # Verify code output.
-        assert image_id == u'9a754690460d'
-        assert container_id == u'd4cb4ee'
+        assert container.image_id == u'9a754690460d'
+        assert container.container_id == u'd4cb4ee'
         assert client.build.called
         calls = [call(image=u'9a754690460d', stdin_open=True)]
         client.create_container.assert_has_calls(calls)
@@ -69,5 +87,3 @@ def test_installing_packages_to_docker(tmpdir):
         calls = [call(exec_id=u'b3245cd55', stream=True)]
         client.exec_start.assert_has_calls(calls)
         assert_in("container standard output", log.lines)
-        assert_in("Generating command for package: base-files", log.lines)
-        assert_in("Generating command for package: bc", log.lines)

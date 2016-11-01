@@ -7,37 +7,42 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from repronim.distribution import Distribution
 from repronim.provenance import Provenance
 
 import logging
+from mock import MagicMock, call
 
 from repronim.utils import swallow_logs
 from repronim.tests.utils import assert_in
-from repronim.tests.test_constants import REPROZIP_OUTPUT
+from repronim.tests.test_constants import DEMO_SPEC1
 
 
-def test_get_debian_packages(tmpdir):
+def test_install_debian_packages(tmpdir):
     """
-    Test retrieving commands for 2 Debian packages from provenance.
+    Test creating distribution objects from a provenance file.
     """
 
-    provenance_file = tmpdir.join("reprozip.yml")
-    provenance_file.write(REPROZIP_OUTPUT)
+    provenance_file = tmpdir.join("demo_spec1.yml")
+    provenance_file.write(DEMO_SPEC1)
 
-    provenance = Provenance.factory(provenance_file.strpath, 'reprozip')
-    distribution = Distribution.factory('debian', provenance)
+    provenance = Provenance.factory(provenance_file.strpath, 'repronimspec')
+    container = MagicMock()
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
-        commands = []
-        for command in distribution.get_install_package_commands():
-            commands.append(command)
-        assert commands == [
-            ['apt-get', 'update'],
-            ['apt-get', 'install', '-y', 'base-files'],
-            ['apt-get', 'install', '-y', 'bc']
-        ]
+        for distribution in provenance.get_distributions():
+            distribution.initiate(container)
+            distribution.install_packages(container)
 
-        assert_in("Generating command for package: base-files", log.lines)
-        assert_in("Generating command for package: bc", log.lines)
+        calls = [
+            call.add_command(['apt-get', 'update']),
+            call.add_command(['apt-get', 'install', '-y', 'libc6-dev']),
+            call.add_command(['apt-get', 'install', '-y', 'python-nibabel']),
+            call.add_command(['apt-get', 'update']),
+            call.add_command(['apt-get', 'update']),
+            call.add_command(['apt-get', 'install', '-y', 'afni']),
+            call.add_command(['apt-get', 'install', '-y', 'python-nibabel']),
+            call.add_command(['conda', 'install', 'numpy'])
+        ]
+        container.assert_has_calls(calls)
+        assert_in("Adding Debian update to container command list.", log.lines)
