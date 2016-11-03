@@ -147,7 +147,14 @@ install, possibly overlaying OS-wide installation components, take precedence.
     specified for every installed "module". It might come handy during `trace`
     operation.
 
-Others
+Provisioners
+~~~~~~~~~~~~
+
+Provisioners allow you to automatically install software, alter configurations,
+and maintain files across multiple machines from a central server (or
+configuration specification). ReproNim may need to both recognize its use to
+create an environment and may have an opportunity to use any of the following
+provisioners to recreate an environment:
 
 - ansible
 - chef
