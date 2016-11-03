@@ -13,16 +13,16 @@ from nose.tools import *
 
 @raises(ValueError)
 def test_config_item_non_string_id():
-    r"""Test config item with non string id"""
+    r"""repronim.envconfig.test_config_item.test_config_item_non_string_id"""
     ConfigurationItem(id=3)
 
 
 @raises(ValueError)
 def test_config_item_empty_string():
-    r"""Test config item with empty string"""
+    r"""repronim.envconfig.test_config_item.test_config_item_empty_string"""
     ConfigurationItem(id="")
 
 
 def test_config_item_valid_id():
-    r"""Test config item with valid string"""
+    r"""repronim.envconfig.test_config_item.test_config_item_valid_id"""
     assert(ConfigurationItem(id="test"))

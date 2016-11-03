@@ -1,3 +1,4 @@
+six
 attr
 # If you want to develop, use requirements-devel.txt
 

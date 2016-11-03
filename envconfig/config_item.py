@@ -11,6 +11,7 @@
 """
 
 from __future__ import absolute_import
+from six import string_types
 import attr
 
 __docformat__ = 'restructuredtext'
@@ -18,7 +19,7 @@ __docformat__ = 'restructuredtext'
 
 def non_empty_string(instance, attribute, value):
     r"""attr.ib validator to ensure it is a non-empty string"""
-    if not(isinstance(value, basestring)):
+    if not(isinstance(value, string_types)):
         raise ValueError("'id' must be a string.")
     if not value:
         raise ValueError("'id' must not be empty.")
