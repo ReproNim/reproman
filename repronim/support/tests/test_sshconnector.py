@@ -47,7 +47,7 @@ def test_ssh_get_connection():
 @skip_ssh
 @with_tempfile(suffix=" \"`suffix:;& ", # get_most_obscure_supported_name(),
                content="1")
-def test_ssh_open_close(tfile1):
+def test_ssh_open_close(tfile1=None):
 
     manager = SSHManager()
     c1 = manager.get_connection('ssh://localhost')
@@ -107,7 +107,7 @@ def test_ssh_manager_close_no_throw():
 @with_tempfile(mkdir=True)
 @with_tempfile(content="one")
 @with_tempfile(content="two")
-def test_ssh_copy(sourcedir, sourcefile1, sourcefile2):
+def test_ssh_copy(sourcedir=None, sourcefile1=None, sourcefile2=None):
 
     remote_url = 'ssh://localhost'
     manager = SSHManager()

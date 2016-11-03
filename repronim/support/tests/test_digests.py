@@ -16,7 +16,7 @@ from ...tests.utils import assert_equal
 @with_tree(tree={'sample.txt': '123',
                  '0': chr(0),
                  'long.txt': '123abz\n'*1000000})
-def test_digester(path):
+def test_digester(path=None):
     digester = Digester()
     assert_equal(
         digester(opj(path, 'sample.txt')),

@@ -26,7 +26,7 @@ from .utils import swallow_logs
 
 
 @with_tempfile
-def test_protocol_commons(protocol_file):
+def test_protocol_commons(protocol_file=None):
 
     for protocol_class in [DryRunProtocol, DryRunExternalsProtocol,
                            ExecutionTimeProtocol,
@@ -62,7 +62,7 @@ def test_protocol_commons(protocol_file):
 
 @with_tempfile
 @with_tempfile
-def test_ExecutionTimeProtocol(path1, path2):
+def test_ExecutionTimeProtocol(path1=None, path2=None):
 
     timer_protocol = ExecutionTimeProtocol()
     runner = Runner(protocol=timer_protocol)
@@ -117,7 +117,7 @@ def test_ExecutionTimeProtocol(path1, path2):
 
 @with_tempfile
 @with_tempfile
-def test_ExecutionTimeExternalsProtocol(path1, path2):
+def test_ExecutionTimeExternalsProtocol(path1=None, path2=None):
 
     timer_protocol = ExecutionTimeExternalsProtocol()
     runner = Runner(protocol=timer_protocol)
@@ -153,7 +153,7 @@ def test_ExecutionTimeExternalsProtocol(path1, path2):
 
 
 @with_tempfile
-def test_DryRunProtocol(path):
+def test_DryRunProtocol(path=None):
 
     protocol = DryRunProtocol()
     runner = Runner(protocol=protocol, cwd=path)
@@ -174,7 +174,7 @@ def test_DryRunProtocol(path):
 
 
 @with_tempfile
-def test_DryRunExternalsProtocol(path):
+def test_DryRunExternalsProtocol(path=None):
 
     protocol = DryRunExternalsProtocol()
     runner = Runner(protocol=protocol, cwd=path)

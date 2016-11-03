@@ -32,7 +32,7 @@ from .utils import lgr
 @ignore_nose_capturing_stdout
 @assert_cwd_unchanged
 @with_tempfile
-def test_runner_dry(tempfile):
+def test_runner_dry(tempfile=None):
 
     dry = DryRunProtocol()
     runner = Runner(protocol=dry)
@@ -58,7 +58,7 @@ def test_runner_dry(tempfile):
 @ignore_nose_capturing_stdout
 @assert_cwd_unchanged
 @with_tempfile
-def test_runner(tempfile):
+def test_runner(tempfile=None):
 
     # test non-dry command call
     runner = Runner()
@@ -163,7 +163,7 @@ def test_runner_log_stdout():
 
 
 @with_tempfile
-def test_link_file_load(tempfile):
+def test_link_file_load(tempfile=None):
     tempfile2 = tempfile + '_'
 
     with open(tempfile, 'w') as f:
@@ -215,7 +215,7 @@ def test_link_file_load(tempfile):
 
 
 @with_tempfile(mkdir=True)
-def test_runner_failure(dir_):
+def test_runner_failure(dir_=None):
     runner = Runner()
     failing_cmd = ['sh', '-c', 'exit 2']
 
