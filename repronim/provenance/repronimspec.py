@@ -75,12 +75,27 @@ class RepronimspecProvenance(Provenance):
             for package in self._yaml['packages']:
                 try:
                     # TODO: Improve handling of missing package lists.
-                    for package_dist in package['distributions']:
+                    if 'distributions' in package:
+                        if 'distribution' in package:
+                            raise ValueError(
+                                "Only distribution or distributions must be provided")
+                        distributions = package['distributions']
+                    elif 'distribution' in package:
+                        distributions = [{'name': package['distribution']}]
+                    else:
+                        raise ValueError(
+                            "Provide a single distribution or even multiple distributions")
+
+                    if isinstance(distributions, str):
+                        # we were provided a single distribution so there were no list
+                        distributions = [{'name': distributions}]
+                    for package_dist in distributions:
                         if dist_prov['name'] == package_dist['name']:
                             dist_prov['packages'].append(package)
                 except Exception as exc:
                     # Log error and keep going for now...
-                    lgr.error("Failed to load package: %s, %s", package['name'], exc_str(exc))
+                    lgr.error("Failed to load package: %s, %s",
+                              package['name'], exc_str(exc))
 
             dist_objects.append(Distribution.factory(subclass, dist_prov))
 

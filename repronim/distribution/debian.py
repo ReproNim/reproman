@@ -51,8 +51,8 @@ class DebianDistribution(Distribution):
             Container sub-class instance.
         """
         for package in self.provenance['packages']:
-            container.add_command(['apt-get',
-                'install',
-                '-y',
-                package['name']])
+            container.add_command(
+                ['apt-get', 'install', '-y', package['name']],
+                env={'DEBIAN_FRONTEND': 'noninteractive'}
+            )
         return

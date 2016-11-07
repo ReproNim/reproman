@@ -63,7 +63,11 @@ class DockerengineContainer(Container):
         self._build_image(dockerfile)
         self._run_container()
 
-    def execute_command(self, command):
+    def set_envvar(self, var, value):
+        # TODO: add ENV to docker
+        raise NotImplementedError("pass setting ENV for docker instance")
+
+    def execute_command(self, command, env=None):
         """
         Execute the given command in the container.
 
@@ -72,12 +76,17 @@ class DockerengineContainer(Container):
         command : string or list
             Shell command to send to the container to execute. The command can
             be a string or a list of tokens that create the command.
+        env : dict, optional
+            If provided, would set
 
         Returns
         -------
         list
             List of STDOUT lines from the container.
         """
+        if env:
+            # TODO: might not work - not tested it
+            command = ['%s=%s' % k for k in env.items()] + command
         execute = self.client.exec_create(container=self.container_id, cmd=command)
         response = [line for line in self.client.exec_start(exec_id=execute['Id'], stream=True)]
         return response

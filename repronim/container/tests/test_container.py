@@ -37,12 +37,14 @@ def test_sending_command_to_localhost():
         ]
 
         assert MockRunner.call_count == 3
+        DEBIAN_TARGET_ENV = {'DEBIAN_FRONTEND': 'noninteractive'}
         calls = [
-            call(['apt-get', 'update'], shell=True),
-            call(['apt-get', 'install', '-y', 'base-files'], shell=True),
-            call(['apt-get', 'install', '-y', 'bc'], shell=True),
+            call(['apt-get', 'update']),
+            call(['apt-get', 'install', '-y', 'base-files'], env=DEBIAN_TARGET_ENV),
+            call(['apt-get', 'install', '-y', 'bc'], env=DEBIAN_TARGET_ENV),
         ]
         MockRunner.assert_has_calls(calls, any_order=True)
+
 
 def test_sending_command_to_docker():
     """
