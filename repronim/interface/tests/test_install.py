@@ -14,31 +14,20 @@ from mock import patch, call
 
 from repronim.utils import swallow_logs
 from repronim.tests.utils import assert_in
-from repronim.tests.test_constants import DEMO_SPEC1
 from repronim.cmd import Runner
 
-import pytest
-from repronim.tests.test_constants import DEMO_SPEC1_YML_FILENAME, REPROZIP_SPEC1
-DEMO1_SPECS = [
-    DEMO_SPEC1_YML_FILENAME,
-    # This one could have been another "serialization" of the effectively
-    # identical spec on which we could try to run
-    #REPROZIP_SPEC1
-]
+from repronim.tests.fixtures import demo1_spec
 
 
-def test_install_packages_localhost(tmpdir):
+def test_install_packages_localhost(tmpdir, demo1_spec):
     """
     Test installing packages on the localhost.
     """
-    provenance_file = tmpdir.join("demo_spec1.yml")
-    provenance_file.write(DEMO_SPEC1)
-
     with patch.object(Runner, 'run', return_value='installed package') as MockRunner, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         args = ['install',
-                '--spec', provenance_file.strpath,
+                '--spec', demo1_spec,
                 '--platform', 'localhost']
         main(args)
 
@@ -54,8 +43,7 @@ def test_install_packages_localhost(tmpdir):
         assert_in("Adding Debian update to container command list.", log.lines)
 
 
-@pytest.mark.parametrize("provenance_file", DEMO1_SPECS)
-def test_install_packages_dockerengine(tmpdir, provenance_file):
+def test_install_packages_dockerengine(tmpdir, demo1_spec):
     """
     Test installing packages into a Docker container.
     """
@@ -71,7 +59,7 @@ def test_install_packages_dockerengine(tmpdir, provenance_file):
         client.logs.return_value = 'container standard output'
 
         args = ['install',
-                    '--spec', provenance_file,
+                    '--spec', demo1_spec,
                     '--platform', 'dockerengine']
         main(args)
 

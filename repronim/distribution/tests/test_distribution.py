@@ -14,18 +14,15 @@ from mock import MagicMock, call
 
 from repronim.utils import swallow_logs
 from repronim.tests.utils import assert_in
-from repronim.tests.test_constants import DEMO_SPEC1
 
+import repronim.tests.fixtures
 
-def test_install_debian_packages(tmpdir):
+def test_install_debian_packages(demo1_spec):
     """
     Test creating distribution objects from a provenance file.
     """
 
-    provenance_file = tmpdir.join("demo_spec1.yml")
-    provenance_file.write(DEMO_SPEC1)
-
-    provenance = Provenance.factory(provenance_file.strpath, 'repronimspec')
+    provenance = Provenance.factory(demo1_spec, 'repronimspec')
     container = MagicMock()
 
     with swallow_logs(new_level=logging.DEBUG) as log:
