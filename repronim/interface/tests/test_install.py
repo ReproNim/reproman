@@ -17,6 +17,15 @@ from repronim.tests.utils import assert_in
 from repronim.tests.test_constants import DEMO_SPEC1
 from repronim.cmd import Runner
 
+import pytest
+from repronim.tests.test_constants import DEMO_SPEC1_YML_FILENAME, REPROZIP_SPEC1
+DEMO1_SPECS = [
+    DEMO_SPEC1_YML_FILENAME,
+    # This one could have been another "serialization" of the effectively
+    # identical spec on which we could try to run
+    #REPROZIP_SPEC1
+]
+
 
 def test_install_packages_localhost(tmpdir):
     """
@@ -45,12 +54,11 @@ def test_install_packages_localhost(tmpdir):
         assert_in("Adding Debian update to container command list.", log.lines)
 
 
-def test_install_packages_dockerengine(tmpdir):
+@pytest.mark.parametrize("provenance_file", DEMO1_SPECS)
+def test_install_packages_dockerengine(tmpdir, provenance_file):
     """
     Test installing packages into a Docker container.
     """
-    provenance_file = tmpdir.join("demo_spec1.yml")
-    provenance_file.write(DEMO_SPEC1)
 
     with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
@@ -63,7 +71,7 @@ def test_install_packages_dockerengine(tmpdir):
         client.logs.return_value = 'container standard output'
 
         args = ['install',
-                    '--spec', provenance_file.strpath,
+                    '--spec', provenance_file,
                     '--platform', 'dockerengine']
         main(args)
 
