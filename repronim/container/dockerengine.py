@@ -57,7 +57,7 @@ class DockerengineContainer(Container):
             to use when creating the container. e.g. "debian:8.5"
         """
         if not base_image_tag:
-            base_image_tag = self.config['base_image_tag']
+            base_image_tag = self._config['base_image_tag']
 
         dockerfile = self._get_base_image_dockerfile(base_image_tag)
         self._build_image(dockerfile)
@@ -76,17 +76,21 @@ class DockerengineContainer(Container):
         command : string or list
             Shell command to send to the container to execute. The command can
             be a string or a list of tokens that create the command.
-        env : dict, optional
-            If provided, would set
+        env : dict
+            Additional (or replacement) environment variables which are applied
+            only to the current call
 
         Returns
         -------
         list
             List of STDOUT lines from the container.
         """
-        if env:
+
+        command_env = self.get_updated_env(env)
+
+        if command_env:
             # TODO: might not work - not tested it
-            command = ['%s=%s' % k for k in env.items()] + command
+            command = ['%s=%s' % k for k in command_env.items()] + command
         execute = self.client.exec_create(container=self.container_id, cmd=command)
         response = [line for line in self.client.exec_start(exec_id=execute['Id'], stream=True)]
         return response
@@ -120,7 +124,7 @@ class DockerengineContainer(Container):
         """
         f = BytesIO(dockerfile.encode('utf-8'))
         response = [json.loads(line) for line in self.client.build(fileobj=f, rm=True)]
-        self.lgr.debug(response)
+        self._lgr.debug(response)
         if 'error' in response[-1]:
             raise Exception("Docker error - %s" % response[-1]['error'])
             # TODO: Need to figure out how to remove lingering container image from engine.
@@ -134,9 +138,9 @@ class DockerengineContainer(Container):
         Start the Docker container from the image.
         """
         container = self.client.create_container(image=self.image_id,
-            stdin_open=self.config['stdin_open'])
+            stdin_open=self._config['stdin_open'])
         self.client.start(container)
-        self.lgr.debug(self.client.logs(container))
+        self._lgr.debug(self.client.logs(container))
         self.container_id = container['Id']
 
     def remove_container(self):

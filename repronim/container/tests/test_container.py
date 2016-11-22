@@ -22,22 +22,26 @@ def test_sending_command_to_localhost():
     Test installing 2 Debian packages to the localhost.
     """
     with patch.object(Runner, 'run', return_value='installed package') \
-        as MockRunner:
+        as MockRunner, patch('os.environ.copy') as MockOS:
+
+        MockOS.return_value = {}
+        DEBIAN_TARGET_ENV = {'DEBIAN_FRONTEND': 'noninteractive'}
 
         with Container.factory('localhost') as container:
             container.add_command(['apt-get', 'update'])
-            container.add_command(['apt-get', 'install', '-y', 'base-files'])
-            container.add_command(['apt-get', 'install', '-y', 'bc'])
+            container.add_command(['apt-get', 'install', '-y', 'base-files'],
+                                  env=DEBIAN_TARGET_ENV)
+            container.add_command(['apt-get', 'install', '-y', 'bc'],
+                                  env=DEBIAN_TARGET_ENV)
 
         # Verify code output.
-        assert container.command_buffer == [
-            ['apt-get', 'update'],
-            ['apt-get', 'install', '-y', 'base-files'],
-            ['apt-get', 'install', '-y', 'bc']
+        assert container._command_buffer == [
+            {'command':['apt-get', 'update'], 'env':None},
+            {'command':['apt-get', 'install', '-y', 'base-files'], 'env':DEBIAN_TARGET_ENV},
+            {'command':['apt-get', 'install', '-y', 'bc'], 'env':DEBIAN_TARGET_ENV}
         ]
 
         assert MockRunner.call_count == 3
-        DEBIAN_TARGET_ENV = {'DEBIAN_FRONTEND': 'noninteractive'}
         calls = [
             call(['apt-get', 'update']),
             call(['apt-get', 'install', '-y', 'base-files'], env=DEBIAN_TARGET_ENV),
@@ -63,13 +67,15 @@ def test_sending_command_to_docker():
         client.exec_start.return_value = ['stdout', 'from', 'container']
 
         # Section of code being tested.
+        DEBIAN_TARGET_ENV = {'DEBIAN_FRONTEND': 'noninteractive'}
+
         container_config = {
             'engine_url': 'tcp://127.0.0.1:2375'
         }
         with Container.factory('dockerengine', container_config) as container:
             container.add_command(['apt-get', 'update'])
-            container.add_command(['apt-get', 'install', '-y', 'base-files'])
-            container.add_command(['apt-get', 'install', '-y', 'bc'])
+            container.add_command(['apt-get', 'install', '-y', 'base-files'], env=DEBIAN_TARGET_ENV)
+            container.add_command(['apt-get', 'install', '-y', 'bc'], env=DEBIAN_TARGET_ENV)
 
         # Verify code output.
         assert container.image_id == u'9a754690460d'
@@ -81,8 +87,8 @@ def test_sending_command_to_docker():
         client.start.assert_has_calls(calls)
         calls = [
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
-            call(cmd=['apt-get', 'install', '-y', 'base-files'], container=u'd4cb4ee'),
-            call(cmd=['apt-get', 'install', '-y', 'bc'], container=u'd4cb4ee')
+            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'base-files'], container=u'd4cb4ee'),
+            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'bc'], container=u'd4cb4ee')
         ]
         client.exec_create.assert_has_calls(calls)
         assert client.exec_start.call_count == 3

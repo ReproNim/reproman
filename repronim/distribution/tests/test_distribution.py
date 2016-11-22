@@ -33,12 +33,16 @@ def test_install_debian_packages(demo1_spec):
 
         calls = [
             call.add_command(['apt-get', 'update']),
-            call.add_command(['apt-get', 'install', '-y', 'libc6-dev']),
-            call.add_command(['apt-get', 'install', '-y', 'python-nibabel']),
+            call.add_command(['apt-get', 'install', '-y', 'libc6-dev'],
+                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
+            call.add_command(['apt-get', 'install', '-y', 'python-nibabel'],
+                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
             call.add_command(['apt-get', 'update']),
             call.add_command(['apt-get', 'update']),
-            call.add_command(['apt-get', 'install', '-y', 'afni']),
-            call.add_command(['apt-get', 'install', '-y', 'python-nibabel']),
+            call.add_command(['apt-get', 'install', '-y', 'afni'],
+                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
+            call.add_command(['apt-get', 'install', '-y', 'python-nibabel'],
+                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
             call.add_command(['conda', 'install', 'numpy'])
         ]
         container.assert_has_calls(calls)

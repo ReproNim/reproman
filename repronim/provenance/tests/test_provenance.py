@@ -10,19 +10,15 @@
 import logging
 
 from repronim.utils import swallow_logs
-from repronim.tests.utils import assert_in
-from repronim.tests.test_constants import DEMO_SPEC1
 from repronim.provenance import Provenance
 
+import repronim.tests.fixtures
 
-def test_get_distributions(tmpdir):
+def test_get_distributions(demo1_spec):
     """
     Test reading the distributions from the Repronim spec file.
     """
-    provenance_file = tmpdir.join("demo_spec1.yml")
-    provenance_file.write(DEMO_SPEC1)
-
-    provenance = Provenance.factory(provenance_file.strpath, 'repronimspec')
+    provenance = Provenance.factory(demo1_spec, 'repronimspec')
 
     with swallow_logs(new_level=logging.DEBUG) as log:
         distributions = provenance.get_distributions()

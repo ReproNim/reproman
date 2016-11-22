@@ -52,6 +52,7 @@ class DebianDistribution(Distribution):
         """
         for package in self.provenance['packages']:
             container.add_command(
+                # TODO: Pull env out of provenance for this command.
                 ['apt-get', 'install', '-y', package['name']],
                 env={'DEBIAN_FRONTEND': 'noninteractive'}
             )

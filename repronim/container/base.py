@@ -29,9 +29,11 @@ class Container(object):
         config : dictionary
             Configuration parameters for the container.
         """
-        self.config = config
-        self.command_buffer = []
-        self.lgr = logging.getLogger('repronim.container')
+        self._config = config
+        self._command_buffer = [] # Each element is a dictionary in the
+                                  # form {command=[], env={}}
+        self._env = {}
+        self._lgr = logging.getLogger('repronim.container')
 
     @staticmethod
     @contextmanager
@@ -70,7 +72,7 @@ class Container(object):
         return
 
     @abc.abstractmethod
-    def execute_command(self, command):
+    def execute_command(self, command, env):
         """
         Execute the given command in the container.
 
@@ -80,6 +82,10 @@ class Container(object):
             Shell command string or list of command tokens to send to the
             container to execute.
 
+        env : dict
+            Additional (or replacement) environment variables which are applied
+            only to the current call
+
         Returns
         -------
         list
@@ -87,7 +93,7 @@ class Container(object):
         """
         return
 
-    def add_command(self, command):
+    def add_command(self, command, env=None):
         """
         Add a command to the command buffer so that all commands can be
         run at once in a batch submit to the container.
@@ -96,8 +102,12 @@ class Container(object):
         ----------
         command : string or list
             Command string or list of command string tokens.
+
+        env : dict
+            Additional (or replacement) environment variables which are applied
+            only to the current call
         """
-        self.command_buffer.append(command)
+        self._command_buffer.append({'command':command, 'env':env})
 
     def execute_command_buffer(self):
         """
@@ -110,7 +120,43 @@ class Container(object):
             STDOUT lines from container
         """
         stdout = []
-        for command in self.command_buffer:
-            stdout + self.execute_command(command)
+        for command in self._command_buffer:
+            stdout + self.execute_command(command['command'], command['env'])
 
         return stdout
+
+    def set_envvar(self, var, value):
+        """
+        Save an evironment variable for inclusion in the environment
+
+        Parameters
+        ----------
+        var : string
+            Variable name
+        value : string
+            Variable value
+
+        Returns
+        -------
+
+        """
+        self._env[var] = value
+
+    def get_updated_env(self, custom_env):
+        """
+        Returns an env dictionary with additional or replaced values.
+
+        Parameters
+        ----------
+        custom_env : dict
+            Enviroment variables to merge into the existing list of declared
+            environment variables stored in self._env
+
+        Returns
+        -------
+        dictionary
+        """
+        merged_env = self._env.copy()
+        if custom_env:
+            merged_env.update(custom_env)
+        return merged_env

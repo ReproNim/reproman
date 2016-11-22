@@ -17,7 +17,6 @@ class LocalhostContainer(Container):
 
     def __init__(self, config={}):
         super(LocalhostContainer, self).__init__(config)
-        self._env = {}
 
     def create(self, base_image_id=None):
         """
@@ -31,11 +30,6 @@ class LocalhostContainer(Container):
 
         # Nothing to do to create the localhost "container".
         return
-
-
-    def set_envvar(self, var, value):
-        self._env[var] = value
-
 
     def execute_command(self, command, env=None):
         """
@@ -57,17 +51,16 @@ class LocalhostContainer(Container):
         """
         run = Runner()
 
-        custom_env = self._env.copy()
-        if env:
-            custom_env.update(env)
+        command_env = self.get_updated_env(env)
 
         run_kw = {}
-        if custom_env:
+        if command_env:
             # if anything custom, then we need to get original full environment
             # and update it with custom settings which we either "accumulated"
             # via set_envvar, or it was passed into this call.
             run_env = os.environ.copy()
-            run_kw['env'] = run_env.update(custom_env)
+            run_env.update(command_env)
+            run_kw['env'] = run_env
 
         response = run(command, **run_kw)  # , shell=True)
         return [response]
