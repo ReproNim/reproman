@@ -18,7 +18,7 @@ __docformat__ = 'restructuredtext'
 
 
 def non_empty_string(instance, attribute, value):
-    r"""attr.ib validator to ensure it is a non-empty string"""
+    """attr.ib validator to ensure it is a non-empty string"""
     if not(isinstance(value, string_types)):
         raise ValueError("'id' must be a string.")
     if not value:
@@ -27,7 +27,7 @@ def non_empty_string(instance, attribute, value):
 
 @attr.s
 class ConfigurationItem(object):
-    r"""Parent class to represent configuration items that define an experiment
+    """Parent class to represent configuration items that define an experiment
     environment such as packages, files, environment variables, and commands.
 
     Attributes
