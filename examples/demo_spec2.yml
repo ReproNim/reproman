@@ -1,0 +1,49 @@
+#
+# Butch's exploration of a potential configuration heirarchy
+#
+
+sources:
+ - name: deb-neurodebian-data-main
+   type: apt
+   configuration:
+     type: deb
+     uri: http://neuro.debian.net/debian
+     suite: data
+     component: main
+
+ - name: deb-neurodebian-data-contrib
+   type: apt
+   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: data, component: main}
+
+ - name: deb-neurodebian-data-non-free
+   type: apt
+   config: deb http://neuro.debian.net/debian data non-free
+
+ - name: deb-neurodebian-trusty-main
+   type: apt
+   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: trusty, component: main}
+
+ - name: deb-neurodebian-trusty-contrib
+   type: apt
+   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: trusty, component: conrtib}
+
+ - name: deb-neurodebian-trusty-non-free
+   type: apt
+   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: trusty, component: non-free}
+
+ - name: centos-47.el6.centos-updates
+   type: yum
+   mirrorlist: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=updates
+
+ - name: some-online-package
+   type: uri
+   uri: http://downloadhere.gov/foo.zip
+
+packages:
+ - name: httpd
+   sources:
+    - name: centos-47.el6.centos-updates
+      arch: x86_64
+      version: 2.2.15
+      release: 55.el6.centos.2
+
