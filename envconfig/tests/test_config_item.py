@@ -8,17 +8,17 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from envconfig.config_item import ConfigurationItem
-from nose.tools import *
+import pytest
 
 
-@raises(ValueError)
 def test_config_item_non_string_id():
-    ConfigurationItem(id=3)
+    with pytest.raises(ValueError):
+        ConfigurationItem(id=3)
 
 
-@raises(ValueError)
 def test_config_item_empty_string():
-    ConfigurationItem(id="")
+    with pytest.raises(ValueError):
+        ConfigurationItem(id="")
 
 
 def test_config_item_valid_id():
