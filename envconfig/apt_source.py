@@ -6,7 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Configuration item that represents a distribution used to install packages
+"""Configuration item that represents an APT source used to install packages.
+   NOTE: I don't like this, and am exploring different options in
+         demo_spec2.yml
 
 """
 
@@ -18,19 +20,21 @@ __docformat__ = 'restructuredtext'
 
 
 @attr.s
-class Distribution(ConfigurationItem):
-    """Configuration item that represents a distribution to install packages
+class APTSource(ConfigurationItem):
+    """Configuration item that represents an APT source used to install
+    packages.
 
     Attributes
     ----------
     id : string
-        Unique identifier of the configuration item (inherited)
-    name: basestring
-    origin: basestring
-    label: basestring
-    suite: basestring
-    version: basestring
-    
+        Unique identifier of the configuration item (inherited & mandatory)
+    type : basestring
+        Source types (i.e. "deb" or "deb-src") (mandatory)
+    URI : basestring
+        Base of the distribution (mandatory)
+    Suite : basestring
+        Distribution suite (mandatory)
+    Component : basestring
 
     """
     id = attr.ib(validator=non_empty_string)
