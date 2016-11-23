@@ -27,8 +27,8 @@ matrix:
     # must operate nicely with those env variables set
     - http_proxy=
     - https_proxy=
-  - python: 3.3
   - python: 3.4
+  - python: 3.5
   # Those aren't yet ready since lxml Ibelieve fails to install
   #- python: pypy
   #- python: pypy3
@@ -60,7 +60,8 @@ script:
   # Verify that setup.py build doesn't puke
   - python setup.py build
   - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
-  - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package repronim --logging-level=INFO
+  # - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package repronim --logging-level=INFO
+  - coverage run `which py.test` repronim
   - if [ ! -z "$REPRONIM_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # Generate documentation and run doctests
   - PYTHONPATH=$PWD make -C docs html doctest

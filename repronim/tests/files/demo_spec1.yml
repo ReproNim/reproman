@@ -61,7 +61,7 @@ packages:
    upstream-name: "GNU C library"   # from copyright, Upstream-Name where present
                                      # and we might provide some translations for
                                      # some common victims
-   rchitecture: amd64       # as identified from /var/..._<arch=amd64>_Packages filename
+   architecture: amd64       # as identified from /var/..._<arch=amd64>_Packages filename
    # might be worth capturing information on alternative available versions
    # at that point.  Just an idea -- might be just a waste
    distributions-other-versions:
@@ -101,7 +101,7 @@ packages:
    version: 1.11.0-1maybeevencustombuild
    # we still need somehow to note that it is of "debian" type, but not assign
    # as specific distribution listed among distributions
-   distributions: debian
+   distribution: debian
    source: python-numpy
    upstream-name: NumPy
    # ...

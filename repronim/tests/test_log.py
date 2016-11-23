@@ -22,7 +22,7 @@ from repronim.tests.utils import with_tempfile, ok_, assert_equal
 # disabled
 @patch("repronim.log.is_interactive", lambda: True)
 @with_tempfile
-def test_logging_to_a_file(dst):
+def test_logging_to_a_file(dst=None):
     ok_(not exists(dst))
 
     lgr = LoggerHelper("repronimtest").get_initialized_logger(logtarget=dst)
@@ -44,7 +44,7 @@ def test_logging_to_a_file(dst):
                  line))
 
 @with_tempfile
-def test_logtarget_via_env_variable(dst):
+def test_logtarget_via_env_variable(dst=None):
     with patch.dict('os.environ', {'REPRONIMTEST_LOGTARGET': dst}):
         ok_(not exists(dst))
         lgr = LoggerHelper("repronimtest").get_initialized_logger()
@@ -54,7 +54,7 @@ def test_logtarget_via_env_variable(dst):
 
 @with_tempfile
 @with_tempfile
-def test_mutliple_targets(dst1, dst2):
+def test_mutliple_targets(dst1=None, dst2=None):
     ok_(not exists(dst1))
     ok_(not exists(dst2))
     lgr = LoggerHelper("repronimtest").get_initialized_logger(

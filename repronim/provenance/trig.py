@@ -21,8 +21,11 @@ class TrigProvenance(Provenance):
         self.graph = ConjunctiveGraph()
         self.graph.parse(source, format='trig')
 
-    def get_distribution(self):
-        return dict(OS='Ubuntu', version='12.04')
+    def get_os(self):
+        return 'Ubuntu'
+
+    def get_os_version(self):
+        return '12.04'
 
     def get_create_date(self):
         return '20091004T111800Z'

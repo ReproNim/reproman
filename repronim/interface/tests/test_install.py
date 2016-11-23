@@ -10,77 +10,47 @@
 from repronim.cmdline.main import main
 
 import logging
-from os.path import join as pathjoin
 from mock import patch, call
 
 from repronim.utils import swallow_logs
 from repronim.tests.utils import assert_in
-from repronim.tests.utils import with_tree
 from repronim.cmd import Runner
 
-
-# Sample output from Reprozip.
-REPROZIP_OUTPUT = """
-runs:
-# Run 0
-- architecture: x86_64
-  date: 2016-02-22T22:19:01.735754
-  argv: [echo, $MATH_EXPRESSION, '|', bc]
-  binary: /usr/bin/bc
-  distribution: [Ubuntu, '12.04']
-  environ: {TERM: xterm, MATH_EXPRESSION: '2+2'}
-  exitcode: 0
-  gid: 1003
-  hostname: nitrcce
-  id: run0
-  system: [Linux, 3.2.0-98-virtual]
-  uid: 1002
-  workingdir: /home/rbuccigrossi/simple_workflow
-packages:
-  - name: "base-files"
-    version: "6.5ubuntu6.8"
-    size: 429056
-    packfiles: true
-    files:
-      # Total files used: 103.0 bytes
-      # Installed package size: 419.00 KB
-      - "/etc/debian_version" # 11.0 bytes
-      - "/etc/host.conf" # 92.0 bytes
-  - name: "bc"
-    version: "1.06.95-2ubuntu1"
-    size: 1449984
-    packfiles: true
-    files:
-      # Total files used: 936.64 KB
-      # Installed package size: 1.38 MB
-      - "/bin/bash" # 936.64 KB
-"""
+import repronim.tests.fixtures
 
 
-@with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
-def test_install_packages_localhost(path):
-    """Test installing 2 packages on the localhost.
+def test_install_packages_localhost(demo1_spec):
     """
-    testfile = pathjoin(path, 'sample.yml')
-    with patch.object(Runner, 'run', return_value='installed package') as mocked_call, \
+    Test installing packages on the localhost.
+    """
+    with patch.object(Runner, 'run', return_value='installed package') as MockRunner, \
+        patch('os.environ.copy') as MockOS, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
-        main(['install', '--spec', testfile, '--platform', 'localhost'])
+        MockOS.return_value = {}
 
-        calls = [call(['apt-get', 'install', '-y', package], shell=True)
-                 for package in ('base-files', 'bc')]
-        mocked_call.assert_has_calls(calls)
+        args = ['install',
+                '--spec', demo1_spec,
+                '--platform', 'localhost']
+        main(args)
 
-        assert_in("Installing package: base-files", log.lines)
-        assert_in("Installing package: bc", log.lines)
-        assert_in("installed package", log.lines)
+        assert MockRunner.call_count == 9
+        calls = [
+            call(['apt-get', 'update']),
+            call(['apt-get', 'install', '-y', 'libc6-dev'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
+            call(['apt-get', 'install', '-y', 'python-nibabel'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
+            call(['apt-get', 'install', '-y', 'afni'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
+            # call(['conda', 'install', 'numpy'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
+        ]
+        MockRunner.assert_has_calls(calls, any_order=True)
+        assert_in("Adding Debian update to container command list.", log.lines)
 
 
-@with_tree(tree={'sample.yml': REPROZIP_OUTPUT})
-def test_install_packages_dockerengine(path):
-    """Test installing 2 packages into a Docker container.
+def test_install_packages_dockerengine(demo1_spec):
     """
-    testfile = pathjoin(path, 'sample.yml')
+    Test installing packages into a Docker container.
+    """
+
     with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
@@ -92,21 +62,24 @@ def test_install_packages_dockerengine(path):
         client.logs.return_value = 'container standard output'
 
         args = ['install',
-                    '--spec', testfile,
-                    '--platform', 'dockerengine',
-                    #'--host', 'tcp://127.0.0.1:2375',
-                    #'--image', 'repronim_test'
-                ]
+                    '--spec', demo1_spec,
+                    '--platform', 'dockerengine']
         main(args)
 
         assert client.build.called
-        assert client.create_container.called
-        assert client.start.called
-        calls = [call(environment={'MATH_EXPRESSION': '2+2', 'TERM': 'xterm'},
-                      image=None,
-                      name=None
-                      #image='repronim_test',
-                      #name='repronim_test'
-                    )]
+        calls = [call(image=u'9a754690460d', stdin_open=True)]
         client.create_container.assert_has_calls(calls)
+        calls = [
+            call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
+            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'libc6-dev'], container=u'd4cb4ee'),
+            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
+            call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
+            call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
+            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'afni'], container=u'd4cb4ee'),
+            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
+            call(cmd=['conda', 'install', 'numpy'], container=u'd4cb4ee'),
+        ]
+        client.exec_create.assert_has_calls(calls, any_order=True)
+        assert client.exec_start.call_count == 9
         assert_in("container standard output", log.lines)
+        assert_in("Adding Debian update to container command list.", log.lines)

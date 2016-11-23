@@ -104,7 +104,7 @@ def test_swallow_logs():
         eq_(cm.out, 'debug1\ninfo\n')  # not even visible at level 9
 
 
-def _check_setup_exceptionhook(interactive):
+def _check_setup_exceptionhook(interactive=None):
     old_exceptionhook = sys.excepthook
 
     post_mortem_tb = []
@@ -193,7 +193,7 @@ def test_getpwd_basic():
 @skip_if_on_windows
 @with_tempfile(mkdir=True)
 @assert_cwd_unchanged
-def test_getpwd_symlink(tdir):
+def test_getpwd_symlink(tdir=None):
     sdir = opj(tdir, 's1')
     pwd_orig = getpwd()
     os.symlink('.', sdir)
@@ -310,7 +310,7 @@ from .utils import with_tree
     },
     'git': 'just a file'
 })
-def test_find_files_exclude_vcs(repo):
+def test_find_files_exclude_vcs(repo=None):
     ff = find_files('.*', repo, dirs=True)
     files = list(ff)
     assert_equal({basename(f) for f in files}, {'d1', 'git'})

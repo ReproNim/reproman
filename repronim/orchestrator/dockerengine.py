@@ -54,9 +54,9 @@ class DockerengineOrchestrator(Orchestrator):
         """
 
         # Configure base Docker image and maintainer.
-        distribution = self.provenance.get_distribution()
-        self.dockerfile = 'FROM %s:%s\n' % (distribution['OS'].lower(),
-                                            distribution['version'])
+        os = self.provenance.get_os()
+        os_version = self.provenance.get_os_version()
+        self.dockerfile = 'FROM %s:%s\n' % (os.lower(), os_version)
         self.dockerfile += 'MAINTAINER staff@repronim.org\n'
 
         # Set up package installs.

@@ -40,7 +40,7 @@ JZ0An0Uoocusvjco1t6RAwxt/y3lQoWV
 =a3Nn
 -----END PGP SIGNATURE-----
 """)
-def test_get_spec_from_release_file(f):
+def test_get_spec_from_release_file(f=None):
     # ATM -- plain one to one, no conversions
     eq_(get_spec_from_release_file(f),
         DebianReleaseSpec(
