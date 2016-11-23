@@ -1,49 +1,111 @@
 #
-# Butch's exploration of a potential configuration heirarchy
+# Potential configuration heirarchy
+#
+
+#
+# apt and yum configuration doesn't appear to have a deep concept of "distributions"
+# so here I explore looking at "sources" from the apt and yum perspective
 #
 
 sources:
- - name: deb-neurodebian-data-main
+ #
+ # Info from APT sources come from /apt/sources.list and /apt/sources.list.d/*
+ #
+ - name: deb-neuro.debian.net-data-1
    type: apt
    configuration:
      type: deb
      uri: http://neuro.debian.net/debian
      suite: data
-     component: main
+     components: [main, contrib, non-free]
 
- - name: deb-neurodebian-data-contrib
+ - name: deb-neuro.debian.net-trusty-1
    type: apt
-   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: data, component: main}
+   configuration:
+     type: deb
+     uri: http://neuro.debian.net/debian
+     suite: trusty
+     components: [main, contrib, non-free]
 
- - name: deb-neurodebian-data-non-free
+ - name: deb-us.archive.ubuntu.com-xenial-1
    type: apt
-   config: deb http://neuro.debian.net/debian data non-free
+   configuration:
+     type: deb
+     uri: http://us.archive.ubuntu.com/ubuntu/
+     suite: xenial
+     components: [main restricted]
 
- - name: deb-neurodebian-trusty-main
+ - name: deb-src-us.archive.ubuntu.com-xenial-1
    type: apt
-   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: trusty, component: main}
+   configuration:
+     type: deb-src
+     uri: http://us.archive.ubuntu.com/ubuntu/
+     suite: xenial
+     components: [main restricted]
 
- - name: deb-neurodebian-trusty-contrib
-   type: apt
-   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: trusty, component: conrtib}
-
- - name: deb-neurodebian-trusty-non-free
-   type: apt
-   configuration: {type: deb, uri: http://neuro.debian.net/debian, suite: trusty, component: non-free}
-
- - name: centos-47.el6.centos-updates
+ #
+ # Info from yum sources come from /etc/yum.repos.d/*
+ # "[reponame]" is stored as configuration->name here
+ #
+ - name: base.repo
    type: yum
-   mirrorlist: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=updates
+   configuration:
+     name: base
+     mirrorlist: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os
 
- - name: some-online-package
-   type: uri
-   uri: http://downloadhere.gov/foo.zip
+ - name: updates.repo
+   type: yum
+   configuration:
+     name: updates
+     mirrorlist: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=updates
+
+ - name: puppetlabsproducts.repo
+   type: yum
+   configuration:
+     name: puppetlabsproducts
+     baseurl: http://yum.puppetlabs.com/el/$releasever/products/$basearch/
+     gpgkey: http://yum.puppetlabs.com/RPM-GPG-KEY-puppetlabs
+
+#
+# Once we have sources, we can then state where packages come from. I
+# was interested in trying to list multiple sources for a single
+# package, but this gets complex: a package in Debian may be split
+# across multiple packages in RHEL or CentOS. Maybe we should have
+# multiple package lists depending upon architecture?
+#
 
 packages:
+ 
+ #
+ # For apt, we need to use "dpkg -s" to get installed information
+ # and "apt-cache showpkg" to get repository information for installed package
+ # Note: "apt-cache show" only displays info for the repository's current version
+ #
+ # From "File: /var/lib/apt/lists/us.archive.ubuntu.com_ubuntu_dists_xenial_main_binary-amd64_Packages"
+ # we'd have to glean the right source
+ # 
+ - name: xterm
+   sources:
+    - name: deb-us.archive.ubuntu.com-xenial-1
+      component: main
+      version: 297-1ubuntu1
+      MD5: c1e47d60a01948be9aae7a2a4f63a0fe
+      
+ # 
+ # For yum, we need to use "yum info" to get key information
+ # We can run "yumdb info" to get more (like checksum and releasever)
+ # We can run
+ #    python -c 'import yum, pprint; yb = yum.YumBase(); pprint.pprint(yb.conf.yumvar, width=1)'
+ # to get yum variables
+
  - name: httpd
    sources:
-    - name: centos-47.el6.centos-updates
-      arch: x86_64
+    - name: updates.repo
+      basearch: x86_64
+      releasever: 6
       version: 2.2.15
-      release: 55.el6.centos.2
+      release: 47.el6.centos
+      checksum_data: 61ca6854432b81e3d2c9fd117df9a0167fdcdd6ee99e6e6ab89710017b64f36d
+      checksum_type: sha256
+
 
