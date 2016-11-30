@@ -11,4 +11,4 @@
 
 # Some commonly used fixtures
 
-from repronim.tests.fixtures import demo1_spec
+from repronim.tests.fixtures import demo1_spec, repronim_cfg_path

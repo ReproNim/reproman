@@ -6,25 +6,39 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Orchestrator sub-class to provide management of the localhost environment."""
+"""Container sub-class to provide management of the localhost environment."""
 
 import os
 from repronim.container.base import Container
 from repronim.cmd import Runner
 
 
-class LocalhostContainer(Container):
+class LocalshellContainer(Container):
 
-    def __init__(self, config={}):
-        super(LocalhostContainer, self).__init__(config)
+    def __init__(self, resource, config={}):
+        """
+        Factory method for creating the appropriate Container sub-class.
 
-    def create(self, base_image_id=None):
+        Parameters
+        ----------
+        resource : object
+            Resource sub-class instance
+        config : dictionary
+            Configuration parameters for the container.
+
+        Returns
+        -------
+        Container sub-class instance.
+        """
+        super(LocalshellContainer, self).__init__(resource, config)
+
+    def create(self, image_id=None):
         """
         Create a container instance.
 
         Parameters
         ----------
-        base_image_id : string
+        image_id : string
             Identifier of the base image used to create the container.
         """
 

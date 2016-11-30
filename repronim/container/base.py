@@ -20,16 +20,22 @@ class Container(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, config):
+    def __init__(self, resource, config):
         """
         Class constructor
 
         Parameters
         ----------
+        resource : object
+            Instance of a Resource sub-class
         config : dictionary
             Configuration parameters for the container.
         """
-        self._config = config
+
+        # Merge runtime config parameters into resource config.
+        resource._config.update(config)
+
+        self._resource = resource
         self._command_buffer = [] # Each element is a dictionary in the
                                   # form {command=[], env={}}
         self._env = {}
@@ -37,14 +43,14 @@ class Container(object):
 
     @staticmethod
     @contextmanager
-    def factory(container_engine, config = {}):
+    def factory(resource, config = {}):
         """
         Factory method for creating the appropriate Container sub-class.
 
         Parameters
         ----------
-        container_engine : string
-            Name of container engine. Current valid values are: 'dockerengine'
+        resource : object
+            Platform sub-class instance
         config : dictionary
             Configuration parameters for the container.
 
@@ -52,21 +58,22 @@ class Container(object):
         -------
         Container sub-class instance.
         """
-        class_name = container_engine.capitalize() + 'Container'
-        module = import_module('repronim.container.' + container_engine)
-        instance = getattr(module, class_name)(config)
+        container_name = resource.get_config('container').replace('-', '')
+        class_name = container_name.capitalize() + 'Container'
+        module = import_module('repronim.container.' + container_name)
+        instance = getattr(module, class_name)(resource, config)
         instance.create()
         yield instance
         instance.execute_command_buffer()
 
     @abc.abstractmethod
-    def create(self, base_image_id=None):
+    def create(self, image_id=None):
         """
         Create a container instance.
 
         Parameters
         ----------
-        base_image_id : string
+        image_id : string
             Identifier of the base image used to create the container.
         """
         return
@@ -119,11 +126,11 @@ class Container(object):
         list
             STDOUT lines from container
         """
-        stdout = []
         for command in self._command_buffer:
-            stdout + self.execute_command(command['command'], command['env'])
-
-        return stdout
+            self._lgr.info("Running command '%s'", command['command'])
+            stdout = self.execute_command(command['command'], command['env'])
+            if stdout:
+                self._lgr.info("\n".join(stdout))
 
     def set_envvar(self, var, value):
         """
@@ -160,3 +167,36 @@ class Container(object):
         if custom_env:
             merged_env.update(custom_env)
         return merged_env
+
+    def get_config(self, key):
+        """
+        Convenience method to access the configuration parameters in the
+        resource object.
+
+        Parameters
+        ----------
+        key : string
+            Identifier of configuration setting.
+
+        Returns
+        -------
+        Value of configuration parameter indexed by the key.
+        """
+        return self._resource.get_config(key)
+
+    def set_config(self, key, value):
+        """
+        Convenience method to set a configuration parameter in the
+        resource object.
+
+        Parameters
+        ----------
+        key : string
+            Identifier of configuration setting.
+        value : string
+            Value of the configuration setting.
+
+        Returns
+        -------
+        """
+        self._resource.set_config(key, value)

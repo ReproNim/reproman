@@ -50,6 +50,8 @@ requires = {
         'pyyaml',
         'six>=1.8.0',
         'tqdm',
+        'paramiko',
+        'cryptography',
     ],
     'debian': [
         'python-debian',
@@ -57,6 +59,9 @@ requires = {
     ],
     'docker': [
         'docker-py',
+    ],
+    'aws': [
+        'boto3',
     ],
     'meta': [
         'rdflib',

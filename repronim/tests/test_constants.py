@@ -16,3 +16,7 @@ REPROZIP_SPEC1 = open(REPROZIP_SPEC1_YML_FILENAME).read()
 # examples/demo_spec1.yml
 DEMO_SPEC1_YML_FILENAME = opj(dirname(__file__), 'files', 'demo_spec1.yml')
 DEMO_SPEC1 = open(DEMO_SPEC1_YML_FILENAME).read()
+
+# Configuration file for testing
+REPRONIM_CFG_PATH = opj(dirname(__file__), 'files', 'repronim.cfg')
+REPRONIM_CFG = open(REPRONIM_CFG_PATH).read()

@@ -15,57 +15,47 @@ import json
 from repronim.container.base import Container
 
 
-class DockerengineContainer(Container):
+class DockercontainerContainer(Container):
     """
     Container manager which talks to a Docker engine.
     """
 
-    def __init__(self, config = {}):
+    def __init__(self, resource, config = {}):
         """
         Class constructor
 
         Parameters
         ----------
+        resource : object
+            Resource sub-class instance
         config : dictionary
             Configuration parameters for the container.
         """
 
-        self.image_id = None
-        self.container_id = None
+        self._image_id = None
+        self._container_id = None
 
-        # Set default configuration parameters for Docker engine.
-        if not 'engine_url' in config:
-            config['engine_url'] = 'unix:///var/run/docker.sock'
-        if not 'stdin_open' in config:
-            config['stdin_open'] = True
-        if not 'base_image_tag' in config:
-            config['base_image_tag'] = 'ubuntu:latest'
-
-        super(DockerengineContainer, self).__init__(config)
+        super(DockercontainerContainer, self).__init__(resource, config)
 
         # Initialize the client connection to Docker engine.
-        self.client = docker.Client(base_url=config['engine_url'])
+        self._client = docker.Client(self.get_config('engine_url'))
 
-    def create(self, base_image_tag=None):
+    def create(self, image_id=None):
         """
         Create a baseline Docker image and run it to create the container.
 
         Parameters
         ----------
-        base_image_tag : string
+        image_id : string
             Docker repository:tag string that identifies the Docker image
             to use when creating the container. e.g. "debian:8.5"
         """
-        if not base_image_tag:
-            base_image_tag = self._config['base_image_tag']
+        if not image_id:
+            image_id = self.get_config('base_image_tag')
 
-        dockerfile = self._get_base_image_dockerfile(base_image_tag)
+        dockerfile = self._get_base_image_dockerfile(image_id)
         self._build_image(dockerfile)
         self._run_container()
-
-    def set_envvar(self, var, value):
-        # TODO: add ENV to docker
-        raise NotImplementedError("pass setting ENV for docker instance")
 
     def execute_command(self, command, env=None):
         """
@@ -90,9 +80,9 @@ class DockerengineContainer(Container):
 
         if command_env:
             # TODO: might not work - not tested it
-            command = ['%s=%s' % k for k in command_env.items()] + command
-        execute = self.client.exec_create(container=self.container_id, cmd=command)
-        response = [line for line in self.client.exec_start(exec_id=execute['Id'], stream=True)]
+            command = ['%s=%s;' % k for k in command_env.items()] + command
+        execute = self._client.exec_create(container=self._container_id, cmd=command)
+        response = [line for line in self._client.exec_start(exec_id=execute['Id'], stream=True)]
         return response
 
     def _get_base_image_dockerfile(self, base_image_tag):
@@ -123,7 +113,7 @@ class DockerengineContainer(Container):
             The contents of the Dockerfile used to create the contaner.
         """
         f = BytesIO(dockerfile.encode('utf-8'))
-        response = [json.loads(line) for line in self.client.build(fileobj=f, rm=True)]
+        response = [json.loads(line) for line in self._client.build(fileobj=f, rm=True)]
         self._lgr.debug(response)
         if 'error' in response[-1]:
             raise Exception("Docker error - %s" % response[-1]['error'])
@@ -131,26 +121,26 @@ class DockerengineContainer(Container):
 
         # Retrieve image_id from last result string which is in the
         # form of: u'Successfully built 73ccd6b8d194\n'
-        self.image_id = response[-1]['stream'].split(' ')[2][:-1]
+        self._image_id = response[-1]['stream'].split(' ')[2][:-1]
 
     def _run_container(self):
         """
         Start the Docker container from the image.
         """
-        container = self.client.create_container(image=self.image_id,
-            stdin_open=self._config['stdin_open'])
-        self.client.start(container)
-        self._lgr.debug(self.client.logs(container))
-        self.container_id = container['Id']
+        container = self._client.create_container(image=self._image_id,
+            stdin_open=self.get_config('stdin_open'))
+        self._client.start(container)
+        self._lgr.debug(self._client.logs(container))
+        self._container_id = container['Id']
 
     def remove_container(self):
         """
         Deletes a container from the Docker engine.
         """
-        self.client.remove_container(self.container_id)
+        self._client.remove_container(self._container_id)
 
     def remove_image(self):
         """
         Deletes an image from the Docker engine.
         """
-        self.client.remove_container(self.image_id)
+        self._client.remove_container(self._image_id)
