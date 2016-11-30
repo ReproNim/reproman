@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Environment Configuration Classes
+"""ReproNim Experiment Environment Configuration
 
 """
 
