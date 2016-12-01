@@ -34,6 +34,10 @@ def test_register_config_item_empty_string_name():
         c = ConfigurationItem(id="test")
         register_config_item("",c)
 
+def test_register_config_item_non_config_item():
+    with pytest.raises(ValueError):
+        register_config_item("test",3)
+
 def test_register_config_item_duplicate_handler():
     with pytest.raises(ValueError):
         c = ConfigurationItem(id="test")
