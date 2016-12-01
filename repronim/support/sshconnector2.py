@@ -20,6 +20,14 @@ class SSHConnector2(object):
     Manage and use an SSH connection.
     """
 
+    # TODO: eventually we might need to have
+    #  - X forwarding
+    #     see e.g. http://stackoverflow.com/a/12876252 on how to do with Paramiko
+    #  - local port forwarding... to channel VNC session -- not sure if
+    #     could be done with paramiko.  there is sshtunnel Python module though
+    #     and some homebrewed solutions on top of paramiko:
+    #     http://stackoverflow.com/a/12106387
+    #  Get back to reprozip and check what they did?
     def __init__(self, host, username='ubuntu', key_filename=None):
         """
         Collect the connection parameters and create client object.
@@ -38,6 +46,7 @@ class SSHConnector2(object):
         self._key_filename = key_filename
 
         self._client = paramiko.SSHClient()
+        # TODO: make configurable
         self._client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     def __enter__(self):
@@ -94,11 +103,13 @@ class SSHConnector2(object):
 
         # Wait for command to complete. This is a blocking call.
         exit_status = stdout.channel.recv_exit_status()
-        lgr.debug("Command '%s' had and exit status = %i", cmd, exit_status)
+        lgr.debug("Command '%s' completed, exit status = %i", cmd, exit_status)
 
         for line in stdout.read().splitlines():
             stdout_lines.append(line)
 
+        # TODO:  decide on either throw an exception or return exit status
+        # We must not just swallow/warn about it
         if exit_status != 0:
             lgr.warning("Command '%s' failed, exit status = %i", cmd, exit_status)
 
