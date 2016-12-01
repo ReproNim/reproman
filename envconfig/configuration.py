@@ -38,6 +38,8 @@ def register_config_item(name, handler_class):
 
     Return
     ------
+    int
+        The number of registered handlers
 
     Raises
     ------
@@ -58,5 +60,44 @@ def register_config_item(name, handler_class):
     _handlers[name] = handler_class;
 
     return(len(_handlers))
+
+def yaml_to_configuration_item_array(yaml_string):
+    """Parse YAML string into an array of ConfigurationItems using registered handlers
+
+    Using the globally registered ConfigurationItem objects, this function parses
+    a YAML string into an array of ConfigurationItems that can then be used to 
+    generate an environment.
+
+    Parameters
+    ----------
+    yaml_string : string
+        The YAML configuration file
+
+    Return
+    ------
+    array
+        An array of parsed ConfigurationItem objects
+
+    """
+    raise NotImplementedError("TODO");
+
+def configuration_item_array_to_yaml(config_items):
+    """Generates the YAML string from an array of configuration items
+
+    Given an array of ConfigurationItem objects, this function generates the
+    ReproNim YAML configuration string used to store that configuration.
+
+    Parameters
+    ----------
+    config_items : array of ConfigurationItem
+        The environment configuration
+
+    Return
+    ------
+    string
+        The YAML representation of the array
+
+    """
+    raise NotImplementedError("TODO");
 
 
