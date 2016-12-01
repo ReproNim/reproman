@@ -3,68 +3,30 @@
 #
 
 #
-# apt and yum configuration doesn't appear to have a deep concept of "distributions"
-# so here I explore looking at "sources" from the apt and yum perspective
-#
+# A "source" is a source for a number of packages. We'll initially start supporting one 
+# type: apt.sources
 
-sources:
+apt.sources:
  #
- # Info from APT sources come from /apt/sources.list and /apt/sources.list.d/*
+ # A "distribution" (such as "Debian" or "NeuroDebian") is a collection of sources already
+ # known to ReproNim with built-in logic to pull dated snapshots of packages.
  #
- - name: deb-neuro.debian.net-data-1
-   type: apt
-   configuration:
-     type: deb
-     uri: http://neuro.debian.net/debian
-     suite: data
-     components: [main, contrib, non-free]
-
- - name: deb-neuro.debian.net-trusty-1
-   type: apt
-   configuration:
-     type: deb
-     uri: http://neuro.debian.net/debian
-     suite: trusty
-     components: [main, contrib, non-free]
-
- - name: deb-us.archive.ubuntu.com-xenial-1
-   type: apt
-   configuration:
-     type: deb
-     uri: http://us.archive.ubuntu.com/ubuntu/
-     suite: xenial
-     components: [main restricted]
-
- - name: deb-src-us.archive.ubuntu.com-xenial-1
-   type: apt
-   configuration:
-     type: deb-src
-     uri: http://us.archive.ubuntu.com/ubuntu/
-     suite: xenial
-     components: [main restricted]
-
+ - name: NeuroDebian-1
+   distribution: NeuroDebian
+   type: deb
+   suite: xenial
+   architecture: amd64
+   component main
  #
- # Info from yum sources come from /etc/yum.repos.d/*
- # "[reponame]" is stored as configuration->name here
+ # If repronim isn't familiar with the source's distribution, just record the 
+ # sources.list information
  #
- - name: base.repo
-   type: yum
-   configuration:
-     name: base
-     mirrorlist: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os
-
- - name: updates.repo
-   type: yum
-   configuration:
-     name: updates
-     mirrorlist: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=updates
-
- - name: puppetlabsproducts.repo
-   type: yum
-   configuration:
-     name: puppetlabsproducts
-     baseurl: http://yum.puppetlabs.com/el/$releasever/products/$basearch/
-     gpgkey: http://yum.puppetlabs.com/RPM-GPG-KEY-puppetlabs
+ - name: us.archive.ubuntu.com-1
+   uri: http://us.archive.ubuntu.com/ubuntu/
+   type: deb
+   suite: xenial
+   architecture: amd64
+   component: main
 
 #
 # Once we have sources, we can then state where packages come from. I
@@ -74,38 +36,40 @@ sources:
 # multiple package lists depending upon architecture?
 #
 
-packages:
- 
+apt.packages:
  #
  # For apt, we need to use "dpkg -s" to get installed information
- # and "apt-cache showpkg" to get repository information for installed package
- # Note: "apt-cache show" only displays info for the repository's current version
+ # We use "apt-cache show" to get the MD5sum (if available)
+ # "apt-cache showpkg" to get repository information for installed package
+ # We can use the date of /var/lib/dpkg/info/PACKAGE.list to get the install date:
+ #  "stat -c %y /var/lib/dpkg/info/fslview.list"
  #
- # From "File: /var/lib/apt/lists/us.archive.ubuntu.com_ubuntu_dists_xenial_main_binary-amd64_Packages"
+ # From "(/var/lib/apt/lists/neuro.debian.net_debian_dists_xenial_main_binary-amd64_Packages)"
  # we'd have to glean the right source
  # 
+ # For "xterm" I have a version (297-1ubuntu1) that is older than the current one
+ # (322-1ubuntu1). For this reason we can't get the MD5sum or the size from "apt-cache show".
+ # And we have to guess the distribution using the information from the newest version
+ # using "apt-cache showpkg"
+ #
  - name: xterm
-   sources:
-    - name: deb-us.archive.ubuntu.com-xenial-1
-      component: main
-      version: 297-1ubuntu1
-      MD5: c1e47d60a01948be9aae7a2a4f63a0fe
-      
+   source: us.archive.ubuntu.com-1
+   version: 297-1ubuntu1
+   date: 2016-09-10 09:37:49.627803689 -0400
+
  # 
- # For yum, we need to use "yum info" to get key information
- # We can run "yumdb info" to get more (like checksum and releasever)
- # We can run
- #    python -c 'import yum, pprint; yb = yum.YumBase(); pprint.pprint(yb.conf.yumvar, width=1)'
- # to get yum variables
+ # For "fslview" we do have the latest version, so I gcan get the filename, size, and
+ # hash information.
+ #
+ - name: fslview
+   source: NeuroDebian-1
+   version: 4.0.1-6~nd+1+nd16.04+1
+   date: 2016-11-30 18:25:05.659524447 -0500
+   Filename: pool/main/f/fslview/fslview_4.0.1-6~nd+1+nd16.04+1_amd64.deb
+   Size: 1344678
+   SHA256: e63635f648e66f1ed1a8ce622bd7510aa5406dab67da1296ac9bf2ebe683dfc7
+   SHA1: 1ef5299926d994293e44554757b29d508c88482c
+   MD5sum: 7a00919d11c047c4e4e3fd90add99cc8
 
- - name: httpd
-   sources:
-    - name: updates.repo
-      basearch: x86_64
-      releasever: 6
-      version: 2.2.15
-      release: 47.el6.centos
-      checksum_data: 61ca6854432b81e3d2c9fd117df9a0167fdcdd6ee99e6e6ab89710017b64f36d
-      checksum_type: sha256
-
+   
 
