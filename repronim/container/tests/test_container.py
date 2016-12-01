@@ -149,6 +149,6 @@ def test_sending_command_to_ec2(repronim_cfg_path):
         assert_in("Running command '['apt-get', 'install', '-y', 'base-files']'", log.lines)
         assert_in("Command 'export DEBIAN_FRONTEND=noninteractive; apt-get install -y base-files' failed, exit status = 1", log.lines)
         assert_in("Running command '['apt-get', 'install', '-y', 'bc']'", log.lines)
-        assert_in("Command 'export DEBIAN_FRONTEND=noninteractive; apt-get install -y bc' had and exit status = 1", log.lines)
+        assert_in("Command 'export DEBIAN_FRONTEND=noninteractive; apt-get install -y bc' completed, exit status = 1", log.lines)
 
 
