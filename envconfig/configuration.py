@@ -19,7 +19,7 @@ from envconfig.config_item import ConfigurationItem
 # A dict of registered handlers. The keys are cnfiguration names (used
 # for case-insensitive matching with the configuration file).  The
 # values are registered subclasses of ConfigurationItem.
-__handlers = {}
+_handlers = {}
 
 def register_config_item(name, handler_class):
     """Register a config_item class
@@ -52,9 +52,11 @@ def register_config_item(name, handler_class):
         raise ValueError("'name' must not be empty.")
     if not(isinstance(handler_class, ConfigurationItem)):
         raise ValueError("'handler_class' must be ConfigurationItem.")
+    if (name in _handlers):
+        raise ValueError("A handler for '{0}' has already been defined.".format(name))
 
-    __handlers[name] = handler_class;
+    _handlers[name] = handler_class;
 
-    return(len(__handlers))
+    return(len(_handlers))
 
 
