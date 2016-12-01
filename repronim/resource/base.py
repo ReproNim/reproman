@@ -66,7 +66,6 @@ class Resource(object):
         if len(cm._sections) == 1:
             raise MissingConfigError("Cannot locate a repronim.cfg file.")
 
-        x = cm.sections()
         default_config = dict(cm.items('resource ' + resource_id))
         if not default_config:
             raise MissingConfigError(
