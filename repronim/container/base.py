@@ -67,14 +67,9 @@ class Container(object):
         instance.execute_command_buffer()
 
     @abc.abstractmethod
-    def create(self, image_id=None):
+    def create(self):
         """
         Create a container instance.
-
-        Parameters
-        ----------
-        image_id : string
-            Identifier of the base image used to create the container.
         """
         return
 
@@ -127,10 +122,10 @@ class Container(object):
             STDOUT lines from container
         """
         for command in self._command_buffer:
-            self._lgr.info("Running command '%s'", command['command'])
+            self._lgr.debug("Running command '%s'", command['command'])
             stdout = self.execute_command(command['command'], command['env'])
             if stdout:
-                self._lgr.info("\n".join(stdout))
+                self._lgr.debug("\n".join(stdout))
 
     def set_envvar(self, var, value):
         """

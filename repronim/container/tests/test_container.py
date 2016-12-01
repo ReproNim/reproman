@@ -94,8 +94,8 @@ def test_sending_command_to_docker(repronim_cfg_path):
         client.start.assert_has_calls(calls)
         calls = [
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'base-files'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'bc'], container=u'd4cb4ee')
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'base-files'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'bc'], container=u'd4cb4ee')
         ]
         client.exec_create.assert_has_calls(calls)
         assert client.exec_start.call_count == 3
@@ -134,9 +134,9 @@ def test_sending_command_to_ec2(repronim_cfg_path):
         calls = [
             call().exec_command('apt-get update'),
             call().exec_command(
-                'DEBIAN_FRONTEND=noninteractive; apt-get install -y base-files'),
+                'export DEBIAN_FRONTEND=noninteractive; apt-get install -y base-files'),
             call().exec_command(
-                'DEBIAN_FRONTEND=noninteractive; apt-get install -y bc'),
+                'export DEBIAN_FRONTEND=noninteractive; apt-get install -y bc'),
         ]
         MockSSH.assert_has_calls(calls)
 
@@ -147,8 +147,8 @@ def test_sending_command_to_ec2(repronim_cfg_path):
         assert_in("Running command '['apt-get', 'update']'", log.lines)
         assert_in("Command 'apt-get update' failed, exit status = 1", log.lines)
         assert_in("Running command '['apt-get', 'install', '-y', 'base-files']'", log.lines)
-        assert_in("Command 'DEBIAN_FRONTEND=noninteractive; apt-get install -y base-files' failed, exit status = 1", log.lines)
+        assert_in("Command 'export DEBIAN_FRONTEND=noninteractive; apt-get install -y base-files' failed, exit status = 1", log.lines)
         assert_in("Running command '['apt-get', 'install', '-y', 'bc']'", log.lines)
-        assert_in("Command 'DEBIAN_FRONTEND=noninteractive; apt-get install -y bc' had and exit status = 1", log.lines)
+        assert_in("Command 'export DEBIAN_FRONTEND=noninteractive; apt-get install -y bc' had and exit status = 1", log.lines)
 
 

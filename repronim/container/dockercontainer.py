@@ -37,23 +37,21 @@ class DockercontainerContainer(Container):
 
         super(DockercontainerContainer, self).__init__(resource, config)
 
+        if not self.get_config('base_image_tag'):
+            self.set_config('base_image_tag', 'ubuntu:latest')
+        if not self.get_config('engine_url'):
+            self.set_config('engine_url', 'unix:///var/run/docker.sock')
+        if not self.get_config('stdin_open'):
+            self.set_config('stdin_open', True)
+
         # Initialize the client connection to Docker engine.
         self._client = docker.Client(self.get_config('engine_url'))
 
-    def create(self, image_id=None):
+    def create(self):
         """
         Create a baseline Docker image and run it to create the container.
-
-        Parameters
-        ----------
-        image_id : string
-            Docker repository:tag string that identifies the Docker image
-            to use when creating the container. e.g. "debian:8.5"
         """
-        if not image_id:
-            image_id = self.get_config('base_image_tag')
-
-        dockerfile = self._get_base_image_dockerfile(image_id)
+        dockerfile = self._get_base_image_dockerfile(self.get_config('base_image_tag'))
         self._build_image(dockerfile)
         self._run_container()
 
@@ -80,7 +78,7 @@ class DockercontainerContainer(Container):
 
         if command_env:
             # TODO: might not work - not tested it
-            command = ['%s=%s;' % k for k in command_env.items()] + command
+            command = ['export %s=%s;' % k for k in command_env.items()] + command
         execute = self._client.exec_create(container=self._container_id, cmd=command)
         response = [line for line in self._client.exec_start(exec_id=execute['Id'], stream=True)]
         return response

@@ -32,14 +32,9 @@ class LocalshellContainer(Container):
         """
         super(LocalshellContainer, self).__init__(resource, config)
 
-    def create(self, image_id=None):
+    def create(self):
         """
         Create a container instance.
-
-        Parameters
-        ----------
-        image_id : string
-            Identifier of the base image used to create the container.
         """
 
         # Nothing to do to create the localhost "container".

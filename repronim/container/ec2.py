@@ -48,20 +48,12 @@ class Ec2Container(Container):
             region_name=self.get_config('region_name')
         )
 
-    def create(self, image_id=None):
+    def create(self):
         """
         Create an EC2 instance.
-
-        Parameters
-        ----------
-        image_id : string
-            Identifier of the AMI used to build the EC2 instance.
         """
-        if not image_id:
-            image_id = self.get_config('ami_id')
-
         instances = self._ec2_resource.create_instances(
-            ImageId=image_id,
+            ImageId=self.get_config('ami_id'),
             InstanceType=self.get_config('instance_type'),
             KeyName=self.get_config('key_name'),
             MinCount=1,
@@ -118,7 +110,7 @@ class Ec2Container(Container):
 
         if command_env:
             # TODO: might not work - not tested it
-            command = ['%s=%s;' % k for k in command_env.items()] + command
+            command = ['export %s=%s;' % k for k in command_env.items()] + command
 
         stdout = ssh(" ".join(command))
 

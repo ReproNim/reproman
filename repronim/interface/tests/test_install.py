@@ -75,12 +75,12 @@ def test_install_packages_dockerengine(demo1_spec, repronim_cfg_path):
         client.create_container.assert_has_calls(calls)
         calls = [
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'libc6-dev'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'libc6-dev'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'afni'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'afni'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
             call(cmd=['conda', 'install', 'numpy'], container=u'd4cb4ee'),
         ]
         client.exec_create.assert_has_calls(calls, any_order=True)

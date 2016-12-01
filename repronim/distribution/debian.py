@@ -38,7 +38,6 @@ class DebianDistribution(Distribution):
         """
         self.lgr.debug("Adding Debian update to container command list.")
         container.add_command(['apt-get', 'update'])
-        return
 
     def install_packages(self, container):
         """
@@ -56,4 +55,3 @@ class DebianDistribution(Distribution):
                 ['apt-get', 'install', '-y', package['name']],
                 env={'DEBIAN_FRONTEND': 'noninteractive'}
             )
-        return
