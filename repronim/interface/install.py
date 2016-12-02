@@ -16,8 +16,8 @@ from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..provenance import Provenance
+from ..resource import Resource
 from ..container import Container
-from .. import cfg
 
 from logging import getLogger
 lgr = getLogger('repronim.api.install')
@@ -29,7 +29,7 @@ class Install(Interface):
     Examples
     --------
 
-      $ repronim install --spec recipe_for_failure.yml
+      $ repronim install --spec recipe_for_failure.yml --resource docker
 
     """
 
@@ -45,34 +45,36 @@ class Install(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
-        platform=Parameter(
-            args=("--platform",),
-            doc="platform environment to install on",
+        resource=Parameter(
+            args=("--resource",),
+            doc="name of target resource to install spec on",
+            metavar='RESOURCE',
             constraints=EnsureStr(),
-            choices=['localhost', 'dockerengine'],
         ),
-        # host=Parameter(
-        #     args=("--host",),
-        #     doc="host name or ip and port to install environment",
-        #     constraints=EnsureStr(),
-        # ),
-        # image=Parameter(
-        #     args=("--image",),
-        #     doc="image name of environment",
-        #     constraints=EnsureStr(),
-        # ),
+        config=Parameter(
+            args=("--config",),
+            doc="path to repronim configuration file",
+            metavar='CONFIG',
+            constraints=EnsureStr(),
+        ),
     )
 
     @staticmethod
-    def __call__(spec, platform='dockerengine'):
+    def __call__(spec, resource, config):
+
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
         print("SPEC: {}".format(spec))
 
+        if not resource:
+            raise InsufficientArgumentsError("Need at least a single --resource")
+        print("RESOURCE: {}".format(resource))
+
         filename = spec[0]
         provenance = Provenance.factory(filename)
+        resource = Resource.factory(resource, config_path=config)
 
-        with Container.factory(platform) as container:
+        with Container.factory(resource) as container:
             for distribution in provenance.get_distributions():
                 distribution.initiate(container)
                 distribution.install_packages(container)

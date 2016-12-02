@@ -8,7 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import pytest
-from .test_constants import DEMO_SPEC1_YML_FILENAME, REPROZIP_SPEC1
+from .test_constants import DEMO_SPEC1_YML_FILENAME, REPRONIM_CFG_PATH
 
 DEMO1_SPECS = [
     DEMO_SPEC1_YML_FILENAME,
@@ -17,9 +17,18 @@ DEMO1_SPECS = [
     # REPROZIP_SPEC1
 ]
 
+# Substitutes in for user's ~/.config/repronim.cfg file
+CONFIGURATION = [
+    REPRONIM_CFG_PATH
+]
+
 
 # Let's make a convenience fixture to run tests against demo1 file(s)
 @pytest.fixture(params=DEMO1_SPECS)
 def demo1_spec(request):
+    yield request.param
+
+@pytest.fixture(params=CONFIGURATION)
+def repronim_cfg_path(request):
     yield request.param
 

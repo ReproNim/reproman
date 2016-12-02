@@ -44,6 +44,8 @@ class InsufficientArgumentsError(ValueError):
 class SpecLoadingError(IOError):
     """To be raised when spec file fails to load"""
     pass
-#
-#
-#
+
+
+class MissingConfigError(RuntimeError):
+    """To be raised when missing configuration files or parameters"""
+    pass

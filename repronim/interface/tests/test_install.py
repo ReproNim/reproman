@@ -19,7 +19,7 @@ from repronim.cmd import Runner
 import repronim.tests.fixtures
 
 
-def test_install_packages_localhost(demo1_spec):
+def test_install_packages_localhost(demo1_spec, repronim_cfg_path):
     """
     Test installing packages on the localhost.
     """
@@ -31,7 +31,9 @@ def test_install_packages_localhost(demo1_spec):
 
         args = ['install',
                 '--spec', demo1_spec,
-                '--platform', 'localhost']
+                '--resource', 'localhost-shell',
+                '--config', repronim_cfg_path,
+                ]
         main(args)
 
         assert MockRunner.call_count == 9
@@ -46,7 +48,7 @@ def test_install_packages_localhost(demo1_spec):
         assert_in("Adding Debian update to container command list.", log.lines)
 
 
-def test_install_packages_dockerengine(demo1_spec):
+def test_install_packages_dockerengine(demo1_spec, repronim_cfg_path):
     """
     Test installing packages into a Docker container.
     """
@@ -63,7 +65,9 @@ def test_install_packages_dockerengine(demo1_spec):
 
         args = ['install',
                     '--spec', demo1_spec,
-                    '--platform', 'dockerengine']
+                    '--resource', 'remote-docker',
+                    '--config', repronim_cfg_path,
+                ]
         main(args)
 
         assert client.build.called
@@ -71,12 +75,12 @@ def test_install_packages_dockerengine(demo1_spec):
         client.create_container.assert_has_calls(calls)
         calls = [
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'libc6-dev'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'libc6-dev'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
             call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'afni'], container=u'd4cb4ee'),
-            call(cmd=['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'afni'], container=u'd4cb4ee'),
+            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'python-nibabel'], container=u'd4cb4ee'),
             call(cmd=['conda', 'install', 'numpy'], container=u'd4cb4ee'),
         ]
         client.exec_create.assert_has_calls(calls, any_order=True)

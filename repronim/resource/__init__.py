@@ -6,11 +6,11 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Facility for installing and managing environments on targeted servers.
+"""Facility for managing compute resources.
 
 """
 
 __docformat__ = 'restructuredtext'
 
-# Allow base Orchestrator class to be available directly from the package.
-from repronim.orchestrator.base import Orchestrator
+# Allow base Container class to be available directly from the package.
+from repronim.resource.base import Resource
