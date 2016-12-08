@@ -111,15 +111,18 @@ class DockercontainerContainer(Container):
             The contents of the Dockerfile used to create the contaner.
         """
         f = BytesIO(dockerfile.encode('utf-8'))
-        response = [json.loads(line) for line in self._client.build(fileobj=f, rm=True)]
-        self._lgr.debug(response)
-        if 'error' in response[-1]:
-            raise Exception("Docker error - %s" % response[-1]['error'])
+        last_response = None
+        for i, line in enumerate(self._client.build(fileobj=f, rm=True)):
+            last_response = json.loads(line)
+            self._lgr.debug("build#%i: %s", i, line.rstrip())
+
+        if last_response and 'error' in last_response:
+            raise Exception("Docker error - %s" % last_response['error'])
             # TODO: Need to figure out how to remove lingering container image from engine.
 
         # Retrieve image_id from last result string which is in the
         # form of: u'Successfully built 73ccd6b8d194\n'
-        self._image_id = response[-1]['stream'].split(' ')[2][:-1]
+        self._image_id = last_response['stream'].split(' ')[2][:-1]
 
     def _run_container(self):
         """
