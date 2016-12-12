@@ -6,14 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Orchestrator sub-class to provide management of Vagrant instances."""
+"""Common tests configuration for py.test
+"""
 
-from repronim.orchestrator.base import Orchestrator
+# Some commonly used fixtures
 
-class VagrantOrchestrator(Orchestrator):
-
-    def __init__(self, provenance):
-        super(VagrantOrchestrator, self).__init__(provenance)
-
-    def install_packages(self):
-        return
+from repronim.tests.fixtures import demo1_spec, repronim_cfg_path

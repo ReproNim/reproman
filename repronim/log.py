@@ -128,7 +128,8 @@ class ColorFormatter(logging.Formatter):
                 ("{%(process)d}" if log_pid else "") +
                 "[%(levelname)s] "
                 "%(message)s "
-                "($BOLD%(filename)s$RESET:%(lineno)d)")
+                # "($BOLD%(filename)s$RESET:%(lineno)d)"
+                )
 
     def formatter_msg(self, fmt, use_color=False):
         if use_color:

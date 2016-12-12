@@ -67,7 +67,7 @@ def test_with_tempfile_dir_via_env_variable():
 
 @with_tempfile
 @with_tempfile
-def test_nested_with_tempfile_basic(f1, f2):
+def test_nested_with_tempfile_basic(f1=None, f2=None):
     ok_(f1 != f2)
     ok_(not os.path.exists(f1))
     ok_(not os.path.exists(f2))
@@ -96,7 +96,7 @@ def test_nested_with_tempfile_parametrized_surrounded():
 
 
 @with_tempfile(content="testtest")
-def test_with_tempfile_content(f):
+def test_with_tempfile_content(f=None):
     ok_file_has_content(f, "testtest")
 
 
@@ -130,7 +130,7 @@ def test_with_tempfile_mkdir():
 
 
 @with_tempfile()
-def test_with_tempfile_default_prefix(d1):
+def test_with_tempfile_default_prefix(d1=None):
     d = basename(d1)
     short = 'repronim_temp_'
     full = short + \
@@ -143,7 +143,7 @@ def test_with_tempfile_default_prefix(d1):
 
 
 @with_tempfile(prefix="norepronim_")
-def test_with_tempfile_specified_prefix(d1):
+def test_with_tempfile_specified_prefix(d1=None):
     ok_startswith(basename(d1), 'norepronim_')
     ok_('test_with_tempfile_specified_prefix' not in d1)
 
@@ -183,7 +183,7 @@ def test_keeptemp_via_env_variable():
 
 
 @with_tempfile
-def test_ok_symlink_helpers(tmpfile):
+def test_ok_symlink_helpers(tmpfile=None):
 
     if on_windows:
         raise SkipTest("no sylmlinks on windows")
@@ -468,7 +468,7 @@ def test_skip_if():
 
 @assert_cwd_unchanged
 @with_tempfile(mkdir=True)
-def test_run_under_dir(d):
+def test_run_under_dir(d=None):
     orig_pwd = getpwd()
     orig_cwd = os.getcwd()
 
