@@ -17,6 +17,7 @@ apt.sources:
    suite: xenial
    architecture: amd64
    component: main
+
  #
  # If repronim isn't familiar with the source's distribution, just record the 
  # sources.list information
