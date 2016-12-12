@@ -16,7 +16,7 @@ apt.sources:
    type: deb
    suite: xenial
    architecture: amd64
-   component main
+   component: main
  #
  # If repronim isn't familiar with the source's distribution, just record the 
  # sources.list information

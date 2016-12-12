@@ -7,8 +7,9 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from envconfig.config_item import ConfigurationItem
 import pytest
+
+from repronim.file_analysis.configuration import ConfigurationItem
 
 
 def test_config_item_non_string_id():

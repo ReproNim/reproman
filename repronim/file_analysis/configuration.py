@@ -11,10 +11,10 @@
 """
 
 from __future__ import absolute_import
-from six import string_types
-import attr
 
-from envconfig.config_item import ConfigurationItem
+from six import string_types
+
+from repronim.file_analysis.config_item import ConfigurationItem
 
 # A dict of registered handlers. The keys are cnfiguration names (used
 # for case-insensitive matching with the configuration file).  The
