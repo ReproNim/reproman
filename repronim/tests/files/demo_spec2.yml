@@ -1,0 +1,103 @@
+
+#
+# Based on ReproZip format extended to support sufficiently detailed
+# description of multiple distributions.
+#
+
+#
+# A "run" gives details about the system environment and the command that
+# was executed.  Right now this is cloned from ReproZip
+#
+runs:
+- architecture: x86_64
+  date: 2016-02-22T22:19:01.735754
+  argv: [echo, $MATH_EXPRESSION, '|', bc]
+  binary: /usr/bin/bc
+  distribution: [Ubuntu, '12.04']
+  environ: {TERM: xterm, MATH_EXPRESSION: '2+2'}
+  exitcode: 0
+  gid: 1003
+  hostname: nitrcce
+  id: run0
+  system: [Linux, 3.2.0-98-virtual]
+  uid: 1002
+  workingdir: /home/rbuccigrossi/simple_workflow
+
+#
+# A "distribution" is a source for a number of packages. Here we define configuration
+# details for various distributions. We'll probably have some built-in types that
+# require no configuration, such as "pip".
+#
+
+distributions:
+ #
+ # We'll have both generic distribution types (like "apt") and specific types that we know
+ # special details about (like "Debian" and "NeuroDebian"). Specifically, for Debian and 
+ # NeuroDebian, we will already know how to retrieve specific snapshots in time.
+ #
+ - name: NeuroDebian-1
+   type: NeuroDebian
+   source-type: deb
+   codename: xenial
+   architecture: amd64
+   components: [main, contrib, non-free]
+
+ #
+ # If repronim isn't familiar with the source's distribution, just record the 
+ # sources.list information
+ #
+ - name: us.archive.ubuntu.com-1
+   type: apt
+   source-type: deb
+   uri: http://us.archive.ubuntu.com/ubuntu/
+   distribution: xenial
+   architecture: amd64
+   components: [main]
+
+#
+# Once we have sources, we can then state where packages come from.
+#
+
+packages:
+ #
+ # For apt, we need to use "dpkg -s" to get installed information
+ # We use "apt-cache show" to get the MD5sum (if available)
+ # "apt-cache showpkg" to get repository information for installed package
+ # We can use the date of /var/lib/dpkg/info/PACKAGE.list to get the install date:
+ #  "stat -c %y /var/lib/dpkg/info/fslview.list"
+ #
+ # From "(/var/lib/apt/lists/neuro.debian.net_debian_dists_xenial_main_binary-amd64_Packages)"
+ # we'd have to glean the right source
+ # 
+ # For "xterm" I have a version (297-1ubuntu1) that is older than the current one
+ # (322-1ubuntu1). For this reason we can't get the MD5sum or the size from "apt-cache show".
+ # And we have to guess the distribution using the information from the newest version
+ # using "apt-cache showpkg"
+ #
+ - name: xterm
+   distributions:
+    - name: us.archive.ubuntu.com-1
+      component: main
+      pin: 500
+   version: 297-1ubuntu1
+   date: 2016-09-10 09:37:49.627803689 -0400
+
+ # 
+ # For "fslview" we do have the latest version, so I gcan get the filename, size, and
+ # hash information.
+ #
+ - name: fslview
+   distributions: 
+    - name: NeuroDebian-1
+      component: main
+      pin: 400
+   version: 4.0.1-6~nd+1+nd16.04+1
+   date: 2016-11-30 18:25:05.659524447 -0500
+   filename: pool/main/f/fslview/fslview_4.0.1-6~nd+1+nd16.04+1_amd64.deb
+   size: 1344678
+   SHA256: e63635f648e66f1ed1a8ce622bd7510aa5406dab67da1296ac9bf2ebe683dfc7
+   SHA1: 1ef5299926d994293e44554757b29d508c88482c
+   MD5sum: 7a00919d11c047c4e4e3fd90add99cc8
+
+   
+
