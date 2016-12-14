@@ -32,5 +32,6 @@ _group_misc = (
         ('repronim.interface.ls', 'Ls'),
         # ('repronim.interface.trace', 'Trace'),
         # ('repronim.interface.shell', 'Shell'),
+        ('repronim.interface.retrace', 'Retrace'),
         ('repronim.interface.test', 'Test'),
     ])
