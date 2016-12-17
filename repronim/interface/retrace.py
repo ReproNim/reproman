@@ -13,6 +13,7 @@ from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
+from ..retrace import rpzutil
 from logging import getLogger
 
 __docformat__ = 'restructuredtext'
@@ -47,5 +48,7 @@ class Retrace(Interface):
             raise InsufficientArgumentsError("Need at least a single --spec")
 
         filename = spec[0]
-
         lgr.info("reading filename " + filename)
+        rpz_env_config = rpzutil.read_reprozip_yaml(filename)
+        # updated_config = identify_packages(rpz_env_config)
+        # write_env_config(updated_config)
