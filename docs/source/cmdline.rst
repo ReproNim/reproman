@@ -31,4 +31,5 @@ Miscellaneous commands
 .. toctree::
    :maxdepth: 1
 
+   generated/man/repronim-retrace
    generated/man/repronim-test
