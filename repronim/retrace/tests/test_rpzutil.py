@@ -7,14 +7,13 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import pytest
 import pprint
 
 import repronim.retrace.rpzutil as rpzutil
 from repronim.tests.test_constants import REPROZIP_SPEC1_YML_FILENAME
 
+
 def test_read_reprozip_yaml():
     config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC1_YML_FILENAME)
     pprint.pprint(config)
-    assert True;
-
+    assert True
