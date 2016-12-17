@@ -14,7 +14,7 @@ from __future__ import absolute_import
 
 from six import string_types
 
-from repronim.file_analysis.config_item import ConfigurationItem
+from repronim.retrace.config_item import ConfigurationItem
 
 # A dict of registered handlers. The keys are cnfiguration names (used
 # for case-insensitive matching with the configuration file).  The

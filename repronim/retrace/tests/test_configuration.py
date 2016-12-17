@@ -9,9 +9,9 @@
 
 import pytest
 
-from repronim.file_analysis.config_item import ConfigurationItem
-from repronim.file_analysis import configuration
-from repronim.file_analysis.configuration import register_config_item
+from repronim.retrace.config_item import ConfigurationItem
+from repronim.retrace import configuration
+from repronim.retrace.configuration import register_config_item
 
 # A dict to back up the registered handlers
 backup_handlers = {};

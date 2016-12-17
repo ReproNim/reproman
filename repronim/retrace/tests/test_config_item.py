@@ -9,7 +9,7 @@
 
 import pytest
 
-from repronim.file_analysis.configuration import ConfigurationItem
+from repronim.retrace.configuration import ConfigurationItem
 
 
 def test_config_item_non_string_id():
