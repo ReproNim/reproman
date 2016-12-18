@@ -10,10 +10,11 @@
 import pprint
 
 import repronim.retrace.rpzutil as rpzutil
-from repronim.tests.test_constants import REPROZIP_SPEC1_YML_FILENAME
-
+from repronim.tests.test_constants import REPROZIP_SPEC2_YML_FILENAME
 
 def test_read_reprozip_yaml():
-    config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC1_YML_FILENAME)
-    pprint.pprint(config)
+    config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC2_YML_FILENAME)
+    files = rpzutil.get_system_files(config)
+    pprint.pprint(files)
     assert True
+

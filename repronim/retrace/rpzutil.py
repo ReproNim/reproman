@@ -29,6 +29,37 @@ def read_reprozip_yaml(filename):
         The environment configuration
 
     """
-    with io.open(filename,encoding='utf-8') as fp:
+    with io.open(filename, encoding='utf-8') as fp:
         config = yaml.safe_load(fp)
-        return(config)
+        return config
+
+
+def get_system_files(config):
+    """Pulls the system files from a ReproZip configuration into a set
+
+    Given a ReproZip configuration (read into a dictionary) it pulls
+    the list of files from "packages" and "other files" sections into a
+    set. It excludes files from "input_output".
+
+    Parameters
+    ----------
+    config : dict
+        ReproZip configuration
+
+    Return
+    ------
+    set
+        System fles from the configuration
+    """
+
+    files = set()
+
+    if 'packages' in config:
+        for package in config['packages']:
+            if 'files' in package:
+                files.update(package['files'])
+
+    if 'other_files' in config:
+        files.update(config["other_files"])
+
+    return files
