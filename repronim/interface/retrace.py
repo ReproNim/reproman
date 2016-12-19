@@ -8,7 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Analyzes ReproZip YML configuration to gather detailed package information
 """
-
+import sys
 from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -49,6 +49,6 @@ class Retrace(Interface):
 
         filename = spec[0]
         lgr.info("reading filename " + filename)
-        rpz_env_config = rpzutil.read_reprozip_yaml(filename)
-        # updated_config = identify_packages(rpz_env_config)
-        # write_env_config(updated_config)
+        config = rpzutil.read_reprozip_yaml(filename)
+        rpzutil.identify_packages(config)
+        rpzutil.write_config(sys.stdout, config)

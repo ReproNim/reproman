@@ -66,6 +66,22 @@ def identify_packages(config):
 
     return config
 
+def write_config(os, config):
+    """Writes an environment config to a stream
+
+    Parameters
+    ----------
+    os
+        Output Stream
+
+    config : dict
+        Environment configuration (input)
+
+    """
+    os.write(unicode(yaml.safe_dump(config,
+                                    encoding='utf-8',
+                                    allow_unicode=True)))
+
 
 def get_system_files(config):
     """Pulls the system files from a ReproZip configuration into a set
