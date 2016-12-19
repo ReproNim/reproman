@@ -14,7 +14,9 @@ from repronim.tests.test_constants import REPROZIP_SPEC2_YML_FILENAME
 
 def test_read_reprozip_yaml():
     config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC2_YML_FILENAME)
+    pprint.pprint(config)
     files = rpzutil.get_system_files(config)
-    pprint.pprint(files)
+    rpzutil.identify_packages(config)
+    pprint.pprint(config)
     assert True
 

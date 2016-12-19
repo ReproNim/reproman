@@ -12,6 +12,7 @@
 import yaml
 import io
 
+
 def read_reprozip_yaml(filename):
     """Parses a ReproZip YAML file into a configuration object
 
@@ -20,7 +21,7 @@ def read_reprozip_yaml(filename):
 
     Parameters
     ----------
-    filename : basestring
+    filename : str
         Path to the ReproZip YAML file
 
     Return
@@ -32,6 +33,38 @@ def read_reprozip_yaml(filename):
     with io.open(filename, encoding='utf-8') as fp:
         config = yaml.safe_load(fp)
         return config
+
+
+def identify_packages(config):
+    """Identifies packages in the current environment from a ReproZip config
+
+    Given a ReproZip configuration, it analyzes the current environment to
+    find details about the source packages, and places the results back into
+    the configuration object.
+
+    Parameters
+    ----------
+    config : dict
+        ReproZip configuration (input/output)
+
+    Return
+    ------
+    dict
+        A reference to the input dict
+
+    """
+    # Immediately clone the configuration
+    files = get_system_files(config)
+
+    # clear out current package assignment
+    config['packages'] = {}
+
+    # TODO: Identify files here
+
+    # set any files not identified
+    config['other_files'] = files
+
+    return config
 
 
 def get_system_files(config):
