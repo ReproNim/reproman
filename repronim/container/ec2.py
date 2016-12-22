@@ -100,11 +100,6 @@ class Ec2Container(Container):
         env : dict
             Additional (or replacement) environment variables which are applied
             only to the current call
-
-        Returns
-        -------
-        list
-            List of STDOUT lines from the container.
         """
         command_env = self.get_updated_env(env)
 
@@ -112,19 +107,15 @@ class Ec2Container(Container):
             # TODO: might not work - not tested it
             command = ['export %s=%s;' % k for k in command_env.items()] + command
 
-        stdout = ssh(" ".join(command))
-
-        return stdout
+        for i, line in enumerate(ssh(" ".join(command))):
+            if 'error' in line.lower():
+                raise Exception("AWS error - %s" % line)
+            self._lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def execute_command_buffer(self):
         """
         Send all the commands in the command buffer to the container for
         execution.
-
-        Returns
-        -------
-        list
-            STDOUT lines from container
         """
         host = self._ec2_instance.public_ip_address
         key_filename = self.get_config('key_filename')
@@ -132,6 +123,4 @@ class Ec2Container(Container):
         with SSHConnector2(host, key_filename=key_filename) as ssh:
             for command in self._command_buffer:
                 self._lgr.info("Running command '%s'", command['command'])
-                stdout = self.execute_command(ssh, command['command'], command['env'])
-                if stdout:
-                    self._lgr.info("\n".join(stdout))
+                self.execute_command(ssh, command['command'], command['env'])

@@ -115,17 +115,10 @@ class Container(object):
         """
         Send all the commands in the command buffer to the container for
         execution.
-
-        Returns
-        -------
-        list
-            STDOUT lines from container
         """
         for command in self._command_buffer:
             self._lgr.debug("Running command '%s'", command['command'])
-            stdout = self.execute_command(command['command'], command['env'])
-            if stdout:
-                self._lgr.debug("\n".join(stdout))
+            self.execute_command(command['command'], command['env'])
 
     def set_envvar(self, var, value):
         """

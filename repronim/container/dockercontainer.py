@@ -67,11 +67,6 @@ class DockercontainerContainer(Container):
         env : dict
             Additional (or replacement) environment variables which are applied
             only to the current call
-
-        Returns
-        -------
-        list
-            List of STDOUT lines from the container.
         """
 
         command_env = self.get_updated_env(env)
@@ -80,8 +75,12 @@ class DockercontainerContainer(Container):
             # TODO: might not work - not tested it
             command = ['export %s=%s;' % k for k in command_env.items()] + command
         execute = self._client.exec_create(container=self._container_id, cmd=command)
-        response = [line for line in self._client.exec_start(exec_id=execute['Id'], stream=True)]
-        return response
+
+        for i, line in enumerate(self._client.exec_start(exec_id=execute['Id'], stream=True)):
+            if 'error' in line.lower():
+                # TODO: self.remove_container()
+                raise Exception("Docker error - %s" % line)
+            self._lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def _get_base_image_dockerfile(self, base_image_tag):
         """
@@ -111,18 +110,18 @@ class DockercontainerContainer(Container):
             The contents of the Dockerfile used to create the contaner.
         """
         f = BytesIO(dockerfile.encode('utf-8'))
-        last_response = None
         for i, line in enumerate(self._client.build(fileobj=f, rm=True)):
             last_response = json.loads(line)
+
+            if last_response and 'error' in last_response:
+                raise Exception("Docker error - %s" % last_response['error'])
+
+            # Retrieve image_id from last result string which is in the
+            # form of: u'Successfully built 73ccd6b8d194\n'
+            if last_response['stream'].startswith('Successfully built'):
+                self._image_id = last_response['stream'].split(' ')[2][:-1]
+
             self._lgr.debug("build#%i: %s", i, line.rstrip())
-
-        if last_response and 'error' in last_response:
-            raise Exception("Docker error - %s" % last_response['error'])
-            # TODO: Need to figure out how to remove lingering container image from engine.
-
-        # Retrieve image_id from last result string which is in the
-        # form of: u'Successfully built 73ccd6b8d194\n'
-        self._image_id = last_response['stream'].split(' ')[2][:-1]
 
     def _run_container(self):
         """
