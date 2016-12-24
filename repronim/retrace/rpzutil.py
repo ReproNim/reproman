@@ -9,6 +9,9 @@
 """Functions to read and manipulate reprozip yaml files
 
 """
+import datetime
+
+import repronim
 import yaml
 import io
 
@@ -32,6 +35,7 @@ def read_reprozip_yaml(filename):
     """
     with io.open(filename, encoding='utf-8') as fp:
         config = yaml.safe_load(fp)
+        # TODO: Check version of ReproZip file and warn if unknown
         return config
 
 
@@ -62,9 +66,11 @@ def identify_packages(config):
     # TODO: Identify files here
 
     # set any files not identified
-    config['other_files'] = files
+    config['other_files'] = list(files)
+    config['other_files'].sort()
 
     return config
+
 
 def write_config(os, config):
     """Writes an environment config to a stream
@@ -78,9 +84,48 @@ def write_config(os, config):
         Environment configuration (input)
 
     """
-    os.write(unicode(yaml.safe_dump(config,
-                                    encoding='utf-8',
-                                    allow_unicode=True)))
+    envconfig = dict(config)  # Shallow copy for destruction
+    os.write(("# ReproNim Environment Configuration File\n" +
+              "# This file was created by ReproNim {0} on {1}\n").format(
+            repronim.__version__, datetime.datetime.now()))
+
+    c = "\n# Runs: Commands and related environment variables\n\n"
+    write_config_key(os, envconfig, "runs", c)
+
+    c = "\n# Packages \n\n"
+    write_config_key(os, envconfig, "packages", c)
+
+    c = "\n# Non-Packaged Files \n\n"
+    write_config_key(os, envconfig, "other_files", c)
+
+    os.write("\n# Other ReproZip keys (not used by ReproNim) \n\n")
+    os.write(yaml.safe_dump(envconfig,
+                            encoding='utf-8',
+                            allow_unicode=True))
+
+
+def write_config_key(os, envconfig, key, intro_comment=""):
+    """Writes the YAML representation of a single key
+
+    This writes a single key of a dict to an output stream and then removes
+    the key from the dict.
+
+    Parameters
+    ----------
+    os
+    envconfig
+    key
+    intro_comment
+
+    """
+    if key in envconfig:
+        mini_config = dict()
+        mini_config[key] = envconfig[key]
+        del envconfig[key]
+        os.write(intro_comment)
+        os.write(yaml.safe_dump(mini_config,
+                                encoding='utf-8',
+                                allow_unicode=True))
 
 
 def get_system_files(config):
