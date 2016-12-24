@@ -113,9 +113,13 @@ def write_config_key(os, envconfig, key, intro_comment=""):
     Parameters
     ----------
     os
+        Output Stream
     envconfig
+        Dictonary
     key
+        Key from the dictionary
     intro_comment
+        Optional introduction comment for the key
 
     """
     if key in envconfig:
