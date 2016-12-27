@@ -67,6 +67,7 @@ class Resource(object):
             raise MissingConfigError("Cannot locate a repronim.cfg file.")
 
         default_config = dict(cm.items('resource ' + resource_id))
+        default_config['resource_id'] = resource_id
         if not default_config:
             raise MissingConfigError(
                 "Cannot find resource %s in repronim.cfg file.", resource_id)

@@ -60,17 +60,17 @@ def test_sending_command_to_docker(repronim_cfg_path):
     """
     resource = Resource.factory('remote-docker', config_path=repronim_cfg_path)
 
-    with patch('docker.Client') as MockClient, \
+    with patch('docker.DockerClient') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         # Set up return values for mocked docker.Client methods.
-        client = MockClient.return_value
-        client.build.return_value = ['{"stream": "Successfully built 9a754690460d\\n"}']
-        client.create_container.return_value = {u'Id': u'd4cb4ee', u'Warnings': None}
-        client.start.return_value = None
-        client.logs.return_value = 'container standard output'
-        client.exec_create.return_value = {u'Id': u'b3245cd55'}
-        client.exec_start.return_value = ['stdout', 'from', 'container']
+        # client = MockClient.return_value
+        # client.build.return_value = ['{"stream": "Successfully built 9a754690460d\\n"}']
+        # client.create_container.return_value = {u'Id': u'd4cb4ee', u'Warnings': None}
+        # client.start.return_value = None
+        # client.logs.return_value = 'container standard output'
+        # client.exec_create.return_value = {u'Id': u'b3245cd55'}
+        # client.exec_start.return_value = ['stdout', 'from', 'container']
 
         # Section of code being tested.
         DEBIAN_TARGET_ENV = {'DEBIAN_FRONTEND': 'noninteractive'}
@@ -84,24 +84,19 @@ def test_sending_command_to_docker(repronim_cfg_path):
             container.add_command(['apt-get', 'install', '-y', 'bc'], env=DEBIAN_TARGET_ENV)
 
         # Verify code output.
-        assert container._image_id == u'9a754690460d'
-        assert container._container_id == u'd4cb4ee'
-        assert container.get_config('engine_url') == 'tcp://127.0.0.1:2376'
-        assert client.build.called
-        calls = [call(image=u'9a754690460d', stdin_open=True)]
-        client.create_container.assert_has_calls(calls)
-        calls = [call({u'Id': u'd4cb4ee', u'Warnings': None})]
-        client.start.assert_has_calls(calls)
         calls = [
-            call(cmd=['apt-get', 'update'], container=u'd4cb4ee'),
-            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'base-files'], container=u'd4cb4ee'),
-            call(cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get', 'install', '-y', 'bc'], container=u'd4cb4ee')
+            call.exec_run(cmd=['apt-get', 'update'], stream=True),
+            call.exec_run(
+                cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get',
+                     'install', '-y', 'base-files'], stream=True),
+            call.exec_run(
+                cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get',
+                     'install', '-y', 'bc'], stream=True),
         ]
-        client.exec_create.assert_has_calls(calls)
-        assert client.exec_start.call_count == 3
-        calls = [call(exec_id=u'b3245cd55', stream=True)]
-        client.exec_start.assert_has_calls(calls)
-        assert_in("container standard output", log.lines)
+        container._container.assert_has_calls(calls, any_order=True)
+        assert_in("Running command '['apt-get', 'update']'", log.lines)
+        assert_in("Running command '['apt-get', 'install', '-y', 'base-files']'", log.lines)
+        assert_in("Running command '['apt-get', 'install', '-y', 'bc']'", log.lines)
 
 def test_sending_command_to_ec2(repronim_cfg_path):
 

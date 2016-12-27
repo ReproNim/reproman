@@ -10,7 +10,6 @@
 
 from io import BytesIO
 import docker
-import json
 
 from repronim.container.base import Container
 
@@ -32,8 +31,8 @@ class DockercontainerContainer(Container):
             Configuration parameters for the container.
         """
 
-        self._image_id = None
-        self._container_id = None
+        self._image = None
+        self._container = None
 
         super(DockercontainerContainer, self).__init__(resource, config)
 
@@ -45,7 +44,7 @@ class DockercontainerContainer(Container):
             self.set_config('stdin_open', True)
 
         # Initialize the client connection to Docker engine.
-        self._client = docker.Client(self.get_config('engine_url'))
+        self._client = docker.DockerClient(self.get_config('engine_url'))
 
     def create(self):
         """
@@ -74,11 +73,11 @@ class DockercontainerContainer(Container):
         if command_env:
             # TODO: might not work - not tested it
             command = ['export %s=%s;' % k for k in command_env.items()] + command
-        execute = self._client.exec_create(container=self._container_id, cmd=command)
 
-        for i, line in enumerate(self._client.exec_start(exec_id=execute['Id'], stream=True)):
-            if 'error' in line.lower():
-                # TODO: self.remove_container()
+        # The following call may throw the following exception:
+        #    docker.errors.APIError - If the server returns an error.
+        for i, line in enumerate(self._container.exec_run(cmd=command, stream=True)):
+            if line.startswith('rpc error'):
                 raise Exception("Docker error - %s" % line)
             self._lgr.debug("exec#%i: %s", i, line.rstrip())
 
@@ -110,37 +109,32 @@ class DockercontainerContainer(Container):
             The contents of the Dockerfile used to create the contaner.
         """
         f = BytesIO(dockerfile.encode('utf-8'))
-        for i, line in enumerate(self._client.build(fileobj=f, rm=True)):
-            last_response = json.loads(line)
-
-            if last_response and 'error' in last_response:
-                raise Exception("Docker error - %s" % last_response['error'])
-
-            # Retrieve image_id from last result string which is in the
-            # form of: u'Successfully built 73ccd6b8d194\n'
-            if last_response['stream'].startswith('Successfully built'):
-                self._image_id = last_response['stream'].split(' ')[2][:-1]
-
-            self._lgr.debug("build#%i: %s", i, line.rstrip())
+        # The following call may throw the following exceptions:
+        #    docker.errors.BuildError - If there is an error during the build.
+        #    docker.errors.APIError - If the server returns any other error.
+        self._image = self._client.images.build(fileobj=f,
+            tag="repronim:%s" % self.get_config('resource_id'), rm=True)
 
     def _run_container(self):
         """
         Start the Docker container from the image.
         """
-        container = self._client.create_container(image=self._image_id,
-            stdin_open=self.get_config('stdin_open'))
-        self._client.start(container)
-        self._lgr.debug(self._client.logs(container))
-        self._container_id = container['Id']
+        # The following call may throw the following exceptions:
+        #    docker.errors.ContainerError - If the container exits with a non-zero
+        #        exit code and detach is False.
+        #    docker.errors.ImageNotFound - If the specified image does not exist.
+        #    docker.errors.APIError - If the server returns an error.
+        self._container = self._client.containers.run(image=self._image,
+            stdin_open=self.get_config('stdin_open'), detach=True)
 
     def remove_container(self):
         """
         Deletes a container from the Docker engine.
         """
-        self._client.remove_container(self._container_id)
+        self._container.remove(force=True)
 
     def remove_image(self):
         """
         Deletes an image from the Docker engine.
         """
-        self._client.remove_container(self._image_id)
+        self._client.images.remove(self._image)
