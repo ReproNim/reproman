@@ -6,83 +6,71 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Class to manage container engines in which the environments are created."""
+"""Class to manage environment engines in which the environments are created."""
 
-from importlib import import_module
 import abc
-from contextlib import contextmanager
-import logging
 
-class Container(object):
+from ..resource import Resource
+
+
+class Environment(Resource):
     """
-    Base class for installing and managing container engines.
+    Base class for installing and managing computational environments.
     """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, resource, config):
+    def __init__(self, config):
         """
         Class constructor
 
         Parameters
         ----------
-        resource : object
-            Instance of a Resource sub-class
         config : dictionary
-            Configuration parameters for the container.
+            Configuration parameters for the environment.
         """
+        super(Environment, self).__init__(config)
 
-        # Merge runtime config parameters into resource config.
-        resource._config.update(config)
-
-        self._resource = resource
         self._command_buffer = [] # Each element is a dictionary in the
                                   # form {command=[], env={}}
         self._env = {}
-        self._lgr = logging.getLogger('repronim.container')
 
-    @staticmethod
-    @contextmanager
-    def factory(resource, config = {}):
+    @abc.abstractmethod
+    def create(self, name, image_id):
         """
-        Factory method for creating the appropriate Container sub-class.
+        Create a running environment.
 
         Parameters
         ----------
-        resource : object
-            Platform sub-class instance
-        config : dictionary
-            Configuration parameters for the container.
-
-        Returns
-        -------
-        Container sub-class instance.
+        name : string
+            Name identifier of the environment to be created.
+        image_id : string
+            Identifier of the image to use when creating the environment.
         """
-        container_name = resource.get_config('container').replace('-', '')
-        class_name = container_name.capitalize() + 'Container'
-        module = import_module('repronim.container.' + container_name)
-        instance = getattr(module, class_name)(resource, config)
-        instance.create()
-        yield instance
-        instance.execute_command_buffer()
+        return
 
     @abc.abstractmethod
-    def create(self):
+    def connect(self, name=None):
         """
-        Create a container instance.
+        Connect to an existing environment.
+
+        Parameters
+        ----------
+        name : string
+            Name identifier of the environment to connect to.
         """
         return
 
     @abc.abstractmethod
     def execute_command(self, command, env):
         """
-        Execute the given command in the container.
+        Execute the given command in the environment.
 
         Parameters
         ----------
         command : string or list
             Shell command string or list of command tokens to send to the
-            container to execute.
+            environment to execute.
 
         env : dict
             Additional (or replacement) environment variables which are applied
@@ -91,14 +79,27 @@ class Container(object):
         Returns
         -------
         list
-            List of STDOUT lines from the container.
+            List of STDOUT lines from the environment.
         """
         return
+
+    def get_resource_client(self):
+        """
+        Retrieve the resource object for the client for the backend that is
+        hosting the environment.
+
+        Returns
+        -------
+        Instance of a Client class
+        """
+        resource_client = self.get_config('resource_client')
+        config_path = self.get_config('config_path')
+        return Resource.factory(resource_client, config_path=config_path)
 
     def add_command(self, command, env=None):
         """
         Add a command to the command buffer so that all commands can be
-        run at once in a batch submit to the container.
+        run at once in a batch submit to the environment.
 
         Parameters
         ----------
@@ -113,7 +114,7 @@ class Container(object):
 
     def execute_command_buffer(self):
         """
-        Send all the commands in the command buffer to the container for
+        Send all the commands in the command buffer to the environment for
         execution.
         """
         for command in self._command_buffer:
@@ -155,36 +156,3 @@ class Container(object):
         if custom_env:
             merged_env.update(custom_env)
         return merged_env
-
-    def get_config(self, key):
-        """
-        Convenience method to access the configuration parameters in the
-        resource object.
-
-        Parameters
-        ----------
-        key : string
-            Identifier of configuration setting.
-
-        Returns
-        -------
-        Value of configuration parameter indexed by the key.
-        """
-        return self._resource.get_config(key)
-
-    def set_config(self, key, value):
-        """
-        Convenience method to set a configuration parameter in the
-        resource object.
-
-        Parameters
-        ----------
-        key : string
-            Identifier of configuration setting.
-        value : string
-            Value of the configuration setting.
-
-        Returns
-        -------
-        """
-        self._resource.set_config(key, value)

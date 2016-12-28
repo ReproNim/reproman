@@ -12,10 +12,12 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
-from ..provenance.base import Provenance
+from ..provenance import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
+from ..resource import Resource
+import random
 
 from logging import getLogger
 lgr = getLogger('repronim.api.create')
@@ -23,20 +25,34 @@ lgr = getLogger('repronim.api.create')
 
 # STUBS for functionality to be moved into corresponding submodules
 
-def get_known_backends():
-    # TODO move
-    # stub for nwo
-    return 'docker', 'singularity', 'aws', 'native'
+def generate_environment_name():
+    first_words = [
+        'stamp',
+        'languid',
+        'annoyed',
+        'kettle',
+        'guard',
+        'shape',
+        'closed',
+        'private',
+        'barbarous',
+        'preserve',
+    ]
+    second_words = [
+        'pest',
+        'purpose',
+        'unequaled',
+        'end',
+        'scream',
+        'uneven',
+        'arithmetic',
+        'zippy',
+        'drop',
+        'cheerful',
+    ]
 
-
-def create_env_from_spec(spec):
-    # TODO
-    return "The environment/image descriptor"
-
-# Registry of already known/created environments.
-# Definitely will not be just a dict but should support basic
-# dict-like (associative array) interface
-registry = {}
+    name = '{0}_{1}'.format(random.choice(first_words), random.choice(second_words))
+    return name
 
 
 class Create(Interface):
@@ -62,6 +78,23 @@ class Create(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
+        resource=Parameter(
+            args=("-r", "--resource"),
+            doc="""For which resource to create a new environment. To see
+            available resource, run the command 'repronim ls'""",
+            constraints=EnsureStr(),
+        ),
+        config = Parameter(
+            args=("-c", "--config",),
+            doc="path to repronim configuration file",
+            metavar='CONFIG',
+            constraints=EnsureStr(),
+        ),
+        image=Parameter(
+            args=("-i", "--image",),
+            doc="Image ID from which to create running instance",
+            constraints=EnsureStr(),
+        ),
         only_env=Parameter(
             args=("--only-env",),
             doc="only env spec",
@@ -79,62 +112,35 @@ class Create(Interface):
             choices=("fail", "redefine"),
             doc="Action to take if name is already known"
         ),
-        backend=Parameter(
-            choices=get_known_backends(),
-            doc="""For which backend to create a new environment.""",
-        ),
-
-        # fast=Parameter(
-        #     args=("-F", "--fast"),
-        #     action="store_true",
-        #     doc="only perform fast operations.  Would be overrident by --all",
-        # ),
-        # all=Parameter(
-        #     args=("-a", "--all"),
-        #     action="store_true",
-        #     doc="list all entries, not e.g. only latest entries in case of S3",
-        # ),
-        # config_file=Parameter(
-        #     doc="""path to config file which could help the 'ls'.  E.g. for s3://
-        #     URLs could be some ~/.s3cfg file which would provide credentials""",
-        #     constraints=EnsureStr() | EnsureNone()
-        # ),
-        # list_content=Parameter(
-        #     choices=(None, 'first10', 'md5', 'full'),
-        #     doc="""list also the content or only first 10 bytes (first10), or md5
-        #     checksum of an entry.  Might require expensive transfer and dump
-        #     binary output to your screen.  Do not enable unless you know what you
-        #     are after""",
-        #     default=None
-        # ),
     )
 
     @staticmethod
-    def __call__(specs, only_env=None, name=None, existing='fail',
-                 backend=None):
+    def __call__(specs, resource, config=None, image=None, only_env=None,
+                 name=None, existing='fail'):
+
         if not specs:
             raise InsufficientArgumentsError("Need at least a single --spec")
+        # Load, while possible merging/augmenting sequentially
+        lgr.info("Loading the specs %s", specs)
+        provenance = Provenance.factory(specs[0])
+        lgr.debug("SPEC: {}".format(specs))
+
+        if not resource:
+            raise InsufficientArgumentsError("Need a --resource")
 
         if only_env:
             raise NotImplementedError
 
-        if name in registry:
-            # already exists
-            raise ValueError("{} name is already known to the registry. ")
-
-        # Load, while possible merging/augmenting sequentially
-        lgr.info("Loading the specs %s", specs)
-        spec = Provenance.chain_factory(specs)
-        lgr.debug("SPEC: {}".format(spec))
-
-        # Create
-        env = create_env_from_spec(spec)
+        env_resource = Resource.factory(resource, config_path=config)
 
         if name is None:
-            name = "some-fancy-unique-based-on-spec"
+            name = generate_environment_name()
+        else:
+            resource_client = env_resource.get_resource_client()
+            if name in resource_client.list_environments():
+                raise ValueError(
+                    "{} environment is already known to the resource.", name)
 
-        lgr.info("Created the environment %s=%s", name, env)
-        # Register within the registry
-        registry[name] = env
+        env_resource.create(name, image)
 
-        return env
+        lgr.info("Created the environment %s", name)

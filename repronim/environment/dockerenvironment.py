@@ -6,53 +6,77 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Container sub-class to provide management of container engine."""
+"""Environment sub-class to provide management of environment engine."""
 
 from io import BytesIO
-import docker
 
-from repronim.container.base import Container
+from repronim.resource import Resource
+from repronim.environment.base import Environment
 
 
-class DockercontainerContainer(Container):
+class DockerEnvironment(Environment):
     """
-    Container manager which talks to a Docker engine.
+    Environment manager which talks to a Docker engine.
     """
 
-    def __init__(self, resource, config = {}):
+    def __init__(self, config = {}):
         """
         Class constructor
 
         Parameters
         ----------
-        resource : object
-            Resource sub-class instance
         config : dictionary
-            Configuration parameters for the container.
+            Configuration parameters for the environment.
         """
+        if not 'base_image_id' in config:
+            config['base_image_id'] = 'ubuntu:latest'
+        if not 'stdin_open' in config:
+            config['stdin_open'] = True
 
+        super(DockerEnvironment, self).__init__(config)
+
+        self._client = None
         self._image = None
         self._container = None
 
-        super(DockercontainerContainer, self).__init__(resource, config)
+        # Open a client connection to the Docker engine.
+        docker_client = self.get_resource_client()
+        self._client = docker_client.get_connection()
 
-        if not self.get_config('base_image_tag'):
-            self.set_config('base_image_tag', 'ubuntu:latest')
-        if not self.get_config('engine_url'):
-            self.set_config('engine_url', 'unix:///var/run/docker.sock')
-        if not self.get_config('stdin_open'):
-            self.set_config('stdin_open', True)
-
-        # Initialize the client connection to Docker engine.
-        self._client = docker.DockerClient(self.get_config('engine_url'))
-
-    def create(self):
+    def create(self, name, image_id):
         """
         Create a baseline Docker image and run it to create the container.
+
+        Parameters
+        ----------
+        name : string
+            Name identifier of the environment to be created.
+        image_id : string
+            Identifier of the image to use when creating the environment.
         """
-        dockerfile = self._get_base_image_dockerfile(self.get_config('base_image_tag'))
+        if name:
+            self.set_config('name', name)
+        if image_id:
+            self.set_config('base_image_id', image_id)
+
+        dockerfile = self._get_base_image_dockerfile(self.get_config('base_image_id'))
         self._build_image(dockerfile)
         self._run_container()
+
+    def connect(self, name=None):
+        """
+        Open a connection to the environment.
+
+        Parameters
+        ----------
+        name : string
+            Name identifier of the environment to connect to.
+        """
+
+        # Following call may raise these exceptions:
+        #    docker.errors.NotFound - If the container does not exist.
+        #    docker.errors.APIError - If the server returns an error.
+        self._container = self._client.containers.get(name)
 
     def execute_command(self, command, env=None):
         """
@@ -81,13 +105,13 @@ class DockercontainerContainer(Container):
                 raise Exception("Docker error - %s" % line)
             self._lgr.debug("exec#%i: %s", i, line.rstrip())
 
-    def _get_base_image_dockerfile(self, base_image_tag):
+    def _get_base_image_dockerfile(self, base_image_id):
         """
         Creates the Dockerfile needed to create the baseline Docker image.
 
         Parameters
         ----------
-        base_image_tag : string
+        base_image_id : string
             "repo:tag" of Docker image to use as base image.
 
         Returns
@@ -95,7 +119,7 @@ class DockercontainerContainer(Container):
         string
             String containing the Dockerfile commands.
         """
-        dockerfile = 'FROM %s\n' % (base_image_tag,)
+        dockerfile = 'FROM %s\n' % (base_image_id,)
         dockerfile += 'MAINTAINER staff@repronim.org\n'
         return dockerfile
 
@@ -113,19 +137,20 @@ class DockercontainerContainer(Container):
         #    docker.errors.BuildError - If there is an error during the build.
         #    docker.errors.APIError - If the server returns any other error.
         self._image = self._client.images.build(fileobj=f,
-            tag="repronim:%s" % self.get_config('resource_id'), rm=True)
+            tag="repronim:{}".format(self.get_config('name')), rm=True)
 
     def _run_container(self):
         """
         Start the Docker container from the image.
         """
         # The following call may throw the following exceptions:
-        #    docker.errors.ContainerError - If the container exits with a non-zero
+        #    docker.errors.EnvironmentError - If the container exits with a non-zero
         #        exit code and detach is False.
         #    docker.errors.ImageNotFound - If the specified image does not exist.
         #    docker.errors.APIError - If the server returns an error.
         self._container = self._client.containers.run(image=self._image,
-            stdin_open=self.get_config('stdin_open'), detach=True)
+            stdin_open=self.get_config('stdin_open'), detach=True,
+            name=self.get_config('name'))
 
     def remove_container(self):
         """

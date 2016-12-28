@@ -91,6 +91,19 @@ class Provenance(object):
         return fullspec
 
     @abc.abstractmethod
+    def get_operating_system(self):
+        """
+        Retrieve the operating system information.
+
+        Returns
+        -------
+        Dictionary containing name and version of the OS.
+            os['name']
+            os['version']
+        """
+        return
+
+    @abc.abstractmethod
     def get_distributions(self):
         """
         Retrieve the information for all the distributions recorded in the

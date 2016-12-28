@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from repronim.container import Container
+from repronim.environment import Environment
 
 import logging
 from mock import patch, call, MagicMock
@@ -31,15 +31,15 @@ def test_sending_command_to_localhost(repronim_cfg_path):
         MockOS.return_value = {}
         DEBIAN_TARGET_ENV = {'DEBIAN_FRONTEND': 'noninteractive'}
 
-        with Container.factory(resource) as container:
-            container.add_command(['apt-get', 'update'])
-            container.add_command(['apt-get', 'install', '-y', 'base-files'],
+        with Environment.factory(resource) as environment:
+            environment.add_command(['apt-get', 'update'])
+            environment.add_command(['apt-get', 'install', '-y', 'base-files'],
                                   env=DEBIAN_TARGET_ENV)
-            container.add_command(['apt-get', 'install', '-y', 'bc'],
+            environment.add_command(['apt-get', 'install', '-y', 'bc'],
                                   env=DEBIAN_TARGET_ENV)
 
         # Verify code output.
-        assert container._command_buffer == [
+        assert environment._command_buffer == [
             {'command':['apt-get', 'update'], 'env':None},
             {'command':['apt-get', 'install', '-y', 'base-files'], 'env':DEBIAN_TARGET_ENV},
             {'command':['apt-get', 'install', '-y', 'bc'], 'env':DEBIAN_TARGET_ENV}
@@ -78,10 +78,10 @@ def test_sending_command_to_docker(repronim_cfg_path):
         container_config = {
             'engine_url': 'tcp://127.0.0.1:2376'
         }
-        with Container.factory(resource, config=container_config) as container:
-            container.add_command(['apt-get', 'update'])
-            container.add_command(['apt-get', 'install', '-y', 'base-files'], env=DEBIAN_TARGET_ENV)
-            container.add_command(['apt-get', 'install', '-y', 'bc'], env=DEBIAN_TARGET_ENV)
+        with Environment.factory(resource, config=container_config) as environment:
+            environment.add_command(['apt-get', 'update'])
+            environment.add_command(['apt-get', 'install', '-y', 'base-files'], env=DEBIAN_TARGET_ENV)
+            environment.add_command(['apt-get', 'install', '-y', 'bc'], env=DEBIAN_TARGET_ENV)
 
         # Verify code output.
         calls = [
@@ -93,7 +93,7 @@ def test_sending_command_to_docker(repronim_cfg_path):
                 cmd=['export DEBIAN_FRONTEND=noninteractive;', 'apt-get',
                      'install', '-y', 'bc'], stream=True),
         ]
-        container._container.assert_has_calls(calls, any_order=True)
+        environment._container.assert_has_calls(calls, any_order=True)
         assert_in("Running command '['apt-get', 'update']'", log.lines)
         assert_in("Running command '['apt-get', 'install', '-y', 'base-files']'", log.lines)
         assert_in("Running command '['apt-get', 'install', '-y', 'bc']'", log.lines)
@@ -109,10 +109,10 @@ def test_sending_command_to_ec2(repronim_cfg_path):
         resource = Resource.factory('repronim-aws', config_path=repronim_cfg_path)
         DEBIAN_TARGET_ENV = {'DEBIAN_FRONTEND': 'noninteractive'}
 
-        with Container.factory(resource) as container:
-            container.add_command(['apt-get', 'update'])
-            container.add_command(['apt-get', 'install', '-y', 'base-files'], env=DEBIAN_TARGET_ENV)
-            container.add_command(['apt-get', 'install', '-y', 'bc'], env=DEBIAN_TARGET_ENV)
+        with Environment.factory(resource) as environment:
+            environment.add_command(['apt-get', 'update'])
+            environment.add_command(['apt-get', 'install', '-y', 'base-files'], env=DEBIAN_TARGET_ENV)
+            environment.add_command(['apt-get', 'install', '-y', 'bc'], env=DEBIAN_TARGET_ENV)
 
         # Run tests.
         calls = [
@@ -135,9 +135,9 @@ def test_sending_command_to_ec2(repronim_cfg_path):
         ]
         MockSSH.assert_has_calls(calls)
 
-        assert container._command_buffer[0]['command'] == ['apt-get', 'update']
-        assert container._command_buffer[1]['command'] == ['apt-get', 'install', '-y', 'base-files']
-        assert container._command_buffer[2]['command'] == ['apt-get', 'install', '-y', 'bc']
+        assert environment._command_buffer[0]['command'] == ['apt-get', 'update']
+        assert environment._command_buffer[1]['command'] == ['apt-get', 'install', '-y', 'base-files']
+        assert environment._command_buffer[2]['command'] == ['apt-get', 'install', '-y', 'bc']
 
         assert_in("Running command '['apt-get', 'update']'", log.lines)
         assert_in("Command 'apt-get update' failed, exit status = 1", log.lines)

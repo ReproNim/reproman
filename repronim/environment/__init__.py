@@ -2,10 +2,15 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the ReproNim package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""resource tests"""
+"""Facility for managing computational environment.
+
+"""
 
 __docformat__ = 'restructuredtext'
+
+# Allow base Environment class to be available directly from the package.
+# from repronim.environment.base import Environment

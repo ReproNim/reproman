@@ -6,14 +6,14 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Class to manage resources in which containers are created and run."""
+"""Class to manage compute resources."""
 
 from importlib import import_module
 import abc
 import logging
 
-from ..config import ConfigManager
-from ..support.exceptions import MissingConfigError
+from .config import ConfigManager
+from .support.exceptions import MissingConfigError
 
 
 class Resource(object):
@@ -23,19 +23,15 @@ class Resource(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, default_config, config):
+    def __init__(self, config):
         """
         Class constructor
 
         Parameters
         ----------
-        default_config : dictionary
-            Resource configuration settings from the repronim.cfg file.
         config : dictionary
-            Configuration parameters for the resource that will override
-            the default settings from the repronim.cfg file
+            Configuration parameters for the resource.
         """
-        self._default_config = default_config
         self._config = config
         self._lgr = logging.getLogger('repronim.resource')
 
@@ -59,6 +55,46 @@ class Resource(object):
         -------
         Resource sub-class instance.
         """
+        cm = Resource._get_config_manager(config_path)
+
+        default_config = dict(cm.items('resource ' + resource_id))
+        if not default_config:
+            raise MissingConfigError(
+                "Cannot find resource %s in repronim.cfg file.", resource_id)
+
+        # Override repronim.cfg settings with those passed in to the function.
+        default_config.update(config)
+        config = default_config
+
+        # Store some useful info in the configuration.
+        config['resource_id'] = resource_id
+        config['config_path'] = config_path
+
+        if 'resource_type' in config:
+            class_type, class_base = config['resource_type'].split('-')
+        else:
+            raise MissingConfigError(
+                "Resource 'resource_type' parameter missing for resource '%s'.", resource_id)
+
+        class_name = class_type.capitalize() + class_base.capitalize()
+        module = import_module('repronim.{1}.{0}{1}'.format(class_type, class_base))
+        instance = getattr(module, class_name)(config)
+        return instance
+
+    @staticmethod
+    def _get_config_manager(config_path=None):
+        """
+        Retrieve configuration manager object.
+
+        Parameters
+        ----------
+        config_path : string
+            Path to repronim.cfg file.
+
+        Returns
+        -------
+        ConfigManager object
+        """
         if config_path:
             cm = ConfigManager([config_path], False)
         else:
@@ -66,56 +102,30 @@ class Resource(object):
         if len(cm._sections) == 1:
             raise MissingConfigError("Cannot locate a repronim.cfg file.")
 
-        default_config = dict(cm.items('resource ' + resource_id))
-        default_config['resource_id'] = resource_id
-        if not default_config:
-            raise MissingConfigError(
-                "Cannot find resource %s in repronim.cfg file.", resource_id)
-        if 'type' in default_config:
-            resource_type = default_config['type']
-        else:
-            raise MissingConfigError(
-                "Resource 'type' parameter missing for resource '%s'.", resource_id)
+        return cm
 
-        # Translate the resource type into a class name.
-        package_name = None
-        if resource_type == 'localhost':
-            package_name = 'localhost'
-        if resource_type == 'aws':
-            package_name = 'aws'
-        if resource_type == 'docker':
-            package_name = 'dockerengine'
-        if resource_type == 'singularity':
-            package_name = 'singularity'
-        if not package_name:
-            raise MissingConfigError("Resource package %s not found.", package_name)
-
-        class_name = package_name.capitalize() + 'Resource'
-        module = import_module('repronim.resource.' + package_name)
-        instance = getattr(module, class_name)(default_config, config)
-        return instance
-
-    @abc.abstractmethod
-    def get_container_list(self):
+    @staticmethod
+    def get_resource_list(config_path=None):
         """
-        Query the resource and return a list of container information.
+        Get the resources defined in the repronim.cfg file.
+
+        Parameters
+        ----------
+        config_path : string
+            Path to repronim.cfg file.
 
         Returns
         -------
-        List of containers located at the resource.
+        List of Resource sub-classed objects.
         """
-        return
+        cm = Resource._get_config_manager(config_path)
 
-    @abc.abstractmethod
-    def get_image_list(self):
-        """
-        Query the resource and return a list of image information.
-
-        Returns
-        -------
-        List of images located at the resource.
-        """
-        return
+        resources = []
+        for name in cm._sections:
+            if name.startswith('resource '):
+                resources.append(cm._sections[name])
+                resources[-1]['resource_id'] = name.split(' ')[-1]
+        return resources
 
     def get_config(self, key):
         """
