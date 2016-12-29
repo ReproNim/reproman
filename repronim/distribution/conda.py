@@ -48,8 +48,10 @@ class CondaDistribution(Distribution):
         environment : object
             Environment sub-class instance.
         """
-        for package in self.provenance['packages']:
-            environment.add_command(['conda',
-                                   'install',
-                                   package['name']])
+
+        # TODO: Need to figure out a graceful way to install conda before we can install packages here.
+        # for package in self.provenance['packages']:
+        #     environment.add_command(['conda',
+        #                            'install',
+        #                            package['name']])
         return

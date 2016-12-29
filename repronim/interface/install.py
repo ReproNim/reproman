@@ -57,7 +57,7 @@ class Install(Interface):
             constraints=EnsureStr(),
         ),
         name = Parameter(
-            args=("-n", "--name"),
+            args=("--name", "-n"),
             metavar="NAME",
             constraints=EnsureStr() | EnsureNone(),
             doc="provide a name for the environment to connect",
@@ -74,6 +74,8 @@ class Install(Interface):
         if not resource:
             raise InsufficientArgumentsError("Need at least a single --resource")
         print("RESOURCE: {}".format(resource))
+
+        # TODO: Check to make sure resource_type is "environment"
 
         if not name:
             raise InsufficientArgumentsError("Need at least a single --name")

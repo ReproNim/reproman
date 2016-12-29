@@ -13,4 +13,3 @@
 __docformat__ = 'restructuredtext'
 
 # Allow base Environment class to be available directly from the package.
-# from repronim.environment.base import Environment

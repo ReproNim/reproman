@@ -38,6 +38,7 @@ class DebianDistribution(Distribution):
         """
         self.lgr.debug("Adding Debian update to environment command list.")
         environment.add_command(['apt-get', 'update'])
+        environment.add_command(['apt-get', 'install', '-y', 'python-pip'])
 
     def install_packages(self, environment):
         """
@@ -53,5 +54,5 @@ class DebianDistribution(Distribution):
             environment.add_command(
                 # TODO: Pull env out of provenance for this command.
                 ['apt-get', 'install', '-y', package['name']],
-                env={'DEBIAN_FRONTEND': 'noninteractive'}
+                # env={'DEBIAN_FRONTEND': 'noninteractive'}
             )

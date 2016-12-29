@@ -9,8 +9,8 @@
 """Environment sub-class to provide management of environment engine."""
 
 from io import BytesIO
+from ..support.exceptions import CommandError
 
-from repronim.resource import Resource
 from repronim.environment.base import Environment
 
 
@@ -63,7 +63,7 @@ class DockerEnvironment(Environment):
         self._build_image(dockerfile)
         self._run_container()
 
-    def connect(self, name=None):
+    def connect(self, name):
         """
         Open a connection to the environment.
 
@@ -94,15 +94,15 @@ class DockerEnvironment(Environment):
 
         command_env = self.get_updated_env(env)
 
-        if command_env:
+        # if command_env:
             # TODO: might not work - not tested it
-            command = ['export %s=%s;' % k for k in command_env.items()] + command
+            # command = ['export %s=%s' % k for k in command_env.items()] + command
 
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
         for i, line in enumerate(self._container.exec_run(cmd=command, stream=True)):
             if line.startswith('rpc error'):
-                raise Exception("Docker error - %s" % line)
+                raise CommandError(cmd=command, msg="Docker error - %s" % line)
             self._lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def _get_base_image_dockerfile(self, base_image_id):

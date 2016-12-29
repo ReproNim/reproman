@@ -26,8 +26,6 @@ class Client(Resource):
 
         Parameters
         ----------
-        default_config : dictionary
-            Resource configuration settings from the repronim.cfg file.
         config : dictionary
             Configuration parameters for the resource that will override
             the default settings from the repronim.cfg file

@@ -56,5 +56,7 @@ class Ls(Interface):
         resources = Resource.get_resource_list(config_path=config)
         print '{: <30} {: <20}'.format('RESOURCE', 'TYPE')
         print '{: <30} {: <20}'.format('--------', '----')
-        for resource in resources:
-            print '{: <30} {: <20}'.format(resource['resource_id'], resource['resource_type'])
+        for key in resources:
+            lgr.debug('listing resource {}'.format(key))
+            print '{: <30} {: <20}'.format(resources[key]['resource_id'],
+                                           resources[key]['resource_type'])

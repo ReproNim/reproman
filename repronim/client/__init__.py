@@ -13,4 +13,3 @@
 __docformat__ = 'restructuredtext'
 
 # Allow base Client class to be available directly from the package.
-# from repronim.client.base import Client

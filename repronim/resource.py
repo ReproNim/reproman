@@ -120,11 +120,12 @@ class Resource(object):
         """
         cm = Resource._get_config_manager(config_path)
 
-        resources = []
+        resources = {}
         for name in cm._sections:
             if name.startswith('resource '):
-                resources.append(cm._sections[name])
-                resources[-1]['resource_id'] = name.split(' ')[-1]
+                resource_id = name.split(' ')[-1]
+                resources[resource_id] = cm._sections[name]
+                resources[resource_id]['resource_id'] = resource_id
         return resources
 
     def get_config(self, key):
@@ -142,9 +143,6 @@ class Resource(object):
         """
         if key in self._config:
             return self._config[key]
-
-        if key in self._default_config:
-            return self._default_config[key]
 
         raise MissingConfigError("Missing configuration parameter: '%s'" % key)
 

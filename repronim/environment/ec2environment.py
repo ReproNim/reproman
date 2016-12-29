@@ -97,7 +97,7 @@ class Ec2Environment(Environment):
         waiter.wait(InstanceIds=[self._ec2_instance.id])
         self._lgr.info("EC2 instance %s initialized!")
 
-    def connect(self, name=None):
+    def connect(self, name):
         """
         Open a connection to the environment.
 
@@ -106,8 +106,21 @@ class Ec2Environment(Environment):
         name : string
             Name identifier of the environment to connect to.
         """
-        return
-
+        instances = self._ec2_resource.instances.filter(
+            Filters=[{
+                'Name': 'tag:Name',
+                'Values': [name]
+            },
+            {
+                'Name': 'instance-state-name',
+                'Values': ['running']
+            }]
+        )
+        instances = list(instances)
+        if len(instances) == 1:
+            self._ec2_instance = instances[0]
+        else:
+            raise Exception("AWS error - No EC2 instance named {}".format(name))
 
     def execute_command(self, ssh, command, env=None):
         """
@@ -126,13 +139,12 @@ class Ec2Environment(Environment):
         """
         command_env = self.get_updated_env(env)
 
-        if command_env:
+        # if command_env:
             # TODO: might not work - not tested it
-            command = ['export %s=%s;' % k for k in command_env.items()] + command
+            # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
+        # If a command fails, a CommandError exception will be thrown.
         for i, line in enumerate(ssh(" ".join(command))):
-            if 'error' in line.lower():
-                raise Exception("AWS error - %s" % line)
             self._lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def execute_command_buffer(self):

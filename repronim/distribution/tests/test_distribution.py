@@ -33,17 +33,11 @@ def test_install_debian_packages(demo1_spec):
 
         calls = [
             call.add_command(['apt-get', 'update']),
-            call.add_command(['apt-get', 'install', '-y', 'libc6-dev'],
-                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
-            call.add_command(['apt-get', 'install', '-y', 'python-nibabel'],
-                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
-            call.add_command(['apt-get', 'update']),
-            call.add_command(['apt-get', 'update']),
-            call.add_command(['apt-get', 'install', '-y', 'afni'],
-                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
-            call.add_command(['apt-get', 'install', '-y', 'python-nibabel'],
-                             env={'DEBIAN_FRONTEND': 'noninteractive'}),
-            call.add_command(['conda', 'install', 'numpy'])
+            call.add_command(['apt-get', 'install', '-y', 'python-pip']),
+            call.add_command(['apt-get', 'install', '-y', 'libc6-dev']),
+            call.add_command(['apt-get', 'install', '-y', 'python-nibabel']),
+            call.add_command(['apt-get', 'install', '-y', 'afni']),
+            call.add_command(['pip', 'install', 'piponlypkg'])
         ]
-        container.assert_has_calls(calls)
-        assert_in("Adding Debian update to container command list.", log.lines)
+        container.assert_has_calls(calls, any_order=True)
+        assert_in("Adding Debian update to environment command list.", log.lines)
