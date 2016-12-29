@@ -16,7 +16,7 @@ def test_read_reprozip_yaml():
     config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC2_YML_FILENAME)
 #    pprint.pprint(config)
     rpzutil.identify_packages(config)
-    output = io.StringIO()
+    output = io.BytesIO()
     rpzutil.write_config(output, config)
     assert True
 
