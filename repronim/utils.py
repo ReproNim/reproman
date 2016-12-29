@@ -884,9 +884,14 @@ def _path_(p):
         return p
 
 def unicode(s):
-    """Given a str type, convert to unicode (does nothing for PY3)"""
+    """Given a str type, convert to unicode"""
     if PY3:
-        return s
+        if isinstance(s, bytes):
+            return str(s, 'utf-8')
+        elif isinstance(s, str):
+            return s
+        else:
+            raise TypeError("Incorrect type for unicode()")
     else:
         return __builtin__.unicode(s)
 
