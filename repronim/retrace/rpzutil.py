@@ -9,9 +9,10 @@
 """Functions to read and manipulate reprozip yaml files
 
 """
+from __future__ import unicode_literals
 import datetime
-
 import repronim
+import repronim.utils as utils
 import yaml
 import io
 
@@ -99,9 +100,9 @@ def write_config(os, config):
     write_config_key(os, envconfig, "other_files", c)
 
     os.write("\n# Other ReproZip keys (not used by ReproNim) \n\n")
-    os.write(yaml.safe_dump(envconfig,
-                            encoding='utf-8',
-                            allow_unicode=True))
+    os.write(utils.unicode(yaml.safe_dump(envconfig,
+                                          encoding="utf-8",
+                                          allow_unicode=True)))
 
 
 def write_config_key(os, envconfig, key, intro_comment=""):
@@ -127,9 +128,9 @@ def write_config_key(os, envconfig, key, intro_comment=""):
         mini_config[key] = envconfig[key]
         del envconfig[key]
         os.write(intro_comment)
-        os.write(yaml.safe_dump(mini_config,
-                                encoding='utf-8',
-                                allow_unicode=True))
+        os.write(utils.unicode(yaml.safe_dump(mini_config,
+                                              encoding="utf-8",
+                                              allow_unicode=True)))
 
 
 def get_system_files(config):

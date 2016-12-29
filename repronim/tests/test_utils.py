@@ -16,6 +16,7 @@ import sys
 import logging
 from mock import patch
 from six import PY3
+import six.moves.builtins as __builtin__
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename
@@ -39,6 +40,7 @@ from ..utils import get_func_kwargs_doc
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
+from ..utils import unicode
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -400,3 +402,11 @@ def test_path_():
     else:
         p = 'a/b/c'
         assert(_path_(p) is p)  # nothing is done to it whatsoever
+
+def test_unicode():
+    s = "mytest"
+    s2 = unicode(s)
+    if (PY3):
+        assert(s2 == s)
+    else:
+        assert(s2 == __builtin__.unicode(s))
