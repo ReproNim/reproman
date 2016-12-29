@@ -404,9 +404,12 @@ def test_path_():
         assert(_path_(p) is p)  # nothing is done to it whatsoever
 
 def test_unicode():
-    s = "mytest"
-    s2 = unicode(s)
     if (PY3):
-        assert(s2 == s)
+        s = b"mytest"
+        s2 = "mytest"
+        assert(unicode(s) == s2)
+        assert(unicode(s2) == s2)
     else:
+        s = "mytest"
+        s2 = unicode(s)
         assert(s2 == __builtin__.unicode(s))
