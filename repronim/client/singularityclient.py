@@ -13,7 +13,7 @@ from repronim.client.base import Client
 
 class SingularityClient(Client):
 
-    def __init__(self, config={}):
+    def __init__(self, config):
         """
         Class constructor
 

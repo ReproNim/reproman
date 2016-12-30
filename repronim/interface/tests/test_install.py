@@ -49,9 +49,6 @@ import repronim.tests.fixtures
 
 
 def test_install_packages_dockerengine(demo1_spec, repronim_cfg_path):
-    """
-    Test installing packages into a Docker container.
-    """
 
     with patch('docker.DockerClient') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:

@@ -36,7 +36,7 @@ class DebianDistribution(Distribution):
         environment : object
             The Environment sub-class object.
         """
-        self.lgr.debug("Adding Debian update to environment command list.")
+        self._lgr.debug("Adding Debian update to environment command list.")
         environment.add_command(['apt-get', 'update'])
         environment.add_command(['apt-get', 'install', '-y', 'python-pip'])
 
@@ -50,7 +50,7 @@ class DebianDistribution(Distribution):
         environment : object
             Environment sub-class instance.
         """
-        for package in self.provenance['packages']:
+        for package in self._provenance['packages']:
             environment.add_command(
                 # TODO: Pull env out of provenance for this command.
                 ['apt-get', 'install', '-y', package['name']],

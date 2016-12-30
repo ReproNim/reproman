@@ -15,9 +15,8 @@ from repronim.provenance import Provenance
 import repronim.tests.fixtures
 
 def test_get_distributions(demo1_spec):
-    """
-    Test reading the distributions from the Repronim spec file.
-    """
+
+    # Test reading the distributions from the Repronim spec file.
     provenance = Provenance.factory(demo1_spec, 'repronimspec')
 
     with swallow_logs(new_level=logging.DEBUG) as log:
@@ -25,18 +24,18 @@ def test_get_distributions(demo1_spec):
 
         assert len(distributions) == 5
 
-        assert distributions[0].provenance['name'] == 'debian-1'
-        assert distributions[0].provenance['version'] == 8.5
-        assert len(distributions[0].provenance['packages']) == 2
-        assert distributions[0].provenance['packages'][0]['name'] == 'libc6-dev'
-        assert distributions[0].provenance['packages'][1]['name'] == 'python-nibabel'
+        assert distributions[0]._provenance['name'] == 'debian-1'
+        assert distributions[0]._provenance['version'] == 8.5
+        assert len(distributions[0]._provenance['packages']) == 2
+        assert distributions[0]._provenance['packages'][0]['name'] == 'libc6-dev'
+        assert distributions[0]._provenance['packages'][1]['name'] == 'python-nibabel'
 
-        assert distributions[2].provenance['name'] == 'neurodebian-1'
-        assert distributions[2].provenance['version'] == 8.5
-        assert len(distributions[2].provenance['packages']) == 2
-        assert distributions[2].provenance['packages'][0]['name'] == 'afni'
-        assert distributions[2].provenance['packages'][1]['name'] == 'python-nibabel'
+        assert distributions[2]._provenance['name'] == 'neurodebian-1'
+        assert distributions[2]._provenance['version'] == 8.5
+        assert len(distributions[2]._provenance['packages']) == 2
+        assert distributions[2]._provenance['packages'][0]['name'] == 'afni'
+        assert distributions[2]._provenance['packages'][1]['name'] == 'python-nibabel'
 
-        assert distributions[3].provenance['name'] == 'conda-1'
-        assert len(distributions[3].provenance['packages']) == 1
-        assert distributions[3].provenance['packages'][0]['name'] == 'numpy'
+        assert distributions[3]._provenance['name'] == 'conda-1'
+        assert len(distributions[3]._provenance['packages']) == 1
+        assert distributions[3]._provenance['packages'][0]['name'] == 'numpy'

@@ -48,6 +48,6 @@ class PypiDistribution(Distribution):
         environment : object
             Environment sub-class instance.
         """
-        for package in self.provenance['packages']:
+        for package in self._provenance['packages']:
             environment.add_command(['pip', 'install', package['name']])
         return

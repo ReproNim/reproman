@@ -48,7 +48,7 @@ class Client(Resource):
     @abc.abstractmethod
     def connect(self):
         """
-        Connect to service and save client instance to _client property.
+        Connect to service and save client instance to _connection property.
         """
         return
 

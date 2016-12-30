@@ -57,10 +57,9 @@ class Resource(object):
         """
         cm = Resource._get_config_manager(config_path)
 
+        # Following statement throws exception, NoSectionError, if section
+        # is missing from repronim.cfg file.
         default_config = dict(cm.items('resource ' + resource_id))
-        if not default_config:
-            raise MissingConfigError(
-                "Cannot find resource %s in repronim.cfg file.", resource_id)
 
         # Override repronim.cfg settings with those passed in to the function.
         default_config.update(config)
@@ -116,7 +115,8 @@ class Resource(object):
 
         Returns
         -------
-        List of Resource sub-classed objects.
+        Dictionary containing the settings for all resources. The keys of
+        the dictionary are the IDs of the resources.
         """
         cm = Resource._get_config_manager(config_path)
 

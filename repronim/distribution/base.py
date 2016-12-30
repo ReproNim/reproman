@@ -28,8 +28,8 @@ class Distribution(object):
         provenance : object
             Provenance class instance
         """
-        self.provenance = provenance
-        self.lgr = logging.getLogger('repronim.distribution')
+        self._provenance = provenance
+        self._lgr = logging.getLogger('repronim.distribution')
 
     @staticmethod
     def factory(distribution_name, provenance):

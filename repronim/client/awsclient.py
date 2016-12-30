@@ -13,7 +13,7 @@ from repronim.client.base import Client
 
 class AwsClient(Client):
 
-    def __init__(self, config={}):
+    def __init__(self, config):
         """
         Class constructor
 
@@ -31,7 +31,7 @@ class AwsClient(Client):
         """
         # Because of how boto3 works, the connection is initialized in the
         # environment class that uses this client. See the __init__ of the
-        # environment class.
+        # Ec2Environment class.
         return
 
     def list_environments(self):

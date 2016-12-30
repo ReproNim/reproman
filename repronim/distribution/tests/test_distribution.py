@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from repronim.provenance import Provenance
+from ...provenance import Provenance
 
 import logging
 from mock import MagicMock, call
@@ -17,27 +17,38 @@ from repronim.tests.utils import assert_in
 
 import repronim.tests.fixtures
 
-def test_install_debian_packages(demo1_spec):
-    """
-    Test creating distribution objects from a provenance file.
-    """
+def test_distributions(demo1_spec):
 
-    provenance = Provenance.factory(demo1_spec, 'repronimspec')
-    container = MagicMock()
+    provenance = Provenance.factory(demo1_spec)
+    distributions = provenance.get_distributions()
+
+    # Test DebianDistribution class.
+    debian_distribution = distributions[0]
+    environment = MagicMock()
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
-        for distribution in provenance.get_distributions():
-            distribution.initiate(container)
-            distribution.install_packages(container)
+        debian_distribution.initiate(environment)
+        debian_distribution.install_packages(environment)
 
         calls = [
             call.add_command(['apt-get', 'update']),
             call.add_command(['apt-get', 'install', '-y', 'python-pip']),
             call.add_command(['apt-get', 'install', '-y', 'libc6-dev']),
             call.add_command(['apt-get', 'install', '-y', 'python-nibabel']),
-            call.add_command(['apt-get', 'install', '-y', 'afni']),
-            call.add_command(['pip', 'install', 'piponlypkg'])
         ]
-        container.assert_has_calls(calls, any_order=True)
+        environment.assert_has_calls(calls, any_order=True)
         assert_in("Adding Debian update to environment command list.", log.lines)
+
+
+    # Test PypiDistribution class.
+    pypi_distribution = distributions[4]
+    environment = MagicMock()
+
+    pypi_distribution.initiate(environment)
+    pypi_distribution.install_packages(environment)
+
+    calls = [
+        call.add_command(['pip', 'install', 'piponlypkg']),
+    ]
+    environment.assert_has_calls(calls, any_order=True)

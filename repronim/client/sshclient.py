@@ -12,7 +12,7 @@ from repronim.client.base import Client
 
 
 class SshClient(Client):
-    def __init__(self, config={}):
+    def __init__(self, config):
         """
         Class constructor
 

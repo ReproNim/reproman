@@ -15,7 +15,7 @@ from repronim.cmd import Runner
 
 class LocalshellEnvironment(Environment):
 
-    def __init__(self, resource, config={}):
+    def __init__(self, config={}):
         """
         Factory method for creating the appropriate Environment sub-class.
 
@@ -30,7 +30,7 @@ class LocalshellEnvironment(Environment):
         -------
         Environment sub-class instance.
         """
-        super(LocalshellEnvironment, self).__init__(resource, config)
+        super(LocalshellEnvironment, self).__init__(config)
 
     def create(self, name, image_id):
         """

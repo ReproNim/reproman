@@ -14,7 +14,7 @@ import docker
 
 class DockerClient(Client):
 
-    def __init__(self, config={}):
+    def __init__(self, config):
         """
         Class constructor
 
@@ -34,7 +34,9 @@ class DockerClient(Client):
         """
         Connect to service and save client instance to _client property.
         """
+        # If the connection fails, the DockerException will be raised.
         self._connection = docker.DockerClient(self.get_config('engine_url'))
+        self._lgr.debug("Connected to docker at {}".format(self.get_config('engine_url')))
 
     def list_environments(self):
         """
