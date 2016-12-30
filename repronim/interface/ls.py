@@ -51,7 +51,7 @@ class Ls(Interface):
     )
 
     @staticmethod
-    def __call__(names, verbose=False, config=None):
+    def __call__(names, config, verbose=False):
 
         resources = Resource.get_resource_list(config_path=config)
         print '{: <30} {: <20}'.format('RESOURCE', 'TYPE')

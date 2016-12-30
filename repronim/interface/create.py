@@ -115,8 +115,8 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(specs, resource, config=None, image=None, only_env=None,
-                 name=None, existing='fail'):
+    def __call__(specs, resource, config, image, only_env,
+                 name, existing='fail'):
 
         if not specs:
             raise InsufficientArgumentsError("Need at least a single --spec")
@@ -138,7 +138,7 @@ class Create(Interface):
 
         env_resource = Resource.factory(resource, config_path=config)
 
-        if name is None:
+        if not name:
             name = generate_environment_name()
         else:
             resource_client = env_resource.get_resource_client()

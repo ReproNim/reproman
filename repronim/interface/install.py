@@ -65,7 +65,7 @@ class Install(Interface):
     )
 
     @staticmethod
-    def __call__(spec, resource, name, config=None):
+    def __call__(spec, resource, name, config):
 
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
