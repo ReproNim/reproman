@@ -82,6 +82,7 @@ class DpkgManager(PackageManager):
 
         # Process /var/lib/dpkg/info/*.list
         # TODO: Also search .conffiles
+        # TODO: Determine if we care about symbolic link destinations
         for listfile in Path('/var/lib/dpkg/info').listdir():
             pkgname = listfile.unicodename[:-5]
             # Removes :arch

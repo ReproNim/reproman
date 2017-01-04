@@ -15,6 +15,7 @@ import repronim
 import repronim.utils as utils
 import yaml
 import io
+import repronim.retrace.packagemanagers as packagemanagers
 
 
 def read_reprozip_yaml(filename):
@@ -61,13 +62,14 @@ def identify_packages(config):
     # Immediately clone the configuration
     files = get_system_files(config)
 
-    # clear out current package assignment
-    config['packages'] = {}
 
-    # TODO: Identify files here
+    (unidentified_files, packages) = packagemanagers.identify_packages(list(files))
+
+    # Update reprozip package assignment
+    config['packages'] = packages
 
     # set any files not identified
-    config['other_files'] = list(files)
+    config['other_files'] = list(unidentified_files)
     config['other_files'].sort()
 
     return config
