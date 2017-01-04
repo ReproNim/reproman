@@ -8,7 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import pytest
-from .test_constants import DEMO_SPEC1_YML_FILENAME, REPRONIM_CFG_PATH
+from .constants import DEMO_SPEC1_YML_FILENAME, REPRONIM_CFG_PATH
 
 DEMO1_SPECS = [
     DEMO_SPEC1_YML_FILENAME,
@@ -27,6 +27,7 @@ CONFIGURATION = [
 @pytest.fixture(params=DEMO1_SPECS)
 def demo1_spec(request):
     yield request.param
+
 
 @pytest.fixture(params=CONFIGURATION)
 def repronim_cfg_path(request):

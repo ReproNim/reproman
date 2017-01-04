@@ -13,11 +13,10 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr
+from ..support.constraints import EnsureStr, EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
 from ..provenance import Provenance
 from ..resource import Resource
-from ..container import Container
 
 from logging import getLogger
 lgr = getLogger('repronim.api.install')
@@ -57,10 +56,16 @@ class Install(Interface):
             metavar='CONFIG',
             constraints=EnsureStr(),
         ),
+        name = Parameter(
+            args=("--name", "-n"),
+            metavar="NAME",
+            constraints=EnsureStr() | EnsureNone(),
+            doc="provide a name for the environment to connect",
+        ),
     )
 
     @staticmethod
-    def __call__(spec, resource, config):
+    def __call__(spec, resource, name, config):
 
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
@@ -70,11 +75,18 @@ class Install(Interface):
             raise InsufficientArgumentsError("Need at least a single --resource")
         print("RESOURCE: {}".format(resource))
 
+        # TODO: Check to make sure resource_type is "environment"
+
+        if not name:
+            raise InsufficientArgumentsError("Need at least a single --name")
+        print("NAME: {}".format(name))
+
         filename = spec[0]
         provenance = Provenance.factory(filename)
-        resource = Resource.factory(resource, config_path=config)
 
-        with Container.factory(resource) as container:
-            for distribution in provenance.get_distributions():
-                distribution.initiate(container)
-                distribution.install_packages(container)
+        env_resource = Resource.factory(resource, config_path=config)
+        env_resource.connect(name)
+        for distribution in provenance.get_distributions():
+            distribution.initiate(env_resource)
+            distribution.install_packages(env_resource)
+        env_resource.execute_command_buffer()

@@ -6,49 +6,65 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Container sub-class to provide management of the localhost environment."""
+"""Environment sub-class to provide management of the localhost environment."""
 
 import os
-from repronim.container.base import Container
+from repronim.environment.base import Environment
 from repronim.cmd import Runner
 
 
-class LocalshellContainer(Container):
+class LocalshellEnvironment(Environment):
 
-    def __init__(self, resource, config={}):
+    def __init__(self, config={}):
         """
-        Factory method for creating the appropriate Container sub-class.
+        Factory method for creating the appropriate Environment sub-class.
 
         Parameters
         ----------
         resource : object
             Resource sub-class instance
         config : dictionary
-            Configuration parameters for the container.
+            Configuration parameters for the environment.
 
         Returns
         -------
-        Container sub-class instance.
+        Environment sub-class instance.
         """
-        super(LocalshellContainer, self).__init__(resource, config)
+        super(LocalshellEnvironment, self).__init__(config)
 
-    def create(self):
+    def create(self, name, image_id):
         """
-        Create a container instance.
-        """
+        Create a running environment.
 
-        # Nothing to do to create the localhost "container".
+        Parameters
+        ----------
+        name : string
+            Name identifier of the environment to be created.
+        image_id : string
+            Identifier of the image to use when creating the environment.
+        """
+        return
+
+    def connect(self, name=None):
+        """
+        Connect to an existing environment.
+
+        Parameters
+        ----------
+        name : string
+            Name identifier of the environment to connect to.
+        """
         return
 
     def execute_command(self, command, env=None):
         """
-        Execute the given command in the container.
+        Execute the given command in the environment.
 
         Parameters
         ----------
         command : list
             Shell command string or list of command tokens to send to the
-            container to execute.
+            environment to execute.
         env : dict
             Additional (or replacement) environment variables which are applied
             only to the current call
@@ -56,7 +72,7 @@ class LocalshellContainer(Container):
         Returns
         -------
         list
-            List of STDOUT lines from the container.
+            List of STDOUT lines from the environment.
         """
         run = Runner()
 

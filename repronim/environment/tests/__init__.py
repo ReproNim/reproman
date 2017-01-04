@@ -6,6 +6,6 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""resource tests"""
+"""environment tests"""
 
 __docformat__ = 'restructuredtext'

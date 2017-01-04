@@ -11,6 +11,7 @@
 import logging
 import paramiko
 import sys
+from ..support.exceptions import CommandError
 
 lgr = logging.getLogger('repronim.sshconnector2')
 
@@ -108,9 +109,8 @@ class SSHConnector2(object):
         for line in stdout.read().splitlines():
             stdout_lines.append(line)
 
-        # TODO:  decide on either throw an exception or return exit status
-        # We must not just swallow/warn about it
         if exit_status != 0:
-            lgr.warning("Command '%s' failed, exit status = %i", cmd, exit_status)
+            raise CommandError(cmd=cmd,
+                msg="Command '%s' failed, exit status = %i" % (cmd, exit_status))
 
         return stdout_lines

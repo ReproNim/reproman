@@ -27,31 +27,32 @@ class DebianDistribution(Distribution):
         """
         super(DebianDistribution, self).__init__(provenance)
 
-    def initiate(self, container):
+    def initiate(self, environment):
         """
-        Perform any initialization commands needed in the container environment.
+        Perform any initialization commands needed in the environment environment.
 
         Parameters
         ----------
-        container : object
-            The container sub-class object the hold the environment.
+        environment : object
+            The Environment sub-class object.
         """
-        self.lgr.debug("Adding Debian update to container command list.")
-        container.add_command(['apt-get', 'update'])
+        self._lgr.debug("Adding Debian update to environment command list.")
+        environment.add_command(['apt-get', 'update'])
+        environment.add_command(['apt-get', 'install', '-y', 'python-pip'])
 
-    def install_packages(self, container):
+    def install_packages(self, environment):
         """
         Install the packages associated to this distribution by the provenance
-        into the container environment.
+        into the environment.
 
         Parameters
         ----------
-        container : object
-            Container sub-class instance.
+        environment : object
+            Environment sub-class instance.
         """
-        for package in self.provenance['packages']:
-            container.add_command(
+        for package in self._provenance['packages']:
+            environment.add_command(
                 # TODO: Pull env out of provenance for this command.
                 ['apt-get', 'install', '-y', package['name']],
-                env={'DEBIAN_FRONTEND': 'noninteractive'}
+                # env={'DEBIAN_FRONTEND': 'noninteractive'}
             )

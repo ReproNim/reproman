@@ -27,27 +27,27 @@ class PypiDistribution(Distribution):
         """
         super(PypiDistribution, self).__init__(provenance)
 
-    def initiate(self, container):
+    def initiate(self, environment):
         """
-        Perform any initialization commands needed in the container environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
-        container : object
-            The container sub-class object the hold the environment.
+        environment : object
+            The Environment sub-class object.
         """
         return
 
-    def install_packages(self, container):
+    def install_packages(self, environment):
         """
         Install the packages associated to this distribution by the provenance
-        into the container environment.
+        into the environment.
 
         Parameters
         ----------
-        container : object
-            Container sub-class instance.
+        environment : object
+            Environment sub-class instance.
         """
-        for package in self.provenance['packages']:
-            container.add_command(['pip', 'install', package['name']])
+        for package in self._provenance['packages']:
+            environment.add_command(['pip', 'install', package['name']])
         return

@@ -55,6 +55,18 @@ class RepronimspecProvenance(Provenance):
                 lgr.error("Failed to load %s: %s", source, exc_str(exc))
                 raise  # TODO -- we might want a dedicated exception here
 
+    def get_operating_system(self):
+        """
+        Retrieve the operating system information.
+
+        Returns
+        -------
+        Dictionary containing name and version of the OS.
+            os['name']
+            os['version']
+        """
+        return self._yaml['distribution']
+
     def get_distributions(self):
         """
         Retrieve the information for all the distributions recorded in the

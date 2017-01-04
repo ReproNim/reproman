@@ -28,16 +28,16 @@ class NeurodebianDistribution(DebianDistribution):
         super(NeurodebianDistribution, self).__init__(provenance)
 
 
-    def initiate(self, container):
+    def initiate(self, environment):
         """
-        Perform any initialization commands needed in the container environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
-        container : object
-            The container sub-class object the hold the environment.
+        environment : object
+            The Environment sub-class object.
         """
 
         # TODO: Add code to setup NeuroDebian repository setup.
 
-        super(NeurodebianDistribution, self).initiate(container)
+        super(NeurodebianDistribution, self).initiate(environment)

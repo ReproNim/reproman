@@ -23,6 +23,9 @@ cfg = ConfigManager()
 # ssh_manager = SSHManager()
 #
 import atexit
+import pytest
+import repronim
+import os
 # atexit.register(ssh_manager.close, allow_fail=False)
 atexit.register(lgr.log, 5, "Exiting")
 
@@ -36,12 +39,13 @@ def test(package='repronim', **kwargs):
     Tester().test call
     """
     try:
-        from numpy.testing import Tester
-        Tester(package=package).test(**kwargs)
+        # from numpy.testing import Tester
+        # Tester(package=package).test(**kwargs)
+        pytest.main(['--disable-pytest-warnings', os.path.dirname(repronim.__file__)])
         # we don't have any benchmarks atm
         # bench = Tester().bench
     except ImportError:
-        raise RuntimeError('Need numpy >= 1.2 for repronim.tests().  Nothing is done')
+        raise RuntimeError('Problem with pytest for repronim.tests().  Nothing is done')
 test.__test__ = False
 
 # Following fixtures are necessary at the top level __init__ for fixtures which
