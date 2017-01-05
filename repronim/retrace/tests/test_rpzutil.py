@@ -8,12 +8,16 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 import io
 import pprint
+import os
 
 import repronim.retrace.rpzutil as rpzutil
-from repronim.tests.test_constants import REPROZIP_SPEC2_YML_FILENAME
+
+REPROZIP_SPEC_YML_FILENAME = os.path.join(os.path.dirname(__file__), os.pardir,
+                                           os.pardir, 'tests', 'files',
+                                           'reprozip_xeyes.yml')
 
 def test_read_reprozip_yaml():
-    config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC2_YML_FILENAME)
+    config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC_YML_FILENAME)
 #    pprint.pprint(config)
     rpzutil.identify_packages(config)
     output = io.StringIO()
