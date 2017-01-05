@@ -13,14 +13,15 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr, EnsureNone, EnsureBool
+from ..support.constraints import EnsureStr, EnsureNone
+from  ..resource import Resource
 
 from logging import getLogger
 lgr = getLogger('repronim.api.ls')
 
 
 class Ls(Interface):
-    """List known computation environments
+    """List known computation resources, images and environments
 
     Examples
     --------
@@ -41,31 +42,21 @@ class Ls(Interface):
             #constraints=EnsureBool() | EnsureNone(),
             doc="provide more verbose listing",
         ),
-        # fast=Parameter(
-        #     args=("-F", "--fast"),
-        #     action="store_true",
-        #     doc="only perform fast operations.  Would be overrident by --all",
-        # ),
-        # all=Parameter(
-        #     args=("-a", "--all"),
-        #     action="store_true",
-        #     doc="list all entries, not e.g. only latest entries in case of S3",
-        # ),
-        # config_file=Parameter(
-        #     doc="""path to config file which could help the 'ls'.  E.g. for s3://
-        #     URLs could be some ~/.s3cfg file which would provide credentials""",
-        #     constraints=EnsureStr() | EnsureNone()
-        # ),
-        # list_content=Parameter(
-        #     choices=(None, 'first10', 'md5', 'full'),
-        #     doc="""list also the content or only first 10 bytes (first10), or md5
-        #     checksum of an entry.  Might require expensive transfer and dump
-        #     binary output to your screen.  Do not enable unless you know what you
-        #     are after""",
-        #     default=None
-        # ),
+        config=Parameter(
+            args=("--config",),
+            doc="path to repronim configuration file",
+            metavar='CONFIG',
+            constraints=EnsureStr(),
+        ),
     )
 
     @staticmethod
-    def __call__(names, verbose=False):
-        raise NotImplementedError
+    def __call__(names, config, verbose=False):
+
+        resources = Resource.get_resource_list(config_path=config)
+        print('{:<30} {:<20}'.format('RESOURCE', 'TYPE'))
+        print('{:<30} {:<20}'.format('--------', '----'))
+        for key in resources:
+            lgr.debug('listing resource {}'.format(key))
+            print('{:<30} {:<20}'.format(resources[key]['resource_id'],
+                                           resources[key]['resource_type']))

@@ -6,11 +6,8 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Facility for managing compute resources.
+"""Facility for managing computational environment.
 
 """
 
 __docformat__ = 'restructuredtext'
-
-# Allow base Container class to be available directly from the package.
-from repronim.resource.base import Resource

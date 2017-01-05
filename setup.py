@@ -59,7 +59,7 @@ requires = {
         'chardet',  # python-debian misses dependency on it
     ],
     'docker': [
-        'docker-py',
+        'docker',
     ],
     'aws': [
         'boto3',
@@ -69,7 +69,7 @@ requires = {
     ],
     'tests': [
         'mock',
-        'nose>=1.3.4',
+        'pytest',
     ]
 }
 
