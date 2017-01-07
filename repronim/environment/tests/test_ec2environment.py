@@ -8,7 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-from mock import patch, call, MagicMock
+from mock import patch, call
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
@@ -17,6 +17,7 @@ from ..ec2environment import Ec2Environment
 def test_ec2environment_class():
 
     config = {
+        'resource_id': 'my-ec2-env',
         'resource_type': 'ec2-environment',
         'resource_client': 'my-aws-subscription',
         'region_name': 'us - east - 1',
@@ -35,9 +36,7 @@ def test_ec2environment_class():
         # Test initializing the environment object.
         env = Ec2Environment(config)
         calls = [
-            call('my-aws-subscription', config_path='/path/to/config/file'),
-            call().get_config('aws_access_key_id'),
-            call().get_config('aws_secret_access_key'),
+            call('my-aws-subscription', config_path='/path/to/config/file')
         ]
         MockResourceClient.assert_has_calls(calls, any_order=True)
 
@@ -45,8 +44,8 @@ def test_ec2environment_class():
         name = 'my-test-environment'
         image_id = 'ubuntu:trusty'
         env.create(name, image_id)
-        assert env.get_config('name') == 'my-test-environment'
-        assert env.get_config('base_image_id') == 'ubuntu:trusty'
+        assert env['name'] == 'my-test-environment'
+        assert env['base_image_id'] == 'ubuntu:trusty'
 
         # Test running some install commands.
         command = ['apt-get', 'install', 'bc']

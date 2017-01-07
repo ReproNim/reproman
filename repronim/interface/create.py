@@ -142,9 +142,10 @@ class Create(Interface):
             name = generate_environment_name()
         else:
             resource_client = env_resource.get_resource_client()
-            if name in resource_client.list_environments():
-                raise ValueError(
-                    "{} environment is already known to the resource.", name)
+            # TODO: Get a listing of environments.
+            # if name in resource_client.list_environments():
+            #     raise ValueError(
+            #         "{} environment is already known to the resource.", name)
 
         env_resource.create(name, image)
 

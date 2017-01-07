@@ -42,9 +42,9 @@ class Ec2Environment(Environment):
         aws_client = self.get_resource_client()
         self._ec2_resource = boto3.resource(
             'ec2',
-            aws_access_key_id=aws_client.get_config('aws_access_key_id'),
-            aws_secret_access_key=aws_client.get_config('aws_secret_access_key'),
-            region_name=self.get_config('region_name')
+            aws_access_key_id=aws_client['aws_access_key_id'],
+            aws_secret_access_key=aws_client['aws_secret_access_key'],
+            region_name=self['region_name']
         )
 
     def create(self, name, image_id):
@@ -59,23 +59,23 @@ class Ec2Environment(Environment):
             Identifier of the image to use when creating the environment.
         """
         if name:
-            self.set_config('name', name)
+            self['name'] = name
         if image_id:
-            self.set_config('base_image_id', image_id)
+            self['base_image_id'] = image_id
 
         instances = self._ec2_resource.create_instances(
-            ImageId=self.get_config('base_image_id'),
-            InstanceType=self.get_config('instance_type'),
-            KeyName=self.get_config('key_name'),
+            ImageId=self['base_image_id'],
+            InstanceType=self['instance_type'],
+            KeyName=self['key_name'],
             MinCount=1,
             MaxCount=1,
-            SecurityGroups=[self.get_config('security_group')],
+            SecurityGroups=[self['security_group']],
         )
 
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
             Resources=[instances[0].id],
-            Tags=[{'Key': 'Name', 'Value': self.get_config('name')}]
+            Tags=[{'Key': 'Name', 'Value': self['name']}]
         )
 
         # Save the EC2 Instance object.
@@ -153,7 +153,7 @@ class Ec2Environment(Environment):
         execution.
         """
         host = self._ec2_instance.public_ip_address
-        key_filename = self.get_config('key_filename')
+        key_filename = self['key_filename']
 
         with SSHConnector2(host, key_filename=key_filename) as ssh:
             for command in self._command_buffer:

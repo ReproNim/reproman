@@ -17,6 +17,7 @@ from ..dockerenvironment import DockerEnvironment
 def test_dockerenvironment_class():
 
     config = {
+        'resource_id': 'my-docker-env',
         'resource_type': 'docker-environment',
         'resource_client': 'remote-docker-engine',
         'config_path': '/path/to/config/file',
@@ -29,8 +30,7 @@ def test_dockerenvironment_class():
         # Test initializing the environment object.
         env = DockerEnvironment(config)
         calls = [
-            call('remote-docker-engine', config_path='/path/to/config/file'),
-            call().get_connection()
+            call('remote-docker-engine', config_path='/path/to/config/file')
         ]
         MockResourceClient.assert_has_calls(calls, any_order=True)
 
@@ -38,8 +38,8 @@ def test_dockerenvironment_class():
         name = 'my-test-environment'
         image_id = 'ubuntu:trusty'
         env.create(name, image_id)
-        assert env.get_config('name') == 'my-test-environment'
-        assert env.get_config('base_image_id') == 'ubuntu:trusty'
+        assert env['name'] == 'my-test-environment'
+        assert env['base_image_id'] == 'ubuntu:trusty'
 
         # Test connecting to an environment and running some install commands.
         env = DockerEnvironment(config)
@@ -50,10 +50,10 @@ def test_dockerenvironment_class():
         env.add_command(command)
         env.execute_command_buffer()
         calls = [
-            call().get_connection().containers.get('my-test-environment'),
-            call().get_connection().containers.get().exec_run(
+            call()().containers.get('my-test-environment'),
+            call()().containers.get().exec_run(
                 cmd=['apt-get', 'install', 'bc'], stream=True),
-            call().get_connection().containers.get().exec_run(
+            call()().containers.get().exec_run(
                 cmd=['apt-get', 'install', 'xeyes'], stream=True),
         ]
         MockResourceClient.assert_has_calls(calls, any_order=True)

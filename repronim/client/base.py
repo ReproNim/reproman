@@ -32,44 +32,17 @@ class Client(Resource):
         """
         super(Client, self).__init__(config)
 
-        self._connection = None
-        self.connect()
+        # The _client attribute must be defined in the child class.
+        if not hasattr(self, '_client'):
+            raise RuntimeError("Unable to find the resource client for '{}'".format(config['resource_id']))
 
-    def get_connection(self):
+    def __call__(self, *args, **kwargs):
         """
-        Returns the connection object needed to communicate with the backend service.
-
-        Returns
-        -------
-        Connection object specific to the backend API being implemented.
-        """
-        return self._connection
-
-    @abc.abstractmethod
-    def connect(self):
-        """
-        Connect to service and save client instance to _connection property.
-        """
-        return
-
-    @abc.abstractmethod
-    def list_environments(self):
-        """
-        Query the resource and return a list of container information.
+        Returns the client object needed to communicate with the backend service.
 
         Returns
         -------
-        Dictionary of containers located at the resource.
+        Client object specific to the backend API being implemented.
         """
-        return {}
-
-    @abc.abstractmethod
-    def list_images(self):
-        """
-        Query the resource and return a list of image information.
-
-        Returns
-        -------
-        Dictionary of images located at the resource.
-        """
-        return {}
+        self._lgr.debug("Retrieving client for resource {}".format(self['resource_id']))
+        return self._client
