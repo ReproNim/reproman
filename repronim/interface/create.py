@@ -123,15 +123,14 @@ class Create(Interface):
         print("SPEC: {}".format(specs[0]))
 
         # Load, while possible merging/augmenting sequentially
-        lgr.info("Loading the specs %s", specs)
+        # lgr.info("Loading the specs %s", specs)
         provenance = Provenance.factory(specs[0])
         lgr.debug("SPEC: {}".format(specs))
 
         if not resource:
             raise InsufficientArgumentsError("Need a --resource")
+        Interface.validate_resource(resource, config, 'environment')
         print("RESOURCE: {}".format(resource))
-
-        # TODO: Check to make sure resource_type is "environment"
 
         if only_env:
             raise NotImplementedError

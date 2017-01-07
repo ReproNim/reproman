@@ -13,7 +13,7 @@ import abc
 import logging
 
 from .config import ConfigManager
-from .support.exceptions import MissingConfigError
+from .support.exceptions import MissingConfigError, MissingConfigFileError
 
 
 class Resource(object):
@@ -114,7 +114,7 @@ class Resource(object):
         else:
             cm = ConfigManager()
         if len(cm._sections) == 1:
-            raise MissingConfigError("Cannot locate a repronim.cfg file.")
+            raise MissingConfigFileError("Unable to locate a repronim.cfg file.")
 
         return cm
 

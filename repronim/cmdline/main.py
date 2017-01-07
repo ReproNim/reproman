@@ -23,7 +23,7 @@ from importlib import import_module
 import repronim
 
 from repronim.cmdline import helpers
-from repronim.support.exceptions import InsufficientArgumentsError
+from repronim.support.exceptions import InsufficientArgumentsError, MissingConfigFileError
 from ..utils import setup_exceptionhook, chpwd
 from ..dochelpers import exc_str
 
@@ -244,6 +244,23 @@ def main(args=None):
             # if the func reports inappropriate usage, give help output
             lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             cmdlineargs.subparser.print_usage()
+            sys.exit(1)
+        except MissingConfigFileError as exc:
+            # TODO: ConfigManager is not finding files in the default locations.
+            message = """
+    ERROR: Unable to locate the repronim.cfg file.
+
+    You may either specify one using the --config parameter or place one in the
+    one of following locations:
+
+    1. '/etc/repronim/repronim.cfg'
+    2. 'repronim/config' in all directories defined by $XDG_CONFIG_DIRS
+        (by default: /etc/xdg/)
+    3. 'repronim.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
+    4. 'repronim.cfg' in the current directory
+"""
+            # print(message)
+            lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             sys.exit(1)
         except Exception as exc:
             lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
