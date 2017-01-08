@@ -9,8 +9,10 @@
 """Environment sub-class to provide management of an AWS EC2 instance."""
 
 import boto3
+from sys import version_info, exit
+from os import makedirs, chmod, getcwd
+from os.path import expanduser, dirname, exists, isfile
 
-from repronim.resource import Resource
 from repronim.environment.base import Environment
 from repronim.support.sshconnector2 import SSHConnector2
 
@@ -62,6 +64,8 @@ class Ec2Environment(Environment):
             self['name'] = name
         if image_id:
             self['base_image_id'] = image_id
+        if not 'key_name' in self:
+            self.create_key_pair()
 
         instances = self._ec2_resource.create_instances(
             ImageId=self['base_image_id'],
@@ -159,3 +163,86 @@ class Ec2Environment(Environment):
             for command in self._command_buffer:
                 self._lgr.info("Running command '%s'", command['command'])
                 self.execute_command(ssh, command['command'], command['env'])
+
+    def create_key_pair(self):
+        """
+        Walk the user through creating an SSH key pair that is saved to
+        the AWS platform.
+        """
+        def get_user_input(prompt):
+            py3 = version_info[0] > 2
+            if py3:
+                response = input(prompt)
+            else:
+                response = raw_input(prompt)
+            return response.strip()
+
+        # Prompt for a name of the key-pair on AWS.
+        prompt = """
+You did not specify an EC2 SSH key-pair name to use when creating your EC2 environment.
+Please enter a unique name to create a new key-pair or press [enter] to exit.> """
+        key_name = get_user_input(prompt)
+
+        # The user wants to exit.
+        if not key_name:
+            exit(0)
+
+        # Check to see if key_name already exists.
+        for i in range(3):
+            key_pairs = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
+            try:
+                len(list(key_pairs))
+            except:
+                # Catch the exception raised when there is no matching key name at AWS.
+                break
+            if i == 2:
+                print('That key name exists already, exiting.')
+                exit(1)
+            else:
+                prompt = 'That key name exists already, try again. > '
+                key_name = get_user_input(prompt)
+
+        # Prompt for a path to store the SSH private key.
+        default_path = '{}/.ssh/{}.pem'.format(expanduser("~"), key_name)
+        for i in range(3):
+            prompt = 'Please enter the path to save the private key. [{}]> '.format(default_path)
+            key_filename = get_user_input(prompt)
+
+            if not key_filename:
+                key_filename = default_path
+            # Put .pem at end of private key file if not there already.
+            elif not key_filename.endswith('.pem'):
+                key_filename += '.pem'
+
+            if isfile(key_filename):
+                if i == 2:
+                    print('File exists, exiting.')
+                    exit(1)
+                else:
+                    # TODO: Ask user if they want to overwrite the existing file.
+                    print('File exists, try again.')
+            else:
+                break
+
+        # Make sure the directory for the private key file exists.
+        basedir = dirname(key_filename)
+        if not basedir or not basedir.startswith('/'):
+            basedir = getcwd()
+            key_filename = basedir + '/' + key_filename
+        if not exists(basedir):
+            makedirs(basedir)
+
+        # Generate the key-pair and save to the private key file.
+        with open(key_filename, 'w') as key_file:
+            key_pair = self._ec2_resource.create_key_pair(
+                DryRun=False,
+                KeyName=key_name
+            )
+            key_file.write(key_pair.key_material)
+        chmod(key_filename, 0400)
+        self._lgr.info("Created private key file %s.", key_filename)
+
+        # Save the new info to the resource.
+        self['key_name'] = key_name
+        self['key_filename'] = key_filename
+        # TODO: Write new config info to the repronim.cfg file.

@@ -50,6 +50,9 @@ class Resource(object):
     def __setitem__(self, key, value):
         self._config[key] = value
 
+    def __contains__(self, item):
+        return item in self._config
+
     @staticmethod
     def factory(resource_id, config = {}, config_path=None):
         """
