@@ -170,10 +170,8 @@ class Ec2Environment(Environment):
         the AWS platform.
         """
 
-        # TODO: Should move this to something usable application-wide.
-        py3 = version_info[0] > 2
-
         def get_user_input(prompt):
+            py3 = version_info[0] > 2
             if py3:
                 response = input(prompt)
             else:
@@ -242,10 +240,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit.> "
                 KeyName=key_name
             )
             key_file.write(key_pair.key_material)
-        if py3:
-            chmod(key_filename, 0o400)
-        else:
-            chmod(key_filename, 0400)
+        chmod(key_filename, 0o400)
         self._lgr.info("Created private key file %s.", key_filename)
 
         # Save the new info to the resource.
