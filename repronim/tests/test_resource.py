@@ -22,11 +22,11 @@ def test_resource_class(repronim_cfg_path):
 
     # Test reading a repronim.cfg file.
     resource = Resource.factory('ec2-workflow', config_path=repronim_cfg_path)
-    assert resource.get_config('resource_id') == 'ec2-workflow'
-    assert resource.get_config('resource_type') == 'ec2-environment'
-    assert resource.get_config('resource_client') == 'my-aws-subscription'
-    assert resource.get_config('region_name') == 'us-east-1'
-    assert resource.get_config('instance_type') == 't2.micro'
+    assert resource['resource_id'] == 'ec2-workflow'
+    assert resource['resource_type'] == 'ec2-environment'
+    assert resource['resource_client'] == 'my-aws-subscription'
+    assert resource['region_name'] == 'us-east-1'
+    assert resource['instance_type'] == 't2.micro'
 
     # Test overriding the settings read from a repronim.cfg file.
     config = {
@@ -34,25 +34,25 @@ def test_resource_class(repronim_cfg_path):
         'instance_type': 'm3.medium'
     }
     resource = Resource.factory('ec2-workflow', config, config_path=repronim_cfg_path)
-    assert len(resource._config) == 11
-    assert resource.get_config('resource_id') == 'ec2-workflow'
-    assert resource.get_config('resource_type') == 'ec2-environment'
-    assert resource.get_config('resource_client') == 'my-aws-subscription'
-    assert resource.get_config('region_name') == 'us-east-1'
-    assert resource.get_config('instance_type') == 'm3.medium'
-    assert resource.get_config('new_config_var') == 'abc123'
+    assert len(resource) == 11
+    assert resource['resource_id'] == 'ec2-workflow'
+    assert resource['resource_type'] == 'ec2-environment'
+    assert resource['resource_client'] == 'my-aws-subscription'
+    assert resource['region_name'] == 'us-east-1'
+    assert resource['instance_type'] == 'm3.medium'
+    assert resource['new_config_var'] == 'abc123'
 
     # Test updating a configuration setting.
-    assert resource.get_config('instance_type') == 'm3.medium'
-    resource.set_config('instance_type', 't2.large')
-    assert resource.get_config('instance_type') == 't2.large'
+    assert resource['instance_type'] == 'm3.medium'
+    resource['instance_type'] = 't2.large'
+    assert resource['instance_type'] == 't2.large'
 
     # TODO: Test below is not working in python 3.
     # Python 3 complains that MissingConfigError object has no attribute 'message'
     #
     # Test raising an exception if a config setting is missing.
     # try:
-    #     resource.get_config('i-do-not-exist')
+    #     resource['i-do-not-exist']
     # except MissingConfigError as e:
     #     assert e.message == "Missing configuration parameter: 'i-do-not-exist'"
     #

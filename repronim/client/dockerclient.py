@@ -28,32 +28,6 @@ class DockerClient(Client):
         if not 'engine_url' in config:
             config['engine_url'] = 'unix:///var/run/docker.sock'
 
+        self._client = docker.DockerClient(config['engine_url'])
+
         super(DockerClient, self).__init__(config)
-
-    def connect(self):
-        """
-        Connect to service and save client instance to _client property.
-        """
-        # If the connection fails, the DockerException will be raised.
-        self._connection = docker.DockerClient(self.get_config('engine_url'))
-        self._lgr.debug("Connected to docker at {}".format(self.get_config('engine_url')))
-
-    def list_environments(self):
-        """
-        Query the resource and return a list of container information.
-
-        Returns
-        -------
-        Dictionary of containers located at the resource.
-        """
-        return {}
-
-    def list_images(self):
-        """
-        Query the resource and return a list of image information.
-
-        Returns
-        -------
-        Dictionary of images located at the resource.
-        """
-        return {}

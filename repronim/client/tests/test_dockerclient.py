@@ -20,27 +20,26 @@ def test_dockerclient_class():
 
     # Test connecting to a mock docker server.
     config = {
+        'resource_id': 'my-docker-client',
         'engine_url': 'tcp://127.0.0.1:2375'
     }
-    env = DockerClient(config)
 
     with patch('docker.DockerClient') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         MockClient.return_value = 'connection made to docker'
 
-        env.connect()
+        DockerClient(config)
 
         calls = [
             call('tcp://127.0.0.1:2375')
         ]
         MockClient.assert_has_calls(calls, any_order=True)
 
-        assert env.get_connection() == 'connection made to docker'
-        assert_in('Connected to docker at tcp://127.0.0.1:2375', log.lines)
-
     # Test setting the default engine url if not provided.
-    config = {}
-    env = DockerClient(config)
-    assert env.get_config('engine_url') == 'unix:///var/run/docker.sock'
+    config = {
+        'resource_id': 'my-docker-client'
+    }
+    client = DockerClient(config)
+    assert client['engine_url'] == 'unix:///var/run/docker.sock'
 

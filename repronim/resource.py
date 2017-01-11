@@ -13,7 +13,7 @@ import abc
 import logging
 
 from .config import ConfigManager
-from .support.exceptions import MissingConfigError
+from .support.exceptions import MissingConfigError, MissingConfigFileError
 
 
 class Resource(object):
@@ -33,7 +33,25 @@ class Resource(object):
             Configuration parameters for the resource.
         """
         self._config = config
+        if not 'resource_id' in self._config:
+            raise MissingConfigError("Missing 'resource_id' config parameter")
+
         self._lgr = logging.getLogger('repronim.resource')
+
+    def __repr__(self):
+        return 'Resource({})'.format(self._config['resource_id'])
+
+    def __len__(self):
+        return len(self._config)
+
+    def __getitem__(self, item):
+        return self._config[item]
+
+    def __setitem__(self, key, value):
+        self._config[key] = value
+
+    def __contains__(self, item):
+        return item in self._config
 
     @staticmethod
     def factory(resource_id, config = {}, config_path=None):
@@ -99,7 +117,7 @@ class Resource(object):
         else:
             cm = ConfigManager()
         if len(cm._sections) == 1:
-            raise MissingConfigError("Cannot locate a repronim.cfg file.")
+            raise MissingConfigFileError("Unable to locate a repronim.cfg file.")
 
         return cm
 
@@ -127,39 +145,3 @@ class Resource(object):
                 resources[resource_id] = cm._sections[name]
                 resources[resource_id]['resource_id'] = resource_id
         return resources
-
-    def get_config(self, key):
-        """
-        Returns a configuration parameter indexed by the key.
-
-        Parameters
-        ----------
-        key : string
-            Identifier of configuration setting.
-
-        Returns
-        -------
-        Value of configuration parameter indexed by the key.
-        """
-        if key in self._config:
-            return self._config[key]
-
-        raise MissingConfigError("Missing configuration parameter: '%s'" % key)
-
-    def set_config(self, key, value):
-        """
-        Set a configuration parameter for the instance of the resource.
-
-        Parameters
-        ----------
-        key : string
-            Identifier of configuration setting.
-
-        value : string
-            Value of configuration setting.
-
-        Returns
-        -------
-
-        """
-        self._config[key] = value

@@ -73,9 +73,8 @@ class Install(Interface):
 
         if not resource:
             raise InsufficientArgumentsError("Need at least a single --resource")
+        Interface.validate_resource(resource, config, 'environment')
         print("RESOURCE: {}".format(resource))
-
-        # TODO: Check to make sure resource_type is "environment"
 
         if not name:
             raise InsufficientArgumentsError("Need at least a single --name")

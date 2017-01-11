@@ -9,10 +9,15 @@
 """Environment sub-class to provide management of an AWS EC2 instance."""
 
 import boto3
+from sys import exit
+from os import chmod
+from os.path import join
+from appdirs import AppDirs
 
-from repronim.resource import Resource
-from repronim.environment.base import Environment
-from repronim.support.sshconnector2 import SSHConnector2
+from ..environment.base import Environment
+from ..support.sshconnector2 import SSHConnector2
+from ..ui import ui
+from ..utils import assure_dir
 
 
 class Ec2Environment(Environment):
@@ -42,9 +47,9 @@ class Ec2Environment(Environment):
         aws_client = self.get_resource_client()
         self._ec2_resource = boto3.resource(
             'ec2',
-            aws_access_key_id=aws_client.get_config('aws_access_key_id'),
-            aws_secret_access_key=aws_client.get_config('aws_secret_access_key'),
-            region_name=self.get_config('region_name')
+            aws_access_key_id=aws_client['aws_access_key_id'],
+            aws_secret_access_key=aws_client['aws_secret_access_key'],
+            region_name=self['region_name']
         )
 
     def create(self, name, image_id):
@@ -59,23 +64,25 @@ class Ec2Environment(Environment):
             Identifier of the image to use when creating the environment.
         """
         if name:
-            self.set_config('name', name)
+            self['name'] = name
         if image_id:
-            self.set_config('base_image_id', image_id)
+            self['base_image_id'] = image_id
+        if not 'key_name' in self:
+            self.create_key_pair()
 
         instances = self._ec2_resource.create_instances(
-            ImageId=self.get_config('base_image_id'),
-            InstanceType=self.get_config('instance_type'),
-            KeyName=self.get_config('key_name'),
+            ImageId=self['base_image_id'],
+            InstanceType=self['instance_type'],
+            KeyName=self['key_name'],
             MinCount=1,
             MaxCount=1,
-            SecurityGroups=[self.get_config('security_group')],
+            SecurityGroups=[self['security_group']],
         )
 
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
             Resources=[instances[0].id],
-            Tags=[{'Key': 'Name', 'Value': self.get_config('name')}]
+            Tags=[{'Key': 'Name', 'Value': self['name']}]
         )
 
         # Save the EC2 Instance object.
@@ -153,9 +160,56 @@ class Ec2Environment(Environment):
         execution.
         """
         host = self._ec2_instance.public_ip_address
-        key_filename = self.get_config('key_filename')
+        key_filename = self['key_filename']
 
         with SSHConnector2(host, key_filename=key_filename) as ssh:
             for command in self._command_buffer:
                 self._lgr.info("Running command '%s'", command['command'])
                 self.execute_command(ssh, command['command'], command['env'])
+
+    def create_key_pair(self):
+        """
+        Walk the user through creating an SSH key pair that is saved to
+        the AWS platform.
+        """
+
+        prompt = """
+You did not specify an EC2 SSH key-pair name to use when creating your EC2 environment.
+Please enter a unique name to create a new key-pair or press [enter] to exit"""
+        key_name = ui.question(prompt)
+
+        # The user wants to exit.
+        if not key_name:
+            exit(0)
+
+        # Check to see if key_name already exists. 3 tries allowed.
+        for i in range(3):
+            key_pairs = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
+            try:
+                len(list(key_pairs))
+            except:
+                # Catch the exception raised when there is no matching key name at AWS.
+                break
+            if i == 2:
+                ui.message('That key name exists already, exiting.')
+                exit(1)
+            else:
+                key_name = ui.question('That key name exists already, try again')
+
+        # Create private key file.
+        basedir = join(
+            AppDirs('repronim', 'repronim.org').user_data_dir, 'ec2_keys')
+        assure_dir(basedir)
+        key_filename = join(basedir, key_name + '.pem')
+
+        # Generate the key-pair and save to the private key file.
+        key_pair = self._ec2_resource.create_key_pair(KeyName=key_name)
+        with open(key_filename, 'w') as key_file:
+            key_file.write(key_pair.key_material)
+        chmod(key_filename, 0o400)
+        self._lgr.info('Created private key file %s', key_filename)
+
+        # Save the new info to the resource.
+        self['key_name'] = key_name
+        self['key_filename'] = key_filename
+        # TODO: Write new config info to the repronim.cfg file or a registry of some sort.
