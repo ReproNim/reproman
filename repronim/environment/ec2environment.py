@@ -9,6 +9,8 @@
 """Environment sub-class to provide management of an AWS EC2 instance."""
 
 import boto3
+import re
+
 from os import chmod
 from os.path import join
 from appdirs import AppDirs
@@ -68,17 +70,34 @@ class Ec2Environment(Environment):
             self['name'] = name
         if image_id:
             self['base_image_id'] = image_id
-        if not 'key_name' in self:
+        if 'key_name' not in self:
             self.create_key_pair()
 
-        instances = self._ec2_resource.create_instances(
+        create_kwargs = dict(
             ImageId=self['base_image_id'],
             InstanceType=self['instance_type'],
             KeyName=self['key_name'],
             MinCount=1,
             MaxCount=1,
-            SecurityGroups=[self['security_group']],
+            SecurityGroups=[self['security_group']]
         )
+        try:
+            instances = self._ec2_resource.create_instances(**create_kwargs)
+        except ClientError as exc:
+            if re.search(
+                'The key pair .%(key_name)s. does not exist' % self,
+                str(exc)
+            ):
+                if not ui.yesno(
+                    title="No key %(key_name)r found in the "
+                          "zone %(region_name)s" % self,
+                    text="Would you like to generate a new key?"
+                ):
+                    raise
+                self.create_key_pair(self['key_name'])
+                instances = self._ec2_resource.create_instances(**create_kwargs)
+            else:
+                raise  # re-raise
 
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
@@ -171,16 +190,18 @@ class Ec2Environment(Environment):
                 self._lgr.info("Running command '%s'", command['command'])
                 self.execute_command(ssh, command['command'], command['env'])
 
-    def create_key_pair(self):
+    def create_key_pair(self, key_name=None):
         """
         Walk the user through creating an SSH key pair that is saved to
         the AWS platform.
         """
 
-        prompt = """
-You did not specify an EC2 SSH key-pair name to use when creating your EC2 environment.
+        if not key_name:
+            prompt = """\
+You did not specify an EC2 SSH key-pair name to use when creating your EC2
+environment.
 Please enter a unique name to create a new key-pair or press [enter] to exit"""
-        key_name = ui.question(prompt)
+            key_name = ui.question(prompt)
 
         # Check to see if key_name already exists. 3 tries allowed.
         for i in range(3):
