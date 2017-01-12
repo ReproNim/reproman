@@ -12,12 +12,16 @@ import boto3
 from os import chmod
 from os.path import join
 from appdirs import AppDirs
+from botocore.exceptions import ClientError
 
 from ..environment.base import Environment
 from ..support.sshconnector2 import SSHConnector2
 from ..ui import ui
 from ..utils import assure_dir
+from ..dochelpers import exc_str
 
+import logging
+lgr = logging.getLogger('repronim.environment.ec2')
 
 class Ec2Environment(Environment):
 
@@ -183,12 +187,26 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
             if not key_name:
                 raise SystemExit("Empty keyname was provided, exiting")
 
-            key_pairs = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
+            key_pair = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
             try:
-                len(list(key_pairs))
-            except:
-                # Catch the exception raised when there is no matching key name at AWS.
-                break
+                try:
+                    len(list(key_pair))
+                except ClientError as exc:
+                    # Catch the exception raised when there is no matching
+                    # key name at AWS.
+                    if "does not exist" in str(exc):
+                        break
+                    # We have no clue what it is
+                    raise
+            except Exception as exc:
+                lgr.error(
+                    "Caught some unknown exception while checking key %s: %s",
+                    key_pair,
+                    exc_str(exc)
+                )
+                # reraising
+                raise
+
             if i == 2:
                 raise SystemExit('That key name exists already, exiting.')
             else:
