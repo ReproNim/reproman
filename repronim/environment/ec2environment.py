@@ -20,8 +20,6 @@ from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
 
-import logging
-lgr = logging.getLogger('repronim.environment.ec2')
 
 class Ec2Environment(Environment):
 
@@ -202,7 +200,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
                     # We have no clue what it is
                     raise
             except Exception as exc:
-                lgr.error(
+                self._lgr.error(
                     "Caught some unknown exception while checking key %s: %s",
                     key_pair,
                     exc_str(exc)
