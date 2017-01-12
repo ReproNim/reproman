@@ -33,7 +33,7 @@ class Resource(object):
             Configuration parameters for the resource.
         """
         self._config = config
-        if not 'resource_id' in self._config:
+        if 'resource_id' not in self._config:
             raise MissingConfigError("Missing 'resource_id' config parameter")
 
         self._lgr = logging.getLogger('repronim.resource')

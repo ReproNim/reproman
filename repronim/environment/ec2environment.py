@@ -9,15 +9,18 @@
 """Environment sub-class to provide management of an AWS EC2 instance."""
 
 import boto3
-from sys import exit
+import re
+
 from os import chmod
 from os.path import join
 from appdirs import AppDirs
+from botocore.exceptions import ClientError
 
 from ..environment.base import Environment
 from ..support.sshconnector2 import SSHConnector2
 from ..ui import ui
 from ..utils import assure_dir
+from ..dochelpers import exc_str
 
 
 class Ec2Environment(Environment):
@@ -67,17 +70,34 @@ class Ec2Environment(Environment):
             self['name'] = name
         if image_id:
             self['base_image_id'] = image_id
-        if not 'key_name' in self:
+        if 'key_name' not in self:
             self.create_key_pair()
 
-        instances = self._ec2_resource.create_instances(
+        create_kwargs = dict(
             ImageId=self['base_image_id'],
             InstanceType=self['instance_type'],
             KeyName=self['key_name'],
             MinCount=1,
             MaxCount=1,
-            SecurityGroups=[self['security_group']],
+            SecurityGroups=[self['security_group']]
         )
+        try:
+            instances = self._ec2_resource.create_instances(**create_kwargs)
+        except ClientError as exc:
+            if re.search(
+                'The key pair .%(key_name)s. does not exist' % self,
+                str(exc)
+            ):
+                if not ui.yesno(
+                    title="No key %(key_name)r found in the "
+                          "zone %(region_name)s" % self,
+                    text="Would you like to generate a new key?"
+                ):
+                    raise
+                self.create_key_pair(self['key_name'])
+                instances = self._ec2_resource.create_instances(**create_kwargs)
+            else:
+                raise  # re-raise
 
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
@@ -88,21 +108,24 @@ class Ec2Environment(Environment):
         # Save the EC2 Instance object.
         self._ec2_instance = self._ec2_resource.Instance(instances[0].id)
 
-        self._lgr.info("Waiting for EC2 instance %s to start running...", self._ec2_instance.id)
+        instance_id = self._ec2_instance.id
+        self._lgr.info("Waiting for EC2 instance %s to start running...",
+                       instance_id)
         self._ec2_instance.wait_until_running(
             Filters=[
                 {
                     'Name': 'instance-id',
-                    'Values': [self._ec2_instance.id]
+                    'Values': [instance_id]
                 },
             ]
         )
-        self._lgr.info("EC2 instance %s to start running!", self._ec2_instance.id)
+        self._lgr.info("EC2 instance %s to start running!", instance_id)
 
-        self._lgr.info("Waiting for EC2 instance %s to complete initialization...", self._ec2_instance.id)
+        self._lgr.info("Waiting for EC2 instance %s to complete initialization...",
+                       instance_id)
         waiter = self._ec2_instance.meta.client.get_waiter('instance_status_ok')
-        waiter.wait(InstanceIds=[self._ec2_instance.id])
-        self._lgr.info("EC2 instance %s initialized!")
+        waiter.wait(InstanceIds=[instance_id])
+        self._lgr.info("EC2 instance %s initialized!", instance_id)
 
     def connect(self, name):
         """
@@ -167,32 +190,47 @@ class Ec2Environment(Environment):
                 self._lgr.info("Running command '%s'", command['command'])
                 self.execute_command(ssh, command['command'], command['env'])
 
-    def create_key_pair(self):
+    def create_key_pair(self, key_name=None):
         """
         Walk the user through creating an SSH key pair that is saved to
         the AWS platform.
         """
 
-        prompt = """
-You did not specify an EC2 SSH key-pair name to use when creating your EC2 environment.
-Please enter a unique name to create a new key-pair or press [enter] to exit"""
-        key_name = ui.question(prompt)
-
-        # The user wants to exit.
         if not key_name:
-            exit(0)
+            prompt = """\
+You did not specify an EC2 SSH key-pair name to use when creating your EC2
+environment.
+Please enter a unique name to create a new key-pair or press [enter] to exit"""
+            key_name = ui.question(prompt)
 
         # Check to see if key_name already exists. 3 tries allowed.
         for i in range(3):
-            key_pairs = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
+            # The user wants to exit.
+            if not key_name:
+                raise SystemExit("Empty keyname was provided, exiting")
+
+            key_pair = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
             try:
-                len(list(key_pairs))
-            except:
-                # Catch the exception raised when there is no matching key name at AWS.
-                break
+                try:
+                    len(list(key_pair))
+                except ClientError as exc:
+                    # Catch the exception raised when there is no matching
+                    # key name at AWS.
+                    if "does not exist" in str(exc):
+                        break
+                    # We have no clue what it is
+                    raise
+            except Exception as exc:
+                self._lgr.error(
+                    "Caught some unknown exception while checking key %s: %s",
+                    key_pair,
+                    exc_str(exc)
+                )
+                # reraising
+                raise
+
             if i == 2:
-                ui.message('That key name exists already, exiting.')
-                exit(1)
+                raise SystemExit('That key name exists already, exiting.')
             else:
                 key_name = ui.question('That key name exists already, try again')
 
