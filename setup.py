@@ -26,20 +26,20 @@ from setup_support import get_version
 def findsome(subdir, extensions):
     """Find files under subdir having specified extensions
 
-    Leading directory (repronim) gets stripped
+    Leading directory (niceman) gets stripped
     """
     return [
-        f.split(pathsep, 1)[1] for f in findall(opj('repronim', subdir))
+        f.split(pathsep, 1)[1] for f in findall(opj('niceman', subdir))
         if splitext(f)[-1].lstrip('.') in extensions
     ]
 
-# repronim version to be installed
+# niceman version to be installed
 version = get_version()
 
 # Only recentish versions of find_packages support include
-# repronim_pkgs = find_packages('.', include=['repronim*'])
+# niceman_pkgs = find_packages('.', include=['niceman*'])
 # so we will filter manually for maximal compatibility
-repronim_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('repronim')]
+niceman_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('niceman')]
 
 requires = {
     'core': [
@@ -127,21 +127,21 @@ except ImportError:
     long_description = open(README).read()
 
 setup(
-    name="repronim",
+    name="niceman",
     author="The ReproNim Team and Contributors",
-    author_email="team@repronim.org",
+    author_email="team@niceman.org",
     version=version,
     description="Tools for Reproducible Neuroimaging",
-    packages=repronim_pkgs,
+    packages=niceman_pkgs,
     install_requires=requires['core'],
     extras_require=requires,
     entry_points={
         'console_scripts': [
-            'repronim=repronim.cmdline.main:main',
+            'niceman=niceman.cmdline.main:main',
         ],
     },
     cmdclass=cmdclass,
     package_data={
-        'repronim': []
+        'niceman': []
     }
 )

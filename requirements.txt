@@ -7,5 +7,5 @@
 # this one should work but would copy entire . tree  so should be ran on a clean copy
 .[full]
 
-# doesn't install repronim itself
-# file://.#egg=repronim[full]
+# doesn't install niceman itself
+# file://.#egg=niceman[full]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# repronim documentation build configuration file, created by
+# niceman documentation build configuration file, created by
 # sphinx-quickstart on Tue Oct 13 08:41:19 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -74,7 +74,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'repronim'
+project = u'niceman'
 copyright = u'2016, ReproNim team (in parts DataLad Team)'
 author = u'ReproNim team'
 
@@ -156,7 +156,7 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '_static/repronim_logo.png'
+html_logo = '_static/niceman_logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -229,7 +229,7 @@ html_show_sourcelink = False
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'repronimdoc'
+htmlhelp_basename = 'nicemandoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -251,7 +251,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'repronim.tex', u'repronim Documentation',
+  (master_doc, 'niceman.tex', u'niceman Documentation',
    u'ReproNim team', 'manual'),
 ]
 
@@ -281,7 +281,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'repronim', u'repronim Documentation',
+    (master_doc, 'niceman', u'niceman Documentation',
      [author], 1)
 ]
 
@@ -295,8 +295,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'repronim', u'repronim Documentation',
-   author, 'repronim', 'One line description of project.',
+  (master_doc, 'niceman', u'niceman Documentation',
+   author, 'niceman', 'One line description of project.',
    'Miscellaneous'),
 ]
 

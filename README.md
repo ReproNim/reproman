@@ -23,7 +23,7 @@ internals and/or contributing to the project.
 
 * [![codecov.io](https://codecov.io/github/ReproNim/ReproNim/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/ReproNim?branch=master)
 
-* [![Documentation](https://readthedocs.org/projects/ReproNim/badge/?version=latest)](http://repronim.rtfd.org)
+* [![Documentation](https://readthedocs.org/projects/ReproNim/badge/?version=latest)](http://niceman.rtfd.org)
 
 # Installation
 
@@ -36,13 +36,13 @@ all necessary packages from that repository.
 
 ## Other Linux'es, OSX (Windows yet TODO) via pip
 
-By default, installation via pip installs core functionality of repronim
+By default, installation via pip installs core functionality of niceman
 allowing for managing datasets etc.  Additional installation schemes
 are available, so you could provide enhanced installation via
-`pip install repronim[SCHEME]` where `SCHEME` could be
+`pip install niceman[SCHEME]` where `SCHEME` could be
 
 - tests
-     to also install dependencies used by unit-tests battery of the repronim
+     to also install dependencies used by unit-tests battery of the niceman
 - full
      to install all of possible dependencies.
 
