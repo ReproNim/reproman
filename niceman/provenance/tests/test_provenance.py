@@ -16,7 +16,7 @@ import niceman.tests.fixtures
 
 def test_get_distributions(demo1_spec):
 
-    # Test reading the distributions from the Repronim spec file.
+    # Test reading the distributions from the NICEMAN spec file.
     provenance = Provenance.factory(demo1_spec, 'nicemanspec')
 
     with swallow_logs(new_level=logging.DEBUG) as log:

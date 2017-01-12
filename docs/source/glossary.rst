@@ -13,8 +13,8 @@
 Glossary
 ********
 
-ReproNim uses terminology which is collated from various technologies. This
-glossary provides definitions for terms used in the ReproNim documentation
+NICEMAN uses terminology which is collated from various technologies. This
+glossary provides definitions for terms used in the NICEMAN documentation
 and API, and provides additional references where to seek more information
 
 .. glossary::

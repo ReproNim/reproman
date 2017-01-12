@@ -75,8 +75,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'niceman'
-copyright = u'2016, ReproNim team (in parts DataLad Team)'
-author = u'ReproNim team'
+copyright = u'2016, NICEMAN team (in parts DataLad Team)'
+author = u'NICEMAN team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -252,7 +252,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   (master_doc, 'niceman.tex', u'niceman Documentation',
-   u'ReproNim team', 'manual'),
+   u'NICEMAN team', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

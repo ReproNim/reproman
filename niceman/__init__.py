@@ -6,8 +6,12 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Repronim - Reproducible Neuroimaging is a suite of tools to ease construction
-and execution of computation environments based on the provenance data."""
+"""NICEMAN - Neuroimaging Computation Environments Manager
+
+It is a part of the ReproNim (Reproducible Neuroimaging) suite of tools
+to ease construction and execution of computation environments based on the
+provenance data.
+"""
 
 from .log import lgr
 

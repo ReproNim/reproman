@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Python ReproNim API exposing user-oriented commands (also available via CLI)"""
+"""Python NICEMAN API exposing user-oriented commands (also available via CLI)"""
 
 
 def _generate_func_api():

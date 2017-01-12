@@ -1,7 +1,7 @@
-Contributing to ReproNim
+Contributing to NICEMAN
 ========================
 
-[gh-niceman]: http://github.com/ReproNim/ReproNim
+[gh-niceman]: http://github.com/ReproNim/niceman
 
 Files organization
 ------------------
@@ -25,13 +25,13 @@ Files organization
     - `bash-completions` - bash and zsh completion setup for niceman (just
       `source` it)
 - `tools/` contains helper utilities used during development, testing, and
-  benchmarking of ReproNim.  Implemented in any most appropriate language
+  benchmarking of NICEMAN.  Implemented in any most appropriate language
   (Python, bash, etc.)
 
 How to contribute
 -----------------
 
-The preferred way to contribute to the ReproNim code base is
+The preferred way to contribute to the NICEMAN code base is
 to fork the [main repository][gh-niceman] on GitHub.  Here
 we outline the workflow used by the developers:
 
@@ -39,7 +39,7 @@ we outline the workflow used by the developers:
 0. Have a clone of our main [project repository][gh-niceman] as `origin`
    remote in your git:
 
-          git clone git://github.com/niceman/niceman
+          git clone git://github.com/ReproNim/niceman
 
 1. Fork the [project repository][gh-niceman]: click on the 'Fork'
    button near the top of the page.  This creates a copy of the code
@@ -94,14 +94,14 @@ we outline the workflow used by the developers:
    also use `TST` for commits concerned solely with tests, and `BK` to signal
    that the commit causes a breakage (e.g. of tests) at that point.  Multiple
    entries could be listed joined with a `+` (e.g. `rf+doc-`).  See `git log` for
-   examples.  If a commit closes an existing ReproNim issue, then add to the end
+   examples.  If a commit closes an existing NICEMAN issue, then add to the end
    of the message `(Closes #ISSUE_NUMER)`
 
 5. Push to GitHub with:
 
           git push -u gh-YourLogin nf-my-feature
 
-   Finally, go to the web page of your fork of the ReproNim repo, and click
+   Finally, go to the web page of your fork of the NICEMAN repo, and click
    'Pull request' (PR) to send your changes to the maintainers for review. This
    will send an email to the committers.  You can commit new changes to this branch
    and keep pushing to your remote -- github automagically adds them to your
@@ -182,7 +182,7 @@ Additional Hints
    
    and if conflicts occur, provide short summary on how they were resolved
    in "Conflicts" listing within the merge commit
-   (see [example](https://github.com/niceman/niceman/commit/eb062a8009d160ae51929998771964738636dcc2)).
+   (see [example](https://github.com/ReproNim/niceman/commit/eb062a8009d160ae51929998771964738636dcc2)).
 
 
 Quality Assurance
@@ -291,8 +291,8 @@ package to ease pycharm installation even further.
 Easy Issues
 -----------
 
-A great way to start contributing to ReproNim is to pick an item from the list of
-[Easy issues](https://github.com/niceman/niceman/labels/easy) in the issue
+A great way to start contributing to NICEMAN is to pick an item from the list of
+[Easy issues](https://github.com/ReproNim/niceman/labels/easy) in the issue
 tracker.  Resolving these issues allows you to start contributing to the project
 without much prior knowledge.  Your assistance in this area will be greatly
 appreciated by the more experienced developers as it helps free up their time to

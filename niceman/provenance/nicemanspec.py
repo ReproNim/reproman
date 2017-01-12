@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Plugin support for provenance YAML files following ReproNim spec.
+Plugin support for provenance YAML files following NICEMAN spec.
 
 See: https://vida-nyu.github.io/reprozip/
 """
@@ -22,9 +22,9 @@ import logging
 lgr = logging.getLogger('niceman.provenance.nicemanspec')
 
 
-class RepronimspecProvenance(Provenance):
+class NicemanspecProvenance(Provenance):
     """
-    Parser for Repronim Spec provenance (YAML specification)
+    Parser for NICEMAN Spec provenance (YAML specification)
     """
 
     def __init__(self, source):

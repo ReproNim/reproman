@@ -88,8 +88,8 @@ def write_config(os, config):
 
     """
     envconfig = dict(config)  # Shallow copy for destruction
-    os.write(("# ReproNim Environment Configuration File\n" +
-              "# This file was created by ReproNim {0} on {1}\n").format(
+    os.write(("# NICEMAN Environment Configuration File\n" +
+              "# This file was created by NICEMAN {0} on {1}\n").format(
             niceman.__version__, datetime.datetime.now()))
 
     c = "\n# Runs: Commands and related environment variables\n\n"
@@ -101,7 +101,7 @@ def write_config(os, config):
     c = "\n# Non-Packaged Files \n\n"
     write_config_key(os, envconfig, "other_files", c)
 
-    os.write("\n# Other ReproZip keys (not used by ReproNim) \n\n")
+    os.write("\n# Other ReproZip keys (not used by NICEMAN) \n\n")
     os.write(utils.unicode(yaml.safe_dump(envconfig,
                                           encoding="utf-8",
                                           allow_unicode=True)))

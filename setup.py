@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the ReproNim package for the
+#   See COPYING file distributed along with the NICEMAN package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -128,7 +128,7 @@ except ImportError:
 
 setup(
     name="niceman",
-    author="The ReproNim Team and Contributors",
+    author="The NICEMAN Team and Contributors",
     author_email="team@niceman.org",
     version=version,
     description="Tools for Reproducible Neuroimaging",

@@ -30,7 +30,7 @@ from ..dochelpers import exc_str
 
 def _license_info():
     return """\
-Copyright (c) 2016- Repronim developers (parts 2013-2016 DataLad developers)
+Copyright (c) 2016- NICEMAN developers (parts 2013-2016 DataLad developers)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -74,7 +74,7 @@ def setup_parser(
         # instead of niceman for some reason... doesn't happen in datalad
         usage="%(prog)s ...",
         description=dedent_docstring("""\
-            ReproNim aims to ease construction and execution of computation environments
+            NICEMAN aims to ease construction and execution of computation environments
             based on collected provenance data."""),
         epilog='"Control Your Data"',
         formatter_class=formatter_class,

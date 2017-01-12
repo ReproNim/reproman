@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 #   Originally written by Yaroslav Halchenko  for Fail2Ban and later
-#   adopted for use in DataLad and ReproNim and thus relicensed under MIT/Expat.
+#   adopted for use in DataLad and NICEMAN and thus relicensed under MIT/Expat.
 #   Relicensing was conveyed via email to other contributors.
 #
 #  ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
