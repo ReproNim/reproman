@@ -11,7 +11,7 @@ from os.path import join as opj, dirname
 
 # Sample output from Reprozip.
 REPROZIP_SPEC1_YML_FILENAME = opj(dirname(__file__), 'files', 'reprozip_spec1.yml')
-REPROZIP_SPEC1 = open(REPROZIP_SPEC1_YML_FILENAME).read()
+REPROZIP_SPEC2_YML_FILENAME = opj(dirname(__file__), 'files', 'reprozip_xeyes.yml')
 
 # examples/demo_spec1.yml
 DEMO_SPEC1_YML_FILENAME = opj(dirname(__file__), 'files', 'demo_spec1.yml')

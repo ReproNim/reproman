@@ -14,7 +14,7 @@ import time
 
 from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
 from six.moves.urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
-from six import text_type, binary_type
+from six import text_type, binary_type, PY3
 
 import logging
 import shutil
@@ -882,5 +882,17 @@ def _path_(p):
     else:
         # Assume that all others as POSIX compliant so nothing to be done
         return p
+
+def unicode(s):
+    """Given a str type, convert to unicode"""
+    if PY3:
+        if isinstance(s, bytes):
+            return str(s, 'utf-8')
+        elif isinstance(s, str):
+            return s
+        else:
+            raise TypeError("Incorrect type for unicode()")
+    else:
+        return __builtin__.unicode(s)
 
 lgr.log(5, "Done importing repronim.utils")
