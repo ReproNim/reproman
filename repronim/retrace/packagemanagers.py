@@ -40,8 +40,9 @@ class PackageManager(object):
         Return
         ------
         (found_packages, unknown_files)
-            - found_packages is an dict (indexed by package name) with an
-              entry "files" that contains an array of related files
+            - found_packages is an array of dicts that holds information about
+              the found packages. Package dicts need at least "name" and
+              "files" (that contains an array of related files)
             - unknown_files is a list of files that were not found in
               a package
         """
@@ -72,7 +73,7 @@ class PackageManager(object):
                  nb_pkg_files,
                  len(unknown_files))
 
-        return found_packages, unknown_files
+        return list(viewvalues(found_packages)), unknown_files
 
     def _get_package_for_file(self, filename):
         raise NotImplementedError
