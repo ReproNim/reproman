@@ -84,6 +84,12 @@ packages:
    TODOMORE: TODO
    component: contrib
    architecture: amd64
+   # --- User knowledge which we might not be able to "trace" but should allow for 
+   # custom specification, e.g. environment variables which might guide the
+   # package installation procedure/initial configuration
+   # 
+   # environment:
+   #  - VAR1: xxxx
 
  - name: python-nibabel
    distributions:
