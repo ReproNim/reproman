@@ -62,8 +62,8 @@ def identify_packages(config):
     # Immediately clone the configuration
     files = get_system_files(config)
 
-
-    (unidentified_files, packages) = packagemanagers.identify_packages(list(files))
+    (packages, unidentified_files) = packagemanagers.identify_packages(
+        list(files))
 
     # Update reprozip package assignment
     config['packages'] = packages

@@ -52,7 +52,6 @@ requires = {
         'tqdm',
         'paramiko',
         'cryptography',
-        'rpaths',
     ],
     'debian': [
         'python-debian',

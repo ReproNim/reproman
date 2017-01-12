@@ -14,10 +14,12 @@ from repronim.retrace.packagemanagers import identify_packages
 def test_identify_packages():
     files = ["/usr/share/doc/xterm/copyright",
              "/usr/share/icons/hicolor/48x48/apps/xterm-color.png",
+             "/usr/share/doc/zlib1g/copyright",
              "/usr/bin/vim.basic",
              "/usr/share/bug/vim/script",
              "/home/butch"]
-    files, packages = identify_packages(files)
+    # TODO: Mock I/O and detect correct analysis
+    packages, files = identify_packages(files)
     pprint(files)
     pprint(packages)
     assert True
