@@ -9,7 +9,6 @@
 """Environment sub-class to provide management of an AWS EC2 instance."""
 
 import boto3
-from sys import exit
 from os import chmod
 from os.path import join
 from appdirs import AppDirs
@@ -178,12 +177,12 @@ You did not specify an EC2 SSH key-pair name to use when creating your EC2 envir
 Please enter a unique name to create a new key-pair or press [enter] to exit"""
         key_name = ui.question(prompt)
 
-        # The user wants to exit.
-        if not key_name:
-            exit(0)
-
         # Check to see if key_name already exists. 3 tries allowed.
         for i in range(3):
+            # The user wants to exit.
+            if not key_name:
+                raise SystemExit("Empty keyname was provided, exiting")
+
             key_pairs = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
             try:
                 len(list(key_pairs))
@@ -191,8 +190,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
                 # Catch the exception raised when there is no matching key name at AWS.
                 break
             if i == 2:
-                ui.message('That key name exists already, exiting.')
-                exit(1)
+                raise SystemExit('That key name exists already, exiting.')
             else:
                 key_name = ui.question('That key name exists already, try again')
 
