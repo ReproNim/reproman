@@ -91,21 +91,24 @@ class Ec2Environment(Environment):
         # Save the EC2 Instance object.
         self._ec2_instance = self._ec2_resource.Instance(instances[0].id)
 
-        self._lgr.info("Waiting for EC2 instance %s to start running...", self._ec2_instance.id)
+        instance_id = self._ec2_instance.id
+        self._lgr.info("Waiting for EC2 instance %s to start running...",
+                       instance_id)
         self._ec2_instance.wait_until_running(
             Filters=[
                 {
                     'Name': 'instance-id',
-                    'Values': [self._ec2_instance.id]
+                    'Values': [instance_id]
                 },
             ]
         )
-        self._lgr.info("EC2 instance %s to start running!", self._ec2_instance.id)
+        self._lgr.info("EC2 instance %s to start running!", instance_id)
 
-        self._lgr.info("Waiting for EC2 instance %s to complete initialization...", self._ec2_instance.id)
+        self._lgr.info("Waiting for EC2 instance %s to complete initialization...",
+                       instance_id)
         waiter = self._ec2_instance.meta.client.get_waiter('instance_status_ok')
-        waiter.wait(InstanceIds=[self._ec2_instance.id])
-        self._lgr.info("EC2 instance %s initialized!")
+        waiter.wait(InstanceIds=[instance_id])
+        self._lgr.info("EC2 instance %s initialized!", instance_id)
 
     def connect(self, name):
         """
