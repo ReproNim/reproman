@@ -1,4 +1,4 @@
-ReproNim |---| tools for reproducible neuroimaging
+NICEMAN |---| tools for reproducible neuroimaging
 **************************************************
 
 .. toctree::

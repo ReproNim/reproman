@@ -5,7 +5,7 @@
 Acknowledgments
 ***************
 
-ReproNim development is being performed as part of an NIH_ funded
+NICEMAN development is being performed as part of an NIH_ funded
 (1P41EB019936-01A1_) "Center for Reproducible Neuroimaging Computation
 (CRNC)". It's initial development aims to provide a suite of tools for
 management of computational environments, which is the TR&D 3 sub-project of

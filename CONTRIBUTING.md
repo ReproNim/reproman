@@ -1,17 +1,17 @@
-Contributing to ReproNim
+Contributing to NICEMAN
 ========================
 
-[gh-repronim]: http://github.com/ReproNim/ReproNim
+[gh-niceman]: http://github.com/ReproNim/niceman
 
 Files organization
 ------------------
 
-- `repronim/` is the main Python module where major development is happening,
+- `niceman/` is the main Python module where major development is happening,
   with major submodules being:
     - `cmdline/` - helpers for accessing `interface/` functionality from
      command line
     - `interface/` - high level interface functions which get exposed via
-      command line (`cmdline/`) or Python (`repronim.api`).
+      command line (`cmdline/`) or Python (`niceman.api`).
     - `tests/` - some unit- and regression- tests (more could be found under
       `tests/` of corresponding submodules)
         - `utils.py` provides convenience helpers used by unit-tests such as
@@ -22,33 +22,33 @@ Files organization
     - `support/` - various support modules, e.g. for git/git-annex interfaces,
       constraints for the `interface/`, etc
 - `docs/` - yet to be heavily populated documentation
-    - `bash-completions` - bash and zsh completion setup for repronim (just
+    - `bash-completions` - bash and zsh completion setup for niceman (just
       `source` it)
 - `tools/` contains helper utilities used during development, testing, and
-  benchmarking of ReproNim.  Implemented in any most appropriate language
+  benchmarking of NICEMAN.  Implemented in any most appropriate language
   (Python, bash, etc.)
 
 How to contribute
 -----------------
 
-The preferred way to contribute to the ReproNim code base is
-to fork the [main repository][gh-repronim] on GitHub.  Here
+The preferred way to contribute to the NICEMAN code base is
+to fork the [main repository][gh-niceman] on GitHub.  Here
 we outline the workflow used by the developers:
 
 
-0. Have a clone of our main [project repository][gh-repronim] as `origin`
+0. Have a clone of our main [project repository][gh-niceman] as `origin`
    remote in your git:
 
-          git clone git://github.com/repronim/repronim
+          git clone git://github.com/ReproNim/niceman
 
-1. Fork the [project repository][gh-repronim]: click on the 'Fork'
+1. Fork the [project repository][gh-niceman]: click on the 'Fork'
    button near the top of the page.  This creates a copy of the code
    base under your account on the GitHub server.
 
 2. Add your forked clone as a remote to the local clone you already have on your
    local disk:
 
-          git remote add gh-YourLogin git@github.com:YourLogin/repronim.git
+          git remote add gh-YourLogin git@github.com:YourLogin/niceman.git
           git fetch gh-YourLogin
 
     To ease addition of other github repositories as remotes, here is
@@ -65,7 +65,7 @@ we outline the workflow used by the developers:
 
     thus you could simply run:
 
-         ghremote git@github.com:YourLogin/repronim.git
+         ghremote git@github.com:YourLogin/niceman.git
 
     to add the above `gh-YourLogin` remote.  Additional handy aliases
     such as `ghpr` (to fetch existing pr from someone's remote) and 
@@ -94,14 +94,14 @@ we outline the workflow used by the developers:
    also use `TST` for commits concerned solely with tests, and `BK` to signal
    that the commit causes a breakage (e.g. of tests) at that point.  Multiple
    entries could be listed joined with a `+` (e.g. `rf+doc-`).  See `git log` for
-   examples.  If a commit closes an existing ReproNim issue, then add to the end
+   examples.  If a commit closes an existing NICEMAN issue, then add to the end
    of the message `(Closes #ISSUE_NUMER)`
 
 5. Push to GitHub with:
 
           git push -u gh-YourLogin nf-my-feature
 
-   Finally, go to the web page of your fork of the ReproNim repo, and click
+   Finally, go to the web page of your fork of the NICEMAN repo, and click
    'Pull request' (PR) to send your changes to the maintainers for review. This
    will send an email to the committers.  You can commit new changes to this branch
    and keep pushing to your remote -- github automagically adds them to your
@@ -119,7 +119,7 @@ with `python{,3}-{` to also install dependencies for Python 3 (e.g., if you woul
 like to develop and test through tox).
 
 See [README.md:Dependencies](README.md#Dependencies) for basic information
-about installation of repronim itself.
+about installation of niceman itself.
 On Debian-based systems we recommend to enable [NeuroDebian](http://neuro.debian.net)
 since we use it to provide backports of recent fixed external modules we depend upon.
 
@@ -182,7 +182,7 @@ Additional Hints
    
    and if conflicts occur, provide short summary on how they were resolved
    in "Conflicts" listing within the merge commit
-   (see [example](https://github.com/repronim/repronim/commit/eb062a8009d160ae51929998771964738636dcc2)).
+   (see [example](https://github.com/ReproNim/niceman/commit/eb062a8009d160ae51929998771964738636dcc2)).
 
 
 Quality Assurance
@@ -201,7 +201,7 @@ rules before submitting a pull request:
 
 ### Tests
 
-`repronim/tests` contains tests for the core portion of the project, and
+`niceman/tests` contains tests for the core portion of the project, and
 more tests are provided under corresponding submodules in `tests/`
 subdirectories to simplify re-running the tests concerning that portion
 of the codebase.  To execute many tests, the codebase first needs to be
@@ -218,13 +218,13 @@ python setup.py develop
 and then use that virtual environment to run the tests, via
 
 ```sh
-python -m nose -s -v repronim
+python -m nose -s -v niceman
 ```
 
 or similarly,
 
 ```sh
-nosetests -s -v repronim
+nosetests -s -v niceman
 ```
 
 then to later deactivate the virtualenv just simply enter
@@ -291,8 +291,8 @@ package to ease pycharm installation even further.
 Easy Issues
 -----------
 
-A great way to start contributing to ReproNim is to pick an item from the list of
-[Easy issues](https://github.com/repronim/repronim/labels/easy) in the issue
+A great way to start contributing to NICEMAN is to pick an item from the list of
+[Easy issues](https://github.com/ReproNim/niceman/labels/easy) in the issue
 tracker.  Resolving these issues allows you to start contributing to the project
 without much prior knowledge.  Your assistance in this area will be greatly
 appreciated by the more experienced developers as it helps free up their time to
@@ -319,46 +319,46 @@ Various hints for developers
   (Firefox, Chrome) which annotates pull requests on github regarding changed coverage.
 
 ### Useful Environment Variables
-Refer repronim/config.py for information on how to add these environment variables to the config file and their naming convention
+Refer niceman/config.py for information on how to add these environment variables to the config file and their naming convention
 
-- *REPRONIM_LOGLEVEL*: 
-  Used for control the verbosity of logs printed to stdout while running repronim commands/debugging
-- *REPRONIM_TESTS_KEEPTEMP*: 
+- *NICEMAN_LOGLEVEL*: 
+  Used for control the verbosity of logs printed to stdout while running niceman commands/debugging
+- *NICEMAN_TESTS_KEEPTEMP*: 
   Function rmtemp will not remove temporary file/directory created for testing if this flag is set
-- *REPRONIM_EXC_STR_TBLIMIT*: 
-  This flag is used by the repronim extract_tb function which extracts and formats stack-traces.
-  It caps the number of lines to REPRONIM_EXC_STR_TBLIMIT of pre-processed entries from traceback.
-- *REPRONIM_TESTS_TEMPDIR*: 
+- *NICEMAN_EXC_STR_TBLIMIT*: 
+  This flag is used by the niceman extract_tb function which extracts and formats stack-traces.
+  It caps the number of lines to NICEMAN_EXC_STR_TBLIMIT of pre-processed entries from traceback.
+- *NICEMAN_TESTS_TEMPDIR*: 
   Create a temporary directory at location specified by this flag.
   It is used by tests to create a temporary git directory while testing git annex archives etc
-- *REPRONIM_TESTS_NONETWORK*: 
+- *NICEMAN_TESTS_NONETWORK*: 
   Skips network tests completely if this flag is set
   Examples include test for s3, git_repositories, openfmri etc
-- *REPRONIM_TESTS_SSH*: 
+- *NICEMAN_TESTS_SSH*: 
   Skips SSH tests if this flag is **not** set
-- *REPRONIM_LOGTRACEBACK*: 
+- *NICEMAN_LOGTRACEBACK*: 
   Runs TraceBack function with collide set to True, if this flag is set to 'collide'.
   This replaces any common prefix between current traceback log and previous invocation with "..."
-- *REPRONIM_TESTS_NOTEARDOWN*: 
+- *NICEMAN_TESTS_NOTEARDOWN*: 
   Does not execute teardown_package which cleans up temp files and directories created by tests if this flag is set
-- *REPRONIM_USECASSETTE*:
+- *NICEMAN_USECASSETTE*:
   Specifies the location of the file to record network transactions by the VCR module.
   Currently used by when testing custom special remotes
-- *REPRONIM_CMD_PROTOCOL*: 
+- *NICEMAN_CMD_PROTOCOL*: 
   Specifies the protocol number used by the Runner to note shell command or python function call times and allows for dry runs. 
   'externals-time' for ExecutionTimeExternalsProtocol, 'time' for ExecutionTimeProtocol and 'null' for NullProtocol.
-  Any new REPRONIM_CMD_PROTOCOL has to implement repronim.support.protocol.ProtocolInterface
-- *REPRONIM_CMD_PROTOCOL_PREFIX*: 
-  Sets a prefix to add before the command call times are noted by REPRONIM_CMD_PROTOCOL.
-- *REPRONIM_PROTOCOL_REMOTE*:
+  Any new NICEMAN_CMD_PROTOCOL has to implement niceman.support.protocol.ProtocolInterface
+- *NICEMAN_CMD_PROTOCOL_PREFIX*: 
+  Sets a prefix to add before the command call times are noted by NICEMAN_CMD_PROTOCOL.
+- *NICEMAN_PROTOCOL_REMOTE*:
   Binary flag to specify whether to test protocol interactions of custom remote with annex
-- *REPRONIM_LOG_TIMESTAMP*:
-  Used to add timestamp to repronim logs
-- *REPRONIM_RUN_CMDLINE_TESTS*:
+- *NICEMAN_LOG_TIMESTAMP*:
+  Used to add timestamp to niceman logs
+- *NICEMAN_RUN_CMDLINE_TESTS*:
   Binary flag to specify if shell testing using shunit2 to be carried out
-- *REPRONIM_TEMP_FS*:
-  Specify the temporary file system to use as loop device for testing REPRONIM_TESTS_TEMPDIR creation
-- *REPRONIM_TEMP_FS_SIZE*:
-  Specify the size of temporary file system to use as loop device for testing REPRONIM_TESTS_TEMPDIR creation
-- *REPRONIM_NONLO*:
+- *NICEMAN_TEMP_FS*:
+  Specify the temporary file system to use as loop device for testing NICEMAN_TESTS_TEMPDIR creation
+- *NICEMAN_TEMP_FS_SIZE*:
+  Specify the size of temporary file system to use as loop device for testing NICEMAN_TESTS_TEMPDIR creation
+- *NICEMAN_NONLO*:
   Specifies network interfaces to bring down/up for testing. Currently used by travis.

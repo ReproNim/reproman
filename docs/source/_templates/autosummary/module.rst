@@ -1,9 +1,9 @@
-{% if fullname == 'repronim.api' -%}
+{% if fullname == 'niceman.api' -%}
 `{{ name }}`
 =={%- for c in name %}={%- endfor %}
-.. automodule:: repronim.api
+.. automodule:: niceman.api
 
-.. currentmodule:: repronim.api
+.. currentmodule:: niceman.api
 
 {% for item in members if not item.startswith('_') %}
 `{{ item }}`

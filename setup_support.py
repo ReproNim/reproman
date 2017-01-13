@@ -1,6 +1,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the ReproNim package for the
+#   See COPYING file distributed along with the NICEMAN package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -20,11 +20,11 @@ def _path_rel2file(p):
 
 
 def get_version():
-    """Load version of repronim from version.py without entailing any imports
+    """Load version of niceman from version.py without entailing any imports
     """
     # This might entail lots of imports which might not yet be available
     # so let's do ad-hoc parsing of the version.py
-    with open(opj(dirname(__file__), 'repronim', 'version.py')) as f:
+    with open(opj(dirname(__file__), 'niceman', 'version.py')) as f:
         version_lines = list(filter(lambda x: x.startswith('__version__'), f))
     assert (len(version_lines) == 1)
     return version_lines[0].split('=')[1].strip(" '\"\t\n")
@@ -48,7 +48,7 @@ class BuildManPage(Command):
     def initialize_options(self):
         self.manpath = opj('build', 'man')
         self.rstpath = opj('docs', 'source', 'generated', 'man')
-        self.parser = 'repronim.cmdline.main:setup_parser'
+        self.parser = 'niceman.cmdline.main:setup_parser'
 
     def finalize_options(self):
         if self.manpath is None:
@@ -78,7 +78,7 @@ class BuildManPage(Command):
         dist = self.distribution
         #homepage = dist.get_url()
         #appname = self._parser.prog
-        appname = 'repronim'
+        appname = 'niceman'
 
         sections = {
             'Authors': """{0} is developed by {1} <{2}>.""".format(
@@ -93,7 +93,7 @@ class BuildManPage(Command):
             for cmdname in self._parser:
                 p = self._parser[cmdname]
                 cmdname = "{0}{1}".format(
-                    'repronim-' if cmdname != 'repronim' else '',
+                    'niceman-' if cmdname != 'niceman' else '',
                     cmdname)
                 format = cls(cmdname, ext_sections=sections, version=get_version())
                 formatted = format.format_man_page(p)
@@ -140,7 +140,7 @@ class BuildRSTExamplesFromScripts(Command):
                     ref='_example_{0}'.format(exname))
 
 """
-# Placed into a string for effecting comment-out since not used in Repronim
+# Placed into a string for effecting comment-out since not used in NICEMAN
 # project ATM
 
 class BuildConfigInfo(Command):
@@ -164,8 +164,8 @@ class BuildConfigInfo(Command):
         if not os.path.exists(opath):
             os.makedirs(opath)
 
-        from repronim.interface.common_cfg import definitions as cfgdefs
-        from repronim.dochelpers import _indent
+        from niceman.interface.common_cfg import definitions as cfgdefs
+        from niceman.dochelpers import _indent
 
         categories = {
             'global': {},
