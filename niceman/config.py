@@ -150,9 +150,10 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         self.read(self._get_file_candidates())
 
         # now look for variables in the environment
-        for var in [v for v in os.environ.keys() if v.startswith('NICEMAN_')]:
+        pref = 'NICEMAN_'
+        for var in [v for v in os.environ.keys() if v.startswith(pref)]:
             # strip leading 'NICEMAN_' and lower case entries
-            svar = var[9:].lower()
+            svar = var[len(pref):].lower()
 
             # section is next element in name (or 'general' if simple name)
             if not svar.count('_'):

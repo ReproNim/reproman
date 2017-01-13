@@ -47,7 +47,7 @@ def test_logging_to_a_file(dst=None):
 def test_logtarget_via_env_variable(dst=None):
     with patch.dict('os.environ', {'NICEMAN_TEST_LOGTARGET': dst}):
         ok_(not exists(dst))
-        lgr = LoggerHelper("nicemantest").get_initialized_logger()
+        lgr = LoggerHelper("niceman_test").get_initialized_logger()
         ok_(exists(dst))
     # just to see that mocking patch worked
     ok_(not 'NICEMAN_TEST_LOGTARGET' in os.environ)
