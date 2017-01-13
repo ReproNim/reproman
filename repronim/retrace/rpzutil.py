@@ -75,12 +75,12 @@ def identify_packages(config):
     return config
 
 
-def write_config(os, config):
+def write_config(output, config):
     """Writes an environment config to a stream
 
     Parameters
     ----------
-    os
+    output
         Output Stream
 
     config : dict
@@ -88,23 +88,23 @@ def write_config(os, config):
 
     """
     envconfig = dict(config)  # Shallow copy for destruction
-    os.write(("# ReproNim Environment Configuration File\n" +
-              "# This file was created by ReproNim {0} on {1}\n").format(
-            repronim.__version__, datetime.datetime.now()))
+    output.write(("# ReproNim Environment Configuration File\n" +
+                  "# This file was created by ReproNim {0} on {1}\n").format(
+        repronim.__version__, datetime.datetime.now()))
 
     c = "\n# Runs: Commands and related environment variables\n\n"
-    write_config_key(os, envconfig, "runs", c)
+    write_config_key(output, envconfig, "runs", c)
 
     c = "\n# Packages \n\n"
-    write_config_key(os, envconfig, "packages", c)
+    write_config_key(output, envconfig, "packages", c)
 
     c = "\n# Non-Packaged Files \n\n"
-    write_config_key(os, envconfig, "other_files", c)
+    write_config_key(output, envconfig, "other_files", c)
 
-    os.write("\n# Other ReproZip keys (not used by ReproNim) \n\n")
-    os.write(utils.unicode(yaml.safe_dump(envconfig,
-                                          encoding="utf-8",
-                                          allow_unicode=True)))
+    output.write("\n# Other ReproZip keys (not used by ReproNim) \n\n")
+    output.write(utils.unicode(yaml.safe_dump(envconfig,
+                                              encoding="utf-8",
+                                              allow_unicode=True)))
 
 
 def write_config_key(os, envconfig, key, intro_comment=""):
