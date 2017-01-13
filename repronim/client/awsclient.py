@@ -23,33 +23,8 @@ class AwsClient(Client):
             Configuration parameters for the resource.
         """
 
+        # AWS client created for each individual environment. In this case,
+        # the AWS client is needed to provide AWS subscription credentials.
+        self._client = None
+
         super(AwsClient, self).__init__(config)
-
-    def connect(self):
-        """
-        Connect to service and save client instance to _client property.
-        """
-        # Because of how boto3 works, the connection is initialized in the
-        # environment class that uses this client. See the __init__ of the
-        # Ec2Environment class.
-        return
-
-    def list_environments(self):
-        """
-        Query the resource and return a list of container information.
-
-        Returns
-        -------
-        Dictionary of containers located at the resource.
-        """
-        return {}
-
-    def list_images(self):
-        """
-        Query the resource and return a list of image information.
-
-        Returns
-        -------
-        Dictionary of images located at the resource.
-        """
-        return {}

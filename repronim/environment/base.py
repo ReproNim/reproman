@@ -92,9 +92,7 @@ class Environment(Resource):
         -------
         Instance of a Client class
         """
-        resource_client = self.get_config('resource_client')
-        config_path = self.get_config('config_path')
-        return Resource.factory(resource_client, config_path=config_path)
+        return Resource.factory(self['resource_client'], config_path=self['config_path'])
 
     def add_command(self, command, env=None):
         """

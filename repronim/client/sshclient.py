@@ -12,6 +12,7 @@ from repronim.client.base import Client
 
 
 class SshClient(Client):
+
     def __init__(self, config):
         """
         Class constructor
@@ -22,30 +23,6 @@ class SshClient(Client):
             Configuration parameters for the resource.
         """
 
+        self._client = None
+
         super(SshClient, self).__init__(config)
-
-    def connect(self):
-        """
-        Connect to service and save client instance to _client property.
-        """
-        return
-
-    def list_environments(self):
-        """
-        Query the resource and return a list of container information.
-
-        Returns
-        -------
-        Dictionary of containers located at the resource.
-        """
-        return {}
-
-    def list_images(self):
-        """
-        Query the resource and return a list of image information.
-
-        Returns
-        -------
-        Dictionary of images located at the resource.
-        """
-        return {}

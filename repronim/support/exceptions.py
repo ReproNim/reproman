@@ -47,5 +47,10 @@ class SpecLoadingError(IOError):
 
 
 class MissingConfigError(RuntimeError):
-    """To be raised when missing configuration files or parameters"""
+    """To be raised when missing configuration a parameter"""
+    pass
+
+
+class MissingConfigFileError(RuntimeError):
+    """To be raised when missing the configuration file"""
     pass

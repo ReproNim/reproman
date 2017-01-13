@@ -18,7 +18,9 @@ from ...cmd import Runner
 
 def test_localshellenvironment_class():
 
-    config = {}
+    config = {
+        'resource_id': 'my-localshell-env'
+    }
 
     with patch.object(Runner, 'run', return_value='installed package') as MockRunner, \
             swallow_logs(new_level=logging.DEBUG) as log:
