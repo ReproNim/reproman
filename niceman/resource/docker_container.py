@@ -11,37 +11,40 @@
 from io import BytesIO
 from ..support.exceptions import CommandError
 
-from niceman.environment.base import Environment
+from .base import ResourceConfig, Resource
+from .interface.environment import Environment
 
 
-class DockerEnvironment(Environment):
+class DockerContainer(Resource, Environment):
     """
     Environment manager which talks to a Docker engine.
     """
 
-    def __init__(self, config = {}):
+    def __init__(self, resource_config):
         """
         Class constructor
 
         Parameters
         ----------
-        config : dictionary
-            Configuration parameters for the environment.
+        resource_config : ResourceConfig object
+            Configuration parameters for the resource.
         """
-        if not 'base_image_id' in config:
-            config['base_image_id'] = 'ubuntu:latest'
-        if not 'stdin_open' in config:
-            config['stdin_open'] = True
+        if not 'base_image_id' in resource_config:
+            resource_config['base_image_id'] = 'ubuntu:latest'
+        if not 'stdin_open' in resource_config:
+            resource_config['stdin_open'] = True
 
-        super(DockerEnvironment, self).__init__(config)
+        super(DockerContainer, self).__init__(resource_config)
 
         self._client = None
         self._image = None
         self._container = None
 
         # Open a client connection to the Docker engine.
-        docker_client = self.get_resource_client()
-        self._client = docker_client()
+        resource_config = ResourceConfig(resource_config['resource_backend'],
+            config_path=resource_config['config_path'])
+        docker_engine = Resource.factory(resource_config)
+        self._client = docker_engine()
 
     def create(self, name, image_id):
         """
@@ -55,11 +58,11 @@ class DockerEnvironment(Environment):
             Identifier of the image to use when creating the environment.
         """
         if name:
-            self['name'] = name
+            self.set_config('name', name)
         if image_id:
-            self['base_image_id'] = image_id
+            self.set_config('base_image_id', image_id)
 
-        dockerfile = self._get_base_image_dockerfile(self['base_image_id'])
+        dockerfile = self._get_base_image_dockerfile(self.get_config('base_image_id'))
         self._build_image(dockerfile)
         self._run_container()
 
@@ -137,7 +140,7 @@ class DockerEnvironment(Environment):
         #    docker.errors.BuildError - If there is an error during the build.
         #    docker.errors.APIError - If the server returns any other error.
         self._image = self._client.images.build(fileobj=f,
-            tag="niceman:{}".format(self['name']), rm=True)
+            tag="niceman:{}".format(self.get_config('name')), rm=True)
 
     def _run_container(self):
         """
@@ -149,8 +152,8 @@ class DockerEnvironment(Environment):
         #    docker.errors.ImageNotFound - If the specified image does not exist.
         #    docker.errors.APIError - If the server returns an error.
         self._container = self._client.containers.run(image=self._image,
-            stdin_open=self['stdin_open'], detach=True,
-            name=self['name'])
+            stdin_open=self.get_config('stdin_open'), detach=True,
+            name=self.get_config('name'))
 
     def remove_container(self):
         """

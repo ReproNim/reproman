@@ -16,7 +16,7 @@ from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
 from ..provenance import Provenance
-from ..resource import Resource
+from ..resource import ResourceConfig, Resource
 
 from logging import getLogger
 lgr = getLogger('niceman.api.install')
@@ -83,7 +83,8 @@ class Install(Interface):
         filename = spec[0]
         provenance = Provenance.factory(filename)
 
-        env_resource = Resource.factory(resource, config_path=config)
+        resource_config = ResourceConfig(resource, config_path=config)
+        env_resource = Resource.factory(resource_config)
         env_resource.connect(name)
         for distribution in provenance.get_distributions():
             distribution.initiate(env_resource)

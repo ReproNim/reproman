@@ -6,25 +6,24 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Client sub-class to provide management of AWS subscription access."""
+"""Client sub-class to provide access to singularity containers."""
 
-from niceman.client.base import Client
+from .base import Resource
+from .interface.backend import Backend
 
 
-class AwsClient(Client):
+class SingularityEngine(Resource, Backend):
 
-    def __init__(self, config):
+    def __init__(self, resource_config):
         """
         Class constructor
 
         Parameters
         ----------
-        config : dictionary
+        resource_config : ResourceConfig object
             Configuration parameters for the resource.
         """
 
-        # AWS client created for each individual environment. In this case,
-        # the AWS client is needed to provide AWS subscription credentials.
         self._client = None
 
-        super(AwsClient, self).__init__(config)
+        super(SingularityEngine, self).__init__(resource_config)

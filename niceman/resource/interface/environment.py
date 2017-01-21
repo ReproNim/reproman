@@ -6,34 +6,17 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Class to manage environment engines in which the environments are created."""
+"""Class interface definition for environment resources."""
 
 import abc
 
-from ..resource import Resource
 
-
-class Environment(Resource):
+class Environment(object):
     """
     Base class for installing and managing computational environments.
     """
 
     __metaclass__ = abc.ABCMeta
-
-    def __init__(self, config):
-        """
-        Class constructor
-
-        Parameters
-        ----------
-        config : dictionary
-            Configuration parameters for the environment.
-        """
-        super(Environment, self).__init__(config)
-
-        self._command_buffer = [] # Each element is a dictionary in the
-                                  # form {command=[], env={}}
-        self._env = {}
 
     @abc.abstractmethod
     def create(self, name, image_id):
@@ -83,17 +66,6 @@ class Environment(Resource):
         """
         return
 
-    def get_resource_client(self):
-        """
-        Retrieve the resource object for the client for the backend that is
-        hosting the environment.
-
-        Returns
-        -------
-        Instance of a Client class
-        """
-        return Resource.factory(self['resource_client'], config_path=self['config_path'])
-
     def add_command(self, command, env=None):
         """
         Add a command to the command buffer so that all commands can be
@@ -108,6 +80,9 @@ class Environment(Resource):
             Additional (or replacement) environment variables which are applied
             only to the current call
         """
+        if not hasattr(self, '_command_buffer'):
+            self._command_buffer = [] # Each element is a dictionary in the
+                                      # form {command=[], env={}}
         self._command_buffer.append({'command':command, 'env':env})
 
     def execute_command_buffer(self):
@@ -134,6 +109,9 @@ class Environment(Resource):
         -------
 
         """
+        if not hasattr(self, '_env'):
+            self._env = {}
+
         self._env[var] = value
 
     def get_updated_env(self, custom_env):
@@ -143,14 +121,17 @@ class Environment(Resource):
         Parameters
         ----------
         custom_env : dict
-            Enviroment variables to merge into the existing list of declared
+            Environment variables to merge into the existing list of declared
             environment variables stored in self._env
 
         Returns
         -------
         dictionary
         """
-        merged_env = self._env.copy()
-        if custom_env:
-            merged_env.update(custom_env)
-        return merged_env
+        if hasattr(self, '_env'):
+            merged_env = self._env.copy()
+            if custom_env:
+                merged_env.update(custom_env)
+            return merged_env
+
+        return custom_env

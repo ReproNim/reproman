@@ -310,6 +310,6 @@ class Interface(object):
             raise RuntimeError(
                 "Unable to find resource '{}' in the config file.".format(resource_id))
 
-        if type and not resource['resource_type'].endswith(type):
-            raise RuntimeError(
-                "'{}' is not a resource of type {}.".format(resource_id, type))
+        # if type and not resource['resource_type'].endswith(type):
+        #     raise RuntimeError(
+        #         "'{}' is not a resource of type {}.".format(resource_id, type))

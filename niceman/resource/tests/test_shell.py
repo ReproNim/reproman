@@ -12,26 +12,25 @@ from mock import patch, call
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..localshellenvironment import LocalshellEnvironment
+from ..base import ResourceConfig, Resource
 from ...cmd import Runner
 
 
-def test_localshellenvironment_class():
-
-    config = {
-        'resource_id': 'my-localshell-env'
-    }
+def test_localshellenvironment_class(niceman_cfg_path):
 
     with patch.object(Runner, 'run', return_value='installed package') as MockRunner, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test running some install commands.
-        env = LocalshellEnvironment(config)
+        resource_config = ResourceConfig('local-shell',
+                                         config_path=niceman_cfg_path)
+        shell = Resource.factory(resource_config)
+
         command = ['apt-get', 'install', 'bc']
-        env.add_command(command)
+        shell.add_command(command)
         command = ['apt-get', 'install', 'xeyes']
-        env.add_command(command)
-        env.execute_command_buffer()
+        shell.add_command(command)
+        shell.execute_command_buffer()
         calls = [
             call(['apt-get', 'install', 'xeyes']),
             call(['apt-get', 'install', 'bc']),

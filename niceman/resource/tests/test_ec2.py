@@ -12,49 +12,34 @@ from mock import patch, call
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..ec2environment import Ec2Environment
+from ..base import ResourceConfig, Resource
 from ...tests.utils import with_testsui
 
 
-def test_ec2environment_class():
-
-    config = {
-        'resource_id': 'my-ec2-env',
-        'resource_type': 'ec2-environment',
-        'resource_client': 'my-aws-subscription',
-        'region_name': 'us-east-1',
-        'instance_type': 't2.micro',
-        'security_group': 'SSH only',
-        'key_name': 'aws-key-name',
-        'key_filename': '/path/to/id_rsa',
-        'config_path': '/path/to/config/file',
-    }
+def test_ec2environment_class(niceman_cfg_path):
 
     with patch('boto3.resource') as MockEc2Client, \
-        patch('niceman.resource.Resource.factory') as MockResourceClient, \
         patch('niceman.support.sshconnector2.SSHConnector2.__enter__') as MockSSH, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test initializing the environment object.
-        env = Ec2Environment(config)
-        calls = [
-            call('my-aws-subscription', config_path='/path/to/config/file')
-        ]
-        MockResourceClient.assert_has_calls(calls, any_order=True)
+        resource_config = ResourceConfig('ec2-workflow',
+                                         config_path=niceman_cfg_path)
+        ec2_instance = Resource.factory(resource_config)
 
         # Test creating an environment.
         name = 'my-test-environment'
         image_id = 'ubuntu:trusty'
-        env.create(name, image_id)
-        assert env['name'] == 'my-test-environment'
-        assert env['base_image_id'] == 'ubuntu:trusty'
+        ec2_instance.create(name, image_id)
+        assert ec2_instance.get_config('name') == 'my-test-environment'
+        assert ec2_instance.get_config('base_image_id') == 'ubuntu:trusty'
 
         # Test running some install commands.
         command = ['apt-get', 'install', 'bc']
-        env.add_command(command)
+        ec2_instance.add_command(command)
         command = ['apt-get', 'install', 'xeyes']
-        env.add_command(command)
-        env.execute_command_buffer()
+        ec2_instance.add_command(command)
+        ec2_instance.execute_command_buffer()
         calls = [
             call()('apt-get install bc'),
             call()('apt-get install xeyes'),
