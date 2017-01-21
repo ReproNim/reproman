@@ -8,6 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Client sub-class to provide management of AWS subscription access."""
 
+import boto3
+
 from .base import Resource
 from .interface.backend import Backend
 
@@ -24,8 +26,15 @@ class AwsSubscription(Resource, Backend):
             Configuration parameters for the resource.
         """
 
-        # AWS client created for each individual environment. In this case,
-        # the AWS client is needed to provide AWS subscription credentials.
-        self._client = None
+        # Assign a default parameters if needed.
+        if not 'region_name' in resource_config:
+            resource_config['region_name'] = 'us-east-1'
+
+        self._client = boto3.resource(
+            'ec2',
+            aws_access_key_id=resource_config['aws_access_key_id'],
+            aws_secret_access_key=resource_config['aws_secret_access_key'],
+            region_name=resource_config['region_name']
+        )
 
         super(AwsSubscription, self).__init__(resource_config)

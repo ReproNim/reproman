@@ -52,7 +52,7 @@ def test_ec2environment_class(niceman_cfg_path):
 # def test_ec2environment_create_key_pair():
 #
 #     config = {
-#         'resource_id': 'my-ec2-env',
+#         'name': 'my-ec2-env',
 #         'resource_type': 'ec2-environment',
 #         'resource_client': 'my-aws-subscription',
 #         'region_name': 'us-east-1',

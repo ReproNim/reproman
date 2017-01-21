@@ -56,8 +56,7 @@ def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
         args = ['install',
                     '--spec', demo1_spec,
                     '--resource', 'my-debian',
-                    '--config', niceman_cfg_path,
-                    '--name', 'my-great-docker-container'
+                    '--config', niceman_cfg_path
                 ]
         main(args)
 

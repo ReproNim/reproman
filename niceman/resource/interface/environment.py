@@ -13,34 +13,41 @@ import abc
 
 class Environment(object):
     """
-    Base class for installing and managing computational environments.
+    Abstract class that defines the interface for an environment.
     """
 
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def create(self, name, image_id):
+    def poll_status(self):
+        """
+        Poll the backend for info on the environment. Updates the ResourceConfig.
+        """
+        return
+
+    @abc.abstractmethod
+    def create(self, image_id):
         """
         Create a running environment.
 
         Parameters
         ----------
-        name : string
-            Name identifier of the environment to be created.
         image_id : string
-            Identifier of the image to use when creating the environment.
+            Identifier of the base image to use when creating the environment.
         """
         return
 
     @abc.abstractmethod
-    def connect(self, name=None):
+    def delete(self):
         """
-        Connect to an existing environment.
+        Remove this environment from the backend.
+        """
+        return
 
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to connect to.
+    @abc.abstractmethod
+    def connect(self):
+        """
+        Connect to an existing environment resource.
         """
         return
 

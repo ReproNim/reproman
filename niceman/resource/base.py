@@ -21,23 +21,22 @@ class ResourceConfig(object):
     Base class for creating and managing resource configuration.
     """
 
-    def __init__(self, resource_config_id, config={}, config_path=None):
+    def __init__(self, name, config={}, config_path=None):
         """
         Class constructor
 
         Parameters
         ----------
-        resource_config_id : string
+        name : string
             Configuration identifier as listed in the niceman.cfg file.
             e.g. [resource my-resource-config-id]
         config : dictionary
-            Configuration parameters for the resource that will override
+            Configuration parameters for the resource that will define the resource or override
             the parameters in the niceman.cfg file
         config_path : string
             Path to niceman.cfg file if overriding the default file locations.
             Default file locations are described in niceman.config.py
         """
-
         if not config_path and 'config_path' in config:
             config_path = config['config_path']
 
@@ -50,38 +49,42 @@ class ResourceConfig(object):
 
         # Following statement throws exception, NoSectionError, if section
         # is missing from niceman.cfg file.
-        default_config = dict(cm.items('resource ' + resource_config_id))
+        default_config = dict(cm.items('resource ' + name))
 
         # Override niceman.cfg settings with those passed in to the function.
         default_config.update(config)
         self._config = default_config
 
         # Set some parameters that are nice to have recorded.
-        self._config['resource_config_id'] = resource_config_id
+        self._config['name'] = name
         self._config['config_path'] = config_path
+        self._config['resource_id'] = None
+        self._config['resource_status'] = None
+        if 'resource_backend' not in self._config:
+            self._config['resource_backend'] = None
 
         self._lgr = logging.getLogger('niceman.resource_config')
 
     def __repr__(self):
-        return 'ResourceConfig({})'.format(self._config['resource_config_id'])
+        return 'ResourceConfig({})'.format(self._config['name'])
 
     def __len__(self):
         return len(self._config)
 
     def __getitem__(self, item):
-        self._lgr.debug('Getting item "{}" in resource config "{}"'. format(item,
-            self._config['resource_config_id']))
+        self._lgr.debug('Getting config item "{}" in resource "{}"'. format(item,
+            self._config['name']))
         return self._config[item]
 
     def __setitem__(self, key, value):
-        self._lgr.debug('Setting item "{}" to "{}" in resource config "{}"'.format(key,
-            value, self._config['resource_config_id']))
+        self._lgr.debug('Setting config item "{}" to "{}" in resource "{}"'.format(key,
+            value, self._config['name']))
         self._config[key] = value
 
     def __delitem__(self, key):
         self._lgr.debug(
-            'Deleting item "{}" in resource config "{}"'.format(key,
-                self._config['resource_config_id']))
+            'Deleting config item "{}" in resource "{}"'.format(key,
+                self._config['name']))
         del self._config[key]
 
     def __contains__(self, item):
@@ -109,7 +112,7 @@ class Resource(object):
         self._lgr = logging.getLogger('niceman.resource')
 
     def __repr__(self):
-        return 'Resource({})'.format(self._config['resource_id'])
+        return 'Resource({})'.format(self._config['name'])
 
     @staticmethod
     def factory(resource_config):
@@ -136,7 +139,7 @@ class Resource(object):
         return instance
 
     @staticmethod
-    def get_resource_list(config_path=None):
+    def get_resources(config_path=None):
         """
         Get the resources defined in the niceman.cfg file.
 
@@ -147,8 +150,7 @@ class Resource(object):
 
         Returns
         -------
-        Dictionary containing the settings for all resources. The keys of
-        the dictionary are the IDs of the resources.
+        dictionary of Resources as defined in the niceman.cfg file.
         """
         if config_path:
             cm = ConfigManager([config_path], False)
@@ -156,11 +158,14 @@ class Resource(object):
             cm = ConfigManager()
 
         resources = {}
-        for name in cm._sections:
-            if name.startswith('resource '):
-                resource_id = name.split(' ')[-1]
-                resources[resource_id] = cm._sections[name]
-                resources[resource_id]['resource_id'] = resource_id
+
+        # Get resources defined in niceman.cfg file.
+        for section_name in cm._sections:
+            if section_name.startswith('resource '):
+                resource_name = section_name.split(' ')[-1]
+                resource_config = ResourceConfig(resource_name, config_path=config_path)
+                resources[resource_name] = Resource.factory(resource_config)
+
         return resources
 
     def get_config(self, key):
@@ -204,4 +209,4 @@ class Resource(object):
         -------
         boolean : True if key exists in configuration dictionary.
         """
-        return key in self._config
+        return key in self._config and self._config[key]

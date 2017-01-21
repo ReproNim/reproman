@@ -287,29 +287,3 @@ class Interface(object):
         except KeyboardInterrupt:
             ui.error("\nInterrupted by user while doing magic")
             sys.exit(1)
-
-    @staticmethod
-    def validate_resource(resource_id, config, type=None):
-        """
-        Validate the resource given. Throws and exception if validation fails.
-
-        Parameters
-        ----------
-        resource_id : string
-            ID of resource in the niceman.cfg file.
-        config : dictionary
-            Dictionary of config parameters for the resource.
-        type : string
-            If set, checks to see if the resource is of type 'environment' or
-            'client'
-        """
-        resources = Resource.get_resource_list(config_path=config)
-        try:
-            resource = resources[resource_id]
-        except KeyError:
-            raise RuntimeError(
-                "Unable to find resource '{}' in the config file.".format(resource_id))
-
-        # if type and not resource['resource_type'].endswith(type):
-        #     raise RuntimeError(
-        #         "'{}' is not a resource of type {}.".format(resource_id, type))

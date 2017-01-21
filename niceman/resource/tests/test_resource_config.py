@@ -14,7 +14,7 @@ def test_resource_class(niceman_cfg_path):
     # Test retrieving a resource list.
     resource_config = ResourceConfig('ec2-workflow', config_path=niceman_cfg_path)
 
-    assert resource_config['resource_config_id'] == 'ec2-workflow'
+    assert resource_config['name'] == 'ec2-workflow'
     assert resource_config['resource_type'] == 'ec2-instance'
     assert resource_config['resource_backend'] == 'my-aws-subscription'
     assert resource_config['region_name'] == 'us-east-1'
@@ -27,7 +27,7 @@ def test_resource_class(niceman_cfg_path):
     }
     resource_config = ResourceConfig('ec2-workflow', config=new_config, config_path=niceman_cfg_path)
     assert len(resource_config) == 10
-    assert resource_config['resource_config_id'] == 'ec2-workflow'
+    assert resource_config['name'] == 'ec2-workflow'
     assert resource_config['resource_type'] == 'ec2-instance'
     assert resource_config['resource_backend'] == 'my-aws-subscription'
     assert resource_config['region_name'] == 'us-east-1'

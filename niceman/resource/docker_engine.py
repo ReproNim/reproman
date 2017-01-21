@@ -8,7 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Backend resource class to provide access to a Docker engine."""
 
-from .base import Resource
+from .base import ResourceConfig, Resource
 from .interface.backend import Backend
 import docker
 
@@ -32,3 +32,16 @@ class DockerEngine(Resource, Backend):
         self._client = docker.DockerClient(resource_config['engine_url'])
 
         super(DockerEngine, self).__init__(resource_config)
+
+    # def resource_count(self):
+    #     """
+    #     Returns the number of resources located in the backend.
+    #
+    #     Returns
+    #     -------
+    #     int
+    #         The number of resources located at the backend.
+    #     """
+    #     container_count = len(self._client.containers.list(all=True))
+    #     image_count = len(self._client.images.list(name='niceman'))
+    #     return container_count + image_count

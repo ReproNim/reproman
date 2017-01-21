@@ -13,7 +13,7 @@ import abc
 
 class Backend(object):
     """
-    Abstract class for defining backend resource API
+    Abstract class that defines the interface for a backend.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -26,5 +26,5 @@ class Backend(object):
         -------
         Client object specific to the backend API being implemented.
         """
-        self._lgr.debug("Retrieving resource client of type Backend.")
+        self._lgr.debug("Retrieving resource client of type 'backend'.")
         return self._client
