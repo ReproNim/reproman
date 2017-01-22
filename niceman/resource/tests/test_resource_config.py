@@ -17,7 +17,6 @@ def test_resource_class(niceman_cfg_path):
     assert resource_config['name'] == 'ec2-workflow'
     assert resource_config['resource_type'] == 'ec2-instance'
     assert resource_config['resource_backend'] == 'my-aws-subscription'
-    assert resource_config['region_name'] == 'us-east-1'
     assert resource_config['instance_type'] == 't2.micro'
 
     # Test overriding the settings read from a niceman.cfg file.
@@ -26,11 +25,10 @@ def test_resource_class(niceman_cfg_path):
         'instance_type': 'm3.medium'
     }
     resource_config = ResourceConfig('ec2-workflow', config=new_config, config_path=niceman_cfg_path)
-    assert len(resource_config) == 10
+    assert len(resource_config) == 11
     assert resource_config['name'] == 'ec2-workflow'
     assert resource_config['resource_type'] == 'ec2-instance'
     assert resource_config['resource_backend'] == 'my-aws-subscription'
-    assert resource_config['region_name'] == 'us-east-1'
     assert resource_config['instance_type'] == 'm3.medium'
     assert resource_config['new_config_var'] == 'abc123'
 

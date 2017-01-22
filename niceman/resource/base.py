@@ -110,6 +110,7 @@ class Resource(object):
         self._config = resource_config
 
         self._lgr = logging.getLogger('niceman.resource')
+        self._lgr.debug('Retrieved resource {}'.format(self._config['name']))
 
     def __repr__(self):
         return 'Resource({})'.format(self._config['name'])

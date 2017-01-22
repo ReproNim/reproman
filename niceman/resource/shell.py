@@ -34,7 +34,7 @@ class Shell(Resource, Environment):
         """
         Poll the backend for info on the environment. Updates the ResourceConfig.
         """
-        returns
+        return
 
     def create(self, image_id):
         """
