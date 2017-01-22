@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from mock import patch, MagicMock
+from mock import patch
 
 from ...cmdline.main import main
 from ...utils import swallow_logs
@@ -25,9 +25,10 @@ def test_ls_output(niceman_cfg_path):
             '--config', niceman_cfg_path,
     ]
 
-    with patch('docker.DockerClient') as MockDockerClient, \
-            patch('boto3.resource') as MockEc2Client, \
-            swallow_logs(new_level=logging.DEBUG) as log:
+    with patch('docker.DockerClient'), \
+            patch('boto3.resource'), \
+            patch('niceman.resource.docker_container.DockerContainer.set_container'), \
+         swallow_logs(new_level=logging.DEBUG) as log:
 
         main(args)
 
