@@ -101,7 +101,7 @@ class DpkgManager(PackageManager):
                      '-W',
                      pkgname],
                     stderr=devnull)
-        except OSError: # dpkg-query not defined
+        except OSError:  # dpkg-query not defined
             r = ""
         except subprocess.CalledProcessError:  # Package not found
             r = ""
