@@ -86,28 +86,29 @@ class DpkgManager(PackageManager):
     """DPKG Package Identifier
     """
 
+    # TODO: Read in full files from dpkg/info/*.list and .config
+    # TODO: (Low Priority) handle cases from dpkg-divert
+    
     def _get_package_for_file(self, filename):
         return find_dpkg_for_file(filename)
 
     def _create_package(self, pkgname):
-        p = subprocess.Popen(['dpkg-query',
-                              '--showformat=${Version}\t'
-                              '${Installed-Size}\n',
-                              '-W',
-                              pkgname],
-                             stdout=subprocess.PIPE)
         try:
-            size = version = None
-            for l in p.stdout:
-                fields = l.split()
-                version = fields[0].decode('ascii')
-                size = int(fields[1].decode('ascii')) * 1024    # kbytes
-                break
-            for l in p.stdout:  # finish draining stdout
-                pass
-        finally:
-            p.wait()
-        if p.returncode == 0:
+            with open(os.devnull, 'w') as devnull:
+                r = subprocess.check_output(
+                    ['dpkg-query',
+                     '--showformat=${Version}\t${Installed-Size}\n',
+                     '-W',
+                     pkgname],
+                    stderr=devnull)
+        except OSError: # dpkg-query not defined
+            r = ""
+        except subprocess.CalledProcessError:  # Package not found
+            r = ""
+        if r:
+            fields = r.decode().split()
+            version = fields[0]
+            size = int(fields[1]) * 1024    # kbytes
             pkg = {"name": pkgname,
                    "version": version,
                    "size": size,
@@ -142,7 +143,7 @@ def find_dpkg_for_file(filename):
                                         stderr=devnull)
         # Note, we must split after ": " instead of ":" in case the
         # package name includes an architecture (like "zlib1g:amd64")
-        pkg = r.decode('ascii').split(': ', 1)[0]
+        pkg = r.decode().split(': ', 1)[0]
     except OSError:  # dpkg-query not defined
         pkg = ""
     except subprocess.CalledProcessError:  # Package not found
