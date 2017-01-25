@@ -124,16 +124,14 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
+
 def subprocess_check_output(cmd):
     """Execute a subprocess call and catch common exceptions"""
     try:
         with open(os.devnull, 'w') as devnull:
-            r = subprocess.check_output(cmd, stderr=devnull)
-    except OSError:  # dpkg-query not defined
-        r = ""
-    except subprocess.CalledProcessError:  # Package not found
-        r = ""
-    return r
+            return subprocess.check_output(cmd, stderr=devnull)
+    except (OSError, subprocess.CalledProcessError):
+        return ""
 
 
 def find_dpkg_for_file(filename):
@@ -154,7 +152,7 @@ def find_dpkg_for_file(filename):
         Package name (or empty if not found)
 
     """
-    r =subprocess_check_output(['dpkg-query', '-S', filename])
+    r = subprocess_check_output(['dpkg-query', '-S', filename])
     if r:
         # Note, we must split after ": " instead of ":" in case the
         # package name includes an architecture (like "zlib1g:amd64")
