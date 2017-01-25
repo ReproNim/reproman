@@ -52,6 +52,7 @@ requires = {
         'tqdm',
         'paramiko',
         'cryptography',
+        'pytz',
     ],
     'debian': [
         'python-debian',

@@ -16,6 +16,8 @@ from six import viewvalues
 from logging import getLogger
 import time
 
+import pytz
+from datetime import datetime
 
 lgr = getLogger('niceman.api.retrace')
 
@@ -59,6 +61,7 @@ class PackageManager(object):
             else:
                 if pkgname in found_packages:
                     found_packages[pkgname]["files"].append(f)
+                    nb_pkg_files += 1
                 else:
                     pkg = self._create_package(pkgname)
                     if pkg:
@@ -93,30 +96,44 @@ class DpkgManager(PackageManager):
         return find_dpkg_for_file(filename)
 
     def _create_package(self, pkgname):
+        r = subprocess_check_output(
+            ['dpkg-query',
+             '--showformat=${Version}\t${Installed-Size}\n',
+             '-W',
+             pkgname])
+        if not r:
+            return None  # Package not found
+        # Now get installation date
         try:
-            with open(os.devnull, 'w') as devnull:
-                r = subprocess.check_output(
-                    ['dpkg-query',
-                     '--showformat=${Version}\t${Installed-Size}\n',
-                     '-W',
-                     pkgname],
-                    stderr=devnull)
-        except OSError:  # dpkg-query not defined
-            r = ""
-        except subprocess.CalledProcessError:  # Package not found
-            r = ""
-        if r:
-            fields = r.decode().split()
-            version = fields[0]
-            size = int(fields[1]) * 1024    # kbytes
-            pkg = {"name": pkgname,
-                   "version": version,
-                   "size": size,
-                   "files": []}
-            lgr.debug("Found package %s", pkg)
-            return pkg
-        else:
-            return None
+            install_date = str(
+                pytz.utc.localize(
+                    datetime.utcfromtimestamp(
+                        os.path.getmtime("/var/lib/dpkg/info/" + pkgname +
+                                         ".list"))))
+
+        except OSError:  # file not found
+            install_date = ""
+        fields = r.decode().split()
+        version = fields[0]
+        size = int(fields[1]) * 1024    # kbytes
+        pkg = {"name": pkgname,
+               "version": version,
+               "size": size,
+               "install_date": install_date,
+               "files": []}
+        lgr.debug("Found package %s", pkg)
+        return pkg
+
+def subprocess_check_output(cmd):
+    """Execute a subprocess call and catch common exceptions"""
+    try:
+        with open(os.devnull, 'w') as devnull:
+            r = subprocess.check_output(cmd, stderr=devnull)
+    except OSError:  # dpkg-query not defined
+        r = ""
+    except subprocess.CalledProcessError:  # Package not found
+        r = ""
+    return r
 
 
 def find_dpkg_for_file(filename):
@@ -137,18 +154,14 @@ def find_dpkg_for_file(filename):
         Package name (or empty if not found)
 
     """
-    try:
-        with open(os.devnull, 'w') as devnull:
-            r = subprocess.check_output(['dpkg-query', '-S', filename],
-                                        stderr=devnull)
+    r =subprocess_check_output(['dpkg-query', '-S', filename])
+    if r:
         # Note, we must split after ": " instead of ":" in case the
         # package name includes an architecture (like "zlib1g:amd64")
         pkg = r.decode().split(': ', 1)[0]
-    except OSError:  # dpkg-query not defined
-        pkg = ""
-    except subprocess.CalledProcessError:  # Package not found
-        pkg = ""
-    return pkg
+        return pkg
+    else:
+        return ""
 
 
 def identify_packages(files):
