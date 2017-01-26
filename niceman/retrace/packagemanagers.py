@@ -15,7 +15,7 @@ import subprocess
 from six import viewvalues
 from logging import getLogger
 import time
-
+from debian import deb822
 import pytz
 from datetime import datetime
 
@@ -96,30 +96,50 @@ class DpkgManager(PackageManager):
         return find_dpkg_for_file(filename)
 
     def _create_package(self, pkgname):
-        r = subprocess_check_output(
-            ['dpkg-query',
-             '--showformat=${Version}\t${Installed-Size}\n',
-             '-W',
-             pkgname])
+        # Get information for the package from dpkg-query
+        r = subprocess_check_output(['dpkg-query', '-s', pkgname])
         if not r:
             return None  # Package not found
+        query_info = dict(deb822.Dsc(r.decode()))
+
         # Now get installation date
         try:
             install_date = str(
                 pytz.utc.localize(
                     datetime.utcfromtimestamp(
-                        os.path.getmtime("/var/lib/dpkg/info/" + pkgname +
-                                         ".list"))))
-
+                        os.path.getmtime(
+                            "/var/lib/dpkg/info/" + pkgname + ".list"))))
         except OSError:  # file not found
             install_date = ""
-        fields = r.decode().split()
-        version = fields[0]
-        size = int(fields[1]) * 1024    # kbytes
+
+        # Get the version table (and sources)
+        r = subprocess_check_output(['apt-cache', 'policy', pkgname])
+        policy_info = {"VersionTable": "", "Candidate": ""}
+        if r:
+            f = dict(deb822.Dsc(r))
+            # Pull out the first (and only) entry in the policy dict
+            _, value = f.popitem()
+            # The entry itself is a deb config file, but needs to be cleaned.
+            # Pull out details for the package, remove indentation,
+            # clean up "Version Table:" tag and remove "***"
+            info = value.replace("\n  ", "\n").\
+                replace("***", "   ").\
+                replace("Version table:", "VersionTable:")
+            policy_info = dict(deb822.Dsc(info))
+            # Clean up VersionTable (remove extra padding and strip initial
+            # newline)
+            policy_info["VersionTable"] = policy_info["VersionTable"].\
+                replace("\n     ","\n").lstrip("\n")
+
+
+        # Combine the information into a package-specific dict
         pkg = {"name": pkgname,
-               "version": version,
-               "size": size,
+               "version": query_info["Version"],
+               "installed-size": query_info["Installed-Size"],
+               "architecture": query_info["Architecture"],
                "install_date": install_date,
+               "candidate": policy_info["Candidate"],
+               "version_table": policy_info["VersionTable"],
                "files": []}
         lgr.debug("Found package %s", pkg)
         return pkg
