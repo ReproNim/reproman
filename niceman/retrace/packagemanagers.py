@@ -15,15 +15,16 @@ import subprocess
 from six import viewvalues
 from logging import getLogger
 import time
-import apt
+import apt  # https://apt.alioth.debian.org/python-apt-doc/library/index.html
 import pytz
 from datetime import datetime
 
 lgr = getLogger('niceman.api.retrace')
-cache = apt.Cache();
+cache = apt.Cache()
 
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
+
 
 class PackageManager(object):
     """Base class for package identifiers."""
@@ -136,7 +137,7 @@ class DpkgManager(PackageManager):
             v_info["origins"] = origins
             pkg_versions.append(v_info)
 
-        pkg["version_table"] = pkg_versions;
+        pkg["version_table"] = pkg_versions
 
         lgr.debug("Found package %s", pkg)
         return pkg
