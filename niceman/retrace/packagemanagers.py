@@ -15,12 +15,12 @@ import subprocess
 from six import viewvalues
 from logging import getLogger
 import time
-from debian import deb822
+import apt
 import pytz
 from datetime import datetime
 
 lgr = getLogger('niceman.api.retrace')
-
+cache = apt.Cache();
 
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
@@ -96,51 +96,48 @@ class DpkgManager(PackageManager):
         return find_dpkg_for_file(filename)
 
     def _create_package(self, pkgname):
-        # Get information for the package from dpkg-query
-        r = subprocess_check_output(['dpkg-query', '-s', pkgname])
-        if not r:
-            return None  # Package not found
-        query_info = dict(deb822.Dsc(r.decode()))
+        try:
+            pkg_info = cache[pkgname]
+        except KeyError:  # Package not found
+            return None
+
+        # prep our pkg object:
+        pkg = {"name": pkgname,
+               "version": pkg_info.installed.version,
+               "size": pkg_info.installed.size,
+               "architecture": pkg_info.installed.architecture,
+               "md5": pkg_info.installed.md5,
+               "sha1": pkg_info.installed.sha1,
+               "sha256": pkg_info.installed.sha256,
+               "candidate": pkg_info.candidate.version,
+               "files": []}
 
         # Now get installation date
         try:
-            install_date = str(
+            pkg["install_date"] = str(
                 pytz.utc.localize(
                     datetime.utcfromtimestamp(
                         os.path.getmtime(
                             "/var/lib/dpkg/info/" + pkgname + ".list"))))
         except OSError:  # file not found
-            install_date = ""
+            pass
 
-        # Get the version table (and sources)
-        r = subprocess_check_output(['apt-cache', 'policy', pkgname])
-        policy_info = {"VersionTable": "", "Candidate": ""}
-        if r:
-            f = dict(deb822.Dsc(r))
-            # Pull out the first (and only) entry in the policy dict
-            _, value = f.popitem()
-            # The entry itself is a deb config file, but needs to be cleaned.
-            # Pull out details for the package, remove indentation,
-            # clean up "Version Table:" tag and remove "***"
-            info = value.replace("\n  ", "\n").\
-                replace("***", "   ").\
-                replace("Version table:", "VersionTable:")
-            policy_info = dict(deb822.Dsc(info))
-            # Clean up VersionTable (remove extra padding and strip initial
-            # newline)
-            policy_info["VersionTable"] = policy_info["VersionTable"].\
-                replace("\n     ","\n").lstrip("\n")
+        # Compile Version Table
+        pkg_versions = []
+        for v in pkg_info.versions:
+            v_info = {"version": v.version}
+            origins = []
+            for o in v.origins:
+                origins.append({"component": o.component,
+                                "archive": o.archive,
+                                "origin": o.origin,
+                                "label": o.label,
+                                "site": o.site})
+            v_info["origins"] = origins
+            pkg_versions.append(v_info)
 
+        pkg["version_table"] = pkg_versions;
 
-        # Combine the information into a package-specific dict
-        pkg = {"name": pkgname,
-               "version": query_info["Version"],
-               "installed-size": query_info["Installed-Size"],
-               "architecture": query_info["Architecture"],
-               "install_date": install_date,
-               "candidate": policy_info["Candidate"],
-               "version_table": policy_info["VersionTable"],
-               "files": []}
         lgr.debug("Found package %s", pkg)
         return pkg
 
