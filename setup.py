@@ -56,6 +56,7 @@ requires = {
     ],
     'debian': [
         'python-debian',
+        'apt',
         'chardet',  # python-debian misses dependency on it
     ],
     'docker': [
