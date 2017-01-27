@@ -48,7 +48,7 @@ before_install:
   - travis_retry sudo apt-get update -qq
 
 install:
-  - sudo apt-get install -y python-apt
+  - sudo apt-get install -y python-apt python-distutils-extra
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib
