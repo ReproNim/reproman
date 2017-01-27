@@ -48,7 +48,10 @@ before_install:
   - travis_retry sudo apt-get update -qq
 
 install:
-  - sudo apt-get install -y python-apt python-distutils-extra
+  # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
+  - sudo apt-get build-dep python-apt
+  - pip install http://launchpad.net/python-distutils-extra/trunk/2.28/+download/python-distutils-extra-2.28.tar.gz
+  - pip install http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.8.3ubuntu7.tar.gz
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib
