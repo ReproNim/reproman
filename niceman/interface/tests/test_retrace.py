@@ -16,10 +16,19 @@ import os
 from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
 
+import pytest
+try:
+    import apt
+except Exception:
+    apt = None
+
+
 REPROZIP_SPEC_YML_FILENAME = os.path.join(os.path.dirname(__file__), os.pardir,
                                            os.pardir, 'tests', 'files',
                                            'reprozip_xeyes.yml')
 
+
+@pytest.mark.skipif(not apt, reason="requires apt module")
 def test_retrace():
     """
     Test installing packages on the localhost.
