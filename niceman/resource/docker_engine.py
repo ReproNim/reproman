@@ -6,28 +6,29 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Client sub-class to provide access to a Docker engine."""
+"""Backend resource class to provide access to a Docker engine."""
 
-from niceman.client.base import Client
+from .base import Resource
+from .interface.backend import Backend
 import docker
 
 
-class DockerClient(Client):
+class DockerEngine(Resource, Backend):
 
-    def __init__(self, config):
+    def __init__(self, resource_config):
         """
         Class constructor
 
         Parameters
         ----------
-        config : dictionary
+        resource_config : ResourceConfig object
             Configuration parameters for the resource.
         """
 
         # Assign a default parameters if needed.
-        if not 'engine_url' in config:
-            config['engine_url'] = 'unix:///var/run/docker.sock'
+        if not 'engine_url' in resource_config:
+            resource_config['engine_url'] = 'unix:///var/run/docker.sock'
 
-        self._client = docker.DockerClient(config['engine_url'])
+        self._client = docker.DockerClient(resource_config['engine_url'])
 
-        super(DockerClient, self).__init__(config)
+        super(DockerEngine, self).__init__(resource_config)

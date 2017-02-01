@@ -6,12 +6,13 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Client sub-class to provide access via SSH to remote environments."""
+"""Resource sub-class to provide access via SSH to remote environments."""
 
-from niceman.client.base import Client
+from .base import Resource
+from .interface.backend import Backend
 
 
-class SshClient(Client):
+class SshServer(Resource, Backend):
 
     def __init__(self, config):
         """
@@ -19,10 +20,10 @@ class SshClient(Client):
 
         Parameters
         ----------
-        config : dictionary
+        resource_config : ResourceConfig object
             Configuration parameters for the resource.
         """
 
         self._client = None
 
-        super(SshClient, self).__init__(config)
+        super(SshServer, self).__init__(config)

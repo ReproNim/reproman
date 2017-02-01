@@ -16,7 +16,7 @@ from ..provenance import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
-from ..resource import Resource
+from ..resource import ResourceConfig, Resource
 import random
 
 from logging import getLogger
@@ -135,12 +135,14 @@ class Create(Interface):
         if only_env:
             raise NotImplementedError
 
-        env_resource = Resource.factory(resource, config_path=config)
+        resource_config = ResourceConfig(resource, config_path=config)
+        env_resource = Resource.factory(resource_config)
 
         if not name:
             name = generate_environment_name()
         else:
-            resource_client = env_resource.get_resource_client()
+            pass
+            # resource_client = env_resource.get_resource_client()
             # TODO: Get a listing of environments.
             # if name in resource_client.list_environments():
             #     raise ValueError(

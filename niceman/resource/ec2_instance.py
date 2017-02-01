@@ -16,43 +16,46 @@ from os.path import join
 from appdirs import AppDirs
 from botocore.exceptions import ClientError
 
-from ..environment.base import Environment
+from .base import ResourceConfig, Resource
+from .interface.environment import Environment
 from ..support.sshconnector2 import SSHConnector2
 from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
 
 
-class Ec2Environment(Environment):
+class Ec2Instance(Resource, Environment):
 
-    def __init__(self, config={}):
+    def __init__(self, resource_config):
         """
         Class constructor
 
         Parameters
         ----------
-        config : dictionary
+        resource_config : ResourceConfig object
             Configuration parameters for the environment.
         """
-        if not 'base_image_id' in config:
-            config['base_image_id'] = 'ami-c8580bdf' # Ubuntu 14.04 LTS
-        if not 'instance_type' in config:
-            config['instance_type'] = 't2.micro'
-        if not 'security_group' in config:
-            config['security_group'] = 'default'
+        if not 'base_image_id' in resource_config:
+            resource_config['base_image_id'] = 'ami-c8580bdf' # Ubuntu 14.04 LTS
+        if not 'instance_type' in resource_config:
+            resource_config['instance_type'] = 't2.micro'
+        if not 'security_group' in resource_config:
+            resource_config['security_group'] = 'default'
 
-        super(Ec2Environment, self).__init__(config)
+        super(Ec2Instance, self).__init__(resource_config)
 
         self._ec2_resource = None
         self._ec2_instance = None
 
         # Initialize the connection to the AWS resource.
-        aws_client = self.get_resource_client()
+        resource_config = ResourceConfig(resource_config['resource_backend'],
+            config_path=resource_config['config_path'])
+        aws_subscription = Resource.factory(resource_config)
         self._ec2_resource = boto3.resource(
             'ec2',
-            aws_access_key_id=aws_client['aws_access_key_id'],
-            aws_secret_access_key=aws_client['aws_secret_access_key'],
-            region_name=self['region_name']
+            aws_access_key_id=aws_subscription.get_config('aws_access_key_id'),
+            aws_secret_access_key=aws_subscription.get_config('aws_secret_access_key'),
+            region_name=self.get_config('region_name')
         )
 
     def create(self, name, image_id):
@@ -67,34 +70,34 @@ class Ec2Environment(Environment):
             Identifier of the image to use when creating the environment.
         """
         if name:
-            self['name'] = name
+            self.set_config('name', name)
         if image_id:
-            self['base_image_id'] = image_id
-        if 'key_name' not in self:
+            self.set_config('base_image_id', image_id)
+        if not self.has_config('key_name'):
             self.create_key_pair()
 
         create_kwargs = dict(
-            ImageId=self['base_image_id'],
-            InstanceType=self['instance_type'],
-            KeyName=self['key_name'],
+            ImageId=self.get_config('base_image_id'),
+            InstanceType=self.get_config('instance_type'),
+            KeyName=self.get_config('key_name'),
             MinCount=1,
             MaxCount=1,
-            SecurityGroups=[self['security_group']]
+            SecurityGroups=[self.get_config('security_group')]
         )
         try:
             instances = self._ec2_resource.create_instances(**create_kwargs)
         except ClientError as exc:
             if re.search(
-                'The key pair .%(key_name)s. does not exist' % self,
+                'The key pair .%(key_name)s. does not exist' % self._config,
                 str(exc)
             ):
                 if not ui.yesno(
                     title="No key %(key_name)r found in the "
-                          "zone %(region_name)s" % self,
+                          "zone %(region_name)s" % self._config,
                     text="Would you like to generate a new key?"
                 ):
                     raise
-                self.create_key_pair(self['key_name'])
+                self.create_key_pair(self.get_config('key_name'))
                 instances = self._ec2_resource.create_instances(**create_kwargs)
             else:
                 raise  # re-raise
@@ -102,7 +105,7 @@ class Ec2Environment(Environment):
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
             Resources=[instances[0].id],
-            Tags=[{'Key': 'Name', 'Value': self['name']}]
+            Tags=[{'Key': 'Name', 'Value': self.get_config('name')}]
         )
 
         # Save the EC2 Instance object.
@@ -183,7 +186,7 @@ class Ec2Environment(Environment):
         execution.
         """
         host = self._ec2_instance.public_ip_address
-        key_filename = self['key_filename']
+        key_filename = self.get_config('key_filename')
 
         with SSHConnector2(host, key_filename=key_filename) as ssh:
             for command in self._command_buffer:
@@ -248,6 +251,6 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         self._lgr.info('Created private key file %s', key_filename)
 
         # Save the new info to the resource.
-        self['key_name'] = key_name
-        self['key_filename'] = key_filename
+        self.set_config('key_name', key_name)
+        self.set_config('key_filename', key_filename)
         # TODO: Write new config info to the niceman.cfg file or a registry of some sort.
