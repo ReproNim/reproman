@@ -8,7 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Environment sub-class to provide management of an AWS EC2 instance."""
 
-import boto3
 import re
 
 from os import chmod
@@ -51,14 +50,43 @@ class Ec2Instance(Resource, Environment):
         resource_config = ResourceConfig(resource_config['resource_backend'],
             config_path=resource_config['config_path'])
         aws_subscription = Resource.factory(resource_config)
-        self._ec2_resource = boto3.resource(
-            'ec2',
-            aws_access_key_id=aws_subscription.get_config('aws_access_key_id'),
-            aws_secret_access_key=aws_subscription.get_config('aws_secret_access_key'),
-            region_name=self.get_config('region_name')
-        )
+        self._ec2_resource = aws_subscription()
+        self.poll_status()
 
-    def create(self, name, image_id):
+    def poll_status(self):
+        """
+        Poll the backend for info on the environment. Updates the ResourceConfig.
+        """
+        name = self.get_config('name')
+        instances = self._ec2_resource.instances.filter(
+            Filters=[{
+                'Name': 'tag:Name',
+                'Values': [name]
+            }]
+        )
+        instances = list(instances)
+        if len(instances) == 1:
+            self.set_ec2_instance(instances[0])
+        elif len(instances) == 0:
+            self.set_config('resource_id', None)
+            self.set_config('resource_status', None)
+        else:
+            raise Exception(
+                "AWS error - Multiple EC2 instances named '{}' found".format(name))
+
+    def set_ec2_instance(self, ec2_instance):
+        """
+        Save the AWS EC2 object to am object proptery.
+
+        Parameters
+        ----------
+        ec2_instance : AWS EC2 instance object
+        """
+        self._ec2_instance = ec2_instance
+        self.set_config('resource_id', ec2_instance.instance_id)
+        self.set_config('resource_status', ec2_instance.state['Name'])
+
+    def create(self, image_id):
         """
         Create an EC2 instance.
 
@@ -69,8 +97,6 @@ class Ec2Instance(Resource, Environment):
         image_id : string
             Identifier of the image to use when creating the environment.
         """
-        if name:
-            self.set_config('name', name)
         if image_id:
             self.set_config('base_image_id', image_id)
         if not self.has_config('key_name'):
@@ -109,11 +135,10 @@ class Ec2Instance(Resource, Environment):
         )
 
         # Save the EC2 Instance object.
-        self._ec2_instance = self._ec2_resource.Instance(instances[0].id)
+        self.set_ec2_instance(self._ec2_resource.Instance(instances[0].id))
 
         instance_id = self._ec2_instance.id
-        self._lgr.info("Waiting for EC2 instance %s to start running...",
-                       instance_id)
+        self._lgr.info("Waiting for EC2 instance %s to start running...", instance_id)
         self._ec2_instance.wait_until_running(
             Filters=[
                 {
@@ -130,15 +155,17 @@ class Ec2Instance(Resource, Environment):
         waiter.wait(InstanceIds=[instance_id])
         self._lgr.info("EC2 instance %s initialized!", instance_id)
 
-    def connect(self, name):
+    def delete(self):
         """
-        Open a connection to the environment.
+        Terminate this EC2 instance in the AWS subscription.
+        """
+        return
 
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to connect to.
+    def connect(self):
         """
+        Open a connection to the environment resource.
+        """
+        name = self.get_config('name')
         instances = self._ec2_resource.instances.filter(
             Filters=[{
                 'Name': 'tag:Name',
@@ -151,7 +178,7 @@ class Ec2Instance(Resource, Environment):
         )
         instances = list(instances)
         if len(instances) == 1:
-            self._ec2_instance = instances[0]
+            self.set_ec2_instance(instances[0])
         else:
             raise Exception("AWS error - No EC2 instance named {}".format(name))
 

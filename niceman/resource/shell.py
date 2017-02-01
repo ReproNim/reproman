@@ -30,7 +30,13 @@ class Shell(Resource, Environment):
         self._client = None
         super(Shell, self).__init__(resource_config)
 
-    def create(self, name, image_id):
+    def poll_status(self):
+        """
+        Poll the backend for info on the environment. Updates the ResourceConfig.
+        """
+        return
+
+    def create(self, image_id):
         """
         Create a running environment.
 
@@ -43,7 +49,7 @@ class Shell(Resource, Environment):
         """
         return
 
-    def connect(self, name=None):
+    def connect(self):
         """
         Connect to an existing environment.
 
@@ -51,6 +57,12 @@ class Shell(Resource, Environment):
         ----------
         name : string
             Name identifier of the environment to connect to.
+        """
+        return
+
+    def delete(self):
+        """
+        Remove this environment from the backend.
         """
         return
 

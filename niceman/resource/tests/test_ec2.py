@@ -28,10 +28,8 @@ def test_ec2environment_class(niceman_cfg_path):
         ec2_instance = Resource.factory(resource_config)
 
         # Test creating an environment.
-        name = 'my-test-environment'
         image_id = 'ubuntu:trusty'
-        ec2_instance.create(name, image_id)
-        assert ec2_instance.get_config('name') == 'my-test-environment'
+        ec2_instance.create(image_id)
         assert ec2_instance.get_config('base_image_id') == 'ubuntu:trusty'
 
         # Test running some install commands.
@@ -52,7 +50,7 @@ def test_ec2environment_class(niceman_cfg_path):
 # def test_ec2environment_create_key_pair():
 #
 #     config = {
-#         'resource_id': 'my-ec2-env',
+#         'name': 'my-ec2-env',
 #         'resource_type': 'ec2-environment',
 #         'resource_client': 'my-aws-subscription',
 #         'region_name': 'us-east-1',

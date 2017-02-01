@@ -10,6 +10,7 @@
 
 from io import BytesIO
 from ..support.exceptions import CommandError
+import docker
 
 from .base import ResourceConfig, Resource
 from .interface.environment import Environment
@@ -45,8 +46,24 @@ class DockerContainer(Resource, Environment):
             config_path=resource_config['config_path'])
         docker_engine = Resource.factory(resource_config)
         self._client = docker_engine()
+        self.poll_status()
 
-    def create(self, name, image_id):
+    def poll_status(self):
+        """
+        Poll the backend for info on the environment. Updates the ResourceConfig.
+        """
+        if self.get_config('resource_id'):
+            name_or_id = self.get_config('resource_id')
+        else:
+            name_or_id = self.get_config('name')
+
+        try:
+            self.set_container(self._client.containers.get(name_or_id))
+        except docker.errors.NotFound:
+            self.set_config('resource_status', None)
+            self.set_config('resource_id', None)
+
+    def create(self, image_id):
         """
         Create a baseline Docker image and run it to create the container.
 
@@ -57,8 +74,6 @@ class DockerContainer(Resource, Environment):
         image_id : string
             Identifier of the image to use when creating the environment.
         """
-        if name:
-            self.set_config('name', name)
         if image_id:
             self.set_config('base_image_id', image_id)
 
@@ -66,7 +81,7 @@ class DockerContainer(Resource, Environment):
         self._build_image(dockerfile)
         self._run_container()
 
-    def connect(self, name):
+    def connect(self):
         """
         Open a connection to the environment.
 
@@ -79,7 +94,8 @@ class DockerContainer(Resource, Environment):
         # Following call may raise these exceptions:
         #    docker.errors.NotFound - If the container does not exist.
         #    docker.errors.APIError - If the server returns an error.
-        self._container = self._client.containers.get(name)
+        name = self.get_config('name')
+        self.set_container(self._client.containers.get(name))
 
     def execute_command(self, command, env=None):
         """
@@ -151,18 +167,25 @@ class DockerContainer(Resource, Environment):
         #        exit code and detach is False.
         #    docker.errors.ImageNotFound - If the specified image does not exist.
         #    docker.errors.APIError - If the server returns an error.
-        self._container = self._client.containers.run(image=self._image,
+        container = self._client.containers.run(image=self._image,
             stdin_open=self.get_config('stdin_open'), detach=True,
             name=self.get_config('name'))
+        self.set_container(container)
 
-    def remove_container(self):
+    def delete(self):
         """
         Deletes a container from the Docker engine.
         """
         self._container.remove(force=True)
 
-    def remove_image(self):
+    def set_container(self, container):
         """
-        Deletes an image from the Docker engine.
+        Save the container object to an instance property.
+
+        Parameters
+        ----------
+        container : Docker conainer object
         """
-        self._client.images.remove(self._image)
+        self._container = container
+        self.set_config('resource_status', self._container.status)
+        self.set_config('resource_id', self._container.short_id)

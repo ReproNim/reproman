@@ -30,8 +30,8 @@ def test_dockerengine_class(niceman_cfg_path):
         ]
         MockClient.assert_has_calls(calls, any_order=True)
 
-        assert_in('Getting item "resource_type" in resource config "remote-docker"', log.lines)
-        assert_in('Getting item "engine_url" in resource config "remote-docker"', log.lines)
+        assert_in('Getting config item "resource_type" in resource "remote-docker"', log.lines)
+        assert_in('Getting config item "engine_url" in resource "remote-docker"', log.lines)
 
         # Test setting the default engine url if not provided.
         del resource_config['engine_url']
