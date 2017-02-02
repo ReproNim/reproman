@@ -10,6 +10,7 @@
 
 from __future__ import unicode_literals
 
+import collections
 import os
 import subprocess
 from six import viewvalues
@@ -94,6 +95,7 @@ class DpkgManager(PackageManager):
     """DPKG Package Identifier
     """
 
+    # TODO: Record Source Name of a Binary Package
     # TODO: Read in full files from dpkg/info/*.list and .config
     # TODO: (Low Priority) handle cases from dpkg-divert
 
@@ -109,15 +111,16 @@ class DpkgManager(PackageManager):
             return None
 
         # prep our pkg object:
-        pkg = {"name": pkgname,
-               "version": pkg_info.installed.version,
-               "size": pkg_info.installed.size,
-               "architecture": pkg_info.installed.architecture,
-               "md5": pkg_info.installed.md5,
-               "sha1": pkg_info.installed.sha1,
-               "sha256": pkg_info.installed.sha256,
-               "candidate": pkg_info.candidate.version,
-               "files": []}
+        pkg = collections.OrderedDict()
+        pkg["name"] = pkgname
+        pkg["version"] = pkg_info.installed.version
+        pkg["size"] = pkg_info.installed.size
+        pkg["architecture"] = pkg_info.installed.architecture
+        pkg["md5"] = pkg_info.installed.md5
+        pkg["sha1"] = pkg_info.installed.sha1
+        pkg["sha256"] = pkg_info.installed.sha256
+        pkg["candidate"] = pkg_info.candidate.version
+        pkg["files"] = []
 
         # Now get installation date
         try:
