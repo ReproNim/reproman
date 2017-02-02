@@ -48,6 +48,10 @@ before_install:
   - travis_retry sudo apt-get update -qq
 
 install:
+  # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
+  - sudo apt-get build-dep python-apt
+  # only for Python2 ATM
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} = 2 ]; then pip install http://launchpad.net/python-distutils-extra/trunk/2.28/+download/python-distutils-extra-2.28.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.8.3ubuntu7.tar.gz; fi
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib

@@ -52,9 +52,14 @@ requires = {
         'tqdm',
         'paramiko',
         'cryptography',
+        'pytz',
     ],
     'debian': [
         'python-debian',
+        # on Debian systems will come via apt
+        #'python-apt',
+        # unfortunately not on pypi but needed by python-apt
+        #'http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.8.3ubuntu7.tar.gz',
         'chardet',  # python-debian misses dependency on it
     ],
     'docker': [
@@ -69,6 +74,8 @@ requires = {
     'tests': [
         'mock',
         'pytest',
+        # some of the tests still use nose.tools
+        'nose>=1.3.4',
     ]
 }
 
