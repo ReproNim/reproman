@@ -95,7 +95,6 @@ class DpkgManager(PackageManager):
     """DPKG Package Identifier
     """
 
-    # TODO: Record Source Name of a Binary Package
     # TODO: Read in full files from dpkg/info/*.list and .config
     # TODO: (Low Priority) handle cases from dpkg-divert
 
@@ -114,12 +113,15 @@ class DpkgManager(PackageManager):
         pkg = collections.OrderedDict()
         pkg["name"] = pkgname
         pkg["version"] = pkg_info.installed.version
+        pkg["candidate"] = pkg_info.candidate.version
         pkg["size"] = pkg_info.installed.size
         pkg["architecture"] = pkg_info.installed.architecture
         pkg["md5"] = pkg_info.installed.md5
         pkg["sha1"] = pkg_info.installed.sha1
         pkg["sha256"] = pkg_info.installed.sha256
-        pkg["candidate"] = pkg_info.candidate.version
+        if (pkg_info.installed.source_name):
+            pkg["source_name"] = pkg_info.installed.source_name
+            pkg["source_version"] = pkg_info.installed.source_version
         pkg["files"] = []
 
         # Now get installation date
