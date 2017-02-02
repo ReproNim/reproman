@@ -10,14 +10,7 @@ from pprint import pprint
 
 from niceman.retrace.packagemanagers import identify_packages
 
-import pytest
-try:
-    import apt
-except Exception:
-    apt = None
 
-
-@pytest.mark.skipif(not apt, reason="requires apt module")
 def test_identify_packages():
     files = ["/usr/share/doc/xterm/copyright",
              "/usr/share/icons/hicolor/48x48/apps/xterm-color.png",

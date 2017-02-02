@@ -17,6 +17,12 @@ from logging import getLogger
 import time
 import pytz
 from datetime import datetime
+try:
+    import apt
+    cache = apt.Cache()
+except ImportError:
+    apt = None
+    cache = None
 
 lgr = getLogger('niceman.api.retrace')
 
@@ -91,23 +97,14 @@ class DpkgManager(PackageManager):
     # TODO: Read in full files from dpkg/info/*.list and .config
     # TODO: (Low Priority) handle cases from dpkg-divert
 
-    def __init__(self, *args, **kwargs):
-        super(DpkgManager, self).__init__(*args, **kwargs)
-        self._apt_cache = None
-
-    @property
-    def apt_cache(self):
-        if self._apt_cache is None:
-            import apt  # https://apt.alioth.debian.org/python-apt-doc/library/index.html
-            self._apt_cache = apt.Cache()
-        return self._apt_cache
-
     def _get_package_for_file(self, filename):
         return find_dpkg_for_file(filename)
 
     def _create_package(self, pkgname):
+        if not cache:
+            return None
         try:
-            pkg_info = self.apt_cache[pkgname]
+            pkg_info = cache[pkgname]
         except KeyError:  # Package not found
             return None
 
