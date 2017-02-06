@@ -150,7 +150,7 @@ def get_system_files(config):
     Return
     ------
     set
-        System fles from the configuration
+        Files listed in the configuration
     """
 
     files = set()

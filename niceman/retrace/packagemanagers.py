@@ -24,6 +24,9 @@ except ImportError:
     apt = None
     cache = None
 
+from niceman.cmd import Runner
+from niceman.cmd import CommandError
+
 lgr = getLogger('niceman.api.retrace')
 
 # Note: The following was derived from ReproZip's PkgManager class
@@ -33,6 +36,11 @@ lgr = getLogger('niceman.api.retrace')
 class PackageManager(object):
     """Base class for package identifiers."""
 
+    def __init__(self):
+        # will be (re)used to run external commands, and let's hardcode LC_ALL
+        # codepage just in case since we might want to comprehend error messages
+        self._runner = Runner(env={'LC_ALL': 'C'})
+
     def search_for_files(self, files):
         """Identifies the packages for a given collection of files
 
@@ -41,8 +49,8 @@ class PackageManager(object):
 
         Parameters
         ----------
-        files : array
-            Iterable array of file paths
+        files : iterable
+            Container (e.g. list or set) of file paths
 
         Return
         ------
@@ -98,7 +106,21 @@ class DpkgManager(PackageManager):
     # TODO: (Low Priority) handle cases from dpkg-divert
 
     def _get_package_for_file(self, filename):
-        return find_dpkg_for_file(filename)
+        try:
+            out, err = self._runner.run(
+                ['dpkg-query', '-S', filename],
+                expect_stderr=True, expect_fail=True
+            )
+        except CommandError as exc:
+            if 'no path found matching pattern' in exc.stderr:
+                return None  # no package
+            raise  # some other fault -- handle it above
+
+        # Note, we must split after ": " instead of ":" in case the
+        # package name includes an architecture (like "zlib1g:amd64")
+        pkg = out.decode().split(': ', 1)[0]
+        lgr.debug("Identified file %r to belong to package %s", filename, pkg)
+        return pkg
 
     def _create_package(self, pkgname):
         if not cache:
@@ -149,44 +171,20 @@ class DpkgManager(PackageManager):
         return pkg
 
 
-def subprocess_check_output(cmd):
-    """Execute a subprocess call and catch common exceptions"""
-    try:
-        with open(os.devnull, 'w') as devnull:
-            return subprocess.check_output(cmd, stderr=devnull)
-    except (OSError, subprocess.CalledProcessError):
-        return ""
-
-
-def find_dpkg_for_file(filename):
-    """Given a file, use dpkg to identify the source package
-
-    From the full file and pathname (given as a string), we use dpkg-query
-    to identify the package that contains that file. If there is no package
-    (or dpkg-query is not installed) we return an empty string.
+def identify_packages(files):
+    """Identify packages files belong to
 
     Parameters
     ----------
-    filename : basestring
-        Filename and path
+    files : iterable
+      Files to consider
 
-    Return
-    ------
-    basestring
-        Package name (or empty if not found)
-
+    Returns
+    -------
+    packages : list of Package
+    unknown_files : list of str
+      Files which were not determined to belong to some package
     """
-    r = subprocess_check_output(['dpkg-query', '-S', filename])
-    if r:
-        # Note, we must split after ": " instead of ":" in case the
-        # package name includes an architecture (like "zlib1g:amd64")
-        pkg = r.decode().split(': ', 1)[0]
-        return pkg
-    else:
-        return ""
-
-
-def identify_packages(files):
     manager = DpkgManager()
     begin = time.time()
     (packages, unknown_files) = manager.search_for_files(files)
