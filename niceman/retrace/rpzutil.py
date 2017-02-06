@@ -118,7 +118,7 @@ def write_config_key(os, envconfig, key, intro_comment=""):
     os
         Output Stream
     envconfig
-        Dictonary
+        Dictionary
     key
         Key from the dictionary
     intro_comment
