@@ -10,8 +10,8 @@
 
 from __future__ import unicode_literals
 
+import collections
 import os
-import subprocess
 from six import viewvalues
 from logging import getLogger
 import time
@@ -38,7 +38,8 @@ class PackageManager(object):
 
     def __init__(self):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
-        # codepage just in case since we might want to comprehend error messages
+        # codepage just in case since we might want to comprehend error
+        # messages
         self._runner = Runner(env={'LC_ALL': 'C'})
 
     def search_for_files(self, files):
@@ -135,15 +136,19 @@ class DpkgManager(PackageManager):
             return None
 
         # prep our pkg object:
-        pkg = {"name": pkgname,
-               "version": pkg_info.installed.version,
-               "size": pkg_info.installed.size,
-               "architecture": pkg_info.installed.architecture,
-               "md5": pkg_info.installed.md5,
-               "sha1": pkg_info.installed.sha1,
-               "sha256": pkg_info.installed.sha256,
-               "candidate": pkg_info.candidate.version,
-               "files": []}
+        pkg = collections.OrderedDict()
+        pkg["name"] = pkgname
+        pkg["version"] = pkg_info.installed.version
+        pkg["candidate"] = pkg_info.candidate.version
+        pkg["size"] = pkg_info.installed.size
+        pkg["architecture"] = pkg_info.installed.architecture
+        pkg["md5"] = pkg_info.installed.md5
+        pkg["sha1"] = pkg_info.installed.sha1
+        pkg["sha256"] = pkg_info.installed.sha256
+        if pkg_info.installed.source_name:
+            pkg["source_name"] = pkg_info.installed.source_name
+            pkg["source_version"] = pkg_info.installed.source_version
+        pkg["files"] = []
 
         # Now get installation date
         try:

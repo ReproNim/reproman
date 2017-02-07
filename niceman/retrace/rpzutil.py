@@ -10,6 +10,8 @@
 
 """
 from __future__ import unicode_literals
+
+import collections
 import datetime
 import niceman
 import niceman.utils as utils
@@ -87,6 +89,15 @@ def write_config(output, config):
         Environment configuration (input)
 
     """
+
+    # Allow yaml to handle OrderedDict
+    # From http://stackoverflow.com/questions/31605131
+    if collections.OrderedDict not in yaml.SafeDumper.yaml_representers:
+        yaml.SafeDumper.add_representer(
+            collections.OrderedDict,
+            lambda self, data:
+            self.represent_mapping('tag:yaml.org,2002:map', data.items()))
+
     envconfig = dict(config)  # Shallow copy for destruction
     output.write(("# NICEMAN Environment Configuration File\n" +
                   "# This file was created by NICEMAN {0} on {1}\n").format(
