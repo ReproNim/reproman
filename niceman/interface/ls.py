@@ -15,6 +15,7 @@ from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from  ..resource import Resource
+from ..ui import ui
 
 from logging import getLogger
 lgr = getLogger('niceman.api.ls')
@@ -53,12 +54,31 @@ class Ls(Interface):
     @staticmethod
     def __call__(names, config, verbose=False):
 
-        resources = Resource.get_resource_list(config_path=config)
+        resources = Resource.get_resources(config_path=config)
 
-        print('\n{:<30} {:<20}'.format('RESOURCE', 'TYPE'))
-        print('{:<30} {:<20}'.format('--------', '----'))
-        for key in resources:
-            lgr.debug('listing resource {}'.format(key))
-            print('{:<30} {:<20}'.format(resources[key]['resource_id'],
-                                           resources[key]['resource_type']))
-        print('\n')
+        template = '{:<30} {:<20} {:<20} {:<10} {:<20}'
+        ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS', 'LOCATION'))
+        ui.message(template.format('-----------', '----', '--', '------', '--------'))
+
+        for name in resources:
+            r = resources[name]
+            if r.get_config('resource_id'):
+                resource_id = r.get_config('resource_id')
+            else:
+                resource_id = '-'
+            if r.get_config('resource_status'):
+                resource_status = r.get_config('resource_status')
+            else:
+                resource_status = '-'
+            if r.get_config('resource_backend'):
+                resource_backend = r.get_config('resource_backend')
+            else:
+                resource_backend = '-'
+
+            ui.message(template.format(
+                name,
+                r.get_config('resource_type'),
+                resource_id,
+                resource_status,
+                resource_backend
+            ))

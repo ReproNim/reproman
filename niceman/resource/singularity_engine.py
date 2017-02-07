@@ -8,21 +8,22 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Client sub-class to provide access to singularity containers."""
 
-from niceman.client.base import Client
+from .base import Resource
+from .interface.backend import Backend
 
 
-class SingularityClient(Client):
+class SingularityEngine(Resource, Backend):
 
-    def __init__(self, config):
+    def __init__(self, resource_config):
         """
         Class constructor
 
         Parameters
         ----------
-        config : dictionary
+        resource_config : ResourceConfig object
             Configuration parameters for the resource.
         """
 
         self._client = None
 
-        super(SingularityClient, self).__init__(config)
+        super(SingularityEngine, self).__init__(resource_config)

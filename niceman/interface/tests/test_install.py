@@ -12,11 +12,9 @@ from niceman.cmdline.main import main
 import logging
 from mock import patch, call
 
-from niceman.utils import swallow_logs
-from niceman.tests.utils import assert_in
-from niceman.cmd import Runner
-
-import niceman.tests.fixtures
+from ...utils import swallow_logs
+from ...tests.utils import assert_in
+from ...cmd import Runner
 
 
 # def test_install_packages_localhost(demo1_spec, niceman_cfg_path):
@@ -56,14 +54,13 @@ def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
         args = ['install',
                     '--spec', demo1_spec,
                     '--resource', 'my-debian',
-                    '--config', niceman_cfg_path,
-                    '--name', 'my-great-docker-container'
+                    '--config', niceman_cfg_path
                 ]
         main(args)
 
         calls = [
             call('tcp://127.0.0.1:2375'),
-            call().containers.get('my-great-docker-container'),
+            # call().containers.get('my-great-docker-container'),
             call().containers.get().exec_run(cmd=['apt-get', 'update'],
                                              stream=True),
             call().containers.get().exec_run(

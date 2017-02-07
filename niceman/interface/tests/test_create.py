@@ -59,8 +59,7 @@ def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
         args = ['create',
                     '--spec', demo1_spec,
                     '--resource', 'my-debian',
-                    '--config', niceman_cfg_path,
-                    '--name', 'my-new-docker-container'
+                    '--config', niceman_cfg_path
                 ]
         main(args)
 
@@ -69,4 +68,4 @@ def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
         ]
         MockClient.assert_has_calls(calls, any_order=True)
 
-        assert_in("Created the environment my-new-docker-container", log.lines)
+        assert_in("Created the environment my-debian", log.lines)

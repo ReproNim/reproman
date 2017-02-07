@@ -8,7 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Environment sub-class to provide management of an AWS EC2 instance."""
 
-import boto3
 import re
 
 from os import chmod
@@ -16,46 +15,78 @@ from os.path import join
 from appdirs import AppDirs
 from botocore.exceptions import ClientError
 
-from ..environment.base import Environment
+from .base import ResourceConfig, Resource
+from .interface.environment import Environment
 from ..support.sshconnector2 import SSHConnector2
 from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
 
 
-class Ec2Environment(Environment):
+class Ec2Instance(Resource, Environment):
 
-    def __init__(self, config={}):
+    def __init__(self, resource_config):
         """
         Class constructor
 
         Parameters
         ----------
-        config : dictionary
+        resource_config : ResourceConfig object
             Configuration parameters for the environment.
         """
-        if not 'base_image_id' in config:
-            config['base_image_id'] = 'ami-c8580bdf' # Ubuntu 14.04 LTS
-        if not 'instance_type' in config:
-            config['instance_type'] = 't2.micro'
-        if not 'security_group' in config:
-            config['security_group'] = 'default'
+        if not 'base_image_id' in resource_config:
+            resource_config['base_image_id'] = 'ami-c8580bdf' # Ubuntu 14.04 LTS
+        if not 'instance_type' in resource_config:
+            resource_config['instance_type'] = 't2.micro'
+        if not 'security_group' in resource_config:
+            resource_config['security_group'] = 'default'
 
-        super(Ec2Environment, self).__init__(config)
+        super(Ec2Instance, self).__init__(resource_config)
 
         self._ec2_resource = None
         self._ec2_instance = None
 
         # Initialize the connection to the AWS resource.
-        aws_client = self.get_resource_client()
-        self._ec2_resource = boto3.resource(
-            'ec2',
-            aws_access_key_id=aws_client['aws_access_key_id'],
-            aws_secret_access_key=aws_client['aws_secret_access_key'],
-            region_name=self['region_name']
-        )
+        resource_config = ResourceConfig(resource_config['resource_backend'],
+            config_path=resource_config['config_path'])
+        aws_subscription = Resource.factory(resource_config)
+        self._ec2_resource = aws_subscription()
+        self.poll_status()
 
-    def create(self, name, image_id):
+    def poll_status(self):
+        """
+        Poll the backend for info on the environment. Updates the ResourceConfig.
+        """
+        name = self.get_config('name')
+        instances = self._ec2_resource.instances.filter(
+            Filters=[{
+                'Name': 'tag:Name',
+                'Values': [name]
+            }]
+        )
+        instances = list(instances)
+        if len(instances) == 1:
+            self.set_ec2_instance(instances[0])
+        elif len(instances) == 0:
+            self.set_config('resource_id', None)
+            self.set_config('resource_status', None)
+        else:
+            raise Exception(
+                "AWS error - Multiple EC2 instances named '{}' found".format(name))
+
+    def set_ec2_instance(self, ec2_instance):
+        """
+        Save the AWS EC2 object to am object proptery.
+
+        Parameters
+        ----------
+        ec2_instance : AWS EC2 instance object
+        """
+        self._ec2_instance = ec2_instance
+        self.set_config('resource_id', ec2_instance.instance_id)
+        self.set_config('resource_status', ec2_instance.state['Name'])
+
+    def create(self, image_id):
         """
         Create an EC2 instance.
 
@@ -66,35 +97,33 @@ class Ec2Environment(Environment):
         image_id : string
             Identifier of the image to use when creating the environment.
         """
-        if name:
-            self['name'] = name
         if image_id:
-            self['base_image_id'] = image_id
-        if 'key_name' not in self:
+            self.set_config('base_image_id', image_id)
+        if not self.has_config('key_name'):
             self.create_key_pair()
 
         create_kwargs = dict(
-            ImageId=self['base_image_id'],
-            InstanceType=self['instance_type'],
-            KeyName=self['key_name'],
+            ImageId=self.get_config('base_image_id'),
+            InstanceType=self.get_config('instance_type'),
+            KeyName=self.get_config('key_name'),
             MinCount=1,
             MaxCount=1,
-            SecurityGroups=[self['security_group']]
+            SecurityGroups=[self.get_config('security_group')]
         )
         try:
             instances = self._ec2_resource.create_instances(**create_kwargs)
         except ClientError as exc:
             if re.search(
-                'The key pair .%(key_name)s. does not exist' % self,
+                'The key pair .%(key_name)s. does not exist' % self._config,
                 str(exc)
             ):
                 if not ui.yesno(
                     title="No key %(key_name)r found in the "
-                          "zone %(region_name)s" % self,
+                          "zone %(region_name)s" % self._config,
                     text="Would you like to generate a new key?"
                 ):
                     raise
-                self.create_key_pair(self['key_name'])
+                self.create_key_pair(self.get_config('key_name'))
                 instances = self._ec2_resource.create_instances(**create_kwargs)
             else:
                 raise  # re-raise
@@ -102,15 +131,14 @@ class Ec2Environment(Environment):
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
             Resources=[instances[0].id],
-            Tags=[{'Key': 'Name', 'Value': self['name']}]
+            Tags=[{'Key': 'Name', 'Value': self.get_config('name')}]
         )
 
         # Save the EC2 Instance object.
-        self._ec2_instance = self._ec2_resource.Instance(instances[0].id)
+        self.set_ec2_instance(self._ec2_resource.Instance(instances[0].id))
 
         instance_id = self._ec2_instance.id
-        self._lgr.info("Waiting for EC2 instance %s to start running...",
-                       instance_id)
+        self._lgr.info("Waiting for EC2 instance %s to start running...", instance_id)
         self._ec2_instance.wait_until_running(
             Filters=[
                 {
@@ -127,15 +155,17 @@ class Ec2Environment(Environment):
         waiter.wait(InstanceIds=[instance_id])
         self._lgr.info("EC2 instance %s initialized!", instance_id)
 
-    def connect(self, name):
+    def delete(self):
         """
-        Open a connection to the environment.
+        Terminate this EC2 instance in the AWS subscription.
+        """
+        return
 
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to connect to.
+    def connect(self):
         """
+        Open a connection to the environment resource.
+        """
+        name = self.get_config('name')
         instances = self._ec2_resource.instances.filter(
             Filters=[{
                 'Name': 'tag:Name',
@@ -148,7 +178,7 @@ class Ec2Environment(Environment):
         )
         instances = list(instances)
         if len(instances) == 1:
-            self._ec2_instance = instances[0]
+            self.set_ec2_instance(instances[0])
         else:
             raise Exception("AWS error - No EC2 instance named {}".format(name))
 
@@ -183,7 +213,7 @@ class Ec2Environment(Environment):
         execution.
         """
         host = self._ec2_instance.public_ip_address
-        key_filename = self['key_filename']
+        key_filename = self.get_config('key_filename')
 
         with SSHConnector2(host, key_filename=key_filename) as ssh:
             for command in self._command_buffer:
@@ -248,6 +278,6 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         self._lgr.info('Created private key file %s', key_filename)
 
         # Save the new info to the resource.
-        self['key_name'] = key_name
-        self['key_filename'] = key_filename
+        self.set_config('key_name', key_name)
+        self.set_config('key_filename', key_filename)
         # TODO: Write new config info to the niceman.cfg file or a registry of some sort.

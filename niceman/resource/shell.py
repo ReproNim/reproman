@@ -6,33 +6,37 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Environment sub-class to provide management of the localhost environment."""
+"""Resource sub-class to provide management of the localhost environment."""
 
-import os
-from niceman.environment.base import Environment
+from .base import Resource
+from .interface.environment import Environment
 from niceman.cmd import Runner
 
+import os
 
-class LocalshellEnvironment(Environment):
 
-    def __init__(self, config={}):
+class Shell(Resource, Environment):
+
+    def __init__(self, resource_config):
         """
-        Factory method for creating the appropriate Environment sub-class.
+        Class constructor
 
         Parameters
         ----------
-        resource : object
-            Resource sub-class instance
-        config : dictionary
-            Configuration parameters for the environment.
-
-        Returns
-        -------
-        Environment sub-class instance.
+        resource_config : ResourceConfig object
+            Configuration parameters for the resource.
         """
-        super(LocalshellEnvironment, self).__init__(config)
 
-    def create(self, name, image_id):
+        self._client = None
+        super(Shell, self).__init__(resource_config)
+
+    def poll_status(self):
+        """
+        Poll the backend for info on the environment. Updates the ResourceConfig.
+        """
+        return
+
+    def create(self, image_id):
         """
         Create a running environment.
 
@@ -45,7 +49,7 @@ class LocalshellEnvironment(Environment):
         """
         return
 
-    def connect(self, name=None):
+    def connect(self):
         """
         Connect to an existing environment.
 
@@ -53,6 +57,12 @@ class LocalshellEnvironment(Environment):
         ----------
         name : string
             Name identifier of the environment to connect to.
+        """
+        return
+
+    def delete(self):
+        """
+        Remove this environment from the backend.
         """
         return
 

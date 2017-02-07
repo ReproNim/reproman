@@ -16,43 +16,10 @@ from ..provenance import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
-from ..resource import Resource
-import random
+from ..resource import ResourceConfig, Resource
 
 from logging import getLogger
 lgr = getLogger('niceman.api.create')
-
-
-# STUBS for functionality to be moved into corresponding submodules
-
-def generate_environment_name():
-    first_words = [
-        'stamp',
-        'languid',
-        'annoyed',
-        'kettle',
-        'guard',
-        'shape',
-        'closed',
-        'private',
-        'barbarous',
-        'preserve',
-    ]
-    second_words = [
-        'pest',
-        'purpose',
-        'unequaled',
-        'end',
-        'scream',
-        'uneven',
-        'arithmetic',
-        'zippy',
-        'drop',
-        'cheerful',
-    ]
-
-    name = '{0}_{1}'.format(random.choice(first_words), random.choice(second_words))
-    return name
 
 
 class Create(Interface):
@@ -101,12 +68,12 @@ class Create(Interface):
             nargs="+",
             #action="store_true",
         ),
-        name=Parameter(
-            args=("-n", "--name"),
-            metavar="NAME",
-            constraints=EnsureStr() | EnsureNone(),
-            doc="provide a name for the created environment",
-        ),
+        # name=Parameter(
+        #     args=("-n", "--name"),
+        #     metavar="NAME",
+        #     constraints=EnsureStr() | EnsureNone(),
+        #     doc="provide a name for the created environment",
+        # ),
         existing=Parameter(
             args=("-e", "--existing"),
             choices=("fail", "redefine"),
@@ -115,8 +82,7 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(specs, resource, config, image, only_env,
-                 name, existing='fail'):
+    def __call__(specs, resource, config, image, only_env, existing='fail'):
 
         if not specs:
             raise InsufficientArgumentsError("Need at least a single --spec")
@@ -129,23 +95,15 @@ class Create(Interface):
 
         if not resource:
             raise InsufficientArgumentsError("Need a --resource")
-        Interface.validate_resource(resource, config, 'environment')
         print("RESOURCE: {}".format(resource))
+
+        # TODO: Make sure this resource has not already been created.
 
         if only_env:
             raise NotImplementedError
 
-        env_resource = Resource.factory(resource, config_path=config)
+        resource_config = ResourceConfig(resource, config_path=config)
+        env_resource = Resource.factory(resource_config)
+        env_resource.create(image)
 
-        if not name:
-            name = generate_environment_name()
-        else:
-            resource_client = env_resource.get_resource_client()
-            # TODO: Get a listing of environments.
-            # if name in resource_client.list_environments():
-            #     raise ValueError(
-            #         "{} environment is already known to the resource.", name)
-
-        env_resource.create(name, image)
-
-        lgr.info("Created the environment %s", name)
+        lgr.info("Created the environment %s", resource)

@@ -129,7 +129,7 @@ def write_config_key(os, envconfig, key, intro_comment=""):
     os
         Output Stream
     envconfig
-        Dictonary
+        Dictionary
     key
         Key from the dictionary
     intro_comment
@@ -161,7 +161,7 @@ def get_system_files(config):
     Return
     ------
     set
-        System fles from the configuration
+        Files listed in the configuration
     """
 
     files = set()
