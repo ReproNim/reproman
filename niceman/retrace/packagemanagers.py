@@ -118,7 +118,11 @@ class DpkgManager(PackageManager):
 
         # Note, we must split after ": " instead of ":" in case the
         # package name includes an architecture (like "zlib1g:amd64")
-        pkg = out.decode().split(': ', 1)[0]
+        try:
+            out = out.decode()
+        except AttributeError:
+            pass
+        pkg = out.split(': ', 1)[0]
         lgr.debug("Identified file %r to belong to package %s", filename, pkg)
         return pkg
 
