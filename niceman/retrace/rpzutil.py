@@ -92,11 +92,11 @@ def write_config(output, config):
 
     # Allow yaml to handle OrderedDict
     # From http://stackoverflow.com/questions/31605131
-    if (collections.OrderedDict not in yaml.SafeDumper.yaml_representers):
-        represent_dict_order = lambda self, data: self.represent_mapping(
-            'tag:yaml.org,2002:map', data.items())
-        yaml.SafeDumper.add_representer(collections.OrderedDict,
-                                        represent_dict_order)
+    if collections.OrderedDict not in yaml.SafeDumper.yaml_representers:
+        yaml.SafeDumper.add_representer(
+            collections.OrderedDict,
+            lambda self, data:
+            self.represent_mapping('tag:yaml.org,2002:map', data.items()))
 
     envconfig = dict(config)  # Shallow copy for destruction
     output.write(("# NICEMAN Environment Configuration File\n" +
