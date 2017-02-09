@@ -23,6 +23,7 @@ _group_dataset = (
         # src module can be relative, but has to be relative to the main 'niceman' package
         ('niceman.interface.create', 'Create'),
         ('niceman.interface.install', 'Install'),
+        ('niceman.interface.delete', 'Delete'),
         # ('niceman.distribution.run', 'Run'),
     ])
 

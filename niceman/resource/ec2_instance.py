@@ -159,7 +159,13 @@ class Ec2Instance(Resource, Environment):
         """
         Terminate this EC2 instance in the AWS subscription.
         """
-        return
+        name = self.get_config('name')
+        self._ec2_resource.instances.filter(
+            Filters=[{
+                'Name': 'tag:Name',
+                'Values': [name]
+            }]
+        ).terminate()
 
     def connect(self):
         """
