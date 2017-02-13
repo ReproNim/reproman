@@ -11,6 +11,9 @@
 from .base import Resource
 from .interface.backend import Backend
 
+import logging
+lgr = logging.getLogger('niceman.resource.ssh_server')
+
 
 class SshServer(Resource, Backend):
 

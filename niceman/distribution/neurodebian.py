@@ -10,6 +10,8 @@
 
 from niceman.distribution.debian import DebianDistribution
 
+import logging
+lgr = logging.getLogger('niceman.distribution.neurodebian')
 
 class NeurodebianDistribution(DebianDistribution):
     """

@@ -12,6 +12,8 @@ from .base import ResourceConfig, Resource
 from .interface.backend import Backend
 import docker
 
+import logging
+lgr = logging.getLogger('niceman.resource.docker_engine')
 
 class DockerEngine(Resource, Backend):
 

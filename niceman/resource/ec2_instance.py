@@ -15,6 +15,9 @@ from os.path import join
 from appdirs import AppDirs
 from botocore.exceptions import ClientError
 
+import logging
+lgr = logging.getLogger('niceman.resource.ec2_instance')
+
 from .base import ResourceConfig, Resource
 from .interface.environment import Environment
 from ..support.sshconnector2 import SSHConnector2
@@ -138,7 +141,7 @@ class Ec2Instance(Resource, Environment):
         self.set_ec2_instance(self._ec2_resource.Instance(instances[0].id))
 
         instance_id = self._ec2_instance.id
-        self._lgr.info("Waiting for EC2 instance %s to start running...", instance_id)
+        lgr.info("Waiting for EC2 instance %s to start running...", instance_id)
         self._ec2_instance.wait_until_running(
             Filters=[
                 {
@@ -147,13 +150,13 @@ class Ec2Instance(Resource, Environment):
                 },
             ]
         )
-        self._lgr.info("EC2 instance %s to start running!", instance_id)
+        lgr.info("EC2 instance %s to start running!", instance_id)
 
-        self._lgr.info("Waiting for EC2 instance %s to complete initialization...",
+        lgr.info("Waiting for EC2 instance %s to complete initialization...",
                        instance_id)
         waiter = self._ec2_instance.meta.client.get_waiter('instance_status_ok')
         waiter.wait(InstanceIds=[instance_id])
-        self._lgr.info("EC2 instance %s initialized!", instance_id)
+        lgr.info("EC2 instance %s initialized!", instance_id)
 
     def delete(self):
         """
@@ -211,7 +214,7 @@ class Ec2Instance(Resource, Environment):
 
         # If a command fails, a CommandError exception will be thrown.
         for i, line in enumerate(ssh(" ".join(command))):
-            self._lgr.debug("exec#%i: %s", i, line.rstrip())
+            lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def execute_command_buffer(self):
         """
@@ -223,7 +226,7 @@ class Ec2Instance(Resource, Environment):
 
         with SSHConnector2(host, key_filename=key_filename) as ssh:
             for command in self._command_buffer:
-                self._lgr.info("Running command '%s'", command['command'])
+                lgr.info("Running command '%s'", command['command'])
                 self.execute_command(ssh, command['command'], command['env'])
 
     def create_key_pair(self, key_name=None):
@@ -257,7 +260,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
                     # We have no clue what it is
                     raise
             except Exception as exc:
-                self._lgr.error(
+                lgr.error(
                     "Caught some unknown exception while checking key %s: %s",
                     key_pair,
                     exc_str(exc)
@@ -281,7 +284,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         with open(key_filename, 'w') as key_file:
             key_file.write(key_pair.key_material)
         chmod(key_filename, 0o400)
-        self._lgr.info('Created private key file %s', key_filename)
+        lgr.info('Created private key file %s', key_filename)
 
         # Save the new info to the resource.
         self.set_config('key_name', key_name)

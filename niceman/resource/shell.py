@@ -12,6 +12,9 @@ from .base import Resource
 from .interface.environment import Environment
 from niceman.cmd import Runner
 
+import logging
+lgr = logging.getLogger('niceman.resource.shell')
+
 import os
 
 

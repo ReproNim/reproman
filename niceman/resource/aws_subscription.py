@@ -10,6 +10,9 @@
 
 import boto3
 
+import logging
+lgr = logging.getLogger('niceman.resource.aws_subscription')
+
 from .base import Resource
 from .interface.backend import Backend
 

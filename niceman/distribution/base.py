@@ -10,7 +10,9 @@
 
 from importlib import import_module
 import abc
+
 import logging
+lgr = logging.getLogger('niceman.distribution')
 
 class Distribution(object):
     """
@@ -29,7 +31,6 @@ class Distribution(object):
             Provenance class instance
         """
         self._provenance = provenance
-        self._lgr = logging.getLogger('niceman.distribution')
 
     @staticmethod
     def factory(distribution_name, provenance):

@@ -10,6 +10,8 @@
 
 from niceman.distribution import Distribution
 
+import logging
+lgr = logging.getLogger('niceman.distribution.pypi')
 
 class PypiDistribution(Distribution):
     """

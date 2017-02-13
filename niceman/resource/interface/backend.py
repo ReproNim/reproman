@@ -10,6 +10,8 @@
 
 import abc
 
+import logging
+lgr = logging.getLogger('niceman.resource.interface.backend')
 
 class Backend(object):
     """
@@ -26,5 +28,5 @@ class Backend(object):
         -------
         Client object specific to the backend API being implemented.
         """
-        self._lgr.debug("Retrieving resource client of type 'backend'.")
+        lgr.debug("Retrieving resource client of type 'backend'.")
         return self._client

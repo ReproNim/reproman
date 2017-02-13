@@ -10,6 +10,8 @@
 
 import abc
 
+import logging
+lgr = logging.getLogger('niceman.resource.interface.environment')
 
 class Environment(object):
     """
@@ -98,7 +100,7 @@ class Environment(object):
         execution.
         """
         for command in self._command_buffer:
-            self._lgr.debug("Running command '%s'", command['command'])
+            lgr.debug("Running command '%s'", command['command'])
             self.execute_command(command['command'], command['env'])
 
     def set_envvar(self, var, value):
