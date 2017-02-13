@@ -10,6 +10,8 @@
 
 import abc
 
+import logging
+lgr = logging.getLogger('niceman.resource.interface.image')
 
 class Image(object):
     """

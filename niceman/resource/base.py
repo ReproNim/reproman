@@ -10,7 +10,9 @@
 
 from importlib import import_module
 import abc
+
 import logging
+lgr = logging.getLogger('niceman.resource.base')
 
 from ..config import ConfigManager
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
@@ -63,8 +65,6 @@ class ResourceConfig(object):
         if 'resource_backend' not in self._config:
             self._config['resource_backend'] = None
 
-        self._lgr = logging.getLogger('niceman.resource_config')
-
     def __repr__(self):
         return 'ResourceConfig({})'.format(self._config['name'])
 
@@ -72,17 +72,17 @@ class ResourceConfig(object):
         return len(self._config)
 
     def __getitem__(self, item):
-        self._lgr.debug('Getting config item "{}" in resource "{}"'. format(item,
+        lgr.debug('Getting config item "{}" in resource "{}"'. format(item,
             self._config['name']))
         return self._config[item]
 
     def __setitem__(self, key, value):
-        self._lgr.debug('Setting config item "{}" to "{}" in resource "{}"'.format(key,
+        lgr.debug('Setting config item "{}" to "{}" in resource "{}"'.format(key,
             value, self._config['name']))
         self._config[key] = value
 
     def __delitem__(self, key):
-        self._lgr.debug(
+        lgr.debug(
             'Deleting config item "{}" in resource "{}"'.format(key,
                 self._config['name']))
         del self._config[key]
@@ -109,8 +109,8 @@ class Resource(object):
         """
         self._config = resource_config
 
-        self._lgr = logging.getLogger('niceman.resource')
-        self._lgr.debug('Retrieved resource {}'.format(self._config['name']))
+        lgr = logging.getLogger('niceman.resource')
+        lgr.debug('Retrieved resource {}'.format(self._config['name']))
 
     def __repr__(self):
         return 'Resource({})'.format(self._config['name'])

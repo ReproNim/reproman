@@ -10,6 +10,8 @@
 
 from niceman.distribution import Distribution
 
+import logging
+lgr = logging.getLogger('niceman.distribution.debian')
 
 class DebianDistribution(Distribution):
     """
@@ -36,7 +38,7 @@ class DebianDistribution(Distribution):
         environment : object
             The Environment sub-class object.
         """
-        self._lgr.debug("Adding Debian update to environment command list.")
+        lgr.debug("Adding Debian update to environment command list.")
         environment.add_command(['apt-get', 'update'])
         environment.add_command(['apt-get', 'install', '-y', 'python-pip'])
 

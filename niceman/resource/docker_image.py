@@ -11,6 +11,9 @@
 from .base import ResourceConfig, Resource
 from .interface.image import Image
 
+import logging
+lgr = logging.getLogger('niceman.resource.docker_image')
+
 
 class DockerImage(Resource, Image):
 
@@ -39,7 +42,7 @@ class DockerImage(Resource, Image):
         #         try:
         #             image = self._client.images.get(name_or_id)
         #         except docker.errors.ImageNotFound:
-        #             self._lgr.error('No Docker resource found for {}'.format(name_or_id))
+        #             lgr.error('No Docker resource found for {}'.format(name_or_id))
         #             return None
 
     def create(self, image_id, environment_resource):

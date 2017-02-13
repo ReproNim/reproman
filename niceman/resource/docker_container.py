@@ -12,6 +12,9 @@ from io import BytesIO
 from ..support.exceptions import CommandError
 import docker
 
+import logging
+lgr = logging.getLogger('niceman.resource.docker_container')
+
 from .base import ResourceConfig, Resource
 from .interface.environment import Environment
 
@@ -122,7 +125,7 @@ class DockerContainer(Resource, Environment):
         for i, line in enumerate(self._container.exec_run(cmd=command, stream=True)):
             if line.startswith('rpc error'):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
-            self._lgr.debug("exec#%i: %s", i, line.rstrip())
+            lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def _get_base_image_dockerfile(self, base_image_id):
         """

@@ -11,6 +11,8 @@
 from .base import ResourceConfig, Resource
 from .interface.image import Image
 
+import logging
+lgr = logging.getLogger('niceman.resource.ec2_image')
 
 class Ec2Image(Resource, Image):
 
