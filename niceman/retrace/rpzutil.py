@@ -64,11 +64,14 @@ def identify_packages(config):
     # Immediately clone the configuration
     files = get_system_files(config)
 
-    (packages, unidentified_files) = packagemanagers.identify_packages(
-        list(files))
+    (packages, origins, unidentified_files) = \
+        packagemanagers.identify_packages(list(files))
 
     # Update reprozip package assignment
     config['packages'] = packages
+
+    # Update reprozip package assignment
+    config['origins'] = origins
 
     # set any files not identified
     config['other_files'] = list(unidentified_files)
@@ -105,6 +108,10 @@ def write_config(output, config):
 
     c = "\n# Runs: Commands and related environment variables\n\n"
     write_config_key(output, envconfig, "runs", c)
+
+    c = "\n# Package Origins \n\n"
+    write_config_key(output, envconfig, "origins", c)
+
 
     c = "\n# Packages \n\n"
     write_config_key(output, envconfig, "packages", c)

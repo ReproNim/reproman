@@ -92,6 +92,24 @@ class PackageManager(object):
 
         return list(viewvalues(found_packages)), unknown_files
 
+    def identify_package_origins(self, packages):
+        """Identify and collate origins from a set of packages
+
+        From a collection of packages, identify the unique origins
+        into a separate collection.
+
+        Parameters
+        ----------
+        packages : iterable
+            Array of Package (to be updated)
+
+        Return
+        ------
+        (origins)
+            - Discovered collection of origins
+        """
+        raise NotImplementedError
+
     def _get_package_for_file(self, filename):
         raise NotImplementedError
 
@@ -105,6 +123,46 @@ class DpkgManager(PackageManager):
 
     # TODO: Read in full files from dpkg/info/*.list and .config
     # TODO: (Low Priority) handle cases from dpkg-divert
+
+    def identify_package_origins(self, packages):
+        origins = []
+        # First, pull out all unique origins
+        for p in packages:
+            for v in p.get("version_table", []):
+                for o in v.get("origins", []):
+                    if o not in origins:
+                        origins.append(o)
+
+        # Now let's name the origins
+        origin_names = []
+        origin_name_set = set()
+        # Iterate through each origin, creating a name out of the
+        # origin and site, and make sure it is unique (by adding a number)
+        for o in origins:
+            i = 0
+            name = "apt_" + o.get("origin") + "_" + o.get("site") + "_" + \
+                   o.get("archive") + "_"
+            # See if the name is unique (and increment the number until it is)
+            while (name + str(i)) in origin_name_set:
+                i += 1
+            # store the new name into our origin list and set
+            origin_name_set.add(name + str(i))
+            origin_names.append(name + str(i))
+
+        # Now replace the origins with our created names
+        # TODO: replace iterative search with a hash lookup?
+        for p in packages:
+            for v in p.get("version_table", []):
+                for i, o in enumerate(v.get("origins", [])):
+                    lookup_idx = origins.index(o)
+                    v["origins"][i] = origin_names[lookup_idx]
+
+        # Now update the origins with their name and type
+        for i, o in enumerate(origins):
+            o["name"] = origin_names[i]
+            o["type"] = "apt"
+
+        return origins
 
     def _get_package_for_file(self, filename):
         try:
@@ -197,7 +255,8 @@ def identify_packages(files):
     manager = DpkgManager()
     begin = time.time()
     (packages, unknown_files) = manager.search_for_files(files)
+    origin = manager.identify_package_origins(packages)
     lgr.debug("Assigning files to packages took %f seconds",
               (time.time() - begin))
 
-    return packages, list(unknown_files)
+    return packages, origin, list(unknown_files)
