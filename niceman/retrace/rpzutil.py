@@ -112,7 +112,6 @@ def write_config(output, config):
     c = "\n# Package Origins \n\n"
     write_config_key(output, envconfig, "origins", c)
 
-
     c = "\n# Packages \n\n"
     write_config_key(output, envconfig, "packages", c)
 

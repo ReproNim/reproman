@@ -159,8 +159,13 @@ class DpkgManager(PackageManager):
 
         # Now update the origins with their name and type
         for i, o in enumerate(origins):
-            o["name"] = origin_names[i]
-            o["type"] = "apt"
+            new_o = collections.OrderedDict()
+            new_o["name"] = origin_names[i]
+            new_o["type"] = "apt"
+            new_o.update(o)
+            origins[i] = new_o
+        # Now sort the origins by the name
+        origins = sorted(origins, key=lambda k: k["name"])
 
         return origins
 
@@ -249,6 +254,7 @@ def identify_packages(files):
     Returns
     -------
     packages : list of Package
+    origin : list of Origin
     unknown_files : list of str
       Files which were not determined to belong to some package
     """
