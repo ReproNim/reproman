@@ -29,6 +29,9 @@ from niceman.cmd import CommandError
 
 lgr = getLogger('niceman.api.retrace')
 
+# Pick a conservative max command-line (instead of using os)
+_MAX_LEN_CMDLINE = 2048
+
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
 
@@ -66,13 +69,13 @@ class PackageManager(object):
         found_packages = {}
         nb_pkg_files = 0
 
+        file_to_package_dict = self._get_packages_for_files(files)
         for f in files:
-            pkgname = self._get_package_for_file(f)
-
             # Stores the file
-            if not pkgname:
+            if f not in file_to_package_dict:
                 unknown_files.add(f)
             else:
+                pkgname = file_to_package_dict[f]
                 if pkgname in found_packages:
                     found_packages[pkgname]["files"].append(f)
                     nb_pkg_files += 1
@@ -110,7 +113,7 @@ class PackageManager(object):
         """
         raise NotImplementedError
 
-    def _get_package_for_file(self, filename):
+    def _get_packages_for_files(self, filename):
         raise NotImplementedError
 
     def _create_package(self, pkgname):
@@ -121,7 +124,6 @@ class DpkgManager(PackageManager):
     """DPKG Package Identifier
     """
 
-    # TODO: Read in full files from dpkg/info/*.list and .config
     # TODO: (Low Priority) handle cases from dpkg-divert
 
     def identify_package_origins(self, packages):
@@ -169,26 +171,42 @@ class DpkgManager(PackageManager):
 
         return origins
 
-    def _get_package_for_file(self, filename):
-        try:
-            out, err = self._runner.run(
-                ['dpkg-query', '-S', filename],
-                expect_stderr=True, expect_fail=True
-            )
-        except CommandError as exc:
-            if 'no path found matching pattern' in exc.stderr:
-                return None  # no package
-            raise  # some other fault -- handle it above
+    def _get_packages_for_files(self, files):
+        file_to_package_dict = {}
 
-        # Note, we must split after ": " instead of ":" in case the
-        # package name includes an architecture (like "zlib1g:amd64")
-        try:
-            out = out.decode()
-        except AttributeError:
-            pass
-        pkg = out.split(': ', 1)[0]
-        lgr.debug("Identified file %r to belong to package %s", filename, pkg)
-        return pkg
+        # Find out how many files we can query at once
+        max_len = max([len(f) for f in files])
+        num_files = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
+
+        for subfiles in (files[pos:pos + num_files]
+                         for pos in range(0, len(files), num_files)):
+            try:
+                out, err = self._runner.run(
+                    ['dpkg-query', '-S'] + subfiles,
+                    expect_stderr=True, expect_fail=True
+                )
+            except CommandError as exc:
+                if 'no path found matching pattern' in exc.stderr:
+                    out = exc.stdout  # One file not found, so continue
+                else:
+                    raise  # some other fault -- handle it above
+            # Decode output for Python 2
+            try:
+                out = out.decode()
+            except AttributeError:
+                pass
+
+            # Now go through the output and assign packages to files
+            for outline in out.splitlines():
+                # Note, we must split after ": " instead of ":" in case the
+                # package name includes an architecture (like "zlib1g:amd64")
+                # TODO: Handle query of /bin/sh better
+                (pkg, found_name) = outline.split(': ', 1)
+                lgr.debug("Identified file %r to belong to package %s",
+                          found_name, pkg)
+                file_to_package_dict[found_name] = pkg
+
+        return file_to_package_dict
 
     def _create_package(self, pkgname):
         if not cache:
