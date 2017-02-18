@@ -404,8 +404,9 @@ def test_path_():
         p = 'a/b/c'
         assert(_path_(p) is p)  # nothing is done to it whatsoever
 
+
 def test_unicode():
-    if (PY3):
+    if PY3:
         s = b"mytest"
         s2 = "mytest"
         assert(unicode(s) == s2)
@@ -415,11 +416,11 @@ def test_unicode():
         s2 = unicode(s)
         assert(s2 == __builtin__.unicode(s))
 
+
 def test_generate_unique_set():
     names = set()
-    n = generate_unique_name("test_%d",names)
+    n = generate_unique_name("test_%d", names)
     assert(n == "test_0")
     names.add(n)
-    n = generate_unique_name("test_%d",names)
+    n = generate_unique_name("test_%d", names)
     assert(n == "test_1")
-    

@@ -883,6 +883,7 @@ def _path_(p):
         # Assume that all others as POSIX compliant so nothing to be done
         return p
 
+
 def unicode(s):
     """Given a str type, convert to unicode"""
     if PY3:
@@ -894,6 +895,7 @@ def unicode(s):
             raise TypeError("Incorrect type for unicode()")
     else:
         return __builtin__.unicode(s)
+
 
 def generate_unique_name(pattern, nameset):
     """Create a unique numbered name from a pattern and a set"""
