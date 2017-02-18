@@ -895,4 +895,13 @@ def unicode(s):
     else:
         return __builtin__.unicode(s)
 
+def generate_unique_name(pattern, nameset):
+    """Create a unique numbered name from a pattern and a set"""
+    i = 0
+    while True:
+        n = pattern % i
+        i += 1
+        if n not in nameset:
+            return n
+
 lgr.log(5, "Done importing niceman.utils")

@@ -41,6 +41,7 @@ from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
 from ..utils import unicode
+from ..utils import generate_unique_name
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -413,3 +414,12 @@ def test_unicode():
         s = "mytest"
         s2 = unicode(s)
         assert(s2 == __builtin__.unicode(s))
+
+def test_generate_unique_set():
+    names = set()
+    n = generate_unique_name("test_%d",names)
+    assert(n == "test_0")
+    names.add(n)
+    n = generate_unique_name("test_%d",names)
+    assert(n == "test_1")
+    

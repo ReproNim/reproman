@@ -16,6 +16,7 @@ from six import viewvalues
 from logging import getLogger
 import time
 import pytz
+import niceman.utils as utils
 from datetime import datetime
 try:
     import apt
@@ -144,15 +145,13 @@ class DpkgManager(PackageManager):
         # Iterate through each origin, creating a name out of the
         # origin and site, and make sure it is unique (by adding a number)
         for o in origins:
-            i = 0
             name = "apt_" + o.get("origin") + "_" + o.get("archive") + "_" + \
                    o.get("component") + "_"
             # See if the name is unique (and increment the number until it is)
-            while (name + str(i)) in origin_name_set:
-                i += 1
+            name = utils.generate_unique_name(name + "%d", origin_name_set)
             # store the new name into our origin list and set
-            origin_name_set.add(name + str(i))
-            origin_names.append(name + str(i))
+            origin_name_set.add(name)
+            origin_names.append(name)
 
         # Now replace the origins with our created names
         # TODO: replace iterative search with a hash lookup?
