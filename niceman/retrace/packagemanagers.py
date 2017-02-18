@@ -145,8 +145,8 @@ class DpkgManager(PackageManager):
         # origin and site, and make sure it is unique (by adding a number)
         for o in origins:
             i = 0
-            name = "apt_" + o.get("origin") + "_" + o.get("site") + "_" + \
-                   o.get("archive") + "_"
+            name = "apt_" + o.get("origin") + "_" + o.get("archive") + "_" + \
+                   o.get("component") + "_"
             # See if the name is unique (and increment the number until it is)
             while (name + str(i)) in origin_name_set:
                 i += 1
@@ -222,6 +222,7 @@ class DpkgManager(PackageManager):
         # prep our pkg object:
         pkg = collections.OrderedDict()
         pkg["name"] = pkgname
+        pkg["type"] = "dpkg"
         pkg["version"] = pkg_info.installed.version
         pkg["candidate"] = pkg_info.candidate.version
         pkg["size"] = pkg_info.installed.size
