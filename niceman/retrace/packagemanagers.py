@@ -157,9 +157,8 @@ class DpkgManager(PackageManager):
     @staticmethod
     def _create_origin(o, used_names):
         # Create a unique name for the origin
-        name_fmt = "apt_" + o.get("origin") + "_" + \
-                   o.get("archive") + "_" + \
-                   o.get("component") + "_%d"
+        name_fmt = "apt_%s_%s_%s_%%d" % (o.get("origin"), o.get("archive"),
+                                         o.get("component"))
         name = utils.generate_unique_name(name_fmt,
                                           used_names)
         # Remember the created name
