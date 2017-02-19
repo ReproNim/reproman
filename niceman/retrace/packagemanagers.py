@@ -23,9 +23,13 @@ import niceman.utils as utils
 
 try:
     import apt
+    import apt.utils as apt_utils
+    import apt_pkg
     cache = apt.Cache()
 except ImportError:
     apt = None
+    apt_utils = None
+    apt_pkg = None
     cache = None
 
 from niceman.cmd import Runner
@@ -247,11 +251,17 @@ class DpkgManager(PackageManager):
             v_info = {"version": v.version}
             origins = []
             for o in v.origins:
-                origins.append({"component": o.component,
-                                "archive": o.archive,
-                                "origin": o.origin,
-                                "label": o.label,
-                                "site": o.site})
+                origin = {"component": o.component,
+                          "archive": o.archive,
+                          "origin": o.origin,
+                          "label": o.label,
+                          "site": o.site}
+                # Get the release date
+                rdate = self._find_release_date(o.site, o.archive)
+                if rdate:
+                    origin["date"] = rdate
+                # Now add our crafted origin to the list
+                origins.append(origin)
             v_info["origins"] = origins
             pkg_versions.append(v_info)
 
@@ -259,6 +269,37 @@ class DpkgManager(PackageManager):
 
         lgr.debug("Found package %s", pkg)
         return pkg
+
+    def _find_release_date(self, site, archive):
+        if not site:
+            return None
+        # First find the release file
+        # This uses logic similar to apt.utils.get_release_filename_for_pkg
+        # but restricts matches to the source site
+        rfile = None
+        dirname = apt_pkg.config.find_dir("Dir::State::lists")
+        # If we want to avoid using cache._list, we can call
+        # apt_pkg.SourceList() directly
+        for uri in set([metaindex.uri for metaindex in cache._list.list]):
+            if site in uri:
+                for relfile in ['InRelease', 'Release']:
+                    name = ((apt_pkg.uri_to_filename(uri)) +
+                            "dists_%s_%s" % (archive, relfile))
+                    if os.path.exists(dirname + name):
+                        if rfile:
+                            lgr.warning(
+                                "More than one release file found for %s %s" %
+                                (site, archive))
+                        rfile = dirname + name
+
+        # Now extract and format the date from the release file
+        rdate = None
+        if rfile:
+            rdate = apt_utils.get_release_date_from_release_file(rfile)
+            if rdate:
+                rdate = str(pytz.utc.localize(
+                    datetime.utcfromtimestamp(rdate)))
+        return rdate
 
 
 def identify_packages(files):
