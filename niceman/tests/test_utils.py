@@ -434,4 +434,3 @@ def test_hashable_dict():
     d[key_a] = 1
     assert(key_b in d)
     assert(key_c not in d)
-
