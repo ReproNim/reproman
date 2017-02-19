@@ -270,6 +270,9 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
+    class MultipleReleaseFileMatch(RuntimeError):
+        pass
+
     def _find_release_date(self, site, archive):
         if not site:
             return None
@@ -281,13 +284,13 @@ class DpkgManager(PackageManager):
         # If we want to avoid using cache._list, we can call
         # apt_pkg.SourceList() directly
         for uri in set([metaindex.uri for metaindex in cache._list.list]):
-            if site in uri:
+            if ("//" + site + "/") in uri:
                 for relfile in ['InRelease', 'Release']:
                     name = ((apt_pkg.uri_to_filename(uri)) +
                             "dists_%s_%s" % (archive, relfile))
                     if os.path.exists(dirname + name):
                         if rfile:
-                            lgr.warning(
+                            raise self.MultipleReleaseFileMatch(
                                 "More than one release file found for %s %s" %
                                 (site, archive))
                         rfile = dirname + name
