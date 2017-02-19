@@ -12,12 +12,15 @@ from __future__ import unicode_literals
 
 import collections
 import os
-from six import viewvalues
-from logging import getLogger
 import time
+from logging import getLogger
+from six import viewvalues
+
 import pytz
-import niceman.utils as utils
 from datetime import datetime
+
+import niceman.utils as utils
+
 try:
     import apt
     cache = apt.Cache()
@@ -131,47 +134,42 @@ class DpkgManager(PackageManager):
     # TODO: (Low Priority) handle cases from dpkg-divert
 
     def identify_package_origins(self, packages):
-        origins = []
-        # First, pull out all unique origins
-        for p in packages:
-            for v in p.get("version_table", []):
-                for o in v.get("origins", []):
-                    if o not in origins:
-                        origins.append(o)
+        used_names = set()  # Set to avoid duplicate origin names
+        origin_map = {}  # Map original origins to the yaml-prepared origins
 
-        # Now let's name the origins
-        origin_names = []
-        origin_name_set = set()
-        # Iterate through each origin, creating a name out of the
-        # origin and site, and make sure it is unique (by adding a number)
-        for o in origins:
-            name = "apt_" + o.get("origin") + "_" + o.get("archive") + "_" + \
-                   o.get("component") + "_"
-            # See if the name is unique (and increment the number until it is)
-            name = utils.generate_unique_name(name + "%d", origin_name_set)
-            # store the new name into our origin list and set
-            origin_name_set.add(name)
-            origin_names.append(name)
-
-        # Now replace the origins with our created names
-        # TODO: replace iterative search with a hash lookup?
+        # Iterate over all package origins
         for p in packages:
             for v in p.get("version_table", []):
                 for i, o in enumerate(v.get("origins", [])):
-                    lookup_idx = origins.index(o)
-                    v["origins"][i] = origin_names[lookup_idx]
+                    o = utils.HashableDict(o)
+                    # If we haven't seen this origin before, generate it
+                    if o not in origin_map:
+                        origin_map[o] = self._create_origin(o, used_names)
+                    # Now replace the package origin with the name of the
+                    # yaml-prepared origin
+                    v["origins"][i] = origin_map[o]["name"]
 
-        # Now update the origins with their name and type
-        for i, o in enumerate(origins):
-            new_o = collections.OrderedDict()
-            new_o["name"] = origin_names[i]
-            new_o["type"] = "apt"
-            new_o.update(o)
-            origins[i] = new_o
-        # Now sort the origins by the name
-        origins = sorted(origins, key=lambda k: k["name"])
+        # Sort the origins by the name for the configuration file
+        origins = sorted(origin_map.values(), key=lambda k: k["name"])
 
         return origins
+
+    @staticmethod
+    def _create_origin(o, used_names):
+        # Create a unique name for the origin
+        name_fmt = "apt_" + o.get("origin") + "_" + \
+                   o.get("archive") + "_" + \
+                   o.get("component") + "_%d"
+        name = utils.generate_unique_name(name_fmt,
+                                          used_names)
+        # Remember the created name
+        used_names.add(name)
+        # Create a new ordered dictionary to be used in the config file
+        new_o = collections.OrderedDict()
+        new_o["name"] = name
+        new_o["type"] = "apt"
+        new_o.update(o)
+        return new_o
 
     def _get_packages_for_files(self, files):
         file_to_package_dict = {}

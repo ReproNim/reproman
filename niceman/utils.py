@@ -906,4 +906,11 @@ def generate_unique_name(pattern, nameset):
         if n not in nameset:
             return n
 
+
+# http://stackoverflow.com/questions/1151658/python-hashable-dicts
+class HashableDict(dict):
+    """Dict that can be used as keys"""
+    def __hash__(self):
+        return hash(frozenset(self.values()))
+
 lgr.log(5, "Done importing niceman.utils")

@@ -24,7 +24,7 @@ from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
 from ..dochelpers import exc_str
-from ..utils import updated
+from ..utils import updated, HashableDict
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
@@ -424,3 +424,14 @@ def test_generate_unique_set():
     names.add(n)
     n = generate_unique_name("test_%d", names)
     assert(n == "test_1")
+
+
+def test_hashable_dict():
+    key_a = HashableDict({"a": 1, "b": "test"})
+    key_b = HashableDict({"a": 1, "b": "test"})
+    key_c = HashableDict({"a": "dog", "b": "boo"})
+    d = dict()
+    d[key_a] = 1
+    assert(key_b in d)
+    assert(key_c not in d)
+
