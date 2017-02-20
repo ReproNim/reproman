@@ -62,6 +62,10 @@ class DockerContainer(Resource, Environment):
         except docker.errors.NotFound:
             self.set_config('resource_status', None)
             self.set_config('resource_id', None)
+        except docker.errors.APIError as exc:
+            self._lgr.warning("Cannot access container due to client API mismatch: %s", str(exc))
+            self.set_config('resource_status', None)
+            self.set_config('resource_id', None)
 
     def create(self, image_id):
         """
