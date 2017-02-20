@@ -15,6 +15,7 @@ import os
 import time
 from logging import getLogger
 from six import viewvalues
+from six.moves.urllib.parse import urlparse
 
 import pytz
 from datetime import datetime
@@ -284,7 +285,7 @@ class DpkgManager(PackageManager):
         # If we want to avoid using cache._list, we can call
         # apt_pkg.SourceList() directly
         for uri in set([metaindex.uri for metaindex in cache._list.list]):
-            if ("//" + site + "/") in uri:
+            if site == urlparse(uri).netloc:
                 for relfile in ['InRelease', 'Release']:
                     name = ((apt_pkg.uri_to_filename(uri)) +
                             "dists_%s_%s" % (archive, relfile))
