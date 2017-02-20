@@ -21,6 +21,7 @@ import pytz
 from datetime import datetime
 
 import niceman.utils as utils
+from niceman.support.exceptions import MultipleReleaseFileMatch
 
 try:
     import apt
@@ -271,9 +272,6 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
-    class MultipleReleaseFileMatch(RuntimeError):
-        pass
-
     def _find_release_date(self, site, archive):
         if not site:
             return None
@@ -291,7 +289,7 @@ class DpkgManager(PackageManager):
                             "dists_%s_%s" % (archive, relfile))
                     if os.path.exists(dirname + name):
                         if rfile:
-                            raise self.MultipleReleaseFileMatch(
+                            raise MultipleReleaseFileMatch(
                                 "More than one release file found for %s %s" %
                                 (site, archive))
                         rfile = dirname + name
