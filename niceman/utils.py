@@ -902,7 +902,7 @@ def generate_unique_name(pattern, nameset):
 
     Parameters
     ----------
-    pattern: str
+    pattern: basestring
       The pattern for the name (to be used with %) that includes one %d
       location
     nameset: collection

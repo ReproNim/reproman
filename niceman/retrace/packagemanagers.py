@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 import collections
 import os
+from os.path import join as opj
 import time
 from logging import getLogger
 from six import viewvalues
@@ -287,12 +288,12 @@ class DpkgManager(PackageManager):
                 for relfile in ['InRelease', 'Release']:
                     name = ((apt_pkg.uri_to_filename(uri)) +
                             "dists_%s_%s" % (archive, relfile))
-                    if os.path.exists(dirname + name):
+                    if os.path.exists(opj(dirname, name)):
                         if rfile:
                             raise MultipleReleaseFileMatch(
                                 "More than one release file found for %s %s" %
                                 (site, archive))
-                        rfile = dirname + name
+                        rfile = opj(dirname, name)
 
         # Now extract and format the date from the release file
         rdate = None
