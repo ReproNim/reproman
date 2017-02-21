@@ -13,6 +13,11 @@ from __future__ import unicode_literals
 import collections
 import os
 import time
+
+from os.path import dirname, isdir, isabs
+from os.path import exists, lexists
+from os.path import join as opj
+
 from logging import getLogger
 from six import viewvalues
 from six.moves.urllib.parse import urlparse
@@ -20,6 +25,7 @@ from six.moves.urllib.parse import urlparse
 import pytz
 from datetime import datetime
 
+from niceman.dochelpers import exc_str
 import niceman.utils as utils
 
 try:
@@ -48,8 +54,16 @@ except ValueError:
 # (Revised BSD License)
 
 
+# TODO:  we might want to rename
+#  Package ...
+#  Manager -> Resolver?  since we are trying to resolve paths into their
+#             corresponding "Package"s
 class PackageManager(object):
-    """Base class for package identifiers."""
+    """Base class for package identifiers.
+
+    ATM :term:`Package` describes all of possible "containers" which deliver
+    some piece of software or data -- packages by distributions (Debian, conda,
+    pip, ...) or VCS repositories"""
 
     def __init__(self):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
@@ -317,15 +331,25 @@ def identify_packages(files):
     Returns
     -------
     packages : list of Package
-    origin : list of Origin
+    origins : list of Origin
     unknown_files : list of str
       Files which were not determined to belong to some package
     """
-    manager = DpkgManager()
-    begin = time.time()
-    (packages, unknown_files) = manager.search_for_files(files)
-    origin = manager.identify_package_origins(packages)
-    lgr.debug("Assigning files to packages took %f seconds",
-              (time.time() - begin))
+    # TODO: move this function into the base.py having decided on naming etc
+    from .vcs import VCSManager
+    managers = [DpkgManager(),]# VCSManager()]
+    origins = []
+    packages = []
 
-    return packages, origin, list(unknown_files)
+    files_to_consider = files
+
+    for manager in managers:
+        begin = time.time()
+        (packages_, unknown_files) = manager.search_for_files(files_to_consider)
+        origins += manager.identify_package_origins(packages_)
+        lgr.debug("Assigning files to packages by %s took %f seconds",
+                  (manager, time.time() - begin))
+        packages += packages_
+        files_to_consider = unknown_files
+
+    return packages, origins, list(unknown_files)
