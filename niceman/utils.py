@@ -898,7 +898,22 @@ def unicode(s):
 
 
 def generate_unique_name(pattern, nameset):
-    """Create a unique numbered name from a pattern and a set"""
+    """Create a unique numbered name from a pattern and a set
+
+    Parameters
+    ----------
+    pattern: str
+      The pattern for the name (to be used with %) that includes one %d
+      location
+    nameset: collection
+      Collection (set or list) of existing names. If the generated name is
+      used, then add the name to the nameset.
+
+    Returns
+    -------
+    str
+      The generated unique name
+    """
     i = 0
     while True:
         n = pattern % i
