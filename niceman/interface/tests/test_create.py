@@ -53,7 +53,7 @@ def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
     Test installing packages into a Docker container.
     """
 
-    with patch('docker.DockerClient') as MockClient, \
+    with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         args = ['create',
@@ -64,7 +64,7 @@ def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
         main(args)
 
         calls = [
-            call('tcp://127.0.0.1:2375'),
+            call(base_url='tcp://127.0.0.1:2375'),
         ]
         MockClient.assert_has_calls(calls, any_order=True)
 

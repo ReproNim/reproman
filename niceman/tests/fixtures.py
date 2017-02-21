@@ -8,7 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import pytest
-from .constants import DEMO_SPEC1_YML_FILENAME, NICEMAN_CFG_PATH
+from .constants import DEMO_SPEC1_YML_FILENAME, NICEMAN_CFG_PATH, REPROZIP_SPEC2_YML_FILENAME
 
 DEMO1_SPECS = [
     DEMO_SPEC1_YML_FILENAME,
@@ -22,6 +22,10 @@ CONFIGURATION = [
     NICEMAN_CFG_PATH
 ]
 
+REPROZIP_SPEC2 = [
+    REPROZIP_SPEC2_YML_FILENAME
+]
+
 
 # Let's make a convenience fixture to run tests against demo1 file(s)
 @pytest.fixture(params=DEMO1_SPECS)
@@ -31,5 +35,9 @@ def demo1_spec(request):
 
 @pytest.fixture(params=CONFIGURATION)
 def niceman_cfg_path(request):
+    yield request.param
+
+@pytest.fixture(params=REPROZIP_SPEC2)
+def reprozip_spec2(request):
     yield request.param
 

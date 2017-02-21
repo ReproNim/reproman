@@ -18,7 +18,7 @@ from niceman.tests.utils import assert_in
 
 def test_dockerengine_class(niceman_cfg_path):
 
-    with patch('docker.DockerClient') as MockClient, \
+    with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         resource_config = ResourceConfig('remote-docker',
@@ -26,7 +26,7 @@ def test_dockerengine_class(niceman_cfg_path):
         Resource.factory(resource_config)
 
         calls = [
-            call('tcp://127.0.0.1:2375')
+            call(base_url='tcp://127.0.0.1:2375')
         ]
         MockClient.assert_has_calls(calls, any_order=True)
 

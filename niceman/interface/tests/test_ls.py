@@ -25,9 +25,8 @@ def test_ls_output(niceman_cfg_path):
             '--config', niceman_cfg_path,
     ]
 
-    with patch('docker.DockerClient'), \
+    with patch('docker.Client'), \
             patch('boto3.resource'), \
-            patch('niceman.resource.docker_container.DockerContainer.set_container'), \
          swallow_logs(new_level=logging.DEBUG) as log:
 
         main(args)

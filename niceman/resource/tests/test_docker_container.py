@@ -8,7 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-from mock import patch, call
+from mock import patch
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
@@ -16,7 +16,7 @@ from ..base import ResourceConfig, Resource
 
 def test_dockercontainer_class(niceman_cfg_path):
 
-    with patch('docker.DockerClient') as MockDockerClient, \
+    with patch('docker.Client'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test initializing the environment object.
@@ -36,16 +36,6 @@ def test_dockercontainer_class(niceman_cfg_path):
         command = ['apt-get', 'install', 'xeyes']
         docker_container.add_command(command)
         docker_container.execute_command_buffer()
-        calls = [
-            call().containers.get('my-debian')
-        ]
-        MockDockerClient.assert_has_calls(calls, any_order=True)
+
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
-
-        # Test removing the container and image.
-        docker_container.delete()
-        calls = [
-            call.remove(force=True)
-        ]
-        docker_container._container.assert_has_calls(calls, any_order=True)
