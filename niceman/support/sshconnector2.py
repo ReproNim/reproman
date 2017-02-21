@@ -9,6 +9,7 @@
 """Interface to an ssh connection."""
 
 import logging
+import os
 import paramiko
 import sys
 from ..support.exceptions import CommandError
@@ -60,7 +61,7 @@ class SSHConnector2(object):
         """
         try:
             self._client.connect(self._host, username=self._username,
-                key_filename=self._key_filename)
+                key_filename=os.path.expanduser(self._key_filename))
         except paramiko.AuthenticationException:
             lgr.error("SSH authentication failed when connecting to %s", self._host)
             sys.exit(1)

@@ -28,8 +28,9 @@ class DockerEngine(Resource, Backend):
         """
 
         # Assign a default parameters if needed.
-        if not 'engine_url' in resource_config:
+        if 'engine_url' not in resource_config:
             resource_config['engine_url'] = 'unix:///var/run/docker.sock'
+
 
         self._client = docker.DockerClient(resource_config['engine_url'])
 
