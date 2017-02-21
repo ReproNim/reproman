@@ -54,3 +54,8 @@ class MissingConfigError(RuntimeError):
 class MissingConfigFileError(RuntimeError):
     """To be raised when missing the configuration file"""
     pass
+
+
+class MultipleReleaseFileMatch(RuntimeError):
+    """Multiple release files were matched while retracing on Debian"""
+    pass
