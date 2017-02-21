@@ -883,6 +883,7 @@ def _path_(p):
         # Assume that all others as POSIX compliant so nothing to be done
         return p
 
+
 def unicode(s):
     """Given a str type, convert to unicode"""
     if PY3:
@@ -894,5 +895,37 @@ def unicode(s):
             raise TypeError("Incorrect type for unicode()")
     else:
         return __builtin__.unicode(s)
+
+
+def generate_unique_name(pattern, nameset):
+    """Create a unique numbered name from a pattern and a set
+
+    Parameters
+    ----------
+    pattern: basestring
+      The pattern for the name (to be used with %) that includes one %d
+      location
+    nameset: collection
+      Collection (set or list) of existing names. If the generated name is
+      used, then add the name to the nameset.
+
+    Returns
+    -------
+    str
+      The generated unique name
+    """
+    i = 0
+    while True:
+        n = pattern % i
+        i += 1
+        if n not in nameset:
+            return n
+
+
+# http://stackoverflow.com/questions/1151658/python-hashable-dicts
+class HashableDict(dict):
+    """Dict that can be used as keys"""
+    def __hash__(self):
+        return hash(frozenset(self.values()))
 
 lgr.log(5, "Done importing niceman.utils")

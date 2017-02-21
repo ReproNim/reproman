@@ -12,22 +12,39 @@ from __future__ import unicode_literals
 
 import collections
 import os
-from six import viewvalues
-from logging import getLogger
+from os.path import join as opj
 import time
+from logging import getLogger
+from six import viewvalues
+from six.moves.urllib.parse import urlparse
+
 import pytz
 from datetime import datetime
+
+import niceman.utils as utils
+from niceman.support.exceptions import MultipleReleaseFileMatch
+
 try:
     import apt
+    import apt.utils as apt_utils
+    import apt_pkg
     cache = apt.Cache()
 except ImportError:
     apt = None
+    apt_utils = None
+    apt_pkg = None
     cache = None
 
 from niceman.cmd import Runner
 from niceman.cmd import CommandError
 
 lgr = getLogger('niceman.api.retrace')
+
+# Pick a conservative max command-line
+try:
+    _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
+except ValueError:
+    _MAX_LEN_CMDLINE = 2048
 
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
@@ -66,13 +83,13 @@ class PackageManager(object):
         found_packages = {}
         nb_pkg_files = 0
 
+        file_to_package_dict = self._get_packages_for_files(files)
         for f in files:
-            pkgname = self._get_package_for_file(f)
-
             # Stores the file
-            if not pkgname:
+            if f not in file_to_package_dict:
                 unknown_files.add(f)
             else:
+                pkgname = file_to_package_dict[f]
                 if pkgname in found_packages:
                     found_packages[pkgname]["files"].append(f)
                     nb_pkg_files += 1
@@ -92,7 +109,25 @@ class PackageManager(object):
 
         return list(viewvalues(found_packages)), unknown_files
 
-    def _get_package_for_file(self, filename):
+    def identify_package_origins(self, packages):
+        """Identify and collate origins from a set of packages
+
+        From a collection of packages, identify the unique origins
+        into a separate collection.
+
+        Parameters
+        ----------
+        packages : iterable
+            Array of Package (to be updated)
+
+        Return
+        ------
+        (origins)
+            - Discovered collection of origins
+        """
+        raise NotImplementedError
+
+    def _get_packages_for_files(self, filename):
         raise NotImplementedError
 
     def _create_package(self, pkgname):
@@ -103,29 +138,81 @@ class DpkgManager(PackageManager):
     """DPKG Package Identifier
     """
 
-    # TODO: Read in full files from dpkg/info/*.list and .config
     # TODO: (Low Priority) handle cases from dpkg-divert
 
-    def _get_package_for_file(self, filename):
-        try:
-            out, err = self._runner.run(
-                ['dpkg-query', '-S', filename],
-                expect_stderr=True, expect_fail=True
-            )
-        except CommandError as exc:
-            if 'no path found matching pattern' in exc.stderr:
-                return None  # no package
-            raise  # some other fault -- handle it above
+    def identify_package_origins(self, packages):
+        used_names = set()  # Set to avoid duplicate origin names
+        origin_map = {}  # Map original origins to the yaml-prepared origins
 
-        # Note, we must split after ": " instead of ":" in case the
-        # package name includes an architecture (like "zlib1g:amd64")
-        try:
-            out = out.decode()
-        except AttributeError:
-            pass
-        pkg = out.split(': ', 1)[0]
-        lgr.debug("Identified file %r to belong to package %s", filename, pkg)
-        return pkg
+        # Iterate over all package origins
+        for p in packages:
+            for v in p.get("version_table", []):
+                for i, o in enumerate(v.get("origins", [])):
+                    o = utils.HashableDict(o)
+                    # If we haven't seen this origin before, generate it
+                    if o not in origin_map:
+                        origin_map[o] = self._create_origin(o, used_names)
+                    # Now replace the package origin with the name of the
+                    # yaml-prepared origin
+                    v["origins"][i] = origin_map[o]["name"]
+
+        # Sort the origins by the name for the configuration file
+        origins = sorted(origin_map.values(), key=lambda k: k["name"])
+
+        return origins
+
+    @staticmethod
+    def _create_origin(o, used_names):
+        # Create a unique name for the origin
+        name_fmt = "apt_%s_%s_%s_%%d" % (o.get("origin"), o.get("archive"),
+                                         o.get("component"))
+        name = utils.generate_unique_name(name_fmt,
+                                          used_names)
+        # Remember the created name
+        used_names.add(name)
+        # Create a new ordered dictionary to be used in the config file
+        new_o = collections.OrderedDict()
+        new_o["name"] = name
+        new_o["type"] = "apt"
+        new_o.update(o)
+        return new_o
+
+    def _get_packages_for_files(self, files):
+        file_to_package_dict = {}
+
+        # Find out how many files we can query at once
+        max_len = max([len(f) for f in files])
+        num_files = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
+
+        for subfiles in (files[pos:pos + num_files]
+                         for pos in range(0, len(files), num_files)):
+            try:
+                out, err = self._runner.run(
+                    ['dpkg-query', '-S'] + subfiles,
+                    expect_stderr=True, expect_fail=True
+                )
+            except CommandError as exc:
+                if 'no path found matching pattern' in exc.stderr:
+                    out = exc.stdout  # One file not found, so continue
+                else:
+                    raise  # some other fault -- handle it above
+            # Decode output for Python 2
+            try:
+                out = out.decode()
+            except AttributeError:
+                pass
+
+            # Now go through the output and assign packages to files
+            for outline in out.splitlines():
+                # Note, we must split after ": " instead of ":" in case the
+                # package name includes an architecture (like "zlib1g:amd64")
+                # TODO: Handle query of /bin/sh better
+                (pkg, found_name) = outline.split(': ', 1)
+                lgr.debug("Identified file %r to belong to package %s",
+                          found_name, pkg)
+                file_to_package_dict[found_name] = pkg
+
+        return file_to_package_dict
 
     def _create_package(self, pkgname):
         if not cache:
@@ -138,6 +225,7 @@ class DpkgManager(PackageManager):
         # prep our pkg object:
         pkg = collections.OrderedDict()
         pkg["name"] = pkgname
+        pkg["type"] = "dpkg"
         pkg["version"] = pkg_info.installed.version
         pkg["candidate"] = pkg_info.candidate.version
         pkg["size"] = pkg_info.installed.size
@@ -166,11 +254,17 @@ class DpkgManager(PackageManager):
             v_info = {"version": v.version}
             origins = []
             for o in v.origins:
-                origins.append({"component": o.component,
-                                "archive": o.archive,
-                                "origin": o.origin,
-                                "label": o.label,
-                                "site": o.site})
+                origin = {"component": o.component,
+                          "archive": o.archive,
+                          "origin": o.origin,
+                          "label": o.label,
+                          "site": o.site}
+                # Get the release date
+                rdate = self._find_release_date(o.site, o.archive)
+                if rdate:
+                    origin["date"] = rdate
+                # Now add our crafted origin to the list
+                origins.append(origin)
             v_info["origins"] = origins
             pkg_versions.append(v_info)
 
@@ -178,6 +272,37 @@ class DpkgManager(PackageManager):
 
         lgr.debug("Found package %s", pkg)
         return pkg
+
+    def _find_release_date(self, site, archive):
+        if not site:
+            return None
+        # First find the release file
+        # This uses logic similar to apt.utils.get_release_filename_for_pkg
+        # but restricts matches to the source site
+        rfile = None
+        dirname = apt_pkg.config.find_dir("Dir::State::lists")
+        # If we want to avoid using cache._list, we can call
+        # apt_pkg.SourceList() directly
+        for uri in set([metaindex.uri for metaindex in cache._list.list]):
+            if site == urlparse(uri).netloc:
+                for relfile in ['InRelease', 'Release']:
+                    name = ((apt_pkg.uri_to_filename(uri)) +
+                            "dists_%s_%s" % (archive, relfile))
+                    if os.path.exists(opj(dirname, name)):
+                        if rfile:
+                            raise MultipleReleaseFileMatch(
+                                "More than one release file found for %s %s" %
+                                (site, archive))
+                        rfile = opj(dirname, name)
+
+        # Now extract and format the date from the release file
+        rdate = None
+        if rfile:
+            rdate = apt_utils.get_release_date_from_release_file(rfile)
+            if rdate:
+                rdate = str(pytz.utc.localize(
+                    datetime.utcfromtimestamp(rdate)))
+        return rdate
 
 
 def identify_packages(files):
@@ -191,13 +316,15 @@ def identify_packages(files):
     Returns
     -------
     packages : list of Package
+    origin : list of Origin
     unknown_files : list of str
       Files which were not determined to belong to some package
     """
     manager = DpkgManager()
     begin = time.time()
     (packages, unknown_files) = manager.search_for_files(files)
+    origin = manager.identify_package_origins(packages)
     lgr.debug("Assigning files to packages took %f seconds",
               (time.time() - begin))
 
-    return packages, list(unknown_files)
+    return packages, origin, list(unknown_files)

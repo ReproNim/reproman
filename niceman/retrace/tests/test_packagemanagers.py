@@ -19,7 +19,8 @@ def test_identify_packages():
              "/usr/share/bug/vim/script",
              "/home/butch"]
     # TODO: Mock I/O and detect correct analysis
-    packages, files = identify_packages(files)
+    packages, origins, files = identify_packages(files)
     pprint(files)
+    pprint(origins)
     pprint(packages)
     assert True
