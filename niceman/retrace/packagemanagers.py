@@ -253,16 +253,22 @@ class DpkgManager(PackageManager):
         for v in pkg_info.versions:
             v_info = {"version": v.version}
             origins = []
-            for o in v.origins:
-                origin = {"component": o.component,
-                          "archive": o.archive,
-                          "origin": o.origin,
-                          "label": o.label,
-                          "site": o.site}
-                # Get the release date
-                rdate = self._find_release_date(o.site, o.archive)
-                if rdate:
-                    origin["date"] = rdate
+            for (pf, _) in v._cand.file_list:
+                # Pull origin information from package file
+                origin = {"component": pf.component,
+                          "archive": pf.archive,
+                          "origin": pf.origin,
+                          "label": pf.label,
+                          "site": pf.site}
+                # Get the archive uri
+                indexfile = v.package._pcache._list.find_index(pf)
+                if indexfile:
+                    archive_uri = indexfile.archive_uri("")
+                    origin["archive_uri"] = archive_uri
+                    # Get the release date
+                    rdate = self._find_release_date(archive_uri, pf.archive)
+                    if rdate:
+                        origin["date"] = rdate
                 # Now add our crafted origin to the list
                 origins.append(origin)
             v_info["origins"] = origins
@@ -273,27 +279,24 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
-    def _find_release_date(self, site, archive):
-        if not site:
-            return None
+    def _find_release_date(self, archive_uri, archive):
         # First find the release file
         # This uses logic similar to apt.utils.get_release_filename_for_pkg
-        # but restricts matches to the source site
         rfile = None
         dirname = apt_pkg.config.find_dir("Dir::State::lists")
-        # If we want to avoid using cache._list, we can call
-        # apt_pkg.SourceList() directly
-        for uri in set([metaindex.uri for metaindex in cache._list.list]):
-            if site == urlparse(uri).netloc:
-                for relfile in ['InRelease', 'Release']:
-                    name = ((apt_pkg.uri_to_filename(uri)) +
-                            "dists_%s_%s" % (archive, relfile))
-                    if os.path.exists(opj(dirname, name)):
-                        if rfile:
-                            raise MultipleReleaseFileMatch(
-                                "More than one release file found for %s %s" %
-                                (site, archive))
-                        rfile = opj(dirname, name)
+        for relfile in ['InRelease', 'Release']:
+            if archive:  # Format used for remote repositories
+                name = ((apt_pkg.uri_to_filename(archive_uri)) +
+                        "dists_%s_%s" % (archive, relfile))
+            else:  # Format used for local repositories
+                name = ((apt_pkg.uri_to_filename(archive_uri)) +
+                        "._%s" % relfile)
+            if os.path.exists(opj(dirname, name)):
+                if rfile:
+                    raise MultipleReleaseFileMatch(
+                        "More than one release file found for %s %s" %
+                        (archive_uri, archive))
+                rfile = opj(dirname, name)
 
         # Now extract and format the date from the release file
         rdate = None
