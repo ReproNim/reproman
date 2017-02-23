@@ -97,6 +97,10 @@ class PackageManager(object):
 
         file_to_package_dict = self._get_packages_for_files(files)
         for f in files:
+            if not os.path.lexists(f):
+                lgr.warning(
+                    "Provided file %s doesn't exist, spec might be incomplete",
+                    f)
             # Stores the file
             if f not in file_to_package_dict:
                 unknown_files.add(f)
@@ -348,7 +352,7 @@ def identify_packages(files):
         (packages_, unknown_files) = manager.search_for_files(files_to_consider)
         origins += manager.identify_package_origins(packages_)
         lgr.debug("Assigning files to packages by %s took %f seconds",
-                  (manager, time.time() - begin))
+                  manager, time.time() - begin)
         packages += packages_
         files_to_consider = unknown_files
 

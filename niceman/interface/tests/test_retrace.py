@@ -30,4 +30,4 @@ def test_retrace():
                 '--spec', REPROZIP_SPEC_YML_FILENAME,
                 ]
         main(args)
-        assert_in("reading filename " + REPROZIP_SPEC_YML_FILENAME, log.lines)
+        assert_in("reading spec file " + REPROZIP_SPEC_YML_FILENAME, log.lines)
