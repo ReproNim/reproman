@@ -293,6 +293,7 @@ class DpkgManager(PackageManager):
             for ending in ['_InRelease', '_Release']:
                 if os.path.exists(rfprefix + ending):
                     rfile = rfprefix + ending
+                    break
         return rfile
 
     def _find_release_date(self, rfile):
