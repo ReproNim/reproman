@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 import os
 
+from collections import OrderedDict
 from os.path import dirname, isdir, isabs
 from os.path import exists, lexists
 from os.path import join as opj
@@ -20,6 +21,7 @@ from logging import getLogger
 from six import viewvalues
 
 from niceman.dochelpers import exc_str
+from niceman.utils import only_with_values
 
 try:
     import apt
@@ -63,6 +65,7 @@ class GitSVNRepo(VCSRepo):
     """
 
     _ls_files_command = None  # just need to define in subclass
+    _ls_files_filter = None
 
     def __init__(self, path):
         """Representation for Git or SVN repository
@@ -73,17 +76,18 @@ class GitSVNRepo(VCSRepo):
            Path to the top of the repository
 
         """
-        super(GitSVNRepo, self).__init__(self, path)
+        super(GitSVNRepo, self).__init__(path)
         self._files = None
+        self._runner = Runner(env={'LC_ALL': 'C'}, cwd=self.path)
 
     @property
     def files(self):
         if self._files is None:
-            out, err = Runner(env={'LC_ALL': 'C'}, cwd=self.path)(
-                self._ls_files_command
-            )
+            out, err = self._runner(self._ls_files_command)
             assert not err
             self._files = set(filter(None, out.split('\n')))
+            if self._ls_files_filter:
+                self._files = self._ls_files_filter(self._files)
         return self._files
 
     def is_mine(self, path):
@@ -103,14 +107,56 @@ class GitSVNRepo(VCSRepo):
     def get_at_dirpath(cls, dirpath):
         raise NotImplementedError
 
-
+# Name must be   TYPERepo since used later in the code
+# As an overkill might want some metaclass to look after that ;-)
 class SVNRepo(GitSVNRepo):
-    _ls_files_command = 'sqlite3 -batch .svn/wc.db ".headers off" "select local_relpath from nodes_base"'
+
+    @property
+    def _ls_files_command(self):
+        # tricky -- we need to locate wc.db somewhere upstairs, and filter out paths
+        root_path = self._info['Working Copy Root Path']
+        return 'sqlite3 -batch %s/.svn/wc.db ".headers off" ' \
+            '"select local_relpath from nodes_base"' \
+                    % root_path
+
+    def _ls_files_filter(self, all_files):
+        root_path = self._info['Working Copy Root Path']
+        subdir = os.path.relpath(self.path, root_path)
+        if subdir == os.curdir:
+            return all_files
+        else:
+            return [f[len(subdir)+1:] for f in all_files
+                    if os.path.commonprefix((subdir, f)) == subdir]
+
+    def __init__(self, *args, **kwargs):
+        super(SVNRepo, self).__init__(*args, **kwargs)
+        self.__info = None
 
     @classmethod
     def get_at_dirpath(cls, dirpath):
-        if not exists(opj(dirpath, '.svn')):
-            return None
+        # ho ho -- no longer the case that there is .svn in each subfolder:
+        # http://stackoverflow.com/a/9070242
+        found = False
+        if exists(opj(dirpath, '.svn')):  # early detection
+            found = True
+        # but still might be under SVN
+        if not found:
+            try:
+                out, err = Runner(cwd=dirpath).run(
+                    'svn info',
+                    expect_fail=True)
+            except CommandError as exc:
+                if "Please see the 'svn upgrade' command" in exc.message:
+                    lgr.warning(
+                        "SVN at %s is outdated, needs 'svn upgrade'",
+                        dirpath)
+                else:
+                    # we are in SVN but it is outdated and needs an upgrade
+                    lgr.debug(
+                        "Probably %s is not under SVN repo path: %s",
+                        dirpath, exc_str(exc)
+                    )
+                    return None
         # for now we treat each directory under SVN independently
         # pros:
         #   - could provide us 'minimal' set of checkouts to do, since it might be
@@ -118,6 +164,32 @@ class SVNRepo(GitSVNRepo):
         #      besides few leaves
         lgr.debug("Detected SVN repository at %s", dirpath)
         return cls(dirpath)
+
+    @property
+    def _info(self):
+        if self.__info is None:
+            # TODO -- outdated repos might need 'svn upgrade' first
+            # so not sure -- if we should copy them somewhere first and run
+            # update there or ask user to update them on his behalf?!
+            out, err = self._runner('svn info')
+            self.__info = dict([x.lstrip() for x in l.split(':', 1)] for l in out.splitlines() if l.strip())
+        return self.__info
+
+    @property
+    def version(self):
+        return self._info['Revision']
+
+    @property
+    def semantic_version(self):
+        """Let's use git describe"""
+        return None
+
+    @property
+    def sources(self):
+        # also has similarity to APT in that we could have the top of SVN repo
+        # as an 'origin' which might be reused by multiple 'sub-repos'/directories
+        # "Repository Root" and "Relative URL"
+        return self._info['URL']
 
 
 class GitRepo(GitSVNRepo):
@@ -139,6 +211,24 @@ class GitRepo(GitSVNRepo):
         lgr.debug("Detected Git repository at %s for %s", topdir, dirpath)
         return cls(topdir)
 
+    @property
+    def version(self):
+        return self._runner.run('git rev-parse HEAD')[0].strip()
+        
+    @property
+    def semantic_version(self):
+        """Let's use git describe"""
+        try:
+            return self._runner('git describe --tags', expect_fail=True)[0].strip()
+        except CommandError:
+            return None
+
+    @property
+    def sources(self):
+        # ideally needs to figure out the remote(s) which already have
+        # this commit.  So kinda similar to APT where we list all origins
+        # where some might not even contain current version
+        return "TODO"
 
 
 class VCSManager(PackageManager):
@@ -171,17 +261,25 @@ class VCSManager(PackageManager):
         # instance it belongs to
         self._known_repos = {}
 
+    def _create_package(self, vcs):
+        # prep our pkg object:
+        pkg = OrderedDict()
+        pkg["path"] = vcs.path
+        pkg["type"] = vcs.__class__.__name__[:-4].lower()   # strip Repo
+        # VCS specific ways to identify the version, sources, etc
+        pkg["version"] = vcs.version
+        pkg["semantic_version"] = vcs.semantic_version
+        pkg["sources"] = vcs.sources
+        # TODO:  we might want to mark those which are found to belong to pkg
+        #  files which are dirty.
+        # pkg["dirty"]
+        pkg = only_with_values(pkg)
+        pkg["files"] = []
+        return pkg
 
-    def _create_package(self, pkgname):
-        raise NotImplementedError
-
-
-    def _get_packages_for_files(self, files):
-        file_to_package_dict = {}
-
-        return file_to_package_dict
 
     def resolve_file(self, path):
+        """Given a path, return path of the repository it belongs to"""
         # very naive just to get a ball rolling
         if not isabs(path):
             raise ValueError("ATM operating on full paths, got %s" % path)
@@ -200,7 +298,7 @@ class VCSManager(PackageManager):
             # should be ok
 
             # could be less efficient than some str manipulations but ok for now
-            if os.path.commonprefix(repo.path, path) != repo.path:
+            if os.path.commonprefix((repo.path, path)) != repo.path:
                 continue
 
             # could be less efficient than some str manipulations but ok for now
@@ -211,7 +309,8 @@ class VCSManager(PackageManager):
         # ok -- if it is not among known repos, we need to 'sniff' around
         # if there is a repository at that path
         for VCS in self.REGISTERED_VCS:
-            vcs = VCS.get_at_dirpath(dirpath)
+            lgr.log(5, "Trying %s for path %s", VCS, path)
+            vcs = VCS.get_at_dirpath(dirpath) if lexists(dirpath) else None
             if vcs:
                 # so there is one nearby -- record it
                 self._known_repos[vcs.path] = vcs
@@ -221,60 +320,8 @@ class VCSManager(PackageManager):
                 # if not -- just keep going to the next candidate repository
         return None
 
-
-    # actually we might better just overload the entire search
-    def search_for_files(self, files):
-        """Identifies the VCS repos for a given collection of files
-
-
-        Parameters
-        ----------
-        files : iterable
-            Container (e.g. list or set) of file paths
-
-        Return
-        ------
-        (found_packages, unknown_files)
-            - found_packages is an array of dicts that holds information about
-              the found packages. Package dicts need at least "name" and
-              "files" (that contains an array of related files)
-            - unknown_files is a list of files that were not found in
-              a package
-        """
-        unknown_files = set()
-        found_packages = {}  # TODO: rename?
-        nb_pkg_files = 0
-
-        file_to_package_dict
-        for f in files:
-            # Stores the file
-            if f not in file_to_package_dict:
-                unknown_files.add(f)
-            else:
-                pkgname = file_to_package_dict[f]
-                if pkgname in found_packages:
-                    found_packages[pkgname]["files"].append(f)
-                    nb_pkg_files += 1
-                else:
-                    pkg = self._create_package(pkgname)
-                    if pkg:
-                        found_packages[pkgname] = pkg
-                        pkg["files"].append(f)
-                        nb_pkg_files += 1
-                    else:
-                        unknown_files.add(f)
-
-        # here we need also to get "leaf" vcs possibly sitting on top of
-        # unknown files since later those might be used to hint to produced
-        # artifacts.  They will have no files associated with them
-        # TODO
-
-        lgr.info("%d packages with %d files, and %d other files",
-                 len(found_packages),
-                 nb_pkg_files,
-                 len(unknown_files))
-
-        return list(viewvalues(found_packages)), unknown_files
+    def _get_packages_for_files(self, files):
+        return {f: self.resolve_file(f) for f in files}
 
     def identify_package_origins(self, *args, **kwargs):
         # no origins for any VCS AFAIK

@@ -105,8 +105,13 @@ class PackageManager(object):
             if f not in file_to_package_dict:
                 unknown_files.add(f)
             else:
+                # TODO: pkgname should become  pkgid
+                # where for packages from distributions would be name,
+                # for VCS -- their path
                 pkgname = file_to_package_dict[f]
-                if pkgname in found_packages:
+                if pkgname is None:
+                    unknown_files.add(f)
+                elif pkgname in found_packages:
                     found_packages[pkgname]["files"].append(f)
                     nb_pkg_files += 1
                 else:
@@ -118,12 +123,13 @@ class PackageManager(object):
                     else:
                         unknown_files.add(f)
 
-        lgr.info("%d packages with %d files, and %d other files",
+        lgr.info("%s: %d packages with %d files, and %d other files",
+                 self.__class__.__name__,
                  len(found_packages),
                  nb_pkg_files,
                  len(unknown_files))
 
-        return list(viewvalues(found_packages)), unknown_files
+        return list(viewvalues(found_packages)), list(unknown_files)
 
     def identify_package_origins(self, packages):
         """Identify and collate origins from a set of packages
@@ -341,7 +347,7 @@ def identify_packages(files):
     """
     # TODO: move this function into the base.py having decided on naming etc
     from .vcs import VCSManager
-    managers = [DpkgManager(),]# VCSManager()]
+    managers = [DpkgManager(), VCSManager()]
     origins = []
     packages = []
 
@@ -350,10 +356,12 @@ def identify_packages(files):
     for manager in managers:
         begin = time.time()
         (packages_, unknown_files) = manager.search_for_files(files_to_consider)
-        origins += manager.identify_package_origins(packages_)
+        packages_origins = manager.identify_package_origins(packages_)
+        if packages_origins:
+            origins += packages_origins
         lgr.debug("Assigning files to packages by %s took %f seconds",
                   manager, time.time() - begin)
         packages += packages_
         files_to_consider = unknown_files
 
-    return packages, origins, list(unknown_files)
+    return packages, origins, files_to_consider
