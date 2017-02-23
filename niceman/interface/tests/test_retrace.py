@@ -10,24 +10,17 @@
 from niceman.cmdline.main import main
 
 import logging
-import os
 
 from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
 
-
-REPROZIP_SPEC_YML_FILENAME = os.path.join(os.path.dirname(__file__), os.pardir,
-                                          os.pardir, 'tests', 'files',
-                                          'reprozip_xeyes.yml')
-
-
-def test_retrace():
+def test_retrace(reprozip_spec2):
     """
     Test installing packages on the localhost.
     """
     with swallow_logs(new_level=logging.DEBUG) as log:
         args = ['retrace',
-                '--spec', REPROZIP_SPEC_YML_FILENAME,
+                '--spec', reprozip_spec2,
                 ]
         main(args)
-        assert_in("reading filename " + REPROZIP_SPEC_YML_FILENAME, log.lines)
+        assert_in("reading filename " + reprozip_spec2, log.lines)

@@ -31,7 +31,7 @@ class DockerEngine(Resource, Backend):
         if not 'engine_url' in resource_config:
             resource_config['engine_url'] = 'unix:///var/run/docker.sock'
 
-        self._client = docker.DockerClient(resource_config['engine_url'])
+        self._client = docker.Client(base_url=resource_config['engine_url'])
 
         super(DockerEngine, self).__init__(resource_config)
 

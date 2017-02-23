@@ -10,7 +10,6 @@
 
 from io import BytesIO
 from ..support.exceptions import CommandError
-import docker
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')
@@ -41,7 +40,6 @@ class DockerContainer(Resource, Environment):
         super(DockerContainer, self).__init__(resource_config)
 
         self._client = None
-        self._image = None
         self._container = None
 
         # Open a client connection to the Docker engine.
@@ -55,14 +53,12 @@ class DockerContainer(Resource, Environment):
         """
         Poll the backend for info on the environment. Updates the ResourceConfig.
         """
-        if self.get_config('resource_id'):
-            name_or_id = self.get_config('resource_id')
+        self.connect()
+        if self._container:
+            stats = self._client.stats(self._container, decode=True)
+            self.set_config('resource_status', 'running')
+            self.set_config('resource_id', self._container.get('Id')[:12])
         else:
-            name_or_id = self.get_config('name')
-
-        try:
-            self.set_container(self._client.containers.get(name_or_id))
-        except docker.errors.NotFound:
             self.set_config('resource_status', None)
             self.set_config('resource_id', None)
 
@@ -82,7 +78,7 @@ class DockerContainer(Resource, Environment):
 
         dockerfile = self._get_base_image_dockerfile(self.get_config('base_image_id'))
         self._build_image(dockerfile)
-        self._run_container()
+        self._create_container()
 
     def connect(self):
         """
@@ -93,12 +89,10 @@ class DockerContainer(Resource, Environment):
         name : string
             Name identifier of the environment to connect to.
         """
-
-        # Following call may raise these exceptions:
-        #    docker.errors.NotFound - If the container does not exist.
-        #    docker.errors.APIError - If the server returns an error.
         name = self.get_config('name')
-        self.set_container(self._client.containers.get(name))
+        containers = self._client.containers(dict(label=name))
+        if len(containers) == 1:
+            self._container = containers[0]
 
     def execute_command(self, command, env=None):
         """
@@ -122,7 +116,8 @@ class DockerContainer(Resource, Environment):
 
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
-        for i, line in enumerate(self._container.exec_run(cmd=command, stream=True)):
+        execute = self._client.exec_create(container=self._container, cmd=command)
+        for i, line in enumerate(self._client.exec_start(exec_id=execute['Id'], stream=True)):
             if line.startswith('rpc error'):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
             lgr.debug("exec#%i: %s", i, line.rstrip())
@@ -158,37 +153,24 @@ class DockerContainer(Resource, Environment):
         # The following call may throw the following exceptions:
         #    docker.errors.BuildError - If there is an error during the build.
         #    docker.errors.APIError - If the server returns any other error.
-        self._image = self._client.images.build(fileobj=f,
+        self._client.build(fileobj=f,
             tag="niceman:{}".format(self.get_config('name')), rm=True)
 
-    def _run_container(self):
+    def _create_container(self):
         """
         Start the Docker container from the image.
         """
-        # The following call may throw the following exceptions:
-        #    docker.errors.EnvironmentError - If the container exits with a non-zero
-        #        exit code and detach is False.
-        #    docker.errors.ImageNotFound - If the specified image does not exist.
-        #    docker.errors.APIError - If the server returns an error.
-        container = self._client.containers.run(image=self._image,
+        self._container = self._client.create_container(
+            image="niceman:{}".format(self.get_config('name')),
             stdin_open=self.get_config('stdin_open'), detach=True,
             name=self.get_config('name'))
-        self.set_container(container)
+        self._client.start(container=self._container.get('Id'))
 
     def delete(self):
         """
         Deletes a container from the Docker engine.
         """
-        self._container.remove(force=True)
-
-    def set_container(self, container):
-        """
-        Save the container object to an instance property.
-
-        Parameters
-        ----------
-        container : Docker conainer object
-        """
-        self._container = container
-        self.set_config('resource_status', self._container.status)
-        self.set_config('resource_id', self._container.short_id)
+        if self._container:
+            self._client.remove_container(self._container, force=True)
+        else:
+            lgr.info('Container not found.')

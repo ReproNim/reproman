@@ -48,7 +48,7 @@ from ...cmd import Runner
 
 def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
 
-    with patch('docker.DockerClient') as MockClient, \
+    with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         args = ['install',
@@ -59,30 +59,29 @@ def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
         main(args)
 
         calls = [
-            call('tcp://127.0.0.1:2375'),
-            # call().containers.get('my-great-docker-container'),
-            call().containers.get().exec_run(cmd=['apt-get', 'update'],
-                                             stream=True),
-            call().containers.get().exec_run(
-                cmd=['apt-get', 'install', '-y', 'python-pip'], stream=True),
-            call().containers.get().exec_run(
-                cmd=['apt-get', 'install', '-y', 'libc6-dev'], stream=True),
-            call().containers.get().exec_run(
-                cmd=['apt-get', 'install', '-y', 'python-nibabel'], stream=True),
-            call().containers.get().exec_run(cmd=['apt-get', 'update'],
-                                             stream=True),
-            call().containers.get().exec_run(
-                cmd=['apt-get', 'install', '-y', 'python-pip'], stream=True),
-            call().containers.get().exec_run(cmd=['apt-get', 'update'],
-                                             stream=True),
-            call().containers.get().exec_run(
-                cmd=['apt-get', 'install', '-y', 'python-pip'], stream=True),
-            call().containers.get().exec_run(
-                cmd=['apt-get', 'install', '-y', 'afni'], stream=True),
-            call().containers.get().exec_run(
-                cmd=['apt-get', 'install', '-y', 'python-nibabel'], stream=True),
-            call().containers.get().exec_run(cmd=['pip', 'install', 'piponlypkg'],
-                                             stream=True),
+            call(base_url='tcp://127.0.0.1:2375'),
+            call().containers({'label':'my-debian'}),
+            call().exec_create(cmd=['apt-get', 'update'],container=None),
+            call().exec_create(
+                cmd=['apt-get', 'install', '-y', 'python-pip'], container=None),
+            call().exec_create(
+                cmd=['apt-get', 'install', '-y', 'libc6-dev'], container=None),
+            call().exec_create(
+                cmd=['apt-get', 'install', '-y', 'python-nibabel'], container=None),
+            call().exec_create(cmd=['apt-get', 'update'],
+                                             container=None),
+            call().exec_create(
+                cmd=['apt-get', 'install', '-y', 'python-pip'], container=None),
+            call().exec_create(cmd=['apt-get', 'update'],
+                                             container=None),
+            call().exec_create(
+                cmd=['apt-get', 'install', '-y', 'python-pip'], container=None),
+            call().exec_create(
+                cmd=['apt-get', 'install', '-y', 'afni'], container=None),
+            call().exec_create(
+                cmd=['apt-get', 'install', '-y', 'python-nibabel'], container=None),
+            call().exec_create(cmd=['pip', 'install', 'piponlypkg'],
+                                             container=None),
         ]
         MockClient.assert_has_calls(calls, any_order=True)
 
