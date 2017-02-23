@@ -62,7 +62,7 @@ class Retrace(Interface):
             raise InsufficientArgumentsError("Need at least a single --spec or a file")
 
         if spec:
-            lgr.info("reading spec file %s ", spec)
+            lgr.info("reading spec file %s", spec)
             input_config = rpzutil.read_reprozip_yaml(spec)
         else:
             input_config = {}

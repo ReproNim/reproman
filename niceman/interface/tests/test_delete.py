@@ -20,7 +20,7 @@ def test_delete_docker_container(niceman_cfg_path):
     Test deleting a Docker container.
     """
 
-    with patch('docker.DockerClient') as MockClient, \
+    with patch('docker.Client') as MockClient, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         args = ['delete',
@@ -30,9 +30,8 @@ def test_delete_docker_container(niceman_cfg_path):
         main(args)
 
         calls = [
-            call('tcp://127.0.0.1:2375'),
-            call().containers.get('my-debian'),
-            call().containers.get().remove(force=True)
+            call(base_url='tcp://127.0.0.1:2375'),
+            call().containers({'label':'my-debian'})
         ]
         MockClient.assert_has_calls(calls, any_order=True)
 

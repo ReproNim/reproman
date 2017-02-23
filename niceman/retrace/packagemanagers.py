@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 import collections
 import os
+from os.path import join as opj
 import time
 
 from os.path import dirname, isdir, isabs
@@ -27,6 +28,7 @@ from datetime import datetime
 
 from niceman.dochelpers import exc_str
 import niceman.utils as utils
+from niceman.support.exceptions import MultipleReleaseFileMatch
 
 try:
     import apt
@@ -295,9 +297,6 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
-    class MultipleReleaseFileMatch(RuntimeError):
-        pass
-
     def _find_release_date(self, site, archive):
         if not site:
             return None
@@ -313,12 +312,12 @@ class DpkgManager(PackageManager):
                 for relfile in ['InRelease', 'Release']:
                     name = ((apt_pkg.uri_to_filename(uri)) +
                             "dists_%s_%s" % (archive, relfile))
-                    if os.path.exists(dirname + name):
+                    if os.path.exists(opj(dirname, name)):
                         if rfile:
-                            raise self.MultipleReleaseFileMatch(
+                            raise MultipleReleaseFileMatch(
                                 "More than one release file found for %s %s" %
                                 (site, archive))
-                        rfile = dirname + name
+                        rfile = opj(dirname, name)
 
         # Now extract and format the date from the release file
         rdate = None
