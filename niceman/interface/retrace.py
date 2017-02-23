@@ -38,7 +38,7 @@ class Retrace(Interface):
             doc="ReproZip YML file to be analyzed",
             metavar='SPEC',
             # nargs="+",
-            constraints=EnsureStr(),
+            constraints=EnsureStr() | EnsureNone(),
         ),
         path=Parameter(
             args=("path",),

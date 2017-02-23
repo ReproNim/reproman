@@ -146,7 +146,7 @@ class SVNRepo(GitSVNRepo):
                     'svn info',
                     expect_fail=True)
             except CommandError as exc:
-                if "Please see the 'svn upgrade' command" in exc.message:
+                if "Please see the 'svn upgrade' command" in str(exc):
                     lgr.warning(
                         "SVN at %s is outdated, needs 'svn upgrade'",
                         dirpath)
