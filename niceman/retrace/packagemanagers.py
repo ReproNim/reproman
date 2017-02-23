@@ -265,10 +265,11 @@ class DpkgManager(PackageManager):
                 if indexfile:
                     archive_uri = indexfile.archive_uri("")
                     origin["archive_uri"] = archive_uri
-                    # Get the release date
-                    rdate = self._find_release_date(archive_uri, pf.archive)
-                    if rdate:
-                        origin["date"] = rdate
+                # Get the release date
+                rdate = self._find_release_date(
+                    self._find_release_file(pf.filename))
+                if rdate:
+                    origin["date"] = rdate
                 # Now add our crafted origin to the list
                 origins.append(origin)
             v_info["origins"] = origins
@@ -279,26 +280,23 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
-    def _find_release_date(self, archive_uri, archive):
-        # First find the release file
-        # This uses logic similar to apt.utils.get_release_filename_for_pkg
+    def _find_release_file(self, package_filename):
+        # The release filename is a substring of the package
+        # filename (excluding the ending "Release" or "InRelease"
+        # The split between the release filename and the package filename
+        # is at an underscore, so split the package filename
+        # at underscores and test for the release file:
+        rfprefix = package_filename
         rfile = None
-        dirname = apt_pkg.config.find_dir("Dir::State::lists")
-        for relfile in ['InRelease', 'Release']:
-            if archive:  # Format used for remote repositories
-                name = ((apt_pkg.uri_to_filename(archive_uri)) +
-                        "dists_%s_%s" % (archive, relfile))
-            else:  # Format used for local repositories
-                name = ((apt_pkg.uri_to_filename(archive_uri)) +
-                        "._%s" % relfile)
-            if os.path.exists(opj(dirname, name)):
-                if rfile:
-                    raise MultipleReleaseFileMatch(
-                        "More than one release file found for %s %s" %
-                        (archive_uri, archive))
-                rfile = opj(dirname, name)
+        while "_" in rfprefix:
+            rfprefix = rfprefix.rsplit("_", 1)[0]
+            for ending in ['_InRelease', '_Release']:
+                if os.path.exists(rfprefix + ending):
+                    rfile = rfprefix + ending
+        return rfile
 
-        # Now extract and format the date from the release file
+    def _find_release_date(self, rfile):
+        # Extract and format the date from the release file
         rdate = None
         if rfile:
             rdate = apt_utils.get_release_date_from_release_file(rfile)
