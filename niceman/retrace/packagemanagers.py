@@ -257,6 +257,7 @@ class DpkgManager(PackageManager):
                 # Pull origin information from package file
                 origin = {"component": pf.component,
                           "archive": pf.archive,
+                          "architecture": pf.architecture,
                           "origin": pf.origin,
                           "label": pf.label,
                           "site": pf.site}
