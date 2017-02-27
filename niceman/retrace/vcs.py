@@ -67,6 +67,8 @@ class GitSVNRepo(VCSRepo):
     _ls_files_command = None  # just need to define in subclass
     _ls_files_filter = None
 
+    _fields = tuple()
+
     def __init__(self, path):
         """Representation for Git or SVN repository
 
@@ -78,6 +80,7 @@ class GitSVNRepo(VCSRepo):
         """
         super(GitSVNRepo, self).__init__(path)
         self._files = None
+        self._branch = None
         self._runner = Runner(env={'LC_ALL': 'C'}, cwd=self.path)
 
     @property
@@ -107,9 +110,17 @@ class GitSVNRepo(VCSRepo):
     def get_at_dirpath(cls, dirpath):
         raise NotImplementedError
 
+    @property
+    def branch(self):
+        return self._branch
+
+
 # Name must be   TYPERepo since used later in the code
 # As an overkill might want some metaclass to look after that ;-)
 class SVNRepo(GitSVNRepo):
+
+    _fields = GitSVNRepo._fields + \
+              ('revision', 'url', 'root_url', 'relative_url', 'uuid')
 
     @property
     def _ls_files_command(self):
@@ -172,28 +183,41 @@ class SVNRepo(GitSVNRepo):
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
             out, err = self._runner('svn info')
-            self.__info = dict([x.lstrip() for x in l.split(':', 1)] for l in out.splitlines() if l.strip())
+            self.__info = dict(
+                [x.lstrip() for x in l.split(':', 1)]
+                for l in out.splitlines() if l.strip()
+            )
         return self.__info
 
     @property
-    def version(self):
+    def revision(self):
         return self._info['Revision']
 
     @property
-    def semantic_version(self):
-        """Let's use git describe"""
-        return None
-
-    @property
-    def sources(self):
+    def url(self):
         # also has similarity to APT in that we could have the top of SVN repo
         # as an 'origin' which might be reused by multiple 'sub-repos'/directories
         # "Repository Root" and "Relative URL"
         return self._info['URL']
 
+    @property
+    def root_url(self):
+        return self._info['Repository Root']
+
+    @property
+    def relative_url(self):
+        return self._info['Relative URL']
+
+    @property
+    def uuid(self):
+        return self._info['Repository UUID']
+
 
 class GitRepo(GitSVNRepo):
     _ls_files_command = 'git ls-files'
+
+    _fields = GitSVNRepo._fields + \
+              ('hexsha', 'describe', 'branch', 'tracked_remote', 'remotes')
 
     @classmethod
     def get_at_dirpath(cls, dirpath):
@@ -211,24 +235,66 @@ class GitRepo(GitSVNRepo):
         lgr.debug("Detected Git repository at %s for %s", topdir, dirpath)
         return cls(topdir)
 
+    def _run_git(self, cmd, **kwargs):
+        """Helper to run git command, and ignore stderr"""
+        cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
+        out, err = self._runner.run(cmd, **kwargs)
+        return out.strip()
+
     @property
-    def version(self):
-        return self._runner.run('git rev-parse HEAD')[0].strip()
+    def hexsha(self):
+        return self._run_git('rev-parse HEAD')
         
     @property
-    def semantic_version(self):
+    def describe(self):
         """Let's use git describe"""
         try:
-            return self._runner('git describe --tags', expect_fail=True)[0].strip()
+            return self._run_git('describe --tags', expect_fail=True)
         except CommandError:
             return None
 
     @property
-    def sources(self):
+    def remotes(self):
         # ideally needs to figure out the remote(s) which already have
         # this commit.  So kinda similar to APT where we list all origins
         # where some might not even contain current version
-        return "TODO"
+        #
+        # On the other hand, I think it would not be uncommon to use some
+        # version which is not yet pushed... so what additional information
+        # would this check provide us?  We better record current branch,
+        # and mark remote which is tracked for it
+        hexsha = self.hexsha
+        # which remotes contain this commit, so we could provide this
+        # possibly valuable information
+        remote_branches = self._run_git('branch -r --contains %s' % hexsha)
+        containing_remotes = set(x.split('/', 1)[0] for x in remote_branches)
+        remotes = {}
+        for remote in self._run_git('remote').splitlines():
+            rec = {}
+            for f in 'url', 'pushurl':
+                try:
+                    rec[f] = self._run_git('config remote.%s.%s' % (remote, f),
+                                           expect_fail=True,
+                                           expect_stderr=True)
+                except CommandError:
+                    # must have no value
+                    pass
+            if remote in containing_remotes:
+                rec['contains'] = True
+            remotes[remote] = rec
+        return remotes
+
+    @property
+    def tracked_remote(self):
+        branch = self.branch
+        return self._run_git('config branch.%s.remote' % (branch,),
+                      expect_stderr=True) if branch else None
+
+    @property
+    def branch(self):
+        if self._branch is None:
+            self._branch = self._runner.run('git rev-parse --abbrev-ref HEAD')[0].strip()
+        return self._branch
 
 
 class VCSManager(PackageManager):
@@ -267,9 +333,8 @@ class VCSManager(PackageManager):
         pkg["path"] = vcs.path
         pkg["type"] = vcs.__class__.__name__[:-4].lower()   # strip Repo
         # VCS specific ways to identify the version, sources, etc
-        pkg["version"] = vcs.version
-        pkg["semantic_version"] = vcs.semantic_version
-        pkg["sources"] = vcs.sources
+        for f in vcs._fields:
+            pkg[f] = getattr(vcs, f)
         # TODO:  we might want to mark those which are found to belong to pkg
         #  files which are dirty.
         # pkg["dirty"]
