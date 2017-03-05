@@ -8,34 +8,117 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-from mock import patch
+from mock import patch, MagicMock, call
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..base import ResourceConfig, Resource
+from ..base import Resource
 
-def test_dockercontainer_class(niceman_cfg_path):
+def test_dockercontainer_class():
 
-    with patch('docker.Client'), \
+    with patch('docker.Client') as client, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
-        # Test initializing the environment object.
-        resource_config = ResourceConfig('my-debian',
-                                         config_path=niceman_cfg_path)
-        docker_container = Resource.factory(resource_config)
+        client.return_value = MagicMock(
+            containers=lambda all: [
+                {
+                    'Id': '326b0fdfbf83',
+                    'Names': ['/existing-test-resource'],
+                    'State': 'running'
+                },
+                {
+                    'Id': '111111111111',
+                    'Names': ['/duplicate-resource-name'],
+                    'State': 'running'
+                },
+                {
+                    'Id': '222222222222',
+                    'Names': ['/duplicate-resource-name'],
+                    'State': 'running'
+                }
+            ],
+            pull=lambda repository, tag, stream: [
+                '{ "status" : "status 1", "progress" : "progress 1" }',
+                '{ "status" : "status 2", "progress" : "progress 2" }'
+            ],
+            create_container=lambda name, image, stdin_open, detach: {
+                'Id': '18b31b30e3a5'
+            }
+        )
 
-        # Test creating an environment.
-        image_id = 'ubuntu:trusty'
-        docker_container.create(image_id)
-        assert docker_container.get_config('base_image_id') == 'ubuntu:trusty'
+        # Test connecting when a resource doens't exist.
+        config = {
+            'name': 'non-existent-resource',
+            'type': 'docker-container',
+        }
+        resource = Resource.factory(config)
+        resource.connect()
+        assert resource.id == None
+        assert resource.status == None
 
-        # Test connecting to an environment and running some install commands.
-        docker_container.connect()
+        # Test catching exception when multiple resources are found at connection.
+        config = {
+            'name': 'duplicate-resource-name',
+            'type': 'docker-container',
+        }
+        resource = Resource.factory(config)
+        try:
+            resource.connect()
+        except Exception as e:
+            assert e.message == "Multiple container matches found"
+
+        # Test connecting to an existing resource.
+        config = {
+            'name': 'existing-test-resource',
+            'type': 'docker-container',
+            'engine_url': 'tcp://127.0.0.1:2375'
+        }
+        resource = Resource.factory(config)
+        resource.connect()
+        assert resource.base_image_id == 'ubuntu:latest'
+        assert resource.engine_url == 'tcp://127.0.0.1:2375'
+        assert resource.id == '326b0fdfbf83'
+        assert resource.name == 'existing-test-resource'
+        assert resource.status == 'running'
+        assert resource.type == 'docker-container'
+
+        # Test creating an existing resource and catch the exception.
+        try:
+            resource.create()
+        except Exception as e:
+            assert e.message == "Contaner 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
+
+        # Test creating resource.
+        config = {
+            'name': 'new-test-resource',
+            'type': 'docker-container',
+            'engine_url': 'tcp://127.0.0.1:2375'
+        }
+        resource = Resource.factory(config)
+        resource.connect()
+        results = resource.create()
+        assert results['id'] == '18b31b30e3a5'
+        assert results['status'] == 'running'
+        assert_in('status 1 progress 1', log.lines)
+        assert_in('status 2 progress 2', log.lines)
+
+        # Test running commands in a resource.
         command = ['apt-get', 'install', 'bc']
-        docker_container.add_command(command)
+        resource.add_command(command)
         command = ['apt-get', 'install', 'xeyes']
-        docker_container.add_command(command)
-        docker_container.execute_command_buffer()
-
+        resource.add_command(command)
+        resource.execute_command_buffer()
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
+
+        # Test deleting resource.
+        resource.delete()
+        calls = [
+            call().remove_container({'Id': '18b31b30e3a5'}, force=True),
+        ]
+        client.assert_has_calls(calls, any_order=True)
+
+
+
+
+

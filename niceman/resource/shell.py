@@ -8,8 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Resource sub-class to provide management of the localhost environment."""
 
+import attr
 from .base import Resource
-from .interface.environment import Environment
 from niceman.cmd import Runner
 
 import logging
@@ -18,26 +18,14 @@ lgr = logging.getLogger('niceman.resource.shell')
 import os
 
 
-class Shell(Resource, Environment):
+@attr.s
+class Shell(Resource):
 
-    def __init__(self, resource_config):
-        """
-        Class constructor
-
-        Parameters
-        ----------
-        resource_config : ResourceConfig object
-            Configuration parameters for the resource.
-        """
-
-        self._client = None
-        super(Shell, self).__init__(resource_config)
-
-    def poll_status(self):
-        """
-        Poll the backend for info on the environment. Updates the ResourceConfig.
-        """
-        return
+    # Container properties
+    name = attr.ib()
+    id = attr.ib(default=None)
+    type = attr.ib(default='shell')
+    status = attr.ib(default=None)
 
     def create(self, image_id):
         """

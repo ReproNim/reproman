@@ -12,4 +12,4 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import ResourceConfig, Resource
+from .base import Resource

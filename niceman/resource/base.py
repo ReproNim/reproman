@@ -14,82 +14,14 @@ import abc
 import logging
 lgr = logging.getLogger('niceman.resource.base')
 
-from ..config import ConfigManager
-from ..support.exceptions import MissingConfigError, MissingConfigFileError
+from ..support.exceptions import MissingConfigError
 
-
-class ResourceConfig(object):
-    """
-    Base class for creating and managing resource configuration.
-    """
-
-    def __init__(self, name, config={}, config_path=None):
-        """
-        Class constructor
-
-        Parameters
-        ----------
-        name : string
-            Configuration identifier as listed in the niceman.cfg file.
-            e.g. [resource my-resource-config-id]
-        config : dictionary
-            Configuration parameters for the resource that will define the resource or override
-            the parameters in the niceman.cfg file
-        config_path : string
-            Path to niceman.cfg file if overriding the default file locations.
-            Default file locations are described in niceman.config.py
-        """
-        if not config_path and 'config_path' in config:
-            config_path = config['config_path']
-
-        if config_path:
-            cm = ConfigManager([config_path], False)
-        else:
-            cm = ConfigManager()
-        if len(cm._sections) == 1:
-            raise MissingConfigFileError("Unable to locate a niceman.cfg file.")
-
-        # Following statement throws exception, NoSectionError, if section
-        # is missing from niceman.cfg file.
-        default_config = dict(cm.items('resource ' + name))
-
-        # Override niceman.cfg settings with those passed in to the function.
-        default_config.update(config)
-        self._config = default_config
-
-        # Set some parameters that are nice to have recorded.
-        self._config['name'] = name
-        self._config['config_path'] = config_path
-        self._config['resource_id'] = None
-        self._config['resource_status'] = None
-        if 'resource_backend' not in self._config:
-            self._config['resource_backend'] = None
-
-    def __repr__(self):
-        return 'ResourceConfig({})'.format(self._config['name'])
-
-    def __len__(self):
-        return len(self._config)
-
-    def __getitem__(self, item):
-        lgr.debug('Getting config item "{}" in resource "{}"'. format(item,
-            self._config['name']))
-        return self._config[item]
-
-    def __setitem__(self, key, value):
-        lgr.debug('Setting config item "{}" to "{}" in resource "{}"'.format(key,
-            value, self._config['name']))
-        self._config[key] = value
-
-    def __delitem__(self, key):
-        lgr.debug(
-            'Deleting config item "{}" in resource "{}"'.format(key,
-                self._config['name']))
-        del self._config[key]
-
-    def __contains__(self, item):
-        return item in self._config
-
+# Enumerate the defined resource types available.
+VALID_RESOURCE_TYPES = [
+    'docker-container',
+    'aws-ec2',
+    'shell'
+]
 
 class Resource(object):
     """
@@ -98,25 +30,11 @@ class Resource(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, resource_config):
-        """
-        Class constructor
-
-        Parameters
-        ----------
-        config : ResourceConfig object
-            Configuration parameters for the resource.
-        """
-        self._config = resource_config
-
-        lgr = logging.getLogger('niceman.resource')
-        lgr.debug('Retrieved resource {}'.format(self._config['name']))
-
     def __repr__(self):
-        return 'Resource({})'.format(self._config['name'])
+        return 'Resource({})'.format(self.name)
 
     @staticmethod
-    def factory(resource_config):
+    def factory(config):
         """
         Factory method for creating the appropriate Container sub-class.
 
@@ -129,85 +47,81 @@ class Resource(object):
         -------
         Resource sub-class instance.
         """
-        if 'resource_type' not in resource_config:
-            raise MissingConfigError(
-                "Resource 'resource_type' parameter missing for resource.")
+        if 'type' not in config:
+            raise MissingConfigError("Resource 'type' parameter missing for resource.")
 
-        module_name = '_'.join(resource_config['resource_type'].split('-'))
-        class_name = ''.join([token.capitalize() for token in resource_config['resource_type'].split('-')])
+        module_name = '_'.join(config['type'].split('-'))
+        class_name = ''.join([token.capitalize() for token in config['type'].split('-')])
         module = import_module('niceman.resource.{}'.format(module_name))
-        instance = getattr(module, class_name)(resource_config)
+        instance = getattr(module, class_name)(**config)
         return instance
 
-    @staticmethod
-    def get_resources(config_path=None):
+    def add_command(self, command, env=None):
         """
-        Get the resources defined in the niceman.cfg file.
+        Add a command to the command buffer so that all commands can be
+        run at once in a batch submit to the environment.
 
         Parameters
         ----------
-        config_path : string
-            Path to niceman.cfg file.
+        command : string or list
+            Command string or list of command string tokens.
 
-        Returns
-        -------
-        dictionary of Resources as defined in the niceman.cfg file.
+        env : dict
+            Additional (or replacement) environment variables which are applied
+            only to the current call
         """
-        if config_path:
-            cm = ConfigManager([config_path], False)
-        else:
-            cm = ConfigManager()
+        if not hasattr(self, '_command_buffer'):
+            self._command_buffer = [] # Each element is a dictionary in the
+                                      # form {command=[], env={}}
+        self._command_buffer.append({'command':command, 'env':env})
 
-        resources = {}
-
-        # Get resources defined in niceman.cfg file.
-        for section_name in cm._sections:
-            if section_name.startswith('resource '):
-                resource_name = section_name.split(' ')[-1]
-                resource_config = ResourceConfig(resource_name, config_path=config_path)
-                resources[resource_name] = Resource.factory(resource_config)
-
-        return resources
-
-    def get_config(self, key):
+    def execute_command_buffer(self):
         """
-        Getter access method to the resource configuration dictionary
+        Send all the commands in the command buffer to the environment for
+        execution.
+        """
+        for command in self._command_buffer:
+            lgr.debug("Running command '%s'", command['command'])
+            self.execute_command(command['command'], command['env'])
+
+    def set_envvar(self, var, value):
+        """
+        Save an evironment variable for inclusion in the environment
 
         Parameters
         ----------
-        key : string
-            Key ID of configuration parameter
-
-        Returns
-        -------
-        string : Value of the configuration parameter.
-        """
-        return self._config[key]
-
-    def set_config(self, key, value):
-        """
-        Setter access method to the resource configuration dictionary
-
-        Parameters
-        ----------
-        key : string
-            Key ID of configuration parameter
+        var : string
+            Variable name
         value : string
-            Value of the configuration parameter
-        """
-        self._config[key] = value
-
-    def has_config(self, key):
-        """
-        Getter access method to the resource configuration dictionary
-
-        Parameters
-        ----------
-        key : string
-            Key ID of configuration parameter
+            Variable value
 
         Returns
         -------
-        boolean : True if key exists in configuration dictionary.
+
         """
-        return key in self._config and self._config[key]
+        if not hasattr(self, '_env'):
+            self._env = {}
+
+        self._env[var] = value
+
+    def get_updated_env(self, custom_env):
+        """
+        Returns an env dictionary with additional or replaced values.
+
+        Parameters
+        ----------
+        custom_env : dict
+            Environment variables to merge into the existing list of declared
+            environment variables stored in self._env
+
+        Returns
+        -------
+        dictionary
+        """
+        if hasattr(self, '_env'):
+            merged_env = self._env.copy()
+            if custom_env:
+                merged_env.update(custom_env)
+            return merged_env
+
+        return custom_env

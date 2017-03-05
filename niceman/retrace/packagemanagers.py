@@ -43,7 +43,7 @@ lgr = getLogger('niceman.api.retrace')
 # Pick a conservative max command-line
 try:
     _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
-except ValueError:
+except (ValueError, AttributeError):
     _MAX_LEN_CMDLINE = 2048
 
 # Note: The following was derived from ReproZip's PkgManager class
