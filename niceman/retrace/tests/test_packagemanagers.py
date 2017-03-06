@@ -13,6 +13,7 @@ from niceman.retrace.packagemanagers import identify_packages
 
 def test_identify_packages():
     files = ["/usr/share/doc/xterm/copyright",
+             "/usr/games/alienblaster",
              "/usr/share/icons/hicolor/48x48/apps/xterm-color.png",
              "/usr/share/doc/zlib1g/copyright",
              "/usr/bin/vim.basic",
