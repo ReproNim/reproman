@@ -76,7 +76,7 @@ def setup_parser(
         description=dedent_docstring("""\
             NICEMAN aims to ease construction and execution of computation environments
             based on collected provenance data."""),
-        epilog='"Control Your Data"',
+        epilog='"Nicely Manage Your Environments"',
         formatter_class=formatter_class,
         add_help=False)
     # common options
