@@ -70,9 +70,6 @@ def setup_parser(
     # main parser
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars='@',
-        # TODO: theoretically should have been automatic but plugs nosetests
-        # instead of niceman for some reason... doesn't happen in datalad
-        usage="%(prog)s ...",
         description=dedent_docstring("""\
             NICEMAN aims to ease construction and execution of computation environments
             based on collected provenance data."""),
