@@ -35,24 +35,19 @@ class Delete(Interface):
     _params_ = dict(
         resource=Parameter(
             args=("-r", "--resource"),
-            doc="""For which resource to create a new environment. To see
+            doc="""Name of the resource to consider. To see
             available resource, run the command 'niceman ls'""",
             constraints=EnsureStr(),
         ),
-        resource_type=Parameter(
-            args=("-t", "--resource-type"),
-            doc="""Resource type to create""",
-            constraints=EnsureStr(),
-        ),
-        config=Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            constraints=EnsureStr(),
-        ),
+        # XXX reenable when we support working with multiple instances at once
+        # resource_type=Parameter(
+        #     args=("-t", "--resource-type"),
+        #     doc="""Resource type to work on""",
+        #     constraints=EnsureStr(),
+        # ),
         resource_id=Parameter(
             args=("-id", "--resource-id",),
-            doc="ID of environment container",
+            doc="ID of the environment container",
             constraints=EnsureStr(),
         ),
         skip_confirmation=Parameter(
@@ -60,20 +55,27 @@ class Delete(Interface):
             action="store_true",
             doc="Delete resource without prompting user for confirmation",
         ),
+        # TODO: should be moved into generic API
+        config=Parameter(
+            args=("-c", "--config",),
+            doc="path to niceman configuration file",
+            metavar='CONFIG',
+            constraints=EnsureStr(),
+        ),
     )
 
     @staticmethod
-    def __call__(resource, resource_type, config, resource_id, skip_confirmation=False):
+    def __call__(resource, resource_id=None, skip_confirmation=False, config=None):
 
         if not resource and not resource_id:
             resource = question("Enter a resource name",
                                 error_message="Missing resource name")
 
         # Get configuration and environment inventory
-        config, inventory = get_resource_info(config, resource, resource_id, resource_type)
+        resource_info, inventory = get_resource_info(config, resource, resource_id)
 
         # Delete resource environment
-        env_resource = Resource.factory(config)
+        env_resource = Resource.factory(resource_info)
         env_resource.connect()
 
         if skip_confirmation:
