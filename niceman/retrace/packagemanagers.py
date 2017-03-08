@@ -288,14 +288,13 @@ class DpkgManager(PackageManager):
         # is at an underscore, so split the package filename
         # at underscores and test for the release file:
         rfprefix = package_filename
-        rfile = None
         while "_" in rfprefix:
             rfprefix = rfprefix.rsplit("_", 1)[0]
             for ending in ['_InRelease', '_Release']:
                 if os.path.exists(rfprefix + ending):
-                    rfile = rfprefix + ending
-                    break
-        return rfile
+                    return rfprefix + ending
+        # No file found
+        return None
 
     def _find_release_date(self, rfile):
         # Extract and format the date from the release file
