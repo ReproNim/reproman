@@ -64,8 +64,11 @@ class Ls(Interface):
     @staticmethod
     def __call__(names, config, verbose=False): #, refresh=False):
 
+        # TODO?: we might want to embed get_resource_inventory()
+        #       within ConfigManager (even though it would make it NICEMAN specific)
+        #       This would allow to make more sensible error messages etc
         cm = get_config_manager(config)
-        inventory_path = cm.get('general', 'inventory_file')
+        inventory_path = cm.getpath('general', 'inventory_file')
         inventory = get_resource_inventory(inventory_path)
 
         template = '{:<20} {:<20} {:<20} {:<10}'

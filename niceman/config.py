@@ -188,6 +188,14 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
                 "Failed to obtain value from configuration for %s.%s. "
                 "Original exception was: %s" % (section, option, e))
 
+    def getpath(self, *args, **kwargs):
+        """Wrapper around get to do additional path treatments such as expanduser
+
+        See documentation for `get`
+        """
+        val = self.get(*args, **kwargs)
+        return os.path.expanduser(val)
+
     def getboolean(self, section, option, default=None):
         """Wrapper around SafeConfigParser.getboolean() with a custom default.
 

@@ -227,7 +227,8 @@ def update_docstring_with_parameters(func, params, prefix=None, suffix=None):
     func.__doc__ = doc
     return func
 
-def get_resource_info(config_path, resource, resource_id, resource_type=None):
+
+def get_resource_info(config_path, name, id_=None, type_=None):
     """
     Sort through the parameters supplied by the user at the command line and then
     request the ones that are missing that are needed to find the config and
@@ -238,46 +239,62 @@ def get_resource_info(config_path, resource, resource_id, resource_type=None):
     ----------
     config_path : string
         Path to the niceman.cfg file.
-    resource : string
-        Name of the resource to create.
-    resource_id : string
-        The identifier of the resource as assigned to it by the backend.
-    resource_type : string
-        Name of the resource package used to manage the resource. e.g. "docker_container".
+    name : string
+        Name of the resource
+    id_ : string
+        The identifier of the resource as assigned to it by the backend
+    type_ : string
+        Type of the resource module used to manage the name, e.g.
+        "docker_container".
 
     Returns
     -------
     config : dict
-        The config settings for the resource.
+        The config settings for the name.
     inventory : dict
         Inventory of all the managed resources and their configurations.
     """
 
-    # Get resource configuration for this resource if it exists
+    # Get name configuration for this name if it exists
     # We get the config from inventory first if it exists and then
     # overlay the default config settings from repronim.cfg
     cm = get_config_manager(config_path)
-    inventory_path = cm.get('general', 'inventory_file')
+    inventory_path = cm.getpath('general', 'inventory_file')
     inventory = get_resource_inventory(inventory_path)
-    if resource in inventory:
-        config = dict(cm.items(inventory[resource]['type'].split('-')[0]))
-        config.update(inventory[resource])
-    elif resource_type and resource_type in VALID_RESOURCE_TYPES:
-        config = dict(cm.items(resource_type.split('-')[0]))
+    # XXX: ATM mixes creation with querying existing resources.
+    #      IMHO (yoh) should just query, and leave creation to a dedicated function
+    # TODO: query could be done via ID
+    # TODO: check that if both name and id provided -- they are as it is in
+    #       inventory
+    # TODO:  if no name or id provided, then fail since this function
+    #        is not created to return a list of resources for a given type ATM
+    if name in inventory:
+        # XXX so what is our convention here on SMTH-SMTH defining the type?
+        config = dict(cm.items(inventory[name]['type'].split('-')[0]))
+        config.update(inventory[name])
+    elif type_ and type_ in VALID_RESOURCE_TYPES:
+        config = dict(cm.items(type_.split('-')[0]))
     else:
-        resource_type = question("Enter a resource type",
-                                 default="docker-container")
+        type_ = question("Enter a resource type",
+                         # TODO: decision on type of a container, if needed
+                         # needs to be done outside, and should be configurable
+                         # or follow some heuristic (e.g. if name starts with a
+                         # known type, e.g. docker-
+                         default="docker-container")
         config = {}
-        if resource_type not in VALID_RESOURCE_TYPES:
+        if type_ not in VALID_RESOURCE_TYPES:
             raise MissingConfigError(
-                "Resource type '{}' is not valid".format(resource_type))
+                "Resource type '{}' is not valid".format(type_))
 
     # Overwrite config settings with those from the command line.
-    config['name'] = resource
-    if resource_type: config['type'] = resource_type
-    if resource_id: config['id'] = resource_id
+    config['name'] = name
+    if type_:
+        config['type'] = type_
+    if id_:
+        config['id'] = id_
 
     return config, inventory
+
 
 def get_config_manager(config_path=None):
     """
@@ -313,6 +330,7 @@ def get_config_manager(config_path=None):
 
     return cm
 
+
 def get_resource_inventory(inventory_path):
     """
     Returns a dictionary containing the config information for all resources
@@ -330,20 +348,21 @@ def get_resource_inventory(inventory_path):
         the resource.
     """
     if not inventory_path:
-        raise MissingConfigError("No resource inventory file declared in niceman.cfg")
+        raise MissingConfigError(
+            "No resource inventory file declared in niceman.cfg")
 
     # Create inventory file if it does not exist.
     if not os.path.isfile(inventory_path):
-        open(inventory_path, 'a').close()
+        lgr.info("Creating resources inventory file %s", inventory_path)
+        # initiate empty inventory
+        set_resource_inventory({'_path': inventory_path})
 
     with open(inventory_path, 'r') as fp:
-        try:
-            inventory = json.load(fp)
-        except ValueError:
-            inventory = {}
+        inventory = json.load(fp)
 
     inventory['_path'] = inventory_path
     return inventory
+
 
 def set_resource_inventory(inventory):
     """
@@ -357,25 +376,27 @@ def set_resource_inventory(inventory):
         settings of the resource.
     """
 
-    # Clean up inventory list.
-    valid_inventory = {}
-    for key in inventory:
+    # Operate on a copy so there is no side-effect of modifying original
+    # inventory
+    inventory = inventory.copy()
+    inventory_path = inventory.pop('_path')
+
+    for key in list(inventory):  # go through a copy of all keys since we modify
 
         # A resource without an ID has been deleted.
-        if 'id' in inventory[key] and not inventory[key]['id']:
-            continue
+        inventory_item = inventory[key]
+        if 'id' in inventory_item and not inventory_item['id']:
+            del inventory[key]
 
-        # Remove AWS credentials.
-        if 'access_key_id' in inventory[key]:
-            del inventory[key]['access_key_id']
-        if 'secret_access_key' in inventory[key]:
-            del inventory[key]['secret_access_key']
+        # Remove AWS credentials
+        # XXX(yoh) where do we get them from later?
+        for secret_key in ('access_key_id', 'secret_access_key'):
+            if secret_key in inventory_item:
+                del inventory_item[secret_key]
 
-        # Save inventory record to valid list.
-        valid_inventory[key] = inventory[key]
+    with open(inventory_path, 'w') as fp:
+        json.dump(inventory, fp, indent=2, sort_keys=True)
 
-    with open(valid_inventory['_path'], 'w') as fp:
-        json.dump(valid_inventory, fp)
 
 def question(text, error_message=None, default=None):
     """
@@ -406,6 +427,7 @@ def question(text, error_message=None, default=None):
         else:
             raise MissingConfigError(error_message)
     return response
+
 
 class Interface(object):
     """Base class for interface implementations"""
