@@ -281,18 +281,22 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
-    def _find_release_file(self, package_filename):
+    @staticmethod
+    def _find_release_file(packages_filename):
         # The release filename is a substring of the package
         # filename (excluding the ending "Release" or "InRelease"
         # The split between the release filename and the package filename
         # is at an underscore, so split the package filename
         # at underscores and test for the release file:
-        rfprefix = package_filename
+        rfprefix = packages_filename
+        assert os.path.isabs(packages_filename), \
+            "must be given full path, got %s" % packages_filename
         while "_" in rfprefix:
             rfprefix = rfprefix.rsplit("_", 1)[0]
             for ending in ['_InRelease', '_Release']:
-                if os.path.exists(rfprefix + ending):
-                    return rfprefix + ending
+                release_filename = rfprefix + ending
+                if os.path.exists(release_filename):
+                    return release_filename
         # No file found
         return None
 
