@@ -82,7 +82,8 @@ def test_help_np():
                   'General information',
                   'Global options'})
 
-
-def test_usage_on_insufficient_args():
-    stdout, stderr = run_main(['create'], exit_code=1)
-    ok_startswith(stdout, 'usage:')
+# MJT - This test incorrectly tests how the create, ls, install, etc. commands
+# work as they now prompt for missing args rather than display a usage message.
+# def test_usage_on_insufficient_args():
+#     stdout, stderr = run_main(['create'], exit_code=1)
+#     ok_startswith(stdout, 'usage:')

@@ -15,7 +15,6 @@ from mock import patch, call, MagicMock
 from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
 
-import niceman.tests.fixtures
 
 def test_create_interface(niceman_cfg_path):
     """
