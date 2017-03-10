@@ -20,7 +20,7 @@ import logging
 lgr = logging.getLogger('niceman.resource.aws_ec2')
 
 from .base import Resource
-from ..support.sshconnector2 import SSHConnector2
+import niceman.support.sshconnector2 # Needed for test patching to work.
 from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
@@ -202,7 +202,7 @@ class AwsEc2(Resource):
         """
         host = self._ec2_instance.public_ip_address
 
-        with SSHConnector2(host, key_filename=self.key_filename) as ssh:
+        with niceman.support.sshconnector2.SSHConnector2(host, key_filename=self.key_filename) as ssh:
             for command in self._command_buffer:
                 lgr.info("Running command '%s'", command['command'])
                 self.execute_command(ssh, command['command'], command['env'])

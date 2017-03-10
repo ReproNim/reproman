@@ -13,7 +13,8 @@ __docformat__ = 'restructuredtext'
 
 import re
 
-from .base import Interface, get_resource_info, set_resource_inventory, question
+from .base import Interface, get_resource_info, question
+import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..resource import Resource
@@ -90,6 +91,6 @@ class Delete(Interface):
 
             # Save the updated configuration for this resource.
             if resource in inventory: del inventory[resource]
-            set_resource_inventory(inventory)
+            niceman.interface.base.set_resource_inventory(inventory)
 
             lgr.info("Deleted the environment %s", resource)

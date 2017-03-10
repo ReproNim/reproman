@@ -11,7 +11,8 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, get_resource_info, set_resource_inventory, question
+from .base import Interface, get_resource_info, question
+import niceman.interface.base # Needed for test patching
 # from ..provenance import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -175,6 +176,6 @@ class Create(Interface):
         # Save the updated configuration for this resource.
         config.update(config_updates)
         inventory[resource] = config
-        set_resource_inventory(inventory)
+        niceman.interface.base.set_resource_inventory(inventory)
 
         lgr.info("Created the environment %s", resource)
