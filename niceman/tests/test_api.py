@@ -18,8 +18,7 @@ from nose.tools import eq_
 from niceman.tests.utils import assert_in
 
 
-# TODO: Fix this broken test
-def _test_basic_setup():
+def test_basic_setup():
     # the import alone will verify that all default values match their
     # constraints
     from niceman import api

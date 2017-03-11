@@ -49,7 +49,7 @@ class Delete(Interface):
         resource_id=Parameter(
             args=("-id", "--resource-id",),
             doc="ID of the environment container",
-            constraints=EnsureStr(),
+            # constraints=EnsureStr(),
         ),
         skip_confirmation=Parameter(
             args=("--skip-confirmation",),
@@ -61,7 +61,7 @@ class Delete(Interface):
             args=("-c", "--config",),
             doc="path to niceman configuration file",
             metavar='CONFIG',
-            constraints=EnsureStr(),
+            # constraints=EnsureStr(),
         ),
     )
 
