@@ -11,9 +11,8 @@
 import attr
 import docker
 import json
-from ..support.exceptions import CommandError
+from ..support.exceptions import CommandError, ResourceError
 from .base import Resource
-from ..support.exceptions import ResourceError
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')

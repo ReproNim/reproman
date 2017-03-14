@@ -18,10 +18,8 @@ from ..base import Resource
 def test_awsec2_class():
 
     with patch('boto3.resource') as client, \
-        patch('niceman.support.sshconnector2.SSHConnector2') as ssh, \
+        patch('niceman.support.sshconnector2.SSHConnector2'), \
             swallow_logs(new_level=logging.DEBUG) as log:
-
-        # ssh.return_value = MagicMock()
 
         # Test connecting when a resource doesn't exist.
         client.return_value = MagicMock(
@@ -61,7 +59,7 @@ def test_awsec2_class():
         try:
             resource.connect()
         except Exception as e:
-            assert e.message == "Multiple container matches found"
+            assert e.args[0] == "Multiple container matches found"
 
         # Test connecting to an existing resource.
         client.return_value = MagicMock(
@@ -98,7 +96,7 @@ def test_awsec2_class():
         try:
             resource.create()
         except Exception as e:
-            assert e.message == "Instance 'i-00002777d52482d9c' already exists in AWS subscription"
+            assert e.args[0] == "Instance 'i-00002777d52482d9c' already exists in AWS subscription"
 
         # Test creating resource.
         client.return_value = MagicMock(

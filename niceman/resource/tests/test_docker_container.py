@@ -65,7 +65,7 @@ def test_dockercontainer_class():
         try:
             resource.connect()
         except Exception as e:
-            assert e.message == "Multiple container matches found"
+            assert e.args[0] == "Multiple container matches found"
 
         # Test connecting to an existing resource.
         config = {
@@ -86,7 +86,7 @@ def test_dockercontainer_class():
         try:
             resource.create()
         except Exception as e:
-            assert e.message == "Contaner 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
+            assert e.args[0] == "Contaner 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
 
         # Test creating resource.
         config = {
