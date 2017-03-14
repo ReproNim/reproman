@@ -13,6 +13,7 @@ import docker
 import json
 from ..support.exceptions import CommandError
 from .base import Resource
+from ..support.exceptions import ResourceError
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')
@@ -53,7 +54,7 @@ class DockerContainer(Resource):
             self.id = self._container.get('Id')
             self.status = self._container.get('State')
         elif len(containers) > 1:
-            raise Exception("Multiple container matches found")
+            raise ResourceError("Multiple container matches found")
         else:
             self.id = None
             self.status = None
@@ -67,7 +68,7 @@ class DockerContainer(Resource):
         dict : config parameters to capture in the inventory file
         """
         if self._container:
-            raise Exception("Contaner '{}' (ID {}) already exists in Docker".format(
+            raise ResourceError("Contaner '{}' (ID {}) already exists in Docker".format(
                 self.name, self.id))
         repository, tag = self.base_image_id.split(':')
         for line in self._client.pull(repository=repository, tag=tag, stream=True):

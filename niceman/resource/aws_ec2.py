@@ -24,6 +24,7 @@ import niceman.support.sshconnector2 # Needed for test patching to work.
 from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
+from ..support.exceptions import ResourceError
 
 
 @attr.s
@@ -84,7 +85,7 @@ class AwsEc2(Resource):
                 self.id = None
                 self.status = None
         elif len(instances) > 1:
-            raise Exception("Multiple container matches found")
+            raise ResourceError("Multiple container matches found")
         else:
             self.id = None
             self.status = None
@@ -98,7 +99,7 @@ class AwsEc2(Resource):
         dict : config and state parameters to capture in the inventory file
         """
         if self.id:
-            raise Exception("Instance '{}' already exists in AWS subscription".format(
+            raise ResourceError("Instance '{}' already exists in AWS subscription".format(
                 self.id))
 
         if not self.key_name:
