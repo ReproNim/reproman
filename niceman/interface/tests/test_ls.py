@@ -83,6 +83,8 @@ def test_ls_interface(niceman_cfg_path):
         ]
         main(args)
 
-        assert_in('list result: ec2-resource-2, aws-ec2, i-22221ddf096c22bb0, running', log.lines)
-        assert_in('list result: docker-resource-1, docker-container, 326b0fdfbf83, running', log.lines)
-        assert_in('list result: ec2-resource-1, aws-ec2, i-3333f40de2b9b8967, stopped', log.lines)
+        assert_in(
+            'list result: docker-resource-1, docker-container, 326b0fdfbf83, running',
+            log.lines)
+        assert_in('list result: ec2-resource-1, aws-ec2, i-22221ddf096c22bb0, running', log.lines)
+        assert_in('list result: ec2-resource-2, aws-ec2, i-3333f40de2b9b8967, stopped', log.lines)

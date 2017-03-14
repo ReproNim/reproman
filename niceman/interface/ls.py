@@ -75,7 +75,7 @@ class Ls(Interface):
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 
-        for name in inventory:
+        for name in sorted(inventory):
             if name.startswith('_'):
                 continue
 
