@@ -168,6 +168,7 @@ class Create(Interface):
         # Overwrite file config settings with the optional ones from the command line.
         if image: config['base_image_id'] = image
         if docker_engine_url: config['engine_url'] = docker_engine_url
+
         if aws_access_key_id: config['access_key_id'] = aws_access_key_id
         if aws_secret_access_key: config['secret_access_key'] = aws_secret_access_key
         if aws_instance_type: config['instance_type'] = aws_instance_type

@@ -28,8 +28,10 @@ class DockerContainer(Resource):
     name = attr.ib()
     id = attr.ib(default=None)
     type = attr.ib(default='docker-container')
+
     engine_url = attr.ib(default='unix:///var/run/docker.sock')
     base_image_id = attr.ib(default='ubuntu:latest')
+
     status = attr.ib(default=None)
 
     # Management properties

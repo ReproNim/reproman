@@ -25,9 +25,10 @@ class Shell(Resource):
     name = attr.ib()
     id = attr.ib(default=None)
     type = attr.ib(default='shell')
+
     status = attr.ib(default=None)
 
-    def create(self, image_id):
+    def create(self):
         """
         Create a running environment.
 
@@ -35,21 +36,19 @@ class Shell(Resource):
         ----------
         name : string
             Name identifier of the environment to be created.
-        image_id : string
-            Identifier of the image to use when creating the environment.
         """
-        return
+        # Generic logic to reside in Resource???
+        if self.id is None:
+            self.id = Resource._generate_id()
+        return {
+            'id': self.id
+        }
 
     def connect(self):
         """
         Connect to an existing environment.
-
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to connect to.
         """
-        return
+        pass
 
     def delete(self):
         """

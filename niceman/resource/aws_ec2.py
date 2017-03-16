@@ -30,20 +30,30 @@ from ..support.exceptions import ResourceError
 @attr.s
 class AwsEc2(Resource):
 
-    # EC2 properties
+    # Generic properties of any Resource
     name = attr.ib()
+
+    # Configurable options for each "instance"
     access_key_id = attr.ib()
     secret_access_key = attr.ib()
-    id = attr.ib(default=None) # EC2 instance ID
-    type = attr.ib(default='aws-ec2') # Resource type
-    base_image_id = attr.ib(default='ami-c8580bdf')  # Ubuntu 14.04 LTS
-    instance_type = attr.ib(default='t2.micro') # EC2 instance type
-    security_group = attr.ib(default='default') # AWS security group
-    region_name = attr.ib(default='us-east-1') # AWS region
-    key_name = attr.ib(default=None) # Name of SSH key registered on AWS.
+    instance_type = attr.ib(default='t2.micro')  # EC2 instance type
+    security_group = attr.ib(default='default')  # AWS security group
+    region_name = attr.ib(default='us-east-1')  # AWS region
+    key_name = attr.ib(default=None)  # Name of SSH key registered on AWS.
     key_filename = attr.ib(default=None) # SSH private key filename on local machine.
+    base_image_id = attr.ib(default='ami-c8580bdf')  # Ubuntu 14.04 LTS
+
+    # Interesting one -- should we allow for it to be specified or should
+    # it just become a property?  may be base class could
+    id = attr.ib(default=None)  # EC2 instance ID
+
+    # TODO: shouldn't be hardcoded???
+    type = attr.ib(default='aws-ec2')  # Resource type
+
+    # Current instance properties, to be set by us, not augmented by user
     status = attr.ib(default=None)
 
+    # ???
     # Management properties
     _ec2_resource = attr.ib(default=None)
     _ec2_instance = attr.ib(default=None)

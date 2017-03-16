@@ -23,6 +23,7 @@ VALID_RESOURCE_TYPES = [
     'shell'
 ]
 
+
 class Resource(object):
     """
     Base class for creating and managing compute resources.
@@ -125,3 +126,11 @@ class Resource(object):
             return merged_env
 
         return custom_env
+
+    @classmethod
+    def _generate_id(cls):
+        import uuid
+        # just a random uuid for now, TODO: think if we somehow could
+        # fingerprint it so to later be able to decide if it is 'ours'? ;)
+        return str(uuid.uuid1())
+
