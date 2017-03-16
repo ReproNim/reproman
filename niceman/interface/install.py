@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, get_resource_info, question
+from .base import Interface, get_resource_info
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..provenance import Provenance
@@ -65,11 +65,12 @@ class Install(Interface):
     @staticmethod
     def __call__(spec, resource, resource_id, config):
 
+        from niceman.ui import ui
         if not spec:
-            spec = [question("Enter a spec filename", default="spec.yml")]
+            spec = [ui.question("Enter a spec filename", default="spec.yml")]
 
         if not resource and not resource_id:
-            resource = question("Enter a resource name",
+            resource = ui.question("Enter a resource name",
                 error_message="Missing resource name")
 
         # Load, while possible merging/augmenting sequentially

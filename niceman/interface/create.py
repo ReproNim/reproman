@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, get_resource_info, question
+from .base import Interface, get_resource_info
 import niceman.interface.base # Needed for test patching
 # from ..provenance import Provenance
 from ..support.param import Parameter
@@ -47,6 +47,7 @@ class Create(Interface):
         # ),
         resource=Parameter(
             args=("-r", "--resource"),
+            # TODO:  is that a --name kind?  note that example mentions --name
             doc="""For which resource to create a new environment. To see
             available resource, run the command 'niceman ls'""",
             constraints=EnsureStr(),
@@ -142,8 +143,13 @@ class Create(Interface):
         # Load, while possible merging/augmenting sequentially
         # provenance = Provenance.factory(specs)
 
+        from niceman.ui import ui
+
         if not resource:
-            resource = question("Enter a resource name", error_message="Missing resource name")
+            resource = ui.question(
+                "Enter a resource name",
+                error_message="Missing resource name"
+            )
 
         # if only_env:
         #     raise NotImplementedError
@@ -157,6 +163,8 @@ class Create(Interface):
         else:
             config, inventory = get_resource_info(config, resource, resource_id, resource_type)
 
+        # TODO: All resource-type-specific params handling should be done in some other
+        # more scalable fashion
         # Overwrite file config settings with the optional ones from the command line.
         if image: config['base_image_id'] = image
         if docker_engine_url: config['engine_url'] = docker_engine_url

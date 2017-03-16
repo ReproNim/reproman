@@ -37,7 +37,7 @@ def test_dockercontainer_class():
                     'State': 'running'
                 }
             ],
-            pull=lambda repository, tag, stream: [
+            pull=lambda repository, stream: [
                 '{ "status" : "status 1", "progress" : "progress 1" }',
                 '{ "status" : "status 2", "progress" : "progress 2" }'
             ],
@@ -86,7 +86,7 @@ def test_dockercontainer_class():
         try:
             resource.create()
         except Exception as e:
-            assert e.args[0] == "Contaner 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
+            assert e.args[0] == "Container 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
 
         # Test creating resource.
         config = {

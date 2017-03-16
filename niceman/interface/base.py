@@ -275,12 +275,14 @@ def get_resource_info(config_path, name, id_=None, type_=None):
     elif type_ and type_ in VALID_RESOURCE_TYPES:
         config = dict(cm.items(type_.split('-')[0]))
     else:
-        type_ = question("Enter a resource type",
-                         # TODO: decision on type of a container, if needed
-                         # needs to be done outside, and should be configurable
-                         # or follow some heuristic (e.g. if name starts with a
-                         # known type, e.g. docker-
-                         default="docker-container")
+        type_ = ui.question(
+            "Enter a resource type",
+            # TODO: decision on type of a container, if needed
+            # needs to be done outside, and should be configurable
+            # or follow some heuristic (e.g. if name starts with a
+            # known type, e.g. docker-
+            default="docker-container"
+        )
         config = {}
         if type_ not in VALID_RESOURCE_TYPES:
             raise MissingConfigError(
@@ -322,7 +324,7 @@ def get_config_manager(config_path=None):
         config_path = 'niceman.cfg'
     cm = get_cm(config_path=config_path)
     if not config_path and len(cm._sections) == 1:
-        config = question("Enter a config file", default="niceman.cfg")
+        config = ui.question("Enter a config file", default="niceman.cfg")
         cm = get_cm(config_path=config)
     if len(cm._sections) == 1:
         raise MissingConfigFileError(
@@ -396,37 +398,6 @@ def set_resource_inventory(inventory):
 
     with open(inventory_path, 'w') as fp:
         json.dump(inventory, fp, indent=2, sort_keys=True)
-
-
-def question(text, error_message=None, default=None):
-    """
-    Wrapper of the ui.question method to simplify the request of additional
-    command line parameters.
-
-    Parameters
-    ----------
-    text : string
-        Question to present to the user.
-    error_message : string
-        Message to the user before quitting the program if the question response
-        is not valid.
-    default : string
-        A default response presented to the user in the question.
-
-    Returns
-    -------
-    response : string
-        Response of the user to the question.
-    """
-    if default:
-        text += ' [' + default + ']'
-    response = ui.question(text)
-    if not response:
-        if default:
-            return default
-        else:
-            raise MissingConfigError(error_message)
-    return response
 
 
 class Interface(object):

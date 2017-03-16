@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import re
 
-from .base import Interface, get_resource_info, question
+from .base import Interface, get_resource_info
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -67,30 +67,41 @@ class Delete(Interface):
 
     @staticmethod
     def __call__(resource, resource_id=None, skip_confirmation=False, config=None):
-
+        from niceman.ui import ui
         if not resource and not resource_id:
-            resource = question("Enter a resource name",
-                                error_message="Missing resource name")
+            resource = ui.question(
+                "Enter a resource name",
+                error_message="Missing resource name"
+            )
 
         # Get configuration and environment inventory
+        # TODO: this one would ask for resource type whenever it is not found
+        #       why should we???
         resource_info, inventory = get_resource_info(config, resource, resource_id)
 
         # Delete resource environment
         env_resource = Resource.factory(resource_info)
         env_resource.connect()
 
+        if not env_resource.id:
+            raise ValueError("No resource found given the info %s" % str(resource_info))
+
         if skip_confirmation:
-            response = 'yes'
+            response = True
         else:
-            response = question("Delete the resource '{}'? (ID: {})".format(
-                env_resource.name, env_resource.id[:20]), default="No")
+            response = ui.yesno(
+                "Delete the resource '{}'? (ID: {})".format(
+                    env_resource.name, env_resource.id[:20]),
+                default="no"
+            )
 
-        if re.match('y|yes', response, re.IGNORECASE):
-
+        if response:
             env_resource.delete()
 
             # Save the updated configuration for this resource.
-            if resource in inventory: del inventory[resource]
+            if resource in inventory:
+                del inventory[resource]
+
             niceman.interface.base.set_resource_inventory(inventory)
 
             lgr.info("Deleted the environment %s", resource)

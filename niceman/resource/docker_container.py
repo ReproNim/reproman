@@ -67,21 +67,27 @@ class DockerContainer(Resource):
         dict : config parameters to capture in the inventory file
         """
         if self._container:
-            raise ResourceError("Contaner '{}' (ID {}) already exists in Docker".format(
-                self.name, self.id))
-        repository, tag = self.base_image_id.split(':')
-        for line in self._client.pull(repository=repository, tag=tag, stream=True):
+            raise ResourceError(
+                "Container '{}' (ID {}) already exists in Docker".format(
+                    self.name, self.id))
+        # image might be of the form repository:tag -- pull would split them
+        # if needed
+        for line in self._client.pull(repository=self.base_image_id, stream=True):
             status = json.loads(line)
             output = status['status']
-            if 'progress' in status: output += ' ' + status['progress']
+            if 'progress' in status:
+                output += ' ' + status['progress']
             lgr.info(output)
-        self._container = self._client.create_container(name=self.name,
-            image=self.base_image_id, stdin_open=True, detach=True)
+        self._container = self._client.create_container(
+            name=self.name,
+            image=self.base_image_id,
+            stdin_open=True,
+            detach=True)
         self.id = self._container.get('Id')
         self.status = 'running'
         self._client.start(container=self.id)
         return {
-            'id' : self.id,
+            'id': self.id,
             'status': self.status
         }
 
