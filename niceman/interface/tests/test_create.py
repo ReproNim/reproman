@@ -10,62 +10,56 @@
 from niceman.cmdline.main import main
 
 import logging
-from mock import patch, call
+from mock import patch, call, MagicMock
 
 from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
-from niceman.cmd import Runner
-
-import niceman.tests.fixtures
 
 
-# def test_install_packages_localhost(demo1_spec, niceman_cfg_path):
-#     """
-#     Test installing packages on the localhost.
-#     """
-#     with patch.object(Runner, 'run', return_value='installed package') as MockRunner, \
-#         patch('os.environ.copy') as MockOS, \
-#         swallow_logs(new_level=logging.DEBUG) as log:
-#
-#         MockOS.return_value = {}
-#
-#         args = ['install',
-#                 '--spec', demo1_spec,
-#                 '--resource', 'localhost-shell',
-#                 '--config', niceman_cfg_path,
-#                 ]
-#         main(args)
-#
-#         assert MockRunner.call_count == 9
-#         calls = [
-#             call(['apt-get', 'update']),
-#             call(['apt-get', 'install', '-y', 'libc6-dev'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
-#             call(['apt-get', 'install', '-y', 'python-nibabel'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
-#             call(['apt-get', 'install', '-y', 'afni'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
-#             # call(['conda', 'install', 'numpy'], env={'DEBIAN_FRONTEND': 'noninteractive'}),
-#         ]
-#         MockRunner.assert_has_calls(calls, any_order=True)
-#         assert_in("Adding Debian update to container command list.", log.lines)
-
-
-def test_install_packages_dockerengine(demo1_spec, niceman_cfg_path):
+def test_create_interface(niceman_cfg_path):
     """
-    Test installing packages into a Docker container.
+    Test creating an environment
     """
 
-    with patch('docker.Client') as MockClient, \
-            swallow_logs(new_level=logging.DEBUG) as log:
+    with patch('docker.Client') as client, \
+        patch('niceman.interface.base.set_resource_inventory'), \
+        patch('niceman.interface.base.get_resource_inventory') as get_inventory, \
+        swallow_logs(new_level=logging.DEBUG) as log:
+
+        client.return_value = MagicMock(
+            containers=lambda all: [],
+            pull=lambda repository, stream: [
+                '{ "status" : "status 1", "progress" : "progress 1" }',
+                '{ "status" : "status 2", "progress" : "progress 2" }'
+            ],
+            create_container=lambda name, image, stdin_open, detach: {
+                'Id': '18b31b30e3a5'
+            }
+        )
+
+        get_inventory.return_value = {
+            "my-test-resource": {
+                "status": "running",
+                "engine_url": "tcp://127.0.0.1:2375",
+                "type": "docker-container",
+                "name": "my-test-resource",
+                "id": "18b31b30e3a5"
+            }
+        }
 
         args = ['create',
-                    '--spec', demo1_spec,
-                    '--resource', 'my-debian',
-                    '--config', niceman_cfg_path
-                ]
+                '--resource', 'my-test-resource',
+                '--resource-type', 'docker-container',
+                '--config', niceman_cfg_path
+        ]
         main(args)
 
         calls = [
             call(base_url='tcp://127.0.0.1:2375'),
+            call().start(container='18b31b30e3a5')
         ]
-        MockClient.assert_has_calls(calls, any_order=True)
+        client.assert_has_calls(calls, any_order=True)
 
-        assert_in("Created the environment my-debian", log.lines)
+        assert_in("status 1 progress 1", log.lines)
+        assert_in("status 2 progress 2", log.lines)
+        assert_in("Created the environment my-test-resource", log.lines)

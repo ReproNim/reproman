@@ -11,11 +11,13 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface
+import re
+
+from .base import Interface, get_resource_info
+import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..support.exceptions import InsufficientArgumentsError
-from ..resource import ResourceConfig, Resource
+from ..resource import Resource
 
 from logging import getLogger
 lgr = getLogger('niceman.api.delete')
@@ -34,27 +36,72 @@ class Delete(Interface):
     _params_ = dict(
         resource=Parameter(
             args=("-r", "--resource"),
-            doc="""For which resource to create a new environment. To see
+            doc="""Name of the resource to consider. To see
             available resource, run the command 'niceman ls'""",
             constraints=EnsureStr(),
         ),
-        config = Parameter(
+        # XXX reenable when we support working with multiple instances at once
+        # resource_type=Parameter(
+        #     args=("-t", "--resource-type"),
+        #     doc="""Resource type to work on""",
+        #     constraints=EnsureStr(),
+        # ),
+        resource_id=Parameter(
+            args=("-id", "--resource-id",),
+            doc="ID of the environment container",
+            # constraints=EnsureStr(),
+        ),
+        skip_confirmation=Parameter(
+            args=("--skip-confirmation",),
+            action="store_true",
+            doc="Delete resource without prompting user for confirmation",
+        ),
+        # TODO: should be moved into generic API
+        config=Parameter(
             args=("-c", "--config",),
             doc="path to niceman configuration file",
             metavar='CONFIG',
-            constraints=EnsureStr(),
+            # constraints=EnsureStr(),
         ),
     )
 
     @staticmethod
-    def __call__(resource, config):
+    def __call__(resource, resource_id=None, skip_confirmation=False, config=None):
+        from niceman.ui import ui
+        if not resource and not resource_id:
+            resource = ui.question(
+                "Enter a resource name",
+                error_message="Missing resource name"
+            )
 
-        if not resource:
-            raise InsufficientArgumentsError("Need a --resource")
-        print("RESOURCE: {}".format(resource))
+        # Get configuration and environment inventory
+        # TODO: this one would ask for resource type whenever it is not found
+        #       why should we???
+        resource_info, inventory = get_resource_info(config, resource, resource_id)
 
-        resource_config = ResourceConfig(resource, config_path=config)
-        env_resource = Resource.factory(resource_config)
-        env_resource.delete()
+        # Delete resource environment
+        env_resource = Resource.factory(resource_info)
+        env_resource.connect()
 
-        lgr.info("Deleted the environment %s", resource)
+        if not env_resource.id:
+            raise ValueError("No resource found given the info %s" % str(resource_info))
+
+        if skip_confirmation:
+            response = True
+        else:
+            response = ui.yesno(
+                "Delete the resource '{}'? (ID: {})".format(
+                    env_resource.name, env_resource.id[:20]),
+                default="no"
+            )
+
+        if response:
+            env_resource.delete()
+
+            # Save the updated configuration for this resource.
+            if resource in inventory:
+                del inventory[resource]
+
+            niceman.interface.base.set_resource_inventory(inventory)
+
+            lgr.info("Deleted the environment %s", resource)

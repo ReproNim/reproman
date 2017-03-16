@@ -8,91 +8,90 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Environment sub-class to provide management of environment engine."""
 
-from io import BytesIO
-from ..support.exceptions import CommandError
+import attr
+import docker
+import json
+from ..support.exceptions import CommandError, ResourceError
+from .base import Resource
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')
 
-from .base import ResourceConfig, Resource
-from .interface.environment import Environment
 
-
-class DockerContainer(Resource, Environment):
+@attr.s
+class DockerContainer(Resource):
     """
-    Environment manager which talks to a Docker engine.
+    Environment manager which manages a Docker container.
     """
 
-    def __init__(self, resource_config):
-        """
-        Class constructor
+    # Container properties
+    name = attr.ib()
+    id = attr.ib(default=None)
+    type = attr.ib(default='docker-container')
 
-        Parameters
-        ----------
-        resource_config : ResourceConfig object
-            Configuration parameters for the resource.
-        """
-        if not 'base_image_id' in resource_config:
-            resource_config['base_image_id'] = 'ubuntu:latest'
-        if not 'stdin_open' in resource_config:
-            resource_config['stdin_open'] = True
+    engine_url = attr.ib(default='unix:///var/run/docker.sock')
+    base_image_id = attr.ib(default='ubuntu:latest')
 
-        super(DockerContainer, self).__init__(resource_config)
+    status = attr.ib(default=None)
 
-        self._client = None
-        self._container = None
-
-        # Open a client connection to the Docker engine.
-        resource_config = ResourceConfig(resource_config['resource_backend'],
-            config_path=resource_config['config_path'])
-        docker_engine = Resource.factory(resource_config)
-        self._client = docker_engine()
-        self.poll_status()
-
-    def poll_status(self):
-        """
-        Poll the backend for info on the environment. Updates the ResourceConfig.
-        """
-        self.connect()
-        if self._container:
-            stats = self._client.stats(self._container, decode=True)
-            self.set_config('resource_status', 'running')
-            self.set_config('resource_id', self._container.get('Id')[:12])
-        else:
-            self.set_config('resource_status', None)
-            self.set_config('resource_id', None)
-
-    def create(self, image_id):
-        """
-        Create a baseline Docker image and run it to create the container.
-
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to be created.
-        image_id : string
-            Identifier of the image to use when creating the environment.
-        """
-        if image_id:
-            self.set_config('base_image_id', image_id)
-
-        dockerfile = self._get_base_image_dockerfile(self.get_config('base_image_id'))
-        self._build_image(dockerfile)
-        self._create_container()
+    # Management properties
+    _client = attr.ib(default=None)
+    _container = attr.ib(default=None)
 
     def connect(self):
         """
         Open a connection to the environment.
-
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to connect to.
         """
-        name = self.get_config('name')
-        containers = self._client.containers(dict(label=name))
+        # Open a client connection to the Docker engine.
+        self._client = docker.Client(base_url=self.engine_url)
+
+        containers = []
+        for container in self._client.containers(all=True):
+            if self.id == container.get('Id') or '/' + self.name == container.get('Names')[0]:
+                containers.append(container)
+
         if len(containers) == 1:
             self._container = containers[0]
+            self.id = self._container.get('Id')
+            self.status = self._container.get('State')
+        elif len(containers) > 1:
+            raise ResourceError("Multiple container matches found")
+        else:
+            self.id = None
+            self.status = None
+
+    def create(self):
+        """
+        Create a baseline Docker image and run it to create the container.
+
+        Returns
+        -------
+        dict : config parameters to capture in the inventory file
+        """
+        if self._container:
+            raise ResourceError(
+                "Container '{}' (ID {}) already exists in Docker".format(
+                    self.name, self.id))
+        # image might be of the form repository:tag -- pull would split them
+        # if needed
+        for line in self._client.pull(repository=self.base_image_id, stream=True):
+            status = json.loads(line)
+            output = status['status']
+            if 'progress' in status:
+                output += ' ' + status['progress']
+            lgr.info(output)
+        self._container = self._client.create_container(
+            name=self.name,
+            image=self.base_image_id,
+            stdin_open=True,
+            detach=True)
+        self.id = self._container.get('Id')
+        self.status = 'running'
+        self._client.start(container=self.id)
+        return {
+            'id': self.id,
+            'status': self.status
+        }
 
     def execute_command(self, command, env=None):
         """
@@ -122,55 +121,9 @@ class DockerContainer(Resource, Environment):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
-    def _get_base_image_dockerfile(self, base_image_id):
-        """
-        Creates the Dockerfile needed to create the baseline Docker image.
-
-        Parameters
-        ----------
-        base_image_id : string
-            "repo:tag" of Docker image to use as base image.
-
-        Returns
-        -------
-        string
-            String containing the Dockerfile commands.
-        """
-        dockerfile = 'FROM %s\n' % (base_image_id,)
-        dockerfile += 'MAINTAINER staff@niceman.org\n'
-        return dockerfile
-
-    def _build_image(self, dockerfile):
-        """
-        Create the Docker image in the Docker engine.
-
-        Parameters
-        ----------
-        dockerfile : string
-            The contents of the Dockerfile used to create the contaner.
-        """
-        f = BytesIO(dockerfile.encode('utf-8'))
-        # The following call may throw the following exceptions:
-        #    docker.errors.BuildError - If there is an error during the build.
-        #    docker.errors.APIError - If the server returns any other error.
-        self._client.build(fileobj=f,
-            tag="niceman:{}".format(self.get_config('name')), rm=True)
-
-    def _create_container(self):
-        """
-        Start the Docker container from the image.
-        """
-        self._container = self._client.create_container(
-            image="niceman:{}".format(self.get_config('name')),
-            stdin_open=self.get_config('stdin_open'), detach=True,
-            name=self.get_config('name'))
-        self._client.start(container=self._container.get('Id'))
-
     def delete(self):
         """
         Deletes a container from the Docker engine.
         """
         if self._container:
             self._client.remove_container(self._container, force=True)
-        else:
-            lgr.info('Container not found.')

@@ -8,8 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Resource sub-class to provide management of the localhost environment."""
 
+import attr
 from .base import Resource
-from .interface.environment import Environment
 from niceman.cmd import Runner
 
 import logging
@@ -18,28 +18,17 @@ lgr = logging.getLogger('niceman.resource.shell')
 import os
 
 
-class Shell(Resource, Environment):
+@attr.s
+class Shell(Resource):
 
-    def __init__(self, resource_config):
-        """
-        Class constructor
+    # Container properties
+    name = attr.ib()
+    id = attr.ib(default=None)
+    type = attr.ib(default='shell')
 
-        Parameters
-        ----------
-        resource_config : ResourceConfig object
-            Configuration parameters for the resource.
-        """
+    status = attr.ib(default=None)
 
-        self._client = None
-        super(Shell, self).__init__(resource_config)
-
-    def poll_status(self):
-        """
-        Poll the backend for info on the environment. Updates the ResourceConfig.
-        """
-        return
-
-    def create(self, image_id):
+    def create(self):
         """
         Create a running environment.
 
@@ -47,21 +36,19 @@ class Shell(Resource, Environment):
         ----------
         name : string
             Name identifier of the environment to be created.
-        image_id : string
-            Identifier of the image to use when creating the environment.
         """
-        return
+        # Generic logic to reside in Resource???
+        if self.id is None:
+            self.id = Resource._generate_id()
+        return {
+            'id': self.id
+        }
 
     def connect(self):
         """
         Connect to an existing environment.
-
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to connect to.
         """
-        return
+        pass
 
     def delete(self):
         """

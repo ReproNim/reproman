@@ -10,29 +10,54 @@
 from niceman.cmdline.main import main
 
 import logging
-from mock import patch, call
+from mock import patch, call, MagicMock
 
 from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
 
-def test_delete_docker_container(niceman_cfg_path):
+
+def test_delete_interface(niceman_cfg_path):
     """
-    Test deleting a Docker container.
+    Test deleting a resource.
     """
 
-    with patch('docker.Client') as MockClient, \
-            swallow_logs(new_level=logging.DEBUG) as log:
+    with patch('docker.Client') as client, \
+        patch('niceman.interface.base.set_resource_inventory'), \
+        patch('niceman.interface.base.get_resource_inventory') as get_inventory, \
+        swallow_logs(new_level=logging.DEBUG) as log:
+
+        client.return_value = MagicMock(
+            containers=lambda all: [
+                {
+                    'Id': '326b0fdfbf83',
+                    'Names': ['/my-resource'],
+                    'State': 'running'
+                }
+            ]
+        )
+
+        get_inventory.return_value = {
+            "my-resource": {
+                "status": "running",
+                "engine_url": "tcp://127.0.0.1:2375",
+                "type": "docker-container",
+                "name": "my-resource",
+                "id": "326b0fdfbf838"
+            }
+        }
 
         args = ['delete',
-            '--resource', 'my-debian',
-            '--config', niceman_cfg_path
+            '--resource', 'my-resource',
+            '--config', niceman_cfg_path,
+            '--skip-confirmation'
         ]
         main(args)
 
         calls = [
             call(base_url='tcp://127.0.0.1:2375'),
-            call().containers({'label':'my-debian'})
+            call().remove_container({'State': 'running', 'Id': '326b0fdfbf83',
+                'Names': ['/my-resource']}, force=True)
         ]
-        MockClient.assert_has_calls(calls, any_order=True)
+        client.assert_has_calls(calls, any_order=True)
 
-        assert_in('Deleted the environment my-debian', log.lines)
+        assert_in('Deleted the environment my-resource', log.lines)

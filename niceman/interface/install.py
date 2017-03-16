@@ -11,19 +11,18 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface
+from .base import Interface, get_resource_info
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr, EnsureNone
-from ..support.exceptions import InsufficientArgumentsError
+from ..support.constraints import EnsureStr
 from ..provenance import Provenance
-from ..resource import ResourceConfig, Resource
+from ..resource import Resource
 
 from logging import getLogger
 lgr = getLogger('niceman.api.install')
 
 
 class Install(Interface):
-    """Installs Debian packages out from provided specification(s)
+    """Install packages according to the provided specification(s)
 
     Examples
     --------
@@ -34,7 +33,7 @@ class Install(Interface):
 
     _params_ = dict(
         spec=Parameter(
-            args=("--spec",),
+            args=("-s", "--spec",),
             doc="file with specifications (in supported formats) of"
                 " packages used in executed environment",
             metavar='SPEC',
@@ -45,41 +44,43 @@ class Install(Interface):
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
         resource=Parameter(
-            args=("--resource",),
+            args=("-r", "--resource",),
             doc="name of target resource to install spec on",
             metavar='RESOURCE',
             constraints=EnsureStr(),
         ),
+        resource_id=Parameter(
+            args=("-id", "--resource-id",),
+            doc="ID of environment to install resource on",
+            constraints=EnsureStr(),
+        ),
         config=Parameter(
-            args=("--config",),
+            args=("-c", "--config",),
             doc="path to niceman configuration file",
             metavar='CONFIG',
             constraints=EnsureStr(),
         ),
-        # name = Parameter(
-        #     args=("--name", "-n"),
-        #     metavar="NAME",
-        #     constraints=EnsureStr() | EnsureNone(),
-        #     doc="provide a name for the environment to connect",
-        # ),
     )
 
     @staticmethod
-    def __call__(spec, resource, config):
+    def __call__(spec, resource, resource_id, config):
 
+        from niceman.ui import ui
         if not spec:
-            raise InsufficientArgumentsError("Need at least a single --spec")
-        print("SPEC: {}".format(spec))
+            spec = [ui.question("Enter a spec filename", default="spec.yml")]
 
-        if not resource:
-            raise InsufficientArgumentsError("Need at least a single --resource")
-        print("RESOURCE: {}".format(resource))
+        if not resource and not resource_id:
+            resource = ui.question("Enter a resource name",
+                error_message="Missing resource name")
 
+        # Load, while possible merging/augmenting sequentially
         filename = spec[0]
         provenance = Provenance.factory(filename)
 
-        resource_config = ResourceConfig(resource, config_path=config)
-        env_resource = Resource.factory(resource_config)
+        # Get configuration and environment inventory
+        config, inventory = get_resource_info(config, resource, resource_id)
+
+        env_resource = Resource.factory(config)
         env_resource.connect()
         for distribution in provenance.get_distributions():
             distribution.initiate(env_resource)

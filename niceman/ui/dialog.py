@@ -32,6 +32,7 @@ from copy import copy
 from ..utils import auto_repr
 from ..utils import on_windows
 from .base import InteractiveUI
+from ..support.exceptions import MissingConfigError
 
 # Example APIs which might be useful to look for "inspiration"
 #  man debconf-devel
@@ -138,9 +139,10 @@ class DialogUI(ConsoleLog, InteractiveUI):
     def question(self, text,
                  title=None, choices=None,
                  default=None,
+                 error_message=None,
                  hidden=False):
         # Do initial checks first
-        if default and default not in choices:
+        if default and choices and default not in choices:
             raise ValueError("default value %r is not among choices: %s"
                              % (default, choices))
 
@@ -160,6 +162,8 @@ class DialogUI(ConsoleLog, InteractiveUI):
             msg += "%s (choices: %s)" % (text, ', '.join(map(mark_default, choices)))
         else:
             msg += text
+            if default:
+                msg += ' ' + mark_default(default)
         """
         Anaconda format:
 
@@ -183,9 +187,12 @@ Question? [choice1|choice2]
             # else:
             response = (getpass.getpass if hidden else getpass_echo)(msg + ": ")
 
-            if not response and default:
-                response = default
-                break
+            if not response:
+                if default:
+                    response = default
+                    break
+                elif error_message:
+                    raise MissingConfigError(error_message)
 
             if choices and response not in choices:
                 self.error("%r is not among choices: %s. Repeat your answer"

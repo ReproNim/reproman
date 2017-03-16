@@ -260,6 +260,7 @@ def main(args=None):
             lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             sys.exit(1)
         except Exception as exc:
+            # print('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             sys.exit(1)
     if hasattr(cmdlineargs, 'result_renderer'):

@@ -12,19 +12,21 @@ from mock import patch, call
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..base import ResourceConfig, Resource
+from ..base import Resource
 from ...cmd import Runner
 
 
-def test_localshellenvironment_class(niceman_cfg_path):
+def test_shell_class():
 
-    with patch.object(Runner, 'run', return_value='installed package') as MockRunner, \
+    with patch.object(Runner, 'run', return_value='installed package') as runner, \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test running some install commands.
-        resource_config = ResourceConfig('local-shell',
-                                         config_path=niceman_cfg_path)
-        shell = Resource.factory(resource_config)
+        config = {
+            'name': 'my-shell',
+            'type': 'shell'
+        }
+        shell = Resource.factory(config)
 
         command = ['apt-get', 'install', 'bc']
         shell.add_command(command)
@@ -35,6 +37,6 @@ def test_localshellenvironment_class(niceman_cfg_path):
             call(['apt-get', 'install', 'xeyes']),
             call(['apt-get', 'install', 'bc']),
         ]
-        MockRunner.assert_has_calls(calls, any_order=True)
+        runner.assert_has_calls(calls, any_order=True)
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
