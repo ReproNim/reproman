@@ -22,7 +22,7 @@ lgr = getLogger('niceman.api.install')
 
 
 class Install(Interface):
-    """Installs Debian packages out from provided specification(s)
+    """Install packages according to the provided specification(s)
 
     Examples
     --------
