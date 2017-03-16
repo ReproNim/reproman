@@ -12,17 +12,15 @@ from __future__ import unicode_literals
 
 import collections
 import os
-from os.path import join as opj
 import time
 from logging import getLogger
 from six import viewvalues
-from six.moves.urllib.parse import urlparse
 
 import pytz
+import attr
 from datetime import datetime
 
 import niceman.utils as utils
-from niceman.support.exceptions import MultipleReleaseFileMatch
 
 try:
     import apt
@@ -134,6 +132,21 @@ class PackageManager(object):
         raise NotImplementedError
 
 
+@attr.s
+class DpkgOrigin(object):
+    """DPKG Origin information for a dpkg
+    """
+    component = attr.ib()
+    archive = attr.ib()
+    architecture = attr.ib()
+    origin = attr.ib()
+    label = attr.ib()
+    site = attr.ib()
+    name = attr.ib(default=None)
+    archive_uri = attr.ib(default=None)
+    date = attr.ib(default=None)
+
+
 class DpkgManager(PackageManager):
     """DPKG Package Identifier
     """
@@ -148,7 +161,7 @@ class DpkgManager(PackageManager):
         for p in packages:
             for v in p.get("version_table", []):
                 for i, o in enumerate(v.get("origins", [])):
-                    o = utils.HashableDict(o)
+                    o = utils.HashableDict(attr.asdict(o))
                     # If we haven't seen this origin before, generate it
                     if o not in origin_map:
                         origin_map[o] = self._create_origin(o, used_names)
@@ -255,22 +268,23 @@ class DpkgManager(PackageManager):
             origins = []
             for (pf, _) in v._cand.file_list:
                 # Pull origin information from package file
-                origin = {"component": pf.component,
-                          "archive": pf.archive,
-                          "architecture": pf.architecture,
-                          "origin": pf.origin,
-                          "label": pf.label,
-                          "site": pf.site}
+                origin = DpkgOrigin(component=pf.component,
+                                    archive=pf.archive,
+                                    architecture=pf.architecture,
+                                    origin=pf.origin,
+                                    label=pf.label,
+                                    site=pf.site)
+
                 # Get the archive uri
                 indexfile = v.package._pcache._list.find_index(pf)
                 if indexfile:
                     archive_uri = indexfile.archive_uri("")
-                    origin["archive_uri"] = archive_uri
+                    origin.archive_uri = archive_uri
                 # Get the release date
                 rdate = self._find_release_date(
                     self._find_release_file(pf.filename))
                 if rdate:
-                    origin["date"] = rdate
+                    origin.date = rdate
                 # Now add our crafted origin to the list
                 origins.append(origin)
             v_info["origins"] = origins
@@ -300,7 +314,8 @@ class DpkgManager(PackageManager):
         # No file found
         return None
 
-    def _find_release_date(self, rfile):
+    @staticmethod
+    def _find_release_date(rfile):
         # Extract and format the date from the release file
         rdate = None
         if rfile:
