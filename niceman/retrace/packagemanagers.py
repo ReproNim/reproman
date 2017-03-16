@@ -142,7 +142,7 @@ class DpkgOrigin(object):
     origin = attr.ib()
     label = attr.ib()
     site = attr.ib()
-    name = attr.ib(default=None)
+#   name = attr.ib(default=None)
     archive_uri = attr.ib(default=None)
     date = attr.ib(default=None)
 
