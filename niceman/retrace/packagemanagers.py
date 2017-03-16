@@ -253,14 +253,22 @@ class DpkgManager(PackageManager):
         for v in pkg_info.versions:
             v_info = {"version": v.version}
             origins = []
-            for o in v.origins:
-                origin = {"component": o.component,
-                          "archive": o.archive,
-                          "origin": o.origin,
-                          "label": o.label,
-                          "site": o.site}
+            for (pf, _) in v._cand.file_list:
+                # Pull origin information from package file
+                origin = {"component": pf.component,
+                          "archive": pf.archive,
+                          "architecture": pf.architecture,
+                          "origin": pf.origin,
+                          "label": pf.label,
+                          "site": pf.site}
+                # Get the archive uri
+                indexfile = v.package._pcache._list.find_index(pf)
+                if indexfile:
+                    archive_uri = indexfile.archive_uri("")
+                    origin["archive_uri"] = archive_uri
                 # Get the release date
-                rdate = self._find_release_date(o.site, o.archive)
+                rdate = self._find_release_date(
+                    self._find_release_file(pf.filename))
                 if rdate:
                     origin["date"] = rdate
                 # Now add our crafted origin to the list
@@ -273,29 +281,27 @@ class DpkgManager(PackageManager):
         lgr.debug("Found package %s", pkg)
         return pkg
 
-    def _find_release_date(self, site, archive):
-        if not site:
-            return None
-        # First find the release file
-        # This uses logic similar to apt.utils.get_release_filename_for_pkg
-        # but restricts matches to the source site
-        rfile = None
-        dirname = apt_pkg.config.find_dir("Dir::State::lists")
-        # If we want to avoid using cache._list, we can call
-        # apt_pkg.SourceList() directly
-        for uri in set([metaindex.uri for metaindex in cache._list.list]):
-            if site == urlparse(uri).netloc:
-                for relfile in ['InRelease', 'Release']:
-                    name = ((apt_pkg.uri_to_filename(uri)) +
-                            "dists_%s_%s" % (archive, relfile))
-                    if os.path.exists(opj(dirname, name)):
-                        if rfile:
-                            raise MultipleReleaseFileMatch(
-                                "More than one release file found for %s %s" %
-                                (site, archive))
-                        rfile = opj(dirname, name)
+    @staticmethod
+    def _find_release_file(packages_filename):
+        # The release filename is a substring of the package
+        # filename (excluding the ending "Release" or "InRelease"
+        # The split between the release filename and the package filename
+        # is at an underscore, so split the package filename
+        # at underscores and test for the release file:
+        rfprefix = packages_filename
+        assert os.path.isabs(packages_filename), \
+            "must be given full path, got %s" % packages_filename
+        while "_" in rfprefix:
+            rfprefix = rfprefix.rsplit("_", 1)[0]
+            for ending in ['_InRelease', '_Release']:
+                release_filename = rfprefix + ending
+                if os.path.exists(release_filename):
+                    return release_filename
+        # No file found
+        return None
 
-        # Now extract and format the date from the release file
+    def _find_release_date(self, rfile):
+        # Extract and format the date from the release file
         rdate = None
         if rfile:
             rdate = apt_utils.get_release_date_from_release_file(rfile)
