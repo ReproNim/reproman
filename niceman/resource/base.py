@@ -14,7 +14,14 @@ import abc
 import logging
 lgr = logging.getLogger('niceman.resource.base')
 
+from os.path import basename
+from os.path import dirname
+from os.path import join as opj
+from glob import glob
+
+from ..dochelpers import exc_str
 from ..support.exceptions import MissingConfigError
+from ..support.exceptions import ResourceError
 
 # Enumerate the defined resource types available.
 VALID_RESOURCE_TYPES = [
@@ -34,6 +41,18 @@ class Resource(object):
     def __repr__(self):
         return 'Resource({})'.format(self.name)
 
+
+    # TODO: Following methods might better be in their own class
+    @staticmethod
+    def _discover_types():
+        l = []
+        for f in glob(opj(dirname(__file__), '*.py')):
+            f_ = basename(f)
+            if f_ in ('base.py',) or f_.startswith('_'):
+                continue
+            l.append(f_[:-3])
+        return sorted(l)
+
     @staticmethod
     def factory(config):
         """
@@ -51,9 +70,18 @@ class Resource(object):
         if 'type' not in config:
             raise MissingConfigError("Resource 'type' parameter missing for resource.")
 
-        module_name = '_'.join(config['type'].split('-'))
-        class_name = ''.join([token.capitalize() for token in config['type'].split('-')])
-        module = import_module('niceman.resource.{}'.format(module_name))
+
+        type_ = config['type']
+        module_name = '_'.join(type_.split('-'))
+        class_name = ''.join([token.capitalize() for token in type_.split('-')])
+        try:
+            module = import_module('niceman.resource.{}'.format(module_name))
+        except ImportError as exc:
+            raise ResourceError(
+                "Failed to import resource: {}.  Known ones are: {}".format(
+                    exc_str(exc),
+                    ', '.join(Resource._discover_types()))
+            )
         instance = getattr(module, class_name)(**config)
         return instance
 
