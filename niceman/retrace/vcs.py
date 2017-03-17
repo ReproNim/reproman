@@ -54,7 +54,7 @@ class VCSRepo(object):
            Path to the top of the repository
 
         """
-        self.path = path
+        self.path = path.rstrip(os.sep)
 
 
 class GitSVNRepo(VCSRepo):
@@ -95,6 +95,9 @@ class GitSVNRepo(VCSRepo):
 
     def is_mine(self, path):
         # does this repository have this directory under its control?
+        if path.rstrip(os.sep) == self.path:
+            return True
+        # it might be that the path points to itself
         # NOTE:
         #  this is an interesting case -- don't we want to still track "possible"
         #  artifacts produced from the repos?  e.g. ./build subdirectory
@@ -235,15 +238,25 @@ class GitRepo(GitSVNRepo):
         lgr.debug("Detected Git repository at %s for %s", topdir, dirpath)
         return cls(topdir)
 
-    def _run_git(self, cmd, **kwargs):
+    def _run_git(self, cmd, expect_fail=False, **kwargs):
         """Helper to run git command, and ignore stderr"""
         cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
-        out, err = self._runner.run(cmd, **kwargs)
+        try:
+            out, err = self._runner.run(cmd, expect_fail=expect_fail, **kwargs)
+        except CommandError:
+            if not expect_fail:
+                raise
+            else:
+                return None
         return out.strip()
 
     @property
     def hexsha(self):
-        return self._run_git('rev-parse HEAD')
+        try:
+            return self._run_git('rev-parse HEAD')
+        except CommandError:
+            # might still be the first yet to be committed state in the branch
+            return None
         
     @property
     def describe(self):
@@ -266,7 +279,13 @@ class GitRepo(GitSVNRepo):
         hexsha = self.hexsha
         # which remotes contain this commit, so we could provide this
         # possibly valuable information
-        remote_branches = self._run_git('branch -r --contains %s' % hexsha)
+        if not hexsha:  # just initialized
+            return []
+        remote_branches = self._run_git(
+            'branch -r --contains %s' % hexsha,
+            expect_fail=True)
+        if not remote_branches:
+            return []
         containing_remotes = set(x.split('/', 1)[0] for x in remote_branches)
         remotes = {}
         for remote in self._run_git('remote').splitlines():
@@ -287,13 +306,24 @@ class GitRepo(GitSVNRepo):
     @property
     def tracked_remote(self):
         branch = self.branch
-        return self._run_git('config branch.%s.remote' % (branch,),
-                      expect_stderr=True) if branch else None
+        if not branch:
+            return None
+        return self._run_git(
+                'config branch.%s.remote' % (branch,),
+                expect_stderr=True,
+                expect_fail=True
+        ) or None         # want explicit None
 
     @property
     def branch(self):
         if self._branch is None:
-            self._branch = self._runner.run('git rev-parse --abbrev-ref HEAD')[0].strip()
+            try:
+                branch = self._runner.run('git rev-parse --abbrev-ref HEAD')[0].strip()
+            except CommandError:
+                # could yet happen there is no commit here, so branch is not defined?
+                return None
+            if branch != 'HEAD':
+                self._branch = branch
         return self._branch
 
 

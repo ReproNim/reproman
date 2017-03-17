@@ -17,6 +17,7 @@ from os.path import join as opj, pardir, dirname
 from niceman.retrace.packagemanagers import identify_packages
 from niceman.retrace.packagemanagers import DpkgManager
 from niceman.tests.utils import skip_if
+from niceman.tests.utils import with_tempfile
 
 
 def test_identify_packages():
@@ -66,3 +67,47 @@ def test_find_release_file():
                 fp('s_d_d_data_InRelease')
         assert DpkgManager._find_release_file(
             fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
+
+
+@with_tempfile(mkdir=True)
+def test_detached_git(repo):
+    from niceman.cmd import Runner
+    runner = Runner(env={'LC_ALL': 'C'}, cwd=repo)
+    runner('git init')
+
+    # should be good enough not to crash
+    packages, origins, files = identify_packages([repo])
+    assert len(packages) == 1
+    pkg = packages[0]
+    assert pkg['files'] == [repo]
+    assert pkg['type'] == 'git'
+
+    # Let's now make it more sensible
+    fname = opj(repo, "file")
+    with open(fname, 'w') as f:
+        f.write("data")
+    runner("git add file")
+    runner("git commit -m added file")
+    packages, origins, files = identify_packages([fname])
+    assert len(packages) == 1
+    pkg = packages[0]
+    assert pkg['files'] == [fname]
+    assert pkg['type'] == 'git'
+    hexsha = pkg['hexsha']
+    assert hexsha
+    assert pkg['branch'] == 'master'
+    # and no field with None
+    for v in pkg.values():
+        assert v is not None
+
+    # and if we cause a detachment
+    runner("git rm file")
+    runner("git commit -m removed file")
+    runner("git checkout HEAD^")
+    packages, origins, files = identify_packages([repo])
+    assert len(packages) == 1
+    pkg = packages[0]
+    assert pkg['files'] == [repo]
+    assert pkg['type'] == 'git'
+    assert pkg['hexsha'] == hexsha
+    assert 'branch' not in pkg
