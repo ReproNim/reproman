@@ -70,7 +70,7 @@ def test_find_release_file():
 
 
 @with_tempfile(mkdir=True)
-def test_detached_git(repo):
+def test_detached_git(repo=None):
     import os
     from niceman.cmd import Runner
     env = os.environ.copy()
