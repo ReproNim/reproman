@@ -43,7 +43,7 @@ def read_reprozip_yaml(filename):
         return config
 
 
-def identify_packages(config):
+def identify_packages(config=None, paths=None):
     """Identifies packages in the current environment from a ReproZip config
 
     Given a ReproZip configuration, it analyzes the current environment to
@@ -52,8 +52,11 @@ def identify_packages(config):
 
     Parameters
     ----------
-    config : dict
-        ReproZip configuration (input/output)
+    config : dict, optional
+        ReproZip configuration (input/output).  Listed in it files will
+        be analized first
+    paths : list, optional
+        Additional paths to consider
 
     Return
     ------
@@ -62,10 +65,18 @@ def identify_packages(config):
 
     """
     # Immediately clone the configuration
-    files = get_system_files(config)
+    paths = paths or []
+    if config:
+        paths = list(get_system_files(config)) + paths
+        # operate on a copy to avoid side effects
+        config = config.copy()
+    else:
+        config = {}
 
+    # TODO: RF so that only the above portion is reprozip specific.
+    # If we are to reuse their layout largely -- the rest should stay as is
     (packages, origins, unidentified_files) = \
-        packagemanagers.identify_packages(list(files))
+        packagemanagers.identify_packages(paths)
 
     # Update reprozip package assignment
     config['packages'] = packages
@@ -74,8 +85,10 @@ def identify_packages(config):
     config['origins'] = origins
 
     # set any files not identified
-    config['other_files'] = list(unidentified_files)
-    config['other_files'].sort()
+    config.pop('other_files', None)
+    if unidentified_files:
+        config['other_files'] = list(unidentified_files)
+        config['other_files'].sort()
 
     return config
 

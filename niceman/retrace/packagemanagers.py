@@ -14,6 +14,11 @@ import collections
 import os
 from os.path import join as opj
 import time
+
+from os.path import dirname, isdir, isabs
+from os.path import exists, lexists
+from os.path import join as opj
+
 from logging import getLogger
 from six import viewvalues
 from six.moves.urllib.parse import urlparse
@@ -21,6 +26,7 @@ from six.moves.urllib.parse import urlparse
 import pytz
 from datetime import datetime
 
+from niceman.dochelpers import exc_str
 import niceman.utils as utils
 from niceman.support.exceptions import MultipleReleaseFileMatch
 
@@ -50,8 +56,16 @@ except (ValueError, AttributeError):
 # (Revised BSD License)
 
 
+# TODO:  we might want to rename
+#  Package ...
+#  Manager -> Resolver?  since we are trying to resolve paths into their
+#             corresponding "Package"s
 class PackageManager(object):
-    """Base class for package identifiers."""
+    """Base class for package identifiers.
+
+    ATM :term:`Package` describes all of possible "containers" which deliver
+    some piece of software or data -- packages by distributions (Debian, conda,
+    pip, ...) or VCS repositories"""
 
     def __init__(self):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
@@ -85,12 +99,21 @@ class PackageManager(object):
 
         file_to_package_dict = self._get_packages_for_files(files)
         for f in files:
+            if not os.path.lexists(f):
+                lgr.warning(
+                    "Provided file %s doesn't exist, spec might be incomplete",
+                    f)
             # Stores the file
             if f not in file_to_package_dict:
                 unknown_files.add(f)
             else:
+                # TODO: pkgname should become  pkgid
+                # where for packages from distributions would be name,
+                # for VCS -- their path
                 pkgname = file_to_package_dict[f]
-                if pkgname in found_packages:
+                if pkgname is None:
+                    unknown_files.add(f)
+                elif pkgname in found_packages:
                     found_packages[pkgname]["files"].append(f)
                     nb_pkg_files += 1
                 else:
@@ -102,12 +125,13 @@ class PackageManager(object):
                     else:
                         unknown_files.add(f)
 
-        lgr.info("%d packages with %d files, and %d other files",
+        lgr.info("%s: %d packages with %d files, and %d other files",
+                 self.__class__.__name__,
                  len(found_packages),
                  nb_pkg_files,
                  len(unknown_files))
 
-        return list(viewvalues(found_packages)), unknown_files
+        return list(viewvalues(found_packages)), list(unknown_files)
 
     def identify_package_origins(self, packages):
         """Identify and collate origins from a set of packages
@@ -322,15 +346,27 @@ def identify_packages(files):
     Returns
     -------
     packages : list of Package
-    origin : list of Origin
+    origins : list of Origin
     unknown_files : list of str
       Files which were not determined to belong to some package
     """
-    manager = DpkgManager()
-    begin = time.time()
-    (packages, unknown_files) = manager.search_for_files(files)
-    origin = manager.identify_package_origins(packages)
-    lgr.debug("Assigning files to packages took %f seconds",
-              (time.time() - begin))
+    # TODO: move this function into the base.py having decided on naming etc
+    from .vcs import VCSManager
+    managers = [DpkgManager(), VCSManager()]
+    origins = []
+    packages = []
 
-    return packages, origin, list(unknown_files)
+    files_to_consider = files
+
+    for manager in managers:
+        begin = time.time()
+        (packages_, unknown_files) = manager.search_for_files(files_to_consider)
+        packages_origins = manager.identify_package_origins(packages_)
+        if packages_origins:
+            origins += packages_origins
+        lgr.debug("Assigning files to packages by %s took %f seconds",
+                  manager, time.time() - begin)
+        packages += packages_
+        files_to_consider = unknown_files
+
+    return packages, origins, files_to_consider

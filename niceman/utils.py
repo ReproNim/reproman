@@ -427,6 +427,10 @@ def assure_dict_from_str(s, **kwargs):
         out[k] = v
     return out
 
+def only_with_values(d):
+    """Given a dictionary, return the one only with entries which had non-null values"""
+    # to maintain OrderedDict do explicit d.__class__
+    return d.__class__((k, v) for k,v in d.items() if v)
 
 def unique(seq, key=None):
     """Given a sequence return a list only with unique elements while maintaining order
