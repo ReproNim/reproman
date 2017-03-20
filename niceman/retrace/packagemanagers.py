@@ -11,8 +11,8 @@
 from __future__ import unicode_literals
 
 import collections
+import copy
 import os
-from os.path import join as opj
 import time
 
 from os.path import dirname, isdir, isabs
@@ -21,14 +21,14 @@ from os.path import join as opj
 
 from logging import getLogger
 from six import viewvalues
-from six.moves.urllib.parse import urlparse
 
 import pytz
+import attr
+import yaml
 from datetime import datetime
 
 from niceman.dochelpers import exc_str
 import niceman.utils as utils
-from niceman.support.exceptions import MultipleReleaseFileMatch
 
 try:
     import apt
@@ -158,6 +158,29 @@ class PackageManager(object):
         raise NotImplementedError
 
 
+@attr.s
+class DpkgOrigin(object):
+    """DPKG Origin information for a dpkg
+    """
+    name = attr.ib()
+    component = attr.ib()
+    archive = attr.ib()
+    architecture = attr.ib()
+    origin = attr.ib()
+    label = attr.ib()
+    site = attr.ib()
+    archive_uri = attr.ib()
+    date = attr.ib()
+
+    @staticmethod
+    def yaml_representer(dumper, data):
+        ordered_items = attr.asdict(
+            data, dict_factory=collections.OrderedDict).items()
+        return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
+
+yaml.SafeDumper.add_representer(DpkgOrigin,DpkgOrigin.yaml_representer)
+
+
 class DpkgManager(PackageManager):
     """DPKG Package Identifier
     """
@@ -166,39 +189,38 @@ class DpkgManager(PackageManager):
 
     def identify_package_origins(self, packages):
         used_names = set()  # Set to avoid duplicate origin names
-        origin_map = {}  # Map original origins to the yaml-prepared origins
+        unnamed_origin_map = {}  # Map unnamed origins to named origins
 
         # Iterate over all package origins
         for p in packages:
             for v in p.get("version_table", []):
                 for i, o in enumerate(v.get("origins", [])):
-                    o = utils.HashableDict(o)
-                    # If we haven't seen this origin before, generate it
-                    if o not in origin_map:
-                        origin_map[o] = self._create_origin(o, used_names)
+                    # If we haven't seen this origin before, generate a
+                    # name for it
+                    if o not in unnamed_origin_map:
+                        unnamed_origin_map[o] = \
+                            self._create_named_origin(o, used_names)
                     # Now replace the package origin with the name of the
                     # yaml-prepared origin
-                    v["origins"][i] = origin_map[o]["name"]
+                    v["origins"][i] = unnamed_origin_map[o].name
 
         # Sort the origins by the name for the configuration file
-        origins = sorted(origin_map.values(), key=lambda k: k["name"])
+        origins = sorted(unnamed_origin_map.values(), key=lambda k: k.name)
 
         return origins
 
     @staticmethod
-    def _create_origin(o, used_names):
+    def _create_named_origin(o, used_names):
         # Create a unique name for the origin
-        name_fmt = "apt_%s_%s_%s_%%d" % (o.get("origin"), o.get("archive"),
-                                         o.get("component"))
+        name_fmt = "apt_%s_%s_%s_%%d" % (o.origin, o.archive,
+                                         o.component)
         name = utils.generate_unique_name(name_fmt,
                                           used_names)
         # Remember the created name
         used_names.add(name)
-        # Create a new ordered dictionary to be used in the config file
-        new_o = collections.OrderedDict()
-        new_o["name"] = name
-        new_o["type"] = "apt"
-        new_o.update(o)
+        # Create a named origin
+        new_o = copy.deepcopy(o)
+        new_o.name = name
         return new_o
 
     def _get_packages_for_files(self, files):
@@ -278,23 +300,28 @@ class DpkgManager(PackageManager):
             v_info = {"version": v.version}
             origins = []
             for (pf, _) in v._cand.file_list:
-                # Pull origin information from package file
-                origin = {"component": pf.component,
-                          "archive": pf.archive,
-                          "architecture": pf.architecture,
-                          "origin": pf.origin,
-                          "label": pf.label,
-                          "site": pf.site}
                 # Get the archive uri
                 indexfile = v.package._pcache._list.find_index(pf)
                 if indexfile:
                     archive_uri = indexfile.archive_uri("")
-                    origin["archive_uri"] = archive_uri
+                else:
+                    archive_uri = None
+
                 # Get the release date
                 rdate = self._find_release_date(
                     self._find_release_file(pf.filename))
-                if rdate:
-                    origin["date"] = rdate
+
+                # Pull origin information from package file
+                origin = DpkgOrigin(name=None,
+                                    component=pf.component,
+                                    archive=pf.archive,
+                                    architecture=pf.architecture,
+                                    origin=pf.origin,
+                                    label=pf.label,
+                                    site=pf.site,
+                                    archive_uri=archive_uri,
+                                    date=rdate)
+
                 # Now add our crafted origin to the list
                 origins.append(origin)
             v_info["origins"] = origins
@@ -324,7 +351,8 @@ class DpkgManager(PackageManager):
         # No file found
         return None
 
-    def _find_release_date(self, rfile):
+    @staticmethod
+    def _find_release_date(rfile):
         # Extract and format the date from the release file
         rdate = None
         if rfile:
