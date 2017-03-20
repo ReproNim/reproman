@@ -13,7 +13,7 @@ from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
-from ..retrace import rpzutil
+
 from logging import getLogger
 
 __docformat__ = 'restructuredtext'
@@ -43,7 +43,8 @@ class Retrace(Interface):
 
     @staticmethod
     def __call__(spec):
-
+        # heavy import -- should be delayed until actually used
+        from ..retrace import rpzutil
         if not spec:
             raise InsufficientArgumentsError("Need at least a single --spec")
 

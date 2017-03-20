@@ -23,7 +23,7 @@ class Distribution(object):
 
     def __init__(self, provenance):
         """
-        Class consturctor
+        Class constructor
 
         Parameters
         ----------
@@ -33,15 +33,15 @@ class Distribution(object):
         self._provenance = provenance
 
     @staticmethod
-    def factory(distribution_name, provenance):
+    def factory(distribution_type, provenance):
         """
         Factory method for creating the appropriate Orchestrator sub-class
         based on format type.
 
         Parameters
         ----------
-        distribution_name : string
-            Name of distribution subclass to create. Current options are:
+        distribution_type : string
+            Type of distribution subclass to create. Current options are:
             'conda', 'debian', 'neurodebian', 'pypi'
         provenance : object
             Provenance class instance.
@@ -49,10 +49,10 @@ class Distribution(object):
         Returns
         -------
         distribution : object
-            Instance of a Distribtion sub-class
+            Instance of a Distribution sub-class
         """
-        class_name = distribution_name.capitalize() + 'Distribution'
-        module = import_module('niceman.distribution.' + distribution_name)
+        class_name = distribution_type.capitalize() + 'Distribution'
+        module = import_module('niceman.distribution.' + distribution_type)
         return getattr(module, class_name)(provenance)
 
     @abc.abstractmethod
