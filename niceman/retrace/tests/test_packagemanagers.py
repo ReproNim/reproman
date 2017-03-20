@@ -71,8 +71,13 @@ def test_find_release_file():
 
 @with_tempfile(mkdir=True)
 def test_detached_git(repo):
+    import os
     from niceman.cmd import Runner
-    runner = Runner(env={'LC_ALL': 'C'}, cwd=repo)
+    env = os.environ.copy()
+    env['LC_ALL'] = 'C'
+    runner = Runner(env=env, cwd=repo)
+    assert runner('git config user.name')[0], "git env should be set"
+    assert runner('git config user.email')[0], "git env should be set"
     runner('git init')
 
     # should be good enough not to crash
