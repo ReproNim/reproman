@@ -23,4 +23,4 @@ def test_retrace(reprozip_spec2):
                 '--spec', reprozip_spec2,
                 ]
         main(args)
-        assert_in("reading filename " + reprozip_spec2, log.lines)
+        assert_in("reading spec file " + reprozip_spec2, log.lines)

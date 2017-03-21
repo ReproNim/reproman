@@ -6,12 +6,13 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Analyzes ReproZip YML configuration to gather detailed package information
+"""Analyze ReproZip YML configuration to gather detailed package information
 """
 import sys
 from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
+from ..support.constraints import EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
 
 from logging import getLogger
@@ -22,7 +23,7 @@ lgr = getLogger('niceman.api.retrace')
 
 
 class Retrace(Interface):
-    """Analyzes ReproZip files to gather detailed package information
+    """Analyze known (e.g. ReproZip) trace files or just paths to gather detailed package information
 
     Examples
     --------
@@ -36,20 +37,37 @@ class Retrace(Interface):
             args=("--spec",),
             doc="ReproZip YML file to be analyzed",
             metavar='SPEC',
-            nargs="+",
-            constraints=EnsureStr(),
+            # nargs="+",
+            constraints=EnsureStr() | EnsureNone(),
+        ),
+        path=Parameter(
+            args=("path",),
+            metavar="PATH",
+            doc="""path(s) to be traced.  If spec is provided, would trace them
+            after tracing the spec""",
+            nargs="*",
+            constraints=EnsureStr() | EnsureNone()),
+        output_file=Parameter(
+            args=("-o", "--output-file",),
+            doc="Output file.  If not specified - printed to stdout",
+            metavar='output_file',
+            constraints=EnsureStr() | EnsureNone(),
         ),
     )
 
     @staticmethod
-    def __call__(spec):
+    def __call__(path=None, spec=None, output_file=None):
         # heavy import -- should be delayed until actually used
         from ..retrace import rpzutil
-        if not spec:
-            raise InsufficientArgumentsError("Need at least a single --spec")
 
-        filename = spec[0]
-        lgr.info("reading filename " + filename)
-        config = rpzutil.read_reprozip_yaml(filename)
-        rpzutil.identify_packages(config)
-        rpzutil.write_config(sys.stdout, config)
+        if not (spec or path):
+            raise InsufficientArgumentsError("Need at least a single --spec or a file")
+
+        if spec:
+            lgr.info("reading spec file %s", spec)
+            input_config = rpzutil.read_reprozip_yaml(spec)
+        else:
+            input_config = {}
+
+        config = rpzutil.identify_packages(input_config, path)
+        rpzutil.write_config(output_file or sys.stdout, config)

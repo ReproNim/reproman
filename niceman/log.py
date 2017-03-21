@@ -153,7 +153,10 @@ class ColorFormatter(logging.Formatter):
         if self._tb:
             record.msg = self._tb() + "  " + record.msg
 
-        return logging.Formatter.format(self, record)
+        try:
+            return logging.Formatter.format(self, record)
+        except:
+            import pdb; pdb.set_trace()
 
 
 class LoggerHelper(object):
