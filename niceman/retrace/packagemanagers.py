@@ -166,6 +166,7 @@ class DpkgOrigin(object):
     component = attr.ib()
     archive = attr.ib()
     architecture = attr.ib()
+    codename = attr.ib()
     origin = attr.ib()
     label = attr.ib()
     site = attr.ib()
@@ -314,6 +315,7 @@ class DpkgManager(PackageManager):
                 # Pull origin information from package file
                 origin = DpkgOrigin(name=None,
                                     component=pf.component,
+                                    codename=pf.codename,
                                     archive=pf.archive,
                                     architecture=pf.architecture,
                                     origin=pf.origin,
