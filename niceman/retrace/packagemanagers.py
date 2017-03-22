@@ -15,10 +15,6 @@ import copy
 import os
 import time
 
-from os.path import dirname, isdir, isabs
-from os.path import exists, lexists
-from os.path import join as opj
-
 from logging import getLogger
 from six import viewvalues
 
@@ -27,7 +23,6 @@ import attr
 import yaml
 from datetime import datetime
 
-from niceman.dochelpers import exc_str
 import niceman.utils as utils
 
 try:
@@ -179,7 +174,7 @@ class DpkgOrigin(object):
             data, dict_factory=collections.OrderedDict).items()
         return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
 
-yaml.SafeDumper.add_representer(DpkgOrigin,DpkgOrigin.yaml_representer)
+yaml.SafeDumper.add_representer(DpkgOrigin, DpkgOrigin.yaml_representer)
 
 
 class DpkgManager(PackageManager):
@@ -390,7 +385,8 @@ def identify_packages(files):
 
     for manager in managers:
         begin = time.time()
-        (packages_, unknown_files) = manager.search_for_files(files_to_consider)
+        (packages_, unknown_files) = \
+            manager.search_for_files(files_to_consider)
         packages_origins = manager.identify_package_origins(packages_)
         if packages_origins:
             origins += packages_origins
