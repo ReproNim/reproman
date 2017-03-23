@@ -181,6 +181,18 @@ class AwsEc2(Resource):
         """
         self._ec2_instance.terminate()
 
+    def start(self):
+        """
+        Start this EC2 instance in the AWS subscription.
+        """
+        self._ec2_instance.start()
+
+    def stop(self):
+        """
+        Stop this EC2 instance in the AWS subscription.
+        """
+        self._ec2_instance.stop()
+
     def execute_command(self, ssh, command, env=None):
         """
         Execute the given command in the environment.

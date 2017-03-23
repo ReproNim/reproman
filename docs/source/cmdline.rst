@@ -25,6 +25,8 @@ Environments operations
    generated/man/niceman-create
    generated/man/niceman-install
    generated/man/niceman-delete
+   generated/man/niceman-start
+   generated/man/niceman-stop
 
 Miscellaneous commands
 ======================

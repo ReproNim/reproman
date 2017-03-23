@@ -24,6 +24,8 @@ _group_dataset = (
         ('niceman.interface.create', 'Create'),
         ('niceman.interface.install', 'Install'),
         ('niceman.interface.delete', 'Delete'),
+        ('niceman.interface.start', 'Start'),
+        ('niceman.interface.stop', 'Stop'),
         # ('niceman.distribution.run', 'Run'),
     ])
 
