@@ -57,9 +57,10 @@ requires = {
     'debian': [
         'python-debian',
         # on Debian systems will come via apt
-        #'python-apt',
+        #'python-apt>=0.8.9.1',
+        # Origin.codename was introduced in 0.8.9
         # unfortunately not on pypi but needed by python-apt
-        #'http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.8.3ubuntu7.tar.gz',
+        #'http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.9.3.5.tar.xz'
         'chardet',  # python-debian misses dependency on it
     ],
     'docker': [
