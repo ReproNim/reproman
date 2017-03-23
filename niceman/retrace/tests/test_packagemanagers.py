@@ -19,6 +19,11 @@ from niceman.retrace.packagemanagers import DpkgManager
 from niceman.tests.utils import skip_if
 from niceman.tests.utils import with_tempfile
 
+try:
+    import apt
+except ImportError:
+    apt = None
+
 
 def test_identify_packages():
     files = ["/usr/share/doc/xterm/copyright",
@@ -36,11 +41,12 @@ def test_identify_packages():
     assert True
 
 
+@skip_if(not apt)
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
     manager = DpkgManager()
     (packages, unknown_files) = \
-            manager.search_for_files(files)
+        manager.search_for_files(files)
     origins = manager.identify_package_origins(packages)
     # Make sure that iptables was identified
     assert (not unknown_files), "/sbin/iptables should be identified"
