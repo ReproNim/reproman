@@ -52,9 +52,7 @@ before_install:
 install:
   # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
   - sudo apt-get build-dep python-apt
-  # only for Python2 ATM
-  # - if [ ${TRAVIS_PYTHON_VERSION:0:1} = 2 ]; then sudo apt-get install xz-utils; curl -O http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.9.3.5.tar.xz; xz -d python-apt_0.9.3.5.tar.xz; pip install http://launchpad.net/python-distutils-extra/trunk/2.28/+download/python-distutils-extra-2.28.tar.gz python-apt_0.9.3.5.tar; rm python-apt_0.9.3.5.tar; fi
-  # Try to install python-apt manually
+  # Install python-apt version 0.9.3.5 for Python 2 and 3
   - sudo apt-get install xz-utils; curl -O http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.9.3.5.tar.xz; xz -d python-apt_0.9.3.5.tar.xz; pip install http://launchpad.net/python-distutils-extra/trunk/2.28/+download/python-distutils-extra-2.28.tar.gz python-apt_0.9.3.5.tar; rm python-apt_0.9.3.5.tar;
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
