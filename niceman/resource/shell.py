@@ -56,6 +56,18 @@ class Shell(Resource):
         """
         return
 
+    def start(self):
+        """
+        Start this environment in the backend.
+        """
+        return
+
+    def stop(self):
+        """
+        Stop this environment in the backend.
+        """
+        return
+
     def execute_command(self, command, env=None):
         """
         Execute the given command in the environment.

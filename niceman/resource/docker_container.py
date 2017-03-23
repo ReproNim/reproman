@@ -127,3 +127,17 @@ class DockerContainer(Resource):
         """
         if self._container:
             self._client.remove_container(self._container, force=True)
+
+    def start(self):
+        """
+        Starts a container in the Docker engine.
+        """
+        if self._container:
+            self._client.start(container=self._container.get('Id'))
+
+    def stop(self):
+        """
+        Stops a container in the Docker engine.
+        """
+        if self._container:
+            self._client.stop(container=self._container.get('Id'))

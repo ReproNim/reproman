@@ -133,6 +133,20 @@ def test_awsec2_class():
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
 
+        # Test stopping resource.
+        resource.stop()
+        calls = [
+            call.stop()
+        ]
+        resource._ec2_instance.assert_has_calls(calls, any_order=True)
+
+        # Test starting resource.
+        resource.start()
+        calls = [
+            call.start()
+        ]
+        resource._ec2_instance.assert_has_calls(calls, any_order=True)
+
         # Test deleting resource.
         resource.delete()
         calls = [
