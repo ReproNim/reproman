@@ -19,6 +19,11 @@ from niceman.retrace.packagemanagers import DpkgManager
 from niceman.tests.utils import skip_if
 from niceman.tests.utils import with_tempfile
 
+try:
+    import apt
+except ImportError:
+    apt = None
+
 
 def test_identify_packages():
     files = ["/usr/share/doc/xterm/copyright",
@@ -28,12 +33,43 @@ def test_identify_packages():
              "/usr/bin/vim.basic",
              "/usr/share/bug/vim/script",
              "/home/butch"]
-    # TODO: Mock I/O and detect correct analysis
+    # Simple sanity check that the pipeline works
     packages, origins, files = identify_packages(files)
     pprint(files)
     pprint(origins)
     pprint(packages)
     assert True
+
+
+@skip_if(not apt)
+def test_dpkg_manager_identify_packages():
+    files = ["/sbin/iptables"]
+    manager = DpkgManager()
+    (packages, unknown_files) = \
+        manager.search_for_files(files)
+    origins = manager.identify_package_origins(packages)
+    # Make sure that iptables was identified
+    assert (not unknown_files), "/sbin/iptables should be identified"
+    # Make sure an origin is found
+    assert origins
+    # Make sure both a non-local origin was found
+    for o in origins:
+        if o.site:
+            assert o.name, "A non-local origin needs a name"
+            assert o.component, "A non-local origin needs a component"
+            assert o.archive, "A non-local origin needs a archive"
+            assert o.codename, "A non-local origin needs a codename"
+            assert o.origin, "A non-local origin needs an origin"
+            assert o.label, "A non-local origin needs a label"
+            assert o.site, "A non-local origin needs a site"
+            assert o.archive_uri, "An archive_uri should have been found"
+            assert o.date, "An package should have been found"
+            # Note: architecture is not mandatory (and not found on travis)
+            break
+    else:
+        assert False, "A non-local origin must be found"
+    pprint(origins)
+    pprint(packages)
 
 
 @skip_if(not lexists(opj(dirname(__file__), pardir, pardir, pardir, '.git')))
