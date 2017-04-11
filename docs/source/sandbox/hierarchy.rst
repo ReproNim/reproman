@@ -235,3 +235,48 @@ Observations
 
   if type is None, should be chosen based on the Distribution, or possibly even
   go through some kind of chain of known/registered distributions
+
+
+Bucc's RF idea
+==============
+
+Actors
+------
+
+- Traceable
+  .identify_packages(files) -> packages, loose_files
+
+- Provisionable
+  .initiate(specification)
+  .install_packages
+
+- Tracer
+  (acts upon Traceable things to harvest env spec)
+- Creator
+
+
+- Distribution
+  - DebianDistribution(Traceable, Provisionable)
+
+
+DataModels
+----------
+
+- Package
+  .origins
+
+- Origin
+
+- Specification
+  - DistributionSpecification
+    .origins
+    .packages
+    .other_files
+  - RunSpecification
+
+
+distribution: !include simple_workflow.yaml
+runs:
+  -
+
+
