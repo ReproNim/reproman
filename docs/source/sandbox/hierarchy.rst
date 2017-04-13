@@ -256,25 +256,33 @@ Actors
 
 - Creator
 
-- Distribution
-  - DebianDistribution(Traceable, Provisionable)
-  - UbuntuDistribution(Traceable, Provisionable)
-  - NeuroDebianDistribution(Traceable, Provisionable)
+- Distribution(Traceable, Provisionable)
+  - DebianDistribution
+  - UbuntuDistribution
+  - NeuroDebianDistribution
      - well -- could be traced as any other DebianDistribution BUT it is not
        'standalone' so just might need to be provisioned only on top of another
      - while preparing Debian-based "distributions" we will group them based on
        origin (and/or) label (e.g. if label is different from origin)
+     - all of above might need generic common parent DebDistribution since there
+       will be only a few particular aspects of them, primarily concerning
+     - they all to varying degree could
+         guess_apt_sources(packages) -> [!!AptSourceSpec]
+       to figure out additional apt sources needed to fulfill packages list if
+       we (how?) determine that it is necessary.  Could may be a generic API
+         adjust_distribution_to_fulfill_packages(!!DistributionSpec, environ)
+       which internally would first figure out which versions of packages are
+       available in the active `environ` and see how/if it could satisfy for
+       missing ones, and that is where `guess_apt_sources(packages)` would kick
+       in.  BUT that is where making boundaries between Debian and NeuroDebian
+       as separate distributions would hurt :-/  Unless we come up with central
+       class/object "Distributions" with `.has_a_package(package)`.
   - Conda
   - Docker
 
 
 DataModels
 ----------
-
-- Package
-  .origins
-
-- Origin
 
 - Spec    # Generic class which would also be "YAMLable", i.e. we could easily dump/load from .yml
   - Provenance(Spec)
@@ -287,8 +295,15 @@ DataModels
     - DebDistributionSpec(DistributionSpec)
       +? .system
       +? .architecture
+      .lsb_id        # Debian, Ubuntu (CentOS later)
+      .lsb_release   # APT sources might list multiple but we could analyze or just record which one is currently used
+      .lsb_codename
       + .sources [!!AptSourceSpec]
       .packages  [!!DebPackageSpec]
+    - CondaSpec(Spec)
+     +? .version
+     +? .build
+     .packages  [!!CondaPackageSpec]
   - RunSpec
   - AptSourceSpec(Spec)
     .name
@@ -303,6 +318,11 @@ DataModels
     .name
     .version
     .versions  [!!DebPackageAptVersionSpec]
+  - CondaPackageSpec
+    .name
+    .version
+    .build
+    .manager:  conda, pip   # could be either!  so it is not per se "CondaPackage"... not sure how/where we should distinguish
   - DebPackageAptVersionSpec(Spec):
     version: [!!ids to point to .sources]
   - VCSPackageSpec(Spec)
@@ -339,8 +359,7 @@ distributions:
   - name: ...
     version: ...
     versions: # we could still explicitly list them the same way we do for origins ATM
-    - version:
-      sources:
+     version: sources
  git:
   # here might be git-specific options, e.g. some credentials or whatnot
   packages:

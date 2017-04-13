@@ -132,23 +132,40 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(resource, resource_type, config, resource_id, clone, image,
-        docker_engine_url, only_env, aws_access_key_id, aws_secret_access_key,
-        aws_instance_type, aws_security_group, aws_region_name, aws_key_name,
-        aws_key_filename, existing='fail '):
+    def __call__(resource_name, resource_type, config, resource_id, clone, image,
+                 docker_engine_url, only_env, aws_access_key_id, aws_secret_access_key,
+                 aws_instance_type, aws_security_group, aws_region_name, aws_key_name,
+                 aws_key_filename, existing='fail '):
 
-        # if not specs:
-        #     specs = question("Enter a spec filename", default="spec.yml")
 
         # Load, while possible merging/augmenting sequentially
         # provenance = Provenance.factory(specs)
+        #
+        # TODO: need to be redone to be able to operate based on a spec
+        #  we do want
+        #     niceman create --resource_type docker_container --spec analysis.spec
+        #  which would choose appropriate base container etc
+        #
+        # if nothing in cmdline instructed on specific one to use:
+        #   resource = Resource.factory(resource_type)
+        #   resource_base = resource.guess_base(provenance.distributions)
+        #
+        # internally it might first just check if base OS could be deduced, so
+        # we need helpers like
+        #     guess_base_os_spec(distributions)
+        # and if none is there, each resource, might provide/use defaults, e.g.
+        # a default docker image if there is anaconda used and nothing about base
+        # env.
+        #
+        # if not specs:
+        #     specs = question("Enter a spec filename", default="spec.yml")
 
         from niceman.ui import ui
 
-        if not resource:
-            resource = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
+        if not resource_name:
+            resource_name = ui.question(
+                "Enter a resource_name name",
+                error_message="Missing resource_name name"
             )
 
         # if only_env:
@@ -157,13 +174,13 @@ class Create(Interface):
         # Get configuration and environment inventory
         if clone:
             config, inventory = get_resource_info(config, clone, resource_id, resource_type)
-            config['name'] = resource
+            config['name'] = resource_name
             del config['id']
             del config['status']
         else:
-            config, inventory = get_resource_info(config, resource, resource_id, resource_type)
+            config, inventory = get_resource_info(config, resource_name, resource_id, resource_type)
 
-        # TODO: All resource-type-specific params handling should be done in some other
+        # TODO: All resource_name-type-specific params handling should be done in some other
         # more scalable fashion
         # Overwrite file config settings with the optional ones from the command line.
         if image: config['base_image_id'] = image
@@ -177,14 +194,19 @@ class Create(Interface):
         if aws_key_name: config['key_name'] = aws_key_name
         if aws_key_filename: config['key_filename'] = aws_key_filename
 
-        # Create resource environment
+        # Create resource_name environment
         env_resource = Resource.factory(config)
         env_resource.connect()
         config_updates = env_resource.create()
 
-        # Save the updated configuration for this resource.
+        # Save the updated configuration for this resource_name.
         config.update(config_updates)
-        inventory[resource] = config
+        inventory[resource_name] = config
         niceman.interface.base.set_resource_inventory(inventory)
 
-        lgr.info("Created the environment %s", resource)
+        lgr.info("Created the environment %s", resource_name)
+
+        # TODO: at the end install packages using install and created env
+        # if not only_env:
+        #     from repronim.api import install
+        #     install(provenance, resource_name, resource_id, config)

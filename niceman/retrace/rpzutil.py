@@ -54,7 +54,7 @@ def identify_packages(config=None, paths=None):
     ----------
     config : dict, optional
         ReproZip configuration (input/output).  Listed in it files will
-        be analized first
+        be analyzed first
     paths : list, optional
         Additional paths to consider
 
