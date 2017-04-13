@@ -15,7 +15,7 @@ from os.path import lexists
 from os.path import join as opj, pardir, dirname
 
 from niceman.retrace.packagemanagers import identify_packages
-from niceman.retrace.packagemanagers import DpkgManager
+from niceman.retrace.packagemanagers import DebTracer
 from niceman.tests.utils import skip_if
 from niceman.tests.utils import with_tempfile
 
@@ -59,13 +59,13 @@ def test_find_release_file():
         }
 
     with mock.patch('os.path.exists', mocked_exists):
-        assert DpkgManager._find_release_file(
+        assert DebTracer._find_release_file(
             fp('s_d_d_data_non-free_binary-amd64_Packages')) == \
-                fp('s_d_d_data_InRelease')
-        assert DpkgManager._find_release_file(
+               fp('s_d_d_data_InRelease')
+        assert DebTracer._find_release_file(
             fp('s_d_d_data_non-free_binary-i386_Packages')) == \
-                fp('s_d_d_data_InRelease')
-        assert DpkgManager._find_release_file(
+               fp('s_d_d_data_InRelease')
+        assert DebTracer._find_release_file(
             fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
 
 

@@ -39,13 +39,13 @@ from niceman.cmd import CommandError
 
 lgr = getLogger('niceman.api.retrace')
 
-from .packagemanagers import PackageManager
+from .packagemanagers import PackageTracer
 
 
 class VCSRepo(object):
     """Base VCS repo class"""
 
-    def __init__(self, path):
+    def __init__(self, path, environ=None):
         """Representation for a repository
 
         Parameters
@@ -55,6 +55,10 @@ class VCSRepo(object):
 
         """
         self.path = path.rstrip(os.sep)
+        # TODO: we should be able to run within the environment
+        if environ is not None:
+            raise NotImplementedError("VCS tracing within custom environ")
+        self._environ = Runner(env={'LC_ALL': 'C'}, cwd=self.path)
 
 
 class GitSVNRepo(VCSRepo):
@@ -69,7 +73,7 @@ class GitSVNRepo(VCSRepo):
 
     _fields = tuple()
 
-    def __init__(self, path):
+    def __init__(self, path, environ=None):
         """Representation for Git or SVN repository
 
         Parameters
@@ -78,15 +82,14 @@ class GitSVNRepo(VCSRepo):
            Path to the top of the repository
 
         """
-        super(GitSVNRepo, self).__init__(path)
+        super(GitSVNRepo, self).__init__(path, environ=environ)
         self._files = None
         self._branch = None
-        self._runner = Runner(env={'LC_ALL': 'C'}, cwd=self.path)
 
     @property
     def files(self):
         if self._files is None:
-            out, err = self._runner(self._ls_files_command)
+            out, err = self._environ(self._ls_files_command)
             assert not err
             self._files = set(filter(None, out.split('\n')))
             if self._ls_files_filter:
@@ -185,7 +188,7 @@ class SVNRepo(GitSVNRepo):
             # TODO -- outdated repos might need 'svn upgrade' first
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
-            out, err = self._runner('svn info')
+            out, err = self._environ('svn info')
             self.__info = dict(
                 [x.lstrip() for x in l.split(':', 1)]
                 for l in out.splitlines() if l.strip()
@@ -242,7 +245,7 @@ class GitRepo(GitSVNRepo):
         """Helper to run git command, and ignore stderr"""
         cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
         try:
-            out, err = self._runner.run(cmd, expect_fail=expect_fail, **kwargs)
+            out, err = self._environ.run(cmd, expect_fail=expect_fail, **kwargs)
         except CommandError:
             if not expect_fail:
                 raise
@@ -318,7 +321,7 @@ class GitRepo(GitSVNRepo):
     def branch(self):
         if self._branch is None:
             try:
-                branch = self._runner.run('git rev-parse --abbrev-ref HEAD')[0].strip()
+                branch = self._environ.run('git rev-parse --abbrev-ref HEAD')[0].strip()
             except CommandError:
                 # could yet happen there is no commit here, so branch is not defined?
                 return None
@@ -327,7 +330,7 @@ class GitRepo(GitSVNRepo):
         return self._branch
 
 
-class VCSManager(PackageManager):
+class VCSTracer(PackageTracer):
     """Resolve files into Git repositories they are contained with
 
     TODO: generalize to other common VCS (svn, hg, bzr) which should win one
@@ -352,7 +355,7 @@ class VCSManager(PackageManager):
     REGISTERED_VCS = (SVNRepo, GitRepo)
 
     def __init__(self, *args, **kwargs):
-        super(VCSManager, self).__init__(*args, **kwargs)
+        super(VCSTracer, self).__init__(*args, **kwargs)
         # dictionary to contain per each inspected/known directory a VCS
         # instance it belongs to
         self._known_repos = {}
@@ -371,7 +374,6 @@ class VCSManager(PackageManager):
         pkg = only_with_values(pkg)
         pkg["files"] = []
         return pkg
-
 
     def resolve_file(self, path):
         """Given a path, return path of the repository it belongs to"""
@@ -415,7 +417,7 @@ class VCSManager(PackageManager):
                 # if not -- just keep going to the next candidate repository
         return None
 
-    def _get_packages_for_files(self, files):
+    def _get_packagenames_for_files(self, files):
         return {f: self.resolve_file(f) for f in files}
 
     def identify_package_origins(self, *args, **kwargs):

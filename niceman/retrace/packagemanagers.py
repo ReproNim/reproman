@@ -56,25 +56,23 @@ except (ValueError, AttributeError):
 # (Revised BSD License)
 
 
-# TODO:  we might want to rename
-#  Package ...
-#  Manager -> Resolver?  since we are trying to resolve paths into their
-#             corresponding "Package"s
-class PackageManager(object):
-    """Base class for package identifiers.
+class PackageTracer(object):
+    """Base class for package trackers.
 
-    ATM :term:`Package` describes all of possible "containers" which deliver
+    ATM :term:`Package` describes all of possible "archives" which deliver
     some piece of software or data -- packages by distributions (Debian, conda,
-    pip, ...) or VCS repositories"""
+    pip, ...), VCS repositories or even container images -- something which has
+    to be installed to fulfill environment spec
+    """
 
-    def __init__(self):
+    def __init__(self, environ=None):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
         # codepage just in case since we might want to comprehend error
         # messages
-        self._runner = Runner(env={'LC_ALL': 'C'})
+        self._environ = environ or Runner(env={'LC_ALL': 'C'})
 
-    def search_for_files(self, files):
-        """Identifies the packages for a given collection of files
+    def identify_packages_from_files(self, files):
+        """Identifies packages for a given collection of files
 
         From an iterative collection of files, we identify the packages
         that contain the files and any files that are not related.
@@ -87,7 +85,7 @@ class PackageManager(object):
         Return
         ------
         (found_packages, unknown_files)
-            - found_packages is an array of dicts that holds information about
+            - found_packages is a list of dicts that holds information about
               the found packages. Package dicts need at least "name" and
               "files" (that contains an array of related files)
             - unknown_files is a list of files that were not found in
@@ -97,7 +95,7 @@ class PackageManager(object):
         found_packages = {}
         nb_pkg_files = 0
 
-        file_to_package_dict = self._get_packages_for_files(files)
+        file_to_package_dict = self._get_packagenames_for_files(files)
         for f in files:
             if not os.path.lexists(f):
                 lgr.warning(
@@ -151,16 +149,21 @@ class PackageManager(object):
         """
         raise NotImplementedError
 
-    def _get_packages_for_files(self, filename):
+    def _get_packagenames_for_files(self, files):
         raise NotImplementedError
 
     def _create_package(self, pkgname):
+        """Creates implementation specific Package object
+         
+        (well -- atm still an OrderedDict)
+        """
         raise NotImplementedError
 
 
+# TODO: flyweight/singleton
 @attr.s
-class DpkgOrigin(object):
-    """DPKG Origin information for a dpkg
+class APTSource(object):
+    """APT origin information
     """
     name = attr.ib()
     component = attr.ib()
@@ -178,11 +181,11 @@ class DpkgOrigin(object):
             data, dict_factory=collections.OrderedDict).items()
         return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
 
-yaml.SafeDumper.add_representer(DpkgOrigin,DpkgOrigin.yaml_representer)
+yaml.SafeDumper.add_representer(APTSource, APTSource.yaml_representer)
 
 
-class DpkgManager(PackageManager):
-    """DPKG Package Identifier
+class DebTracer(PackageTracer):
+    """.deb-based (and using apt and dpkg) systems package tracer
     """
 
     # TODO: (Low Priority) handle cases from dpkg-divert
@@ -223,7 +226,7 @@ class DpkgManager(PackageManager):
         new_o.name = name
         return new_o
 
-    def _get_packages_for_files(self, files):
+    def _get_packagenames_for_files(self, files):
         file_to_package_dict = {}
 
         # Find out how many files we can query at once
@@ -233,7 +236,7 @@ class DpkgManager(PackageManager):
         for subfiles in (files[pos:pos + num_files]
                          for pos in range(0, len(files), num_files)):
             try:
-                out, err = self._runner.run(
+                out, err = self._environ(
                     ['dpkg-query', '-S'] + subfiles,
                     expect_stderr=True, expect_fail=True
                 )
@@ -247,6 +250,12 @@ class DpkgManager(PackageManager):
                 out = out.decode()
             except AttributeError:
                 pass
+            except UnicodeDecodeError as exc:
+                lgr.warning(
+                    "Got unicode decode problem. Happened within %s. Decoding allowing for errors.",
+                    exc.object[max(0, exc.start - 15):exc.end + 15].decode(errors='replace')
+                )
+                out = out.decode(errors='replace')
 
             # Now go through the output and assign packages to files
             for outline in out.splitlines():
@@ -312,15 +321,15 @@ class DpkgManager(PackageManager):
                     self._find_release_file(pf.filename))
 
                 # Pull origin information from package file
-                origin = DpkgOrigin(name=None,
-                                    component=pf.component,
-                                    archive=pf.archive,
-                                    architecture=pf.architecture,
-                                    origin=pf.origin,
-                                    label=pf.label,
-                                    site=pf.site,
-                                    archive_uri=archive_uri,
-                                    date=rdate)
+                origin = APTSource(name=None,
+                                   component=pf.component,
+                                   archive=pf.archive,
+                                   architecture=pf.architecture,
+                                   origin=pf.origin,
+                                   label=pf.label,
+                                   site=pf.site,
+                                   archive_uri=archive_uri,
+                                   date=rdate)
 
                 # Now add our crafted origin to the list
                 origins.append(origin)
@@ -362,8 +371,10 @@ class DpkgManager(PackageManager):
                     datetime.utcfromtimestamp(rdate)))
         return rdate
 
-
-def identify_packages(files):
+# TODO: environment should be with a state.  Idea is that if we want
+#  to trace while inheriting all custom PATHs which that run might have
+#  had
+def identify_packages(files, environment=None):
     """Identify packages files belong to
 
     Parameters
@@ -379,21 +390,31 @@ def identify_packages(files):
       Files which were not determined to belong to some package
     """
     # TODO: move this function into the base.py having decided on naming etc
-    from .vcs import VCSManager
-    managers = [DpkgManager(), VCSManager()]
+    from .vcs import VCSTracer
+    # TODO create list of appropriate for the `environment` OS tracers
+    #      in case of no environment -- get current one
+    tracers = [DebTracer(), VCSTracer()]
     origins = []
     packages = []
 
     files_to_consider = files
 
-    for manager in managers:
+    for tracer in tracers:
         begin = time.time()
-        (packages_, unknown_files) = manager.search_for_files(files_to_consider)
-        packages_origins = manager.identify_package_origins(packages_)
+        # TODO: we should allow for multiple passes, where each one could
+        #  possibly identify a new "distribution" (e.g. scripts ran from
+        #  different virtualenvs... some bizzare multiple condas etc)
+        # Each one should initialize "Distribution" and attach to it pkgs
+        (packages_, unknown_files) = \
+            tracer.identify_packages_from_files(files_to_consider)
+        # TODO: tracer.normalize
+        #   similar to DBs should take care about identifying/groupping etc
+        #   of origins etc
+        packages_origins = tracer.identify_package_origins(packages_)
         if packages_origins:
             origins += packages_origins
         lgr.debug("Assigning files to packages by %s took %f seconds",
-                  manager, time.time() - begin)
+                  tracer, time.time() - begin)
         packages += packages_
         files_to_consider = unknown_files
 

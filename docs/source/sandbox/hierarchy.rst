@@ -251,12 +251,21 @@ Actors
   .install_packages
 
 - Tracer
-  (acts upon Traceable things to harvest env spec)
-- Creator
+  (acts upon Traceable things to harvest env spec given an environment and a list of files)
+  - DebTracer
 
+- Creator
 
 - Distribution
   - DebianDistribution(Traceable, Provisionable)
+  - UbuntuDistribution(Traceable, Provisionable)
+  - NeuroDebianDistribution(Traceable, Provisionable)
+     - well -- could be traced as any other DebianDistribution BUT it is not
+       'standalone' so just might need to be provisioned only on top of another
+     - while preparing Debian-based "distributions" we will group them based on
+       origin (and/or) label (e.g. if label is different from origin)
+  - Conda
+  - Docker
 
 
 DataModels
@@ -267,16 +276,140 @@ DataModels
 
 - Origin
 
-- Specification
-  - DistributionSpecification
-    .origins
-    .packages
-    .other_files
-  - RunSpecification
+- Spec    # Generic class which would also be "YAMLable", i.e. we could easily dump/load from .yml
+  - Provenance(Spec)
+    .files  [!!str] # just loose files... we might actually bring it under 'Files' Distribution as of the last resort
+    .distributions [!!DistributionSpec]
+    .runs [!!RunSpec]
+    ...
+  - DistributionSpec(Spec)
+    .packages  [!!PackageSpec]
+    - DebDistributionSpec(DistributionSpec)
+      +? .system
+      +? .architecture
+      + .sources [!!AptSourceSpec]
+      .packages  [!!DebPackageSpec]
+  - RunSpec
+  - AptSourceSpec(Spec)
+    .name
+    .component
+    .archive
+    .architecture
+    .origin
+    .label
+    ...
+  - PackageSpec(Spec)
+  - DebPackageSpec(PackageSpec)
+    .name
+    .version
+    .versions  [!!DebPackageAptVersionSpec]
+  - DebPackageAptVersionSpec(Spec):
+    version: [!!ids to point to .sources]
+  - VCSPackageSpec(Spec)
+    .path
+    - GitPackageSpec(VCSPackageSpec)
+      .
 
 
 distribution: !include simple_workflow.yaml
 runs:
   -
 
+DISTRIBUTUONS
+-------------
 
+I think we can't escape those.  They would allow for nicer groupping and avoid
+pulling terms by the ears... e.g.
+
+# for now just inheriting ideas from reprozip but we might RF it to expand to
+# support alternative specs (BIDS-apps, scritran's gears etc)
+
+version: # our spec version
+runs:  # to be discussed but it will provide ENV variables which will be used to establish env where retracing is done!
+input_outputs:
+other_files:
+
+# here we expand
+distributions:
+ deb:  # just the one which uses deb (and apt and dpkg)
+  sources:  # what now is origins. do not like origins -- clashes with "origin" and ppl know about apt/sources
+  -
+  packages:  # not even sure if we should point from which apt_sources was available
+  # names might not be unique -- multiarch
+  - name: ...
+    version: ...
+    versions: # we could still explicitly list them the same way we do for origins ATM
+    - version:
+      sources:
+ git:
+  # here might be git-specific options, e.g. some credentials or whatnot
+  packages:
+  - path:
+    hexsha:
+ svn:
+  # might even have some "root" one
+  packages:
+
+ conda:
+ - path: /path/conda1
+   build: ...
+   packages:
+   -
+ - path: /path/conda2
+   build: ...
+   packages:
+   -
+
+
+overall for distributions
+
+distributions:
+ TYPE:  # deb,git,svn
+   LIST (list) OR A SINGLE entry (associative) of that type
+    packages:
+     LIST of either full *Package entries or sugarings (e.g. name=version)
+
+
+Resources images
+~~~~~~~~~~~~~~~~
+Well -- we will use some as environments where any given spec is "implemented".
+BUT we could also support resources being listed as 'packages', possibly even without
+directly associated files (suchas in the case with docker):
+
+docker:
+ # could be some specific to it settings, e.g. "hubs" similar to "apt sources"
+ packages:
+ - image: bids/qa
+   tag: latest
+   id: afe...
+ - "bids/cpac:latest"  # sugaring -- ideally we should use in sugarings native syntax
+                       # thus wrapping here into string explicitly
+   # TODO -- review docker-compose syntax to what degree we need to implement it
+   #   our use cases aren't service oriented, so all the ports mapping etc is not
+   #   what we really need
+singularity:
+ packages:
+ - image: /path/sing_image.img
+   md5: ...
+   sha1: ...
+
+so that in theory we could 'trace' execution "into" containers and/or just spec
+commands which will use them (even if commands would fetch them automagically imho
+this would be beneficial).  Corresponding "packages" then would need to have access
+to that resource type backend
+
+Sugarings
+~~~~~~~~~
+
+For packages, we should allow some sugaring in specs to facilitate entry by humans, e.g.
+packages (allowing for mixing):
+
+ - python-mvpa2=2.6.0  # may be borrow from pip for = to be non-strict, and == strict?
+ - name: python-nibabel
+
+those sugarings would be type dependent, e.g. here NAME=VERSION and in GIT, PATH=URL@treeish, etc
+
+git:
+ - /opt/niceman=http://github.com/repronim/niceman@1.0.0
+
+then normalization would unroll those into full fledged specs
