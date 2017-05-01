@@ -94,7 +94,6 @@ requires.update({
         'sphinx-rtd-theme',
     ],
     'devel-utils': [
-        'nose-timer',
         'line-profiler',
         # necessary for accessing SecretStorage keyring (system wide Gnome
         # keyring)  but not installable on travis, IIRC since it needs connectivity
