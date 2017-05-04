@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Classes to identify package sources for files"""
+"""Classes to identify VCS repos for files"""
 
 from __future__ import unicode_literals
 
@@ -23,16 +23,6 @@ from six import viewvalues
 from niceman.dochelpers import exc_str
 from niceman.utils import only_with_values
 
-try:
-    import apt
-    import apt.utils as apt_utils
-    import apt_pkg
-    cache = apt.Cache()
-except ImportError:
-    apt = None
-    apt_utils = None
-    apt_pkg = None
-    cache = None
 
 from niceman.cmd import Runner
 from niceman.cmd import CommandError
