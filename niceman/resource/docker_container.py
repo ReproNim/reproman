@@ -10,6 +10,7 @@
 
 import attr
 import docker
+import dockerpty
 import json
 from ..support.exceptions import CommandError, ResourceError
 from .base import Resource
@@ -84,7 +85,10 @@ class DockerContainer(Resource):
             name=self.name,
             image=self.base_image_id,
             stdin_open=True,
-            detach=True)
+            # detach=True,
+            tty=True,
+            command='/bin/sh',
+        )
         self.id = self._container.get('Id')
         self.status = 'running'
         self._client.start(container=self.id)
@@ -141,3 +145,11 @@ class DockerContainer(Resource):
         """
         if self._container:
             self._client.stop(container=self._container.get('Id'))
+
+    def login(self):
+        """
+        Log into a container and get the command line
+        """
+
+        # press C-p C-q to close but keep container running
+        dockerpty.start(self._client, self._container)
