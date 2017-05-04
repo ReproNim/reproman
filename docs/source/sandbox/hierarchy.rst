@@ -29,10 +29,11 @@ TOL (thoughts out loud):
   So e.g. `install_packages` should get a list of versioned packages and the `environment`
   to be used to install them
 
-  - __init__()  -- leave agnostic of the "provenance"
+  - __init__()  -- leave agnostic of the "provenance"?
+     possibly provide with environment to operate on? (shared state among all methods)
 
   - initiate(
-     origins: list of the origins to initiate based on,
+     dist_spec: distribution portion of the specification
      environment: the environment to operate in
     )
 
@@ -284,11 +285,16 @@ Actors
 DataModels
 ----------
 
+Spec or Model????
+
 - Spec    # Generic class which would also be "YAMLable", i.e. we could easily dump/load from .yml
-  - Provenance(Spec)
-    .files  [!!str] # just loose files... we might actually bring it under 'Files' Distribution as of the last resort
+  - Environment(Spec)
+    .base   ????? # to encode information such as kernel, lsb_release of the base system?
+            (LinuxBase,DockerImage,SingularityImage,), i.e.
     .distributions [!!DistributionSpec]
-    .runs [!!RunSpec]
+    .files  [!!str] # just loose files... we might actually bring it under 'Files' Distribution as of the last resort
+    .packages [!!PackageSpec]  # generic specs for packages which could later be assigned into distributions
+    # .runs [!!RunSpec]   -- most probably will not be here! we will move them outside, and they could (optionally) point to environment spec
     ...
   - DistributionSpec(Spec)
     .packages  [!!PackageSpec]
@@ -303,7 +309,13 @@ DataModels
     - CondaSpec(Spec)
      +? .version
      +? .build
+     +? .python_version
+     +? .type  (anaconda, miniconda, ...)
      .packages  [!!CondaPackageSpec]
+    - Docker   # happen someone runs smth like a dockerized BIDSApp.
+               # We should capture availability of that image so it could be used in 'runs' scripts/commands
+              # We can't provision Containers though! although optionally could detect starting container, so we could make an image and thus -- provision!
+      .images [!!DockerImageSpec]
   - RunSpec
   - AptSourceSpec(Spec)
     .name
@@ -312,6 +324,8 @@ DataModels
     .architecture
     .origin
     .label
+    .suite
+    .codename # should we allow for custom referencing of upstairs attributes, e.g. $lsb_codename to facilitate easy manipulations?
     ...
   - PackageSpec(Spec)
   - DebPackageSpec(PackageSpec)
@@ -329,11 +343,26 @@ DataModels
     .path
     - GitPackageSpec(VCSPackageSpec)
       .
+  - FilesPackageSpec    # some additional flexible specs to allow e.g. to accompany spec with collections of files to be deployed into env
+
+  - LinuxBase
+    . kernel
+    ?. architecture
+
+  - DockerImage
+    . image
+    . dockerfile   # could be specified one way or another
+    # . container    # probably shouldn't be here for various reasons?
 
 
-distribution: !include simple_workflow.yaml
+If we move runs specification outside (as probably it should) we could then
+provide some semantics to include env spec within "execution specification"
+
+environment: !include simple_workflow.yaml
 runs:
   -
+
+
 
 DISTRIBUTUONS
 -------------
@@ -344,13 +373,17 @@ pulling terms by the ears... e.g.
 # for now just inheriting ideas from reprozip but we might RF it to expand to
 # support alternative specs (BIDS-apps, scritran's gears etc)
 
-version: # our spec version
-runs:  # to be discussed but it will provide ENV variables which will be used to establish env where retracing is done!
-input_outputs:
-other_files:
-
-# here we expand
-distributions:
+version:        # our spec version
+base:           # possible base on top of which to operate.  Could be discovered basic LinuxBase or DockerImage or ...
+ # either
+ linux:
+ - kernel:
+  - release: 4.9.0-2-amd64
+  - machine: x86_64
+ # or
+ docker:   # serves as a base for everything listed below so no need for list - a single entry
+  image: debian:stretch  # name?repository:tag  so
+distributions:  # here we expand
  deb:  # just the one which uses deb (and apt and dpkg)
   sources:  # what now is origins. do not like origins -- clashes with "origin" and ppl know about apt/sources
   -
@@ -378,6 +411,17 @@ distributions:
    build: ...
    packages:
    -
+
+ docker:
+  images:
+   - repository: debian
+     id: 19134a8202e7
+     tag: stretch
+     ?image:   debian:stretch    # alternative?
+     ?digest:
+     ?index:      # not sure if possible to discover ATM see http://rancher.com/comparing-four-hosted-docker-registries/ for concepts
+     ?registry:   # but if we allow for specification -- might be helpful.
+     ?repository: # BUT overlaps somewhat with what we should be specifying in resources!
 
 
 overall for distributions
