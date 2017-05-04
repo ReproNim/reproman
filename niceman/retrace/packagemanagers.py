@@ -251,6 +251,7 @@ class DebTracer(PackageTracer):
             except AttributeError:
                 pass
             except UnicodeDecodeError as exc:
+                # TODO: TEMP workaround. needs a proper fix:  https://github.com/ReproNim/niceman/issues/83
                 lgr.warning(
                     "Got unicode decode problem. Happened within %s. Decoding allowing for errors.",
                     exc.object[max(0, exc.start - 15):exc.end + 15].decode(errors='replace')

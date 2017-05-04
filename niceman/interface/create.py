@@ -132,7 +132,7 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(resource_name, resource_type, config, resource_id, clone, image,
+    def __call__(resource, resource_type, config, resource_id, clone, image,
                  docker_engine_url, only_env, aws_access_key_id, aws_secret_access_key,
                  aws_instance_type, aws_security_group, aws_region_name, aws_key_name,
                  aws_key_filename, existing='fail '):
@@ -162,10 +162,11 @@ class Create(Interface):
 
         from niceman.ui import ui
 
-        if not resource_name:
-            resource_name = ui.question(
-                "Enter a resource_name name",
-                error_message="Missing resource_name name"
+        # TODO: allow resource to be name or id...
+        if not resource:
+            resource = ui.question(
+                "Enter a resource name",
+                error_message="Missing resource name"
             )
 
         # if only_env:
@@ -174,13 +175,13 @@ class Create(Interface):
         # Get configuration and environment inventory
         if clone:
             config, inventory = get_resource_info(config, clone, resource_id, resource_type)
-            config['name'] = resource_name
+            config['name'] = resource
             del config['id']
             del config['status']
         else:
-            config, inventory = get_resource_info(config, resource_name, resource_id, resource_type)
+            config, inventory = get_resource_info(config, resource, resource_id, resource_type)
 
-        # TODO: All resource_name-type-specific params handling should be done in some other
+        # TODO: All resource-type-specific params handling should be done in some other
         # more scalable fashion
         # Overwrite file config settings with the optional ones from the command line.
         if image: config['base_image_id'] = image
@@ -194,19 +195,19 @@ class Create(Interface):
         if aws_key_name: config['key_name'] = aws_key_name
         if aws_key_filename: config['key_filename'] = aws_key_filename
 
-        # Create resource_name environment
+        # Create resource environment
         env_resource = Resource.factory(config)
         env_resource.connect()
         config_updates = env_resource.create()
 
-        # Save the updated configuration for this resource_name.
+        # Save the updated configuration for this resource.
         config.update(config_updates)
-        inventory[resource_name] = config
+        inventory[resource] = config
         niceman.interface.base.set_resource_inventory(inventory)
 
-        lgr.info("Created the environment %s", resource_name)
+        lgr.info("Created the environment %s", resource)
 
         # TODO: at the end install packages using install and created env
         # if not only_env:
         #     from repronim.api import install
-        #     install(provenance, resource_name, resource_id, config)
+        #     install(provenance, resource, resource_id, config)
