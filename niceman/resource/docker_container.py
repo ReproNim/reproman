@@ -85,9 +85,8 @@ class DockerContainer(Resource):
             name=self.name,
             image=self.base_image_id,
             stdin_open=True,
-            # detach=True,
             tty=True,
-            command='/bin/sh',
+            command='/bin/bash',
         )
         self.id = self._container.get('Id')
         self.status = 'running'
@@ -150,6 +149,4 @@ class DockerContainer(Resource):
         """
         Log into a container and get the command line
         """
-
-        # press C-p C-q to close but keep container running
-        dockerpty.start(self._client, self._container)
+        dockerpty.start(self._client, self._container, logs=0)
