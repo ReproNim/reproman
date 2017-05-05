@@ -17,6 +17,7 @@ from ..base import Resource
 def test_dockercontainer_class():
 
     with patch('docker.Client') as client, \
+        patch('dockerpty.start') as dockerpty, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
@@ -41,7 +42,7 @@ def test_dockercontainer_class():
                 '{ "status" : "status 1", "progress" : "progress 1" }',
                 '{ "status" : "status 2", "progress" : "progress 2" }'
             ],
-            create_container=lambda name, image, stdin_open, detach: {
+            create_container=lambda name, image, stdin_open, tty: {
                 'Id': '18b31b30e3a5'
             }
         )
@@ -117,6 +118,10 @@ def test_dockercontainer_class():
             call().start(container='18b31b30e3a5'),
         ]
         client.assert_has_calls(calls, any_order=True)
+
+        # Test logging into the container.
+        resource.login()
+        assert dockerpty.called == True
 
         # Test stopping resource.
         resource.stop()
