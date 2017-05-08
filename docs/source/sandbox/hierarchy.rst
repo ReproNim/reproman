@@ -290,7 +290,7 @@ Spec or Model????
 - Spec    # Generic class which would also be "YAMLable", i.e. we could easily dump/load from .yml
   - Environment(Spec)
     .base   ????? # to encode information such as kernel, lsb_release of the base system?
-            (LinuxBase,DockerImage,SingularityImage,), i.e.
+            (LinuxBase,DockerImage,SingularityImage,AWS), i.e.
     .distributions [!!DistributionSpec]
     .files  [!!str] # just loose files... we might actually bring it under 'Files' Distribution as of the last resort
     .packages [!!PackageSpec]  # generic specs for packages which could later be assigned into distributions
@@ -362,6 +362,23 @@ environment: !include simple_workflow.yaml
 runs:
   -
 
+build_env_debian.yaml
+packages:
+  - name: g++
+  - name: cmake
+
+
+build_env_centos.yaml
+packages:
+  -name: gcc-c++
+  -name: cmake
+
+
+build_env.yaml
+packages:
+ include: build_env_debian.yaml
+ git:
+  - url: http://github.com/...
 
 
 DISTRIBUTUONS
@@ -412,7 +429,7 @@ distributions:  # here we expand
    packages:
    -
 
- docker:
+ docker:   # to cause "docker distribution" to do   docker pull  on every image
   images:
    - repository: debian
      id: 19134a8202e7
@@ -422,7 +439,21 @@ distributions:  # here we expand
      ?index:      # not sure if possible to discover ATM see http://rancher.com/comparing-four-hosted-docker-registries/ for concepts
      ?registry:   # but if we allow for specification -- might be helpful.
      ?repository: # BUT overlaps somewhat with what we should be specifying in resources!
+packages:
 
+
+
+distributions:
+ deb:
+  packages:
+   - name: fsl
+     version:
+   - name: docker.io
+     version:
+ docker:
+  images:
+   - image: fsl-worker
+     id: 19134a
 
 overall for distributions
 
