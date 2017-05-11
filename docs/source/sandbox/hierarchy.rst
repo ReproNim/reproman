@@ -10,8 +10,8 @@ distribution.base.Distribution   base class
  - __init__ (provenance)
  - factory [static]  (distribution_name, provenance)
     provenance given to __init__
- - initiate (environment)
- - install_packages (environment)
+ - initiate (session)
+ - install_packages (session)
 
 sub-classes
  - Debian
@@ -26,47 +26,47 @@ TOL (thoughts out loud):
   That makes it somewhat inflexible since probably "orchestrating" of the
   Distribution's should be done outside of their classes, and they should just
   be provided necessary pieces of the "provenance" depending on their types.
-  So e.g. `install_packages` should get a list of versioned packages and the `environment`
+  So e.g. `install_packages` should get a list of versioned packages and the `session`
   to be used to install them
 
   - __init__()  -- leave agnostic of the "provenance"?
-     possibly provide with environment to operate on? (shared state among all methods)
+     possibly provide with session to operate on? (shared state among all methods)
 
   - initiate(
      dist_spec: distribution portion of the specification
-     environment: the environment to operate in
+     session: the session to operate in
     )
 
     might want to do
-    - necessary checks if environment is compatible with this distribution and
+    - necessary checks if session is compatible with this distribution and
       possibly is already satisfied (could be useful to be able to use functionality
       from trace!)
-    - instruct already pre-setup environment to install necessary "packages"
+    - instruct already pre-setup session to install necessary "packages"
       (see [INST])
 
   - install_packages(
       packages: list of "Package"s of known to it types,
-      environment,
+      session,
     )
     Could may be even just consume regular string(s) whenever no specific
     details are needed
 
   - resolve_name(
       name: list of software/data names (possibly with versions?! mneh for now),
-      environment: optional
+      session: optional
     ) -> string or None
     so that top level Environment could request to install e.g. 'svn', 'pip', etc.
-    We might even 'sense' if such a package is available already (thus environment)
+    We might even 'sense' if such a package is available already (thus session)
     option.
 
     Might store a set of predefined resolutions (e.g. svn -> subversion,
     singularity -> singularity-container) which is  specific to distributions
 
     TODO future:  think how it would link into some packages requiring tune up
-    of the environment or sourcing some env files specific to different distros.
+    of the session or sourcing some env files specific to different distros.
 
-- Q: could/should environment be specified at __init__ time or just memorized by
-  'initiate' call, since we unlikely to re-use the same object for different environments
+- Q: could/should session be specified at __init__ time or just memorized by
+  'initiate' call, since we unlikely to re-use the same object for different sessions
 
 
 resource.base.Resource base class
@@ -288,6 +288,7 @@ DataModels
 Spec or Model????
 
 - Spec    # Generic class which would also be "YAMLable", i.e. we could easily dump/load from .yml
+  - RunSpec
   - Environment(Spec)
     .base   ????? # to encode information such as kernel, lsb_release of the base system?
             (LinuxBase,DockerImage,SingularityImage,AWS), i.e.
@@ -316,7 +317,6 @@ Spec or Model????
                # We should capture availability of that image so it could be used in 'runs' scripts/commands
               # We can't provision Containers though! although optionally could detect starting container, so we could make an image and thus -- provision!
       .images [!!DockerImageSpec]
-  - RunSpec
   - AptSourceSpec(Spec)
     .name
     .component
@@ -507,3 +507,119 @@ git:
  - /opt/niceman=http://github.com/repronim/niceman@1.0.0
 
 then normalization would unroll those into full fledged specs
+
+
+
+Actual hierarchy
+----------------
+
+To make separation of interfaces cleaner
+
+(active interfaces)
+Tracer      - given env, outputs specs
+Provisioner - given env and specs, performs installations
+
+  Debian(Tracer, Provisioner)
+
+Resource - base class for anything we manage within out 'inventory'
+           configuration.  So shouldn't be a part of the spec although some "models" could/should be reused, e.g. for images
+ Image    - a resource which could be shared, or could be instantiated (docker image, aws ec2 instance)
+ Instance - an instantiation of an image which could generate sessions
+            - could have state (off, on, booting, ...)
+            - should be "linked" to original image (.parent?)
+ Session  - active session which could execute commands, could be
+            - active (connected, can run commands)
+            - reenterable (e.g. session of a running docker container)
+              - should retain possibly changed env, so we should store it after each command exec or just rely on .set_envvar and .source_file?
+            - persistent (not only reenterable but stateful, screen or VNC within any other session)
+            - should be linked back to original resource (instance, image) (.parent?)
+
+            .run(cmd, track_env=False)
+            .set_envvar(var, value, session_only=False, format=False)
+               - `session_only` is to store only for this session only as to facilitate dockers ARG.
+                 If False (default), change should be persistent and reflected in running commands there
+                 later and/or generated image
+               - `format` is to allow format using already existing variables  (e.g. PATH=/blah:{PATH})
+               - not yet sure if we would like to expose that ARG handling from cmdline API as docker does
+               - internally should maintain two versions I guess (session_only and overall)
+                 - idea: could generalize by adding `space=None` argument which would instruct within which
+                   env space it would be stored.  E.g. space=`session` would be identical to session_only.
+                   But becomes somewhat incongruent since after this one is done
+            .set_runner(cmd, space=None)
+               - set the command which would be used to run each command, e.g. `eatmydata` ??? or should not be as generic...?
+                 may be we need some kind of execution profiles (again -- `space`)
+                  so I could say ".set_envvar('DEBIAN_FRONTEND', 'noninteractive', space='deb'); .set_runner('eatmydata', space='deb')"
+            .get_env(session=False)
+               - with `session` True, would return also
+            .source_file(filename, args=[])
+               - needed to activate conda/pip/modules envs
+            .copy_files_into(src, dest, ...)
+            # if to aim for better coverage of Dockerfile "API".  Could be made supported for others (singularity, ssh, localhost)
+            .set_user(user)
+            .set_entry_command(cmd)
+
+            Batched one:
+            - .finalize_batch()  -- if was ran in batch mode
+
+Backends (docker, localhost, aws-ec2) - generate/manipulate image/instance/sessions
+   - depending on the backend, `session` might need to be generated directly (e.g. localhost)
+     or would need to be done from Image (singularity) or from Instance (docker).
+     Some (schroot) could go directly into instance but allow for image (tarball)
+
+   .instantiate(image) -> instance (docker start)
+   .start_session(instance or image, background=False, batched=False)
+    - in case of batched session, returned Session should have '.finalize_batch'?
+   .join_session(session)
+   .snapshot_image(session or instance, image_name) -> image_instance_spec
+   .build_image(env_spec, target_image_spec=None, batched=False) -> image_instance_spec  [not avail for localhost]
+    - in case of batched,
+         docker and singularity could use their BatchedSession
+         to generate Dockerfile or Singularity.def which they would pass to their 'build'
+         and generate an image
+      in case of not batched, they
+        - .instantiate first
+        - .start_session
+        - run the commands
+        - .snapshot_image
+    - image_spec
+   .stop_session()
+    .run(..., rm=False)  -- sugaring which chains things up if needed or directly calls if available applicable
+
+So "features"(passive)/interfaces
+ Instantiable? (DockerImage, but not SingularityImage)
+ CanStartSession (SinularityImage)
+
+
+
+Depending on the backend
+
+-
+  - base/ -- base classes definitions etc
+    - models  - would provide base definitions and functionality for all the specs etc
+  - cmdline/ -- cmdline helpers
+  - interface/ -- interface functionality
+  - distributions/ - aggregate everything related to the distribution within
+                     (so should absorb majority of retrace. The "retrace" controller code should go to retrace.py for now)
+    - base -- base classes
+    - base_vcs -- base classes for VCSs
+    - debian -- definitions for packages, distribution spec, Tracer/Provisioner
+    - conda
+    - docker
+    - git
+    - svn
+  - formats/ - serialized (files) representations
+    - base -- base classes
+    - niceman -- will be pretty much straight dump of the model BUT there could be others
+    - reprozip
+    - trig
+    - NEW: human  ;)
+    - NEW: neurodocker-like
+    - examples/  (move from top level)
+  - resource[s]/ -- computational resources... ????  RF into ...
+    - aws_ec2
+    - docker
+    - singularity
+  - support/ - misc stuff
+  - tests/ - top level tests
+  - ui/  - ui related stuff
+
