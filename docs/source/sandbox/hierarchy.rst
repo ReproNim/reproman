@@ -536,12 +536,13 @@ Resource - base class for anything we manage within out 'inventory'
             - should be linked back to original resource (instance, image) (.parent?)
 
             .run(cmd, track_env=False)
+
             .set_envvar(var, value, session_only=False, format=False)
                - `session_only` is to store only for this session only as to facilitate dockers ARG.
                  If False (default), change should be persistent and reflected in running commands there
                  later and/or generated image
                - `format` is to allow format using already existing variables  (e.g. PATH=/blah:{PATH})
-               - I don't think we need to expose that ARG handling from cmdline API as docker does at this level
+               - I don't think we need to expose that ARG handling from cmdline API as docker does at this time/level
                - internally should maintain two versions I guess (session_only and overall)
                  - idea: could generalize by adding `space=None` argument which would instruct within which
                    env space it would be stored.  E.g. space=`session` would be identical to session_only.
@@ -551,8 +552,11 @@ Resource - base class for anything we manage within out 'inventory'
                    generating (e.g. /root/.niceman/spaces/SPACE) and sourcing them for every command run in
                    case of docker since we can't otherwise augment env.  Having a single "session_only" makes
                    it easi(er)
+            .set_envvars(vars:dict, update=True, ...) - sugaring on top to pass entire dict and update or overload entirely
+            .get_envvars(session=False) -> dict
+               - with `session` True, would return also
 
-            .set_runner(cmd, space=None) -- might go away
+            ???.set_runner(cmd, space=None) -- might go away
                - set the command which would be used to run each command, e.g. `eatmydata` ??? or should not be as generic...?
                  may be we need some kind of execution profiles (again -- `space`)
                   so I could say ".set_envvar('DEBIAN_FRONTEND', 'noninteractive', space='deb'); .set_runner('eatmydata', space='deb')"
@@ -560,9 +564,7 @@ Resource - base class for anything we manage within out 'inventory'
                   `.copy_files_into('shims/', '/usr/local/niceman/bootstrap/shims')`
                   `.set_envvar('PATH', '/usr/local/niceman/bootstrap/shims:{PATH}', space='apt')`
                  This way we could control via spaces where we want eatmydata assistance and for which tools
-
-            .get_env(session=False)
-               - with `session` True, would return also
+               - could be default, per distribution in some kind of "prepare_for_deploy" step -- which packages to install and what to set for the env
             .source_file(filename, args=[])
                - needed to activate conda/pip/modules envs
             .copy_files_into(src, dest, ..., permissions=?, recursive=False)
@@ -581,6 +583,7 @@ Backends (docker, localhost, aws-ec2) - generate/manipulate image/instance/sessi
    .instantiate(image) -> instance (docker start)
    .start_session(instance or image, session_spec=None, options=None, background=False, batched=False)
     - in case of batched session, returned Session should have '.finalize_batch'?
+    - if it is an interactive with tty -- would not return I guess since it would be active?
     - `options` are to provide backend specific options to session (the same below for build_image for image, etc)
    .join_session(session)
    .snapshot_image(session or instance, image_name) -> image_instance_spec
@@ -662,3 +665,38 @@ lsb/apt would be good but they wouldn't be "bare".  So we should annotate that o
 some resources are "base", and then only if none found, we could ask if user
 wants to try to use some other available or request update of the resources from
 external sources until satisfying one is found.
+
+It might need to be either a separate registry of resources (which we could
+potentially ship), or somehow tagged within a bigger collection.
+
+Another
+
+
+Resources
+---------
+
+? .type to identify different "types" of resources available
+
+- backend
+- image
+- container
+- session
+
+but how to differ types?  in theory each image/container is associated with a
+backend, so we could just add those for each resource (where not a backend itself)
+
+Resource "management" could may be made "transparent" at the level of manipulating
+their Python objects
+
+- each class deriving from a resource could have .RESOURCE_TYPE field
+- creating a new resource should place it into registry.
+  E.g. if we create a new Container of some type, or an image, it would
+  automatically be added to registry. Starting a session -- adds to registry.
+  Stopping session -- removes from registry.  So overall we need
+
+  - create (start)
+  - delete (stop)
+  - get_status  -- we already have it reported in ls but seems to differ from
+               the one in inventory.json
+  - validate  -- to check if resource entry is still valid (image or container
+                  still exists, etc)
