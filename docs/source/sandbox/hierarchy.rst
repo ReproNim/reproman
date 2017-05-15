@@ -530,8 +530,9 @@ Resource - base class for anything we manage within out 'inventory'
  Session  - active session which could execute commands, could be
             - active (connected, can run commands)
             - reenterable (e.g. session of a running docker container)
+              - could actually have multiple entries (or we could separate that out into separate property)
               - should retain possibly changed env, so we should store it after each command exec or just rely on .set_envvar and .source_file?
-            - persistent (not only reenterable but stateful, screen or VNC within any other session)
+            - persistent (not only reenterable but stateful -- the shell doesn't terminate as with screen or VNC within any other session)
             - should be linked back to original resource (instance, image) (.parent?)
 
             .run(cmd, track_env=False)
@@ -540,20 +541,31 @@ Resource - base class for anything we manage within out 'inventory'
                  If False (default), change should be persistent and reflected in running commands there
                  later and/or generated image
                - `format` is to allow format using already existing variables  (e.g. PATH=/blah:{PATH})
-               - not yet sure if we would like to expose that ARG handling from cmdline API as docker does
+               - I don't think we need to expose that ARG handling from cmdline API as docker does at this level
                - internally should maintain two versions I guess (session_only and overall)
                  - idea: could generalize by adding `space=None` argument which would instruct within which
                    env space it would be stored.  E.g. space=`session` would be identical to session_only.
-                   But becomes somewhat incongruent since after this one is done
-            .set_runner(cmd, space=None)
+                   But becomes somewhat incongruent since after this one is done we want the one without any spaces
+
+                   Might be difficult/cumbersome to make it generic across all sessions, may be only via
+                   generating (e.g. /root/.niceman/spaces/SPACE) and sourcing them for every command run in
+                   case of docker since we can't otherwise augment env.  Having a single "session_only" makes
+                   it easi(er)
+
+            .set_runner(cmd, space=None) -- might go away
                - set the command which would be used to run each command, e.g. `eatmydata` ??? or should not be as generic...?
                  may be we need some kind of execution profiles (again -- `space`)
                   so I could say ".set_envvar('DEBIAN_FRONTEND', 'noninteractive', space='deb'); .set_runner('eatmydata', space='deb')"
+               - might be avoided if we create a shim for commands we care to run through `eatmydata` and then
+                  `.copy_files_into('shims/', '/usr/local/niceman/bootstrap/shims')`
+                  `.set_envvar('PATH', '/usr/local/niceman/bootstrap/shims:{PATH}', space='apt')`
+                 This way we could control via spaces where we want eatmydata assistance and for which tools
+
             .get_env(session=False)
                - with `session` True, would return also
             .source_file(filename, args=[])
                - needed to activate conda/pip/modules envs
-            .copy_files_into(src, dest, ...)
+            .copy_files_into(src, dest, ..., permissions=?, recursive=False)
             # if to aim for better coverage of Dockerfile "API".  Could be made supported for others (singularity, ssh, localhost)
             .set_user(user)
             .set_entry_command(cmd)
@@ -567,11 +579,12 @@ Backends (docker, localhost, aws-ec2) - generate/manipulate image/instance/sessi
      Some (schroot) could go directly into instance but allow for image (tarball)
 
    .instantiate(image) -> instance (docker start)
-   .start_session(instance or image, background=False, batched=False)
+   .start_session(instance or image, session_spec=None, options=None, background=False, batched=False)
     - in case of batched session, returned Session should have '.finalize_batch'?
+    - `options` are to provide backend specific options to session (the same below for build_image for image, etc)
    .join_session(session)
    .snapshot_image(session or instance, image_name) -> image_instance_spec
-   .build_image(env_spec, target_image_spec=None, batched=False) -> image_instance_spec  [not avail for localhost]
+   .build_image(env_spec, image_name, target_image_spec=None, options=None, batched=False) -> image_instance_spec  [not avail for localhost]
     - in case of batched,
          docker and singularity could use their BatchedSession
          to generate Dockerfile or Singularity.def which they would pass to their 'build'
@@ -589,8 +602,6 @@ So "features"(passive)/interfaces
  Instantiable? (DockerImage, but not SingularityImage)
  CanStartSession (SinularityImage)
 
-
-
 Depending on the backend
 
 -
@@ -598,6 +609,10 @@ Depending on the backend
     - models  - would provide base definitions and functionality for all the specs etc
   - cmdline/ -- cmdline helpers
   - interface/ -- interface functionality
+    - create -- out of spec create a resource (image, instance, ...) [internally would be create_instance, install, .snapshot]
+    - install -- (might meld with create) given an existing resource (image, instance, ...) perform installation actions within
+    - retrace -- given a resource and (possibly optional) list of files, create spec describing it
+    - run -- given a resource or spec, and a command, get a session and run the command
   - distributions/ - aggregate everything related to the distribution within
                      (so should absorb majority of retrace. The "retrace" controller code should go to retrace.py for now)
     - base -- base classes
@@ -615,7 +630,7 @@ Depending on the backend
     - NEW: human  ;)
     - NEW: neurodocker-like
     - examples/  (move from top level)
-  - resource[s]/ -- computational resources... ????  RF into ...
+  - resource[s]/ -- computational resources... ????  RF into ... backends!  they will provide resources though!
     - aws_ec2
     - docker
     - singularity
@@ -623,3 +638,27 @@ Depending on the backend
   - tests/ - top level tests
   - ui/  - ui related stuff
 
+
+Registry of (external) resources to serve as the bases
+------------------------------------------------------
+
+Yarik hates maintaining lists of things manually ;)
+
+When a new instance or image is asked to be built based on spec, we need to
+figure out the base.  E.g. which docker image to use.  One approach, as taken
+by e.g. reprozip, manually curate such a list, and hardcode for each 'release'
+the one to use.
+
+More flexible (in you's mind) would be to allow to create such a list of external
+resources by e.g.  pulling all the images available for docker, "tracing" their
+features (lsb_release, apt sources), and recording that information as an
+available resource (they are available upon pull).  Then during analysis for
+which base to choose -- check available images about which "fits" the best e.g.
+base on lsb_release info and apt line entries (origin, date) in case there are
+multiple.
+
+Problem -- if there is way too many, and some are "derived" images so their
+lsb/apt would be good but they wouldn't be "bare".  So we should annotate that only
+some resources are "base", and then only if none found, we could ask if user
+wants to try to use some other available or request update of the resources from
+external sources until satisfying one is found.
