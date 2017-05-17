@@ -15,10 +15,6 @@ import copy
 import os
 import time
 
-from os.path import dirname, isdir, isabs
-from os.path import exists, lexists
-from os.path import join as opj
-
 from logging import getLogger
 from six import viewvalues
 
@@ -27,7 +23,6 @@ import attr
 import yaml
 from datetime import datetime
 
-from niceman.dochelpers import exc_str
 import niceman.utils as utils
 
 try:
@@ -169,6 +164,7 @@ class APTSource(object):
     component = attr.ib()
     archive = attr.ib()
     architecture = attr.ib()
+    codename = attr.ib()
     origin = attr.ib()
     label = attr.ib()
     site = attr.ib()
@@ -324,6 +320,7 @@ class DebTracer(PackageTracer):
                 # Pull origin information from package file
                 origin = APTSource(name=None,
                                    component=pf.component,
+                                   codename=pf.codename,
                                    archive=pf.archive,
                                    architecture=pf.architecture,
                                    origin=pf.origin,
@@ -412,6 +409,7 @@ def identify_packages(files, environment=None):
         #   similar to DBs should take care about identifying/groupping etc
         #   of origins etc
         packages_origins = tracer.identify_package_origins(packages_)
+
         if packages_origins:
             origins += packages_origins
         lgr.debug("Assigning files to packages by %s took %f seconds",

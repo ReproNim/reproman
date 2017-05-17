@@ -124,25 +124,46 @@ On Debian-based systems we recommend to enable [NeuroDebian](http://neuro.debian
 since we use it to provide backports of recent fixed external modules we depend upon.
 
 ```sh
-apt-get install -y -q python-{appdirs,argcomplete,humanize,mock,setuptools,six,yaml}
+apt-get install -y -q eatmydata  # to speed up subsequent installations
+eatmydata apt-get install -y -q python-{appdirs,argcomplete,humanize,mock,setuptools,six,yaml,debian,boto3,docker,tqdm,rdflib}
 ```
 
 and additionally, for development we suggest to use tox and new
-versions of dependencies from pypy:
+versions of dependencies from pypi:
 
 ```sh
-apt-get install -y -q python-{nose,pip,vcr,virtualenv} python-tox
+eatmydata apt-get install -y -q python-{nose,pip,vcr,virtualenv,tox}
 ```
 
-some of which you could also install from PyPi using pip  
+some of which you could also install from PyPi using pip
 (prior installation of those libraries listed above might be necessary)
 
 ```sh
-pip install -r requirements.txt
+pip install -e .
 ```
 
-and you will need to install recent git-annex using appropriate for your
-OS means (for Debian/Ubuntu, once again, just use NeuroDebian).
+Note that you might need to get an updated pip if above `pip install`
+command fails.  You could achieve that by running
+
+```sh
+pip install --upgrade pip
+```
+
+In case you want a complete set of development tools, e.g. to build
+documentation, run tests requiring nibabel etc, first install necessary
+core dependencies using apt-get
+
+```sh
+eatmydata apt-get install -y -q python-{numpy,nibabel,sphinx,dev} ipython
+```
+
+and then run
+
+```sh
+pip install -e '.[devel]'
+```
+
+to install any possibly other additional pip-provided Python library.
 
 
 Documentation
@@ -209,13 +230,13 @@ of the codebase.  To execute many tests, the codebase first needs to be
 that, the recommended course of action is to use `virtualenv`, e.g.
 
 ```sh
-virtualenv --system-site-packages venv-tests
-source venv-tests/bin/activate
+virtualenv --system-site-packages venvs/tests
+source venvs/tests/bin/activate
 pip install -r requirements.txt
 python setup.py develop
 ```
 
-and then use that virtual environment to run the tests, via
+Then use that virtual environment to run the tests, via
 
 ```sh
 python -m nose -s -v niceman

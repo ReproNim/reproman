@@ -111,6 +111,20 @@ def test_dockercontainer_class():
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
 
+        # Test starting resource.
+        resource.start()
+        calls = [
+            call().start(container='18b31b30e3a5'),
+        ]
+        client.assert_has_calls(calls, any_order=True)
+
+        # Test stopping resource.
+        resource.stop()
+        calls = [
+            call().stop(container='18b31b30e3a5'),
+        ]
+        client.assert_has_calls(calls, any_order=True)
+
         # Test deleting resource.
         resource.delete()
         calls = [
