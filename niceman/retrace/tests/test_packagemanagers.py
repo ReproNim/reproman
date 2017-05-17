@@ -1,5 +1,6 @@
 # emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
-# ex: set sts=4 ts=4 sw=4 noet:
+# -*- coding: utf-8 -*-
+#  ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the niceman package for the
@@ -34,6 +35,17 @@ def test_identify_packages():
              "/usr/share/bug/vim/script",
              "/home/butch"]
     # Simple sanity check that the pipeline works
+    packages, origins, files = identify_packages(files)
+    pprint(files)
+    pprint(origins)
+    pprint(packages)
+    assert True
+
+
+@skip_if(not apt)
+def test_utf8_file():
+    files = [u"/usr/share/ca-certificates/mozilla/TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
+    # Simple sanity check that the pipeline works with utf-8
     packages, origins, files = identify_packages(files)
     pprint(files)
     pprint(origins)

@@ -9,6 +9,8 @@
 
 import collections
 import re
+import six
+
 import six.moves.builtins as __builtin__
 import time
 
@@ -888,17 +890,51 @@ def _path_(p):
         return p
 
 
-def unicode(s):
+def is_unicode(s):
+    """Return true if an object is unicode"""
+    return  (six.PY3 and isinstance(s, str)) or \
+            (six.PY2 and isinstance(s, unicode))
+
+
+def to_unicode(s, encoding="utf-8"):
     """Given a str type, convert to unicode"""
-    if PY3:
-        if isinstance(s, bytes):
-            return str(s, 'utf-8')
-        elif isinstance(s, str):
-            return s
+    # If unicode, just return it
+    if is_unicode(s):
+        return s
+    try:
+        if six.PY3:
+            return str(s, encoding)
         else:
-            raise TypeError("Incorrect type for unicode()")
+            return __builtin__.unicode(s, encoding)
+    except TypeError:
+        raise TypeError("Incorrect type for to_unicode()")
+
+
+def safe_decode(s, encoding="utf-8"):
+    """safe_decode attempts to call "decode" with the given encoding."""
+    try:
+        return s.decode(encoding=encoding)
+    except AttributeError:
+        return s
+
+
+def safe_encode(s, encoding="utf-8"):
+    """safe_encode attempts to call "encode" with the given encoding."""
+    try:
+        return s.encode(encoding=encoding)
+    except AttributeError:
+        return s
+
+
+def safe_write(os, s, encoding="utf-8"):
+    """safe_write safely writes different string types to an output stream"""
+    if PY3:
+        os.write(to_unicode(s))
     else:
-        return __builtin__.unicode(s)
+        try: # For PY2 try str first, then unicode
+            os.write(safe_encode(to_unicode(s, encoding), encoding))
+        except TypeError:
+            os.write(to_unicode(s, encoding))
 
 
 def generate_unique_name(pattern, nameset):

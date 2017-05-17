@@ -234,15 +234,13 @@ class DpkgManager(PackageManager):
                     expect_stderr=True, expect_fail=True
                 )
             except CommandError as exc:
-                if 'no path found matching pattern' in exc.stderr:
+                stderr = utils.safe_decode(exc.stderr, "utf-8")
+                if 'no path found matching pattern' in stderr:
                     out = exc.stdout  # One file not found, so continue
                 else:
                     raise  # some other fault -- handle it above
             # Decode output for Python 2
-            try:
-                out = out.decode()
-            except AttributeError:
-                pass
+            out = utils.safe_decode(out, "utf-8")
 
             # Now go through the output and assign packages to files
             for outline in out.splitlines():

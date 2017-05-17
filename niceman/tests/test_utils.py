@@ -40,7 +40,7 @@ from ..utils import get_func_kwargs_doc
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
-from ..utils import unicode
+from ..utils import to_unicode
 from ..utils import generate_unique_name
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
@@ -409,11 +409,11 @@ def test_unicode():
     if PY3:
         s = b"mytest"
         s2 = "mytest"
-        assert(unicode(s) == s2)
-        assert(unicode(s2) == s2)
+        assert(to_unicode(s) == s2)
+        assert(to_unicode(s2) == s2)
     else:
         s = "mytest"
-        s2 = unicode(s)
+        s2 = to_unicode(s)
         assert(s2 == __builtin__.unicode(s))
 
 
