@@ -20,6 +20,7 @@ from ..support.constraints import EnsureStr
 from ..support.constraints import EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
 from ..utils import assure_list
+from ..utils import to_unicode
 
 
 __docformat__ = 'restructuredtext'
@@ -76,6 +77,9 @@ class Retrace(Interface):
             lgr.info("reading spec file %s", spec)
             # TODO: generic loader
             paths += rpzutil.get_files(rpzutil.load_config(spec)) or []
+
+        # Convert paths to unicode
+        paths = list(map(to_unicode, paths))
 
         # TODO: at the moment assumes just a single distribution etc.
         #       Generalize

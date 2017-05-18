@@ -16,9 +16,8 @@ import collections
 
 import pytz
 import yaml
-from apt import utils as apt_utils
 
-from niceman import utils as utils
+from niceman import utils
 from .base import Distribution
 
 import logging
@@ -179,22 +178,13 @@ class DebTracer(PackageTracer):
                     expect_stderr=True, expect_fail=True
                 )
             except CommandError as exc:
-                if 'no path found matching pattern' in exc.stderr:
+                stderr = utils.to_unicode(exc.stderr, "utf-8")
+                if 'no path found matching pattern' in stderr:
                     out = exc.stdout  # One file not found, so continue
                 else:
                     raise  # some other fault -- handle it above
-            # Decode output for Python 2
-            try:
-                out = out.decode()
-            except AttributeError:
-                pass
-            except UnicodeDecodeError as exc:
-                # TODO: TEMP workaround. needs a proper fix:  https://github.com/ReproNim/niceman/issues/83
-                lgr.warning(
-                    "Got unicode decode problem. Happened within %s. Decoding allowing for errors.",
-                    exc.object[max(0, exc.start - 15):exc.end + 15].decode(errors='replace')
-                )
-                out = out.decode(errors='replace')
+
+            out = utils.to_unicode(out, "utf-8")
 
             # Now go through the output and assign packages to files
             for outline in out.splitlines():

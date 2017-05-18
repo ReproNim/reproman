@@ -40,12 +40,13 @@ from ..utils import get_func_kwargs_doc
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
-from ..utils import unicode
+from ..utils import to_unicode
 from ..utils import generate_unique_name
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
-from .utils import with_tempfile, assert_in, with_tree
+from .utils import with_tempfile, assert_in, with_tree, to_binarystring, \
+    is_unicode, is_binarystring
 from .utils import SkipTest
 from .utils import assert_cwd_unchanged, skip_if_on_windows
 from .utils import assure_dict_from_str, assure_list_from_str
@@ -405,16 +406,14 @@ def test_path_():
         assert(_path_(p) is p)  # nothing is done to it whatsoever
 
 
-def test_unicode():
-    if PY3:
-        s = b"mytest"
-        s2 = "mytest"
-        assert(unicode(s) == s2)
-        assert(unicode(s2) == s2)
-    else:
-        s = "mytest"
-        s2 = unicode(s)
-        assert(s2 == __builtin__.unicode(s))
+def test_unicode_and_binary_conversion():
+    s = "Test String"
+    s_unicode = to_unicode(s)
+    s_binary = to_binarystring(s)
+    assert (is_unicode(s_unicode))
+    assert (not(is_binarystring(s_unicode)))
+    assert (is_binarystring(s_binary))
+    assert (not(is_unicode(s_binary)))
 
 
 def test_generate_unique_set():

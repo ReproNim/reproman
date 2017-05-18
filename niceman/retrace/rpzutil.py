@@ -12,6 +12,7 @@
 from __future__ import unicode_literals
 
 import collections
+
 import datetime
 import niceman
 import niceman.interface.retrace
@@ -81,10 +82,11 @@ def write_config(output, config):
     c = "\n# Non-Packaged Files \n\n"
     write_config_key(output, envconfig, "other_files", c)
 
-    output.write("\n# Other ReproZip keys (not used by NICEMAN) \n\n")
-    output.write(utils.unicode(yaml.safe_dump(envconfig,
-                                              encoding="utf-8",
-                                              allow_unicode=True)))
+    if (envconfig):
+        output.write("\n# Other ReproZip keys (not used by NICEMAN) \n\n")
+        utils.safe_write(output, yaml.safe_dump(envconfig,
+                                                encoding="utf-8",
+                                                allow_unicode=True))
 
 
 def write_config_key(os, envconfig, key, intro_comment=""):
@@ -109,10 +111,10 @@ def write_config_key(os, envconfig, key, intro_comment=""):
         mini_config = dict()
         mini_config[key] = envconfig[key]
         del envconfig[key]
-        os.write(intro_comment)
-        os.write(utils.unicode(yaml.safe_dump(mini_config,
-                                              encoding="utf-8",
-                                              allow_unicode=True)))
+        utils.safe_write(os, intro_comment)
+        utils.safe_write(os, yaml.safe_dump(mini_config,
+                                            encoding="utf-8",
+                                            allow_unicode=True))
 
 
 def get_files(config, other_files=True):
