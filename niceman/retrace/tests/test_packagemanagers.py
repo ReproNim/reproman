@@ -15,7 +15,7 @@ from os.path import lexists
 from os.path import join as opj, pardir, dirname
 
 from niceman.retrace.packagemanagers import identify_packages
-from niceman.retrace.packagemanagers import DebTracer
+from niceman.distributions.debian import DebTracer
 from niceman.tests.utils import skip_if
 from niceman.tests.utils import with_tempfile
 

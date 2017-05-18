@@ -29,7 +29,7 @@ from niceman.cmd import CommandError
 
 lgr = getLogger('niceman.api.retrace')
 
-from .packagemanagers import PackageTracer
+from niceman.distributions.base import PackageTracer
 
 
 class VCSRepo(object):
