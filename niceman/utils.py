@@ -9,6 +9,8 @@
 
 import collections
 import re
+import six
+
 import six.moves.builtins as __builtin__
 import time
 
@@ -888,17 +890,38 @@ def _path_(p):
         return p
 
 
-def unicode(s):
-    """Given a str type, convert to unicode"""
-    if PY3:
-        if isinstance(s, bytes):
-            return str(s, 'utf-8')
-        elif isinstance(s, str):
-            return s
-        else:
-            raise TypeError("Incorrect type for unicode()")
+def is_unicode(s):
+    """Return true if an object is unicode"""
+    return isinstance(s, six.text_type)
+
+
+def is_binarystring(s):
+    """Return true if an object is a binary string (not unicode)"""
+    return isinstance(s, six.binary_type)
+
+
+def to_unicode(s, encoding="utf-8"):
+    """Converts any type string to unicode"""
+    if is_unicode(s):
+        return s
     else:
-        return __builtin__.unicode(s)
+        return s.decode(encoding=encoding)
+
+
+def to_binarystring(s, encoding="utf-8"):
+    """Converts any type string to binarystring"""
+    if is_binarystring(s):
+        return s
+    else:
+        return s.encode(encoding=encoding)
+
+
+def safe_write(ostream, s, encoding="utf-8"):
+    """Safely write different string types to an output stream"""
+    try:  # Try unicode, and upon failure try binary_string
+        ostream.write(to_unicode(s, encoding))
+    except (TypeError, UnicodeEncodeError):
+        ostream.write(to_binarystring(s, encoding))
 
 
 def generate_unique_name(pattern, nameset):
