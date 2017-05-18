@@ -1,6 +1,5 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
-# -*- coding: utf-8 -*-
-#  ex: set sts=4 ts=4 sw=4 noet:
+# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
 #   See COPYING file distributed along with the niceman package for the
@@ -44,13 +43,19 @@ def test_identify_packages():
 
 @skip_if(not apt)
 def test_utf8_file():
-    files = [u"/usr/share/ca-certificates/mozilla/TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
+    files = [u"/usr/share/ca-certificates/mozilla/"
+             u"TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
     # Simple sanity check that the pipeline works with utf-8
-    packages, origins, files = identify_packages(files)
-    pprint(files)
+    packages, origins, files_left = identify_packages(files)
+    # Print for manual debugging
+    pprint(files_left)
     pprint(origins)
     pprint(packages)
-    assert True
+    # If the file exists, it should be in ca-certificates
+    if os.path.isfile(files[0]):
+        assert packages[0]["name"] == "ca-certificates"
+    else:  # Otherwise just make sure we didn't throw an exception
+        assert True
 
 
 @skip_if(not apt)

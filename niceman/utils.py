@@ -892,49 +892,36 @@ def _path_(p):
 
 def is_unicode(s):
     """Return true if an object is unicode"""
-    return  (six.PY3 and isinstance(s, str)) or \
-            (six.PY2 and isinstance(s, unicode))
+    return isinstance(s, six.text_type)
+
+
+def is_binarystring(s):
+    """Return true if an object is a binary string (not unicode)"""
+    return isinstance(s, six.binary_type)
 
 
 def to_unicode(s, encoding="utf-8"):
-    """Given a str type, convert to unicode"""
-    # If unicode, just return it
+    """Converts any type string to unicode"""
     if is_unicode(s):
         return s
-    try:
-        if six.PY3:
-            return str(s, encoding)
-        else:
-            return __builtin__.unicode(s, encoding)
-    except TypeError:
-        raise TypeError("Incorrect type for to_unicode()")
-
-
-def safe_decode(s, encoding="utf-8"):
-    """safe_decode attempts to call "decode" with the given encoding."""
-    try:
-        return s.decode(encoding=encoding)
-    except AttributeError:
-        return s
-
-
-def safe_encode(s, encoding="utf-8"):
-    """safe_encode attempts to call "encode" with the given encoding."""
-    try:
-        return s.encode(encoding=encoding)
-    except AttributeError:
-        return s
-
-
-def safe_write(os, s, encoding="utf-8"):
-    """safe_write safely writes different string types to an output stream"""
-    if PY3:
-        os.write(to_unicode(s))
     else:
-        try: # For PY2 try str first, then unicode
-            os.write(safe_encode(to_unicode(s, encoding), encoding))
-        except TypeError:
-            os.write(to_unicode(s, encoding))
+        return s.decode(encoding=encoding)
+
+
+def to_binarystring(s, encoding="utf-8"):
+    """Converts any type string to binarystring"""
+    if is_binarystring(s):
+        return s
+    else:
+        return s.encode(encoding=encoding)
+
+
+def safe_write(ostream, s, encoding="utf-8"):
+    """Safely write different string types to an output stream"""
+    try:  # Try unicode, and upon failure try binary_string
+        ostream.write(to_unicode(s, encoding))
+    except (TypeError, UnicodeEncodeError):
+        ostream.write(to_binarystring(s, encoding))
 
 
 def generate_unique_name(pattern, nameset):
