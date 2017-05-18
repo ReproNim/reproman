@@ -17,9 +17,11 @@ REPROZIP_SPEC_YML_FILENAME = os.path.join(os.path.dirname(__file__), os.pardir,
                                           'reprozip_xeyes.yml')
 
 
-def test_read_reprozip_yaml():
-    config = rpzutil.read_reprozip_yaml(REPROZIP_SPEC_YML_FILENAME)
-    rpzutil.identify_packages(config)
+def test_load_config():
+    config = rpzutil.load_config(REPROZIP_SPEC_YML_FILENAME)
+    files_all = rpzutil.get_files(config)
+    files_noother = rpzutil.get_files(config, other_files=False)
+    assert len(files_noother) < len(files_all)
     output = io.StringIO()
     rpzutil.write_config(output, config)
     assert True

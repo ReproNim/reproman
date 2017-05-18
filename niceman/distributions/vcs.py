@@ -27,7 +27,7 @@ from niceman.utils import only_with_values
 from niceman.cmd import Runner
 from niceman.cmd import CommandError
 
-lgr = getLogger('niceman.api.retrace')
+lgr = getLogger('niceman.distributions.vcs')
 
 from niceman.distributions.base import PackageTracer
 

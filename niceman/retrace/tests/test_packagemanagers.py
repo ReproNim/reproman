@@ -14,7 +14,7 @@ from pprint import pprint
 from os.path import lexists
 from os.path import join as opj, pardir, dirname
 
-from niceman.retrace.packagemanagers import identify_packages
+from niceman.interface.retrace import identify_packages
 from niceman.distributions.debian import DebTracer
 from niceman.tests.utils import skip_if
 from niceman.tests.utils import with_tempfile

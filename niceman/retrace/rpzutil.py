@@ -14,13 +14,13 @@ from __future__ import unicode_literals
 import collections
 import datetime
 import niceman
+import niceman.interface.retrace
 import niceman.utils as utils
 import yaml
 import io
-import niceman.retrace.packagemanagers as packagemanagers
 
 
-def read_reprozip_yaml(filename):
+def load_config(filename):
     """Parses a ReproZip YAML file into a configuration object
 
     Given the path to a ReproZip YAML file, it parses the file and
@@ -41,56 +41,6 @@ def read_reprozip_yaml(filename):
         config = yaml.safe_load(fp)
         # TODO: Check version of ReproZip file and warn if unknown
         return config
-
-
-def identify_packages(config=None, paths=None):
-    """Identifies packages in the current environment from a ReproZip config
-
-    Given a ReproZip configuration, it analyzes the current environment to
-    find details about the source packages, and places the results back into
-    the configuration object.
-
-    Parameters
-    ----------
-    config : dict, optional
-        ReproZip configuration (input/output).  Listed in it files will
-        be analyzed first
-    paths : list, optional
-        Additional paths to consider
-
-    Return
-    ------
-    dict
-        A reference to the input dict
-
-    """
-    # Immediately clone the configuration
-    paths = paths or []
-    if config:
-        paths = list(get_system_files(config)) + paths
-        # operate on a copy to avoid side effects
-        config = config.copy()
-    else:
-        config = {}
-
-    # TODO: RF so that only the above portion is reprozip specific.
-    # If we are to reuse their layout largely -- the rest should stay as is
-    (packages, origins, unidentified_files) = \
-        packagemanagers.identify_packages(paths)
-
-    # Update reprozip package assignment
-    config['packages'] = packages
-
-    # Update reprozip package assignment
-    config['origins'] = origins
-
-    # set any files not identified
-    config.pop('other_files', None)
-    if unidentified_files:
-        config['other_files'] = list(unidentified_files)
-        config['other_files'].sort()
-
-    return config
 
 
 def write_config(output, config):
@@ -165,7 +115,7 @@ def write_config_key(os, envconfig, key, intro_comment=""):
                                               allow_unicode=True)))
 
 
-def get_system_files(config):
+def get_files(config, other_files=True):
     """Pulls the system files from a ReproZip configuration into a set
 
     Given a ReproZip configuration (read into a dictionary) it pulls
@@ -176,6 +126,8 @@ def get_system_files(config):
     ----------
     config : dict
         ReproZip configuration
+    other_files : bool, optional
+        Either to return also other_files
 
     Return
     ------
@@ -190,7 +142,7 @@ def get_system_files(config):
             if 'files' in package:
                 files.update(package['files'])
 
-    if 'other_files' in config:
+    if other_files and 'other_files' in config:
         files.update(config["other_files"])
 
     return files

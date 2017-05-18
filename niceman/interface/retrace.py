@@ -6,24 +6,30 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Analyze ReproZip YML configuration to gather detailed package information
+"""Analyze existing spec or session file system to gather more detailed information
 """
+
+from __future__ import unicode_literals
+
 import sys
+import time
+
 from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.constraints import EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
+from ..utils import assure_list
 
-from logging import getLogger
 
 __docformat__ = 'restructuredtext'
 
+from logging import getLogger
 lgr = getLogger('niceman.api.retrace')
 
 
 class Retrace(Interface):
-    """Analyze known (e.g. ReproZip) trace files or just paths to gather detailed package information
+    """Analyze a known (e.g. ReproZip) trace files or just paths to gather detailed package information
 
     Examples
     --------
@@ -61,13 +67,85 @@ class Retrace(Interface):
         from ..retrace import rpzutil
 
         if not (spec or path):
-            raise InsufficientArgumentsError("Need at least a single --spec or a file")
+            raise InsufficientArgumentsError(
+                "Need at least a single --spec or a file"
+            )
 
+        paths = assure_list(path)
         if spec:
             lgr.info("reading spec file %s", spec)
-            input_config = rpzutil.read_reprozip_yaml(spec)
-        else:
-            input_config = {}
+            # TODO: generic loader
+            paths += rpzutil.get_files(rpzutil.load_config(spec)) or []
 
-        config = rpzutil.identify_packages(input_config, path)
+        # TODO: at the moment assumes just a single distribution etc.
+        #       Generalize
+        # TODO: RF so that only the above portion is reprozip specific.
+        # If we are to reuse their layout largely -- the rest should stay as is
+        (packages, origins, unidentified_files) = identify_packages(paths)
+
+        config = {}   # TODO: proper model
+        # Update reprozip package assignment
+        config['packages'] = packages
+        # Update reprozip package assignment
+        config['origins'] = origins
+        # set any files not identified
+        config.pop('other_files', None)
+        if unidentified_files:
+            config['other_files'] = list(unidentified_files)
+            config['other_files'].sort()
+
+        # TODO: generic writer!
         rpzutil.write_config(output_file or sys.stdout, config)
+
+
+# TODO: session should be with a state.  Idea is that if we want
+#  to trace while inheriting all custom PATHs which that run might have
+#  had
+def identify_packages(files, session=None):
+    """Identify packages files belong to
+
+    Parameters
+    ----------
+    files : iterable
+      Files to consider
+
+    Returns
+    -------
+    packages : list of Package
+    origins : list of Origin
+    unknown_files : list of str
+      Files which were not determined to belong to some package
+    """
+    # TODO: automate discovery of available tracers
+    from niceman.distributions.debian import DebTracer
+    from niceman.distributions.vcs import VCSTracer
+
+    # TODO create list of appropriate for the `environment` OS tracers
+    #      in case of no environment -- get current one
+    tracers = [DebTracer(), VCSTracer()]
+    origins = []
+    packages = []
+
+    files_to_consider = files
+
+    for tracer in tracers:
+        begin = time.time()
+        # TODO: we should allow for multiple passes, where each one could
+        #  possibly identify a new "distribution" (e.g. scripts ran from
+        #  different virtualenvs... some bizzare multiple condas etc)
+        # Each one should initialize "Distribution" and attach to it pkgs
+        (packages_, unknown_files) = \
+            tracer.identify_packages_from_files(files_to_consider)
+        # TODO: tracer.normalize
+        #   similar to DBs should take care about identifying/groupping etc
+        #   of origins etc
+        packages_origins = tracer.identify_package_origins(packages_)
+
+        if packages_origins:
+            origins += packages_origins
+        lgr.debug("Assigning files to packages by %s took %f seconds",
+                  tracer, time.time() - begin)
+        packages += packages_
+        files_to_consider = unknown_files
+
+    return packages, origins, files_to_consider
