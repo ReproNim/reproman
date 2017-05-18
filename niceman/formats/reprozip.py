@@ -18,11 +18,11 @@ from niceman.dochelpers import exc_str
 from .base import Provenance
 
 import logging
-lgr = logging.getLogger('niceman.provenance.reprozip')
+lgr = logging.getLogger('niceman.formats.reprozip')
 
 
 class ReprozipProvenance(Provenance):
-    """Parser for ReproZip provenance (YAML specification) """
+    """Parser for ReproZip file format (YAML specification) """
 
     def __init__(self, source):
         self._yaml = None

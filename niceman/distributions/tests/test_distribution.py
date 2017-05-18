@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from ...provenance import Provenance
+from ...formats import Provenance
 
 import logging
 from mock import MagicMock, call

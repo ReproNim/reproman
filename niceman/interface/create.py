@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface, get_resource_info
 import niceman.interface.base # Needed for test patching
-# from ..provenance import Provenance
+# from ..formats import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..resource import Resource

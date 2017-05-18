@@ -13,4 +13,4 @@
 __docformat__ = 'restructuredtext'
 
 # Allow the base Provenance class to be available directly from the package.
-from niceman.provenance.base import Provenance
+from niceman.formats.base import Provenance

@@ -12,7 +12,7 @@ from importlib import import_module
 import abc
 
 import logging
-lgr = logging.getLogger('niceman.distribution')
+lgr = logging.getLogger('niceman.distributions')
 
 class Distribution(object):
     """
@@ -52,7 +52,7 @@ class Distribution(object):
             Instance of a Distribution sub-class
         """
         class_name = distribution_type.capitalize() + 'Distribution'
-        module = import_module('niceman.distribution.' + distribution_type)
+        module = import_module('niceman.distributions.' + distribution_type)
         return getattr(module, class_name)(provenance)
 
     @abc.abstractmethod

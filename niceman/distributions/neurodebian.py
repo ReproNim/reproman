@@ -8,14 +8,14 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
 
-from niceman.distribution import Distribution
+from niceman.distributions.debian import DebianDistribution
 
 import logging
-lgr = logging.getLogger('niceman.distribution.pypi')
+lgr = logging.getLogger('niceman.distributions.neurodebian')
 
-class PypiDistribution(Distribution):
+class NeurodebianDistribution(DebianDistribution):
     """
-    Class to provide Conda package management.
+    Class to provide Debian-based shell commands.
     """
 
     def __init__(self, provenance):
@@ -27,7 +27,8 @@ class PypiDistribution(Distribution):
         provenance : dictionary
             Provenance information for the distribution.
         """
-        super(PypiDistribution, self).__init__(provenance)
+        super(NeurodebianDistribution, self).__init__(provenance)
+
 
     def initiate(self, environment):
         """
@@ -38,18 +39,7 @@ class PypiDistribution(Distribution):
         environment : object
             The Environment sub-class object.
         """
-        return
 
-    def install_packages(self, environment):
-        """
-        Install the packages associated to this distribution by the provenance
-        into the environment.
+        # TODO: Add code to setup NeuroDebian repository setup.
 
-        Parameters
-        ----------
-        environment : object
-            Environment sub-class instance.
-        """
-        for package in self._provenance['packages']:
-            environment.add_command(['pip', 'install', package['name']])
-        return
+        super(NeurodebianDistribution, self).initiate(environment)

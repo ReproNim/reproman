@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 from .base import Interface, get_resource_info
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..provenance import Provenance
+from ..formats import Provenance
 from ..resource import Resource
 
 from logging import getLogger

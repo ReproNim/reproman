@@ -3,7 +3,7 @@
     The provenance files in the niceman/examples directory are used for this example.
 """
 
-from niceman.provenance import Provenance
+from niceman.formats import Provenance
 # from debian_package_manager import DebianPackageManager
 # from niceman import Orchestrator
 

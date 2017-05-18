@@ -13,4 +13,4 @@
 __docformat__ = 'restructuredtext'
 
 # Allow base Distribution class to be available directly from the package.
-from niceman.distribution.base import Distribution
+from niceman.distributions.base import Distribution

@@ -12,7 +12,7 @@ Plugin support for TriG formatted RDF provenance files.
 See: https://en.wikipedia.org/wiki/TriG_(syntax)
 """
 
-from niceman.provenance.base import Provenance
+from niceman.formats.base import Provenance
 from rdflib import ConjunctiveGraph
 
 class TrigProvenance(Provenance):

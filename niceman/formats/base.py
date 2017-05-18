@@ -50,7 +50,7 @@ class Provenance(object):
         Provenance sub-class instance
         """
         class_name = format.capitalize() + 'Provenance'
-        module = import_module('niceman.provenance.' + format)
+        module = import_module('niceman.formats.' + format)
         return getattr(module, class_name)(source)
 
     @staticmethod

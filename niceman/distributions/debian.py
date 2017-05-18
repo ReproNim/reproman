@@ -8,10 +8,10 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
 
-from niceman.distribution import Distribution
+from niceman.distributions import Distribution
 
 import logging
-lgr = logging.getLogger('niceman.distribution.debian')
+lgr = logging.getLogger('niceman.distributions.debian')
 
 class DebianDistribution(Distribution):
     """

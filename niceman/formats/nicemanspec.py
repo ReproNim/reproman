@@ -16,15 +16,15 @@ import yaml
 
 from ..dochelpers import exc_str
 from .base import Provenance
-from ..distribution import Distribution
+from ..distributions import Distribution
 
 import logging
-lgr = logging.getLogger('niceman.provenance.nicemanspec')
+lgr = logging.getLogger('niceman.formats.nicemanspec')
 
 
 class NicemanspecProvenance(Provenance):
     """
-    Parser for NICEMAN Spec provenance (YAML specification)
+    Parser for NICEMAN Spec (YAML specification)
     """
 
     def __init__(self, source):
@@ -34,7 +34,7 @@ class NicemanspecProvenance(Provenance):
         Parameters
         ----------
         source : string
-            Path or URL of provenance file.
+            File path or URL
         """
         self._yaml = None
         self._load(source)
@@ -46,7 +46,7 @@ class NicemanspecProvenance(Provenance):
         Parameters
         ----------
         source : string
-            Filename or URL endpoint of the spec file.
+            File path or URL
         """
         with open(source, 'r') as stream:
             try:
@@ -70,7 +70,7 @@ class NicemanspecProvenance(Provenance):
     def get_distributions(self):
         """
         Retrieve the information for all the distributions recorded in the
-            provenance file.
+            file.
 
         Returns
         -------
@@ -96,7 +96,7 @@ class NicemanspecProvenance(Provenance):
                         distributions = [{'name': package['distribution']}]
                     else:
                         raise ValueError(
-                            "Provide a single distribution or even multiple distributions")
+                            "Provide a single or multiple distributions")
 
                     if isinstance(distributions, str):
                         # we were provided a single distribution so there were no list
