@@ -1,5 +1,5 @@
 # vim ft=yaml
-# travis-ci.org definition for DataLad build
+# travis-ci.org definition for NICEMAN build
 language: python
 
 cache:
