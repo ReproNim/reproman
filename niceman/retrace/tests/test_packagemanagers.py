@@ -72,16 +72,12 @@ def test_dpkg_manager_identify_packages():
     # Make sure both a non-local origin was found
     for o in origins:
         if o.site:
-            assert o.name, "A non-local origin needs a name"
-            assert o.component, "A non-local origin needs a component"
-            assert o.archive, "A non-local origin needs a archive"
-            assert o.codename, "A non-local origin needs a codename"
-            assert o.origin, "A non-local origin needs an origin"
-            assert o.label, "A non-local origin needs a label"
-            assert o.site, "A non-local origin needs a site"
-            assert o.archive_uri, "An archive_uri should have been found"
-            assert o.date, "An package should have been found"
-            # Note: architecture is not mandatory (and not found on travis)
+            # Loop over mandatory attributes
+            for a in ["name", "component", "archive", "codename",
+                      "origin", "label", "site", "archive_uri"]:
+                assert getattr(o,a), "A non-local origin needs a " + a
+            # Note: date and architecture are not mandatory (and not found on
+            # travis)
             break
     else:
         assert False, "A non-local origin must be found"
