@@ -58,7 +58,7 @@ before_install:
 install:
   # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
   - pip list
-  - sudo tools/ci/build_install_apt
+  - source tools/ci/build_install_apt
   - pip list
   # See if apt is installed
   - python -c "import apt"
