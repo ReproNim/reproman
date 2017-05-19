@@ -153,7 +153,7 @@ class PackageManager(object):
         raise NotImplementedError
 
 
-@attr.s
+@attr.s(cmp=True, hash=True, frozen=True)
 class DpkgOrigin(object):
     """DPKG Origin information for a dpkg
     """
@@ -215,8 +215,16 @@ class DpkgManager(PackageManager):
         # Remember the created name
         used_names.add(name)
         # Create a named origin
-        new_o = copy.deepcopy(o)
-        new_o.name = name
+        new_o = DpkgOrigin(name=name,
+                           component=o.component,
+                           codename=o.codename,
+                           archive=o.archive,
+                           architecture=o.architecture,
+                           origin=o.origin,
+                           label=o.label,
+                           site=o.site,
+                           archive_uri=o.archive_uri,
+                           date=o.date)
         return new_o
 
     def _get_packages_for_files(self, files):

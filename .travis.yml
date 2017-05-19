@@ -46,22 +46,12 @@ before_install:
   # The ultimate one-liner setup for NeuroDebian repository
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
   - travis_retry sudo apt-get update -qq
-  # Gather some info
-  - uname -a
-  - lsb_release -a
-  - grep "^deb " /etc/apt/sources.list /etc/apt/sources.list.d/*
-  - dpkg -l 
-  # Back to normal
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
 
 install:
   # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
-  - pip list
   - bash tools/ci/build_install_apt
-  - pip list
-  # See if apt is installed
-  - python -c "import apt"
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib
@@ -75,7 +65,6 @@ script:
   - python setup.py build
   - if [ ! -z "$NICEMAN_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package niceman --logging-level=INFO
-  # See if apt is installed again
   - coverage run `which py.test` niceman
   - if [ ! -z "$NICEMAN_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # Generate documentation and run doctests
