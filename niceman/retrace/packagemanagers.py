@@ -215,17 +215,7 @@ class DpkgManager(PackageManager):
         # Remember the created name
         used_names.add(name)
         # Create a named origin
-        new_o = DpkgOrigin(name=name,
-                           component=o.component,
-                           codename=o.codename,
-                           archive=o.archive,
-                           architecture=o.architecture,
-                           origin=o.origin,
-                           label=o.label,
-                           site=o.site,
-                           archive_uri=o.archive_uri,
-                           date=o.date)
-        return new_o
+        return attr.assoc(o, name=name)
 
     def _get_packages_for_files(self, files):
         file_to_package_dict = {}
