@@ -6,10 +6,10 @@ set -eux
 
 ver=0.9.3.5
 
-apt-get build-dep python-apt
-apt-get install -y --allow-downgrades  libapt-pkg-dev=0.8.16~exp12ubuntu10.27
+sudo apt-get build-dep python-apt
+sudo apt-get install -y --allow-downgrades  libapt-pkg-dev=0.8.16~exp12ubuntu10.27
 # Install python-apt version 0.9.3.5 for Python 2 and 3
-apt-get install xz-utils
+sudo apt-get install xz-utils
 curl -O http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_$ver.tar.xz
 xz -d python-apt_$ver.tar.xz
 pip list
