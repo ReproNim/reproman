@@ -12,9 +12,9 @@ Plugin support for provenance YAML files produced by ReproZip utility.
 See: https://vida-nyu.github.io/reprozip/
 """
 
+import io
 import yaml
 
-from niceman.dochelpers import exc_str
 from .base import Provenance
 
 import logging
@@ -29,12 +29,10 @@ class ReprozipProvenance(Provenance):
         self._load(source)
 
     def _load(self, source):
-        with open(source, 'r') as stream:
-            try:
-                self.yaml = yaml.load(stream)
-            except yaml.YAMLError as exc:
-                lgr.error("Failed to load %s: %s", source, exc_str(exc))
-                raise  # TODO -- we might want a dedicated exception here
+        with io.open(source, encoding='utf-8') as stream:
+            config = yaml.safe_load(stream)
+            # TODO: Check version of ReproZip file and warn if unknown
+            self.yaml = config
 
     def get_os(self):
         return self.yaml['runs'][0]['distribution'][0]
@@ -54,3 +52,35 @@ class ReprozipProvenance(Provenance):
 
     def get_commandline(self):
         return self.yaml['runs'][0]['argv']
+
+    def get_files(self, other_files=True):
+        """Pulls the system files from a ReproZip configuration into a set
+    
+        Given a ReproZip configuration (read into a dictionary) it pulls
+        the list of files from "packages" and "other files" sections into a
+        set. It excludes files from "input_output".
+    
+        Parameters
+        ----------
+        config : dict
+            ReproZip configuration
+        other_files : bool, optional
+            Either to return also other_files
+    
+        Return
+        ------
+        set
+            Files listed in the configuration
+        """
+
+        files = set()
+
+        if 'packages' in self.yaml:
+            for package in self.yaml['packages']:
+                if 'files' in package:
+                    files.update(package['files'])
+
+        if other_files and 'other_files' in self.yaml:
+            files.update(self.yaml["other_files"])
+
+        return files

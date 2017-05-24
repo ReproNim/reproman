@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 import sys
 import time
 
+import niceman.formats.niceman
 from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -65,7 +66,6 @@ class Retrace(Interface):
     @staticmethod
     def __call__(path=None, spec=None, output_file=None):
         # heavy import -- should be delayed until actually used
-        from ..retrace import rpzutil
 
         if not (spec or path):
             raise InsufficientArgumentsError(
@@ -75,8 +75,10 @@ class Retrace(Interface):
         paths = assure_list(path)
         if spec:
             lgr.info("reading spec file %s", spec)
-            # TODO: generic loader
-            paths += rpzutil.get_files(rpzutil.load_config(spec)) or []
+            # TODO: generic loader to auto-detect formats etc
+            from niceman.formats.reprozip import ReprozipProvenance
+            spec = ReprozipProvenance(spec)
+            paths += spec.get_files() or []
 
         # Convert paths to unicode
         paths = list(map(to_unicode, paths))
@@ -99,7 +101,9 @@ class Retrace(Interface):
             config['other_files'].sort()
 
         # TODO: generic writer!
-        rpzutil.write_config(output_file or sys.stdout, config)
+        from niceman.formats.niceman import NicemanspecProvenance
+        spec = NicemanspecProvenance(model=config)
+        spec.write_config(output_file or sys.stdout)
 
 
 # TODO: session should be with a state.  Idea is that if we want

@@ -13,6 +13,8 @@ to ease construction and execution of computation environments based on the
 provenance data.
 """
 
+from __future__ import absolute_import
+
 from .log import lgr
 
 # Other imports are interspersed with lgr.debug to ease troubleshooting startup
@@ -28,7 +30,6 @@ cfg = ConfigManager()
 #
 import atexit
 import pytest
-import niceman
 import os
 # atexit.register(ssh_manager.close, allow_fail=False)
 atexit.register(lgr.log, 5, "Exiting")
@@ -45,7 +46,7 @@ def test(package='niceman', **kwargs):
     try:
         # from numpy.testing import Tester
         # Tester(package=package).test(**kwargs)
-        pytest.main(['--disable-pytest-warnings', os.path.dirname(niceman.__file__)])
+        pytest.main(['--disable-pytest-warnings', os.path.dirname(__file__)])
         # we don't have any benchmarks atm
         # bench = Tester().bench
     except ImportError:

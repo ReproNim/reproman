@@ -15,6 +15,7 @@ See: https://en.wikipedia.org/wiki/TriG_(syntax)
 from niceman.formats.base import Provenance
 from rdflib import ConjunctiveGraph
 
+
 class TrigProvenance(Provenance):
 
     def __init__(self, source):

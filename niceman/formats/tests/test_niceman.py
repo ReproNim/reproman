@@ -6,8 +6,19 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Determine package and distributions information for files
 
-"""
+from __future__ import absolute_import
 
-__docformat__ = 'restructuredtext'
+import io
+
+from pprint import pprint
+
+from niceman.formats.niceman import NicemanspecProvenance
+
+from .constants import NICEMAN_SPEC1_YML_FILENAME
+
+def test_write_config():
+    output = io.StringIO()
+    spec = NicemanspecProvenance(NICEMAN_SPEC1_YML_FILENAME)
+    spec.write_config(output)
+    print(output.getvalue())

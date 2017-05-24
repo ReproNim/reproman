@@ -34,11 +34,13 @@ class Package(BaseSpec):
 
 @attr.s
 class VCS(Package):
-    path = attr.ib()
+    #path = attr.ib()
+    pass
 
 
 @attr.s
 class Git(VCS):
+    pass
 
 
 

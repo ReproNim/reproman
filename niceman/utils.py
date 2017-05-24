@@ -31,7 +31,6 @@ import glob
 from functools import wraps
 from time import sleep
 from inspect import getargspec
-from niceman.dochelpers import get_docstring_split
 
 lgr = logging.getLogger("niceman.utils")
 
@@ -191,7 +190,7 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_nic
       Directory where to search
     dirs: bool, optional
       Either to match directories as well as files
-    """ % (_VCS_REGEX, _NICEMAN_REGEX)
+    """
 
     for dirpath, dirnames, filenames in os.walk(topdir):
         names = (dirnames + filenames) if dirs else filenames
@@ -206,6 +205,7 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_nic
             if exclude_niceman and re.search(_NICEMAN_REGEX, path):
                 continue
             yield path
+find_files.__doc__ %= (_VCS_REGEX, _NICEMAN_REGEX)
 
 
 def expandpath(path, force_absolute=True):

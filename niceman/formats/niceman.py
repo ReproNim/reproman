@@ -9,17 +9,23 @@
 """
 Plugin support for provenance YAML files following NICEMAN spec.
 
-See: https://vida-nyu.github.io/reprozip/
 """
+from __future__ import absolute_import
+
+import collections
+import datetime
 
 import yaml
 
+import niceman
+from .. import utils
 from ..dochelpers import exc_str
-from .base import Provenance
 from ..distributions import Distribution
+from .base import Provenance
+from .utils import write_config_key
 
 import logging
-lgr = logging.getLogger('niceman.formats.nicemanspec')
+lgr = logging.getLogger('niceman.formats.niceman')
 
 
 class NicemanspecProvenance(Provenance):
@@ -27,7 +33,7 @@ class NicemanspecProvenance(Provenance):
     Parser for NICEMAN Spec (YAML specification)
     """
 
-    def __init__(self, source):
+    def __init__(self, source=None, model=None):
         """
         Class constructor
 
@@ -36,10 +42,12 @@ class NicemanspecProvenance(Provenance):
         source : string
             File path or URL
         """
-        self._yaml = None
-        self._load(source)
+        if source and model:
+            raise ValueError("Provide either source or a model")
+        self._model = model or self._load(source)
 
-    def _load(self, source):
+    @classmethod
+    def _load(cls, source):
         """
         Load and store the raw spec file.
 
@@ -50,7 +58,7 @@ class NicemanspecProvenance(Provenance):
         """
         with open(source, 'r') as stream:
             try:
-                self._yaml = yaml.load(stream)
+                return yaml.load(stream)
             except yaml.YAMLError as exc:
                 lgr.error("Failed to load %s: %s", source, exc_str(exc))
                 raise  # TODO -- we might want a dedicated exception here
@@ -65,7 +73,7 @@ class NicemanspecProvenance(Provenance):
             os['name']
             os['version']
         """
-        return self._yaml['distribution']
+        return self._model['distribution']
 
     def get_distributions(self):
         """
@@ -79,12 +87,12 @@ class NicemanspecProvenance(Provenance):
         """
         dist_objects = []
 
-        for dist_prov in self._yaml['distributions']:
+        for dist_prov in self._model['distributions']:
             subclass = dist_prov['name'].strip('-0123456789')
 
             #Add relevant packages to the distribution provenance.
             dist_prov['packages'] = []
-            for package in self._yaml['packages']:
+            for package in self._model['packages']:
                 try:
                     # TODO: Improve handling of missing package lists.
                     if 'distributions' in package:
@@ -114,4 +122,51 @@ class NicemanspecProvenance(Provenance):
         return dist_objects
 
 
-# TODO: RF
+    # TODO: RF
+    #   config must be gone and taken from self
+    def write_config(self, output):
+        """Writes an environment config to a stream
+    
+        Parameters
+        ----------
+        output
+            Output Stream
+    
+        config : dict
+            Environment configuration (input)
+    
+        """
+
+        config = self._model
+        # Allow yaml to handle OrderedDict
+        # From http://stackoverflow.com/questions/31605131
+        if collections.OrderedDict not in yaml.SafeDumper.yaml_representers:
+            yaml.SafeDumper.add_representer(
+                collections.OrderedDict,
+                lambda self, data:
+                self.represent_mapping('tag:yaml.org,2002:map', data.items()))
+
+        envconfig = dict(config)  # Shallow copy for destruction
+        utils.safe_write(
+            output,
+            ("# NICEMAN Environment Configuration File\n"
+             "# This file was created by NICEMAN {0} on {1}\n").format(
+                niceman.__version__, datetime.datetime.now()))
+
+        c = "\n# Runs: Commands and related environment variables\n\n"
+        write_config_key(output, envconfig, "runs", c)
+
+        c = "\n# Package Origins \n\n"
+        write_config_key(output, envconfig, "origins", c)
+
+        c = "\n# Packages \n\n"
+        write_config_key(output, envconfig, "packages", c)
+
+        c = "\n# Non-Packaged Files \n\n"
+        write_config_key(output, envconfig, "other_files", c)
+
+        if envconfig:
+            utils.safe_write(output, "\n# Other ReproZip keys (not used by NICEMAN) \n\n")
+            utils.safe_write(output, yaml.safe_dump(envconfig,
+                                                    encoding="utf-8",
+                                                    allow_unicode=True))

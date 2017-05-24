@@ -90,7 +90,7 @@ class Provenance(object):
                     "Failed to load %s using any known parser" % source)
         return fullspec
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def get_operating_system(self):
         """
         Retrieve the operating system information.
@@ -101,9 +101,9 @@ class Provenance(object):
             os['name']
             os['version']
         """
-        return
+        raise NotImplementedError()
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def get_distributions(self):
         """
         Retrieve the information for all the distributions recorded in the
@@ -114,4 +114,17 @@ class Provenance(object):
         list
             List of Distribution sub-class objects.
         """
-        return
+        raise NotImplementedError()
+
+    # @abc.abstractmethod
+    def get_files(self):
+        """
+        Retrieve list of files on the system which were mentioned.
+
+        Returns
+        -------
+        list
+            List of file names.
+        """
+        raise NotImplementedError()
+
