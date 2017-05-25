@@ -149,4 +149,5 @@ class DockerContainer(Resource):
         """
         Log into a container and get the command line
         """
+        lgr.debug("Opening TTY connection to docker container.")
         dockerpty.start(self._client, self._container, logs=0)

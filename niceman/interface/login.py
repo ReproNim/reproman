@@ -20,7 +20,7 @@ from ..support.constraints import EnsureStr
 from ..resource import Resource
 
 from logging import getLogger
-lgr = getLogger('niceman.api.delete')
+lgr = getLogger('niceman.api.login')
 
 
 class Login(Interface):
@@ -74,7 +74,7 @@ class Login(Interface):
         #       why should we???
         resource_info, inventory = get_resource_info(config, resource, resource_id)
 
-        # Delete resource environment
+        # Connect to resource environment
         env_resource = Resource.factory(resource_info)
         env_resource.connect()
 

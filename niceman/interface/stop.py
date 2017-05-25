@@ -20,7 +20,7 @@ from ..support.constraints import EnsureStr
 from ..resource import Resource
 
 from logging import getLogger
-lgr = getLogger('niceman.api.start')
+lgr = getLogger('niceman.api.stop')
 
 
 class Stop(Interface):
