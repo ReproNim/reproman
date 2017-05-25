@@ -20,16 +20,16 @@ from ..support.constraints import EnsureStr
 from ..resource import Resource
 
 from logging import getLogger
-lgr = getLogger('niceman.api.stop')
+lgr = getLogger('niceman.api.login')
 
 
-class Stop(Interface):
-    """Stop a computation environment
+class Login(Interface):
+    """Log into a computation environment
 
     Examples
     --------
 
-      $ niceman stop --resource=my-resource --config=niceman.cfg
+      $ niceman login --resource=my-resource --config=niceman.cfg
 
     """
 
@@ -74,13 +74,11 @@ class Stop(Interface):
         #       why should we???
         resource_info, inventory = get_resource_info(config, resource, resource_id)
 
-        # Delete resource environment
+        # Connect to resource environment
         env_resource = Resource.factory(resource_info)
         env_resource.connect()
 
         if not env_resource.id:
             raise ValueError("No resource found given the info %s" % str(resource_info))
 
-        env_resource.stop()
-
-        lgr.info("Stopped the environment %s", resource)
+        env_resource.login()
