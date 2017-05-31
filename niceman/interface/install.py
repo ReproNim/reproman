@@ -11,11 +11,11 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, get_resource_info
+from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..provenance import Provenance
-from ..resource import Resource
+from ..resource import ResourceManager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.install')
@@ -78,9 +78,9 @@ class Install(Interface):
         provenance = Provenance.factory(filename)
 
         # Get configuration and environment inventory
-        config, inventory = get_resource_info(config, resource, resource_id)
+        config, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
 
-        env_resource = Resource.factory(config)
+        env_resource = ResourceManager.factory(config)
         env_resource.connect()
         for distribution in provenance.get_distributions():
             distribution.initiate(env_resource)

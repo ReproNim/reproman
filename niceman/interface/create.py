@@ -11,12 +11,12 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, get_resource_info
+from .base import Interface
 import niceman.interface.base # Needed for test patching
 # from ..provenance import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..resource import Resource
+from ..resource import ResourceManager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.create')
@@ -156,12 +156,12 @@ class Create(Interface):
 
         # Get configuration and environment inventory
         if clone:
-            config, inventory = get_resource_info(config, clone, resource_id, resource_type)
+            config, inventory = ResourceManager.get_resource_info(config, clone, resource_id, resource_type)
             config['name'] = resource
             del config['id']
             del config['status']
         else:
-            config, inventory = get_resource_info(config, resource, resource_id, resource_type)
+            config, inventory = ResourceManager.get_resource_info(config, resource, resource_id, resource_type)
 
         # TODO: All resource-type-specific params handling should be done in some other
         # more scalable fashion
@@ -178,13 +178,13 @@ class Create(Interface):
         if aws_key_filename: config['key_filename'] = aws_key_filename
 
         # Create resource environment
-        env_resource = Resource.factory(config)
+        env_resource = ResourceManager.factory(config)
         env_resource.connect()
         config_updates = env_resource.create()
 
         # Save the updated configuration for this resource.
         config.update(config_updates)
         inventory[resource] = config
-        niceman.interface.base.set_resource_inventory(inventory)
+        ResourceManager.set_inventory(inventory)
 
         lgr.info("Created the environment %s", resource)

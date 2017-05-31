@@ -13,11 +13,11 @@ __docformat__ = 'restructuredtext'
 
 import re
 
-from .base import Interface, get_resource_info
+from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..resource import Resource
+from ..resource import ResourceManager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.delete')
@@ -77,10 +77,10 @@ class Delete(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
-        resource_info, inventory = get_resource_info(config, resource, resource_id)
+        resource_info, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
 
         # Delete resource environment
-        env_resource = Resource.factory(resource_info)
+        env_resource = ResourceManager.factory(resource_info)
         env_resource.connect()
 
         if not env_resource.id:
@@ -102,6 +102,6 @@ class Delete(Interface):
             if resource in inventory:
                 del inventory[resource]
 
-            niceman.interface.base.set_resource_inventory(inventory)
+            ResourceManager.set_inventory(inventory)
 
             lgr.info("Deleted the environment %s", resource)
