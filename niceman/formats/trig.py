@@ -22,25 +22,25 @@ class TrigProvenance(Provenance):
         self.graph = ConjunctiveGraph()
         self.graph.parse(source, format='trig')
 
-    def get_os(self):
-        return 'Ubuntu'
-
-    def get_os_version(self):
-        return '12.04'
-
-    def get_create_date(self):
-        return '20091004T111800Z'
-
-    def get_environment_vars(self):
-
-        results = self.graph.query(
-            """SELECT DISTINCT ?variable ?value
-            WHERE {
-            ?x nipype:environmentVariable ?variable .
-            ?x prov:value ?value .
-            }""")
-
-        return results
+    # def get_os(self):
+    #     return 'Ubuntu'
+    #
+    # def get_os_version(self):
+    #     return '12.04'
+    #
+    # def get_create_date(self):
+    #     return '20091004T111800Z'
+    #
+    # def get_environment_vars(self):
+    #
+    #     results = self.graph.query(
+    #         """SELECT DISTINCT ?variable ?value
+    #         WHERE {
+    #         ?x nipype:environmentVariable ?variable .
+    #         ?x prov:value ?value .
+    #         }""")
+    #
+    #     return results
 
     def get_packages(self):
 
@@ -53,3 +53,13 @@ class TrigProvenance(Provenance):
             }""")
 
         return results
+
+    def get_distributions(self):
+        # needs to use get_packages and see what is in there --
+        # we might need to come up with a "source_distribution" which
+        # would just define packages based on their names without clear
+        # definition on how they were obtained
+        raise NotImplementedError()
+
+    def get_files(self):
+        raise NotImplementedError('TODO')

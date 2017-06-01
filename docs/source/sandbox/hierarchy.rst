@@ -419,6 +419,7 @@ distributions:  # here we expand
   # might even have some "root" one
   packages:
 
+ # Tricky one since might have multiple distributions!
  conda:
  - path: /path/conda1
    build: ...
@@ -439,7 +440,6 @@ distributions:  # here we expand
      ?index:      # not sure if possible to discover ATM see http://rancher.com/comparing-four-hosted-docker-registries/ for concepts
      ?registry:   # but if we allow for specification -- might be helpful.
      ?repository: # BUT overlaps somewhat with what we should be specifying in resources!
-packages:
 
 
 

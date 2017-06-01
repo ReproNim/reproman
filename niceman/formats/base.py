@@ -10,6 +10,7 @@
 
 from importlib import import_module
 import abc
+import attr
 
 from ..utils import file_basename
 from ..dochelpers import exc_str
@@ -22,9 +23,12 @@ _known_extensions = {
 }
 
 import logging
-lgr = logging.getLogger('niceman.prov')
+lgr = logging.getLogger('niceman.formats')
 
+from ..distributions.base import FullModel
 
+# XXX Is just a file format Adapter which should provide us with functionality
+# to load/store FullModel
 class Provenance(object):
     """
     Base class to handle the collection and management of provenance information.
@@ -32,6 +36,7 @@ class Provenance(object):
 
     __metaclass__ = abc.ABCMeta
 
+    # XXX should we rename into more obvious from_file/from_files?
     @staticmethod
     def factory(source, format='nicemanspec'):
         """
@@ -51,7 +56,13 @@ class Provenance(object):
         """
         class_name = format.capitalize() + 'Provenance'
         module = import_module('niceman.formats.' + format)
-        return getattr(module, class_name)(source)
+        provenance_format = getattr(module, class_name).factory(source)
+        # Now create a proper FullModel
+        return FullModel(
+            base=provenance_format.get_base(),
+            distributions=provenance_format.get_distributions(),
+            other_files=provenance_format.get_other_files(),
+        )
 
     @staticmethod
     def chain_factory(sources):
@@ -90,18 +101,18 @@ class Provenance(object):
                     "Failed to load %s using any known parser" % source)
         return fullspec
 
-    # @abc.abstractmethod
-    def get_operating_system(self):
-        """
-        Retrieve the operating system information.
-
-        Returns
-        -------
-        Dictionary containing name and version of the OS.
-            os['name']
-            os['version']
-        """
-        raise NotImplementedError()
+    # # @abc.abstractmethod
+    # def get_operating_system(self):
+    #     """
+    #     Retrieve the operating system information.
+    #
+    #     Returns
+    #     -------
+    #     Dictionary containing name and version of the OS.
+    #         os['name']
+    #         os['version']
+    #     """
+    #     raise NotImplementedError()
 
     # @abc.abstractmethod
     def get_distributions(self):

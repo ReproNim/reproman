@@ -63,17 +63,18 @@ class NicemanspecProvenance(Provenance):
                 lgr.error("Failed to load %s: %s", source, exc_str(exc))
                 raise  # TODO -- we might want a dedicated exception here
 
-    def get_operating_system(self):
-        """
-        Retrieve the operating system information.
-
-        Returns
-        -------
-        Dictionary containing name and version of the OS.
-            os['name']
-            os['version']
-        """
-        return self._model['distribution']
+    # def get_operating_system(self):
+    #     """
+    #     Retrieve the operating system information.
+    #
+    #     Returns
+    #     -------
+    #     Dictionary containing name and version of the OS.
+    #         os['name']
+    #         os['version']
+    #     """
+    #     raise NotImplementedError()
+    #     return self._model['distribution']
 
     def get_distributions(self):
         """
@@ -87,12 +88,12 @@ class NicemanspecProvenance(Provenance):
         """
         dist_objects = []
 
-        for dist_prov in self._model['distributions']:
-            subclass = dist_prov['name'].strip('-0123456789')
+        for dist_prov in self._model.distributions:
+            subclass = dist_prov.name.strip('-0123456789')
 
             #Add relevant packages to the distribution provenance.
             dist_prov['packages'] = []
-            for package in self._model['packages']:
+            for package in self._model.packages:
                 try:
                     # TODO: Improve handling of missing package lists.
                     if 'distributions' in package:
@@ -124,7 +125,8 @@ class NicemanspecProvenance(Provenance):
 
     # TODO: RF
     #   config must be gone and taken from self
-    def write_config(self, output):
+    @classmethod
+    def write_config(self, output, spec):
         """Writes an environment config to a stream
     
         Parameters
@@ -156,8 +158,8 @@ class NicemanspecProvenance(Provenance):
         c = "\n# Runs: Commands and related environment variables\n\n"
         write_config_key(output, envconfig, "runs", c)
 
-        c = "\n# Package Origins \n\n"
-        write_config_key(output, envconfig, "origins", c)
+        c = "\n# APT sources \n\n"
+        write_config_key(output, envconfig, "apt_sources", c)
 
         c = "\n# Packages \n\n"
         write_config_key(output, envconfig, "packages", c)

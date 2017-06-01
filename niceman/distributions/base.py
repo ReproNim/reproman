@@ -10,6 +10,9 @@
 
 import os
 import abc
+import attr
+import collections
+import yaml
 
 from importlib import import_module
 from six import viewvalues
@@ -20,23 +23,43 @@ import logging
 lgr = logging.getLogger('niceman.distributions')
 
 
-class Distribution(object):
-    """
-    Base class for providing distribution-based shell commands.
-    """
+#
+# Models
+#
+
+class SpecObject(object):
+    @staticmethod
+    def yaml_representer(dumper, data):
+
+        ordered_items = filter(
+            lambda i: bool(i[1]),  # so only non empty/None
+            attr.asdict(
+                data, dict_factory=collections.OrderedDict).items())
+        return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
+
+
+def _register_with_representer(cls):
+    # TODO: check if we could/should just inherit from  yaml.YAMLObject
+    # or could may be craft our own metaclass
+    yaml.SafeDumper.add_representer(cls, SpecObject.yaml_representer)
+
+
+@attr.s
+class Package(SpecObject):
+    # files used/associated with the package
+    # Unfortunately cannot be the one with default value in the super-class :-/
+    # https://github.com/python-attrs/attrs/issues/38
+    # So for now will be defined specifically per each subclass
+    # files = attr.ib(default=attr.Factory(list))
+    pass
+
+
+@attr.s
+class Distribution(SpecObject):
+    """Base class for distributions"""
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, provenance):
-        """
-        Class constructor
-
-        Parameters
-        ----------
-        provenance : object
-            Provenance class instance
-        """
-        self._provenance = provenance
 
     @staticmethod
     def factory(distribution_type, provenance):
@@ -58,33 +81,46 @@ class Distribution(object):
             Instance of a Distribution sub-class
         """
         class_name = distribution_type.capitalize() + 'Distribution'
-        module = import_module('niceman.distributions.' + distribution_type)
+        module = import_module('niceman.distributions.' + distribution_type.lower())
         return getattr(module, class_name)(provenance)
 
     @abc.abstractmethod
-    def initiate(self, environment):
+    def initiate(self, session):
         """
         Perform any initialization commands needed in the environment environment.
 
         Parameters
         ----------
-        environment : object
-            The Environment sub-class object.
+        session : object
+            The Session to work in
         """
         return
 
     @abc.abstractmethod
-    def install_packages(self, environment):
+    def install_packages(self, session=None):
         """
         Install the packages associated to this distribution by the provenance
         into the environment.
 
         Parameters
         ----------
-        environment : object
-            Environment sub-class instance.
+        session : object
+            Session to work in
         """
         return
+
+
+class FullModel(SpecObject):
+    # base = attr.ib()  # ???  to define specifics of the system, possibly a docker base
+    distributions = attr.ib(default=attr.Factory(list))  # list of distributions
+    other_files = attr.ib(default=attr.Factory(list))  # list of other files
+    # runs?  whenever we get to provisioning executions
+    #        those would also be useful for tracing for presence of distributions
+    #        e.g. depending on what is in the PATH
+
+_register_with_representer(FullModel)
+
+
 
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
@@ -151,7 +187,7 @@ class PackageTracer(object):
                     pkg = self._create_package(pkgname)
                     if pkg:
                         found_packages[pkgname] = pkg
-                        pkg["files"].append(f)
+                        pkg.files.append(f)
                         nb_pkg_files += 1
                     else:
                         unknown_files.add(f)

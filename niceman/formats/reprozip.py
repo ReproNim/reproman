@@ -24,34 +24,32 @@ lgr = logging.getLogger('niceman.formats.reprozip')
 class ReprozipProvenance(Provenance):
     """Parser for ReproZip file format (YAML specification) """
 
-    def __init__(self, source):
-        self._yaml = None
-        self._load(source)
-
-    def _load(self, source):
+    @classmethod
+    def factory(self, source):
         with io.open(source, encoding='utf-8') as stream:
             config = yaml.safe_load(stream)
             # TODO: Check version of ReproZip file and warn if unknown
             self.yaml = config
 
-    def get_os(self):
-        return self.yaml['runs'][0]['distribution'][0]
-
-    def get_os_version(self):
-        return self.yaml['runs'][0]['distribution'][1]
-
-    def get_create_date(self):
-        format = '%Y%m%dT%H%M%SZ'
-        return self.yaml['runs'][0]['date'].strftime(format)
-
-    def get_environment_vars(self):
-        return self.yaml['runs'][0]['environ']
-
-    def get_packages(self):
-        return [{'name': p['name'], 'version': p['version']} for p in self.yaml['packages']]
-
-    def get_commandline(self):
-        return self.yaml['runs'][0]['argv']
+    # Might come handy to define 'base' whenever we get there
+    # def get_os(self):
+    #     return self.yaml['runs'][0]['distribution'][0]
+    #
+    # def get_os_version(self):
+    #     return self.yaml['runs'][0]['distribution'][1]
+    #
+    # def get_create_date(self):
+    #     format = '%Y%m%dT%H%M%SZ'
+    #     return self.yaml['runs'][0]['date'].strftime(format)
+    #
+    # def get_environment_vars(self):
+    #     return self.yaml['runs'][0]['environ']
+    #
+    # def get_packages(self):
+    #     return [{'name': p['name'], 'version': p['version']} for p in self.yaml['packages']]
+    #
+    # def get_commandline(self):
+    #     return self.yaml['runs'][0]['argv']
 
     def get_files(self, other_files=True):
         """Pulls the system files from a ReproZip configuration into a set

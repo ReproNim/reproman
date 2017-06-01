@@ -141,6 +141,7 @@ def identify_packages(files, session=None):
         # TODO: we should allow for multiple passes, where each one could
         #  possibly identify a new "distribution" (e.g. scripts ran from
         #  different virtualenvs... some bizzare multiple condas etc)
+
         # Each one should initialize "Distribution" and attach to it pkgs
         (packages_, unknown_files) = \
             tracer.identify_packages_from_files(files_to_consider)
