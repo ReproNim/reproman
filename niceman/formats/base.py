@@ -25,16 +25,50 @@ _known_extensions = {
 import logging
 lgr = logging.getLogger('niceman.formats')
 
-from ..distributions.base import FullModel
+from ..distributions.base import EnvironmentSpec
+
 
 # XXX Is just a file format Adapter which should provide us with functionality
-# to load/store FullModel
+# to load/store EnvironmentSpec
 class Provenance(object):
-    """
-    Base class to handle the collection and management of provenance information.
+    """Base class to handle the collection and management of provenance files.
+    
+    Main purpose is to provide basic interface to provide adapters
+    to generate our EnvironmentSpec object, and possibly later save it.
+    
+    Also should provide helpers such as `get_files` so we could do retracing.
     """
 
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, source):
+        """
+        Class constructor
+
+        Parameters
+        ----------
+        source : string
+            File path or URL to load from
+        """
+        self._src = self._load(source)
+
+    @abc.abstractmethod
+    def _load(self, source):
+        raise NotImplementedError
+
+
+    def get_environment(self):
+        """Given the state 
+        
+        Returns
+        -------
+        EnvironmentSpec 
+        """
+        return EnvironmentSpec(
+            base=self.get_base(),
+            distributions=self.get_distributions(),
+            files=self.get_files(limit='loose'),
+        )
 
     # XXX should we rename into more obvious from_file/from_files?
     @staticmethod
@@ -56,13 +90,7 @@ class Provenance(object):
         """
         class_name = format.capitalize() + 'Provenance'
         module = import_module('niceman.formats.' + format)
-        provenance_format = getattr(module, class_name).factory(source)
-        # Now create a proper FullModel
-        return FullModel(
-            base=provenance_format.get_base(),
-            distributions=provenance_format.get_distributions(),
-            other_files=provenance_format.get_other_files(),
-        )
+        return getattr(module, class_name).factory(source)
 
     @staticmethod
     def chain_factory(sources):
@@ -114,6 +142,10 @@ class Provenance(object):
     #     """
     #     raise NotImplementedError()
 
+    def get_base(self):
+        # Default
+        return None
+
     # @abc.abstractmethod
     def get_distributions(self):
         """
@@ -128,9 +160,14 @@ class Provenance(object):
         raise NotImplementedError()
 
     # @abc.abstractmethod
-    def get_files(self):
+    def get_files(self, limit='all'):
         """
         Retrieve list of files on the system which were mentioned.
+
+        Parameters
+        ----------
+        limit : {'all', 'loose', 'packaged'}
+          What files to return
 
         Returns
         -------
@@ -139,3 +176,6 @@ class Provenance(object):
         """
         raise NotImplementedError()
 
+    @classmethod
+    def write(cls, output, spec):
+        raise NotImplementedError("Output was not implemented for %s", cls)

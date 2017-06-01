@@ -56,6 +56,7 @@ lgr = logging.getLogger('niceman.distributions.debian')
 from .base import SpecObject
 from .base import Package
 from .base import Distribution
+from .base import ListOfFactory
 from .base import _register_with_representer
 
 #
@@ -68,15 +69,15 @@ class APTSource(SpecObject):
     """APT origin information
     """
     name = attr.ib()
-    component = attr.ib()
-    archive = attr.ib()
-    architecture = attr.ib()
-    codename = attr.ib()
-    origin = attr.ib()
-    label = attr.ib()
-    site = attr.ib()
-    archive_uri = attr.ib()
-    date = attr.ib()
+    component = attr.ib(default=None)
+    archive = attr.ib(default=None)
+    architecture = attr.ib(default=None)
+    codename = attr.ib(default=None)
+    origin = attr.ib(default=None)
+    label = attr.ib(default=None)
+    site = attr.ib(default=None)
+    archive_uri = attr.ib(default=None)
+    date = attr.ib(default=None)
 _register_with_representer(APTSource)
 
 
@@ -84,20 +85,21 @@ _register_with_representer(APTSource)
 class DEBPackage(Package):
     """Debian package information"""
     name = attr.ib()
-    version = attr.ib()
-    architecture = attr.ib()
-    size = attr.ib()
-    md5 = attr.ib()
-    sha1 = attr.ib()
-    sha256 = attr.ib()
+    version = attr.ib(default=None)
+    architecture = attr.ib(default=None)
+    size = attr.ib(default=None)
+    md5 = attr.ib(default=None)
+    sha1 = attr.ib(default=None)
+    sha256 = attr.ib(default=None)
 
     # Optional
     source_name = attr.ib(default=None)
     source_version = attr.ib(default=None)
     versions = attr.ib(default=None)
     install_date = attr.ib(default=None)
-    apt_sources = attr.ib(default=attr.Factory(list))
-    files = attr.ib(default=attr.Factory(list))
+    apt_sources = attr.ib(default=ListOfFactory(APTSource))
+    files = attr.ib(default=attr.Factory(list))  # Might want a File structure for advanced tracking
+    upstream_name = attr.ib(default=None)
 _register_with_representer(DEBPackage)
 
 
@@ -107,8 +109,8 @@ class DebianDistribution(Distribution):
     Class to provide Debian-based shell commands.
     """
 
-    apt_sources = attr.ib(default=attr.Factory(list))  # [APTSource]
-    packages = attr.ib(default=attr.Factory(list))     # [DEBPackage]
+    apt_sources = attr.ib(default=ListOfFactory(APTSource))
+    packages = attr.ib(default=ListOfFactory(DEBPackage))
 
     def initiate(self, session):
         """

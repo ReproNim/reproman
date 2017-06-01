@@ -23,6 +23,24 @@ import logging
 lgr = logging.getLogger('niceman.distributions')
 
 
+Factory = attr.Factory
+
+#
+# Specification helper constructs
+#
+
+@attr.s(slots=True)
+class ListOfFactory(object):
+    type = attr.ib()
+
+    def __call__(self, *args, **kwargs):
+        return list(*args, **kwargs)
+
+    @property
+    def factory(self):
+        return self
+
+
 #
 # Models
 #
@@ -60,9 +78,12 @@ class Distribution(SpecObject):
 
     __metaclass__ = abc.ABCMeta
 
+    # Actually might want/need to go away since somewhat duplicates the class
+    # name and looks awkward
+    name = attr.ib()
 
     @staticmethod
-    def factory(distribution_type, provenance):
+    def factory(distribution_type, provenance=None):
         """
         Factory method for creating the appropriate Orchestrator sub-class
         based on format type.
@@ -72,17 +93,18 @@ class Distribution(SpecObject):
         distribution_type : string
             Type of distribution subclass to create. Current options are:
             'conda', 'debian', 'neurodebian', 'pypi'
-        provenance : object
-            Provenance class instance.
+        provenance : dict
+            Keyword args to be passed to initialize class instance 
 
         Returns
         -------
         distribution : object
-            Instance of a Distribution sub-class
+            Distribution class or its instance (when provenance is not None)
         """
         class_name = distribution_type.capitalize() + 'Distribution'
         module = import_module('niceman.distributions.' + distribution_type.lower())
-        return getattr(module, class_name)(provenance)
+        class_ = getattr(module, class_name)
+        return class_ if provenance is None else class_(**provenance)
 
     @abc.abstractmethod
     def initiate(self, session):
@@ -110,15 +132,16 @@ class Distribution(SpecObject):
         return
 
 
-class FullModel(SpecObject):
-    # base = attr.ib()  # ???  to define specifics of the system, possibly a docker base
-    distributions = attr.ib(default=attr.Factory(list))  # list of distributions
-    other_files = attr.ib(default=attr.Factory(list))  # list of other files
+@attr.s
+class EnvironmentSpec(SpecObject):
+    base = attr.ib()  # ???  to define specifics of the system, possibly a docker base
+    distributions = attr.ib(default=ListOfFactory(Distribution))  # list of distributions
+    files = attr.ib(default=attr.Factory(list))  # list of other files
     # runs?  whenever we get to provisioning executions
     #        those would also be useful for tracing for presence of distributions
     #        e.g. depending on what is in the PATH
 
-_register_with_representer(FullModel)
+_register_with_representer(EnvironmentSpec)
 
 
 

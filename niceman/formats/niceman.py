@@ -12,8 +12,11 @@ Plugin support for provenance YAML files following NICEMAN spec.
 """
 from __future__ import absolute_import
 
+import attr
+
 import collections
 import datetime
+from collections import OrderedDict
 
 import yaml
 
@@ -23,28 +26,21 @@ from ..dochelpers import exc_str
 from ..distributions import Distribution
 from .base import Provenance
 from .utils import write_config_key
+from .utils import write_config
+from niceman.distributions.base import ListOfFactory
+from niceman.distributions.base import Factory
+from niceman.distributions.base import SpecObject
 
 import logging
 lgr = logging.getLogger('niceman.formats.niceman')
+
+__version__ = '0.0.1'
 
 
 class NicemanspecProvenance(Provenance):
     """
     Parser for NICEMAN Spec (YAML specification)
     """
-
-    def __init__(self, source=None, model=None):
-        """
-        Class constructor
-
-        Parameters
-        ----------
-        source : string
-            File path or URL
-        """
-        if source and model:
-            raise ValueError("Provide either source or a model")
-        self._model = model or self._load(source)
 
     @classmethod
     def _load(cls, source):
@@ -74,12 +70,12 @@ class NicemanspecProvenance(Provenance):
     #         os['version']
     #     """
     #     raise NotImplementedError()
-    #     return self._model['distribution']
+    #     return self._src['distribution']
 
     def get_distributions(self):
         """
         Retrieve the information for all the distributions recorded in the
-            file.
+        file.
 
         Returns
         -------
@@ -88,58 +84,132 @@ class NicemanspecProvenance(Provenance):
         """
         dist_objects = []
 
-        for dist_prov in self._model.distributions:
-            subclass = dist_prov.name.strip('-0123456789')
+        """
+        TODO: For "compressed" presentation we need to specify somewhere a handler
+        in case of e.g. 
+        - packages:
+           - "full" is a list of dicts(attr structures)
+           - a list with strings (e.g. - name[>=version]) where, depending on type
+             of the package ('name' for DEBPackage, "url" for VCS), some name serves
+             an identified
+           - so it is a matter of the datatype of the item (string vs fully blown dict)
+        - distributions:
+           - "full" is a list of dict(attr structures) per each type of distribution
+           - a dict with keys being a "name" of each entry
+           
+        But that is later -- for now just reading as is, allowing to map those specs
+        into structs
+        """
 
-            #Add relevant packages to the distribution provenance.
-            dist_prov['packages'] = []
-            for package in self._model.packages:
-                try:
-                    # TODO: Improve handling of missing package lists.
-                    if 'distributions' in package:
-                        if 'distribution' in package:
-                            raise ValueError(
-                                "Only distribution or distributions must be provided")
-                        distributions = package['distributions']
-                    elif 'distribution' in package:
-                        distributions = [{'name': package['distribution']}]
-                    else:
+        """ATM we will assume that we are getting the "cut" at the level of the environment
+        but it could be that the spec is on top of it
+        """
+
+        dists_in = self._src['distributions']
+        if isinstance(dists_in, dict):
+            # normalize compressed presentation into full
+            dists_in = [
+                dict(name=n, **(fields or {}))
+                for n, fields in dists_in.items()
+            ]
+
+        distributions = []
+        for dist_in in dists_in:
+            subclass = dist_in['name'].strip('-0123456789')
+            # Uses our factory decided by the 'name'
+            # So it is pretty much some kind of a helper factory
+            #   get_instance_by_name('niceman.distributions', dist_in['name'])
+            # and then populate it.  Could become part of the model spec
+            # describing that. ATM it is just a FactoryListOf(Distribution)
+            # but we want to say that it is not just any Distribution
+            # but the one decided from the 'name' and class for which found
+            # among available in a module.
+            # We have pretty much the same "factory" construct for Resources
+            # ATM.
+            # RF: make it generic!
+            spec_class = Distribution.factory(subclass)
+
+            spec_args = []
+            spec_kwargs = dict()  # name=dist_in['name'])
+
+            # process fields
+            spec_attrs = spec_class.__attrs_attrs__  # as is -- list of them
+            spec_in = dist_in.copy()  # shallow copy so we could pop
+
+            # now we need to see what fields are present in the spec,
+            # and prepare them to be passed into its constructor
+            for spec_attr in spec_attrs:
+                name = spec_attr.name
+                if name not in spec_in:
+                    if spec_attr.default is attr.NOTHING:
+                        # positional argument -- must be known
                         raise ValueError(
-                            "Provide a single or multiple distributions")
+                            "%s requires %s, but was provided only with following fields: %s"
+                            % (spec_class.__name__, name, ', '.join(spec_in.keys()))
+                        )
+                    else:
+                        continue  # skipping
 
-                    if isinstance(distributions, str):
-                        # we were provided a single distribution so there were no list
-                        distributions = [{'name': distributions}]
-                    for package_dist in distributions:
-                        if dist_prov['name'] == package_dist['name']:
-                            dist_prov['packages'].append(package)
-                except Exception as exc:
-                    # Log error and keep going for now...
-                    lgr.error("Failed to load package: %s, %s",
-                              package['name'], exc_str(exc))
+                value_in = spec_in.pop(name)
+                # now we need a "factory" for each of those records
+                # And those could be specific to their type(s) when "compressed"
+                # but in general we should be able to use the same logic,
+                # just need to know whom to call
+                if isinstance(spec_attr.default, ListOfFactory):
+                    # we can use information of the type for each element we are
+                    # getting for this name
+                    # TODO: Recurse this whole shebang
+                    value_out = spec_attr.default(
+                        (spec_attr.default.type(**kw) for kw in value_in)
+                    )
+                elif isinstance(spec_attr.default, Factory):
+                    value_out = spec_attr.default(**value_in)
+                else:
+                    value_out = value_in
 
-            dist_objects.append(Distribution.factory(subclass, dist_prov))
+                if spec_attr.default is attr.NOTHING:
+                    spec_args.append(value_out)  # positional arg
+                else:
+                    spec_kwargs[spec_attr.name] = value_out  # keyword arg
 
-        return dist_objects
+            if spec_in:
+                raise ValueError(
+                    "Following input fields were not processed since were not known to %s: %s"
+                    % (spec_class.__name__, ', '.join(spec_in.keys()))
+                )
 
+            distributions.append(
+                spec_class(*spec_args, **spec_kwargs)
+            )
+
+        # from pprint import pprint; pprint(distributions)
+        # import pdb; pdb.set_trace()
+        return distributions
+
+    def get_files(self, limit='all'):
+        return self._src.get('files', []) + ["TODO"]
+        # TODO: we would need to get_distributions first then to traverse
+        # all the packages etc...
 
     # TODO: RF
     #   config must be gone and taken from self
     @classmethod
-    def write_config(self, output, spec):
+    def write(cls, output, spec):
         """Writes an environment config to a stream
     
         Parameters
         ----------
         output
             Output Stream
-    
-        config : dict
-            Environment configuration (input)
+        spec : dict
+            Spec (environment) configuration (input).
+            ??? Might want to code it in a generic fashion so spec 
+            might be at a different level than environment may be.
+            E.g. something which would be above and contain environment(s), 
+            runs, etc 
     
         """
 
-        config = self._model
         # Allow yaml to handle OrderedDict
         # From http://stackoverflow.com/questions/31605131
         if collections.OrderedDict not in yaml.SafeDumper.yaml_representers:
@@ -148,23 +218,60 @@ class NicemanspecProvenance(Provenance):
                 lambda self, data:
                 self.represent_mapping('tag:yaml.org,2002:map', data.items()))
 
-        envconfig = dict(config)  # Shallow copy for destruction
         utils.safe_write(
             output,
             ("# NICEMAN Environment Configuration File\n"
              "# This file was created by NICEMAN {0} on {1}\n").format(
                 niceman.__version__, datetime.datetime.now()))
 
-        c = "\n# Runs: Commands and related environment variables\n\n"
-        write_config_key(output, envconfig, "runs", c)
+        #c = "\n# Runs: Commands and related environment variables\n\n"
+        #write_config_key(output, envconfig, "runs", c)
 
-        c = "\n# APT sources \n\n"
+        out = OrderedDict()
+        out['version'] = __version__
+        out.update(spec_to_dict(spec))
+        write_config(output, out)
+        return out
+
+
+# TODO: RF into SpecObject._as_dict()
+def spec_to_dict(spec):
+
+    out = OrderedDict()
+    spec_attrs = spec.__attrs_attrs__  # as is -- list of them
+    for attr in spec_attrs:
+        value_in = getattr(spec, attr.name, None)
+        if not value_in:
+            continue
+        if isinstance(value_in, (ListOfFactory, Factory)):
+            # wasn't set, thus "default", thus
+            continue
+        elif isinstance(value_in, list):
+            # might be specs too
+            value_out = value_in.__class__(
+                spec_to_dict(v) if isinstance(v, SpecObject) else v
+                for v in value_in
+            )
+        elif isinstance(value_in, SpecObject):
+            value_out = spec_to_dict(value_in)
+        else:
+            value_out = value_in
+        if value_out in (tuple(), [], {}, None):
+            continue  # do not bother saving empty ones
+
+        out[attr.name] = value_out
+    return out
+
+"""
+        envconfig = dict(spec)  # Shallow copy for destruction
+
+        c = "APT sources"
         write_config_key(output, envconfig, "apt_sources", c)
 
-        c = "\n# Packages \n\n"
+        c = "Packages"
         write_config_key(output, envconfig, "packages", c)
 
-        c = "\n# Non-Packaged Files \n\n"
+        c = "Non-Packaged Files"
         write_config_key(output, envconfig, "other_files", c)
 
         if envconfig:
@@ -172,3 +279,4 @@ class NicemanspecProvenance(Provenance):
             utils.safe_write(output, yaml.safe_dump(envconfig,
                                                     encoding="utf-8",
                                                     allow_unicode=True))
+"""

@@ -35,10 +35,15 @@ def write_config_key(stream, envconfig, key, intro_comment=""):
     """
     if key in envconfig:
         mini_config = dict()
-        mini_config[key] = envconfig[key]
-        del envconfig[key]
-        safe_write(stream, intro_comment)
-        safe_write(stream, yaml.safe_dump(mini_config,
-                                          encoding="utf-8",
-                                          allow_unicode=True))
+        mini_config[key] = envconfig.pop(key)
+        if intro_comment:
+            safe_write(stream, "\n# %s\n\n" % intro_comment)
+        write_config(stream, mini_config)
 
+
+def write_config(stream, rec):
+    """TODO"""
+    return safe_write(
+        stream,
+        yaml.safe_dump(rec, encoding="utf-8", allow_unicode=True)
+    )

@@ -25,11 +25,11 @@ class ReprozipProvenance(Provenance):
     """Parser for ReproZip file format (YAML specification) """
 
     @classmethod
-    def factory(self, source):
+    def _load(cls, source):
         with io.open(source, encoding='utf-8') as stream:
             config = yaml.safe_load(stream)
             # TODO: Check version of ReproZip file and warn if unknown
-            self.yaml = config
+            return config
 
     # Might come handy to define 'base' whenever we get there
     # def get_os(self):
@@ -51,7 +51,7 @@ class ReprozipProvenance(Provenance):
     # def get_commandline(self):
     #     return self.yaml['runs'][0]['argv']
 
-    def get_files(self, other_files=True):
+    def get_files(self, limit='all'):
         """Pulls the system files from a ReproZip configuration into a set
     
         Given a ReproZip configuration (read into a dictionary) it pulls
@@ -73,12 +73,14 @@ class ReprozipProvenance(Provenance):
 
         files = set()
 
-        if 'packages' in self.yaml:
-            for package in self.yaml['packages']:
-                if 'files' in package:
-                    files.update(package['files'])
+        src_yaml = self._src
+        if limit in {'all', 'packaged'}:
+            if 'packages' in src_yaml:
+                for package in src_yaml['packages']:
+                    if 'files' in package:
+                        files.update(package['files'])
 
-        if other_files and 'other_files' in self.yaml:
-            files.update(self.yaml["other_files"])
+        if limit in {'all', 'loose'} and 'other_files' in src_yaml:
+            files.update(src_yaml["other_files"])
 
         return files

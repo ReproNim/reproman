@@ -18,9 +18,11 @@ from rdflib import ConjunctiveGraph
 
 class TrigProvenance(Provenance):
 
-    def __init__(self, source):
-        self.graph = ConjunctiveGraph()
-        self.graph.parse(source, format='trig')
+    @classmethod
+    def _load(cls, source):
+        graph = ConjunctiveGraph()
+        graph.parse(source, format='trig')
+        return graph
 
     # def get_os(self):
     #     return 'Ubuntu'
@@ -44,7 +46,7 @@ class TrigProvenance(Provenance):
 
     def get_packages(self):
 
-        results = self.graph.query(
+        results = self._src.query(
             """SELECT DISTINCT ?command ?version
             WHERE {
             ?x nipype:command ?full_command .
@@ -61,5 +63,5 @@ class TrigProvenance(Provenance):
         # definition on how they were obtained
         raise NotImplementedError()
 
-    def get_files(self):
+    def get_files(self, limit='all'):
         raise NotImplementedError('TODO')

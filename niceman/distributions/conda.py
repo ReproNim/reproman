@@ -8,26 +8,17 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
 
+import attr
 from niceman.distributions import Distribution
 
 import logging
 lgr = logging.getLogger('niceman.distributions.conda')
 
+
 class CondaDistribution(Distribution):
     """
     Class to provide Conda package management.
     """
-
-    def __init__(self, provenance):
-        """
-        Class constructor
-
-        Parameters
-        ----------
-        provenance : dictionary
-            Provenance information for the distribution.
-        """
-        super(CondaDistribution, self).__init__(provenance)
 
     def initiate(self, environment):
         """

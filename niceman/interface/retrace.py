@@ -103,7 +103,7 @@ class Retrace(Interface):
         # TODO: generic writer!
         from niceman.formats.niceman import NicemanspecProvenance
         spec = NicemanspecProvenance(model=config)
-        spec.write_config(output_file or sys.stdout)
+        spec.write(output_file or sys.stdout)
 
 
 # TODO: session should be with a state.  Idea is that if we want
