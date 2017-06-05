@@ -36,7 +36,7 @@ lgr = logging.getLogger('niceman.formats.niceman')
 __version__ = '0.0.1'
 
 
-class NicemanspecProvenance(Provenance):
+class NicemanProvenance(Provenance):
     """
     Parser for NICEMAN Spec (YAML specification)
     """

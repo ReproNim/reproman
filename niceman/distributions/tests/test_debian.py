@@ -88,7 +88,7 @@ def test_utf8_file():
     pprint(packages)
     # If the file exists, it should be in ca-certificates
     if os.path.isfile(files[0]):
-        assert packages[0]["name"] == "ca-certificates"
+        assert packages[0].name == "ca-certificates"
     else:  # Otherwise just make sure we didn't throw an exception
         assert True
 

@@ -73,7 +73,7 @@ class Provenance(object):
 
     # XXX should we rename into more obvious from_file/from_files?
     @staticmethod
-    def factory(source, format='nicemanspec'):
+    def factory(source, format='niceman'):
         """
         Factory method for creating the appropriate Provenance sub-class based
         on format type.
@@ -91,7 +91,7 @@ class Provenance(object):
         """
         class_name = format.capitalize() + 'Provenance'
         module = import_module('niceman.formats.' + format)
-        return getattr(module, class_name).factory(source)
+        return getattr(module, class_name)(source)
 
     @staticmethod
     def chain_factory(sources):

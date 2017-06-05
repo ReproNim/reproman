@@ -13,15 +13,15 @@ import io
 
 from pprint import pprint
 
-from niceman.formats.niceman import NicemanspecProvenance
+from niceman.formats.niceman import NicemanProvenance
 
 from .constants import NICEMAN_SPEC1_YML_FILENAME
 
 def test_write():
     output = io.StringIO()
     # just load
-    file_format = NicemanspecProvenance(NICEMAN_SPEC1_YML_FILENAME)
+    file_format = NicemanProvenance(NICEMAN_SPEC1_YML_FILENAME)
     env = file_format.get_environment()
     # and save
-    NicemanspecProvenance.write(output, env)
+    NicemanProvenance.write(output, env)
     print(output.getvalue())

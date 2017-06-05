@@ -100,8 +100,8 @@ class Retrace(Interface):
             spec['files'] = sorted(files)
 
         # TODO: generic writer!
-        from niceman.formats.niceman import NicemanspecProvenance
-        NicemanspecProvenance.write(output_file or sys.stdout, spec)
+        from niceman.formats.niceman import NicemanProvenance
+        NicemanProvenance.write(output_file or sys.stdout, spec)
 
 
 # TODO: session should be with a state.  Idea is that if we want

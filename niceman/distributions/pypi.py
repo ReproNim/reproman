@@ -13,6 +13,7 @@ from niceman.distributions import Distribution
 import logging
 lgr = logging.getLogger('niceman.distributions.pypi')
 
+
 class PypiDistribution(Distribution):
     """
     Class to provide Conda package management.
