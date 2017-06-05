@@ -44,7 +44,7 @@ niceman_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('niceman')]
 requires = {
     'core': [
         'appdirs',
-        'attrs',
+        'attrs>=16.1.0',
         'humanize',
         'mock',  # mock is also used for auto.py, not only for testing
         'pyyaml',
@@ -64,7 +64,8 @@ requires = {
         'chardet',  # python-debian misses dependency on it
     ],
     'docker': [
-        'docker-py',
+        'docker-py>=0.3.2',
+        'dockerpty',
     ],
     'aws': [
         'boto3',

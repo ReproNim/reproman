@@ -69,7 +69,9 @@ from .base import _register_with_representer
 #
 
 # TODO: flyweight/singleton ?
-@attr.s
+# To make them hashable we need to freeze them... not sure if we are ready:
+#@attr.s(cmp=True, hash=True, frozen=True)
+@attr.s(cmp=True)
 class APTSource(SpecObject):
     """APT origin information
     """
@@ -209,9 +211,7 @@ class DebTracer(PackageTracer):
         # Remember the created name
         used_names.add(name)
         # Create a named origin
-        new_o = copy.deepcopy(o)
-        new_o.name = name
-        return new_o
+        return attr.assoc(o, name=name)
 
     def _run_dpkg_query(self, subfiles):
         try:
