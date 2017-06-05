@@ -213,6 +213,21 @@ class DebTracer(PackageTracer):
         new_o.name = name
         return new_o
 
+    def _run_dpkg_query(self, subfiles):
+        try:
+            out, err = self._session(
+                ['dpkg-query', '-S'] + subfiles,
+                expect_stderr=True, expect_fail=True
+            )
+        except CommandError as exc:
+            stderr = utils.to_unicode(exc.stderr, "utf-8")
+            if 'no path found matching pattern' in stderr:
+                out = exc.stdout  # One file not found, so continue
+            else:
+                raise  # some other fault -- handle it above
+        out = utils.to_unicode(out, "utf-8")
+        return out
+
     @staticmethod
     def _parse_dpkgquery_line(line):
         if line.startswith('diversion '):
@@ -233,19 +248,7 @@ class DebTracer(PackageTracer):
 
         for subfiles in (files[pos:pos + num_files]
                          for pos in range(0, len(files), num_files)):
-            try:
-                out, err = self._session(
-                    ['dpkg-query', '-S'] + subfiles,
-                    expect_stderr=True, expect_fail=True
-                )
-            except CommandError as exc:
-                stderr = utils.to_unicode(exc.stderr, "utf-8")
-                if 'no path found matching pattern' in stderr:
-                    out = exc.stdout  # One file not found, so continue
-                else:
-                    raise  # some other fault -- handle it above
-
-            out = utils.to_unicode(out, "utf-8")
+            out = self._run_dpkg_query(subfiles)
 
             # Now go through the output and assign packages to files
             for outline in out.splitlines():
