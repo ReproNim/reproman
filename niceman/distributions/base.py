@@ -138,7 +138,7 @@ _register_with_representer(EnvironmentSpec)
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
 
-class PackageTracer(object):
+class DistributionTracer(object):
     """Base class for package trackers.
 
     ATM :term:`Package` describes all of possible "archives" which deliver

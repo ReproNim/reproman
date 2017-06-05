@@ -123,6 +123,7 @@ def identify_distributions(files, session=None):
     """
     # TODO: automate discovery of available tracers
     from niceman.distributions.debian import DebTracer
+    from niceman.distributions.conda import CondaTracer
     from niceman.distributions.vcs import VCSTracer
 
     from niceman.cmd import Runner
@@ -131,38 +132,23 @@ def identify_distributions(files, session=None):
     #      in case of no environment -- get current one
     # TODO: should operate in the session, might be given additional information
     #       not just files
-    Tracers = [DebTracer,]# VCSTracer]
+    Tracers = [DebTracer, CondaTracer,]# VCSTracer]
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files beloning to them
     files_to_consider = files[:]
 
-    distributions = []
+    distibutions = []
     for Tracer in Tracers:
         tracer = Tracer(session=session)
         begin = time.time()
         # might need to pass more into "identify_distributions" of the tracer
-        for dist in tracer.identify_distributions(files_to_consider):
-            distributions.append(dist)
 
-            # TODO RF: feels awkward to pass that dist now around... should
-            # finally either merge Distribution with Tracer or may be create
-            # DistributionInstance which would be the manipulator of a distribution
-            # object specs.
-            # Anyways retracing capabilities of asking for package detail
-            # might also be used directly by the distribution, so may be
-            # would make even more sense to join
-            if len(dist.packages):
-                raise NotImplementedError("Do not have capability yet to extend the list")
+        for env, files_to_consider in tracer.identify_distributions(files_to_consider):
+            distibutions.append(env)
 
-            packages, files_to_consider = tracer.identify_packages_from_files(files_to_consider)
-            dist.packages.extend(packages)
-            # TODO: dist.normalize()
-            #   similar to DBs should take care about identifying/groupping etc
-            #   of origins etc
-
-            # packages_origins = tracer.identify_package_origins(packages_)
+        # packages_origins = tracer.identify_package_origins(packages_)
         lgr.debug("Assigning files to packages by %s took %f seconds",
                   tracer, time.time() - begin)
 
-    return distributions, files_to_consider
+    return distibutions, files_to_consider

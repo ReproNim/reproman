@@ -29,7 +29,7 @@ from niceman.cmd import CommandError
 
 lgr = getLogger('niceman.distributions.vcs')
 
-from niceman.distributions.base import PackageTracer
+from niceman.distributions.base import DistributionTracer
 
 
 class VCSRepo(object):
@@ -320,7 +320,7 @@ class GitRepo(GitSVNRepo):
         return self._branch
 
 
-class VCSTracer(PackageTracer):
+class VCSTracer(DistributionTracer):
     """Resolve files into Git repositories they are contained with
 
     TODO: generalize to other common VCS (svn, hg, bzr) which should win one

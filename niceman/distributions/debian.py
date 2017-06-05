@@ -53,7 +53,7 @@ _DPKG_QUERY_PARSER = re.compile(
     "(?P<name>[^:]+)(:(?P<architecture>[^:]+))?: (?P<path>.*)$"
 )
 
-from niceman.distributions.base import PackageTracer
+from niceman.distributions.base import DistributionTracer
 from niceman.support.exceptions import CommandError
 
 lgr = logging.getLogger('niceman.distributions.debian')
@@ -162,7 +162,7 @@ class DebianDistribution(Distribution):
 _register_with_representer(DebianDistribution)
 
 
-class DebTracer(PackageTracer):
+class DebTracer(DistributionTracer):
     """.deb-based (and using apt and dpkg) systems package tracer
     """
 
@@ -175,7 +175,21 @@ class DebTracer(PackageTracer):
         except Exception as exc:
             lgr.debug("Did not detect Debian: %s", exc)
             return
-        yield DebianDistribution(name="debian")  # the one and only!
+
+        dist = DebianDistribution(name="debian")  # the one and only!
+        if not dist:
+            return
+        if len(dist.packages):
+            raise NotImplementedError(
+                "Do not have capability yet to extend the list")
+
+        packages, files_to_consider = self.identify_packages_from_files(
+            files)
+        dist.packages.extend(packages)
+        # TODO: dist.normalize()
+        #   similar to DBs should take care about identifying/groupping etc
+        #   of origins etc
+        yield dist, files_to_consider
 
     # TODO: should become a part of "normalization" where common
     # stuff floats up
