@@ -97,7 +97,7 @@ class Retrace(Interface):
             distributions=distributions,
         )
         if files:
-            spec['files'] = sorted(files)
+            spec.files = sorted(files)
 
         # TODO: generic writer!
         from niceman.formats.niceman import NicemanProvenance
