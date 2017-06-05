@@ -91,3 +91,14 @@ def test_utf8_file():
         assert packages[0]["name"] == "ca-certificates"
     else:  # Otherwise just make sure we didn't throw an exception
         assert True
+
+
+def test_parse_dpkgquery_line():
+    parse = DebTracer._parse_dpkgquery_line
+    assert parse('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8') == \
+        {'name': 'zlib1g', 'architecture': 'i386', 'path': '/lib/i386-linux-gnu/libz.so.1.2.8'}
+
+    assert parse('fail2ban: /usr/bin/fail2ban-client') == \
+           {'name': 'fail2ban', 'path': '/usr/bin/fail2ban-client'}
+
+    assert parse('diversion by dash from: /bin/sh') is None

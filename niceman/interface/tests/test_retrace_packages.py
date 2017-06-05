@@ -11,7 +11,7 @@ from os.path import join as opj, pardir, dirname
 from os.path import lexists
 from pprint import pprint
 
-from ..retrace import identify_packages
+from ..retrace import identify_distributions
 
 from niceman.tests.utils import skip_if
 from niceman.tests.utils import with_tempfile
@@ -26,7 +26,7 @@ def test_identify_packages():
              "/usr/share/bug/vim/script",
              "/home/butch"]
     # Simple sanity check that the pipeline works
-    packages, origins, files = identify_packages(files)
+    packages, origins, files = identify_distributions(files)
     pprint(files)
     pprint(origins)
     pprint(packages)
@@ -35,7 +35,7 @@ def test_identify_packages():
 
 @skip_if(not lexists(opj(dirname(__file__), pardir, pardir, pardir, '.git')))
 def test_identify_myself():
-    packages, origins, files = identify_packages([__file__, '/nonexisting-for-sure'])
+    packages, origins, files = identify_distributions([__file__, '/nonexisting-for-sure'])
     assert len(packages) == 1
     assert packages[0]['type'] == 'git'
     assert packages[0]['files'] == [__file__]
@@ -55,7 +55,7 @@ def test_detached_git(repo=None):
     runner('git init')
 
     # should be good enough not to crash
-    packages, origins, files = identify_packages([repo])
+    packages, origins, files = identify_distributions([repo])
     assert len(packages) == 1
     pkg = packages[0]
     assert pkg['files'] == [repo]
@@ -67,7 +67,7 @@ def test_detached_git(repo=None):
         f.write("data")
     runner("git add file")
     runner("git commit -m added file")
-    packages, origins, files = identify_packages([fname])
+    packages, origins, files = identify_distributions([fname])
     assert len(packages) == 1
     pkg = packages[0]
     assert pkg['files'] == [fname]
@@ -83,7 +83,7 @@ def test_detached_git(repo=None):
     runner("git rm file")
     runner("git commit -m removed file")
     runner("git checkout HEAD^")
-    packages, origins, files = identify_packages([repo])
+    packages, origins, files = identify_distributions([repo])
     assert len(packages) == 1
     pkg = packages[0]
     assert pkg['files'] == [repo]

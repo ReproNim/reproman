@@ -87,29 +87,27 @@ class Retrace(Interface):
         #       Generalize
         # TODO: RF so that only the above portion is reprozip specific.
         # If we are to reuse their layout largely -- the rest should stay as is
-        (packages, origins, unidentified_files) = identify_packages(paths)
-
-        config = {}   # TODO: proper model
-        # Update reprozip package assignment
-        config['packages'] = packages
-        # Update reprozip package assignment
-        config['origins'] = origins
-        # set any files not identified
-        config.pop('other_files', None)
-        if unidentified_files:
-            config['other_files'] = list(unidentified_files)
-            config['other_files'].sort()
+        from niceman.cmd import Runner
+        (distributions, files) = identify_distributions(
+            paths,
+            session=Runner(env={'LC_ALL': 'C'})  # TODO: any/proper session
+        )
+        from niceman.distributions.base import EnvironmentSpec
+        spec = EnvironmentSpec(
+            distributions=distributions,
+        )
+        if files:
+            spec['files'] = sorted(files)
 
         # TODO: generic writer!
         from niceman.formats.niceman import NicemanspecProvenance
-        spec = NicemanspecProvenance(model=config)
-        spec.write(output_file or sys.stdout)
+        NicemanspecProvenance.write(output_file or sys.stdout, spec)
 
 
 # TODO: session should be with a state.  Idea is that if we want
 #  to trace while inheriting all custom PATHs which that run might have
 #  had
-def identify_packages(files, session=None):
+def identify_distributions(files, session=None):
     """Identify packages files belong to
 
     Parameters
@@ -119,42 +117,52 @@ def identify_packages(files, session=None):
 
     Returns
     -------
-    packages : list of Package
-    origins : list of Origin
+    distributions : list of Distribution
     unknown_files : list of str
-      Files which were not determined to belong to some package
+      Files which were not determined to belong to any specific distribution
     """
     # TODO: automate discovery of available tracers
     from niceman.distributions.debian import DebTracer
     from niceman.distributions.vcs import VCSTracer
 
+    from niceman.cmd import Runner
+    session = session or Runner(env={'LC_ALL': 'C'})
     # TODO create list of appropriate for the `environment` OS tracers
     #      in case of no environment -- get current one
-    tracers = [DebTracer(), VCSTracer()]
-    origins = []
-    packages = []
+    # TODO: should operate in the session, might be given additional information
+    #       not just files
+    Tracers = [DebTracer,]# VCSTracer]
 
-    files_to_consider = files
+    # .identify_ functions will have a side-effect of shrinking this list in-place
+    # as they identify files beloning to them
+    files_to_consider = files[:]
 
-    for tracer in tracers:
+    distributions = []
+    for Tracer in Tracers:
+        tracer = Tracer(session=session)
         begin = time.time()
-        # TODO: we should allow for multiple passes, where each one could
-        #  possibly identify a new "distribution" (e.g. scripts ran from
-        #  different virtualenvs... some bizzare multiple condas etc)
+        # might need to pass more into "identify_distributions" of the tracer
+        for dist in tracer.identify_distributions(files_to_consider):
+            distributions.append(dist)
 
-        # Each one should initialize "Distribution" and attach to it pkgs
-        (packages_, unknown_files) = \
-            tracer.identify_packages_from_files(files_to_consider)
-        # TODO: tracer.normalize
-        #   similar to DBs should take care about identifying/groupping etc
-        #   of origins etc
-        packages_origins = tracer.identify_package_origins(packages_)
+            # TODO RF: feels awkward to pass that dist now around... should
+            # finally either merge Distribution with Tracer or may be create
+            # DistributionInstance which would be the manipulator of a distribution
+            # object specs.
+            # Anyways retracing capabilities of asking for package detail
+            # might also be used directly by the distribution, so may be
+            # would make even more sense to join
+            if len(dist.packages):
+                raise NotImplementedError("Do not have capability yet to extend the list")
 
-        if packages_origins:
-            origins += packages_origins
+            packages, files_to_consider = tracer.identify_packages_from_files(files_to_consider)
+            dist.packages.extend(packages)
+            # TODO: dist.normalize()
+            #   similar to DBs should take care about identifying/groupping etc
+            #   of origins etc
+
+            # packages_origins = tracer.identify_package_origins(packages_)
         lgr.debug("Assigning files to packages by %s took %f seconds",
                   tracer, time.time() - begin)
-        packages += packages_
-        files_to_consider = unknown_files
 
-    return packages, origins, files_to_consider
+    return distributions, files_to_consider

@@ -47,6 +47,11 @@ try:
 except (ValueError, AttributeError):
     _MAX_LEN_CMDLINE = 2048
 
+# To parse output of dpkg-query
+import re
+_DPKG_QUERY_PARSER = re.compile(
+    "(?P<name>[^:]+)(:(?P<architecture>[^:]+))?: (?P<path>.*)$"
+)
 
 from niceman.distributions.base import PackageTracer
 from niceman.support.exceptions import CommandError
@@ -56,7 +61,7 @@ lgr = logging.getLogger('niceman.distributions.debian')
 from .base import SpecObject
 from .base import Package
 from .base import Distribution
-from .base import ListOfFactory
+from .base import TypedList
 from .base import _register_with_representer
 
 #
@@ -85,21 +90,21 @@ _register_with_representer(APTSource)
 class DEBPackage(Package):
     """Debian package information"""
     name = attr.ib()
+    # Optional
+    source_name = attr.ib(default=None)
+    upstream_name = attr.ib(default=None)
+
     version = attr.ib(default=None)
     architecture = attr.ib(default=None)
     size = attr.ib(default=None)
     md5 = attr.ib(default=None)
     sha1 = attr.ib(default=None)
     sha256 = attr.ib(default=None)
-
-    # Optional
-    source_name = attr.ib(default=None)
     source_version = attr.ib(default=None)
     versions = attr.ib(default=None)
     install_date = attr.ib(default=None)
-    apt_sources = attr.ib(default=ListOfFactory(APTSource))
+    apt_sources = TypedList(APTSource)
     files = attr.ib(default=attr.Factory(list))  # Might want a File structure for advanced tracking
-    upstream_name = attr.ib(default=None)
 _register_with_representer(DEBPackage)
 
 
@@ -109,8 +114,8 @@ class DebianDistribution(Distribution):
     Class to provide Debian-based shell commands.
     """
 
-    apt_sources = attr.ib(default=ListOfFactory(APTSource))
-    packages = attr.ib(default=ListOfFactory(DEBPackage))
+    apt_sources = TypedList(APTSource)
+    packages = TypedList(DEBPackage)
 
     def initiate(self, session):
         """
@@ -161,12 +166,21 @@ class DebTracer(PackageTracer):
 
     # TODO: (Low Priority) handle cases from dpkg-divert
 
+    def identify_distributions(self, files):
+        try:
+            out, err = self._session.run('cat /etc/debian_version')
+            out, err = self._session.run('ls -l /etc/apt')
+        except Exception as exc:
+            lgr.debug("Did not detect Debian: %s", exc)
+            return
+        yield DebianDistribution(name="debian")  # the one and only!
+
     # TODO: should become a part of "normalization" where common
     # stuff floats up
     def identify_package_origins(self, packages):
         used_names = set()  # Set to avoid duplicate origin names
         unnamed_origin_map = {}  # Map unnamed origins to named origins
-
+        raise RuntimeError("should be RFed")
         # Iterate over all package origins
         for p in packages:
             for v in p.version_table:
@@ -199,7 +213,18 @@ class DebTracer(PackageTracer):
         new_o.name = name
         return new_o
 
-    def _get_packagenames_for_files(self, files):
+    @staticmethod
+    def _parse_dpkgquery_line(line):
+        if line.startswith('diversion '):
+            return None  # we are ignoring diversion details ATM  TODO
+        res = _DPKG_QUERY_PARSER.match(line)
+        if res:
+            res = res.groupdict()
+            if res['architecture'] is None:
+                res.pop('architecture')
+        return res
+
+    def _get_packagefields_for_files(self, files):
         file_to_package_dict = {}
 
         # Find out how many files we can query at once
@@ -209,7 +234,7 @@ class DebTracer(PackageTracer):
         for subfiles in (files[pos:pos + num_files]
                          for pos in range(0, len(files), num_files)):
             try:
-                out, err = self._environ(
+                out, err = self._session(
                     ['dpkg-query', '-S'] + subfiles,
                     expect_stderr=True, expect_fail=True
                 )
@@ -227,25 +252,45 @@ class DebTracer(PackageTracer):
                 # Note, we must split after ": " instead of ":" in case the
                 # package name includes an architecture (like "zlib1g:amd64")
                 # TODO: Handle query of /bin/sh better
-                (pkg, found_name) = outline.split(': ', 1)
+                outdict = self._parse_dpkgquery_line(outline)
+                if not outdict:
+                    lgr.debug("Skipping line %s", outline)
+                    continue
+
+                found_name = outdict.pop('path')
+                if not found_name:
+                    raise ValueError("Record %s got no path defined... skipping"  % repr(outdict))
+                # for now let's just return those dicts of fields not actual
+                # packages since then we would need create/kill them all the time
+                # to merge files etc... although could also be a part of "normalization"
+                pkg = outdict  # DEBPackage(**outdict)
                 lgr.debug("Identified file %r to belong to package %s",
                           found_name, pkg)
                 file_to_package_dict[found_name] = pkg
 
         return file_to_package_dict
 
-    def _create_package(self, pkgname):
+    def _create_package(self, name, architecture=None):
         if not apt_cache:
             return None
         try:
-            pkg_info = apt_cache[pkgname]
+            query = name if not architecture else "%s:%s" % (name, architecture)
+            pkg_info = apt_cache[query]
         except KeyError:  # Package not found
+            lgr.warning("Was asked to create a spec for package %s but it was not found in apt", name)
             return None
 
         # prep our pkg object:
         installed_info = pkg_info.installed
+        if architecture and installed_info.architecture and architecture != installed_info.architecture:
+            # should match or we whine a lot  and TODO: fail in the future after switching from apt module
+            lgr.warning(
+                "For package %s got different architecture %s != %s. Using installed for now",
+                name, architecture, installed_info.architecture
+            )
+
         pkg = DEBPackage(
-            name=pkgname,
+            name=name,
             # type="dpkg"
             version=installed_info.version,
             # candidate=pkg_info.candidate.version
@@ -266,7 +311,7 @@ class DebTracer(PackageTracer):
                 pytz.utc.localize(
                     datetime.utcfromtimestamp(
                         os.path.getmtime(
-                            "/var/lib/dpkg/info/" + pkgname + ".list"))))
+                            "/var/lib/dpkg/info/" + name + ".list"))))
         except OSError:  # file not found
             pass
 

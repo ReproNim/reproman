@@ -25,21 +25,12 @@ lgr = logging.getLogger('niceman.distributions')
 
 Factory = attr.Factory
 
-#
-# Specification helper constructs
-#
 
-@attr.s(slots=True)
-class ListOfFactory(object):
-    type = attr.ib()
-
-    def __call__(self, *args, **kwargs):
-        return list(*args, **kwargs)
-
-    @property
-    def factory(self):
-        return self
-
+def TypedList(type_):
+    """A helper to generate an attribute which would be with list factory 
+    but also defining a type in its metadata
+    """
+    return attr.ib(default=Factory(list), metadata={'type': type_})
 
 #
 # Models
@@ -134,15 +125,14 @@ class Distribution(SpecObject):
 
 @attr.s
 class EnvironmentSpec(SpecObject):
-    base = attr.ib()  # ???  to define specifics of the system, possibly a docker base
-    distributions = attr.ib(default=ListOfFactory(Distribution))  # list of distributions
-    files = attr.ib(default=attr.Factory(list))  # list of other files
+    base = attr.ib(default=None)  # ???  to define specifics of the system, possibly a docker base
+    distributions = TypedList(Distribution)  # list of distributions
+    files = attr.ib(default=Factory(list))  # list of other files
     # runs?  whenever we get to provisioning executions
     #        those would also be useful for tracing for presence of distributions
     #        e.g. depending on what is in the PATH
 
 _register_with_representer(EnvironmentSpec)
-
 
 
 # Note: The following was derived from ReproZip's PkgManager class
@@ -157,11 +147,11 @@ class PackageTracer(object):
     to be installed to fulfill environment spec
     """
 
-    def __init__(self, environ=None):
+    def __init__(self, session=None):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
         # codepage just in case since we might want to comprehend error
         # messages
-        self._environ = environ or Runner(env={'LC_ALL': 'C'})
+        self._session = session or Runner(env={'LC_ALL': 'C'})
 
     def identify_packages_from_files(self, files):
         """Identifies packages for a given collection of files
@@ -187,7 +177,9 @@ class PackageTracer(object):
         found_packages = {}
         nb_pkg_files = 0
 
-        file_to_package_dict = self._get_packagenames_for_files(files)
+        # TODO: probably that _get_packagefields should create packagespecs
+        # internally and just return them.  But we should make them hashable
+        file_to_package_dict = self._get_packagefields_for_files(files)
         for f in files:
             if not os.path.lexists(f):
                 lgr.warning(
@@ -200,20 +192,22 @@ class PackageTracer(object):
                 # TODO: pkgname should become  pkgid
                 # where for packages from distributions would be name,
                 # for VCS -- their path
-                pkgname = file_to_package_dict[f]
-                if pkgname is None:
+                pkgfields = file_to_package_dict[f]
+                if pkgfields is None:
                     unknown_files.add(f)
-                elif pkgname in found_packages:
-                    found_packages[pkgname]["files"].append(f)
-                    nb_pkg_files += 1
                 else:
-                    pkg = self._create_package(pkgname)
-                    if pkg:
-                        found_packages[pkgname] = pkg
-                        pkg.files.append(f)
+                    pkgfields_hashable = tuple(x for x in pkgfields.items())
+                    if pkgfields_hashable in found_packages:
+                        found_packages[pkgfields_hashable].files.append(f)
                         nb_pkg_files += 1
                     else:
-                        unknown_files.add(f)
+                        pkg = self._create_package(**pkgfields)
+                        if pkg:
+                            found_packages[pkgfields_hashable] = pkg
+                            pkg.files.append(f)
+                            nb_pkg_files += 1
+                        else:
+                            unknown_files.add(f)
 
         lgr.info("%s: %d packages with %d files, and %d other files",
                  self.__class__.__name__,
@@ -241,7 +235,7 @@ class PackageTracer(object):
         """
         raise NotImplementedError
 
-    def _get_packagenames_for_files(self, files):
+    def _get_packagefields_for_files(self, files):
         raise NotImplementedError
 
     def _create_package(self, pkgname):

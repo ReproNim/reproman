@@ -50,7 +50,8 @@ class Provenance(object):
         source : string
             File path or URL to load from
         """
-        self._src = self._load(source)
+
+        self._src = self._load(source) if isinstance(source, str) else source
 
     @abc.abstractmethod
     def _load(self, source):

@@ -27,7 +27,6 @@ from ..distributions import Distribution
 from .base import Provenance
 from .utils import write_config_key
 from .utils import write_config
-from niceman.distributions.base import ListOfFactory
 from niceman.distributions.base import Factory
 from niceman.distributions.base import SpecObject
 
@@ -144,7 +143,7 @@ class NicemanspecProvenance(Provenance):
                     if spec_attr.default is attr.NOTHING:
                         # positional argument -- must be known
                         raise ValueError(
-                            "%s requires %s, but was provided only with following fields: %s"
+                            "%s requires %r field, but was provided only with following fields: %s"
                             % (spec_class.__name__, name, ', '.join(spec_in.keys()))
                         )
                     else:
@@ -155,15 +154,18 @@ class NicemanspecProvenance(Provenance):
                 # And those could be specific to their type(s) when "compressed"
                 # but in general we should be able to use the same logic,
                 # just need to know whom to call
-                if isinstance(spec_attr.default, ListOfFactory):
-                    # we can use information of the type for each element we are
-                    # getting for this name
-                    # TODO: Recurse this whole shebang
-                    value_out = spec_attr.default(
-                        (spec_attr.default.type(**kw) for kw in value_in)
-                    )
-                elif isinstance(spec_attr.default, Factory):
-                    value_out = spec_attr.default(**value_in)
+                if isinstance(spec_attr.default, Factory):
+                    item_type = spec_attr.metadata.get('type')
+                    if item_type:
+                        # we can use information of the type for each element we are
+                        # getting for this name
+                        # TODO: Recurse this whole shebang
+                        value_out = spec_attr.default.factory(
+                            (item_type(**kw) for kw in value_in)
+                        )
+                    else:
+                        import pdb; pdb.set_trace()
+                        value_out = spec_attr.default.factory(**value_in)
                 else:
                     value_out = value_in
 
@@ -243,7 +245,7 @@ def spec_to_dict(spec):
         value_in = getattr(spec, attr.name, None)
         if not value_in:
             continue
-        if isinstance(value_in, (ListOfFactory, Factory)):
+        if isinstance(value_in, Factory):
             # wasn't set, thus "default", thus
             continue
         elif isinstance(value_in, list):

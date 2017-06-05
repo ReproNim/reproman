@@ -365,7 +365,7 @@ class VCSTracer(PackageTracer):
         pkg["files"] = []
         return pkg
 
-    def resolve_file(self, path):
+    def _resolve_file(self, path):
         """Given a path, return path of the repository it belongs to"""
         # very naive just to get a ball rolling
         if not isabs(path):
@@ -407,8 +407,8 @@ class VCSTracer(PackageTracer):
                 # if not -- just keep going to the next candidate repository
         return None
 
-    def _get_packagenames_for_files(self, files):
-        return {f: self.resolve_file(f) for f in files}
+    def _get_packagefields_for_files(self, files):
+        return {f: self._resolve_file(f) for f in files}
 
     def identify_package_origins(self, *args, **kwargs):
         # no origins for any VCS AFAIK
