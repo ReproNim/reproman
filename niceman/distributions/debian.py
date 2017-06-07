@@ -150,12 +150,15 @@ class DebianDistribution(Distribution):
         """
         package_specs = []
 
-        for package in self._provenance.packages:
+        for package in self.packages:
             package_spec = package.name
             if use_version and package.version:
                 package_spec += '=%s' % package.version
             package_specs.append(package_spec)
 
+        # Doing in one shot to fail early if any of the versioned specs
+        # couldn't be satisfied
+        lgr.debug("Installing %s", ', '.join(package_specs))
         session.add_command(
             # TODO: Pull env out of provenance for this command.
             ['apt-get', 'install', '-y'] + package_specs,
@@ -391,19 +394,24 @@ class DebTracer(DistributionTracer):
                 archive_uri = indexfile.archive_uri("") if indexfile else None
 
                 # Pull origin information from package file
-                pkg_versions[v.version].append(
-                    self._get_apt_source(
-                        packages_filename=pf.filename,
-                        component=pf.component,
-                        codename=pf.codename,
-                        archive=pf.archive,
-                        architecture=pf.architecture,
-                        origin=pf.origin,
-                        label=pf.label,
-                        site=pf.site,
-                        archive_uri=archive_uri
+                if pf.component == 'now':
+                    # just make sure that we have an entry:
+                    # but otherwise - don't store, what for?
+                    pkg_versions[v.version]
+                else:
+                    pkg_versions[v.version].append(
+                        self._get_apt_source(
+                            packages_filename=pf.filename,
+                            component=pf.component,
+                            codename=pf.codename,
+                            archive=pf.archive,
+                            architecture=pf.architecture,
+                            origin=pf.origin,
+                            label=pf.label,
+                            site=pf.site,
+                            archive_uri=archive_uri
+                        )
                     )
-                )
         pkg.versions = dict(pkg_versions)
         lgr.debug("Found package %s", pkg)
         return pkg

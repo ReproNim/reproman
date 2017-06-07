@@ -15,6 +15,8 @@ from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
+from niceman.dochelpers import exc_str
+
 import logging
 lgr = logging.getLogger('niceman.distributions.conda')
 
@@ -37,8 +39,9 @@ class CondaDistribution(Distribution):
     Class to provide Conda package management.
     """
 
+    path = attr.ib(default=None)
     environments = TypedList(CondaEnvironment)
-    channels = attr.s()
+    channels = attr.ib(default=None)
 
     def initiate(self, environment):
         """
@@ -83,7 +86,8 @@ class CondaTracer(DistributionTracer):
         import os
         paths = []
         dist = None
-        while path not in {None, os.path.pathsep, ''}:
+        idx = 0
+        while path not in {None, os.path.pathsep, '', '/'}:
             if path in self._paths_cache:
                 dist = self._paths_cache[path]
                 break
@@ -93,27 +97,42 @@ class CondaTracer(DistributionTracer):
                     'ls -ld %s/bin/conda %s/conda-meta'
                     % (path, path)
                 )
-                # path is not a name
-                dist = CondaDistribution(path)
-                lgr.info("Detected conda %s", dist)
-                break
             except Exception as exc:
-                lgr.debug("Did not detect conda at the path %s", path)
-            path = os.path.dirname(path)  # go to the parent
+                lgr.debug("Did not detect conda at the path %s: %s", path, exc_str(exc))
+                path = os.path.dirname(path)  # go to the parent
+                continue
+
+            dist = CondaDistribution(
+                name=None,  # to be assigned later
+                path=path
+                # TODO: all the packages and paths
+            )
+            lgr.info("Detected conda %s", dist)
+            break
+
         for path in paths:
             self._paths_cache[path] = dist
-        return dist
 
+        return dist
 
     def identify_distributions(self, paths):
         dists = {}  # conda_prefix -> CondaDistribution
         files_to_consider = paths[:]
         for path in paths:
             dist = self._get_conda(path)
-            yield dist, files_to_consider
+            if dist and dist.path not in dists:
+                dists[dist.path] = dist
 
             # check if path possibly within a conda distribution
             pass  # all the magic and slowly prune files_to_consider
+
+        # Assign names
+        if len(dists) > 1:
+            # needs indexes
+            for idx, dist in enumerate(dists.values()):
+                dist.name = 'conda-%d' % idx
+        elif dists:
+            dists.values()[0].name = 'conda'
 
         for dist in dists.values():
             yield dist, files_to_consider

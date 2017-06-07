@@ -955,4 +955,36 @@ class HashableDict(dict):
     def __hash__(self):
         return hash(frozenset(self.values()))
 
+
+def items_to_dict(l, attrs='name', ordered=False):
+    """Given a list of attr instances, return a dict using specified attrs as keys
+    
+    Parameters
+    ----------
+    attrs : str or list of str
+      Which attributes of the items to use to group
+    ordered : bool, optional
+      Either to return an ordered dictionary following the original order of items in the list
+    
+    Raises
+    ------
+    ValueError
+        If there is a conflict - multiple items with the same attrs used for key
+    
+    Returns
+    -------
+    dict or collections.OrderedDict
+    """
+    many = isinstance(attrs, (list, tuple))
+    out = (collections.OrderedDict if ordered else dict)()
+    for i in l:
+        k = tuple(getattr(i, a) for a in attrs) if many else getattr(i, attrs)
+        if k in out:
+            raise ValueError(
+                "We already saw entry for %s: %s.  Not adding %s",
+                k, out[k], i
+            )
+        out[k] = i
+    return out
+
 lgr.log(5, "Done importing niceman.utils")

@@ -24,28 +24,33 @@ from niceman.tests.utils import skip_if
 @skip_if(not apt)
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
-    manager = DebTracer()
+    tracer = DebTracer()
     (packages, unknown_files) = \
-        manager.identify_packages_from_files(files)
-    origins = manager.identify_package_origins(packages)
+        tracer.identify_packages_from_files(files)
     # Make sure that iptables was identified
     assert (not unknown_files), "/sbin/iptables should be identified"
-    # Make sure an origin is found
-    assert origins
+    assert len(packages) == 1
+    pkg = packages[0]
+    assert pkg.name == 'iptables'
+    # Make sure apt_sources are identified, but then we should ask the entire
+    # distribution
+    distributions = list(tracer.identify_distributions(files))
+    assert len(distributions) == 1
+    distribution, unknown_files = distributions[0]
+    assert distribution.apt_sources
     # Make sure both a non-local origin was found
-    for o in origins:
+    for o in distribution.apt_sources:
         if o.site:
             # Loop over mandatory attributes
             for a in ["name", "component", "archive", "codename",
                       "origin", "label", "site", "archive_uri"]:
-                assert getattr(o,a), "A non-local origin needs a " + a
+                assert getattr(o, a), "A non-local origin needs a " + a
             # Note: date and architecture are not mandatory (and not found on
             # travis)
             break
     else:
         assert False, "A non-local origin must be found"
-    pprint(origins)
-    pprint(packages)
+    pprint(distribution)
 
 
 def test_find_release_file():

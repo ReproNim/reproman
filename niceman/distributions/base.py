@@ -149,12 +149,21 @@ class DistributionTracer(object):
     to be installed to fulfill environment spec
     """
 
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, session=None):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
         # codepage just in case since we might want to comprehend error
         # messages
         self._session = session or Runner(env={'LC_ALL': 'C'})
 
+    @abc.abstractmethod
+    def identify_distributions(self, files):
+        raise NotImplementedError()
+
+    # This one assumes that distribution works with "packages"
+    # TODO: we might want to create a more specialized sub-class for that purpose
+    # and move those methods below into that subclass
     def identify_packages_from_files(self, files):
         """Identifies packages for a given collection of files
 
@@ -218,7 +227,6 @@ class DistributionTracer(object):
                  len(unknown_files))
 
         return list(viewvalues(found_packages)), list(unknown_files)
-
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError
