@@ -11,6 +11,7 @@
 from importlib import import_module
 import abc
 import attr
+from six import string_types
 
 from ..utils import file_basename
 from ..dochelpers import exc_str
@@ -51,7 +52,7 @@ class Provenance(object):
             File path or URL to load from
         """
 
-        self._src = self._load(source) if isinstance(source, str) else source
+        self._src = self._load(source) if isinstance(source, string_types) else source
 
     @abc.abstractmethod
     def _load(self, source):

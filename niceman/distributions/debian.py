@@ -13,6 +13,7 @@ from datetime import datetime
 
 import attr
 import collections
+from collections import defaultdict
 
 import pytz
 import yaml
@@ -88,7 +89,7 @@ class APTSource(SpecObject):
 _register_with_representer(APTSource)
 
 
-@attr.s
+@attr.s(slots=True)
 class DEBPackage(Package):
     """Debian package information"""
     name = attr.ib()
@@ -105,7 +106,8 @@ class DEBPackage(Package):
     source_version = attr.ib(default=None)
     versions = attr.ib(default=None)
     install_date = attr.ib(default=None)
-    apt_sources = TypedList(APTSource)
+    # nah -- ATM goes directly into DebianDistribution.apt_sources
+    # apt_sources = TypedList(APTSource)
     files = attr.ib(default=attr.Factory(list))  # Might want a File structure for advanced tracking
 _register_with_representer(DEBPackage)
 
@@ -159,6 +161,26 @@ class DebianDistribution(Distribution):
             ['apt-get', 'install', '-y'] + package_specs,
             # env={'DEBIAN_FRONTEND': 'noninteractive'}
         )
+
+    def normalize(self):
+        # TODO:
+        # - verify that no explicit apt_source is stored within
+        #   apt_sources of the package... actually those are gone (for) now
+        # - verify that there is no duplicate/conflicting apt sources and
+        #   package definitions and merge appropriately.  Will be used to
+        #   grow the spec interactively by adding more packages etc... although
+        #   possibly could be done at 'addition' time
+        # - among apt-source we could merge some together if we allow for
+        #   e.g. component (main, contrib, non-free) to be a list!  but that
+        #   would make us require supporting flexible typing -- string or a list
+        pass
+
+    # to grow:
+    #  def __iadd__(self, another_instance or DEBPackage, or APTSource)
+    #  def __add__(self, another_instance or DEBPackage, or APTSource)
+    # but for the checks we should get away from a plain "list of" to some
+    # structure to help identify on presence
+
 _register_with_representer(DebianDistribution)
 
 
@@ -167,65 +189,93 @@ class DebTracer(DistributionTracer):
     """
 
     # TODO: (Low Priority) handle cases from dpkg-divert
+    def __init__(self, *args, **kwargs):
+        super(DebTracer, self).__init__(*args, **kwargs)
+        # TODO: we might want a generic helper for collections of things
+        # where we could match based on the set of attrs which matter
+        self._apt_sources = {}
+        self._apt_source_names = set()
 
     def identify_distributions(self, files):
         try:
             out, err = self._session.run('cat /etc/debian_version')
-            out, err = self._session.run('ls -l /etc/apt')
+            # for now would also match Ubuntu -- there it would have
+            # ID=ubuntu and ID_LIKE=debian
+            out, err = self._session.run('grep -i "^ID.*=debian" /etc/os-release')
+            out, err = self._session.run('ls -ld /etc/apt')
         except Exception as exc:
-            lgr.debug("Did not detect Debian: %s", exc)
+            lgr.debug("Did not detect Debian (or derivative): %s", exc)
             return
 
-        dist = DebianDistribution(name="debian")  # the one and only!
-        if not dist:
-            return
-        if len(dist.packages):
-            raise NotImplementedError(
-                "Do not have capability yet to extend the list")
-
-        packages, files_to_consider = self.identify_packages_from_files(
-            files)
-        dist.packages.extend(packages)
-        # TODO: dist.normalize()
+        packages, remaining_files = self.identify_packages_from_files(files)
+        dist = DebianDistribution(
+            name="debian",
+            packages=packages,
+            # TODO: helper to go from list -> dict based on the name, since must be unique
+            apt_sources=list(self._apt_sources.values())
+        )  # the one and only!
+        dist.normalize()
         #   similar to DBs should take care about identifying/groupping etc
         #   of origins etc
-        yield dist, files_to_consider
+        yield dist, remaining_files
 
-    # TODO: should become a part of "normalization" where common
-    # stuff floats up
-    def identify_package_origins(self, packages):
-        used_names = set()  # Set to avoid duplicate origin names
-        unnamed_origin_map = {}  # Map unnamed origins to named origins
-        raise RuntimeError("should be RFed")
-        # Iterate over all package origins
-        for p in packages:
-            for v in p.version_table:
-                for i, o in enumerate(v.get("apt_sources", [])):
-                    # If we haven't seen this origin before, generate a
-                    # name for it
-                    if o not in unnamed_origin_map:
-                        unnamed_origin_map[o] = \
-                            self._create_named_origin(o, used_names)
-                    # Now replace the package origin with the name of the
-                    # yaml-prepared origin
-                    v["apt_sources"][i] = unnamed_origin_map[o].name
+    def _get_apt_source(self, packages_filename, **kwargs):
+        # Given a set of attributes, in this case just all provided,
+        # return either a new instance or the cached one
+        hashable = tuple(sorted(kwargs.items()))
+        if hashable not in self._apt_sources:
+            self._apt_sources[hashable] = apt_source = APTSource(
+                name=self._get_apt_source_name(**kwargs),
+                **kwargs
+            )
+            # we need to establish its date
 
-        # Sort the origins by the name for the configuration file
-        origins = sorted(unnamed_origin_map.values(), key=lambda k: k.name)
+            # TODO: shouldn't be done per each package since
+            #       common within session for all packages from the
+            #       same Packages.  So should be done independently
+            #       and once per Packages file
+            # Get the release date
+            apt_source.date = self._find_release_date(
+                self._find_release_file(packages_filename))
 
-        return origins
+        # we return a unique name
+        return self._apt_sources[hashable].name
 
-    @staticmethod
-    def _create_named_origin(o, used_names):
+    def _get_apt_source_name(self, origin, archive, component, **other_attrs):
         # Create a unique name for the origin
-        name_fmt = "apt_%s_%s_%s_%%d" % (o.origin, o.archive,
-                                         o.component)
-        name = utils.generate_unique_name(name_fmt,
-                                          used_names)
+        name_fmt = "apt_%s_%s_%s_%%d" % (origin, archive, component)
+        name = utils.generate_unique_name(name_fmt, self._apt_source_names)
         # Remember the created name
-        used_names.add(name)
+        self._apt_source_names.add(name)
         # Create a named origin
-        return attr.assoc(o, name=name)
+        return name
+
+
+    # # TODO: should become a part of "normalization" where common
+    # # stuff floats up
+    #
+    # def identify_package_origins(self, packages):
+    #     used_names = set()  # Set to avoid duplicate origin names
+    #     unnamed_origin_map = {}  # Map unnamed origins to named origins
+    #
+    #     raise RuntimeError("should be RFed")
+    #     # Iterate over all package origins
+    #     for p in packages:
+    #         for v in p.versions:
+    #             for i, o in enumerate(v.get("apt_sources", [])):
+    #                 # If we haven't seen this origin before, generate a
+    #                 # name for it
+    #                 if o not in unnamed_origin_map:
+    #                     unnamed_origin_map[o] = \
+    #                         self._get_apt_source_name(o, used_names)
+    #                 # Now replace the package origin with the name of the
+    #                 # yaml-prepared origin
+    #                 v["apt_sources"][i] = unnamed_origin_map[o].name
+    #
+    #     # Sort the origins by the name for the configuration file
+    #     origins = sorted(unnamed_origin_map.values(), key=lambda k: k.name)
+    #
+    #     return origins
 
     def _run_dpkg_query(self, subfiles):
         try:
@@ -333,45 +383,28 @@ class DebTracer(DistributionTracer):
             pass
 
         # Compile Version Table
-        pkg_versions = []
+        pkg_versions = defaultdict(list)
         for v in pkg_info.versions:
-            v_info = {"version": v.version}
-            origins = []
             for (pf, _) in v._cand.file_list:
                 # Get the archive uri
                 indexfile = v.package._pcache._list.find_index(pf)
-                if indexfile:
-                    archive_uri = indexfile.archive_uri("")
-                else:
-                    archive_uri = None
-
-                # TODO: shouldn't be done per each package since
-                #       common within session for all packages from the
-                #       same Packages.  So should be done independently
-                #       and once per Packages file
-                # Get the release date
-                rdate = self._find_release_date(
-                    self._find_release_file(pf.filename))
+                archive_uri = indexfile.archive_uri("") if indexfile else None
 
                 # Pull origin information from package file
-                origin = APTSource(name=None,
-                                   component=pf.component,
-                                   codename=pf.codename,
-                                   archive=pf.archive,
-                                   architecture=pf.architecture,
-                                   origin=pf.origin,
-                                   label=pf.label,
-                                   site=pf.site,
-                                   archive_uri=archive_uri,
-                                   date=rdate)
-
-                # Now add our crafted origin to the list
-                origins.append(origin)
-            v_info["apt_sources"] = origins
-            pkg_versions.append(v_info)
-
-        pkg.version_table = pkg_versions
-
+                pkg_versions[v.version].append(
+                    self._get_apt_source(
+                        packages_filename=pf.filename,
+                        component=pf.component,
+                        codename=pf.codename,
+                        archive=pf.archive,
+                        architecture=pf.architecture,
+                        origin=pf.origin,
+                        label=pf.label,
+                        site=pf.site,
+                        archive_uri=archive_uri
+                    )
+                )
+        pkg.versions = dict(pkg_versions)
         lgr.debug("Found package %s", pkg)
         return pkg
 

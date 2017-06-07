@@ -22,8 +22,8 @@ distributions:
        upstream_name: "GNU C library"   # from copyright, Upstream-Name where present
                                          # and we might provide some translations for
                                          # some common victims
-       apt_sources:
-        - apt_Debian_sid_main_0
+       versions:
+          16.2.07~dfsg.1-2~nd90+1: [apt_Debian_sid_main_0]
        version: 2.19-18+deb8u4
        architecture: amd64       # as identified from /var/..._<arch=amd64>_Packages filename
        size: 12602202

@@ -217,23 +217,6 @@ class DistributionTracer(object):
 
         return list(viewvalues(found_packages)), list(unknown_files)
 
-    def identify_package_origins(self, packages):
-        """Identify and collate origins from a set of packages
-
-        From a collection of packages, identify the unique origins
-        into a separate collection.
-
-        Parameters
-        ----------
-        packages : iterable
-            Array of Package (to be updated)
-
-        Return
-        ------
-        (origins)
-            - Discovered collection of origins
-        """
-        raise NotImplementedError
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError

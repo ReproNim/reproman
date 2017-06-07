@@ -409,7 +409,3 @@ class VCSTracer(DistributionTracer):
 
     def _get_packagefields_for_files(self, files):
         return {f: self._resolve_file(f) for f in files}
-
-    def identify_package_origins(self, *args, **kwargs):
-        # no origins for any VCS AFAIK
-        return None

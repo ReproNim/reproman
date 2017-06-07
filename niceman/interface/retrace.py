@@ -147,7 +147,6 @@ def identify_distributions(files, session=None):
         for env, files_to_consider in tracer.identify_distributions(files_to_consider):
             distibutions.append(env)
 
-        # packages_origins = tracer.identify_package_origins(packages_)
         lgr.debug("Assigning files to packages by %s took %f seconds",
                   tracer, time.time() - begin)
 

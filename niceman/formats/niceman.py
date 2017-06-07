@@ -49,8 +49,11 @@ class NicemanProvenance(Provenance):
         Parameters
         ----------
         source : string
-            File path or URL
+            File path or URL or actual spec if contains new line in it
         """
+        if '\n' in source:
+            return yaml.load(source)
+
         with open(source, 'r') as stream:
             try:
                 return yaml.load(stream)
@@ -156,16 +159,18 @@ class NicemanProvenance(Provenance):
                 # just need to know whom to call
                 if isinstance(spec_attr.default, Factory):
                     item_type = spec_attr.metadata.get('type')
+
                     if item_type:
                         # we can use information of the type for each element we are
                         # getting for this name
                         # TODO: Recurse this whole shebang
+                        # Do some check
                         value_out = spec_attr.default.factory(
-                            (item_type(**kw) for kw in value_in)
+                            (instantiate_attr_object(item_type, kw) for kw in value_in)
                         )
                     else:
                         import pdb; pdb.set_trace()
-                        value_out = spec_attr.default.factory(**value_in)
+                        value_out = instantiate_attr_object(spec_attr.default.factory, value_in)
                 else:
                     value_out = value_in
 
@@ -189,7 +194,10 @@ class NicemanProvenance(Provenance):
         return distributions
 
     def get_files(self, limit='all'):
-        return self._src.get('files', []) + ["TODO"]
+        files =  self._src.get('files', [])
+        if 'TODO' not in files:
+            files.append('TODO')
+        return files
         # TODO: we would need to get_distributions first then to traverse
         # all the packages etc...
 
@@ -282,3 +290,30 @@ def spec_to_dict(spec):
                                                     encoding="utf-8",
                                                     allow_unicode=True))
 """
+
+
+# TODO: just absorb into SpecObject __init__ but would require more handling
+# to allow *args as well
+def instantiate_attr_object(item_type, kws):
+    """Instantiate item_type given keyword args kws 
+    
+    Provides a more informative exception message in case if some arguments
+    are incorrect
+    """
+    try:
+        return item_type(**kws)
+    except TypeError as exc:
+        if "unexpected keyword" in str(exc):
+            known_kws = [i.name for i in item_type.__attrs_attrs__]
+            incorrect_kws = set(kws.keys()).difference(known_kws)
+            if incorrect_kws:
+                # Provide a more informative message
+                raise TypeError(
+                    "Following provided arguments are not known to %s: %s.  "
+                    "Known but not yet provided are: %s"
+                    % (item_type.__name__,
+                       ', '.join(incorrect_kws),
+                       ', '.join(sorted(set(known_kws).difference(kws))))
+                )
+        # if couldn't figure it out -- just raise original
+        raise
