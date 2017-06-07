@@ -58,9 +58,8 @@ class Provenance(object):
     def _load(self, source):
         raise NotImplementedError
 
-
     def get_environment(self):
-        """Given the state 
+        """Return Environment object 
         
         Returns
         -------

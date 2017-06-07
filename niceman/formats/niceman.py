@@ -194,12 +194,12 @@ class NicemanProvenance(Provenance):
         return distributions
 
     def get_files(self, limit='all'):
-        files =  self._src.get('files', [])
+        files = self._src.get('files', [])
         if 'TODO' not in files:
             files.append('TODO')
-        return files
         # TODO: we would need to get_distributions first then to traverse
         # all the packages etc...
+        return files
 
     # TODO: RF
     #   config must be gone and taken from self

@@ -32,6 +32,7 @@ def TypedList(type_):
     """
     return attr.ib(default=Factory(list), metadata={'type': type_})
 
+
 #
 # Models
 #
@@ -122,7 +123,8 @@ class Distribution(SpecObject):
         """
         return
 
-
+# So this one is no longer "distributions/" module specific
+# TODO: move up! and strip Spec suffix
 @attr.s
 class EnvironmentSpec(SpecObject):
     base = attr.ib(default=None)  # ???  to define specifics of the system, possibly a docker base
