@@ -22,7 +22,7 @@ def test_login_interface(niceman_cfg_path):
     """
 
     with patch('docker.Client') as client, \
-        patch('niceman.interface.base.get_resource_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
         patch('dockerpty.start'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 

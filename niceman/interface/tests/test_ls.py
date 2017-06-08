@@ -23,8 +23,8 @@ def test_ls_interface(niceman_cfg_path):
 
     with patch('docker.Client') as docker_client, \
         patch('boto3.resource') as aws_client, \
-        patch('niceman.interface.base.set_resource_inventory'), \
-        patch('niceman.interface.base.get_resource_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager.set_inventory'), \
+        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         docker_client.return_value = MagicMock(

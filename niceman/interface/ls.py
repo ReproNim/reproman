@@ -13,11 +13,11 @@ __docformat__ = 'restructuredtext'
 
 import os
 
-from .base import Interface, get_config_manager
+from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
-from  ..resource import Resource
+from  ..resource import ResourceManager
 from ..ui import ui
 
 from logging import getLogger
@@ -67,9 +67,9 @@ class Ls(Interface):
         # TODO?: we might want to embed get_resource_inventory()
         #       within ConfigManager (even though it would make it NICEMAN specific)
         #       This would allow to make more sensible error messages etc
-        cm = get_config_manager(config)
+        cm = ResourceManager.get_config_manager(config)
         inventory_path = cm.getpath('general', 'inventory_file')
-        inventory = niceman.interface.base.get_resource_inventory(inventory_path)
+        inventory = ResourceManager.get_inventory(inventory_path)
 
         template = '{:<20} {:<20} {:<20} {:<10}'
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
@@ -82,7 +82,7 @@ class Ls(Interface):
             # if refresh:
             config = dict(cm.items(inventory[name]['type'].split('-')[0]))
             config.update(inventory[name])
-            env_resource = Resource.factory(config)
+            env_resource = ResourceManager.factory(config)
             env_resource.connect()
             inventory[name]['id'] = env_resource.id
             inventory[name]['status'] = env_resource.status

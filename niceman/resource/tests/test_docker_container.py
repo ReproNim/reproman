@@ -12,7 +12,7 @@ from mock import patch, MagicMock, call
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..base import Resource
+from ..base import ResourceManager
 
 def test_dockercontainer_class():
 
@@ -52,7 +52,7 @@ def test_dockercontainer_class():
             'name': 'non-existent-resource',
             'type': 'docker-container',
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         resource.connect()
         assert resource.id == None
         assert resource.status == None
@@ -62,7 +62,7 @@ def test_dockercontainer_class():
             'name': 'duplicate-resource-name',
             'type': 'docker-container',
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         try:
             resource.connect()
         except Exception as e:
@@ -74,7 +74,7 @@ def test_dockercontainer_class():
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         resource.connect()
         assert resource.base_image_id == 'ubuntu:latest'
         assert resource.engine_url == 'tcp://127.0.0.1:2375'
@@ -95,7 +95,7 @@ def test_dockercontainer_class():
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         resource.connect()
         results = resource.create()
         assert results['id'] == '18b31b30e3a5'
