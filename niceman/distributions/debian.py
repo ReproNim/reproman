@@ -204,13 +204,17 @@ class DebTracer(DistributionTracer):
             out, err = self._session.run('cat /etc/debian_version')
             # for now would also match Ubuntu -- there it would have
             # ID=ubuntu and ID_LIKE=debian
-            out, err = self._session.run('grep -i "^ID.*=debian" /etc/os-release')
-            out, err = self._session.run('ls -ld /etc/apt')
+            out, err = self._session.run('grep -i "^ID.*=debian" /etc/os-release', expect_fail=True)
+            out, err = self._session.run('ls -ld /etc/apt', expect_fail=True)
         except Exception as exc:
             lgr.debug("Did not detect Debian (or derivative): %s", exc)
             return
 
         packages, remaining_files = self.identify_packages_from_files(files)
+        # TODO: add option to report distribution even if no packages/files
+        # found association
+        if not packages:
+            return
         dist = DebianDistribution(
             name="debian",
             packages=packages,

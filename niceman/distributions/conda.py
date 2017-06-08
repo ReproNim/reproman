@@ -95,7 +95,8 @@ class CondaTracer(DistributionTracer):
             try:
                 out, err = self._session.run(
                     'ls -ld %s/bin/conda %s/conda-meta'
-                    % (path, path)
+                    % (path, path),
+                    expect_fail=True
                 )
             except Exception as exc:
                 lgr.debug("Did not detect conda at the path %s: %s", path, exc_str(exc))

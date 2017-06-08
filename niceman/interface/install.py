@@ -105,7 +105,8 @@ class Install(Interface):
         # and a complete, exhaustive and non conflicting with the specified
         # resource
         session = env_resource
-        for distribution in provenance.get_distributions():
+        environment_spec = provenance.get_environment()
+        for distribution in environment_spec.distributions:
             # TODO: add option to skip initiation
             distribution.initiate(session)
             distribution.install_packages(session)
@@ -114,5 +115,5 @@ class Install(Interface):
         #     so would need pretty much going through the spec and querying
         #     all those packages.  If something differs -- report
         # session.close()
-        if provenance.other_files:
-            lgr.warning("Got extra files listed %s", provenance.other_files)
+        if environment_spec.files:
+            lgr.warning("Got extra files listed %s", environment_spec.files)

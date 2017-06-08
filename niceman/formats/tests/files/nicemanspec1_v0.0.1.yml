@@ -23,7 +23,7 @@ distributions:
                                          # and we might provide some translations for
                                          # some common victims
        versions:
-          16.2.07~dfsg.1-2~nd90+1: [apt_Debian_sid_main_0]
+          2.19-18+deb8u4: [apt_Debian_sid_main_0]
        version: 2.19-18+deb8u4
        architecture: amd64       # as identified from /var/..._<arch=amd64>_Packages filename
        size: 12602202

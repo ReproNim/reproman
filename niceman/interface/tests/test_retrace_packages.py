@@ -17,6 +17,7 @@ from niceman.tests.utils import skip_if
 from niceman.tests.utils import with_tempfile
 
 
+# TODO: mock it up or run only when under Debian
 def test_identify_packages():
     files = ["/usr/share/doc/xterm/copyright",
              "/usr/games/alienblaster",
@@ -26,19 +27,18 @@ def test_identify_packages():
              "/usr/share/bug/vim/script",
              "/home/butch"]
     # Simple sanity check that the pipeline works
-    packages, origins, files = identify_distributions(files)
+    distributions, files = identify_distributions(files)
     pprint(files)
-    pprint(origins)
-    pprint(packages)
+    pprint(distributions)
     assert True
 
 
 @skip_if(not lexists(opj(dirname(__file__), pardir, pardir, pardir, '.git')))
 def test_identify_myself():
-    packages, origins, files = identify_distributions([__file__, '/nonexisting-for-sure'])
-    assert len(packages) == 1
-    assert packages[0]['type'] == 'git'
-    assert packages[0]['files'] == [__file__]
+    distributions, files = identify_distributions([__file__, '/nonexisting-for-sure'])
+    assert len(distributions) == 1
+    assert distributions[0].type == 'git'
+    assert distributions[0].files == [__file__]
 
     assert files == ['/nonexisting-for-sure']
 
@@ -55,11 +55,11 @@ def test_detached_git(repo=None):
     runner('git init')
 
     # should be good enough not to crash
-    packages, origins, files = identify_distributions([repo])
+    packages, files = identify_distributions([repo])
     assert len(packages) == 1
     pkg = packages[0]
-    assert pkg['files'] == [repo]
-    assert pkg['type'] == 'git'
+    assert pkg.files == [repo]
+    assert pkg.type == 'git'
 
     # Let's now make it more sensible
     fname = opj(repo, "file")
@@ -67,14 +67,14 @@ def test_detached_git(repo=None):
         f.write("data")
     runner("git add file")
     runner("git commit -m added file")
-    packages, origins, files = identify_distributions([fname])
+    packages, files = identify_distributions([fname])
     assert len(packages) == 1
     pkg = packages[0]
-    assert pkg['files'] == [fname]
-    assert pkg['type'] == 'git'
-    hexsha = pkg['hexsha']
+    assert pkg.files == [fname]
+    assert pkg.type == 'git'
+    hexsha = pkg.hexsha
     assert hexsha
-    assert pkg['branch'] == 'master'
+    assert pkg.branch == 'master'
     # and no field with None
     for v in pkg.values():
         assert v is not None
@@ -83,10 +83,10 @@ def test_detached_git(repo=None):
     runner("git rm file")
     runner("git commit -m removed file")
     runner("git checkout HEAD^")
-    packages, origins, files = identify_distributions([repo])
+    packages, files = identify_distributions([repo])
     assert len(packages) == 1
     pkg = packages[0]
-    assert pkg['files'] == [repo]
-    assert pkg['type'] == 'git'
-    assert pkg['hexsha'] == hexsha
+    assert pkg.files == [repo]
+    assert pkg.type == 'git'
+    assert pkg.hexsha == hexsha
     assert 'branch' not in pkg

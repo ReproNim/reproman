@@ -132,7 +132,7 @@ def identify_distributions(files, session=None):
     #      in case of no environment -- get current one
     # TODO: should operate in the session, might be given additional information
     #       not just files
-    Tracers = [DebTracer, CondaTracer,]# VCSTracer]
+    Tracers = [DebTracer, CondaTracer, VCSTracer]
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files beloning to them
@@ -144,7 +144,8 @@ def identify_distributions(files, session=None):
         begin = time.time()
         # might need to pass more into "identify_distributions" of the tracer
 
-        for env, files_to_consider in tracer.identify_distributions(files_to_consider):
+        for env, files_to_consider in tracer.identify_distributions(
+                files_to_consider):
             distibutions.append(env)
 
         lgr.debug("Assigning files to packages by %s took %f seconds",
