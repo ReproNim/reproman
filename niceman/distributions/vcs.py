@@ -10,6 +10,7 @@
 
 from __future__ import unicode_literals
 
+import attr
 import os
 
 from collections import OrderedDict
@@ -22,6 +23,7 @@ from six import viewvalues
 
 from niceman.dochelpers import exc_str
 from niceman.utils import only_with_values
+from niceman.utils import instantiate_attr_object
 
 
 from niceman.cmd import Runner
@@ -30,12 +32,67 @@ from niceman.cmd import CommandError
 lgr = getLogger('niceman.distributions.vcs')
 
 from niceman.distributions.base import DistributionTracer
+from niceman.distributions.base import SpecObject
+from niceman.distributions.base import Distribution
+from niceman.distributions.base import TypedList
 
 
-class VCSRepo(object):
+# TODO: use metaclass I guess... ?
+def get_vcs_distribution(RepoClass, name, Name):
+    """A helper to generate VCS distribution classes"""
+    class VCSDistribution(Distribution):
+        
+        repositories = TypedList(RepoClass)
+        
+        def __init__(self, *args, **kwargs):
+            self.name = name
+            super(VCSDistribution, self).__init__(*args, **kwargs)
+    VCSDistribution.__name__ = str('%sDistribution' % Name)
+
+
+@attr.s
+class VCSRepo(SpecObject):
     """Base VCS repo class"""
 
-    def __init__(self, path, environ=None):
+    path = attr.ib()
+    files = attr.ib(default=attr.Factory(list))
+
+
+@attr.s
+class GitRepo(VCSRepo):
+
+    branch = attr.ib(default=None)
+    hexsha = attr.ib(default=None)
+    describe = attr.ib(default=None)
+    tracked_remote = attr.ib(default=None)
+    remotes = attr.ib(default=attr.Factory(list))
+
+GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
+
+
+class SVNRepo(VCSRepo):
+
+    revision = attr.ib(default=None)
+    url = attr.ib(default=None)
+    root_url = attr.ib(default=None)
+    relative_url = attr.ib(default=None)
+
+SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
+
+
+#
+# Tracer Shims
+# We use unified VCSTracer but it needs per-VCS specific handling/
+# VCS objects are not created to worry/carry the session information
+# so we have per-VCS shim objects which would be tracer helpers
+# 
+class GitSVNRepoShim(object):
+    _ls_files_command = None  # just need to define in subclass
+    _ls_files_filter = None
+    
+    _vcs_class = None  # associated VCS class
+
+    def __init__(self, path, session):
         """Representation for a repository
 
         Parameters
@@ -44,49 +101,24 @@ class VCSRepo(object):
            Path to the top of the repository
 
         """
-        self.path = path.rstrip(os.sep)
-        # TODO: we should be able to run within the environment
-        if environ is not None:
-            raise NotImplementedError("VCS tracing within custom environ")
-        self._environ = Runner(env={'LC_ALL': 'C'}, cwd=self.path)
-
-
-class GitSVNRepo(VCSRepo):
-    """apparently for now the way to figure out files is similar
-
-    Might later become a mix-in class for any VCS having such "feature" as
-    listing files for a repo
-    """
-
-    _ls_files_command = None  # just need to define in subclass
-    _ls_files_filter = None
-
-    _fields = tuple()
-
-    def __init__(self, path, environ=None):
-        """Representation for Git or SVN repository
-
-        Parameters
-        ----------
-        path: str
-           Path to the top of the repository
-
-        """
-        super(GitSVNRepo, self).__init__(path, environ=environ)
-        self._files = None
+        self.path = path.rstrip(os.sep)  # TODO: might be done as some rg to attr.ib
+        self.session = session 
+        self._all_files = None
         self._branch = None
 
     @property
-    def files(self):
-        if self._files is None:
-            out, err = self._environ(self._ls_files_command)
+    def all_files(self):
+        """Lazy evaluation for _all_files. If session changes, result would be old"""
+        if self._all_files is None:
+            out, err = self.session.run(self._ls_files_command)
             assert not err
-            self._files = set(filter(None, out.split('\n')))
+            self._all_files = set(filter(None, out.split('\n')))
             if self._ls_files_filter:
-                self._files = self._ls_files_filter(self._files)
-        return self._files
+                self._all_files = self._ls_files_filter(self._all_files)
+            self._all_files = set(self._all_files)  # for efficient lookups
+        return self._all_files
 
-    def is_mine(self, path):
+    def owns_path(self, path):
         # does this repository have this directory under its control?
         if path.rstrip(os.sep) == self.path:
             return True
@@ -100,24 +132,22 @@ class GitSVNRepo(VCSRepo):
         #  For now just a strict check, and we would want to request all files
         #  which repo knows about
         rpath = path[len(self.path)+1:]
-        return rpath in self.files
+        return rpath in self.all_files
 
     @classmethod
-    def get_at_dirpath(cls, dirpath):
+    def get_at_dirpath(cls, session, dirpath):
+        """Return VCS instance at the given path (if under that VCS control)"""
         raise NotImplementedError
 
-    @property
-    def branch(self):
-        return self._branch
 
 
 # Name must be   TYPERepo since used later in the code
 # As an overkill might want some metaclass to look after that ;-)
-class SVNRepo(GitSVNRepo):
-
-    _fields = GitSVNRepo._fields + \
-              ('revision', 'url', 'root_url', 'relative_url', 'uuid')
-
+class SVNRepoShim(GitSVNRepoShim):
+    
+    _vcs_class = SVNRepo
+    _vcs_distribution_class = SVNDistribution
+    
     @property
     def _ls_files_command(self):
         # tricky -- we need to locate wc.db somewhere upstairs, and filter out paths
@@ -136,11 +166,11 @@ class SVNRepo(GitSVNRepo):
                     if os.path.commonprefix((subdir, f)) == subdir]
 
     def __init__(self, *args, **kwargs):
-        super(SVNRepo, self).__init__(*args, **kwargs)
+        super(SVNRepoShim, self).__init__(*args, **kwargs)
         self.__info = None
 
     @classmethod
-    def get_at_dirpath(cls, dirpath):
+    def get_at_dirpath(cls, session, dirpath):
         # ho ho -- no longer the case that there is .svn in each subfolder:
         # http://stackoverflow.com/a/9070242
         found = False
@@ -149,9 +179,11 @@ class SVNRepo(GitSVNRepo):
         # but still might be under SVN
         if not found:
             try:
-                out, err = Runner(cwd=dirpath).run(
+                out, err = session.run(
                     'svn info',
-                    expect_fail=True)
+                    expect_fail=True,
+                    cwd=dirpath
+                )
             except CommandError as exc:
                 if "Please see the 'svn upgrade' command" in str(exc):
                     lgr.warning(
@@ -170,7 +202,7 @@ class SVNRepo(GitSVNRepo):
         #      quite expensive to checkout the entire tree if it was not used
         #      besides few leaves
         lgr.debug("Detected SVN repository at %s", dirpath)
-        return cls(dirpath)
+        return cls(dirpath, session=session)
 
     @property
     def _info(self):
@@ -178,7 +210,7 @@ class SVNRepo(GitSVNRepo):
             # TODO -- outdated repos might need 'svn upgrade' first
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
-            out, err = self._environ('svn info')
+            out, err = self.session('svn info')
             self.__info = dict(
                 [x.lstrip() for x in l.split(':', 1)]
                 for l in out.splitlines() if l.strip()
@@ -209,18 +241,21 @@ class SVNRepo(GitSVNRepo):
         return self._info['Repository UUID']
 
 
-class GitRepo(GitSVNRepo):
+class GitRepoShim(GitSVNRepoShim):
+
     _ls_files_command = 'git ls-files'
 
-    _fields = GitSVNRepo._fields + \
-              ('hexsha', 'describe', 'branch', 'tracked_remote', 'remotes')
+    _vcs_class = GitRepo
+    _vcs_distribution_class = GitDistribution
 
     @classmethod
-    def get_at_dirpath(cls, dirpath):
+    def get_at_dirpath(cls, session, dirpath):
         try:
-            out, err = Runner(cwd=dirpath).run(
+            out, err = session.run(
                 'git rev-parse --show-toplevel',
-                expect_fail=True)
+                expect_fail=True,
+                cwd=dirpath
+            )
         except CommandError as exc:
             lgr.debug(
                 "Probably %s is not under git repo path: %s",
@@ -228,14 +263,14 @@ class GitRepo(GitSVNRepo):
             )
             return None
         topdir = out.rstrip('\n')
-        lgr.debug("Detected Git repository at %s for %s", topdir, dirpath)
-        return cls(topdir)
+        lgr.debug("Detected Git repository at %s for %s. Creating a session shim", topdir, dirpath)
+        return cls(topdir, session=session)
 
     def _run_git(self, cmd, expect_fail=False, **kwargs):
         """Helper to run git command, and ignore stderr"""
         cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
         try:
-            out, err = self._environ.run(cmd, expect_fail=expect_fail, **kwargs)
+            out, err = self.session.run(cmd, expect_fail=expect_fail, **kwargs)
         except CommandError:
             if not expect_fail:
                 raise
@@ -311,7 +346,7 @@ class GitRepo(GitSVNRepo):
     def branch(self):
         if self._branch is None:
             try:
-                branch = self._environ.run('git rev-parse --abbrev-ref HEAD')[0].strip()
+                branch = self._run_git('rev-parse --abbrev-ref HEAD')
             except CommandError:
                 # could yet happen there is no commit here, so branch is not defined?
                 return None
@@ -321,7 +356,7 @@ class GitRepo(GitSVNRepo):
 
 
 class VCSTracer(DistributionTracer):
-    """Resolve files into Git repositories they are contained with
+    """Resolve files into VCS repositories they are contained with
 
     TODO: generalize to other common VCS (svn, hg, bzr) which should win one
     over the other depending on the path, e.g. for path
@@ -342,28 +377,35 @@ class VCSTracer(DistributionTracer):
       in one VCS whenever /a/b/d file in another
     """
 
-    REGISTERED_VCS = (SVNRepo, GitRepo)
+    SHIMS = (SVNRepoShim, GitRepoShim)
 
-    def __init__(self, *args, **kwargs):
-        super(VCSTracer, self).__init__(*args, **kwargs)
+    def _init(self):
         # dictionary to contain per each inspected/known directory a VCS
         # instance it belongs to
         self._known_repos = {}
+        
+    def identify_distributions(self, files):
+        repos, remaining_files = self.identify_packages_from_files(files)
+        import pdb; pdb.set_trace()
+        distributions = {}
+        #for repo in repos:
+            
+        dist = DebianDistribution(
+            name="debian",
+            packages=packages,
+            # TODO: helper to go from list -> dict based on the name, since must be unique
+            apt_sources=list(self._apt_sources.values())
+        )  # the one and only!
+        dist.normalize()
+        #   similar to DBs should take care about identifying/groupping etc
+        #   of origins etc
+        yield dist, remaining_files
 
-    def _create_package(self, vcs):
-        # prep our pkg object:
-        pkg = OrderedDict()
-        pkg["path"] = vcs.path
-        pkg["type"] = vcs.__class__.__name__[:-4].lower()   # strip Repo
-        # VCS specific ways to identify the version, sources, etc
-        for f in vcs._fields:
-            pkg[f] = getattr(vcs, f)
+    def _create_package(self, attrs):
         # TODO:  we might want to mark those which are found to belong to pkg
         #  files which are dirty.
-        # pkg["dirty"]
-        pkg = only_with_values(pkg)
-        pkg["files"] = []
-        return pkg
+        attrs = only_with_values(attrs)
+        return instantiate_attr_object(shim._vcs_class, attrs)
 
     def _resolve_file(self, path):
         """Given a path, return path of the repository it belongs to"""
@@ -390,22 +432,30 @@ class VCSTracer(DistributionTracer):
 
             # could be less efficient than some str manipulations but ok for now
             # since we rely on a strict check (must be registered within the repo)
-            if repo.is_mine(path):
+            if repo.owns_path(path):
                 return repo
 
         # ok -- if it is not among known repos, we need to 'sniff' around
         # if there is a repository at that path
-        for VCS in self.REGISTERED_VCS:
-            lgr.log(5, "Trying %s for path %s", VCS, path)
-            vcs = VCS.get_at_dirpath(dirpath) if lexists(dirpath) else None
-            if vcs:
+        for Shim in self.SHIMS:
+            lgr.log(5, "Trying %s for path %s", Shim, path)
+            shim = Shim.get_at_dirpath(self._session, dirpath) \
+                if lexists(dirpath) else None
+            if shim:
                 # so there is one nearby -- record it
-                self._known_repos[vcs.path] = vcs
+                self._known_repos[shim.path] = shim
                 # but it might still not to know about the file
-                if vcs.is_mine(path):
-                    return vcs
+                if shim.owns_path(path):
+                    return shim
                 # if not -- just keep going to the next candidate repository
         return None
 
     def _get_packagefields_for_files(self, files):
-        return {f: self._resolve_file(f) for f in files}
+        out = {}
+        for f in files:
+            shim = self._resolve_file(f)
+            out[f] = dict(
+                (a.name, getattr(shim, a.name)) for a in shim._vcs_class.__attrs_attrs__
+                if a.name not in {'files'}
+            )
+        return out

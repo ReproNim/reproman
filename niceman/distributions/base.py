@@ -156,6 +156,12 @@ class DistributionTracer(object):
         # codepage just in case since we might want to comprehend error
         # messages
         self._session = session or Runner(env={'LC_ALL': 'C'})
+        # to ease _init within derived classes which should not be parametrized
+        # more anyways
+        self._init()
+
+    def _init(self):
+        pass
 
     @abc.abstractmethod
     def identify_distributions(self, files):
@@ -165,7 +171,7 @@ class DistributionTracer(object):
     # TODO: we might want to create a more specialized sub-class for that purpose
     # and move those methods below into that subclass
     def identify_packages_from_files(self, files):
-        """Identifies packages for a given collection of files
+        """Identifies "packages" for a given collection of files
 
         From an iterative collection of files, we identify the packages
         that contain the files and any files that are not related.
@@ -192,10 +198,6 @@ class DistributionTracer(object):
         # internally and just return them.  But we should make them hashable
         file_to_package_dict = self._get_packagefields_for_files(files)
         for f in files:
-            if not os.path.lexists(f):
-                lgr.warning(
-                    "Provided file %s doesn't exist, spec might be incomplete",
-                    f)
             # Stores the file
             if f not in file_to_package_dict:
                 unknown_files.add(f)

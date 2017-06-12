@@ -73,13 +73,11 @@ class CondaDistribution(Distribution):
         return
 
 
-
 class CondaTracer(DistributionTracer):
     """conda distributions tracer
     """
 
-    def __init__(self, *args, **kwargs):
-        super(CondaTracer, self).__init__(*args, **kwargs)
+    def _init(self):
         self._paths_cache = {}  #  path -> False or CondaDistribution
 
     def _get_conda(self, path):

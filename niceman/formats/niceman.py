@@ -12,25 +12,24 @@ Plugin support for provenance YAML files following NICEMAN spec.
 """
 from __future__ import absolute_import
 
-import attr
-
 import collections
 import datetime
+import logging
 from collections import OrderedDict
 
+import attr
 import yaml
 
 import niceman
-from .. import utils
-from ..dochelpers import exc_str
-from ..distributions import Distribution
-from .base import Provenance
-from .utils import write_config_key
-from .utils import write_config
 from niceman.distributions.base import Factory
 from niceman.distributions.base import SpecObject
+from niceman.utils import instantiate_attr_object
+from .base import Provenance
+from .utils import write_config
+from .. import utils
+from ..distributions import Distribution
+from ..dochelpers import exc_str
 
-import logging
 lgr = logging.getLogger('niceman.formats.niceman')
 
 __version__ = '0.0.1'
@@ -292,28 +291,3 @@ def spec_to_dict(spec):
 """
 
 
-# TODO: just absorb into SpecObject __init__ but would require more handling
-# to allow *args as well
-def instantiate_attr_object(item_type, kws):
-    """Instantiate item_type given keyword args kws 
-    
-    Provides a more informative exception message in case if some arguments
-    are incorrect
-    """
-    try:
-        return item_type(**kws)
-    except TypeError as exc:
-        if "unexpected keyword" in str(exc):
-            known_kws = [i.name for i in item_type.__attrs_attrs__]
-            incorrect_kws = set(kws.keys()).difference(known_kws)
-            if incorrect_kws:
-                # Provide a more informative message
-                raise TypeError(
-                    "Following provided arguments are not known to %s: %s.  "
-                    "Known but not yet provided are: %s"
-                    % (item_type.__name__,
-                       ', '.join(incorrect_kws),
-                       ', '.join(sorted(set(known_kws).difference(kws))))
-                )
-        # if couldn't figure it out -- just raise original
-        raise

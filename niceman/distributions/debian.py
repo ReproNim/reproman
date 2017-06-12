@@ -192,8 +192,7 @@ class DebTracer(DistributionTracer):
     """
 
     # TODO: (Low Priority) handle cases from dpkg-divert
-    def __init__(self, *args, **kwargs):
-        super(DebTracer, self).__init__(*args, **kwargs)
+    def _init(self):
         # TODO: we might want a generic helper for collections of things
         # where we could match based on the set of attrs which matter
         self._apt_sources = {}
@@ -333,7 +332,10 @@ class DebTracer(DistributionTracer):
 
                 found_name = outdict.pop('path')
                 if not found_name:
-                    raise ValueError("Record %s got no path defined... skipping"  % repr(outdict))
+                    raise ValueError(
+                        "Record %s got no path defined... skipping"
+                        % repr(outdict)
+                    )
                 # for now let's just return those dicts of fields not actual
                 # packages since then we would need create/kill them all the time
                 # to merge files etc... although could also be a part of "normalization"
@@ -349,6 +351,7 @@ class DebTracer(DistributionTracer):
             return None
         try:
             query = name if not architecture else "%s:%s" % (name, architecture)
+            # TODO: use session, not apt_cache
             pkg_info = apt_cache[query]
         except KeyError:  # Package not found
             lgr.warning("Was asked to create a spec for package %s but it was not found in apt", name)
