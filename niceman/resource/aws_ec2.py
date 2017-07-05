@@ -34,8 +34,8 @@ class AwsEc2(Resource):
     name = attr.ib()
 
     # Configurable options for each "instance"
-    access_key_id = attr.ib()
-    secret_access_key = attr.ib()
+    access_key_id = attr.ib(default=None)
+    secret_access_key = attr.ib(default=None)
     instance_type = attr.ib(default='t2.micro')  # EC2 instance type
     security_group = attr.ib(default='default')  # AWS security group
     region_name = attr.ib(default='us-east-1')  # AWS region
@@ -57,6 +57,26 @@ class AwsEc2(Resource):
     # Management properties
     _ec2_resource = attr.ib(default=None)
     _ec2_instance = attr.ib(default=None)
+
+    @staticmethod
+    def get_backend_properties():
+        """
+        Return the config properties specific to this resource type.
+
+        Returns
+        -------
+        dict : key = resource property, value = property description
+        """
+        return {
+            'access_key_id': 'AWS access key for remote access to your Amazon subscription.',
+            'secret_access_key': 'AWS secret access key for remote access to your Amazon subscription',
+            'instance_type': 'The type of Amazon EC2 instance to run. (e.g. t2.medium)',
+            'security_group': 'AWS security group to assign to the EC2 instance.',
+            'region_name': 'AWS availability zone to run the EC2 instance in. (e.g. us-east-1)',
+            'key_name': 'AWS subscription name of SSH key-pair registered.',
+            'key_filename': 'Path to SSH private key file matched with AWS key name parameter.',
+            'base_image_id': 'AWS image ID from which to create the running instance',
+        }
 
     def connect(self):
         """
