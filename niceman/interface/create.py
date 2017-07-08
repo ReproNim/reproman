@@ -11,6 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import attr
 from importlib import import_module
 from .base import Interface
 import niceman.interface.base # Needed for test patching
@@ -39,9 +40,10 @@ def backend_help(resource_type=None):
                     ', '.join(ResourceManager._discover_types()))
             )
         cls = getattr(module, class_name)
-        args = cls.get_backend_properties()
-        for k, v in args.items():
-            help_args.append('"{}" ({})'.format(k, v))
+        args = attr.fields(cls)
+        for arg in args:
+            if 'doc' in arg.metadata:
+                help_args.append('"{}" ({})'.format(arg.name, arg.metadata['doc']))
 
     return help_message + ", ".join(help_args)
 
@@ -148,14 +150,13 @@ class Create(Interface):
         env_resource = ResourceManager.factory(config)
 
         # Set resource properties to any backend specific command line arguments.
-        backend_properties = env_resource.get_backend_properties()
         for backend_arg in backend:
             key, value = backend_arg.split("=")
-            if key in backend_properties:
+            if hasattr(env_resource, key):
                 config[key] = value
                 setattr(env_resource, key, value)
             else:
-                raise NotImplementedError("Bad backend paramenter '{}'".format(key))
+                raise NotImplementedError("Bad --backend paramenter '{}'".format(key))
 
         env_resource.connect()
         config_updates = env_resource.create()
