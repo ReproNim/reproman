@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Classes to manage compute resources."""
 
+import attr
 from importlib import import_module
 import abc
 
@@ -27,12 +28,17 @@ from ..support.exceptions import ResourceError
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
 from ..ui import ui
 
-# Enumerate the defined resource types available.
-VALID_RESOURCE_TYPES = [
-    'docker-container',
-    'aws-ec2',
-    'shell'
-]
+def attrib(*args, **kwargs):
+    """
+    Extend the attrs decorator to include a doc metadata element.
+    """
+    doc = kwargs.pop('doc', None)
+    metadata = kwargs.get('metadata', {})
+    if doc:
+        metadata['doc'] = doc
+    if metadata:
+        kwargs['metadata'] = metadata
+    return attr.ib(*args, **kwargs)
 
 class ResourceManager(object):
     """
@@ -125,11 +131,14 @@ class ResourceManager(object):
         #       inventory
         # TODO:  if no name or id provided, then fail since this function
         #        is not created to return a list of resources for a given type ATM
+
+        vald_resource_types = [t.replace("_", "-") for t in ResourceManager._discover_types()]
+
         if name in inventory:
             # XXX so what is our convention here on SMTH-SMTH defining the type?
             config = dict(cm.items(inventory[name]['type'].split('-')[0]))
             config.update(inventory[name])
-        elif type_ and type_ in VALID_RESOURCE_TYPES:
+        elif type_ and type_ in vald_resource_types:
             config = dict(cm.items(type_.split('-')[0]))
         else:
             type_ = ui.question(
@@ -141,7 +150,7 @@ class ResourceManager(object):
                 default="docker-container"
             )
             config = {}
-            if type_ not in VALID_RESOURCE_TYPES:
+            if type_ not in vald_resource_types:
                 raise MissingConfigError(
                     "Resource type '{}' is not valid".format(type_))
 
