@@ -28,17 +28,6 @@ class Shell(Resource):
 
     status = attr.ib(default=None)
 
-    @staticmethod
-    def get_backend_properties():
-        """
-        Return the config properties specific to this resource type.
-
-        Returns
-        -------
-        dict : key = resource property, value = property description
-        """
-        return {}
-
     def create(self):
         """
         Create a running environment.

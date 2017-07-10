@@ -32,11 +32,10 @@ def attrib(*args, **kwargs):
     """
     Extend the attrs decorator to include a doc metadata element.
     """
-    doc = kwargs.get('doc')
+    doc = kwargs.pop('doc', None)
     metadata = kwargs.get('metadata', {})
     if doc:
         metadata['doc'] = doc
-        del kwargs['doc']
     if metadata:
         kwargs['metadata'] = metadata
     return attr.ib(*args, **kwargs)
