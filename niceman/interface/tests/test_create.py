@@ -7,13 +7,17 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from niceman.cmdline.main import main
 
 import logging
+import pytest
 from mock import patch, call, MagicMock
 
+from niceman.cmdline.main import main
 from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
+from niceman.support.exceptions import ResourceError
+
+from ..create import backend_help
 
 
 def test_create_interface(niceman_cfg_path):
@@ -64,3 +68,9 @@ def test_create_interface(niceman_cfg_path):
         assert_in("status 1 progress 1", log.lines)
         assert_in("status 2 progress 2", log.lines)
         assert_in("Created the environment my-test-resource", log.lines)
+
+
+def test_backend_help_wrong_backend():
+    with pytest.raises(ResourceError) as exc:
+        backend_help("unknown_backend")
+    assert 'Known ones are: aws' in str(exc)
