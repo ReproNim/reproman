@@ -12,7 +12,7 @@ from mock import patch, call, MagicMock
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..base import Resource
+from ..base import ResourceManager
 
 
 def test_awsec2_class():
@@ -31,7 +31,7 @@ def test_awsec2_class():
             'access_key_id': 'my-aws-access-key-id',
             'secret_access_key': 'my-aws-secret-access-key-id'
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         resource.connect()
         assert resource.id == None
         assert resource.status == None
@@ -55,7 +55,7 @@ def test_awsec2_class():
             'access_key_id': 'my-aws-access-key-id',
             'secret_access_key': 'my-aws-secret-access-key-id'
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         try:
             resource.connect()
         except Exception as e:
@@ -77,7 +77,7 @@ def test_awsec2_class():
             'key_name': 'my-ssh-key',
             'key_filename': '/home/me/.ssh/id_rsa'
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         resource.connect()
         assert resource.base_image_id == 'ami-c8580bdf'
         assert resource.id == 'i-00002777d52482d9c'
@@ -114,7 +114,7 @@ def test_awsec2_class():
             'key_name': 'my-ssh-key',
             'key_filename': '/home/me/.ssh/id_rsa'
         }
-        resource = Resource.factory(config)
+        resource = ResourceManager.factory(config)
         resource.connect()
         results = resource.create()
         assert results['id'] == 'i-11112777d52482d9c'

@@ -19,7 +19,7 @@ from botocore.exceptions import ClientError
 import logging
 lgr = logging.getLogger('niceman.resource.aws_ec2')
 
-from .base import Resource
+from .base import Resource, attrib
 import niceman.support.sshconnector2 # Needed for test patching to work.
 from ..ui import ui
 from ..utils import assure_dir
@@ -34,14 +34,22 @@ class AwsEc2(Resource):
     name = attr.ib()
 
     # Configurable options for each "instance"
-    access_key_id = attr.ib()
-    secret_access_key = attr.ib()
-    instance_type = attr.ib(default='t2.micro')  # EC2 instance type
-    security_group = attr.ib(default='default')  # AWS security group
-    region_name = attr.ib(default='us-east-1')  # AWS region
-    key_name = attr.ib(default=None)  # Name of SSH key registered on AWS.
-    key_filename = attr.ib(default=None) # SSH private key filename on local machine.
-    base_image_id = attr.ib(default='ami-c8580bdf')  # Ubuntu 14.04 LTS
+    access_key_id = attrib(default=None,
+        doc="AWS access key for remote access to your Amazon subscription.")
+    secret_access_key = attrib(default=None,
+        doc="AWS secret access key for remote access to your Amazon subscription")
+    instance_type = attrib(default='t2.micro',
+        doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)")  # EC2 instance type
+    security_group = attrib(default='default',
+        doc="AWS security group to assign to the EC2 instance.")  # AWS security group
+    region_name = attrib(default='us-east-1',
+        doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)")  # AWS region
+    key_name = attrib(default=None,
+        doc="AWS subscription name of SSH key-pair registered.")  # Name of SSH key registered on AWS.
+    key_filename = attrib(default=None,
+        doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
+    base_image_id = attrib(default='ami-c8580bdf',
+        doc="AWS image ID from which to create the running instance")  # Ubuntu 14.04 LTS
 
     # Interesting one -- should we allow for it to be specified or should
     # it just become a property?  may be base class could
@@ -53,8 +61,7 @@ class AwsEc2(Resource):
     # Current instance properties, to be set by us, not augmented by user
     status = attr.ib(default=None)
 
-    # ???
-    # Management properties
+    # Resource and AWS instance objects
     _ec2_resource = attr.ib(default=None)
     _ec2_instance = attr.ib(default=None)
 

@@ -22,8 +22,8 @@ def test_create_interface(niceman_cfg_path):
     """
 
     with patch('docker.Client') as client, \
-        patch('niceman.interface.base.set_resource_inventory'), \
-        patch('niceman.interface.base.get_resource_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager.set_inventory'), \
+        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
@@ -50,12 +50,13 @@ def test_create_interface(niceman_cfg_path):
         args = ['create',
                 '--resource', 'my-test-resource',
                 '--resource-type', 'docker-container',
-                '--config', niceman_cfg_path
+                '--config', niceman_cfg_path,
+                '--backend', 'engine_url=tcp://127.0.0.1:2376'
         ]
         main(args)
 
         calls = [
-            call(base_url='tcp://127.0.0.1:2375'),
+            call(base_url='tcp://127.0.0.1:2376'),
             call().start(container='18b31b30e3a5')
         ]
         client.assert_has_calls(calls, any_order=True)

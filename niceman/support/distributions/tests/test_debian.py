@@ -10,13 +10,18 @@
 
 """
 
-from ..debian import DebianReleaseSpec
-from ..debian import get_spec_from_release_file
+try:
+    from ..debian import DebianReleaseSpec
+    from ..debian import get_spec_from_release_file
+except:
+    DebianReleaseSpec = None
 
 from niceman.tests.utils import with_tempfile
 from niceman.tests.utils import eq_
+from niceman.tests.utils import skip_if
 
 
+@skip_if(not DebianReleaseSpec)
 @with_tempfile(content="""\
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA256

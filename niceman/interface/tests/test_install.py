@@ -19,8 +19,8 @@ from ...tests.utils import assert_in
 def test_install_interface(demo1_spec, niceman_cfg_path):
 
     with patch('docker.Client') as client, \
-        patch('niceman.interface.base.set_resource_inventory'), \
-        patch('niceman.interface.base.get_resource_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager.set_inventory'), \
+        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(

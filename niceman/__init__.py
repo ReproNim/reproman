@@ -29,7 +29,7 @@ cfg = ConfigManager()
 # ssh_manager = SSHManager()
 #
 import atexit
-import pytest
+import niceman
 import os
 # atexit.register(ssh_manager.close, allow_fail=False)
 atexit.register(lgr.log, 5, "Exiting")
@@ -43,6 +43,7 @@ def test(package='niceman', **kwargs):
     See numpy.testing.Tester -- **kwargs are passed into the
     Tester().test call
     """
+    import pytest
     try:
         # from numpy.testing import Tester
         # Tester(package=package).test(**kwargs)

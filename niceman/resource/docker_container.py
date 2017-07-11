@@ -13,7 +13,7 @@ import docker
 import dockerpty
 import json
 from ..support.exceptions import CommandError, ResourceError
-from .base import Resource
+from .base import Resource, attrib
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')
@@ -30,12 +30,14 @@ class DockerContainer(Resource):
     id = attr.ib(default=None)
     type = attr.ib(default='docker-container')
 
-    engine_url = attr.ib(default='unix:///var/run/docker.sock')
-    base_image_id = attr.ib(default='ubuntu:latest')
+    base_image_id = attrib(default='ubuntu:latest',
+        doc="Docker base image ID from which to create the running instance")
+    engine_url = attrib(default='unix:///var/run/docker.sock',
+        doc="Docker server URL where engine is listening for connections")
 
     status = attr.ib(default=None)
 
-    # Management properties
+    # Docker client and container objects.
     _client = attr.ib(default=None)
     _container = attr.ib(default=None)
 

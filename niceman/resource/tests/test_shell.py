@@ -12,7 +12,7 @@ from mock import patch, call
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..base import Resource
+from ..base import ResourceManager
 from ...cmd import Runner
 
 
@@ -26,7 +26,7 @@ def test_shell_class():
             'name': 'my-shell',
             'type': 'shell'
         }
-        shell = Resource.factory(config)
+        shell = ResourceManager.factory(config)
 
         command = ['apt-get', 'install', 'bc']
         shell.add_command(command)
