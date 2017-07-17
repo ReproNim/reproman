@@ -37,8 +37,8 @@ def test_identify_packages():
 def test_identify_myself():
     distributions, files = identify_distributions([__file__, '/nonexisting-for-sure'])
     assert len(distributions) == 1
-    assert distributions[0].type == 'git'
-    assert distributions[0].files == [__file__]
+    assert distributions[0].name == 'git'
+    assert distributions[0].packages[0].files == [__file__]
 
     assert files == ['/nonexisting-for-sure']
 
@@ -55,11 +55,15 @@ def test_detached_git(repo=None):
     runner('git init')
 
     # should be good enough not to crash
-    packages, files = identify_distributions([repo])
+    distributions, files = identify_distributions([repo])
+    assert len(distributions) == 1
+    dist = distributions[0]
+    assert dist.name == 'git'
+    packages = dist.packages
     assert len(packages) == 1
     pkg = packages[0]
     assert pkg.files == [repo]
-    assert pkg.type == 'git'
+    assert pkg.path == repo
 
     # Let's now make it more sensible
     fname = opj(repo, "file")
@@ -67,26 +71,21 @@ def test_detached_git(repo=None):
         f.write("data")
     runner("git add file")
     runner("git commit -m added file")
-    packages, files = identify_distributions([fname])
-    assert len(packages) == 1
-    pkg = packages[0]
+    distributions, files = identify_distributions([fname])
+    assert len(distributions) == 1
+    pkg = distributions[0].packages[0]
     assert pkg.files == [fname]
-    assert pkg.type == 'git'
     hexsha = pkg.hexsha
     assert hexsha
     assert pkg.branch == 'master'
-    # and no field with None
-    for v in pkg.values():
-        assert v is not None
 
     # and if we cause a detachment
     runner("git rm file")
     runner("git commit -m removed file")
     runner("git checkout HEAD^")
-    packages, files = identify_distributions([repo])
-    assert len(packages) == 1
-    pkg = packages[0]
+    distributions, files = identify_distributions([repo])
+    pkg = distributions[0].packages[0]
     assert pkg.files == [repo]
-    assert pkg.type == 'git'
     assert pkg.hexsha == hexsha
-    assert 'branch' not in pkg
+    assert not pkg.branch
+    assert not pkg.remotes

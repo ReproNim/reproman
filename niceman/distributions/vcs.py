@@ -497,6 +497,8 @@ class VCSTracer(DistributionTracer):
         out = {}
         for f in files:
             shim = self._resolve_file(f)
+            if not shim:
+                continue
             # we probably do not want all the attributes to just report which
             # repo it is, so let's report path and type
             # out[f] = dict(
