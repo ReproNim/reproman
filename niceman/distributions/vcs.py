@@ -10,10 +10,11 @@
 
 from __future__ import unicode_literals
 
+import abc
 import attr
 import os
 
-from collections import OrderedDict
+from collections import defaultdict
 from os.path import dirname, isdir, isabs
 from os.path import exists, lexists
 from os.path import join as opj
@@ -24,7 +25,6 @@ from six import viewvalues
 from niceman.dochelpers import exc_str
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
-
 
 from niceman.cmd import Runner
 from niceman.cmd import CommandError
@@ -37,17 +37,39 @@ from niceman.distributions.base import Distribution
 from niceman.distributions.base import TypedList
 
 
-# TODO: use metaclass I guess... ?
-def get_vcs_distribution(RepoClass, name, Name):
-    """A helper to generate VCS distribution classes"""
-    class VCSDistribution(Distribution):
-        
-        repositories = TypedList(RepoClass)
-        
-        def __init__(self, *args, **kwargs):
-            self.name = name
-            super(VCSDistribution, self).__init__(*args, **kwargs)
-    VCSDistribution.__name__ = str('%sDistribution' % Name)
+# # TODO: use metaclass I guess... ?
+# def get_vcs_distribution(RepoClass, name, Name):
+#     """A helper to generate VCS distribution classes"""
+#     class VCSDistribution(Distribution):
+#
+#         repositories = TypedList(RepoClass)
+#
+#         def __init__(self, *args, **kwargs):
+#             self.name = name
+#             super(VCSDistribution, self).__init__(*args, **kwargs)
+#     VCSDistribution.__name__ = str('%sDistribution' % Name)
+#     return VCSDistribution
+
+
+# We need a concept of Distribution
+@attr.s
+class VCSDistribution(Distribution):
+    """
+    Base class for VCS "distributions"
+    """
+
+    def initiate(self, session):
+        # This is VCS specific, but we could may be make it
+        # to verify that some executable is available
+        session.run(self._cmd)
+
+    @abc.abstractmethod
+    def install_packages(self, session, use_version=True):
+        # This is VCS specific
+        raise NotImplementedError()
+
+    def normalize(self):
+        pass
 
 
 @attr.s
@@ -67,7 +89,16 @@ class GitRepo(VCSRepo):
     tracked_remote = attr.ib(default=None)
     remotes = attr.ib(default=attr.Factory(list))
 
-GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
+# Probably generation wouldn't be flexible enough
+#GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
+@attr.s
+class GitDistribution(VCSDistribution):
+    _cmd = "git"
+    packages = TypedList(GitRepo)
+
+    def install_packages(self, session, use_version=True):
+        raise NotImplementedError
+GitRepo._distribution = GitDistribution
 
 
 class SVNRepo(VCSRepo):
@@ -77,7 +108,15 @@ class SVNRepo(VCSRepo):
     root_url = attr.ib(default=None)
     relative_url = attr.ib(default=None)
 
-SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
+#SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
+@attr.s
+class SVNDistribution(VCSDistribution):
+    _cmd = "svn"
+    packages = TypedList(SVNRepo)
+
+    def install_packages(self, session, use_version=True):
+        raise NotImplementedError
+SVNRepo._distribution = SVNDistribution
 
 
 #
@@ -106,11 +145,17 @@ class GitSVNRepoShim(object):
         self._all_files = None
         self._branch = None
 
+    def _session_run(self, cmd, **kwargs):
+        """Run in the session but providing our self.path as the cwd"""
+        if 'cwd' not in kwargs:
+            kwargs = dict(cwd=self.path, **kwargs)
+        return self.session.run(cmd, **kwargs)
+
     @property
     def all_files(self):
         """Lazy evaluation for _all_files. If session changes, result would be old"""
         if self._all_files is None:
-            out, err = self.session.run(self._ls_files_command)
+            out, err = self._session_run(self._ls_files_command)
             assert not err
             self._all_files = set(filter(None, out.split('\n')))
             if self._ls_files_filter:
@@ -210,7 +255,7 @@ class SVNRepoShim(GitSVNRepoShim):
             # TODO -- outdated repos might need 'svn upgrade' first
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
-            out, err = self.session('svn info')
+            out, err = self._session_run('svn info')
             self.__info = dict(
                 [x.lstrip() for x in l.split(':', 1)]
                 for l in out.splitlines() if l.strip()
@@ -270,7 +315,7 @@ class GitRepoShim(GitSVNRepoShim):
         """Helper to run git command, and ignore stderr"""
         cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
         try:
-            out, err = self.session.run(cmd, expect_fail=expect_fail, **kwargs)
+            out, err = self._session_run(cmd, expect_fail=expect_fail, **kwargs)
         except CommandError:
             if not expect_fail:
                 raise
@@ -298,7 +343,8 @@ class GitRepoShim(GitSVNRepoShim):
     def remotes(self):
         # ideally needs to figure out the remote(s) which already have
         # this commit.  So kinda similar to APT where we list all origins
-        # where some might not even contain current version
+        # where some might not even contain current version. TODO: implement
+        # that way
         #
         # On the other hand, I think it would not be uncommon to use some
         # version which is not yet pushed... so what additional information
@@ -386,24 +432,21 @@ class VCSTracer(DistributionTracer):
         
     def identify_distributions(self, files):
         repos, remaining_files = self.identify_packages_from_files(files)
-        import pdb; pdb.set_trace()
-        distributions = {}
-        #for repo in repos:
-            
-        dist = DebianDistribution(
-            name="debian",
-            packages=packages,
-            # TODO: helper to go from list -> dict based on the name, since must be unique
-            apt_sources=list(self._apt_sources.values())
-        )  # the one and only!
-        dist.normalize()
-        #   similar to DBs should take care about identifying/groupping etc
-        #   of origins etc
-        yield dist, remaining_files
+        pkgs_per_distr = defaultdict(list)
+        for repo in repos:
+            pkgs_per_distr[repo._distribution].append(repo)
+        for dist_class, repos in pkgs_per_distr.items():
+            yield dist_class(name=dist_class._cmd,
+                             packages=repos), remaining_files
 
-    def _create_package(self, attrs):
+    def _create_package(self, path):
         # TODO:  we might want to mark those which are found to belong to pkg
         #  files which are dirty.
+        shim = self._known_repos[path]
+        attrs = dict(
+            (a.name, getattr(shim, a.name)) for a in shim._vcs_class.__attrs_attrs__
+            if a.name not in {'files'}  # those will be populated later
+        )
         attrs = only_with_values(attrs)
         return instantiate_attr_object(shim._vcs_class, attrs)
 
@@ -454,8 +497,16 @@ class VCSTracer(DistributionTracer):
         out = {}
         for f in files:
             shim = self._resolve_file(f)
-            out[f] = dict(
-                (a.name, getattr(shim, a.name)) for a in shim._vcs_class.__attrs_attrs__
-                if a.name not in {'files'}
-            )
+            # we probably do not want all the attributes to just report which
+            # repo it is, so let's report path and type
+            # out[f] = dict(
+            #     (a.name, getattr(shim, a.name)) for a in shim._vcs_class.__attrs_attrs__
+            #     if a.name not in {'files'}
+            # )
+            out[f] = {
+                'path': shim.path,
+                # 'repo_class': shim._vcs_class,
+            }
+            # the rest of the attrs will be taken by using _known_repos
+            # in _create_package
         return out

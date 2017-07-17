@@ -120,6 +120,7 @@ class DebianDistribution(Distribution):
 
     apt_sources = TypedList(APTSource)
     packages = TypedList(DEBPackage)
+    version = attr.ib(default=None)  # version as depicted by /etc/debian_version
 
     def initiate(self, session):
         """
@@ -199,10 +200,14 @@ class DebTracer(DistributionTracer):
         self._apt_source_names = set()
 
     def identify_distributions(self, files):
+        debian_version = None
         try:
-            out, err = self._session.run('cat /etc/debian_version')
+            debian_version, err = self._session.run('cat /etc/debian_version')
+            debian_version = debian_version.strip()  # would have new line
             # for now would also match Ubuntu -- there it would have
             # ID=ubuntu and ID_LIKE=debian
+            # TODO: load/parse /etc/os-release into a dict and better use
+            # VERSION_ID and then ID (to decide if Debian or Ubuntu or ...)
             out, err = self._session.run('grep -i "^ID.*=debian" /etc/os-release', expect_fail=True)
             out, err = self._session.run('ls -ld /etc/apt', expect_fail=True)
         except Exception as exc:
@@ -214,8 +219,12 @@ class DebTracer(DistributionTracer):
         # found association
         if not packages:
             return
+        # TODO: Depending on ID might be debian or ubuntu -- we might want to
+        # absorb them all within DebianDistribution or have custom classes??
+        # So far they seems to be largely similar
         dist = DebianDistribution(
             name="debian",
+            version=debian_version,
             packages=packages,
             # TODO: helper to go from list -> dict based on the name, since must be unique
             apt_sources=list(self._apt_sources.values())
@@ -343,7 +352,6 @@ class DebTracer(DistributionTracer):
                 lgr.debug("Identified file %r to belong to package %s",
                           found_name, pkg)
                 file_to_package_dict[found_name] = pkg
-
         return file_to_package_dict
 
     def _create_package(self, name, architecture=None):

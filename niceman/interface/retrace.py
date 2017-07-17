@@ -140,10 +140,12 @@ def identify_distributions(files, session=None):
 
     distibutions = []
     for Tracer in Tracers:
+        if not files_to_consider:
+            lgr.info("No files left to consider, not considering remaining tracers")
+            break
         tracer = Tracer(session=session)
         begin = time.time()
         # might need to pass more into "identify_distributions" of the tracer
-
         for env, files_to_consider in tracer.identify_distributions(
                 files_to_consider):
             distibutions.append(env)

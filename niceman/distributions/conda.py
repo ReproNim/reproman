@@ -122,7 +122,7 @@ class CondaTracer(DistributionTracer):
             if dist and dist.path not in dists:
                 dists[dist.path] = dist
 
-            # check if path possibly within a conda distribution
+            # TODO: check if path possibly within a conda distribution
             pass  # all the magic and slowly prune files_to_consider
 
         # Assign names
