@@ -18,13 +18,16 @@ import niceman.interface.base # Needed for test patching
 # from ..formats import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
+from ..support.exceptions import ResourceError
 from ..resource import ResourceManager
+from ..dochelpers import exc_str
 
 from logging import getLogger
 lgr = getLogger('niceman.api.create')
 
+
 def backend_help(resource_type=None):
-    types = ResourceManager._discover_types()
+    types = ResourceManager._discover_types() if not resource_type else [resource_type]
 
     help_message = "One or more backend parameters in the form KEY=VALUE. Options are: "
     help_args = []
@@ -35,7 +38,8 @@ def backend_help(resource_type=None):
             module = import_module('niceman.resource.{}'.format(module_name))
         except ImportError as exc:
             raise ResourceError(
-                "Failed to import resource: {}.  Known ones are: {}".format(
+                "Failed to import resource {}: {}.  Known ones are: {}".format(
+                    module_name,
                     exc_str(exc),
                     ', '.join(ResourceManager._discover_types()))
             )
