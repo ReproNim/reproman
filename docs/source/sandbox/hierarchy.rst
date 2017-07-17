@@ -5,9 +5,9 @@ Matt side
 *********
 
 distribution.base.Distribution   base class
-===============================
+===========================================
 
- - __init__ (provenance)
+ - `__init__` (provenance)
  - factory [static]  (distribution_name, provenance)
     provenance given to __init__
  - initiate (session)
@@ -20,6 +20,7 @@ sub-classes
  - conda
 
 TOL (thoughts out loud):
+
 - just gets a "provenance" so not clear from API what it needs and operates on.
   It relies on "provenance" which is passed into the constructor and which
   it later 'uses' for any of the steps.

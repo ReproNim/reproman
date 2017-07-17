@@ -182,10 +182,10 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_nic
       Matches to exclude
     exclude_vcs:
       If True, excludes commonly known VCS subdirectories.  If string, used
-      as regex to exclude those files (regex: %r)
+      as regex to exclude those files (regex: `%r`)
     exclude_niceman:
       If True, excludes files known to be niceman meta-data files (e.g. under
-      .niceman/ subdirectory) (regex: %r)
+      .niceman/ subdirectory) (regex: `%r`)
     topdir: basestring, optional
       Directory where to search
     dirs: bool, optional
