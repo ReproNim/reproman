@@ -439,6 +439,26 @@ class VCSTracer(DistributionTracer):
             yield dist_class(name=dist_class._cmd,
                              packages=repos), remaining_files
 
+    def _get_packagefields_for_files(self, files):
+        out = {}
+        for f in files:
+            shim = self._resolve_file(f)
+            if not shim:
+                continue
+            # we probably do not want all the attributes to just report which
+            # repo it is, so let's report path and type
+            # out[f] = dict(
+            #     (a.name, getattr(shim, a.name)) for a in shim._vcs_class.__attrs_attrs__
+            #     if a.name not in {'files'}
+            # )
+            out[f] = {
+                'path': shim.path,
+                # 'repo_class': shim._vcs_class,
+            }
+            # the rest of the attrs will be taken by using _known_repos
+            # in _create_package
+        return out
+
     def _create_package(self, path):
         # TODO:  we might want to mark those which are found to belong to pkg
         #  files which are dirty.
@@ -492,23 +512,3 @@ class VCSTracer(DistributionTracer):
                     return shim
                 # if not -- just keep going to the next candidate repository
         return None
-
-    def _get_packagefields_for_files(self, files):
-        out = {}
-        for f in files:
-            shim = self._resolve_file(f)
-            if not shim:
-                continue
-            # we probably do not want all the attributes to just report which
-            # repo it is, so let's report path and type
-            # out[f] = dict(
-            #     (a.name, getattr(shim, a.name)) for a in shim._vcs_class.__attrs_attrs__
-            #     if a.name not in {'files'}
-            # )
-            out[f] = {
-                'path': shim.path,
-                # 'repo_class': shim._vcs_class,
-            }
-            # the rest of the attrs will be taken by using _known_repos
-            # in _create_package
-        return out

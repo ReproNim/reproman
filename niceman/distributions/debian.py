@@ -234,90 +234,6 @@ class DebTracer(DistributionTracer):
         #   of origins etc
         yield dist, remaining_files
 
-    def _get_apt_source(self, packages_filename, **kwargs):
-        # Given a set of attributes, in this case just all provided,
-        # return either a new instance or the cached one
-        hashable = tuple(sorted(kwargs.items()))
-        if hashable not in self._apt_sources:
-            self._apt_sources[hashable] = apt_source = APTSource(
-                name=self._get_apt_source_name(**kwargs),
-                **kwargs
-            )
-            # we need to establish its date
-
-            # TODO: shouldn't be done per each package since
-            #       common within session for all packages from the
-            #       same Packages.  So should be done independently
-            #       and once per Packages file
-            # Get the release date
-            apt_source.date = self._find_release_date(
-                self._find_release_file(packages_filename))
-
-        # we return a unique name
-        return self._apt_sources[hashable].name
-
-    def _get_apt_source_name(self, origin, archive, component, **other_attrs):
-        # Create a unique name for the origin
-        name_fmt = "apt_%s_%s_%s_%%d" % (origin, archive, component)
-        name = utils.generate_unique_name(name_fmt, self._apt_source_names)
-        # Remember the created name
-        self._apt_source_names.add(name)
-        # Create a named origin
-        return name
-
-
-    # # TODO: should become a part of "normalization" where common
-    # # stuff floats up
-    #
-    # def identify_package_origins(self, packages):
-    #     used_names = set()  # Set to avoid duplicate origin names
-    #     unnamed_origin_map = {}  # Map unnamed origins to named origins
-    #
-    #     raise RuntimeError("should be RFed")
-    #     # Iterate over all package origins
-    #     for p in packages:
-    #         for v in p.versions:
-    #             for i, o in enumerate(v.get("apt_sources", [])):
-    #                 # If we haven't seen this origin before, generate a
-    #                 # name for it
-    #                 if o not in unnamed_origin_map:
-    #                     unnamed_origin_map[o] = \
-    #                         self._get_apt_source_name(o, used_names)
-    #                 # Now replace the package origin with the name of the
-    #                 # yaml-prepared origin
-    #                 v["apt_sources"][i] = unnamed_origin_map[o].name
-    #
-    #     # Sort the origins by the name for the configuration file
-    #     origins = sorted(unnamed_origin_map.values(), key=lambda k: k.name)
-    #
-    #     return origins
-
-    def _run_dpkg_query(self, subfiles):
-        try:
-            out, err = self._session(
-                ['dpkg-query', '-S'] + subfiles,
-                expect_stderr=True, expect_fail=True
-            )
-        except CommandError as exc:
-            stderr = utils.to_unicode(exc.stderr, "utf-8")
-            if 'no path found matching pattern' in stderr:
-                out = exc.stdout  # One file not found, so continue
-            else:
-                raise  # some other fault -- handle it above
-        out = utils.to_unicode(out, "utf-8")
-        return out
-
-    @staticmethod
-    def _parse_dpkgquery_line(line):
-        if line.startswith('diversion '):
-            return None  # we are ignoring diversion details ATM  TODO
-        res = _DPKG_QUERY_PARSER.match(line)
-        if res:
-            res = res.groupdict()
-            if res['architecture'] is None:
-                res.pop('architecture')
-        return res
-
     def _get_packagefields_for_files(self, files):
         file_to_package_dict = {}
 
@@ -430,6 +346,88 @@ class DebTracer(DistributionTracer):
         pkg.versions = dict(pkg_versions)
         lgr.debug("Found package %s", pkg)
         return pkg
+
+    def _get_apt_source_name(self, origin, archive, component, **other_attrs):
+        # Create a unique name for the origin
+        name_fmt = "apt_%s_%s_%s_%%d" % (origin, archive, component)
+        name = utils.generate_unique_name(name_fmt, self._apt_source_names)
+        # Remember the created name
+        self._apt_source_names.add(name)
+        # Create a named origin
+        return name
+
+    def _get_apt_source(self, packages_filename, **kwargs):
+        # Given a set of attributes, in this case just all provided,
+        # return either a new instance or the cached one
+        hashable = tuple(sorted(kwargs.items()))
+        if hashable not in self._apt_sources:
+            self._apt_sources[hashable] = apt_source = APTSource(
+                name=self._get_apt_source_name(**kwargs),
+                **kwargs
+            )
+            # we need to establish its date
+
+            # TODO: shouldn't be done per each package since
+            #       common within session for all packages from the
+            #       same Packages.  So should be done independently
+            #       and once per Packages file
+            # Get the release date
+            apt_source.date = self._find_release_date(
+                self._find_release_file(packages_filename))
+
+        # we return a unique name
+        return self._apt_sources[hashable].name
+    # # TODO: should become a part of "normalization" where common
+    # # stuff floats up
+    #
+    # def identify_package_origins(self, packages):
+    #     used_names = set()  # Set to avoid duplicate origin names
+    #     unnamed_origin_map = {}  # Map unnamed origins to named origins
+    #
+    #     raise RuntimeError("should be RFed")
+    #     # Iterate over all package origins
+    #     for p in packages:
+    #         for v in p.versions:
+    #             for i, o in enumerate(v.get("apt_sources", [])):
+    #                 # If we haven't seen this origin before, generate a
+    #                 # name for it
+    #                 if o not in unnamed_origin_map:
+    #                     unnamed_origin_map[o] = \
+    #                         self._get_apt_source_name(o, used_names)
+    #                 # Now replace the package origin with the name of the
+    #                 # yaml-prepared origin
+    #                 v["apt_sources"][i] = unnamed_origin_map[o].name
+    #
+    #     # Sort the origins by the name for the configuration file
+    #     origins = sorted(unnamed_origin_map.values(), key=lambda k: k.name)
+    #
+    #     return origins
+
+    def _run_dpkg_query(self, subfiles):
+        try:
+            out, err = self._session(
+                ['dpkg-query', '-S'] + subfiles,
+                expect_stderr=True, expect_fail=True
+            )
+        except CommandError as exc:
+            stderr = utils.to_unicode(exc.stderr, "utf-8")
+            if 'no path found matching pattern' in stderr:
+                out = exc.stdout  # One file not found, so continue
+            else:
+                raise  # some other fault -- handle it above
+        out = utils.to_unicode(out, "utf-8")
+        return out
+
+    @staticmethod
+    def _parse_dpkgquery_line(line):
+        if line.startswith('diversion '):
+            return None  # we are ignoring diversion details ATM  TODO
+        res = _DPKG_QUERY_PARSER.match(line)
+        if res:
+            res = res.groupdict()
+            if res['architecture'] is None:
+                res.pop('architecture')
+        return res
 
     @staticmethod
     def _find_release_file(packages_filename):

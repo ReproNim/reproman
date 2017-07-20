@@ -170,6 +170,16 @@ class DistributionTracer(object):
     # This one assumes that distribution works with "packages"
     # TODO: we might want to create a more specialized sub-class for that purpose
     # and move those methods below into that subclass
+    # TODO: moreover this one assumes only detection by the files and
+    #       provides a generic implementation which is based on stages:
+    #       1. for each file identifying package fields uniquely describing the
+    #          package (method `_get_packagefields_for_files`)
+    #       2. groupping fields based on the packagefields
+    #       3. creating an actual `Package` using those fields for each group
+    #          of files.
+    #  In principle could be RFed to be more scalable, where there is a "Package
+    #  manager", which provides similar "assign file to a package" functionality
+    #  and identifying packages as already known to the manager.
     def identify_packages_from_files(self, files):
         """Identifies "packages" for a given collection of files
 
@@ -230,12 +240,18 @@ class DistributionTracer(object):
 
         return list(viewvalues(found_packages)), list(unknown_files)
 
+    @abc.abstractmethod
     def _get_packagefields_for_files(self, files):
+        """Given a list of files, should return a dict mapping files to a
+        dictionary of fields which would be later passed into _create_package
+        to actually create packages while groupping into packages 
+        (having identical returned packagefield values)
+        """
         raise NotImplementedError
 
-    def _create_package(self, pkgname):
-        """Creates implementation specific Package object
-
-        (well -- atm still an OrderedDict)
+    @abc.abstractmethod
+    def _create_package(self, **package_fields):
+        """Creates implementation-specific Package object using fields
+        provided by _get_packagefields_for_files
         """
         raise NotImplementedError
