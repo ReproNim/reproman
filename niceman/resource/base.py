@@ -313,7 +313,7 @@ class Resource(object):
 
     def set_envvar(self, var, value):
         """
-        Save an evironment variable for inclusion in the environment
+        Save an environment variable for inclusion in the environment
 
         Parameters
         ----------

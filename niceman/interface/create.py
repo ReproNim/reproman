@@ -20,6 +20,7 @@ from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
 from ..resource import ResourceManager
+from ..resource import Resource
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -44,6 +45,12 @@ def backend_help(resource_type=None):
                     ', '.join(ResourceManager._discover_types()))
             )
         cls = getattr(module, class_name)
+        if not issubclass(cls, Resource):
+            lgr.debug(
+                "Skipping %s.%s since not a Resource. Consider moving away",
+                module, class_name
+            )
+            continue
         args = attr.fields(cls)
         for arg in args:
             if 'doc' in arg.metadata:
@@ -178,13 +185,13 @@ class Create(Interface):
                 config[key] = value
                 setattr(env_resource, key, value)
             else:
-                raise NotImplementedError("Bad --backend paramenter '{}'".format(key))
+                raise NotImplementedError("Bad --backend parameter '{}'".format(key))
 
         env_resource.connect()
-        config_updates = env_resource.create()
+        resource_attrs = env_resource.create()
 
         # Save the updated configuration for this resource.
-        config.update(config_updates)
+        config.update(resource_attrs)
         inventory[resource] = config
         ResourceManager.set_inventory(inventory)
 

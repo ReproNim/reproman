@@ -50,9 +50,10 @@ class DockerContainer(Resource):
 
         containers = []
         for container in self._client.containers(all=True):
-            if self.id == container.get('Id') or '/' + self.name == container.get('Names')[0]:
+            if (self.id and container.get('Id').startswith(self.id)) or \
+                    (self.name and '/' + self.name == container.get('Names')[0]):
+                    # TODO: make above more robust and centralize across different resources/backends?
                 containers.append(container)
-
         if len(containers) == 1:
             self._container = containers[0]
             self.id = self._container.get('Id')
@@ -91,12 +92,48 @@ class DockerContainer(Resource):
             command='/bin/bash',
         )
         self.id = self._container.get('Id')
-        self.status = 'running'
         self._client.start(container=self.id)
+        self.status = 'running'
         return {
             'id': self.id,
             'status': self.status
         }
+
+    def delete(self):
+        """
+        Deletes a container from the Docker engine.
+        """
+        if self._container:
+            self._client.remove_container(self._container, force=True)
+
+    def start(self):
+        """
+        Starts a container in the Docker engine.
+        """
+        if self._container:
+            self._client.start(container=self._container.get('Id'))
+
+    def stop(self):
+        """
+        Stops a container in the Docker engine.
+        """
+        if self._container:
+            self._client.stop(container=self._container.get('Id'))
+
+    def get_session(self, pty=False):
+        """
+        Log into a container and get the command line
+        """
+        return (PTYDockerSession if pty else DockerSession)(client=self._client, container=self._container)
+
+
+from niceman.resource.session import POSIXSession
+
+
+@attr.s
+class DockerSession(POSIXSession):
+    client = attr.ib()
+    container = attr.ib()
 
     def execute_command(self, command, env=None):
         """
@@ -126,30 +163,20 @@ class DockerContainer(Resource):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
-    def delete(self):
-        """
-        Deletes a container from the Docker engine.
-        """
-        if self._container:
-            self._client.remove_container(self._container, force=True)
+    # XXX should we start/stop on open/close or just assume that it is running already?
 
-    def start(self):
-        """
-        Starts a container in the Docker engine.
-        """
-        if self._container:
-            self._client.start(container=self._container.get('Id'))
 
-    def stop(self):
-        """
-        Stops a container in the Docker engine.
-        """
-        if self._container:
-            self._client.stop(container=self._container.get('Id'))
+@attr.s
+class PTYDockerSession(DockerSession):
+    """Interactive Docker Session"""
 
-    def login(self):
-        """
-        Log into a container and get the command line
-        """
+    def open(self):
         lgr.debug("Opening TTY connection to docker container.")
-        dockerpty.start(self._client, self._container, logs=0)
+        # TODO: probably call to super to assure that we have it running?
+        dockerpty.start(self.client, self.container, logs=0)
+
+    def close(self):
+        # XXX ?
+        pass
+
+    # XXX should we overload execute_command?

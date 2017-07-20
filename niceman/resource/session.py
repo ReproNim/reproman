@@ -14,14 +14,39 @@ lgr = logging.getLogger('niceman.resource.shell')
 
 import os
 
+from niceman.support.exceptions import SessionRuntimeError
+from niceman.dochelpers import exc_str
+
+import logging
+lgr = logging.getLogger('niceman.session')
+
 
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
+
+
+    def __enter__(self):
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    # By default don't do anything special
+    def open(self):
+        pass
+
+    def close(self):
+        pass
 
     @abc.abstractmethod
     def execute_command(command, env=None):
         pass
 
+    #
+    # Files query and manipulation
+    # TODO:  should be in subspace (.path) may be? This would allow for
+    #        more flexible mixups
     @abc.abstractmethod
     def exists(self, path):
         """Return if file exists"""
@@ -46,10 +71,12 @@ class Session(object):
     #
     # Somewhat optional since could be implemented with native "POSIX" commands
     #
+    @abc.abstractmethod
     def read(self, path, mode='r'):
-        """Return context manager to open files for reading or editing"""
-        raise NotImplementedError()
+        """Return content of a file"""
+        raise NotImplementedError
 
+    @abc.abstractmethod
     def mkdir(self, path, parents=False):
         """Create a directory (or with parent directories if `parents` 
         is True)
@@ -59,10 +86,6 @@ class Session(object):
     # chown?
 
 
-class SessionRuntimeError(RuntimeError):
-    pass
-
-
 class POSIXSession(Session):
     """A Session which relies on commands present in any POSIX-compliant env"""
 
@@ -70,16 +93,27 @@ class POSIXSession(Session):
         """Return if file exists"""
         try:
             out, err = self.execute_command(["[", "-e", path, "]"])
-        except Exception:  # TODO: More specific exception
+        except Exception as exc:  # TODO: More specific exception?
+            lgr.debug("Check for file presence failed: %s", exc_str(exc))
             return False
-        return True
+        if not err:
+            return True
+        else:
+            lgr.debug("Standard error was not empty (%r), thus assuming that "
+                      "test for file presence has failed", err)
 
-    def lexists(self, path):
-        """Return if file (or just a broken symlink) exists"""
-        return os.path.lexists(path)
+    # def lexists(self, path):
+    #     """Return if file (or just a broken symlink) exists"""
+    #     return os.path.lexists(path)
 
-#    def get_mtime(self, path):
-#
+# Seems to have no generic implementation in POSIX?  TODO: check
+#  may be we could assume presence of e.g. python so we could use std library?
+    def get_mtime(self, path):
+        # TODO:  too common of a pattern -- we need a helper to wrap such calls
+        out, err = self.execute_command(
+            ['python', '-c', "import os, sys; print(os.path.getmtime(sys.argv[1]))", path]
+        )
+        return out.strip()
 
     #
     # Somewhat optional since could be implemented with native "POSIX" commands

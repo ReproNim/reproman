@@ -81,4 +81,4 @@ class Login(Interface):
         if not env_resource.id:
             raise ValueError("No resource found given the info %s" % str(resource_info))
 
-        env_resource.login()
+        session = env_resource.get_session(pty=True)
