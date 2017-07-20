@@ -108,17 +108,32 @@ def test_parse_dpkgquery_line():
 def test_get_packagefields_for_files():
     manager = DebTracer()
     # TODO: mock! and bring back afni and fail2ban
-    out = manager._get_packagefields_for_files(
-        ['/bin/sh',  # the tricky one with alternatives etc, on my system - provided by dash
-         '/lib/i386-linux-gnu/libz.so.1.2.8', '/lib/x86_64-linux-gnu/libz.so.1.2.8',  # multiarch
-        # '/usr/lib/afni/bin/afni',  # from contrib
-        # '/usr/bin/fail2ban-server', '/usr/bin/fail2ban-server', # arch all and multiple
-         '/bogus'
-         ])
+    files = ['/bin/sh',  # the tricky one with alternatives etc, on my system - provided by dash
+             '/lib/i386-linux-gnu/libz.so.1.2.8', '/lib/x86_64-linux-gnu/libz.so.1.2.8',  # multiarch
+             '/usr/lib/afni/bin/afni',  # from contrib
+             '/usr/bin/fail2ban-server', '/usr/bin/fail2ban-server', # arch all and multiple
+             '/bogus'
+             ]
+
+    def _run_dpkg_query(subfiles):
+        assert subfiles == files  # we get all of the passed in
+        return """\
+diversion by dash from: /bin/sh
+diversion by dash to: /bin/sh.distrib
+dash: /bin/sh
+zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8
+zlib1g:amd64: /lib/x86_64-linux-gnu/libz.so.1.2.8
+afni: /usr/lib/afni/bin/afni
+fail2ban: /usr/bin/fail2ban-server
+fail2ban: /usr/bin/fail2ban-server
+"""
+    with mock.patch.object(manager, "_run_dpkg_query", _run_dpkg_query):
+        out = manager._get_packagefields_for_files(files)
+
     assert out == {
         '/lib/i386-linux-gnu/libz.so.1.2.8': {'name': u'zlib1g', 'architecture': u'i386'},
         '/lib/x86_64-linux-gnu/libz.so.1.2.8': {'name': u'zlib1g', 'architecture': u'amd64'},
-       # '/usr/bin/fail2ban-server': {'name': u'fail2ban'},
-       # '/usr/lib/afni/bin/afni': {'name': u'afni'},
+        '/usr/bin/fail2ban-server': {'name': u'fail2ban'},
+        '/usr/lib/afni/bin/afni': {'name': u'afni'},
         '/bin/sh': {'name': u'dash'}
     }
