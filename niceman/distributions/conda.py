@@ -80,6 +80,12 @@ class CondaTracer(DistributionTracer):
     def _init(self):
         self._paths_cache = {}  #  path -> False or CondaDistribution
 
+    def _get_packagefields_for_files(self, files):
+        raise NotImplementedError("TODO")
+
+    def _create_package(self, *fields):
+        raise NotImplementedError("TODO")
+
     def _get_conda(self, path):
         import os
         paths = []
