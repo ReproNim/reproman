@@ -50,6 +50,11 @@ class NicemanProvenance(Provenance):
         source : string
             File path or URL or actual spec if contains new line in it
         """
+        # TODO: should we somehow provide a custom loader in case of
+        # dictionaries to make them ordered dict?  initial use case
+        # is listing of distributions. although it is not clear yet
+        # either order should matter.  Now in some places then internally
+        # sorting alphabetically for consistency
         if '\n' in source:
             return yaml.load(source)
 
@@ -111,7 +116,7 @@ class NicemanProvenance(Provenance):
             # normalize compressed presentation into full
             dists_in = [
                 dict(name=n, **(fields or {}))
-                for n, fields in dists_in.items()
+                for n, fields in sorted(dists_in.items())
             ]
 
         distributions = []
