@@ -202,8 +202,11 @@ class DebTracer(DistributionTracer):
     def identify_distributions(self, files):
         debian_version = None
         try:
-            debian_version, err = self._session.run('cat /etc/debian_version')
-            debian_version = debian_version.strip()  # would have new line
+            with self._session.open('/etc/debian_version') as f:
+                debian_version = f.read().strip()
+            self._session.exists()
+            # debian_version, err = self._session.run('cat /etc/debian_version')
+            #debian_version = debian_version.strip()  # would have new line
             # for now would also match Ubuntu -- there it would have
             # ID=ubuntu and ID_LIKE=debian
             # TODO: load/parse /etc/os-release into a dict and better use

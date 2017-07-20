@@ -17,9 +17,11 @@ lgr = logging.getLogger('niceman.resource.shell')
 
 import os
 
+from .session import Session
+
 
 @attr.s
-class Shell(Resource):
+class Shell(Resource, Session):
 
     # Container properties
     name = attr.ib()
@@ -68,6 +70,9 @@ class Shell(Resource):
         """
         return
 
+    #
+    # Commands fulfilling a "Session" interface to interact with the environment
+    #
     def execute_command(self, command, env=None):
         """
         Execute the given command in the environment.
@@ -101,3 +106,39 @@ class Shell(Resource):
 
         response = run(command, **run_kw)  # , shell=True)
         return [response]
+
+    def exists(self, path):
+        """Return if file exists"""
+        return os.path.exists(path)
+
+    def lexists(self, path):
+        """Return if file (or just a broken symlink) exists"""
+        return os.path.lexists(path)
+
+    def copy_to(self, src_path, dest_path, preserve_perms=False,
+                owner=None, group=None, recursive=False):
+        """Take file on the local file system and copy over into the session
+        """
+        raise NotImplementedError
+
+    def copy_from(self, src_path, dest_path, preserve_perms=False,
+                  owner=None, group=None, recursive=False):
+        raise NotImplementedError
+
+    def get_mtime(self, path):
+        return os.path.getmtime(path)
+
+    #
+    # Somewhat optional since could be implemented with native "POSIX" commands
+    #
+    def open(self, path, mode='r'):
+        """Return context manager to open files for reading or editing"""
+        raise NotImplementedError()
+
+    def mkdir(self, path, leading=False):
+        """Create a directory (or with leading directories if `leading` 
+        is True)
+        """
+        raise NotImplementedError
+    # chmod?
+    # chown?
