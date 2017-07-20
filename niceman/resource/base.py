@@ -12,9 +12,6 @@ import attr
 from importlib import import_module
 import abc
 
-import logging
-lgr = logging.getLogger('niceman.resource.base')
-
 import yaml
 from os.path import basename
 from os.path import dirname
@@ -28,9 +25,18 @@ from ..support.exceptions import ResourceError
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
 from ..ui import ui
 
+
+import logging
+lgr = logging.getLogger('niceman.resource.base')
+
+
 def attrib(*args, **kwargs):
     """
-    Extend the attrs decorator to include a doc metadata element.
+    Extend the attr.ib to include our metadata elements.
+    
+    ATM we support additional keyword args which are then stored within
+    `metadata`:
+    - `doc` for documentation to describe the attribute (e.g. in --help)
     """
     doc = kwargs.pop('doc', None)
     metadata = kwargs.get('metadata', {})
@@ -39,6 +45,7 @@ def attrib(*args, **kwargs):
     if metadata:
         kwargs['metadata'] = metadata
     return attr.ib(*args, **kwargs)
+
 
 class ResourceManager(object):
     """

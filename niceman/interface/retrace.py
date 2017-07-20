@@ -6,24 +6,32 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Analyze ReproZip YML configuration to gather detailed package information
+"""Analyze existing spec or session file system to gather more detailed information
 """
+
+from __future__ import unicode_literals
+
 import sys
+import time
+
+import niceman.formats.niceman
 from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.constraints import EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
-from ..retrace import rpzutil
-from logging import getLogger
+from ..utils import assure_list
+from ..utils import to_unicode
+
 
 __docformat__ = 'restructuredtext'
 
+from logging import getLogger
 lgr = getLogger('niceman.api.retrace')
 
 
 class Retrace(Interface):
-    """Analyze known (e.g. ReproZip) trace files or just paths to gather detailed package information
+    """Analyze a known (e.g. ReproZip) trace files or just paths to gather detailed package information
 
     Examples
     --------
@@ -57,15 +65,92 @@ class Retrace(Interface):
 
     @staticmethod
     def __call__(path=None, spec=None, output_file=None):
+        # heavy import -- should be delayed until actually used
 
         if not (spec or path):
-            raise InsufficientArgumentsError("Need at least a single --spec or a file")
+            raise InsufficientArgumentsError(
+                "Need at least a single --spec or a file"
+            )
 
+        paths = assure_list(path)
         if spec:
             lgr.info("reading spec file %s", spec)
-            input_config = rpzutil.read_reprozip_yaml(spec)
-        else:
-            input_config = {}
+            # TODO: generic loader to auto-detect formats etc
+            from niceman.formats.reprozip import ReprozipProvenance
+            spec = ReprozipProvenance(spec)
+            paths += spec.get_files() or []
 
-        config = rpzutil.identify_packages(input_config, path)
-        rpzutil.write_config(output_file or sys.stdout, config)
+        # Convert paths to unicode
+        paths = list(map(to_unicode, paths))
+
+        # TODO: at the moment assumes just a single distribution etc.
+        #       Generalize
+        # TODO: RF so that only the above portion is reprozip specific.
+        # If we are to reuse their layout largely -- the rest should stay as is
+        from niceman.cmd import Runner
+        (distributions, files) = identify_distributions(
+            paths,
+            session=Runner(env={'LC_ALL': 'C'})  # TODO: any/proper session
+        )
+        from niceman.distributions.base import EnvironmentSpec
+        spec = EnvironmentSpec(
+            distributions=distributions,
+        )
+        if files:
+            spec.files = sorted(files)
+
+        # TODO: generic writer!
+        from niceman.formats.niceman import NicemanProvenance
+        NicemanProvenance.write(output_file or sys.stdout, spec)
+
+
+# TODO: session should be with a state.  Idea is that if we want
+#  to trace while inheriting all custom PATHs which that run might have
+#  had
+def identify_distributions(files, session=None):
+    """Identify packages files belong to
+
+    Parameters
+    ----------
+    files : iterable
+      Files to consider
+
+    Returns
+    -------
+    distributions : list of Distribution
+    unknown_files : list of str
+      Files which were not determined to belong to any specific distribution
+    """
+    # TODO: automate discovery of available tracers
+    from niceman.distributions.debian import DebTracer
+    from niceman.distributions.conda import CondaTracer
+    from niceman.distributions.vcs import VCSTracer
+
+    from niceman.cmd import Runner
+    session = session or Runner(env={'LC_ALL': 'C'})
+    # TODO create list of appropriate for the `environment` OS tracers
+    #      in case of no environment -- get current one
+    # TODO: should operate in the session, might be given additional information
+    #       not just files
+    Tracers = [DebTracer, CondaTracer, VCSTracer]
+
+    # .identify_ functions will have a side-effect of shrinking this list in-place
+    # as they identify files beloning to them
+    files_to_consider = files[:]
+
+    distibutions = []
+    for Tracer in Tracers:
+        if not files_to_consider:
+            lgr.info("No files left to consider, not considering remaining tracers")
+            break
+        tracer = Tracer(session=session)
+        begin = time.time()
+        # might need to pass more into "identify_distributions" of the tracer
+        for env, files_to_consider in tracer.identify_distributions(
+                files_to_consider):
+            distibutions.append(env)
+
+        lgr.debug("Assigning files to packages by %s took %f seconds",
+                  tracer, time.time() - begin)
+
+    return distibutions, files_to_consider

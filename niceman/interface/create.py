@@ -15,7 +15,7 @@ import attr
 from importlib import import_module
 from .base import Interface
 import niceman.interface.base # Needed for test patching
-# from ..provenance import Provenance
+# from ..formats import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
@@ -122,16 +122,34 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(resource, resource_type, config, resource_id, clone, only_env, backend, existing='fail '):
-
-        # if not specs:
-        #     specs = question("Enter a spec filename", default="spec.yml")
+    def __call__(resource, resource_type, config, resource_id, clone, only_env,
+                 backend, existing='fail '):
 
         # Load, while possible merging/augmenting sequentially
         # provenance = Provenance.factory(specs)
+        #
+        # TODO: need to be redone to be able to operate based on a spec
+        #  we do want
+        #     niceman create --resource_type docker_container --spec analysis.spec
+        #  which would choose appropriate base container etc
+        #
+        # if nothing in cmdline instructed on specific one to use:
+        #   resource = Resource.factory(resource_type)
+        #   resource_base = resource.guess_base(provenance.distributions)
+        #
+        # internally it might first just check if base OS could be deduced, so
+        # we need helpers like
+        #     guess_base_os_spec(distributions)
+        # and if none is there, each resource, might provide/use defaults, e.g.
+        # a default docker image if there is anaconda used and nothing about base
+        # env.
+        #
+        # if not specs:
+        #     specs = question("Enter a spec filename", default="spec.yml")
 
         from niceman.ui import ui
 
+        # TODO: allow resource to be name or id...
         if not resource:
             resource = ui.question(
                 "Enter a resource name",
@@ -171,3 +189,8 @@ class Create(Interface):
         ResourceManager.set_inventory(inventory)
 
         lgr.info("Created the environment %s", resource)
+
+        # TODO: at the end install packages using install and created env
+        # if not only_env:
+        #     from repronim.api import install
+        #     install(provenance, resource, resource_id, config)

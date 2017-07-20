@@ -10,6 +10,8 @@
 
 from importlib import import_module
 import abc
+import attr
+from six import string_types
 
 from ..utils import file_basename
 from ..dochelpers import exc_str
@@ -22,18 +24,56 @@ _known_extensions = {
 }
 
 import logging
-lgr = logging.getLogger('niceman.prov')
+lgr = logging.getLogger('niceman.formats')
+
+from ..distributions.base import EnvironmentSpec
 
 
+# XXX Is just a file format Adapter which should provide us with functionality
+# to load/store EnvironmentSpec
 class Provenance(object):
-    """
-    Base class to handle the collection and management of provenance information.
+    """Base class to handle the collection and management of provenance files.
+    
+    Main purpose is to provide basic interface to provide adapters
+    to generate our EnvironmentSpec object, and possibly later save it.
+    
+    Also should provide helpers such as `get_files` so we could do retracing.
     """
 
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, source):
+        """
+        Class constructor
+
+        Parameters
+        ----------
+        source : string
+            File path or URL to load from
+        """
+
+        self._src = self._load(source) if isinstance(source, string_types) else source
+
+    @abc.abstractmethod
+    def _load(self, source):
+        raise NotImplementedError
+
+    def get_environment(self):
+        """Return Environment object 
+        
+        Returns
+        -------
+        EnvironmentSpec 
+        """
+        return EnvironmentSpec(
+            base=self.get_base(),
+            distributions=self.get_distributions(),
+            files=self.get_files(limit='loose'),
+        )
+
+    # XXX should we rename into more obvious from_file/from_files?
     @staticmethod
-    def factory(source, format='nicemanspec'):
+    def factory(source, format='niceman'):
         """
         Factory method for creating the appropriate Provenance sub-class based
         on format type.
@@ -50,7 +90,7 @@ class Provenance(object):
         Provenance sub-class instance
         """
         class_name = format.capitalize() + 'Provenance'
-        module = import_module('niceman.provenance.' + format)
+        module = import_module('niceman.formats.' + format)
         return getattr(module, class_name)(source)
 
     @staticmethod
@@ -90,20 +130,24 @@ class Provenance(object):
                     "Failed to load %s using any known parser" % source)
         return fullspec
 
-    @abc.abstractmethod
-    def get_operating_system(self):
-        """
-        Retrieve the operating system information.
+    # # @abc.abstractmethod
+    # def get_operating_system(self):
+    #     """
+    #     Retrieve the operating system information.
+    #
+    #     Returns
+    #     -------
+    #     Dictionary containing name and version of the OS.
+    #         os['name']
+    #         os['version']
+    #     """
+    #     raise NotImplementedError()
 
-        Returns
-        -------
-        Dictionary containing name and version of the OS.
-            os['name']
-            os['version']
-        """
-        return
+    def get_base(self):
+        # Default
+        return None
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def get_distributions(self):
         """
         Retrieve the information for all the distributions recorded in the
@@ -114,4 +158,25 @@ class Provenance(object):
         list
             List of Distribution sub-class objects.
         """
-        return
+        raise NotImplementedError()
+
+    # @abc.abstractmethod
+    def get_files(self, limit='all'):
+        """
+        Retrieve list of files on the system which were mentioned.
+
+        Parameters
+        ----------
+        limit : {'all', 'loose', 'packaged'}
+          What files to return
+
+        Returns
+        -------
+        list
+            List of file names.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def write(cls, output, spec):
+        raise NotImplementedError("Output was not implemented for %s", cls)

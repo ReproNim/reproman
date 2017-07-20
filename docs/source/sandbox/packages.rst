@@ -30,7 +30,7 @@ release Y)
 Packages, Package Managers, and Distributions
 =============================================
 
-We would like to be able to identify, record, and install various "packages" of
+We would like to be able to identify, record, and install various **packages** of
 software and data. A package is a collection of files, potentially platform
 specific (in the case of binary packages) or requiring reconstruction (such as
 compiling applications from source). In addition, installing a package may have
@@ -44,14 +44,20 @@ environment and have slightly different capabilities.  For example, "yum" and
 system.  "pip" provides download and compilation capability for the Python
 interpreted language, while "conda" is another Python package manager that can
 supports "virtual environments" (essentially subdirectories) that provide
-separate parallel Python environments.
+separate parallel Python environments.  Different packages provide varying amount
+of meta-information to identify package a particular file belongs to, or to
+gather meta-information identifying that package source so it could be reinstalled
+later on (e.g. "pip" from a git repository would not store a URL for that
+repository anywhere to be recovered).
 
 A "distribution" is a set of packages (typically organized with their dependencies).
 Some distributions (such as Linux distros) are self-sufficient, in a sense
 that they could be deployed on a bare hardware or as an independent
-virtualized environment which would require nothing else.
+virtualized environment which would require nothing else. Many distributions though
+allow to mix a number of **origins**, where any package was or could be obtained from.  E.g.
+it is multiple apt sources for Debian-based distributions and "channels" in conda.
 
-Some distributions (such as the ones based on PIP, Conda), do require some base
+Some distributions (such as the ones based on PIP, conda), do require some base
 environment on top of which they would work.  But also might require some
 minimal set of tools being provided by the base environment.  E.g.
 `conda` -based distribution would probably need nothing but basic shell (core
@@ -172,13 +178,17 @@ impossible to detect automatically:
 
 - VCS in general (git, git-annex) repositories -- we can identify
   if particular files belong to which repo, where it is available from,
-  what was the revision etc.
+  what was the revision etc.  We will not collect/record the entirety of the
+  configuration (i.e. all the settings from .git/config), but only the information
+  sufficient to reproduce the environment, not necessarily any other possible
+  interaction with a given VCS
 - Generic URL download
 - File and directory copy, move, and rename
 - Execution of specific commands - may be highly dependent upon the environment
 
 NOTE: Packages that would generally be considered "Core OS" packages, could be
 installed using these alternate approaches
+
 
 Backends  (engine)
 ------------------
@@ -225,44 +235,6 @@ Instance
 - vagrant -- ???
 - aws -- instance
 - schroot -- session (chroot itself doesn't track anything AFAIK)
-
-
-Overlays: within distro
-=======================
-
-Many distributions are "overlayed" within, affecting not the environment variables,
-but rather the availability of the packages.  E.g., Debian itself provides:
-
-- multiple suites (`stable`, `testing`, `unstable`, etc) which are aliases to
-  "codenames" (release names such as `jessie`, `stretch`, `sid`);
-- components (`main`, `contrib`, `non-free`)
-- additional repositories for security and other updates (which might come with
-  its own components)
-
-so, Debian installation generally is internally an overlay on top of `main` component of some
-codename or suite.  And regular stock "debian" sid codename docker container is just that
--- `main`.   But `jessie` (stable) would come with "updates" and "security-updates".  It will be
-a pair of `Label` and `Suite` in `*Release` files to describe somewhat uniquely (somewhat) each
-APT source::
-
-    root@7b7c55c74d38:/var/lib/apt/lists# grep -e  Label -e Suite -e Components *Release
-    httpredir.debian.org_debian_dists_jessie-updates_InRelease:Label: Debian
-    httpredir.debian.org_debian_dists_jessie-updates_InRelease:Suite: stable-updates
-    httpredir.debian.org_debian_dists_jessie-updates_InRelease:Components: main contrib non-free
-    httpredir.debian.org_debian_dists_jessie_Release:Label: Debian
-    httpredir.debian.org_debian_dists_jessie_Release:Suite: stable
-    httpredir.debian.org_debian_dists_jessie_Release:Components: main contrib non-free
-    security.debian.org_dists_jessie_updates_InRelease:Label: Debian-Security
-    security.debian.org_dists_jessie_updates_InRelease:Suite: stable
-    security.debian.org_dists_jessie_updates_InRelease:Components: updates/main updates/contrib updates/non-free
-
-.. note::
-   note that although Components present -- they describe which are available, but
-   not necessarily configured
-
-Additional priority mechanism usually is employed to decide which (version of) package should
-be installed.  Note that if priorities are set, it is not necesarily that the "most recent"
-package would get installed
 
 
 Perspective "agents/classes"

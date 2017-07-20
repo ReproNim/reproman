@@ -3,23 +3,6 @@
     The provenance files in the niceman/examples directory are used for this example.
 """
 
-from niceman.provenance import Provenance
-# from debian_package_manager import DebianPackageManager
-# from niceman import Orchestrator
-
-def create_reprozip_factor():
-    # provenance = Provenance.factory('pipype_output.trig', format='trig')
-    provenance = Provenance.factory('reprozip_output.yml', format='reprozip')
-    # orchestrator = Orchestrator.factory('localhost', provenance)
-    # orchestrator = Orchestrator.factory('docker', provenance)
-    dpm = DebianPackageManager()
-
-
-    # Add NeuroDebian repository to Ubuntu server.
-    distribution = provenance.get_distribution()
-    create_date = provenance.get_create_date()
-    print('create_date = {}'.format(create_date))
-
 # # Add current NeuroDebian and archived NeuroDebian repos.
 # print '\nAdding the NeuroDebian repository to the server for %s %s ...' % (distribution['OS'], distribution['version'])
 # # orchestrator.add_task('apt_repository', dict(repo='deb http://snapshot.debian.org/archive/debian/%s/ data main contrib non-free' % (create_date,)))

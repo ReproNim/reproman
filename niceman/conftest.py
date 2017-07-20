@@ -11,4 +11,5 @@
 
 # Some commonly used fixtures
 
-from niceman.tests.fixtures import demo1_spec, niceman_cfg_path, reprozip_spec2
+from niceman.tests.fixtures import niceman_cfg_path
+from niceman.formats.tests.fixtures import demo1_spec, reprozip_spec2

@@ -6,11 +6,8 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Facility for collecting and managing provenance information needed to replicate environments.
+"""Provenance tests 
 
 """
 
 __docformat__ = 'restructuredtext'
-
-# Allow the base Provenance class to be available directly from the package.
-from niceman.provenance.base import Provenance

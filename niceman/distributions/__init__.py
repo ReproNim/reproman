@@ -6,8 +6,11 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Provenance tests
+"""Facility for installing and managing distributions on targeted servers.
 
 """
 
 __docformat__ = 'restructuredtext'
+
+# Allow base Distribution class to be available directly from the package.
+from niceman.distributions.base import Distribution

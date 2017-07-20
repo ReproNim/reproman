@@ -6,11 +6,11 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Facility for installing and managing distributions on targeted servers.
+"""Facility for collecting and managing provenance information needed to replicate environments.
 
 """
 
 __docformat__ = 'restructuredtext'
 
-# Allow base Distribution class to be available directly from the package.
-from niceman.distribution.base import Distribution
+# Allow the base Provenance class to be available directly from the package.
+from .base import Provenance

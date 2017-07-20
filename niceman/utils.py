@@ -31,7 +31,6 @@ import glob
 from functools import wraps
 from time import sleep
 from inspect import getargspec
-from niceman.dochelpers import get_docstring_split
 
 lgr = logging.getLogger("niceman.utils")
 
@@ -183,15 +182,15 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_nic
       Matches to exclude
     exclude_vcs:
       If True, excludes commonly known VCS subdirectories.  If string, used
-      as regex to exclude those files (regex: %r)
+      as regex to exclude those files (regex: `%r`)
     exclude_niceman:
       If True, excludes files known to be niceman meta-data files (e.g. under
-      .niceman/ subdirectory) (regex: %r)
+      .niceman/ subdirectory) (regex: `%r`)
     topdir: basestring, optional
       Directory where to search
     dirs: bool, optional
       Either to match directories as well as files
-    """ % (_VCS_REGEX, _NICEMAN_REGEX)
+    """
 
     for dirpath, dirnames, filenames in os.walk(topdir):
         names = (dirnames + filenames) if dirs else filenames
@@ -206,6 +205,7 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_nic
             if exclude_niceman and re.search(_NICEMAN_REGEX, path):
                 continue
             yield path
+find_files.__doc__ %= (_VCS_REGEX, _NICEMAN_REGEX)
 
 
 def expandpath(path, force_absolute=True):
@@ -954,5 +954,64 @@ class HashableDict(dict):
     """Dict that can be used as keys"""
     def __hash__(self):
         return hash(frozenset(self.values()))
+
+
+def items_to_dict(l, attrs='name', ordered=False):
+    """Given a list of attr instances, return a dict using specified attrs as keys
+    
+    Parameters
+    ----------
+    attrs : str or list of str
+      Which attributes of the items to use to group
+    ordered : bool, optional
+      Either to return an ordered dictionary following the original order of items in the list
+    
+    Raises
+    ------
+    ValueError
+        If there is a conflict - multiple items with the same attrs used for key
+    
+    Returns
+    -------
+    dict or collections.OrderedDict
+    """
+    many = isinstance(attrs, (list, tuple))
+    out = (collections.OrderedDict if ordered else dict)()
+    for i in l:
+        k = tuple(getattr(i, a) for a in attrs) if many else getattr(i, attrs)
+        if k in out:
+            raise ValueError(
+                "We already saw entry for %s: %s.  Not adding %s",
+                k, out[k], i
+            )
+        out[k] = i
+    return out
+
+# TODO: just absorb into SpecObject __init__ but would require more handling
+# to allow *args as well
+
+def instantiate_attr_object(item_type, kws):
+    """Instantiate item_type given keyword args kws 
+    
+    Provides a more informative exception message in case if some arguments
+    are incorrect
+    """
+    try:
+        return item_type(**kws)
+    except TypeError as exc:
+        if "unexpected keyword" in str(exc):
+            known_kws = [i.name for i in item_type.__attrs_attrs__]
+            incorrect_kws = set(kws.keys()).difference(known_kws)
+            if incorrect_kws:
+                # Provide a more informative message
+                raise TypeError(
+                    "Following provided arguments are not known to %s: %s.  "
+                    "Known but not yet provided are: %s"
+                    % (item_type.__name__,
+                       ', '.join(incorrect_kws),
+                       ', '.join(sorted(set(known_kws).difference(kws))))
+                )
+        # if couldn't figure it out -- just raise original
+        raise
 
 lgr.log(5, "Done importing niceman.utils")

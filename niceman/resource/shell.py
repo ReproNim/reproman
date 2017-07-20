@@ -48,7 +48,7 @@ class Shell(Resource):
         """
         Connect to an existing environment.
         """
-        pass
+        return self
 
     def delete(self):
         """
@@ -60,7 +60,7 @@ class Shell(Resource):
         """
         Start this environment in the backend.
         """
-        return
+        return self
 
     def stop(self):
         """

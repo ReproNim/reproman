@@ -14,6 +14,7 @@ import logging
 from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
 
+
 def test_retrace(reprozip_spec2):
     """
     Test installing packages on the localhost.

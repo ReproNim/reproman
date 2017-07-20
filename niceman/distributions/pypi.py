@@ -8,12 +8,13 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
 
-from niceman.distribution import Distribution
+from niceman.distributions import Distribution
 
 import logging
-lgr = logging.getLogger('niceman.distribution.conda')
+lgr = logging.getLogger('niceman.distributions.pypi')
 
-class CondaDistribution(Distribution):
+
+class PypiDistribution(Distribution):
     """
     Class to provide Conda package management.
     """
@@ -27,11 +28,11 @@ class CondaDistribution(Distribution):
         provenance : dictionary
             Provenance information for the distribution.
         """
-        super(CondaDistribution, self).__init__(provenance)
+        super(PypiDistribution, self).__init__(provenance)
 
     def initiate(self, environment):
         """
-        Perform any initialization commands needed in the environment environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
@@ -43,17 +44,13 @@ class CondaDistribution(Distribution):
     def install_packages(self, environment):
         """
         Install the packages associated to this distribution by the provenance
-        into the environment environment.
+        into the environment.
 
         Parameters
         ----------
         environment : object
             Environment sub-class instance.
         """
-
-        # TODO: Need to figure out a graceful way to install conda before we can install packages here.
-        # for package in self.provenance['packages']:
-        #     environment.add_command(['conda',
-        #                            'install',
-        #                            package['name']])
+        for package in self._provenance['packages']:
+            environment.add_command(['pip', 'install', package['name']])
         return

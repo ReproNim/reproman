@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 from .base import Interface
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..provenance import Provenance
+from ..formats import Provenance
 from ..resource import ResourceManager
 
 from logging import getLogger
@@ -70,19 +70,50 @@ class Install(Interface):
             spec = [ui.question("Enter a spec filename", default="spec.yml")]
 
         if not resource and not resource_id:
-            resource = ui.question("Enter a resource name",
-                error_message="Missing resource name")
+            resource = ui.question(
+                "Enter a resource name",
+                error_message="Missing resource name"
+            )
 
         # Load, while possible merging/augmenting sequentially
+        assert len(spec) == 1, "For now supporting having only a single spec"
         filename = spec[0]
         provenance = Provenance.factory(filename)
+
+        # TODO
+        #  - provenance might contain a 'base' which would instruct which
+        #    resource to use
 
         # Get configuration and environment inventory
         config, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
 
         env_resource = ResourceManager.factory(config)
         env_resource.connect()
-        for distribution in provenance.get_distributions():
-            distribution.initiate(env_resource)
-            distribution.install_packages(env_resource)
+
+        #  TODOs:
+        #  - resource might be a backend, so we would need to do analysis
+        #    to choose a base environment (e.g. docker image) first, given
+        #    provenance details
+        #  - might need to create a new session if by now we have only an
+        #    "image" which cannot be used as a session right away
+        #  - eventually we would need to implement an analysis to determine
+        #    details of the provenance.distribution(s) before passing them
+        #    for initiation/installation.  That would also "kick back" on the
+        #    steps above making things "tricky" ;)
+
+        # For now we deal with simple resources providing a session
+        # and a complete, exhaustive and non conflicting with the specified
+        # resource
+        session = env_resource
+        environment_spec = provenance.get_environment()
+        for distribution in environment_spec.distributions:
+            # TODO: add option to skip initiation
+            distribution.initiate(session)
+            distribution.install_packages(session)
         env_resource.execute_command_buffer()
+        # ??? verify that everything was installed according to the specs
+        #     so would need pretty much going through the spec and querying
+        #     all those packages.  If something differs -- report
+        # session.close()
+        if environment_spec.files:
+            lgr.warning("Got extra files listed %s", environment_spec.files)

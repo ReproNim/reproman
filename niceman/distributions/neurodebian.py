@@ -8,10 +8,10 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
 
-from niceman.distribution.debian import DebianDistribution
+from niceman.distributions.debian import DebianDistribution
 
 import logging
-lgr = logging.getLogger('niceman.distribution.neurodebian')
+lgr = logging.getLogger('niceman.distributions.neurodebian')
 
 class NeurodebianDistribution(DebianDistribution):
     """

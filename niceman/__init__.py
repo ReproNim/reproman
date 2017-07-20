@@ -13,6 +13,8 @@ to ease construction and execution of computation environments based on the
 provenance data.
 """
 
+from __future__ import absolute_import
+
 from .log import lgr
 
 # Other imports are interspersed with lgr.debug to ease troubleshooting startup
@@ -45,7 +47,7 @@ def test(package='niceman', **kwargs):
     try:
         # from numpy.testing import Tester
         # Tester(package=package).test(**kwargs)
-        pytest.main(['--disable-pytest-warnings', os.path.dirname(niceman.__file__)])
+        pytest.main(['--disable-pytest-warnings', os.path.dirname(__file__)])
         # we don't have any benchmarks atm
         # bench = Tester().bench
     except ImportError:

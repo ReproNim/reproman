@@ -44,7 +44,7 @@ niceman_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('niceman')]
 requires = {
     'core': [
         'appdirs',
-        'attrs>=16.1.0',
+        'attrs>=16.3.0',
         'humanize',
         'mock',  # mock is also used for auto.py, not only for testing
         'pyyaml',
