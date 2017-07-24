@@ -61,7 +61,7 @@ class Login(Interface):
     )
 
     @staticmethod
-    def __call__(resource, resource_id=None, config=None):
+    def __call__(resource=None, resource_name=None, resource_id=None, config=None):
         from niceman.ui import ui
         if not resource and not resource_id:
             resource = ui.question(
@@ -69,16 +69,10 @@ class Login(Interface):
                 error_message="Missing resource name"
             )
 
-        # Get configuration and environment inventory
-        # TODO: this one would ask for resource type whenever it is not found
-        #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
-
+        # Instantiate the resources manager
+        manager = ResourceManager(config)
+        # Get corresponding known resource
+        env_resource = manager.get_resource(resource, name=resource, id_=resource_id)
         # Connect to resource environment
-        env_resource = ResourceManager.factory(resource_info)
         env_resource.connect()
-
-        if not env_resource.id:
-            raise ValueError("No resource found given the info %s" % str(resource_info))
-
         env_resource.login()

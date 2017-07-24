@@ -22,6 +22,8 @@ import os.path
 from ..config import ConfigManager
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
+from ..support.exceptions import ResourceNotFoundError
+from ..support.exceptions import ResourceAlreadyExistsError
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
 from ..ui import ui
 
@@ -53,6 +55,12 @@ class ResourceManager(object):
     """
 
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, config_path=None):
+        self.config_manager = ResourceManager.get_config_manager(config_path)
+        inventory_path = self.config_manager.getpath('general', 'inventory_file')
+        # inventory is just a list of dict so can't do much on its own
+        self.inventory = ResourceManager.get_inventory(inventory_path)
 
     @staticmethod
     def factory(config):
@@ -97,8 +105,7 @@ class ResourceManager(object):
             l.append(f_[:-3])
         return sorted(l)
 
-    @staticmethod
-    def get_resource_info(config_path, name, id_=None, type_=None):
+    def get_resource_config(self, name=None, id_=None):
         """
         Sort through the parameters supplied by the user at the command line and then
         request the ones that are missing that are needed to find the config and
@@ -121,16 +128,10 @@ class ResourceManager(object):
         -------
         config : dict
             The config settings for the name.
-        inventory : dict
-            Inventory of all the managed resources and their configurations.
         """
 
-        # Get name configuration for this name if it exists
-        # We get the config from inventory first if it exists and then
-        # overlay the default config settings from repronim.cfg
-        cm = ResourceManager.get_config_manager(config_path)
-        inventory_path = cm.getpath('general', 'inventory_file')
-        inventory = ResourceManager.get_inventory(inventory_path)
+        assert name or id_, "either name or id_ should be specified"
+
         # XXX: ATM mixes creation with querying existing resources.
         #      IMHO (yoh) should just query, and leave creation to a dedicated function
         # TODO: query could be done via ID
@@ -139,36 +140,38 @@ class ResourceManager(object):
         # TODO:  if no name or id provided, then fail since this function
         #        is not created to return a list of resources for a given type ATM
 
-        vald_resource_types = [t.replace("_", "-") for t in ResourceManager._discover_types()]
+        inventory_config = None
+        if name and name in self.inventory:
+            inventory_config = self.inventory[name]
+        elif id_:
+            for i in self.inventory.values():
+                if i.get('id') == id_:
+                    inventory_config = i
+                    break
 
-        if name in inventory:
-            # XXX so what is our convention here on SMTH-SMTH defining the type?
-            config = dict(cm.items(inventory[name]['type'].split('-')[0]))
-            config.update(inventory[name])
-        elif type_ and type_ in vald_resource_types:
-            config = dict(cm.items(type_.split('-')[0]))
-        else:
-            type_ = ui.question(
-                "Enter a resource type",
-                # TODO: decision on type of a container, if needed
-                # needs to be done outside, and should be configurable
-                # or follow some heuristic (e.g. if name starts with a
-                # known type, e.g. docker-
-                default="docker-container"
-            )
-            config = {}
-            if type_ not in vald_resource_types:
-                raise MissingConfigError(
-                    "Resource type '{}' is not valid".format(type_))
+        if not inventory_config:
+            return None
 
-        # Overwrite config settings with those from the command line.
-        config['name'] = name
-        if type_:
-            config['type'] = type_
-        if id_:
-            config['id'] = id_
+        # XXX so what is our convention here on SMTH-SMTH defining the type?
+        config = dict(self.config_manager.items(inventory_config['type'].split('-')[0]))
+        config.update(inventory_config)
+        return config
 
-        return config, inventory
+    def get_resource(self, name_id, name=None, id_=None):
+        config = self.get_resource_config(name=name, id_=id_)
+        if not config:
+            raise ResourceNotFoundError(
+                "Haven't found resource given name=%s id=%s" % (name, id_))
+        return self.factory(config)
+
+    def create_resource(self, name=None, id_=None, type_=None):
+        # TODO: place the logic I removed which would create the beast and
+        # return it
+        config = self.get_resouce_config(name, id_=id_)
+        if config:
+            raise ResourceAlreadyExistsError("TODO: provide details: %s" % str(config))
+        # TODO: create the resource config and pass into the factory
+
 
     @staticmethod
     def get_config_manager(config_path=None):
@@ -271,6 +274,9 @@ class ResourceManager(object):
 
         with open(inventory_path, 'w') as fp:
             yaml.safe_dump(inventory, fp, default_flow_style=False)
+
+
+manager = ResourceManager()
 
 
 class Resource(object):

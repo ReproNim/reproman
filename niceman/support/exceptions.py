@@ -63,3 +63,10 @@ class MultipleReleaseFileMatch(RuntimeError):
 class ResourceError(RuntimeError):
     """To be raised when there is a problem with a niceman resource"""
     pass
+
+class ResourceNotFoundError(ResourceError):
+    """To be raised whenever specified resource was not found"""
+    pass
+
+class ResourceAlreadyExistsError(ResourceError):
+    pass
