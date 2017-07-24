@@ -120,11 +120,16 @@ class DockerContainer(Resource):
         if self._container:
             self._client.stop(container=self._container.get('Id'))
 
-    def get_session(self, pty=False):
+    def get_session(self, pty=False, shared=None):
         """
         Log into a container and get the command line
         """
-        return (PTYDockerSession if pty else DockerSession)(client=self._client, container=self._container)
+        if pty and shared is not None and not shared:
+            lgr.warning("Cannot do non-shared pty session for docker yet")
+        return (PTYDockerSession if pty else DockerSession)(
+            client=self._client,
+            container=self._container
+        )
 
 
 from niceman.resource.session import POSIXSession
