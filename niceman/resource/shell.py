@@ -26,10 +26,20 @@ from .session import POSIXSession
 class ShellSession(POSIXSession):
     """Local shell session"""
 
+    def __init__(self):
+        super(ShellSession, self).__init__()
+        self._runner = None
+
+    def start(self):
+        self._runner = Runner()
+
+    def stop(self):
+        self._runner = None
+
     #
     # Commands fulfilling a "Session" interface to interact with the environment
     #
-    def execute_command(self, command, env=None):
+    def execute_command(self, command, env=None, expect_fail=False, cwd=None):
         """
         Execute the given command in the environment.
 
@@ -44,12 +54,10 @@ class ShellSession(POSIXSession):
 
         Returns
         -------
-        list
-            List of STDOUT lines from the environment.
+        out, err
         """
-        run = Runner()
-
-        command_env = self.get_updated_env(env)
+        # TODO: bring back updated_env?
+        command_env = dict(self._env, **(env or {}))
 
         run_kw = {}
         if command_env:
@@ -60,7 +68,7 @@ class ShellSession(POSIXSession):
             run_env.update(command_env)
             run_kw['env'] = run_env
 
-        return run(command, **run_kw)  # , shell=True)
+        return self._runner.run(command, expect_fail=expect_fail, **run_kw)  # , shell=True)
 
 
 @attr.s
@@ -112,3 +120,13 @@ class Shell(Resource):
         Stop this environment in the backend.
         """
         return
+
+    def get_session(self, pty=False, shared=None):
+        """
+        Log into a container and get the command line
+        """
+        if pty:
+            raise NotImplementedError
+        if shared:
+            raise NotImplementedError
+        return ShellSession()

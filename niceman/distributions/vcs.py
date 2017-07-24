@@ -61,7 +61,7 @@ class VCSDistribution(Distribution):
     def initiate(self, session):
         # This is VCS specific, but we could may be make it
         # to verify that some executable is available
-        session.run(self._cmd)
+        session.execute_command(self._cmd)
 
     @abc.abstractmethod
     def install_packages(self, session, use_version=True):
@@ -145,17 +145,17 @@ class GitSVNRepoShim(object):
         self._all_files = None
         self._branch = None
 
-    def _session_run(self, cmd, **kwargs):
+    def _session_execute_command(self, cmd, **kwargs):
         """Run in the session but providing our self.path as the cwd"""
         if 'cwd' not in kwargs:
             kwargs = dict(cwd=self.path, **kwargs)
-        return self.session.run(cmd, **kwargs)
+        return self.session_execute_command(cmd, **kwargs)
 
     @property
     def all_files(self):
         """Lazy evaluation for _all_files. If session changes, result would be old"""
         if self._all_files is None:
-            out, err = self._session_run(self._ls_files_command)
+            out, err = self._session_execute_command(self._ls_files_command)
             assert not err
             self._all_files = set(filter(None, out.split('\n')))
             if self._ls_files_filter:
@@ -224,7 +224,7 @@ class SVNRepoShim(GitSVNRepoShim):
         # but still might be under SVN
         if not found:
             try:
-                out, err = session.run(
+                out, err = session.execute_command(
                     'svn info',
                     expect_fail=True,
                     cwd=dirpath
@@ -255,7 +255,7 @@ class SVNRepoShim(GitSVNRepoShim):
             # TODO -- outdated repos might need 'svn upgrade' first
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
-            out, err = self._session_run('svn info')
+            out, err = self._session.execute_command('svn info')
             self.__info = dict(
                 [x.lstrip() for x in l.split(':', 1)]
                 for l in out.splitlines() if l.strip()
@@ -296,7 +296,7 @@ class GitRepoShim(GitSVNRepoShim):
     @classmethod
     def get_at_dirpath(cls, session, dirpath):
         try:
-            out, err = session.run(
+            out, err = session.execute_command(
                 'git rev-parse --show-toplevel',
                 expect_fail=True,
                 cwd=dirpath
@@ -315,7 +315,7 @@ class GitRepoShim(GitSVNRepoShim):
         """Helper to run git command, and ignore stderr"""
         cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
         try:
-            out, err = self._session_run(cmd, expect_fail=expect_fail, **kwargs)
+            out, err = self._session.execute_command(cmd, expect_fail=expect_fail, **kwargs)
         except CommandError:
             if not expect_fail:
                 raise

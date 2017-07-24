@@ -22,6 +22,7 @@ from ..support.constraints import EnsureNone
 from ..support.exceptions import InsufficientArgumentsError
 from ..utils import assure_list
 from ..utils import to_unicode
+from ..resource.shell import Shell
 
 
 __docformat__ = 'restructuredtext'
@@ -83,6 +84,13 @@ class Retrace(Interface):
         # Convert paths to unicode
         paths = list(map(to_unicode, paths))
 
+        # TODO: support arbitrary session as obtained from a resource
+        # TODO:  Shell needs a name -- should we request from manager
+        #        which would assume some magical name for reuse??
+        session = Shell("localshell").get_session(pty=False, shared=False)
+        # or we shouldn't set it ? XXXX
+        session.set_env({'LC_ALL': 'C'})
+
         # TODO: at the moment assumes just a single distribution etc.
         #       Generalize
         # TODO: RF so that only the above portion is reprozip specific.
@@ -90,7 +98,7 @@ class Retrace(Interface):
         from niceman.cmd import Runner
         (distributions, files) = identify_distributions(
             paths,
-            session=Runner(env={'LC_ALL': 'C'})  # TODO: any/proper session
+            session=session
         )
         from niceman.distributions.base import EnvironmentSpec
         spec = EnvironmentSpec(

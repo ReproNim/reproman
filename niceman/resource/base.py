@@ -298,9 +298,9 @@ class Resource(object):
             only to the current call
         """
         if not hasattr(self, '_command_buffer'):
-            self._command_buffer = [] # Each element is a dictionary in the
-                                      # form {command=[], env={}}
-        self._command_buffer.append({'command':command, 'env':env})
+            self._command_buffer = []  # Each element is a dictionary in the
+                                       # form {command=[], env={}}
+        self._command_buffer.append({'command': command, 'env': env})
 
     def execute_command_buffer(self):
         """

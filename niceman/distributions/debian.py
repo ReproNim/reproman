@@ -205,14 +205,14 @@ class DebTracer(DistributionTracer):
             with self._session.open('/etc/debian_version') as f:
                 debian_version = f.read().strip()
             self._session.exists()
-            # debian_version, err = self._session.run('cat /etc/debian_version')
+            # debian_version, err = self._session.execute_command('cat /etc/debian_version')
             #debian_version = debian_version.strip()  # would have new line
             # for now would also match Ubuntu -- there it would have
             # ID=ubuntu and ID_LIKE=debian
             # TODO: load/parse /etc/os-release into a dict and better use
             # VERSION_ID and then ID (to decide if Debian or Ubuntu or ...)
-            out, err = self._session.run('grep -i "^ID.*=debian" /etc/os-release', expect_fail=True)
-            out, err = self._session.run('ls -ld /etc/apt', expect_fail=True)
+            out, err = self._session.execute_command('grep -i "^ID.*=debian" /etc/os-release', expect_fail=True)
+            out, err = self._session.execute_command('ls -ld /etc/apt', expect_fail=True)
         except Exception as exc:
             lgr.debug("Did not detect Debian (or derivative): %s", exc)
             return
