@@ -137,7 +137,7 @@ class CondaTracer(DistributionTracer):
             for idx, dist in enumerate(dists.values()):
                 dist.name = 'conda-%d' % idx
         elif dists:
-            dists.values()[0].name = 'conda'
+            list(dists.values())[0].name = 'conda'
 
         for dist in dists.values():
             yield dist, files_to_consider
