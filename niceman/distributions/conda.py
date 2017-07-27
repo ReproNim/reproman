@@ -7,6 +7,8 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
+import json
+import os
 
 import attr
 from niceman.distributions import Distribution
@@ -30,6 +32,7 @@ class CondaPackage(Package):
 class CondaEnvironment(SpecObject):
     packages = TypedList(CondaPackage)
 
+
 # ~/anaconda
 #
 # ~/anaconda3
@@ -45,7 +48,7 @@ class CondaDistribution(Distribution):
 
     def initiate(self, environment):
         """
-        Perform any initialization commands needed in the environment environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
@@ -54,20 +57,20 @@ class CondaDistribution(Distribution):
         """
         return
 
-    def install_packages(self, environment):
+    def install_packages(self, session=None):
         """
         Install the packages associated to this distribution by the provenance
         into the environment environment.
 
         Parameters
         ----------
-        environment : object
+        session : object
             Environment sub-class instance.
         """
 
         # TODO: Need to figure out a graceful way to install conda before we can install packages here.
         # for package in self.provenance['packages']:
-        #     environment.add_command(['conda',
+        #     session.add_command(['conda',
         #                            'install',
         #                            package['name']])
         return
@@ -78,7 +81,7 @@ class CondaTracer(DistributionTracer):
     """
 
     def _init(self):
-        self._paths_cache = {}  #  path -> False or CondaDistribution
+        self._paths_cache = {}  # path -> False or CondaDistribution
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -86,27 +89,42 @@ class CondaTracer(DistributionTracer):
     def _create_package(self, *fields):
         raise NotImplementedError("TODO")
 
+    def _get_conda_details(self, path):
+        details = {}
+        try:
+            out, err = self._session.run(
+                '%s/bin/conda info --json'
+                % path,
+                expect_fail=True
+            )
+            details = json.loads(out)
+            lgr.debug("Found conda details %s", json.dumps(details))
+        except Exception as exc:
+            lgr.warning("Could not retrieve conda info in path %s: %s", path,
+                      exc_str(exc))
+        return details
+
     def _get_conda(self, path):
-        import os
         paths = []
         dist = None
-        idx = 0
         while path not in {None, os.path.pathsep, '', '/'}:
             if path in self._paths_cache:
                 dist = self._paths_cache[path]
                 break
             paths.append(path)
             try:
-                out, err = self._session.run(
+                _, _ = self._session.run(
                     'ls -ld %s/bin/conda %s/conda-meta'
                     % (path, path),
                     expect_fail=True
                 )
             except Exception as exc:
-                lgr.debug("Did not detect conda at the path %s: %s", path, exc_str(exc))
+                lgr.debug("Did not detect conda at the path %s: %s", path,
+                          exc_str(exc))
                 path = os.path.dirname(path)  # go to the parent
                 continue
 
+            details = self._get_conda_details(path)
             dist = CondaDistribution(
                 name=None,  # to be assigned later
                 path=path

@@ -21,6 +21,7 @@ from niceman.distributions.conda import CondaTracer
 def test_conda_manager_identify_distributions():
     # For now I'm using a local conda install to get a handle on what info
     # is available
+    # TODO: Mock or install a real conda environment for testing
     files = ["/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/nipype2boutiques",
              "/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/xz"]
     tracer = CondaTracer()
