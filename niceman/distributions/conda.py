@@ -120,7 +120,7 @@ class CondaTracer(DistributionTracer):
 
         return packages
 
-    def _get_conda_details(self, path):
+    def _get_conda_info(self, path):
         details = {}
         try:
             out, err = self._session.run(
@@ -129,8 +129,6 @@ class CondaTracer(DistributionTracer):
                 expect_fail=True
             )
             details = json.loads(out)
-            details["packages"] = self._get_conda_package_details(path)
-            lgr.debug("Found conda details %s", json.dumps(details, indent=4))
         except Exception as exc:
             lgr.warning("Could not retrieve conda info in path %s: %s", path,
                       exc_str(exc))
@@ -156,8 +154,10 @@ class CondaTracer(DistributionTracer):
                 path = os.path.dirname(path)  # go to the parent
                 continue
 
-            details = self._get_conda_details(path)
-#            print(json.dumps(details, indent=4))
+            conda_info = self._get_conda_info(path)
+            conda_packages = self._get_conda_package_details(path)
+#            print(json.dumps(conda_info, indent=4))
+#            print(json.dumps(conda_packages, indent=4))
             dist = CondaDistribution(
                 name=None,  # to be assigned later
                 path=path
