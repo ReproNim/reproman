@@ -89,6 +89,37 @@ class CondaTracer(DistributionTracer):
     def _create_package(self, *fields):
         raise NotImplementedError("TODO")
 
+    def _get_conda_meta_files(self, path):
+        try:
+            out, _ = self._session.run(
+                'ls %s/conda-meta/*.json'
+                % path,
+                expect_fail=True
+            )
+            return iter(out.splitlines())
+        except Exception as exc:
+            lgr.warning("Could not retrieve conda-meta files in path %s: %s",
+                        path, exc_str(exc))
+
+    def _get_conda_package_details(self, path):
+        packages = {}
+        for meta_file in self._get_conda_meta_files(path):
+            try:
+                out, err = self._session.run(
+                    'cat %s' % meta_file,
+                    expect_fail=True
+                )
+                details = json.loads(out)
+                if "name" in details:
+                    lgr.debug("Found conda package %s", details["name"])
+                    packages[details["name"]] = details
+            except Exception as exc:
+                lgr.warning("Could not retrieve conda info in path %s: %s",
+                            path,
+                            exc_str(exc))
+
+        return packages
+
     def _get_conda_details(self, path):
         details = {}
         try:
@@ -98,7 +129,8 @@ class CondaTracer(DistributionTracer):
                 expect_fail=True
             )
             details = json.loads(out)
-            lgr.debug("Found conda details %s", json.dumps(details))
+            details["packages"] = self._get_conda_package_details(path)
+            lgr.debug("Found conda details %s", json.dumps(details, indent=4))
         except Exception as exc:
             lgr.warning("Could not retrieve conda info in path %s: %s", path,
                       exc_str(exc))
@@ -125,6 +157,7 @@ class CondaTracer(DistributionTracer):
                 continue
 
             details = self._get_conda_details(path)
+#            print(json.dumps(details, indent=4))
             dist = CondaDistribution(
                 name=None,  # to be assigned later
                 path=path
@@ -146,8 +179,7 @@ class CondaTracer(DistributionTracer):
             if dist and dist.path not in dists:
                 dists[dist.path] = dist
 
-            # TODO: check if path possibly within a conda distribution
-            pass  # all the magic and slowly prune files_to_consider
+            pass  # TODO: all the magic and slowly prune files_to_consider
 
         # Assign names
         if len(dists) > 1:
