@@ -11,6 +11,8 @@ import json
 import os
 
 import attr
+import yaml
+
 from niceman.distributions import Distribution
 
 from .base import SpecObject
@@ -81,7 +83,10 @@ class CondaTracer(DistributionTracer):
     """
 
     def _init(self):
-        self._paths_cache = {}  # path -> False or CondaDistribution
+        self._paths_cache = {}     # path -> False or CondaDistribution
+        self._conda_info = {}      # path -> conda info
+        self._env_export = {}      # path -> conda env export
+        self._conda_packages = {}  # path -> Conda package json details
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -102,6 +107,7 @@ class CondaTracer(DistributionTracer):
                         path, exc_str(exc))
 
     def _get_conda_package_details(self, path):
+        # TODO: Get details for pip installed packages
         packages = {}
         for meta_file in self._get_conda_meta_files(path):
             try:
@@ -110,6 +116,8 @@ class CondaTracer(DistributionTracer):
                     expect_fail=True
                 )
                 details = json.loads(out)
+#                print meta_file
+#                print(json.dumps(details, indent=4))
                 if "name" in details:
                     lgr.debug("Found conda package %s", details["name"])
                     packages[details["name"]] = details
@@ -119,6 +127,23 @@ class CondaTracer(DistributionTracer):
                             exc_str(exc))
 
         return packages
+
+    def _get_conda_env_export(self, root_prefix, path):
+        export = {}
+        try:
+            # NOTE: We need to call conda-env directly.  Conda has problems
+            # calling conda-env without a PATH being set...
+            out, err = self._session.run(
+                '%s/bin/conda-env export -p %s'
+                % (root_prefix, path),
+                expect_fail=True
+            )
+            export = yaml.load(out)
+        except Exception as exc:
+            lgr.warning("Could not retrieve conda environment "
+                        "export from path %s: %s", path,
+                        exc_str(exc))
+        return export
 
     def _get_conda_info(self, path):
         details = {}
@@ -131,7 +156,7 @@ class CondaTracer(DistributionTracer):
             details = json.loads(out)
         except Exception as exc:
             lgr.warning("Could not retrieve conda info in path %s: %s", path,
-                      exc_str(exc))
+                        exc_str(exc))
         return details
 
     def _get_conda(self, path):
@@ -154,10 +179,14 @@ class CondaTracer(DistributionTracer):
                 path = os.path.dirname(path)  # go to the parent
                 continue
 
-            conda_info = self._get_conda_info(path)
-            conda_packages = self._get_conda_package_details(path)
-#            print(json.dumps(conda_info, indent=4))
-#            print(json.dumps(conda_packages, indent=4))
+            # We found a new conda path, so retrieve and cache details
+            self._conda_info[path] = self._get_conda_info(path)
+            self._env_export[path] = self._get_conda_env_export(
+                self._conda_info[path]["root_prefix"], path)
+            self._conda_packages[path] = self._get_conda_package_details(path)
+#            print(json.dumps(self._conda_info[path], indent=4))
+#            print(json.dumps(self._env_export[path], indent=4))
+#            print(json.dumps(self._conda_packages[path], indent=4))
             dist = CondaDistribution(
                 name=None,  # to be assigned later
                 path=path
