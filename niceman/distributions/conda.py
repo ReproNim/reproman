@@ -80,10 +80,6 @@ class CondaTracer(DistributionTracer):
 
     def _init(self):
         self._paths_cache = {}      # path -> False or CondaDistribution
-        self._conda_info = {}       # path -> conda info
-        self._env_export = {}       # path -> conda env export
-        self._conda_packages = {}   # path -> conda package json details
-        self._file_to_condapackage = {}  # file -> (path, package name)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -106,6 +102,7 @@ class CondaTracer(DistributionTracer):
     def _get_conda_package_details(self, conda_path):
         # TODO: Get details for pip installed packages
         packages = {}
+        file_to_package_map = {}
         for meta_file in self._get_conda_meta_files(conda_path):
             try:
                 out, err = self._session.run(
@@ -125,16 +122,15 @@ class CondaTracer(DistributionTracer):
                     packages[conda_package_name] = details
                     # Now map the package files to the package
                     for f in details["files"]:
-                        full_path = os.path.normpath(os.path.join(conda_path,
-                                                                  f))
-                        self._file_to_condapackage[full_path] = \
-                            (conda_path, conda_package_name)
+                        full_path = os.path.normpath(
+                            os.path.join(conda_path, f))
+                        file_to_package_map[full_path] = conda_package_name;
             except Exception as exc:
                 lgr.warning("Could not retrieve conda info in path %s: %s",
                             conda_path,
                             exc_str(exc))
 
-        return packages
+        return packages, file_to_package_map
 
     def _get_conda_env_export(self, root_prefix, conda_path):
         export = {}
@@ -167,12 +163,12 @@ class CondaTracer(DistributionTracer):
                         conda_path, exc_str(exc))
         return details
 
-    def _get_conda(self, path):
+    def _get_conda_path(self, path):
         paths = []
-        dist = None
+        conda_path = None
         while path not in {None, os.path.pathsep, '', '/'}:
             if path in self._paths_cache:
-                dist = self._paths_cache[path]
+                conda_path = self._paths_cache[path]
                 break
             paths.append(path)
             try:
@@ -187,54 +183,77 @@ class CondaTracer(DistributionTracer):
                 path = os.path.dirname(path)  # go to the parent
                 continue
 
-            # We found a new conda path, so retrieve and cache details
-            self._conda_info[path] = self._get_conda_info(path)
-            self._env_export[path] = self._get_conda_env_export(
-                self._conda_info[path]["root_prefix"], path)
-            self._conda_packages[path] = self._get_conda_package_details(path)
-            # Create the distribution
-            dist = CondaDistribution(
-                name=None,  # to be assigned later
-                path=path
-                # TODO: all the packages and paths
-            )
-            lgr.info("Detected conda %s", dist)
+            conda_path = path
+            lgr.info("Detected conda %s", conda_path)
             break
 
         for path in paths:
-            self._paths_cache[path] = dist
+            self._paths_cache[path] = conda_path
 
-        return dist
+        return conda_path
 
     def identify_distributions(self, paths):
-        dists = {}  # conda_prefix -> CondaDistribution
-        unknown_files = set()
+        conda_paths = set()
+        # Start with all paths being set as unknown
+        unknown_files = set(paths)
+
         # First, loop through all the files and identify conda paths
-        # This also pulls in conda environment information
         for path in paths:
-            # Have we already found this path?
-            if path in self._file_to_condapackage:
-                lgr.debug("Already found %s " % path)
-                continue
-            # Path not found, so look for a new conda path
-            dist = self._get_conda(path)
-            if dist:
-                if dist.path not in dists:
-                    dists[dist.path] = dist
+            conda_path = self._get_conda_path(path)
+            if conda_path:
+                if conda_path not in conda_paths:
+                    conda_paths.add(conda_path)
+
+        # Loop through conda_paths, find packages and create the
+        # distributions
+        for idx, conda_path in enumerate(conda_paths):
+
+            # Give the distribution a name
+            if (len(conda_paths)) > 1:
+                dist_name = 'conda-%d' % idx
             else:
-                unknown_files.add(path)
+                dist_name = 'conda'
 
-        # Now that we have the conda path info, identify the packages
-        # TODO: associate packages to conda paths, and files to pachages
-        # packages, remaining_files = self.identify_packages_from_files(files)
+            # Retrieve distribution details
+            conda_info = self._get_conda_info(conda_path)
+            # TODO: Use env_export to get pip packages
+            env_export = self._get_conda_env_export(
+               conda_info["root_prefix"], conda_path)
+            (conda_package_details, file_to_package) = \
+                self._get_conda_package_details(conda_path)
 
-        # Assign names
-        if len(dists) > 1:
-            # needs indexes
-            for idx, dist in enumerate(dists.values()):
-                dist.name = 'conda-%d' % idx
-        elif dists:
-            list(dists.values())[0].name = 'conda'
+            # Loop through packages, initializing a list of found files
+            package_to_found_files = {}
+            for package_name in conda_package_details:
+                package_to_found_files[package_name] = []
 
-        for dist in dists.values():
+            # Loop through unknown files, assigning them to packages if found
+            for path in set(unknown_files):  # Clone the set
+                if path in file_to_package:
+                    # The file was found so remove from unknown file set
+                    unknown_files.remove(path)
+                    # And add to the package
+                    package_to_found_files[file_to_package[path]].append(path)
+
+            packages = []
+            # Create the packages
+            for package_name in conda_package_details:
+                # Skip the package if no files are associated with it
+                if not package_to_found_files[package_name]:
+                    continue
+                # Create the package
+                package = CondaPackage(
+                    name=package_name,  # TODO: Name, version, and build
+                    files=package_to_found_files[package_name]
+                )
+                packages.append(package)
+
+            # Create the distribution
+            dist = CondaDistribution(
+                name=dist_name,
+                path=conda_path,
+                packages=packages
+                # TODO: all the packages and paths
+            )
             yield dist, list(unknown_files)
+
