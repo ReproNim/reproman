@@ -23,7 +23,8 @@ def test_conda_manager_identify_distributions():
     # is available
     # TODO: Mock or install a real conda environment for testing
     files = ["/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/nipype2boutiques",
-             "/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/xz"]
+             "/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/xz",
+             "/sbin/iptables"]
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
     for (distributions, unknown_files) in dists:
