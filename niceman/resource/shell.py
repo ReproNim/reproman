@@ -58,7 +58,9 @@ class ShellSession(POSIXSession):
         """
         # TODO: bring back updated_env?
         command_env = dict(self._env, **(env or {}))
-
+        # XXX should it be a generic behavior to auto-start?
+        if self._runner is None:
+            self.start()
         run_kw = {}
         if command_env:
             # if anything custom, then we need to get original full environment

@@ -89,7 +89,7 @@ class Retrace(Interface):
         #        which would assume some magical name for reuse??
         session = Shell("localshell").get_session(pty=False, shared=False)
         # or we shouldn't set it ? XXXX
-        session.set_env({'LC_ALL': 'C'})
+        session.set_envvar({'LC_ALL': 'C'})
 
         # TODO: at the moment assumes just a single distribution etc.
         #       Generalize

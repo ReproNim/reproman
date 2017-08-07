@@ -11,9 +11,11 @@ import logging
 from mock import patch, call
 
 from ...utils import swallow_logs
+from ...tests.utils import with_tempfile
 from ...tests.utils import assert_in
 from ..base import ResourceManager
 from ...cmd import Runner
+from ..shell import Shell, ShellSession
 
 
 def test_shell_class():
@@ -40,3 +42,21 @@ def test_shell_class():
         runner.assert_has_calls(calls, any_order=True)
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
+
+
+@with_tempfile(content="""
+echo "Enabling special environment"
+echo "We could even spit out an stderr output">&2
+export EXPORTED_VAR="
+multiline
+"
+export PATH=/custom:$PATH
+NON_EXPORTED_VAR=2         # but may be those should be handled??
+""")
+def test_source_file(script):
+    ses = ShellSession()
+    assert ses.get_envvars() == {}
+    new_env_diff = ses.source_script(script, diff=True)
+    assert len(new_env_diff) == 2
+    assert new_env_diff['PATH'].startswith('/custom:')
+    assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"

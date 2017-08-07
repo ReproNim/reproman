@@ -13,6 +13,7 @@ import logging
 lgr = logging.getLogger('niceman.resource.shell')
 
 import os
+import re
 
 from niceman.support.exceptions import SessionRuntimeError
 from niceman.dochelpers import exc_str
@@ -27,7 +28,7 @@ class Session(object):
     def __init__(self):
         # both will be maintained
         self._env = {}           # environment which would be in-effect only for this session
-        self._env_permanent = {} # environment variables which would be in-effect in future sessions if resource is persisten
+        self._env_permanent = {} # environment variables which would be in-effect in future sessions if resource is persistent
 
     def __enter__(self):
         self.open()
@@ -47,7 +48,7 @@ class Session(object):
         # XXX may be here we should dump permanent env settings?
         pass
 
-    def set_env(self, variable, value=None, permanent=False, format=False):
+    def set_envvar(self, variable, value=None, permanent=False, format=False):
         """Set environment variable(s) to be used within the session
         
         All of them would be exported (TODO: should we allow for non-exported
@@ -85,10 +86,25 @@ class Session(object):
             # invocation
             raise NotImplementedError
 
-    def get_env(self):
-        """Query session environment settings"""
+    def get_envvars(self, permanent=False):
+        """Get stored session environment variables"""
         # TODO: should we parametrize to be able to query for permanent ones
         # if were defined or those we store in our variables etc?
+        return self._env_permanent if permanent else self._env
+
+    def query_envvars(self):
+        """Query full session environment settings within session"""
+        raise NotImplementedError
+
+    def source_script(self, script_or_cmd, permanent=False, diff=True):
+        """Source a script which would modify the environment
+        
+        Parameters
+        ----------
+        permanent: bool, optional
+        diff: bool, optional
+          Store only variables values of which were changed by sourcing the file
+        """
         raise NotImplementedError
 
     # TODO: move logic/handling of batched commands defined in
@@ -150,16 +166,70 @@ class Session(object):
 
 
 class POSIXSession(Session):
-    """A Session which relies on commands present in any POSIX-compliant env"""
+    """A Session which relies on commands present in any POSIX-compliant env
+    
+    """
 
+    _GET_ENVIRON_CMD = ['python', '-c', 'import os; print(repr(os.environ).encode())']
 
-    def get_env(self):
+    def query_envvars(self):
         """Query session environment settings"""
-        out, err = self.execute_command(
-            ['python', '-c', 'import os; print(repr(os.environ).encode())']
-        )
-        env = eval(out.decode())
+        out, err = self.execute_command(self._GET_ENVIRON_CMD)
+        env = self._parse_envvars_output(out)
         return env
+
+    def _parse_envvars_output(self, out):
+        return eval(out.decode())
+
+    def source_script(self, script, permanent=False, diff=True):
+        """Source a script which would modify the environment
+
+        Parameters
+        ----------
+        script: str
+          Path to the script within the env
+        permanent: bool, optional
+        diff: bool, optional
+          Store only variables values of which were changed by sourcing the file
+        """
+        orig_env = self.query_envvars()
+        # Might want to be reimplemented in derived classes?  e.g.
+        # if session is persistent (i.e all commands run in persistent session)
+        # and we don't need this source  to be permanent -- we could
+        # just run it and be done
+        marker = "== =NICEMAN == ="  # unique marker to be able to split away
+        # possible output from the sourced script
+        get_env_command = " ".join('"%s"' % s for s in self._GET_ENVIRON_CMD)
+        out, err = self.execute_command(
+            # TODO: must be a composite command which would first source
+            # and then run the same command we use in self.query_envvars
+            # if it is all permanent
+            ['/bin/sh', '-c',
+             '. "{script}"; echo {marker}; {get_env_command}'.format(**locals())]
+        )
+        # stderr is ok -- above call might issue a warning
+        # assert not err
+        new_env = self._parse_envvars_output(
+            re.sub('.*%s\n*' % marker, '', out, flags=re.DOTALL)
+        )
+
+        # TODO: deal with possible removals, so we should prune them from
+        # local envs as well, warning if some variable wasn't even explicitly
+        # listed locally
+
+        if diff:
+            # minimize by dropping the same as before
+            for k in list(new_env.keys()):
+                if k in orig_env and orig_env[k] == new_env[k]:
+                    new_env.pop(k)
+
+        env = self._env_permanent if permanent else self._env
+        for k, v in new_env.items():
+            env[k] = v
+
+        return new_env
+
+
 
     def exists(self, path):
         """Return if file exists"""
@@ -178,8 +248,8 @@ class POSIXSession(Session):
     #     """Return if file (or just a broken symlink) exists"""
     #     return os.path.lexists(path)
 
-# Seems to have no generic implementation in POSIX?  TODO: check
-#  may be we could assume presence of e.g. python so we could use std library?
+    # Seems to have no generic implementation in POSIX?  TODO: check
+    #  may be we could assume presence of e.g. python so we could use std library?
     def get_mtime(self, path):
         # TODO:  too common of a pattern -- we need a helper to wrap such calls
         out, err = self.execute_command(
