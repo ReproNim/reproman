@@ -176,21 +176,30 @@ class POSIXSession(Session):
         """Query session environment settings"""
         out, err = self.execute_command(self._GET_ENVIRON_CMD)
         env = self._parse_envvars_output(out)
+        # TODO:  should we update with our .env or .env_permament????
         return env
 
     def _parse_envvars_output(self, out):
         return eval(out.decode())
 
-    def source_script(self, script, permanent=False, diff=True):
+    def source_script(self, command, permanent=False, diff=True, shell=None):
         """Source a script which would modify the environment
+
+        Note: if command is composite (e.g. "activate envname" for conda), it
+        would work only in bash or zsh shell.
 
         Parameters
         ----------
-        script: str
-          Path to the script within the env
+        command: str or list
+          Name of the script or composite command (if a list, such as 
+          ["activate", "envname"] in conda) to be "sourced"
         permanent: bool, optional
         diff: bool, optional
           Store only variables values of which were changed by sourcing the file
+        shell: str, optional
+          Which shell to use.  If none specified, the one specified by SHELL
+          in the environment would be used. If that one is not specified -- /bin/sh
+          will be used for simple command, or /bin/bash if composite
         """
         orig_env = self.query_envvars()
         # Might want to be reimplemented in derived classes?  e.g.
@@ -200,12 +209,26 @@ class POSIXSession(Session):
         marker = "== =NICEMAN == ="  # unique marker to be able to split away
         # possible output from the sourced script
         get_env_command = " ".join('"%s"' % s for s in self._GET_ENVIRON_CMD)
+        shell = shell or self.query_envvars().get('SHELL', None)
+        if not isinstance(command, list):
+            command = [command]
+            shell = shell or "/bin/sh"
+        else:
+            # apparently in purely POSIX shell (e.g. dash) you cannot do
+            # parametric "source" calls, e.g. ". activate datalad".
+            # Moreover e.g. conda supports only bash and zsh
+            shell = shell or "/bin/bash"
+        command = " ".join('"%s"' % c for c in command)
         out, err = self.execute_command(
-            # TODO: must be a composite command which would first source
+            # is a composite command which would first source
             # and then run the same command we use in self.query_envvars
             # if it is all permanent
-            ['/bin/sh', '-c',
-             '. "{script}"; echo {marker}; {get_env_command}'.format(**locals())]
+            [
+                # Possibly use SHELL which was already set within the environment
+                shell,
+                '-c',
+                '. {command}; echo "{marker}"; {get_env_command}'.format(**locals())
+            ]
         )
         # stderr is ok -- above call might issue a warning
         # assert not err
@@ -216,6 +239,15 @@ class POSIXSession(Session):
         # TODO: deal with possible removals, so we should prune them from
         # local envs as well, warning if some variable wasn't even explicitly
         # listed locally
+
+        # Apparently whenever it is a "parametric" command then shells insert
+        # some "goodness" which I think we shouldn't care about
+        if shell in ["zsh", "/bin/zsh"]:
+            new_env.pop('_')
+            new_env.pop('OLDPWD')
+        elif shell in ["bash", "/bin/bash"]:
+            new_env.pop('_')
+            new_env.pop('SHLVL')
 
         if diff:
             # minimize by dropping the same as before

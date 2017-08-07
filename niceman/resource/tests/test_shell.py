@@ -8,6 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
+import os
+from pytest import raises
 from mock import patch, call
 
 from ...utils import swallow_logs
@@ -60,3 +62,31 @@ def test_source_file(script):
     assert len(new_env_diff) == 2
     assert new_env_diff['PATH'].startswith('/custom:')
     assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
+
+
+@with_tempfile(content="exit 1")
+def test_source_file_crash(script):
+    ses = ShellSession()
+    with raises(Exception):  # TODO: unify?
+        ses.source_script(script)
+
+
+@with_tempfile(content="""
+if ! [ "$1" = "test" ]; then
+   exit 1
+fi
+export EXPORTED_VAR=${1}1
+NON_EXPORTED_VAR=2         # but may be those should be handled??
+""")
+def test_source_file_param(script):
+    ses = ShellSession()
+    assert ses.get_envvars() == {}
+    new_env_diff = ses.source_script([script, "test"])
+    assert new_env_diff == {'EXPORTED_VAR': 'test1'}
+
+    new_env_diff = ses.source_script([script, "test"],
+                                     shell="/bin/bash")
+    assert new_env_diff == {}
+
+    # just for "fun"
+    #print ses.source_script([os.path.expanduser('~/anaconda2/bin/activate'), 'datalad'])
