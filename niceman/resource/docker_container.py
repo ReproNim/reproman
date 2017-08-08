@@ -51,7 +51,7 @@ class DockerContainer(Resource):
         containers = []
         for container in self._client.containers(all=True):
             if (self.id and container.get('Id').startswith(self.id)) or \
-                    (self.name and '/' + self.name == container.get('Names')[0]):
+                    (not self.id and self.name and '/' + self.name == container.get('Names')[0]):
                     # TODO: make above more robust and centralize across different resources/backends?
                 containers.append(container)
         if len(containers) == 1:
