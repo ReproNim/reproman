@@ -123,14 +123,14 @@ class SSHClient(object):
             transport.connect(username=username, pkey=pkey, password=password)
         except paramiko.AuthenticationException:
             raise exception.SSHAuthException(username, host)
-        except paramiko.SSHException, e:
+        except paramiko.SSHException as e:
             msg = e.args[0]
             raise exception.SSHError(msg)
         except socket.error:
             raise exception.SSHConnectionError(host, port)
         except EOFError:
             raise exception.SSHConnectionError(host, port)
-        except Exception, e:
+        except Exception as e:
             raise exception.SSHError(str(e))
         self.close()
         self._transport = transport
