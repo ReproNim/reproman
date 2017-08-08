@@ -21,7 +21,7 @@ StarCluster Exception Classes
 
 import os
 
-# from niceman.support.starcluster import static
+from niceman.support.starcluster import static
 from niceman.support.starcluster.logger import log
 # from niceman.support.starcluster.templates import config, user_msgs
 
@@ -366,9 +366,8 @@ class IncompatibleSettings(ClusterValidationError):
 class InvalidProtocol(ClusterValidationError):
     """Raised when user specifies an invalid IP protocol for permission"""
     def __init__(self, protocol):
-        self.msg = "invalid IP protocol"
-        # self.msg = "protocol %s is not a valid ip protocol. options: %s"
-        # self.msg %= (protocol, ', '.join(static.PROTOCOLS))
+        self.msg = "protocol %s is not a valid ip protocol. options: %s"
+        self.msg %= (protocol, ', '.join(static.PROTOCOLS))
 
 
 class InvalidPortRange(ClusterValidationError):
@@ -453,16 +452,16 @@ class CancelledStartRequest(BaseException):
         self.msg += "\nthe same start command with the -x (--no-create) option"
 
 
-# class CancelledCreateVolume(BaseException):
-#     def __init__(self):
-#         self.msg = "Request to create a new volume was cancelled!!!"
-#         self.msg += "\n\nPlease be aware that volume host instances"
-#         self.msg += " may still be running. "
-#         self.msg += "\n\nTo destroy these instances:"
-#         self.msg += "\n\n   $ starcluster terminate %s"
-#         self.msg += "\n\nYou can then use\n\n   $ starcluster listinstances"
-#         self.msg += "\n\nto verify that the volume hosts have been terminated."
-#         self.msg %= static.VOLUME_GROUP_NAME
+class CancelledCreateVolume(BaseException):
+    def __init__(self):
+        self.msg = "Request to create a new volume was cancelled!!!"
+        self.msg += "\n\nPlease be aware that volume host instances"
+        self.msg += " may still be running. "
+        self.msg += "\n\nTo destroy these instances:"
+        self.msg += "\n\n   $ starcluster terminate %s"
+        self.msg += "\n\nYou can then use\n\n   $ starcluster listinstances"
+        self.msg += "\n\nto verify that the volume hosts have been terminated."
+        self.msg %= static.VOLUME_GROUP_NAME
 
 
 class CancelledCreateImage(BaseException):
@@ -561,12 +560,12 @@ Please terminate the cluster using:
     $ starcluster terminate --force %(tag)s
 """
 
-    # def __init__(self, group):
-    #     tag = group.name.replace(static.SECURITY_GROUP_PREFIX, '')
-    #     states = ['pending', 'running', 'stopping', 'stopped']
-    #     insts = group.connection.get_all_instances(
-    #         filters={'instance-state-name': states,
-    #                  'instance.group-name': group.name})
-    #     ctx = dict(group=group.name, tag=tag, num_nodes=len(insts),
-    #                version=static.VERSION)
-    #     self.msg = self.default_msg % ctx
+    def __init__(self, group):
+        tag = group.name.replace(static.SECURITY_GROUP_PREFIX, '')
+        states = ['pending', 'running', 'stopping', 'stopped']
+        insts = group.connection.get_all_instances(
+            filters={'instance-state-name': states,
+                     'instance.group-name': group.name})
+        ctx = dict(group=group.name, tag=tag, num_nodes=len(insts),
+                   version=static.VERSION)
+        self.msg = self.default_msg % ctx
