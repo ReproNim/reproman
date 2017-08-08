@@ -54,7 +54,7 @@ requires = {
         'cryptography',
         'pytz',
         'scp',
-        'Crypto',
+        'pycrypto',
     ],
     'debian': [
         'python-debian',
