@@ -19,6 +19,8 @@ from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from  ..resource import ResourceManager
 from ..ui import ui
+from ..support.exceptions import ResourceError
+from ..dochelpers import exc_str
 
 from logging import getLogger
 lgr = getLogger('niceman.api.ls')
@@ -80,25 +82,29 @@ class Ls(Interface):
                 continue
 
             # if refresh:
-            config = dict(cm.items(inventory[name]['type'].split('-')[0]))
-            config.update(inventory[name])
+            inventory_resource = inventory[name]
+            config = dict(cm.items(inventory_resource['type'].split('-')[0]))
+            config.update(inventory_resource)
             env_resource = ResourceManager.factory(config)
-            env_resource.connect()
-            inventory[name]['id'] = env_resource.id
-            inventory[name]['status'] = env_resource.status
-            if not env_resource.id:
-                continue # A missing ID indicates a deleted resource.
-
-            ui.message(template.format(
+            try:
+                env_resource.connect()
+                inventory_resource['id'] = env_resource.id
+                inventory_resource['status'] = env_resource.status
+                if not env_resource.id:
+                    # continue  # A missing ID indicates a deleted resource.
+                    inventory_resource['id'] = 'DELETED'
+            except ResourceError as exc:
+                ui.error("%s resource query error: %s" % (name, exc_str(exc)))
+                for f in 'id', 'status':
+                    inventory_resource[f] = inventory_resource.get(f, "?")
+            msgargs = (
                 name,
-                inventory[name]['type'],
-                inventory[name]['id'][:19],
-                inventory[name]['status']
-            ))
-
-            lgr.debug('list result: {}, {}, {}, {}'.format(name,
-                inventory[name]['type'], inventory[name]['id'][:19],
-                inventory[name]['status']))
+                inventory_resource['type'],
+                inventory_resource['id'][:19],
+                inventory_resource['status']
+            )
+            ui.message(template.format(*msgargs))
+            lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
 
         # if not refresh:
         #     ui.message('(Use --refresh option to view current status.)')
