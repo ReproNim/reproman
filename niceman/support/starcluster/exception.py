@@ -521,7 +521,7 @@ class ThreadPoolException(BaseException):
         self.exceptions = exceptions
 
     def print_excs(self):
-        print self.format_excs()
+        print(self.format_excs())
 
     def format_excs(self):
         excs = []
