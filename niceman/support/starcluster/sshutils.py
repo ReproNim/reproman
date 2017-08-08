@@ -517,10 +517,10 @@ class SSHClient(object):
                     line = ''.join(c for c in line if c in string.printable)
                 if line != '':
                     output.append(line)
-                    print line,
+                    print(line),
             for line in stderr.readlines():
                 output.append(line)
-                print line,
+                print(line),
         if only_printable:
             output = map(lambda line: ''.join(c for c in line if c in
                                               string.printable), output)
@@ -681,7 +681,7 @@ class SSHClient(object):
                     try:
                         x = chan.recv(1024)
                         if len(x) == 0:
-                            print '\r\n*** EOF\r\n',
+                            print('\r\n*** EOF\r\n'),
                             break
                         sys.stdout.write(x)
                         sys.stdout.flush()
