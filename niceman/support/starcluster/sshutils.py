@@ -136,7 +136,7 @@ class SSHClient(object):
         self._transport = transport
         try:
             assert self.sftp is not None
-        except paramiko.SFTPError, e:
+        except paramiko.SFTPError as e:
             if 'Garbage packet received' in e:
                 log.debug("Garbage packet received", exc_info=True)
                 raise exception.SSHAccessDeniedViaAuthKeys(username)
@@ -248,7 +248,7 @@ class SSHClient(object):
         if head and tail and not self.path_exists(head):
             try:
                 self.makedirs(head, mode)
-            except OSError, e:
+            except OSError as e:
                 # be happy if someone already created the path
                 if e.errno != os.errno.EEXIST:
                     raise
@@ -451,7 +451,7 @@ class SSHClient(object):
         try:
             self.scp.get(remotepaths, local_path=localpath,
                          recursive=recursive)
-        except Exception, e:
+        except Exception as e:
             log.debug("get failed: remotepaths=%s, localpath=%s",
                       str(remotepaths), localpath)
             raise exception.SCPException(str(e))
@@ -469,7 +469,7 @@ class SSHClient(object):
         try:
             self.scp.put(localpaths, remote_path=remotepath,
                          recursive=recursive)
-        except Exception, e:
+        except Exception as e:
             log.debug("put failed: localpaths=%s, remotepath=%s",
                       str(localpaths), remotepath)
             raise exception.SCPException(str(e))
