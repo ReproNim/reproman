@@ -101,6 +101,7 @@ class GitDistribution(VCSDistribution):
 GitRepo._distribution = GitDistribution
 
 
+@attr.s
 class SVNRepo(VCSRepo):
 
     revision = attr.ib(default=None)
@@ -264,7 +265,8 @@ class SVNRepoShim(GitSVNRepoShim):
 
     @property
     def revision(self):
-        return self._info['Revision']
+        r = self._info['Revision']
+        return int(r) if ((r is not None) and r.isdigit()) else r
 
     @property
     def url(self):

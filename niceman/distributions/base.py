@@ -227,7 +227,9 @@ class DistributionTracer(object):
                         pkg = self._create_package(**pkgfields)
                         if pkg:
                             found_packages[pkgfields_hashable] = pkg
-                            pkg.files.append(f)
+                            # we store only non-directories within 'files'
+                            if not self._session.isdir(f):
+                                pkg.files.append(f)
                             nb_pkg_files += 1
                         else:
                             unknown_files.add(f)

@@ -17,6 +17,7 @@ import re
 
 from niceman.support.exceptions import SessionRuntimeError
 from niceman.dochelpers import exc_str
+from niceman.support.exceptions import CommandError
 
 import logging
 lgr = logging.getLogger('niceman.session')
@@ -161,6 +162,14 @@ class Session(object):
         is True)
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def isdir(self, path):
+        """Return True if path is pointing to a directory
+        """
+        raise NotImplementedError
+
+
     # chmod?
     # chown?
 
@@ -302,5 +311,11 @@ class POSIXSession(Session):
         """
         self.execute_command(["mkdir"] + ("-p" if parents else "") + [path])
 
+    def isdir(self, path):
+        try:
+            self.execute_command(['test', '-d', path])
+            return True
+        except CommandError:
+            return False
     # chmod?
     # chown?
