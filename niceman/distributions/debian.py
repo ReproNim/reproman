@@ -64,7 +64,7 @@ from .base import Package
 from .base import Distribution
 from .base import TypedList
 from .base import _register_with_representer
-
+from ..support.exceptions import CommandError
 #
 # Models
 #
@@ -202,18 +202,17 @@ class DebTracer(DistributionTracer):
     def identify_distributions(self, files):
         debian_version = None
         try:
-            with self._session.open('/etc/debian_version') as f:
-                debian_version = f.read().strip()
-            self._session.exists()
+            debian_version = self._session.read('/etc/debian_version').strip()
+            self._session.exists('/etc/os-release')
             # debian_version, err = self._session.execute_command('cat /etc/debian_version')
             #debian_version = debian_version.strip()  # would have new line
             # for now would also match Ubuntu -- there it would have
             # ID=ubuntu and ID_LIKE=debian
             # TODO: load/parse /etc/os-release into a dict and better use
             # VERSION_ID and then ID (to decide if Debian or Ubuntu or ...)
-            out, err = self._session.execute_command('grep -i "^ID.*=debian" /etc/os-release', expect_fail=True)
-            out, err = self._session.execute_command('ls -ld /etc/apt', expect_fail=True)
-        except Exception as exc:
+            out, err = self._session.execute_command('grep -i "^ID.*=debian" /etc/os-release') # , expect_fail=True)
+            out, err = self._session.execute_command('ls -ld /etc/apt') #, expect_fail=True)
+        except CommandError as exc: # Exception as exc:
             lgr.debug("Did not detect Debian (or derivative): %s", exc)
             return
 
@@ -408,9 +407,11 @@ class DebTracer(DistributionTracer):
 
     def _run_dpkg_query(self, subfiles):
         try:
-            out, err = self._session(
+            out, err = self._session.execute_command(
                 ['dpkg-query', '-S'] + subfiles,
-                expect_stderr=True, expect_fail=True
+                # TODO: what should we do about those additional flags we have
+                # in Runner but not yet in execute_command for all sessions
+                #expect_stderr=True, expect_fail=True
             )
         except CommandError as exc:
             stderr = utils.to_unicode(exc.stderr, "utf-8")

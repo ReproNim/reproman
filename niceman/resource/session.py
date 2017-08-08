@@ -261,8 +261,6 @@ class POSIXSession(Session):
 
         return new_env
 
-
-
     def exists(self, path):
         """Return if file exists"""
         try:

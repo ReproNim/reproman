@@ -84,12 +84,7 @@ class Retrace(Interface):
         # Convert paths to unicode
         paths = list(map(to_unicode, paths))
 
-        # TODO: support arbitrary session as obtained from a resource
-        # TODO:  Shell needs a name -- should we request from manager
-        #        which would assume some magical name for reuse??
-        session = Shell("localshell").get_session(pty=False, shared=False)
-        # or we shouldn't set it ? XXXX
-        session.set_envvar({'LC_ALL': 'C'})
+        session = _get_default_session()
 
         # TODO: at the moment assumes just a single distribution etc.
         #       Generalize
@@ -110,6 +105,16 @@ class Retrace(Interface):
         # TODO: generic writer!
         from niceman.formats.niceman import NicemanProvenance
         NicemanProvenance.write(output_file or sys.stdout, spec)
+
+
+def _get_default_session():
+    # TODO: support arbitrary session as obtained from a resource
+    # TODO:  Shell needs a name -- should we request from manager
+    #        which would assume some magical name for reuse??
+    session = Shell("localshell").get_session(pty=False, shared=False)
+    # or we shouldn't set it ? XXXX
+    session.set_envvar({'LC_ALL': 'C'})
+    return session
 
 
 # TODO: session should be with a state.  Idea is that if we want
@@ -135,7 +140,7 @@ def identify_distributions(files, session=None):
     from niceman.distributions.vcs import VCSTracer
 
     from niceman.cmd import Runner
-    session = session or Runner(env={'LC_ALL': 'C'})
+    session = session or _get_default_session()
     # TODO create list of appropriate for the `environment` OS tracers
     #      in case of no environment -- get current one
     # TODO: should operate in the session, might be given additional information
@@ -148,6 +153,7 @@ def identify_distributions(files, session=None):
 
     distibutions = []
     for Tracer in Tracers:
+        lgr.info("Tracing using %s", Tracer)
         if not files_to_consider:
             lgr.info("No files left to consider, not considering remaining tracers")
             break

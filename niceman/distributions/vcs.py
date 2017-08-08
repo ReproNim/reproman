@@ -141,7 +141,7 @@ class GitSVNRepoShim(object):
 
         """
         self.path = path.rstrip(os.sep)  # TODO: might be done as some rg to attr.ib
-        self.session = session 
+        self._session = session
         self._all_files = None
         self._branch = None
 
@@ -149,7 +149,7 @@ class GitSVNRepoShim(object):
         """Run in the session but providing our self.path as the cwd"""
         if 'cwd' not in kwargs:
             kwargs = dict(cwd=self.path, **kwargs)
-        return self.session_execute_command(cmd, **kwargs)
+        return self._session.execute_command(cmd, **kwargs)
 
     @property
     def all_files(self):
@@ -226,7 +226,7 @@ class SVNRepoShim(GitSVNRepoShim):
             try:
                 out, err = session.execute_command(
                     'svn info',
-                    expect_fail=True,
+                    # expect_fail=True,
                     cwd=dirpath
                 )
             except CommandError as exc:
@@ -298,7 +298,7 @@ class GitRepoShim(GitSVNRepoShim):
         try:
             out, err = session.execute_command(
                 'git rev-parse --show-toplevel',
-                expect_fail=True,
+                # expect_fail=True,
                 cwd=dirpath
             )
         except CommandError as exc:
@@ -315,7 +315,10 @@ class GitRepoShim(GitSVNRepoShim):
         """Helper to run git command, and ignore stderr"""
         cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
         try:
-            out, err = self._session.execute_command(cmd, expect_fail=expect_fail, **kwargs)
+            out, err = self._session.execute_command(
+                cmd,
+                #expect_fail=expect_fail,
+                **kwargs)
         except CommandError:
             if not expect_fail:
                 raise
@@ -335,7 +338,7 @@ class GitRepoShim(GitSVNRepoShim):
     def describe(self):
         """Let's use git describe"""
         try:
-            return self._run_git('describe --tags', expect_fail=True)
+            return self._run_git('describe --tags') #, expect_fail=True)
         except CommandError:
             return None
 
@@ -366,9 +369,10 @@ class GitRepoShim(GitSVNRepoShim):
             rec = {}
             for f in 'url', 'pushurl':
                 try:
-                    rec[f] = self._run_git('config remote.%s.%s' % (remote, f),
-                                           expect_fail=True,
-                                           expect_stderr=True)
+                    rec[f] = self._run_git('config remote.%s.%s' % (remote, f)
+                                           #, expect_fail=True,
+                                           #, expect_stderr=True
+                                           )
                 except CommandError:
                     # must have no value
                     pass
@@ -383,9 +387,9 @@ class GitRepoShim(GitSVNRepoShim):
         if not branch:
             return None
         return self._run_git(
-                'config branch.%s.remote' % (branch,),
-                expect_stderr=True,
-                expect_fail=True
+                'config branch.%s.remote' % (branch,)
+                #, expect_stderr=True
+                #, expect_fail=True
         ) or None         # want explicit None
 
     @property

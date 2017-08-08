@@ -39,7 +39,7 @@ class ShellSession(POSIXSession):
     #
     # Commands fulfilling a "Session" interface to interact with the environment
     #
-    def execute_command(self, command, env=None, expect_fail=False, cwd=None):
+    def execute_command(self, command, env=None, cwd=None):
         """
         Execute the given command in the environment.
 
@@ -70,7 +70,14 @@ class ShellSession(POSIXSession):
             run_env.update(command_env)
             run_kw['env'] = run_env
 
-        return self._runner.run(command, expect_fail=expect_fail, **run_kw)  # , shell=True)
+        return self._runner.run(
+            command,
+            # For now we do not ERROR out whenever command fails or provides
+            # stderr -- analysis will be done outside
+            expect_fail=True,
+            expect_stderr=True,
+            **run_kw
+        )  # , shell=True)
 
 
 @attr.s
