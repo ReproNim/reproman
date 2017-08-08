@@ -53,6 +53,7 @@ requires = {
         'paramiko',
         'cryptography',
         'pytz',
+        'scp',
     ],
     'debian': [
         'python-debian',
