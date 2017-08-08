@@ -25,6 +25,7 @@ from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
+from ..support.starcluster.sshutils import SSHClient
 
 
 @attr.s
@@ -50,6 +51,8 @@ class AwsEc2(Resource):
         doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
     base_image_id = attrib(default='ami-c8580bdf',
         doc="AWS image ID from which to create the running instance")  # Ubuntu 14.04 LTS
+    user = attrib(default='ubuntu',
+        doc="Login account to EC2 instance.")
 
     # Interesting one -- should we allow for it to be specified or should
     # it just become a property?  may be base class could
@@ -298,3 +301,12 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         # saved to the resource inventory file.
         self.key_name = key_name
         self.key_filename = key_filename
+
+    def login(self):
+        """
+        Log into a container and get the command line
+        """
+        lgr.debug("Opening TTY connection to AWS EC2 instance.")
+        host = self._ec2_instance.public_ip_address
+        ssh = SSHClient(host, private_key=self.key_filename)
+        ssh.interactive_shell(self.user)
