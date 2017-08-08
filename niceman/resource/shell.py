@@ -76,6 +76,7 @@ class ShellSession(POSIXSession):
             # stderr -- analysis will be done outside
             expect_fail=True,
             expect_stderr=True,
+            cwd=cwd,
             **run_kw
         )  # , shell=True)
 

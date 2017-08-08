@@ -46,6 +46,7 @@ def test_identify_myself():
 @with_tempfile(mkdir=True)
 def test_detached_git(repo=None):
     import os
+    # XXX Replace with our session?
     from niceman.cmd import Runner
     env = os.environ.copy()
     env['LC_ALL'] = 'C'
@@ -82,7 +83,7 @@ def test_detached_git(repo=None):
     # and if we cause a detachment
     runner("git rm file")
     runner("git commit -m removed file")
-    runner("git checkout HEAD^")
+    runner("git checkout HEAD^", expect_stderr=True)
     distributions, files = identify_distributions([repo])
     pkg = distributions[0].packages[0]
     assert pkg.files == [repo]

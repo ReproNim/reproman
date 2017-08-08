@@ -140,7 +140,7 @@ class DockerSession(POSIXSession):
     client = attr.ib()
     container = attr.ib()
 
-    def execute_command(self, command, env=None):
+    def execute_command(self, command, env=None, cwd=None):
         """
         Execute the given command in the container.
 
@@ -156,6 +156,8 @@ class DockerSession(POSIXSession):
 
         command_env = self.get_updated_env(env)
 
+        if cwd:
+            raise NotImplementedError("handle cwd for docker")
         # if command_env:
             # TODO: might not work - not tested it
             # command = ['export %s=%s' % k for k in command_env.items()] + command

@@ -111,7 +111,7 @@ class Session(object):
     # Resource  and probably env vars handling
 
     @abc.abstractmethod
-    def execute_command(command, env=None):
+    def execute_command(self, command, env=None, cwd=None):
         """Execute a command
         
         Parameters

@@ -255,7 +255,7 @@ class SVNRepoShim(GitSVNRepoShim):
             # TODO -- outdated repos might need 'svn upgrade' first
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
-            out, err = self._session.execute_command('svn info')
+            out, err = self._session.execute_command('svn info', cwd=self.path)
             self.__info = dict(
                 [x.lstrip() for x in l.split(':', 1)]
                 for l in out.splitlines() if l.strip()
@@ -318,6 +318,7 @@ class GitRepoShim(GitSVNRepoShim):
             out, err = self._session.execute_command(
                 cmd,
                 #expect_fail=expect_fail,
+                cwd=self.path,
                 **kwargs)
         except CommandError:
             if not expect_fail:
@@ -338,7 +339,7 @@ class GitRepoShim(GitSVNRepoShim):
     def describe(self):
         """Let's use git describe"""
         try:
-            return self._run_git('describe --tags') #, expect_fail=True)
+            return self._run_git('describe --tags', expect_fail=True)
         except CommandError:
             return None
 
@@ -370,7 +371,7 @@ class GitRepoShim(GitSVNRepoShim):
             for f in 'url', 'pushurl':
                 try:
                     rec[f] = self._run_git('config remote.%s.%s' % (remote, f)
-                                           #, expect_fail=True,
+                                           , expect_fail=True
                                            #, expect_stderr=True
                                            )
                 except CommandError:
@@ -389,7 +390,7 @@ class GitRepoShim(GitSVNRepoShim):
         return self._run_git(
                 'config branch.%s.remote' % (branch,)
                 #, expect_stderr=True
-                #, expect_fail=True
+                , expect_fail=True
         ) or None         # want explicit None
 
     @property
@@ -446,6 +447,7 @@ class VCSTracer(DistributionTracer):
     def _get_packagefields_for_files(self, files):
         out = {}
         for f in files:
+            lgr.log(6, "%s testing file %s", self, f)
             shim = self._resolve_file(f)
             if not shim:
                 continue

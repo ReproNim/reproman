@@ -200,7 +200,7 @@ class AwsEc2(Resource):
         """
         self._ec2_instance.stop()
 
-    def execute_command(self, ssh, command, env=None):
+    def execute_command(self, ssh, command, env=None, cwd=None):
         """
         Execute the given command in the environment.
 
@@ -217,6 +217,8 @@ class AwsEc2(Resource):
         """
         command_env = self.get_updated_env(env)
 
+        if cwd:
+            raise NotImplementedError("implement cwd support")
         # if command_env:
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
