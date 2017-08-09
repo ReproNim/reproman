@@ -219,32 +219,39 @@ class CondaTracer(DistributionTracer):
             # TODO: Use env_export to get pip packages
             env_export = self._get_conda_env_export(
                conda_info["root_prefix"], conda_path)
-            (conda_package_details, file_to_package) = \
+            (conda_package_details, file_to_pkg) = \
                 self._get_conda_package_details(conda_path)
 
             # Loop through packages, initializing a list of found files
-            package_to_found_files = {}
+            pkg_to_found_files = {}
             for package_name in conda_package_details:
-                package_to_found_files[package_name] = []
+                pkg_to_found_files[package_name] = []
 
+            # Get the conda path prefix to calculate relative paths
+            path_prefix = conda_path + os.path.sep
             # Loop through unknown files, assigning them to packages if found
             for path in set(unknown_files):  # Clone the set
-                if path in file_to_package:
+                if path in file_to_pkg:
                     # The file was found so remove from unknown file set
                     unknown_files.remove(path)
+                    # Make relative paths if it is begins with the conda path
+                    if path.startswith(path_prefix):
+                        rel_path = path[len(path_prefix):]
+                    else:
+                        rel_path = path
                     # And add to the package
-                    package_to_found_files[file_to_package[path]].append(path)
+                    pkg_to_found_files[file_to_pkg[path]].append(rel_path)
 
             packages = []
             # Create the packages
             for package_name in conda_package_details:
                 # Skip the package if no files are associated with it
-                if not package_to_found_files[package_name]:
+                if not pkg_to_found_files[package_name]:
                     continue
                 # Create the package
                 package = CondaPackage(
                     name=package_name,  # TODO: Name, version, and build
-                    files=package_to_found_files[package_name]
+                    files=pkg_to_found_files[package_name]
                 )
                 packages.append(package)
 
