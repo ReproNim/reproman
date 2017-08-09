@@ -245,9 +245,6 @@ class CondaTracer(DistributionTracer):
             packages = []
             # Create the packages
             for package_name in conda_package_details:
-                # Skip the package if no files are associated with it
-                if not pkg_to_found_files[package_name]:
-                    continue
                 # Create the package
                 package = CondaPackage(
                     name=package_name,  # TODO: Name, version, and build
