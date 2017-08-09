@@ -14,16 +14,14 @@ from __future__ import unicode_literals
 import sys
 import time
 
-import niceman.formats.niceman
+from niceman.resource.session import get_local_session
 from .base import Interface
-from ..support.param import Parameter
-from ..support.constraints import EnsureStr
 from ..support.constraints import EnsureNone
+from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
+from ..support.param import Parameter
 from ..utils import assure_list
 from ..utils import to_unicode
-from ..resource.shell import Shell
-
 
 __docformat__ = 'restructuredtext'
 
@@ -64,6 +62,8 @@ class Retrace(Interface):
         ),
     )
 
+    # TODO: add a session/resource so we could trace within
+    # arbitrary sessions
     @staticmethod
     def __call__(path=None, spec=None, output_file=None):
         # heavy import -- should be delayed until actually used
@@ -84,13 +84,12 @@ class Retrace(Interface):
         # Convert paths to unicode
         paths = list(map(to_unicode, paths))
 
-        session = _get_default_session()
+        session = get_local_session()
 
         # TODO: at the moment assumes just a single distribution etc.
         #       Generalize
         # TODO: RF so that only the above portion is reprozip specific.
         # If we are to reuse their layout largely -- the rest should stay as is
-        from niceman.cmd import Runner
         (distributions, files) = identify_distributions(
             paths,
             session=session
@@ -105,16 +104,6 @@ class Retrace(Interface):
         # TODO: generic writer!
         from niceman.formats.niceman import NicemanProvenance
         NicemanProvenance.write(output_file or sys.stdout, spec)
-
-
-def _get_default_session():
-    # TODO: support arbitrary session as obtained from a resource
-    # TODO:  Shell needs a name -- should we request from manager
-    #        which would assume some magical name for reuse??
-    session = Shell("localshell").get_session(pty=False, shared=False)
-    # or we shouldn't set it ? XXXX
-    session.set_envvar({'LC_ALL': 'C'})
-    return session
 
 
 # TODO: session should be with a state.  Idea is that if we want
@@ -139,8 +128,7 @@ def identify_distributions(files, session=None):
     from niceman.distributions.conda import CondaTracer
     from niceman.distributions.vcs import VCSTracer
 
-    from niceman.cmd import Runner
-    session = session or _get_default_session()
+    session = session or get_local_session()
     # TODO create list of appropriate for the `environment` OS tracers
     #      in case of no environment -- get current one
     # TODO: should operate in the session, might be given additional information

@@ -10,7 +10,8 @@
 
 import abc
 import logging
-lgr = logging.getLogger('niceman.resource.shell')
+
+lgr = logging.getLogger('niceman.resource.session')
 
 import os
 import re
@@ -37,6 +38,10 @@ class Session(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+    def __call__(self, *args, **kwargs):
+        """Sugaring shortcut to `execute_command`"""
+        return self.execute_command(*args, **kwargs)
 
     # By default don't do anything special
     def open(self):
@@ -319,3 +324,16 @@ class POSIXSession(Session):
             return False
     # chmod?
     # chown?
+
+
+def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):
+    """A shortcut to get a local session"""
+    # TODO: support arbitrary session as obtained from a resource
+    # TODO:  Shell needs a name -- should we request from manager
+    #        which would assume some magical name for reuse??
+    from niceman.resource.shell import Shell
+    session = Shell("localshell").get_session(pty=pty, shared=shared)
+    # or we shouldn't set it ? XXXX
+    if env:
+        session.set_envvar(env)
+    return session

@@ -302,14 +302,16 @@ class Resource(object):
                                        # form {command=[], env={}}
         self._command_buffer.append({'command': command, 'env': env})
 
-    def execute_command_buffer(self):
+    def execute_command_buffer(self, session=None):
         """
         Send all the commands in the command buffer to the environment for
         execution.
         """
+        if not session:
+            session = self.get_session(pty=False)
         for command in self._command_buffer:
             lgr.debug("Running command '%s'", command['command'])
-            self.execute_command(command['command'], command['env'])
+            session.execute_command(command['command'], env=command['env'])
 
     def set_envvar(self, var, value):
         """

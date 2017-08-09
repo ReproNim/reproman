@@ -200,6 +200,8 @@ class AwsEc2(Resource):
         """
         self._ec2_instance.stop()
 
+    # TODO: RF into a separate Session and provide get_session
+    # then custom execute_command_buffer could go
     def execute_command(self, ssh, command, env=None, cwd=None):
         """
         Execute the given command in the environment.
@@ -215,6 +217,7 @@ class AwsEc2(Resource):
             Additional (or replacement) environment variables which are applied
             only to the current call
         """
+        # TODO -- command_env is not used etc...
         command_env = self.get_updated_env(env)
 
         if cwd:

@@ -18,7 +18,7 @@ from ...tests.utils import assert_in
 from ..base import ResourceManager
 from ...cmd import Runner
 from ..shell import Shell, ShellSession
-
+from .test_session import check_session_passing_envvars
 
 def test_shell_class():
 
@@ -90,3 +90,7 @@ def test_source_file_param(script):
 
     # just for "fun"
     #print ses.source_script([os.path.expanduser('~/anaconda2/bin/activate'), 'datalad'])
+
+
+def test_session_passing_envvars():
+    check_session_passing_envvars(ShellSession())
