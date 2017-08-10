@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import re
 
-from .base import Interface
+from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -58,10 +58,15 @@ class Login(Interface):
             metavar='CONFIG',
             # constraints=EnsureStr(),
         ),
+        backend=Parameter(
+            args=("-b", "--backend"),
+            nargs="+",
+            doc=backend_help()
+        ),
     )
 
     @staticmethod
-    def __call__(resource, resource_id=None, config=None):
+    def __call__(resource, backend, resource_id=None, config=None):
         from niceman.ui import ui
         if not resource and not resource_id:
             resource = ui.question(
@@ -72,10 +77,15 @@ class Login(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
+        config, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
 
         # Connect to resource environment
-        env_resource = ResourceManager.factory(resource_info)
+        env_resource = ResourceManager.factory(config)
+
+        # Set resource properties to any backend specific command line arguments.
+        if backend:
+            config = backend_set_config(backend, env_resource, config)
+
         env_resource.connect()
 
         if not env_resource.id:

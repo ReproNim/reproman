@@ -11,9 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import attr
-from importlib import import_module
-from .base import Interface
+from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
 # from ..formats import Provenance
 from ..support.param import Parameter
@@ -27,6 +25,7 @@ from logging import getLogger
 lgr = getLogger('niceman.api.create')
 
 
+<<<<<<< HEAD
 def backend_help(resource_type=None):
     types = ResourceManager._discover_types() if not resource_type else [resource_type]
 
@@ -59,6 +58,35 @@ def backend_help(resource_type=None):
     return help_message + ", ".join(help_args)
 
 
+||||||| merged common ancestors
+def backend_help(resource_type=None):
+    types = ResourceManager._discover_types() if not resource_type else [resource_type]
+
+    help_message = "One or more backend parameters in the form KEY=VALUE. Options are: "
+    help_args = []
+
+    for module_name in types:
+        class_name = ''.join([token.capitalize() for token in module_name.split('_')])
+        try:
+            module = import_module('niceman.resource.{}'.format(module_name))
+        except ImportError as exc:
+            raise ResourceError(
+                "Failed to import resource {}: {}.  Known ones are: {}".format(
+                    module_name,
+                    exc_str(exc),
+                    ', '.join(ResourceManager._discover_types()))
+            )
+        cls = getattr(module, class_name)
+        args = attr.fields(cls)
+        for arg in args:
+            if 'doc' in arg.metadata:
+                help_args.append('"{}" ({})'.format(arg.name, arg.metadata['doc']))
+
+    return help_message + ", ".join(help_args)
+
+
+=======
+>>>>>>> origin/master
 class Create(Interface):
     """Create a computation environment out from provided specification(s)
 
@@ -179,13 +207,8 @@ class Create(Interface):
         env_resource = ResourceManager.factory(config)
 
         # Set resource properties to any backend specific command line arguments.
-        for backend_arg in backend:
-            key, value = backend_arg.split("=")
-            if hasattr(env_resource, key):
-                config[key] = value
-                setattr(env_resource, key, value)
-            else:
-                raise NotImplementedError("Bad --backend parameter '{}'".format(key))
+        if backend:
+            config = backend_set_config(backend, env_resource, config)
 
         env_resource.connect()
         resource_attrs = env_resource.create()
