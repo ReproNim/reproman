@@ -25,68 +25,6 @@ from logging import getLogger
 lgr = getLogger('niceman.api.create')
 
 
-<<<<<<< HEAD
-def backend_help(resource_type=None):
-    types = ResourceManager._discover_types() if not resource_type else [resource_type]
-
-    help_message = "One or more backend parameters in the form KEY=VALUE. Options are: "
-    help_args = []
-
-    for module_name in types:
-        class_name = ''.join([token.capitalize() for token in module_name.split('_')])
-        try:
-            module = import_module('niceman.resource.{}'.format(module_name))
-        except ImportError as exc:
-            raise ResourceError(
-                "Failed to import resource {}: {}.  Known ones are: {}".format(
-                    module_name,
-                    exc_str(exc),
-                    ', '.join(ResourceManager._discover_types()))
-            )
-        cls = getattr(module, class_name)
-        if not issubclass(cls, Resource):
-            lgr.debug(
-                "Skipping %s.%s since not a Resource. Consider moving away",
-                module, class_name
-            )
-            continue
-        args = attr.fields(cls)
-        for arg in args:
-            if 'doc' in arg.metadata:
-                help_args.append('"{}" ({})'.format(arg.name, arg.metadata['doc']))
-
-    return help_message + ", ".join(help_args)
-
-
-||||||| merged common ancestors
-def backend_help(resource_type=None):
-    types = ResourceManager._discover_types() if not resource_type else [resource_type]
-
-    help_message = "One or more backend parameters in the form KEY=VALUE. Options are: "
-    help_args = []
-
-    for module_name in types:
-        class_name = ''.join([token.capitalize() for token in module_name.split('_')])
-        try:
-            module = import_module('niceman.resource.{}'.format(module_name))
-        except ImportError as exc:
-            raise ResourceError(
-                "Failed to import resource {}: {}.  Known ones are: {}".format(
-                    module_name,
-                    exc_str(exc),
-                    ', '.join(ResourceManager._discover_types()))
-            )
-        cls = getattr(module, class_name)
-        args = attr.fields(cls)
-        for arg in args:
-            if 'doc' in arg.metadata:
-                help_args.append('"{}" ({})'.format(arg.name, arg.metadata['doc']))
-
-    return help_message + ", ".join(help_args)
-
-
-=======
->>>>>>> origin/master
 class Create(Interface):
     """Create a computation environment out from provided specification(s)
 
