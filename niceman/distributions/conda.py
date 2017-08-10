@@ -9,6 +9,7 @@
 """Orchestrator sub-class to provide management of the localhost environment."""
 import json
 import os
+from collections import defaultdict
 
 import attr
 import yaml
@@ -28,6 +29,12 @@ lgr = logging.getLogger('niceman.distributions.conda')
 @attr.s
 class CondaPackage(Package):
     name = attr.ib()
+    version = attr.ib()
+    build = attr.ib()
+    channel = attr.ib()
+    size = attr.ib()
+    md5 = attr.ib()
+    fn = attr.ib()
     files = attr.ib(default=attr.Factory(list))
 
 
@@ -222,10 +229,8 @@ class CondaTracer(DistributionTracer):
             (conda_package_details, file_to_pkg) = \
                 self._get_conda_package_details(conda_path)
 
-            # Loop through packages, initializing a list of found files
-            pkg_to_found_files = {}
-            for package_name in conda_package_details:
-                pkg_to_found_files[package_name] = []
+            # Initialize a map from packages to files that defaults to []
+            pkg_to_found_files = defaultdict(list)
 
             # Get the conda path prefix to calculate relative paths
             path_prefix = conda_path + os.path.sep
@@ -245,9 +250,17 @@ class CondaTracer(DistributionTracer):
             packages = []
             # Create the packages
             for package_name in conda_package_details:
+                details = conda_package_details[package_name]
+#                print (json.dumps(details, indent=4))
                 # Create the package
                 package = CondaPackage(
-                    name=package_name,  # TODO: Name, version, and build
+                    name=details.get("name"),
+                    version=details.get("version"),
+                    build=details.get("build"),
+                    channel=details.get("channel"),
+                    size=details.get("size"),
+                    md5=details.get("md5"),
+                    fn=details.get("fn"),
                     files=pkg_to_found_files[package_name]
                 )
                 packages.append(package)
