@@ -37,9 +37,10 @@ def test_shell_class():
         command = ['apt-get', 'install', 'xeyes']
         shell.add_command(command)
         shell.execute_command_buffer()
+        common_kwargs = dict(cwd=None, expect_fail=True, expect_stderr=True)
         calls = [
-            call(['apt-get', 'install', 'xeyes']),
-            call(['apt-get', 'install', 'bc']),
+            call(['apt-get', 'install', 'xeyes'], **common_kwargs),
+            call(['apt-get', 'install', 'bc'], **common_kwargs),
         ]
         runner.assert_has_calls(calls, any_order=True)
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
