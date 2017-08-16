@@ -57,9 +57,8 @@ class CondaDistribution(Distribution):
     path = attr.ib(default=None)
     conda_version = attr.ib(default=None)
     python_version = attr.ib(default=None)
-    packages = TypedList(CondaPackage)
-    channels = attr.ib(default=None)
     environments = TypedList(CondaEnvironment)
+    channels = attr.ib(default=None)
 
     def initiate(self, environment):
         """
@@ -211,7 +210,6 @@ class CondaTracer(DistributionTracer):
 
     def identify_distributions(self, paths):
         conda_paths = set()
-        root_envs = []
         root_to_envs = defaultdict(list)
         # Start with all paths being set as unknown
         unknown_files = set(paths)
@@ -224,12 +222,8 @@ class CondaTracer(DistributionTracer):
                     conda_paths.add(conda_path)
 
         # Loop through conda_paths, find packages and create the
-        # environments (note that conda_paths will grow)
-        conda_env_idx = 0
-        conda_root_idx = 0
-        paths_to_process = set(conda_paths)
-        while paths_to_process:
-            conda_path = paths_to_process.pop()
+        # environments
+        for idx, conda_path in enumerate(conda_paths):
 
             # Retrieve distribution details
             conda_info = self._get_conda_info(conda_path)
@@ -239,11 +233,6 @@ class CondaTracer(DistributionTracer):
                root_path, conda_path)
             (conda_package_details, file_to_pkg) = \
                 self._get_conda_package_details(conda_path)
-
-            # Add the root path to the list of conda_paths if not there
-            if root_path not in conda_paths:
-                conda_paths.add(root_path)
-                paths_to_process.add(root_path)
 
             # Initialize a map from packages to files that defaults to []
             pkg_to_found_files = defaultdict(list)
@@ -267,7 +256,6 @@ class CondaTracer(DistributionTracer):
             # Create the packages in the environment
             for package_name in conda_package_details:
                 details = conda_package_details[package_name]
-#                print (json.dumps(details, indent=4))
                 # Create the package
                 package = CondaPackage(
                     name=details.get("name"),
@@ -281,38 +269,42 @@ class CondaTracer(DistributionTracer):
                 )
                 packages.append(package)
 
-            # Create the Conda Environment or Distribution object
-            if root_path == conda_path:
-                # Name the root path
-                name = 'conda_root-%d' % conda_root_idx
-                conda_root_idx += 1
-                # The conda path is a root path
-                root_env = CondaDistribution(
-                    name=name,
-                    conda_version=conda_info.get("conda_version"),
-                    python_version=conda_info.get("python_version"),
-                    path=conda_path,
-                    packages=packages,
-                    channels=conda_info.get("channels"),
-                    environments=[]
-                )
-                root_envs.append(root_env)
+            # Give the distribution a name
+            if (len(conda_paths)) > 1:
+                env_name = 'conda_env-%d' % idx
             else:
-                # Name the conda path
-                name = 'conda_env-%d' % conda_env_idx
-                conda_env_idx += 1
-                # The conda path is a non-root environment
-                conda_env = CondaEnvironment(
-                    name=name,
-                    conda_version=conda_info.get("conda_version"),
-                    python_version=conda_info.get("python_version"),
-                    path=conda_path,
-                    packages=packages,
-                    channels=conda_info.get("channels")
-                )
-                root_to_envs[root_path].append(conda_env)
+                env_name = 'conda_env'
 
-        # Loop through conda roots, update the environments and yield
-        for root_env in root_envs:
-            root_env.environments = root_to_envs[root_env.path]
-            yield root_env, list(unknown_files)
+            # Create the conda environment (works with root environments too)
+            conda_env = CondaEnvironment(
+                name=env_name,
+                conda_version=conda_info.get("conda_version"),
+                python_version=conda_info.get("python_version"),
+                path=conda_path,
+                packages=packages,
+                channels=conda_info.get("channels")
+            )
+            root_to_envs[root_path].append(conda_env)
+
+        # Find all the identified conda_roots
+        conda_roots = root_to_envs.keys()
+        # Loop through conda_roots and create the distributions
+        for idx, root_path in enumerate(conda_roots):
+            # Retrieve distribution details
+            conda_info = self._get_conda_info(root_path)
+
+            # Give the distribution a name
+            if (len(conda_roots)) > 1:
+                dist_name = 'conda-%d' % idx
+            else:
+                dist_name = 'conda'
+            dist = CondaDistribution(
+                name=dist_name,
+                conda_version=conda_info.get("conda_version"),
+                python_version=conda_info.get("python_version"),
+                path=root_path,
+                environments=root_to_envs[root_path],
+                channels=conda_info.get("channels")
+                # TODO: all the packages and paths
+            )
+            yield dist, list(unknown_files)
