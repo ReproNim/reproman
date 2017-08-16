@@ -6,14 +6,18 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-
+import collections
 import os
+
+import yaml
+import attr
+
 try:
     import apt
 except ImportError:
     apt = None
 
-from pprint import pprint
+import json
 
 from niceman.distributions.conda import CondaTracer
 
@@ -24,11 +28,12 @@ def test_conda_manager_identify_distributions():
     # TODO: Mock or install a real conda environment for testing
     files = ["/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/nipype2boutiques",
              "/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/xz",
+             "/home/butch/simple_workflow/miniconda/lib/python3.6/site-packages/pip/utils/ui.py",
              "/sbin/iptables"]
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
+
     for (distributions, unknown_files) in dists:
-        pprint(distributions)
-        pprint(unknown_files)
-#    distribution, unknown_files = distributions[0]
-#    pprint(distribution)
+        print(json.dumps(attr.asdict(
+                distributions, dict_factory=collections.OrderedDict), indent=4))
+        print(json.dumps(unknown_files, indent=4))
