@@ -29,6 +29,7 @@ lgr = logging.getLogger('niceman.distributions.conda')
 @attr.s
 class CondaPackage(Package):
     name = attr.ib()
+    installer = attr.ib()
     version = attr.ib()
     build = attr.ib()
     channel = attr.ib()
@@ -116,7 +117,6 @@ class CondaTracer(DistributionTracer):
                         conda_path, exc_str(exc))
 
     def _get_conda_package_details(self, conda_path):
-        # TODO: Get details for pip installed packages
         packages = {}
         file_to_package_map = {}
         for meta_file in self._get_conda_meta_files(conda_path):
@@ -135,6 +135,7 @@ class CondaTracer(DistributionTracer):
                     conda_package_name = \
                         ("%s=%s=%s" % (details["name"], details["version"],
                                        details["build"]))
+                    details["installer"] = "conda"
                     packages[conda_package_name] = details
                     # Now map the package files to the package
                     for f in details["files"]:
@@ -145,6 +146,48 @@ class CondaTracer(DistributionTracer):
                 lgr.warning("Could not retrieve conda info in path %s: %s",
                             conda_path,
                             exc_str(exc))
+
+        return packages, file_to_package_map
+
+    def _get_conda_pip_package_details(self, env_export, conda_path):
+        packages = {}
+        file_to_package_map = {}
+        dependencies = env_export.get("dependencies")
+
+        pip_deps = []
+        for dep in dependencies:
+            if isinstance(dep,dict) and "pip" in dep:
+                pip_deps = dep.get("pip")
+
+        for pip_dep in pip_deps:
+            # Pip packages are recorded in conda exports as name==version
+            name = pip_dep.split("=")[0]
+            try:
+                out, err = self._session.run(
+                    '%s/bin/pip show -f %s'
+                    % (conda_path, name),
+                    expect_fail=True
+                )
+                # TODO: Do a better job parsing pip show results
+                # Convert to valid yaml
+                out = out.replace("::", "--")      # Correct classifiers
+                out = out.replace("\n  ","\n - ")  # Correct lists
+                pip_info = yaml.load(out)
+                # Record the details we care about
+                details = {"name": pip_info.get("Name"),
+                           "version": pip_info.get("Version"),
+                           "installer": "pip"}
+                packages[pip_dep] = details
+                # Map the package files to the package
+                for f in pip_info.get("Files"):
+                    full_path = os.path.normpath(
+                        os.path.join(pip_info.get("Location"), f))
+                    file_to_package_map[full_path] = pip_dep
+            except Exception as exc:
+                lgr.warning("Could not retrieve pip info "
+                            "export from path %s: %s", conda_path,
+                            exc_str(exc))
+                continue
 
         return packages, file_to_package_map
 
@@ -233,6 +276,11 @@ class CondaTracer(DistributionTracer):
                root_path, conda_path)
             (conda_package_details, file_to_pkg) = \
                 self._get_conda_package_details(conda_path)
+            (conda_pip_package_details, file_to_pip_pkg) = \
+                self._get_conda_pip_package_details(env_export, conda_path)
+            # Join our conda and pip packages
+            conda_package_details.update(conda_pip_package_details)
+            file_to_pkg.update(file_to_pip_pkg)
 
             # Initialize a map from packages to files that defaults to []
             pkg_to_found_files = defaultdict(list)
@@ -259,6 +307,7 @@ class CondaTracer(DistributionTracer):
                 # Create the package
                 package = CondaPackage(
                     name=details.get("name"),
+                    installer=details.get("installer"),
                     version=details.get("version"),
                     build=details.get("build"),
                     channel=details.get("channel"),

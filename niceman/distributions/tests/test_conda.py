@@ -9,8 +9,10 @@
 import collections
 import os
 
+import sys
 import yaml
 import attr
+from niceman.formats.niceman import NicemanProvenance
 
 try:
     import apt
@@ -28,12 +30,14 @@ def test_conda_manager_identify_distributions():
     # TODO: Mock or install a real conda environment for testing
     files = ["/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/nipype2boutiques",
              "/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/xz",
+             "/home/butch/simple_workflow/miniconda/envs/bh_demo/lib/python2.7/site-packages/pluggy.py",
              "/home/butch/simple_workflow/miniconda/lib/python3.6/site-packages/pip/utils/ui.py",
              "/sbin/iptables"]
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
 
     for (distributions, unknown_files) in dists:
-        print(json.dumps(attr.asdict(
-                distributions, dict_factory=collections.OrderedDict), indent=4))
+        NicemanProvenance.write(sys.stdout, distributions)
+#        print(json.dumps(attr.asdict(
+#                distributions, dict_factory=collections.OrderedDict), indent=4))
         print(json.dumps(unknown_files, indent=4))
