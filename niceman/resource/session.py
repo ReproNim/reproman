@@ -13,6 +13,7 @@ import logging
 
 lgr = logging.getLogger('niceman.resource.session')
 
+import attr
 import os
 import re
 
@@ -24,10 +25,11 @@ import logging
 lgr = logging.getLogger('niceman.session')
 
 
+@attr.s
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
 
-    def __init__(self):
+    def __attrs_post_init__(self):
         # both will be maintained
         self._env = {}           # environment which would be in-effect only for this session
         self._env_permanent = {} # environment variables which would be in-effect in future sessions if resource is persistent
@@ -116,15 +118,48 @@ class Session(object):
     # TODO: move logic/handling of batched commands defined in
     # Resource  and probably env vars handling
 
-    @abc.abstractmethod
     def execute_command(self, command, env=None, cwd=None):
+        """
+        Execute the given command in the environment.
+
+        Parameters
+        ----------
+        command : list
+            Shell command string or list of command tokens to send to the
+            environment to execute.
+        env : dict
+            Additional (or replacement) environment variables which are applied
+            only to the current call
+
+        Returns
+        -------
+        out, err
+        """
+        # TODO: bring back updated_env?
+        command_env = dict(self._env, **(env or {}))
+        run_kw = {}
+        if command_env:
+            # if anything custom, then we need to get original full environment
+            # and update it with custom settings which we either "accumulated"
+            # via set_envvar, or it was passed into this call.
+            run_env = os.environ.copy()
+            run_env.update(command_env)
+            run_kw['env'] = run_env
+
+        return self._execute_command(
+            command,
+            cwd=cwd,
+            **run_kw
+        )  # , shell=True)
+
+    @abc.abstractmethod
+    def _execute_command(self, command, env=None, cwd=None):
         """Execute a command
         
         Parameters
         ----------
         env: dict, optional
-          Additional settings for the environment.  If some variable needs
-          to be un-defined, leave value to be None
+          Complete environment (if provided) to use while executing the command
         """
         raise NotImplementedError
 
@@ -179,6 +214,7 @@ class Session(object):
     # chown?
 
 
+@attr.s
 class POSIXSession(Session):
     """A Session which relies on commands present in any POSIX-compliant env
     

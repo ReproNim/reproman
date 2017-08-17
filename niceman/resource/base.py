@@ -328,6 +328,9 @@ class Resource(object):
         -------
 
         """
+        # TODO: This wouldn't work correctly since pretty much each command
+        # then should have its desired env recorded since set_envvar
+        # could be interleaved with add_command calls
         if not hasattr(self, '_env'):
             self._env = {}
 

@@ -149,7 +149,7 @@ class DockerSession(POSIXSession):
     client = attr.ib()
     container = attr.ib()
 
-    def execute_command(self, command, env=None, cwd=None):
+    def _execute_command(self, command, env=None, cwd=None):
         """
         Execute the given command in the container.
 
@@ -159,11 +159,12 @@ class DockerSession(POSIXSession):
             Shell command to send to the container to execute. The command can
             be a string or a list of tokens that create the command.
         env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
+            Complete environment to be used
         """
 
-        command_env = self.get_updated_env(env)
+        #command_env = self.get_updated_env(env)
+        if env:
+            raise NotImplementedError("passing env variables to docker session execution")
 
         if cwd:
             raise NotImplementedError("handle cwd for docker")
@@ -173,8 +174,11 @@ class DockerSession(POSIXSession):
 
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
-        execute = self._client.exec_create(container=self._container, cmd=command)
-        for i, line in enumerate(self._client.exec_start(exec_id=execute['Id'], stream=True)):
+        execute = self.client.exec_create(container=self.container, cmd=command)
+        for i, line in enumerate(
+                self.client.exec_start(exec_id=execute['Id'],
+                stream=True)
+        ):
             if line.startswith('rpc error'):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
             lgr.debug("exec#%i: %s", i, line.rstrip())

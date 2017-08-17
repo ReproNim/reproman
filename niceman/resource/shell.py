@@ -39,7 +39,7 @@ class ShellSession(POSIXSession):
     #
     # Commands fulfilling a "Session" interface to interact with the environment
     #
-    def execute_command(self, command, env=None, cwd=None):
+    def _execute_command(self, command, env=None, cwd=None):
         """
         Execute the given command in the environment.
 
@@ -56,19 +56,23 @@ class ShellSession(POSIXSession):
         -------
         out, err
         """
-        # TODO: bring back updated_env?
-        command_env = dict(self._env, **(env or {}))
         # XXX should it be a generic behavior to auto-start?
         if self._runner is None:
             self.start()
         run_kw = {}
-        if command_env:
+        if env:
             # if anything custom, then we need to get original full environment
             # and update it with custom settings which we either "accumulated"
             # via set_envvar, or it was passed into this call.
             run_env = os.environ.copy()
-            run_env.update(command_env)
+            # TODO: make get_updated_env which would take care about pruning
+            #  entries which were removed?
+            run_env.update(env)
             run_kw['env'] = run_env
+            # pop those explicitly set to None
+            for e in run_env:
+                if run_env[e] is None:
+                    del run_env[e]
 
         return self._runner.run(
             command,
