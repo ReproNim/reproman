@@ -141,7 +141,7 @@ class CondaTracer(DistributionTracer):
                     for f in details["files"]:
                         full_path = os.path.normpath(
                             os.path.join(conda_path, f))
-                        file_to_package_map[full_path] = conda_package_name;
+                        file_to_package_map[full_path] = conda_package_name
             except Exception as exc:
                 lgr.warning("Could not retrieve conda info in path %s: %s",
                             conda_path,
@@ -156,7 +156,7 @@ class CondaTracer(DistributionTracer):
 
         pip_deps = []
         for dep in dependencies:
-            if isinstance(dep,dict) and "pip" in dep:
+            if isinstance(dep, dict) and "pip" in dep:
                 pip_deps = dep.get("pip")
 
         for pip_dep in pip_deps:
@@ -170,8 +170,8 @@ class CondaTracer(DistributionTracer):
                 )
                 # TODO: Do a better job parsing pip show results
                 # Convert to valid yaml
-                out = out.replace("::", "--")      # Correct classifiers
-                out = out.replace("\n  ","\n - ")  # Correct lists
+                out = out.replace("::", "--")       # Correct classifiers
+                out = out.replace("\n  ", "\n - ")  # Correct lists
                 pip_info = yaml.load(out)
                 # Record the details we care about
                 details = {"name": pip_info.get("Name"),

@@ -10,6 +10,8 @@ import collections
 import os
 
 import sys
+from subprocess import call
+
 import yaml
 import attr
 from niceman.formats.niceman import NicemanProvenance
@@ -24,14 +26,25 @@ import json
 from niceman.distributions.conda import CondaTracer
 
 
+def create_test_conda():
+    if os.path.exists("/tmp/niceman_conda_test"):
+        return
+    call("mkdir /tmp/niceman_conda_test; "
+         "cd /tmp/niceman_conda_test; "
+         "curl -O https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh; "
+         "bash -b Miniconda2-latest-Linux-x86_64.sh -b -p /tmp/niceman_conda_test/miniconda; "
+         "/tmp/niceman_conda_test/miniconda/bin/conda create -y -n mytest python=2.7;"
+         "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/conda install -y xz -n mytest;"
+         "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/pip install pluggy;",
+         shell=True)
+
+
 def test_conda_manager_identify_distributions():
-    # For now I'm using a local conda install to get a handle on what info
-    # is available
-    # TODO: Mock or install a real conda environment for testing
-    files = ["/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/nipype2boutiques",
-             "/home/butch/simple_workflow/miniconda/envs/bh_demo/bin/xz",
-             "/home/butch/simple_workflow/miniconda/envs/bh_demo/lib/python2.7/site-packages/pluggy.py",
-             "/home/butch/simple_workflow/miniconda/lib/python3.6/site-packages/pip/utils/ui.py",
+    create_test_conda()
+    files = ["/tmp/niceman_conda_test/miniconda/bin/sqlite3",
+             "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/xz",
+             "/tmp/niceman_conda_test/miniconda/envs/mytest/lib/python2.7/site-packages/pip/index.py",
+             "/tmp/niceman_conda_test/miniconda/envs/mytest/lib/python2.7/site-packages/pluggy.py",
              "/sbin/iptables"]
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
@@ -41,3 +54,4 @@ def test_conda_manager_identify_distributions():
 #        print(json.dumps(attr.asdict(
 #                distributions, dict_factory=collections.OrderedDict), indent=4))
         print(json.dumps(unknown_files, indent=4))
+    # TODO: Test for existence of expected packages
