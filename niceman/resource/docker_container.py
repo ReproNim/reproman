@@ -50,16 +50,25 @@ class DockerContainer(Resource):
 
         containers = []
         for container in self._client.containers(all=True):
-            if (self.id and container.get('Id').startswith(self.id)) or \
-                    (not self.id and self.name and '/' + self.name == container.get('Names')[0]):
-                    # TODO: make above more robust and centralize across different resources/backends?
-                containers.append(container)
+            assert self.id or self.name, "Name or id must be known"
+            if self.id and not container.get('Id').startswith(self.id):
+                lgr.log(5, "Container %s does not match by id: %s", container,
+                        self.id)
+                continue
+            if self.name and ('/' + self.name) not in container.get('Names'):
+                lgr.log(5, "Container %s does not match by name: %s", container,
+                        self.name)
+                continue
+            # TODO: make above more robust and centralize across different resources/backends?
+            containers.append(container)
         if len(containers) == 1:
             self._container = containers[0]
             self.id = self._container.get('Id')
             self.status = self._container.get('State')
         elif len(containers) > 1:
-            raise ResourceError("Multiple container matches found")
+            raise ResourceError(
+                "Multiple container matches found: %s" % str(containers)
+            )
         else:
             self.id = None
             self.status = None
