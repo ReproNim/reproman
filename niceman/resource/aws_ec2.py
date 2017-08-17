@@ -79,7 +79,6 @@ class AwsEc2(Resource):
             aws_secret_access_key=self.secret_access_key,
             region_name=self.region_name
         )
-
         instances = []
         if self.id:
             instances.append(self._ec2_resource.Instance(self.id))

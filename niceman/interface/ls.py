@@ -54,17 +54,17 @@ class Ls(Interface):
             metavar='CONFIG',
             constraints=EnsureStr(),
         ),
-        # refresh=Parameter(
-        #     args=("--refresh",),
-        #     action="store_true",
-        #     doc="Refresh the status of the resources listed",
-        #     # metavar='CONFIG',
-        #     # constraints=EnsureStr(),
-        # ),
+        refresh=Parameter(
+            args=("--refresh",),
+            action="store_true",
+            doc="Refresh the status of the resources listed",
+            # metavar='CONFIG',
+            # constraints=EnsureStr(),
+        ),
     )
 
     @staticmethod
-    def __call__(names, config, verbose=False): #, refresh=False):
+    def __call__(names, config, verbose=False, refresh=False):
 
         # TODO?: we might want to embed get_resource_inventory()
         #       within ConfigManager (even though it would make it NICEMAN specific)
@@ -73,7 +73,8 @@ class Ls(Interface):
         inventory_path = cm.getpath('general', 'inventory_file')
         inventory = ResourceManager.get_inventory(inventory_path)
 
-        template = '{:<20} {:<20} {:<20} {:<10}'
+        id_length = 19  # todo: make it possible to output them long
+        template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 
@@ -87,7 +88,9 @@ class Ls(Interface):
             config.update(inventory_resource)
             env_resource = ResourceManager.factory(config)
             try:
-                env_resource.connect()
+                if refresh:
+                    env_resource.connect()
+                # TODO: handle the actual refreshing in the inventory
                 inventory_resource['id'] = env_resource.id
                 inventory_resource['status'] = env_resource.status
                 if not env_resource.id:
@@ -100,7 +103,7 @@ class Ls(Interface):
             msgargs = (
                 name,
                 inventory_resource['type'],
-                inventory_resource['id'][:19],
+                inventory_resource['id'][:id_length],
                 inventory_resource['status']
             )
             ui.message(template.format(*msgargs))
