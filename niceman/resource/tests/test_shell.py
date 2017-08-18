@@ -20,6 +20,7 @@ from ...cmd import Runner
 from ..shell import Shell, ShellSession
 from .test_session import check_session_passing_envvars
 
+
 def test_shell_class():
 
     with patch.object(Runner, 'run', return_value='installed package') as runner, \

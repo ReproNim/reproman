@@ -21,6 +21,7 @@ from niceman.support.exceptions import SessionRuntimeError
 from niceman.dochelpers import exc_str
 from niceman.support.exceptions import CommandError
 from niceman.utils import updated
+from niceman.utils import to_unicode
 
 import logging
 lgr = logging.getLogger('niceman.session')
@@ -220,7 +221,7 @@ class POSIXSession(Session):
     
     """
 
-    _GET_ENVIRON_CMD = ['python', '-c', 'import os; print(repr(os.environ).encode())']
+    _GET_ENVIRON_CMD = ['python', '-c', 'import os; print(repr(dict(os.environ)))']
 
     def query_envvars(self):
         """Query session environment settings"""
@@ -230,7 +231,7 @@ class POSIXSession(Session):
         return env
 
     def _parse_envvars_output(self, out):
-        return eval(out.decode())
+        return eval(to_unicode(out))
 
     def source_script(self, command, permanent=False, diff=True, shell=None):
         """Source a script which would modify the environment
