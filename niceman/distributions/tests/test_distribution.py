@@ -35,8 +35,8 @@ def test_distributions(demo1_spec):
         debian_distribution.install_packages(environment)
 
         calls = [
-            call.add_command(['apt-get', 'update']),
-            call.add_command(['apt-get', 'install', '-y', 'libc6-dev=2.19-18+deb8u4', 'afni=16.2.07~dfsg.1-2~nd90+1']),
+            call.execute_command(['apt-get', 'update']),
+            call.execute_command(['apt-get', 'install', '-y', 'libc6-dev=2.19-18+deb8u4', 'afni=16.2.07~dfsg.1-2~nd90+1']),
         ]
         environment.assert_has_calls(calls, any_order=True)
         assert_in("Adding Debian update to environment command list.", log.lines)
