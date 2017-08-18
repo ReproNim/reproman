@@ -12,10 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 import os
-try:
-    from ConfigParser import NoSectionError
-except:
-    from configparser import NoSectionError
+from six.moves.configparser import NoSectionError
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching

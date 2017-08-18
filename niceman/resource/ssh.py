@@ -6,20 +6,15 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Environment sub-class to provide management of a SSH connection."""
+"""Resource sub-class to provide management of a SSH connection."""
 
 import attr
-import re
-from os import chmod
-from os.path import join
-from appdirs import AppDirs
+import uuid
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
 
 from .base import Resource, attrib
-import niceman.support.sshconnector2 # Needed for test patching to work.
-from ..ui import ui
 from ..support.starcluster.sshutils import SSHClient
 
 
@@ -47,27 +42,28 @@ class Ssh(Resource):
 
     # Current instance properties, to be set by us, not augmented by user
     status = attr.ib(default=None)
+    _ssh = attr.ib(default=None)
 
     def connect(self):
         """
         Open a connection to the environment resource.
         """
-        self._ssh = niceman.support.sshconnector2.SSHConnector2(self.host,
-            port=self.port,
-            key_filename=self.key_filename,
+        self._ssh = SSHClient(self.host,
             username=self.user,
-            password=self.password, # TODO: We can use password authentication, but how to securely save the password?
+            password=self.password,
+            private_key=self.key_filename,
+            port=int(self.port)
         )
 
     def create(self):
         """
-        Create an EC2 instance.
+        Register the SSH connection to the niceman inventory registry.
 
         Returns
         -------
         dict : config and state parameters to capture in the inventory file
         """
-        self.id = self.host # TODO: The id should be a niceman-created unique identifier.
+        self.id = str(uuid.uuid4())
         self.status = 'N/A'
         return {
             'id': self.id,
@@ -87,7 +83,27 @@ class Ssh(Resource):
     def stop(self):
         return
 
-    def execute_command(self, command, env=None):
+    def get_session(self, pty=False, shared=None):
+        """
+        Log into remote environment and get the command line
+        """
+        assert self._ssh, "We should create or connect to remote server first"
+
+        if pty and shared is not None and not shared:
+            lgr.warning("Cannot do non-shared pty session for ssh server yet")
+
+        return (PtySshSession if pty else SshSession)(
+            ssh=self._ssh
+        )
+
+
+from niceman.resource.session import POSIXSession
+
+@attr.s
+class SshSession(POSIXSession):
+    ssh = attr.ib()
+
+    def _execute_command(self, command, env=None, cwd=None):
         """
         Execute the given command in the environment.
 
@@ -100,33 +116,28 @@ class Ssh(Resource):
             Additional (or replacement) environment variables which are applied
             only to the current call
         """
-        command_env = self.get_updated_env(env)
+        # TODO -- command_env is not used etc...
+        # command_env = self.get_updated_env(env)
 
+        if cwd:
+            raise NotImplementedError("implement cwd support")
         # if command_env:
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
         # If a command fails, a CommandError exception will be thrown.
-        for i, line in enumerate(self._ssh(" ".join(command))):
+        for i, line in enumerate(self.ssh.execute(" ".join(command))):
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
-    def execute_command_buffer(self):
-        """
-        Send all the commands in the command buffer to the environment for
-        execution.
-        """
-        for command in self._command_buffer:
-            lgr.info("Running command '%s'", command['command'])
-            self.execute_command(command['command'], command['env'])
+@attr.s
+class PtySshSession(SshSession):
+    """Interactive SSH Session"""
 
-    def login(self):
-        """
-        Log into remote environment and get the command line
-        """
+    def open(self):
         lgr.debug("Opening TTY connection via SSH.")
-        ssh = SSHClient(self.host,
-            username=self.user,
-            password=self.password,
-            private_key=self.key_filename,
-            port=self.port)
-        ssh.interactive_shell(self.user)
+        assert self.ssh, "We should create or connect to remote server first"
+        self.ssh.interactive_shell(self.ssh._username)
+
+    def close(self):
+        # XXX ?
+        pass
