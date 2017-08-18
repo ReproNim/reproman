@@ -14,6 +14,7 @@ import logging
 lgr = logging.getLogger('niceman.resource.session')
 
 import attr
+import json
 import os
 import re
 
@@ -221,7 +222,7 @@ class POSIXSession(Session):
     
     """
 
-    _GET_ENVIRON_CMD = ['python', '-c', 'import os; print(repr(dict(os.environ)))']
+    _GET_ENVIRON_CMD = ['python', '-c', 'import os,json,sys; sys.stdout.write(json.dumps(dict(os.environ)))']
 
     def query_envvars(self):
         """Query session environment settings"""
@@ -231,7 +232,7 @@ class POSIXSession(Session):
         return env
 
     def _parse_envvars_output(self, out):
-        return eval(to_unicode(out))
+        return json.loads(to_unicode(out))
 
     def source_script(self, command, permanent=False, diff=True, shell=None):
         """Source a script which would modify the environment
