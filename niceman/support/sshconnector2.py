@@ -21,6 +21,16 @@ class SSHConnector2(object):
     Manage and use an SSH connection.
     """
 
+    def connect(self):
+        """
+        Create a connection to the remote environment.
+
+        Returns
+        -------
+        Instance of SSHConnection2 class
+        """
+        return self.__enter__()
+
     # TODO: eventually we might need to have
     #  - X forwarding
     #     see e.g. http://stackoverflow.com/a/12876252 on how to do with Paramiko
@@ -29,7 +39,7 @@ class SSHConnector2(object):
     #     and some homebrewed solutions on top of paramiko:
     #     http://stackoverflow.com/a/12106387
     #  Get back to reprozip and check what they did?
-    def __init__(self, host, username='ubuntu', key_filename=None):
+    def __init__(self, host, port=22, username='ubuntu', password=None, key_filename=None):
         """
         Collect the connection parameters and create client object.
 
@@ -37,13 +47,17 @@ class SSHConnector2(object):
         ----------
         host : string
             host to connect to.
+        port : integer
+            port to connect to.
         username : string
             username for remote account logging into
         key_filename : string
             path of ssh private key
         """
         self._host = host
+        self._port = port
         self._username = username
+        self._password = password
         self._key_filename = key_filename
 
         self._client = paramiko.SSHClient()
@@ -59,8 +73,8 @@ class SSHConnector2(object):
         Instance of SSHConnection2 class
         """
         try:
-            self._client.connect(self._host, username=self._username,
-                key_filename=self._key_filename)
+            self._client.connect(self._host, username=self._username, password=self._password,
+                key_filename=self._key_filename, port=self._port)
         except paramiko.AuthenticationException:
             lgr.error("SSH authentication failed when connecting to %s", self._host)
             sys.exit(1)
