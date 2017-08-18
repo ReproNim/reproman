@@ -132,8 +132,8 @@ class DebianDistribution(Distribution):
             The Environment sub-class object.
         """
         lgr.debug("Adding Debian update to environment command list.")
-        session.add_command(['apt-get', 'update'])
-        #session.add_command(['apt-get', 'install', '-y', 'python-pip'])
+        session.execute_command(['apt-get', 'update'])
+        #session.execute_command(['apt-get', 'install', '-y', 'python-pip'])
         # session.set_env(DEBIAN_FRONTEND='noninteractive', this_session_only=True)
 
     def install_packages(self, session, use_version=True):
@@ -160,7 +160,7 @@ class DebianDistribution(Distribution):
         # Doing in one shot to fail early if any of the versioned specs
         # couldn't be satisfied
         lgr.debug("Installing %s", ', '.join(package_specs))
-        session.add_command(
+        session.execute_command(
             # TODO: Pull env out of provenance for this command.
             ['apt-get', 'install', '-y'] + package_specs,
             # env={'DEBIAN_FRONTEND': 'noninteractive'}

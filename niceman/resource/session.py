@@ -20,6 +20,7 @@ import re
 from niceman.support.exceptions import SessionRuntimeError
 from niceman.dochelpers import exc_str
 from niceman.support.exceptions import CommandError
+from niceman.utils import updated
 
 import logging
 lgr = logging.getLogger('niceman.session')
@@ -69,7 +70,10 @@ class Session(object):
           must be undefined then).
         value: str or None
           If variable is not a dict, it would be the value for the variable
-          to assign.  If value is None, removes that variable
+          to assign.  If value is None, removes that variable. Use empty string
+          if you want it to be defined and empty
+        permanent: bool, optional
+          Store that variable for future session within this "container"
         format: bool
           Use Python string `.format()` giving old value of the env dictionary
         """
@@ -101,7 +105,7 @@ class Session(object):
         return self._env_permanent if permanent else self._env
 
     def query_envvars(self):
-        """Query full session environment settings within session"""
+        """Query full session environment settings within the session"""
         raise NotImplementedError
 
     def source_script(self, script_or_cmd, permanent=False, diff=True):
@@ -128,8 +132,9 @@ class Session(object):
             Shell command string or list of command tokens to send to the
             environment to execute.
         env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
+            Additional environment variables which are applied
+            only to the current call.  If value is None -- variable will be 
+            removed
 
         Returns
         -------
@@ -139,12 +144,7 @@ class Session(object):
         command_env = dict(self._env, **(env or {}))
         run_kw = {}
         if command_env:
-            # if anything custom, then we need to get original full environment
-            # and update it with custom settings which we either "accumulated"
-            # via set_envvar, or it was passed into this call.
-            run_env = os.environ.copy()
-            run_env.update(command_env)
-            run_kw['env'] = run_env
+            run_kw['env'] = command_env
 
         return self._execute_command(
             command,
@@ -373,3 +373,16 @@ def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):
     if env:
         session.set_envvar(env)
     return session
+
+
+def get_updated_env(env, update):
+    """Given an environment and set of updates, return updated one
+    
+    Special handling -- keys with None for the value, will be removed
+    """
+    env_ = updated(env, update)
+    # pop those explicitly set to None
+    for e in list(env_):
+        if env_[e] is None:
+            del env_[e]
+    return env_

@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import pytest
+from ..session import get_updated_env
 
 @pytest.mark.skip(reason="TODO")
 def test_check_envvars_handling():
@@ -38,3 +39,11 @@ def check_session_passing_envvars(session):
     #  envvars = assert session.query_envvars()
     #  assert 'EXPORTED_NOT_PERMANENT' not in envvars
     #  assert envvars['EXPORTED_NOT_PERMANENT'] == 'VALUE2'
+
+
+def test_get_updated_env():
+    assert get_updated_env({'a': 1}, {'a': 2}) == {'a': 2}
+    assert get_updated_env({'a': None}, {'a': 2}) == {'a': 2}
+    assert get_updated_env({'a': 1}, {'a': None}) == {}
+    assert get_updated_env({'a': 1, 'b': 2}, {'a': None}) == {'b': 2}
+    assert get_updated_env({'a': 1, 'b': 2}, {'a': None, 'b': 3}) == {'b': 3}

@@ -17,7 +17,7 @@ lgr = logging.getLogger('niceman.resource.shell')
 
 import os
 
-from .session import POSIXSession
+from .session import POSIXSession, get_updated_env
 
 
 # For now just assuming that local shell is a POSIX shell
@@ -64,15 +64,7 @@ class ShellSession(POSIXSession):
             # if anything custom, then we need to get original full environment
             # and update it with custom settings which we either "accumulated"
             # via set_envvar, or it was passed into this call.
-            run_env = os.environ.copy()
-            # TODO: make get_updated_env which would take care about pruning
-            #  entries which were removed?
-            run_env.update(env)
-            run_kw['env'] = run_env
-            # pop those explicitly set to None
-            for e in run_env:
-                if run_env[e] is None:
-                    del run_env[e]
+            run_kw['env'] = get_updated_env(os.environ, env)
 
         return self._runner.run(
             command,

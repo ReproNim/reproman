@@ -133,6 +133,7 @@ class DockerContainer(Resource):
         """
         Log into a container and get the command line
         """
+        assert self._container, "We should create or connect to container first"
         if pty and shared is not None and not shared:
             lgr.warning("Cannot do non-shared pty session for docker yet")
         return (PTYDockerSession if pty else DockerSession)(
@@ -161,7 +162,6 @@ class DockerSession(POSIXSession):
         env : dict
             Complete environment to be used
         """
-
         #command_env = self.get_updated_env(env)
         if env:
             raise NotImplementedError("passing env variables to docker session execution")
@@ -174,6 +174,7 @@ class DockerSession(POSIXSession):
 
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
+        lgr.debug('Running command %r', command)
         execute = self.client.exec_create(container=self.container, cmd=command)
         for i, line in enumerate(
                 self.client.exec_start(exec_id=execute['Id'],
