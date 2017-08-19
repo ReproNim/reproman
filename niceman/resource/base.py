@@ -11,7 +11,10 @@
 import attr
 from importlib import import_module
 import abc
-from ConfigParser import NoSectionError
+try:
+    from ConfigParser import NoSectionError
+except:
+    from configparser import NoSectionError
 
 import yaml
 from os.path import basename
