@@ -20,9 +20,6 @@ lgr = logging.getLogger('niceman.resource.ssh')
 from .base import Resource, attrib
 import niceman.support.sshconnector2 # Needed for test patching to work.
 from ..ui import ui
-from ..utils import assure_dir
-from ..dochelpers import exc_str
-from ..support.exceptions import ResourceError
 from ..support.starcluster.sshutils import SSHClient
 
 
@@ -90,14 +87,12 @@ class Ssh(Resource):
     def stop(self):
         return
 
-    def execute_command(self, ssh, command, env=None):
+    def execute_command(self, command, env=None):
         """
         Execute the given command in the environment.
 
         Parameters
         ----------
-        ssh : SSHConnector2 instance
-            SSH connection object
         command : list
             Shell command string or list of command tokens to send to the
             environment to execute.
@@ -112,7 +107,7 @@ class Ssh(Resource):
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
         # If a command fails, a CommandError exception will be thrown.
-        for i, line in enumerate(ssh(" ".join(command))):
+        for i, line in enumerate(self._ssh(" ".join(command))):
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def execute_command_buffer(self):
@@ -120,14 +115,9 @@ class Ssh(Resource):
         Send all the commands in the command buffer to the environment for
         execution.
         """
-        with niceman.support.sshconnector2.SSHConnector2(self.host,
-            port=self.port,
-            key_filename=self.key_filename,
-            username=self.user,
-            password=self.password) as ssh:
-            for command in self._command_buffer:
-                lgr.info("Running command '%s'", command['command'])
-                self.execute_command(ssh, command['command'], command['env'])
+        for command in self._command_buffer:
+            lgr.info("Running command '%s'", command['command'])
+            self.execute_command(command['command'], command['env'])
 
     def login(self):
         """
