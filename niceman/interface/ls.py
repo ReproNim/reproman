@@ -11,7 +11,6 @@
 
 __docformat__ = 'restructuredtext'
 
-import os
 from six.moves.configparser import NoSectionError
 
 from .base import Interface
