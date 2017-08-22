@@ -32,11 +32,16 @@ class CondaPackage(Package):
     installer = attr.ib()
     version = attr.ib()
     build = attr.ib()
-    channel = attr.ib()
+    channel_name = attr.ib()
     size = attr.ib()
     md5 = attr.ib()
     url = attr.ib()
     files = attr.ib(default=attr.Factory(list))
+
+@attr.s
+class CondaChannel(SpecObject):
+    name = attr.ib()
+    channel = attr.ib(default=None)
 
 @attr.s
 class CondaEnvironment(SpecObject):
@@ -45,7 +50,7 @@ class CondaEnvironment(SpecObject):
     conda_version = attr.ib(default=None)
     python_version = attr.ib(default=None)
     packages = TypedList(CondaPackage)
-    channels = attr.ib(default=None)
+    channels = TypedList(CondaChannel)
 
 # ~/anaconda
 #
@@ -59,7 +64,6 @@ class CondaDistribution(Distribution):
     conda_version = attr.ib(default=None)
     python_version = attr.ib(default=None)
     environments = TypedList(CondaEnvironment)
-    channels = attr.ib(default=None)
 
     def initiate(self, environment):
         """
@@ -135,7 +139,6 @@ class CondaTracer(DistributionTracer):
                     conda_package_name = \
                         ("%s=%s=%s" % (details["name"], details["version"],
                                        details["build"]))
-                    details["installer"] = "conda"
                     packages[conda_package_name] = details
                     # Now map the package files to the package
                     for f in details["files"]:
@@ -267,10 +270,12 @@ class CondaTracer(DistributionTracer):
         # Loop through conda_paths, find packages and create the
         # environments
         for idx, conda_path in enumerate(conda_paths):
+            # Start with an empty channels list
+            channels = []
+            channel_to_name = {}
 
             # Retrieve distribution details
             conda_info = self._get_conda_info(conda_path)
-            # TODO: Use env_export to get pip packages
             root_path = conda_info["root_prefix"]
             env_export = self._get_conda_env_export(
                root_path, conda_path)
@@ -303,14 +308,30 @@ class CondaTracer(DistributionTracer):
             packages = []
             # Create the packages in the environment
             for package_name in conda_package_details:
+
                 details = conda_package_details[package_name]
+
+                # Look up or create the conda channel for the environment list
+                channel = details.get("channel")
+                channel_name = None
+                if channel:
+                    if channel not in channel_to_name:
+                        # New channel for our environment, so name and add it
+                        channel_name = "channel_%d" % len(channels)
+                        channel_to_name[channel] = channel_name
+                        channels.append(CondaChannel(
+                            name=channel_name,
+                            channel=channel))
+                    else:
+                        channel_name = channel_to_name[channel]
+
                 # Create the package
                 package = CondaPackage(
                     name=details.get("name"),
                     installer=details.get("installer"),
                     version=details.get("version"),
                     build=details.get("build"),
-                    channel=details.get("channel"),
+                    channel_name=channel_name,
                     size=details.get("size"),
                     md5=details.get("md5"),
                     url=details.get("url"),
@@ -331,7 +352,7 @@ class CondaTracer(DistributionTracer):
                 python_version=conda_info.get("python_version"),
                 path=conda_path,
                 packages=packages,
-                channels=conda_info.get("channels")
+                channels=channels
             )
             root_to_envs[root_path].append(conda_env)
 
@@ -352,8 +373,6 @@ class CondaTracer(DistributionTracer):
                 conda_version=conda_info.get("conda_version"),
                 python_version=conda_info.get("python_version"),
                 path=root_path,
-                environments=root_to_envs[root_path],
-                channels=conda_info.get("channels")
-                # TODO: all the packages and paths
+                environments=root_to_envs[root_path]
             )
             yield dist, list(unknown_files)
