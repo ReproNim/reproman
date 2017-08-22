@@ -38,10 +38,12 @@ class CondaPackage(Package):
     url = attr.ib()
     files = attr.ib(default=attr.Factory(list))
 
+
 @attr.s
 class CondaChannel(SpecObject):
     name = attr.ib()
     channel = attr.ib(default=None)
+
 
 @attr.s
 class CondaEnvironment(SpecObject):
@@ -51,6 +53,7 @@ class CondaEnvironment(SpecObject):
     python_version = attr.ib(default=None)
     packages = TypedList(CondaPackage)
     channels = TypedList(CondaChannel)
+
 
 # ~/anaconda
 #
@@ -152,7 +155,8 @@ class CondaTracer(DistributionTracer):
 
         return packages, file_to_package_map
 
-    def _parse_pip_show(self, out):
+    @staticmethod
+    def _parse_pip_show(out):
         pip_info = {}
         list_tag = None
         for line in out.splitlines():
