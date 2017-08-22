@@ -57,7 +57,7 @@ multiline
 export PATH=/custom:$PATH
 NON_EXPORTED_VAR=2         # but may be those should be handled??
 """)
-def test_source_file(script):
+def test_source_file(script=None):
     ses = ShellSession()
     assert ses.get_envvars() == {}
     new_env_diff = ses.source_script(script, diff=True)
@@ -67,7 +67,7 @@ def test_source_file(script):
 
 
 @with_tempfile(content="exit 1")
-def test_source_file_crash(script):
+def test_source_file_crash(script=None):
     ses = ShellSession()
     with raises(Exception):  # TODO: unify?
         ses.source_script(script)
@@ -80,7 +80,7 @@ fi
 export EXPORTED_VAR=${1}1
 NON_EXPORTED_VAR=2         # but may be those should be handled??
 """)
-def test_source_file_param(script):
+def test_source_file_param(script=None):
     ses = ShellSession()
     assert ses.get_envvars() == {}
     new_env_diff = ses.source_script([script, "test"])
