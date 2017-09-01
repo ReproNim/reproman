@@ -60,6 +60,12 @@ class MultipleReleaseFileMatch(RuntimeError):
     """Multiple release files were matched while retracing on Debian"""
     pass
 
+
 class ResourceError(RuntimeError):
     """To be raised when there is a problem with a niceman resource"""
+    pass
+
+
+# Session errors
+class SessionRuntimeError(RuntimeError):
     pass

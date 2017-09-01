@@ -50,15 +50,25 @@ class DockerContainer(Resource):
 
         containers = []
         for container in self._client.containers(all=True):
-            if self.id == container.get('Id') or '/' + self.name == container.get('Names')[0]:
-                containers.append(container)
-
+            assert self.id or self.name, "Name or id must be known"
+            if self.id and not container.get('Id').startswith(self.id):
+                lgr.log(5, "Container %s does not match by id: %s", container,
+                        self.id)
+                continue
+            if self.name and ('/' + self.name) not in container.get('Names'):
+                lgr.log(5, "Container %s does not match by name: %s", container,
+                        self.name)
+                continue
+            # TODO: make above more robust and centralize across different resources/backends?
+            containers.append(container)
         if len(containers) == 1:
             self._container = containers[0]
             self.id = self._container.get('Id')
             self.status = self._container.get('State')
         elif len(containers) > 1:
-            raise ResourceError("Multiple container matches found")
+            raise ResourceError(
+                "Multiple container matches found: %s" % str(containers)
+            )
         else:
             self.id = None
             self.status = None
@@ -91,40 +101,12 @@ class DockerContainer(Resource):
             command='/bin/bash',
         )
         self.id = self._container.get('Id')
-        self.status = 'running'
         self._client.start(container=self.id)
+        self.status = 'running'
         return {
             'id': self.id,
             'status': self.status
         }
-
-    def execute_command(self, command, env=None):
-        """
-        Execute the given command in the container.
-
-        Parameters
-        ----------
-        command : string or list
-            Shell command to send to the container to execute. The command can
-            be a string or a list of tokens that create the command.
-        env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
-        """
-
-        command_env = self.get_updated_env(env)
-
-        # if command_env:
-            # TODO: might not work - not tested it
-            # command = ['export %s=%s' % k for k in command_env.items()] + command
-
-        # The following call may throw the following exception:
-        #    docker.errors.APIError - If the server returns an error.
-        execute = self._client.exec_create(container=self._container, cmd=command)
-        for i, line in enumerate(self._client.exec_start(exec_id=execute['Id'], stream=True)):
-            if line.startswith('rpc error'):
-                raise CommandError(cmd=command, msg="Docker error - %s" % line)
-            lgr.debug("exec#%i: %s", i, line.rstrip())
 
     def delete(self):
         """
@@ -147,9 +129,75 @@ class DockerContainer(Resource):
         if self._container:
             self._client.stop(container=self._container.get('Id'))
 
-    def login(self):
+    def get_session(self, pty=False, shared=None):
         """
         Log into a container and get the command line
         """
+        assert self._container, "We should create or connect to container first"
+        if pty and shared is not None and not shared:
+            lgr.warning("Cannot do non-shared pty session for docker yet")
+        return (PTYDockerSession if pty else DockerSession)(
+            client=self._client,
+            container=self._container
+        )
+
+
+from niceman.resource.session import POSIXSession
+
+
+@attr.s
+class DockerSession(POSIXSession):
+    client = attr.ib()
+    container = attr.ib()
+
+    def _execute_command(self, command, env=None, cwd=None):
+        """
+        Execute the given command in the container.
+
+        Parameters
+        ----------
+        command : string or list
+            Shell command to send to the container to execute. The command can
+            be a string or a list of tokens that create the command.
+        env : dict
+            Complete environment to be used
+        """
+        #command_env = self.get_updated_env(env)
+        if env:
+            raise NotImplementedError("passing env variables to docker session execution")
+
+        if cwd:
+            raise NotImplementedError("handle cwd for docker")
+        # if command_env:
+            # TODO: might not work - not tested it
+            # command = ['export %s=%s' % k for k in command_env.items()] + command
+
+        # The following call may throw the following exception:
+        #    docker.errors.APIError - If the server returns an error.
+        lgr.debug('Running command %r', command)
+        execute = self.client.exec_create(container=self.container, cmd=command)
+        for i, line in enumerate(
+                self.client.exec_start(exec_id=execute['Id'],
+                stream=True)
+        ):
+            if line.startswith('rpc error'):
+                raise CommandError(cmd=command, msg="Docker error - %s" % line)
+            lgr.debug("exec#%i: %s", i, line.rstrip())
+
+    # XXX should we start/stop on open/close or just assume that it is running already?
+
+
+@attr.s
+class PTYDockerSession(DockerSession):
+    """Interactive Docker Session"""
+
+    def open(self):
         lgr.debug("Opening TTY connection to docker container.")
-        dockerpty.start(self._client, self._container, logs=0)
+        # TODO: probably call to super to assure that we have it running?
+        dockerpty.start(self.client, self.container, logs=0)
+
+    def close(self):
+        # XXX ?
+        pass
+
+    # XXX should we overload execute_command?

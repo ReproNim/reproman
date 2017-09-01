@@ -21,6 +21,7 @@ import textwrap
 from ..ui import ui
 from ..dochelpers import exc_str
 from ..resource import ResourceManager
+from ..resource import Resource
 from ..support.exceptions import ResourceError
 from logging import getLogger
 lgr = getLogger('niceman.interface')
@@ -257,6 +258,12 @@ def backend_help(resource_type=None):
                     ', '.join(ResourceManager._discover_types()))
             )
         cls = getattr(module, class_name)
+        if not issubclass(cls, Resource):
+            lgr.debug(
+                "Skipping %s.%s since not a Resource. Consider moving away",
+                module, class_name
+            )
+            continue
         args = attr.fields(cls)
         for arg in args:
             if 'doc' in arg.metadata:
@@ -276,7 +283,7 @@ def backend_set_config(backend, env_resource, config):
             config[key] = value
             setattr(env_resource, key, value)
         else:
-            raise NotImplementedError("Bad --backend paramenter '{}'".format(key))
+            raise NotImplementedError("Bad --backend parameter '{}'".format(key))
     return config
 
 

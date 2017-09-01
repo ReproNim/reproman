@@ -18,6 +18,7 @@ from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
 from ..resource import ResourceManager
+from ..resource import Resource
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -148,10 +149,10 @@ class Create(Interface):
             config = backend_set_config(backend, env_resource, config)
 
         env_resource.connect()
-        config_updates = env_resource.create()
+        resource_attrs = env_resource.create()
 
         # Save the updated configuration for this resource.
-        config.update(config_updates)
+        config.update(resource_attrs)
         inventory[resource] = config
         ResourceManager.set_inventory(inventory)
 

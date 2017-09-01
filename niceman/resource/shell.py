@@ -17,6 +17,65 @@ lgr = logging.getLogger('niceman.resource.shell')
 
 import os
 
+from .session import POSIXSession, get_updated_env
+
+
+# For now just assuming that local shell is a POSIX shell
+# Later we could specialize based on the OS, and that is why
+# Resource/Shell is not subclassing Session but rather delegates to .session
+class ShellSession(POSIXSession):
+    """Local shell session"""
+
+    def __init__(self):
+        super(ShellSession, self).__init__()
+        self._runner = None
+
+    def start(self):
+        self._runner = Runner()
+
+    def stop(self):
+        self._runner = None
+
+    #
+    # Commands fulfilling a "Session" interface to interact with the environment
+    #
+    def _execute_command(self, command, env=None, cwd=None):
+        """
+        Execute the given command in the environment.
+
+        Parameters
+        ----------
+        command : list
+            Shell command string or list of command tokens to send to the
+            environment to execute.
+        env : dict
+            Additional (or replacement) environment variables which are applied
+            only to the current call
+
+        Returns
+        -------
+        out, err
+        """
+        # XXX should it be a generic behavior to auto-start?
+        if self._runner is None:
+            self.start()
+        run_kw = {}
+        if env:
+            # if anything custom, then we need to get original full environment
+            # and update it with custom settings which we either "accumulated"
+            # via set_envvar, or it was passed into this call.
+            run_kw['env'] = get_updated_env(os.environ, env)
+
+        return self._runner.run(
+            command,
+            # For now we do not ERROR out whenever command fails or provides
+            # stderr -- analysis will be done outside
+            expect_fail=True,
+            expect_stderr=True,
+            cwd=cwd,
+            **run_kw
+        )  # , shell=True)
+
 
 @attr.s
 class Shell(Resource):
@@ -68,36 +127,12 @@ class Shell(Resource):
         """
         return
 
-    def execute_command(self, command, env=None):
+    def get_session(self, pty=False, shared=None):
         """
-        Execute the given command in the environment.
-
-        Parameters
-        ----------
-        command : list
-            Shell command string or list of command tokens to send to the
-            environment to execute.
-        env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
-
-        Returns
-        -------
-        list
-            List of STDOUT lines from the environment.
+        Log into a container and get the command line
         """
-        run = Runner()
-
-        command_env = self.get_updated_env(env)
-
-        run_kw = {}
-        if command_env:
-            # if anything custom, then we need to get original full environment
-            # and update it with custom settings which we either "accumulated"
-            # via set_envvar, or it was passed into this call.
-            run_env = os.environ.copy()
-            run_env.update(command_env)
-            run_kw['env'] = run_env
-
-        response = run(command, **run_kw)  # , shell=True)
-        return [response]
+        if pty:
+            raise NotImplementedError
+        if shared:
+            raise NotImplementedError
+        return ShellSession()

@@ -79,7 +79,6 @@ class AwsEc2(Resource):
             aws_secret_access_key=self.secret_access_key,
             region_name=self.region_name
         )
-
         instances = []
         if self.id:
             instances.append(self._ec2_resource.Instance(self.id))
@@ -203,7 +202,9 @@ class AwsEc2(Resource):
         """
         self._ec2_instance.stop()
 
-    def execute_command(self, ssh, command, env=None):
+    # TODO: RF into a separate Session and provide get_session
+    # then custom execute_command_buffer could go
+    def execute_command(self, ssh, command, env=None, cwd=None):
         """
         Execute the given command in the environment.
 
@@ -218,8 +219,11 @@ class AwsEc2(Resource):
             Additional (or replacement) environment variables which are applied
             only to the current call
         """
+        # TODO -- command_env is not used etc...
         command_env = self.get_updated_env(env)
 
+        if cwd:
+            raise NotImplementedError("implement cwd support")
         # if command_env:
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command

@@ -77,6 +77,7 @@ class Login(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
+        # TODO:  config too bad of a name here -- revert back to resource_info?
         config, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
 
         # Connect to resource environment
@@ -89,6 +90,7 @@ class Login(Interface):
         env_resource.connect()
 
         if not env_resource.id:
-            raise ValueError("No resource found given the info %s" % str(resource_info))
+            raise ValueError("No resource found given the info %s" % str(config))
 
-        env_resource.login()
+        with env_resource.get_session(pty=True):
+            pass

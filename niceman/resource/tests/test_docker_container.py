@@ -13,6 +13,9 @@ from mock import patch, MagicMock, call
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ..base import ResourceManager
+from ...support.exceptions import ResourceError
+
+from pytest import raises
 
 def test_dockercontainer_class():
 
@@ -63,10 +66,9 @@ def test_dockercontainer_class():
             'type': 'docker-container',
         }
         resource = ResourceManager.factory(config)
-        try:
+        with raises(ResourceError) as ecm:
             resource.connect()
-        except Exception as e:
-            assert e.args[0] == "Multiple container matches found"
+        assert ecm.value.args[0].startswith("Multiple container matches found")
 
         # Test connecting to an existing resource.
         config = {
@@ -120,7 +122,8 @@ def test_dockercontainer_class():
         client.assert_has_calls(calls, any_order=True)
 
         # Test logging into the container.
-        resource.login()
+        with resource.get_session(pty=True):
+            pass # we do nothing really
         assert dockerpty.called == True
 
         # Test stopping resource.

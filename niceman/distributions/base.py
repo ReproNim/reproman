@@ -17,7 +17,7 @@ import yaml
 from importlib import import_module
 from six import viewvalues
 
-from niceman.cmd import Runner
+from niceman.resource.session import get_local_session
 
 import logging
 lgr = logging.getLogger('niceman.distributions')
@@ -155,7 +155,7 @@ class DistributionTracer(object):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
         # codepage just in case since we might want to comprehend error
         # messages
-        self._session = session or Runner(env={'LC_ALL': 'C'})
+        self._session = session or get_local_session()
         # to ease _init within derived classes which should not be parametrized
         # more anyways
         self._init()
@@ -227,7 +227,9 @@ class DistributionTracer(object):
                         pkg = self._create_package(**pkgfields)
                         if pkg:
                             found_packages[pkgfields_hashable] = pkg
-                            pkg.files.append(f)
+                            # we store only non-directories within 'files'
+                            if not self._session.isdir(f):
+                                pkg.files.append(f)
                             nb_pkg_files += 1
                         else:
                             unknown_files.add(f)
