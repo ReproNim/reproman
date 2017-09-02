@@ -9,7 +9,7 @@ ver=0.9.3.5
 sudo apt-get build-dep python-apt
 # sudo apt-get install -y --allow-downgrades  libapt-pkg-dev=0.8.16~exp12ubuntu10.27
 curl -O http://security.ubuntu.com/ubuntu/pool/main/a/apt/libapt-pkg-dev_0.8.16~exp12ubuntu10.27_amd64.deb
-sudo dpkg --force-downgrade -i libapt-pkg-dev_0.8.16~exp12ubuntu10.27_amd64.deb
+sudo dpkg --force-all -i libapt-pkg-dev_0.8.16~exp12ubuntu10.27_amd64.deb
 rm -f libapt-pkg-dev_0.8.16~exp12ubuntu10.27_amd64.deb
 # Install python-apt version 0.9.3.5 for Python 2 and 3
 sudo apt-get install xz-utils
