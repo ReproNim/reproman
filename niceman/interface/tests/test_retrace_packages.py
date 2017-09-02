@@ -46,6 +46,7 @@ def test_identify_myself():
 @with_tempfile(mkdir=True)
 def test_detached_git(repo=None):
     import os
+    # XXX Replace with our session?
     from niceman.cmd import Runner
     env = os.environ.copy()
     env['LC_ALL'] = 'C'
@@ -62,7 +63,8 @@ def test_detached_git(repo=None):
     packages = dist.packages
     assert len(packages) == 1
     pkg = packages[0]
-    assert pkg.files == [repo]
+    # we do not include repository path itself
+    assert pkg.files == []
     assert pkg.path == repo
 
     # Let's now make it more sensible
@@ -79,13 +81,32 @@ def test_detached_git(repo=None):
     assert hexsha
     assert pkg.branch == 'master'
 
+    # And if point to a directory under, should not identify the VCS
+    # (since in principle git e.g. is not tracing directories)
+    subdir = opj(repo, 'subdir')
+    os.mkdir(subdir)
+    distributions_, files_ = identify_distributions([subdir])
+    assert distributions_ == []
+    assert files_ == [subdir]
+
+    # but if we point to a file under
+    subfile = opj(subdir, 'file')
+    with open(subfile, 'w') as f:
+        pass
+    runner("git add subdir/file")
+    distributions__, files__ = identify_distributions([subfile])
+    assert len(distributions__) == 1
+    pkg = distributions__[0].packages[0]
+    assert pkg.files == [subfile]
+
     # and if we cause a detachment
     runner("git rm file")
     runner("git commit -m removed file")
-    runner("git checkout HEAD^")
+    runner("git checkout HEAD^", expect_stderr=True)
     distributions, files = identify_distributions([repo])
     pkg = distributions[0].packages[0]
-    assert pkg.files == [repo]
+    # we do not include repository path itself
+    assert pkg.files == []
     assert pkg.hexsha == hexsha
     assert not pkg.branch
     assert not pkg.remotes

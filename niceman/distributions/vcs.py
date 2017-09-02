@@ -61,7 +61,7 @@ class VCSDistribution(Distribution):
     def initiate(self, session):
         # This is VCS specific, but we could may be make it
         # to verify that some executable is available
-        session.run(self._cmd)
+        session.execute_command(self._cmd)
 
     @abc.abstractmethod
     def install_packages(self, session, use_version=True):
@@ -101,6 +101,7 @@ class GitDistribution(VCSDistribution):
 GitRepo._distribution = GitDistribution
 
 
+@attr.s
 class SVNRepo(VCSRepo):
 
     revision = attr.ib(default=None)
@@ -141,21 +142,21 @@ class GitSVNRepoShim(object):
 
         """
         self.path = path.rstrip(os.sep)  # TODO: might be done as some rg to attr.ib
-        self.session = session 
+        self._session = session
         self._all_files = None
         self._branch = None
 
-    def _session_run(self, cmd, **kwargs):
+    def _session_execute_command(self, cmd, **kwargs):
         """Run in the session but providing our self.path as the cwd"""
         if 'cwd' not in kwargs:
             kwargs = dict(cwd=self.path, **kwargs)
-        return self.session.run(cmd, **kwargs)
+        return self._session.execute_command(cmd, **kwargs)
 
     @property
     def all_files(self):
         """Lazy evaluation for _all_files. If session changes, result would be old"""
         if self._all_files is None:
-            out, err = self._session_run(self._ls_files_command)
+            out, err = self._session_execute_command(self._ls_files_command)
             assert not err
             self._all_files = set(filter(None, out.split('\n')))
             if self._ls_files_filter:
@@ -224,9 +225,9 @@ class SVNRepoShim(GitSVNRepoShim):
         # but still might be under SVN
         if not found:
             try:
-                out, err = session.run(
+                out, err = session.execute_command(
                     'svn info',
-                    expect_fail=True,
+                    # expect_fail=True,
                     cwd=dirpath
                 )
             except CommandError as exc:
@@ -255,7 +256,7 @@ class SVNRepoShim(GitSVNRepoShim):
             # TODO -- outdated repos might need 'svn upgrade' first
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
-            out, err = self._session_run('svn info')
+            out, err = self._session.execute_command('svn info', cwd=self.path)
             self.__info = dict(
                 [x.lstrip() for x in l.split(':', 1)]
                 for l in out.splitlines() if l.strip()
@@ -264,7 +265,8 @@ class SVNRepoShim(GitSVNRepoShim):
 
     @property
     def revision(self):
-        return self._info['Revision']
+        r = self._info['Revision']
+        return int(r) if ((r is not None) and r.isdigit()) else r
 
     @property
     def url(self):
@@ -296,9 +298,9 @@ class GitRepoShim(GitSVNRepoShim):
     @classmethod
     def get_at_dirpath(cls, session, dirpath):
         try:
-            out, err = session.run(
+            out, err = session.execute_command(
                 'git rev-parse --show-toplevel',
-                expect_fail=True,
+                # expect_fail=True,
                 cwd=dirpath
             )
         except CommandError as exc:
@@ -315,7 +317,11 @@ class GitRepoShim(GitSVNRepoShim):
         """Helper to run git command, and ignore stderr"""
         cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
         try:
-            out, err = self._session_run(cmd, expect_fail=expect_fail, **kwargs)
+            out, err = self._session.execute_command(
+                cmd,
+                #expect_fail=expect_fail,
+                cwd=self.path,
+                **kwargs)
         except CommandError:
             if not expect_fail:
                 raise
@@ -366,9 +372,10 @@ class GitRepoShim(GitSVNRepoShim):
             rec = {}
             for f in 'url', 'pushurl':
                 try:
-                    rec[f] = self._run_git('config remote.%s.%s' % (remote, f),
-                                           expect_fail=True,
-                                           expect_stderr=True)
+                    rec[f] = self._run_git('config remote.%s.%s' % (remote, f)
+                                           , expect_fail=True
+                                           #, expect_stderr=True
+                                           )
                 except CommandError:
                     # must have no value
                     pass
@@ -383,9 +390,9 @@ class GitRepoShim(GitSVNRepoShim):
         if not branch:
             return None
         return self._run_git(
-                'config branch.%s.remote' % (branch,),
-                expect_stderr=True,
-                expect_fail=True
+                'config branch.%s.remote' % (branch,)
+                #, expect_stderr=True
+                , expect_fail=True
         ) or None         # want explicit None
 
     @property
@@ -442,6 +449,7 @@ class VCSTracer(DistributionTracer):
     def _get_packagefields_for_files(self, files):
         out = {}
         for f in files:
+            lgr.log(6, "%s testing file %s", self, f)
             shim = self._resolve_file(f)
             if not shim:
                 continue

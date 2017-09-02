@@ -29,7 +29,7 @@ def test_delete_interface(niceman_cfg_path):
         client.return_value = MagicMock(
             containers=lambda all: [
                 {
-                    'Id': '326b0fdfbf83',
+                    'Id': '326b0fdfbf838',
                     'Names': ['/my-resource'],
                     'State': 'running'
                 }
@@ -46,7 +46,8 @@ def test_delete_interface(niceman_cfg_path):
             }
         }
 
-        args = ['delete',
+        args = [
+            'delete',
             '--resource', 'my-resource',
             '--config', niceman_cfg_path,
             '--skip-confirmation'
@@ -55,8 +56,14 @@ def test_delete_interface(niceman_cfg_path):
 
         calls = [
             call(base_url='tcp://127.0.0.1:2375'),
-            call().remove_container({'State': 'running', 'Id': '326b0fdfbf83',
-                'Names': ['/my-resource']}, force=True)
+            call().remove_container(
+                {
+                    'State': 'running',
+                    'Id': '326b0fdfbf838',
+                    'Names': ['/my-resource']
+                },
+                force=True
+            )
         ]
         client.assert_has_calls(calls, any_order=True)
 

@@ -113,10 +113,9 @@ class CondaTracer(DistributionTracer):
 
     def _get_conda_meta_files(self, conda_path):
         try:
-            out, _ = self._session.run(
+            out, _ = self._session.execute_command(
                 'ls %s/conda-meta/*.json'
-                % conda_path,
-                expect_fail=True
+                % conda_path
             )
             return iter(out.splitlines())
         except Exception as exc:
@@ -128,9 +127,8 @@ class CondaTracer(DistributionTracer):
         file_to_package_map = {}
         for meta_file in self._get_conda_meta_files(conda_path):
             try:
-                out, err = self._session.run(
-                    'cat %s' % meta_file,
-                    expect_fail=True
+                out, err = self._session.execute_command(
+                    'cat %s' % meta_file
                 )
                 details = json.loads(out)
 #                print meta_file
@@ -196,10 +194,9 @@ class CondaTracer(DistributionTracer):
             # Pip packages are recorded in conda exports as name==version
             name = pip_dep.split("=")[0]
             try:
-                out, err = self._session.run(
+                out, err = self._session.execute_command(
                     '%s/bin/pip show -f %s'
-                    % (conda_path, name),
-                    expect_fail=True
+                    % (conda_path, name)
                 )
                 pip_info = self._parse_pip_show(out)
                 # Record the details we care about
@@ -225,10 +222,9 @@ class CondaTracer(DistributionTracer):
         try:
             # NOTE: We need to call conda-env directly.  Conda has problems
             # calling conda-env without a PATH being set...
-            out, err = self._session.run(
+            out, err = self._session.execute_command(
                 '%s/bin/conda-env export -p %s'
-                % (root_prefix, conda_path),
-                expect_fail=True
+                % (root_prefix, conda_path)
             )
             export = yaml.load(out)
         except Exception as exc:
@@ -240,10 +236,9 @@ class CondaTracer(DistributionTracer):
     def _get_conda_info(self, conda_path):
         details = {}
         try:
-            out, err = self._session.run(
+            out, err = self._session.execute_command(
                 '%s/bin/conda info --json'
-                % conda_path,
-                expect_fail=True
+                % conda_path
             )
             details = json.loads(out)
         except Exception as exc:
@@ -260,10 +255,9 @@ class CondaTracer(DistributionTracer):
                 break
             paths.append(path)
             try:
-                _, _ = self._session.run(
+                _, _ = self._session.execute_command(
                     'ls -ld %s/bin/conda %s/conda-meta'
-                    % (path, path),
-                    expect_fail=True
+                    % (path, path)
                 )
             except Exception as exc:
                 lgr.debug("Did not detect conda at the path %s: %s", path,

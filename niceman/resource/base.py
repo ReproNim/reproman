@@ -298,22 +298,24 @@ class Resource(object):
             only to the current call
         """
         if not hasattr(self, '_command_buffer'):
-            self._command_buffer = [] # Each element is a dictionary in the
-                                      # form {command=[], env={}}
-        self._command_buffer.append({'command':command, 'env':env})
+            self._command_buffer = []  # Each element is a dictionary in the
+                                       # form {command=[], env={}}
+        self._command_buffer.append({'command': command, 'env': env})
 
-    def execute_command_buffer(self):
+    def execute_command_buffer(self, session=None):
         """
         Send all the commands in the command buffer to the environment for
         execution.
         """
+        if not session:
+            session = self.get_session(pty=False)
         for command in self._command_buffer:
             lgr.debug("Running command '%s'", command['command'])
-            self.execute_command(command['command'], command['env'])
+            session.execute_command(command['command'], env=command['env'])
 
     def set_envvar(self, var, value):
         """
-        Save an evironment variable for inclusion in the environment
+        Save an environment variable for inclusion in the environment
 
         Parameters
         ----------
@@ -326,6 +328,9 @@ class Resource(object):
         -------
 
         """
+        # TODO: This wouldn't work correctly since pretty much each command
+        # then should have its desired env recorded since set_envvar
+        # could be interleaved with add_command calls
         if not hasattr(self, '_env'):
             self._env = {}
 

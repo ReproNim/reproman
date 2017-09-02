@@ -12,12 +12,17 @@
 
 __docformat__ = 'restructuredtext'
 
+import attr
+from importlib import import_module
 import sys
 import re
 import textwrap
 
 from ..ui import ui
-
+from ..dochelpers import exc_str
+from ..resource import ResourceManager
+from ..resource import Resource
+from ..support.exceptions import ResourceError
 from logging import getLogger
 lgr = getLogger('niceman.interface')
 
@@ -221,6 +226,66 @@ def update_docstring_with_parameters(func, params, prefix=None, suffix=None):
     # assign the amended docs
     func.__doc__ = doc
     return func
+
+
+def backend_help(resource_type=None):
+    """
+    Helper function for displaying backend help listing for interface commands.
+
+    To use, add this to the interface argparse parameters:
+
+        backend=Parameter(
+            args=("-b", "--backend"),
+            nargs="+",
+            doc=backend_help()
+        )
+
+    """
+    types = ResourceManager._discover_types() if not resource_type else [resource_type]
+
+    help_message = "One or more backend parameters in the form KEY=VALUE. Options are: "
+    help_args = []
+
+    for module_name in types:
+        class_name = ''.join([token.capitalize() for token in module_name.split('_')])
+        try:
+            module = import_module('niceman.resource.{}'.format(module_name))
+        except ImportError as exc:
+            raise ResourceError(
+                "Failed to import resource {}: {}.  Known ones are: {}".format(
+                    module_name,
+                    exc_str(exc),
+                    ', '.join(ResourceManager._discover_types()))
+            )
+        cls = getattr(module, class_name)
+        if not issubclass(cls, Resource):
+            lgr.debug(
+                "Skipping %s.%s since not a Resource. Consider moving away",
+                module, class_name
+            )
+            continue
+        args = attr.fields(cls)
+        for arg in args:
+            if 'doc' in arg.metadata:
+                help_args.append('"{}" ({})'.format(arg.name, arg.metadata['doc']))
+
+    return help_message + ", ".join(help_args)
+
+
+def backend_set_config(backend, env_resource, config):
+    """
+    Set config settings based and env_resource properties based on
+    backend parameters passed through command line.
+    """
+    for backend_arg in backend:
+        key, value = backend_arg.split("=")
+        if hasattr(env_resource, key):
+            config[key] = value
+            setattr(env_resource, key, value)
+        else:
+            raise NotImplementedError("Bad --backend parameter '{}'".format(key))
+    return config
+
 
 class Interface(object):
     """Base class for interface implementations"""

@@ -104,13 +104,13 @@ class Install(Interface):
         # For now we deal with simple resources providing a session
         # and a complete, exhaustive and non conflicting with the specified
         # resource
-        session = env_resource
+        session = env_resource.get_session()
         environment_spec = provenance.get_environment()
         for distribution in environment_spec.distributions:
             # TODO: add option to skip initiation
             distribution.initiate(session)
             distribution.install_packages(session)
-        env_resource.execute_command_buffer()
+        #env_resource.execute_command_buffer()
         # ??? verify that everything was installed according to the specs
         #     so would need pretty much going through the spec and querying
         #     all those packages.  If something differs -- report
