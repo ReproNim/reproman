@@ -13,6 +13,7 @@ curl -O http://security.ubuntu.com/ubuntu/pool/main/a/apt/libapt-pkg4.12_0.8.16~
 curl -O http://security.ubuntu.com/ubuntu/pool/main/a/apt/libapt-inst1.4_0.8.16~exp12ubuntu10.27_amd64.deb
 sudo dpkg --force-downgrade -i libapt-pkg-dev_0.8.16~exp12ubuntu10.27_amd64.deb libapt-pkg4.12_0.8.16~exp12ubuntu10.27_amd64.deb libapt-inst1.4_0.8.16~exp12ubuntu10.27_amd64.deb
 rm -f libapt-pkg-dev_0.8.16~exp12ubuntu10.27_amd64.deb libapt-pkg4.12_0.8.16~exp12ubuntu10.27_amd64.deb libapt-inst1.4_0.8.16~exp12ubuntu10.27_amd64.deb
+sudo apt-get -f install
 # Install python-apt version 0.9.3.5 for Python 2 and 3
 sudo apt-get install xz-utils
 curl -O http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_$ver.tar.xz
