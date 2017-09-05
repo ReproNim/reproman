@@ -13,7 +13,6 @@ from importlib import import_module
 import abc
 from six.moves.configparser import NoSectionError
 
-
 import yaml
 from os.path import basename
 from os.path import dirname
