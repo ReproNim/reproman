@@ -11,45 +11,18 @@
 
 __docformat__ = 'restructuredtext'
 
-import attr
-from importlib import import_module
-from .base import Interface
+from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
 # from ..formats import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
 from ..resource import ResourceManager
+from ..resource import Resource
 from ..dochelpers import exc_str
 
 from logging import getLogger
 lgr = getLogger('niceman.api.create')
-
-
-def backend_help(resource_type=None):
-    types = ResourceManager._discover_types() if not resource_type else [resource_type]
-
-    help_message = "One or more backend parameters in the form KEY=VALUE. Options are: "
-    help_args = []
-
-    for module_name in types:
-        class_name = ''.join([token.capitalize() for token in module_name.split('_')])
-        try:
-            module = import_module('niceman.resource.{}'.format(module_name))
-        except ImportError as exc:
-            raise ResourceError(
-                "Failed to import resource {}: {}.  Known ones are: {}".format(
-                    module_name,
-                    exc_str(exc),
-                    ', '.join(ResourceManager._discover_types()))
-            )
-        cls = getattr(module, class_name)
-        args = attr.fields(cls)
-        for arg in args:
-            if 'doc' in arg.metadata:
-                help_args.append('"{}" ({})'.format(arg.name, arg.metadata['doc']))
-
-    return help_message + ", ".join(help_args)
 
 
 class Create(Interface):
@@ -172,19 +145,14 @@ class Create(Interface):
         env_resource = ResourceManager.factory(config)
 
         # Set resource properties to any backend specific command line arguments.
-        for backend_arg in backend:
-            key, value = backend_arg.split("=")
-            if hasattr(env_resource, key):
-                config[key] = value
-                setattr(env_resource, key, value)
-            else:
-                raise NotImplementedError("Bad --backend paramenter '{}'".format(key))
+        if backend:
+            config = backend_set_config(backend, env_resource, config)
 
         env_resource.connect()
-        config_updates = env_resource.create()
+        resource_attrs = env_resource.create()
 
         # Save the updated configuration for this resource.
-        config.update(config_updates)
+        config.update(resource_attrs)
         inventory[resource] = config
         ResourceManager.set_inventory(inventory)
 

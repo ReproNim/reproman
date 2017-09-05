@@ -227,6 +227,10 @@ def main(args=None):
         for path in cmdlineargs.change_path:
             chpwd(path)
 
+    if not hasattr(cmdlineargs, 'func'):
+        lgr.info("No command given, returning")
+        return
+
     ret = None
     if cmdlineargs.common_debug or cmdlineargs.common_idebug:
         # so we could see/stop clearly at the point of failure

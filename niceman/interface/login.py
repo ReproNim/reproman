@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import re
 
-from .base import Interface
+from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -57,6 +57,11 @@ class Login(Interface):
             doc="path to niceman configuration file",
             metavar='CONFIG',
             # constraints=EnsureStr(),
+        ),
+        backend=Parameter(
+            args=("-b", "--backend"),
+            nargs="+",
+            doc=backend_help()
         ),
     )
 

@@ -97,7 +97,7 @@ class CondaTracer(DistributionTracer):
                 break
             paths.append(path)
             try:
-                out, err = self._session.run(
+                out, err = self._session.execute_command(
                     'ls -ld %s/bin/conda %s/conda-meta'
                     % (path, path),
                     expect_fail=True

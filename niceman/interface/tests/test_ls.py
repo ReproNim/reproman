@@ -64,7 +64,7 @@ def test_ls_interface(niceman_cfg_path):
                 'key_name': 'my-ssh-key',
                 'key_filename': '/home/me/.ssh/id_rsa',
                 "status": "running",
-                "name" : "aws-resource-1"
+                "name": "aws-resource-1"
             },
             "ec2-resource-2": {
                 'id': 'i-3333f40de2b9b8967',
@@ -73,18 +73,19 @@ def test_ls_interface(niceman_cfg_path):
                 'secret_access_key': 'my-aws-secret-access-key-id',
                 'key_name': 'my-ssh-key',
                 'key_filename': '/home/me/.ssh/id_rsa',
-                "status": "running",
-                "name" : "aws-resource-2"
+                "status": "stopped",
+                "name": "aws-resource-2"
             }
         }
 
-        args = ['ls',
+        args = [
+            'ls',
             '--config', niceman_cfg_path,
         ]
         main(args)
 
         assert_in(
-            'list result: docker-resource-1, docker-container, 326b0fdfbf83, running',
+            'list result: docker-resource-1, docker-container, 326b0fdfbf838, running',
             log.lines)
         assert_in('list result: ec2-resource-1, aws-ec2, i-22221ddf096c22bb0, running', log.lines)
         assert_in('list result: ec2-resource-2, aws-ec2, i-3333f40de2b9b8967, stopped', log.lines)
