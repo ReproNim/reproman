@@ -139,5 +139,5 @@ class PtySshSession(SshSession):
         self.ssh.interactive_shell(self.ssh._username)
 
     def close(self):
-        # XXX?
+        # XXX ?
         pass
