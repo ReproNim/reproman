@@ -565,7 +565,7 @@ class SSHClient(object):
                                   only_printable=only_printable)
         exit_status = channel.recv_exit_status()
         self.__last_status = exit_status
-        out_str = '\n'.join(output)
+        out_str = b'\n'.join(output)
         if exit_status != 0:
             msg = "remote command '%s' failed with status %d"
             msg %= (command, exit_status)

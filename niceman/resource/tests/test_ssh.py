@@ -8,7 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-from mock import patch, call, MagicMock
+import re
+import six
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
@@ -17,29 +18,34 @@ from ..base import ResourceManager
 
 def test_ssh_class():
 
-    with patch('niceman.support.sshconnector2.SSHConnector2'), \
-        swallow_logs(new_level=logging.DEBUG) as log:
+    with swallow_logs(new_level=logging.DEBUG) as log:
 
-        # Test connecting when a resource doesn't exist.
+        # Test connecting to test SSH server.
+        # TODO: Add a test using a SSH key pair.
         config = {
-            'name': 'non-existent-ssh',
+            'name': 'ssh-test-resource',
             'type': 'ssh',
-            'host': 'www.not-a-real-server.com',
-            'user': 'ubuntu',
-            'key_filename': '/home/ubuntu/.ssh/id_rsa',
+            'host': 'localhost',
+            'user': 'root',
+            'password': 'root',
+            'port': '49000'
         }
         resource = ResourceManager.factory(config)
         updated_config = resource.create()
         config.update(updated_config)
-        assert resource.id == 'www.not-a-real-server.com'
+        assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}', resource.id) is not None
         assert resource.status == 'N/A'
 
         # Test running commands in a resource.
         resource.connect()
         command = ['apt-get', 'install', 'bc']
         resource.add_command(command)
-        command = ['apt-get', 'install', 'xeyes']
+        command = ['ls', '/']
         resource.add_command(command)
         resource.execute_command_buffer()
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
-        assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
+        assert_in("Running command '['ls', '/']'", log.lines)
+        # TODO: Figure out why PY3 logger is not picking up STDOUT from SSH server.
+        if six.PY2:
+            assert_in('exec#0: Reading package lists...', log.lines)
+            assert_in('exec#0: bin', log.lines)
