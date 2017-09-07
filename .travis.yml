@@ -2,7 +2,7 @@
 # travis-ci.org definition for NICEMAN build
 language: python
 sudo: required
-dist: trusty
+dist: precise
 
 services:
   - docker
