@@ -49,9 +49,16 @@ def test_conda_manager_identify_distributions():
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
 
-    for (distributions, unknown_files) in dists:
-        NicemanProvenance.write(sys.stdout, distributions)
-#        print(json.dumps(attr.asdict(
-#                distributions, dict_factory=collections.OrderedDict), indent=4))
-        print(json.dumps(unknown_files, indent=4))
-    # TODO: Test for existence of expected packages
+    assert len(dists) == 1, "Exactly one Conda distribution expected."
+
+    (distributions, unknown_files) = dists[0]
+
+    assert (len(unknown_files) == 1) and \
+           (unknown_files[0] == "/sbin/iptables"), \
+        "Exactly one file (/sbin/iptables) should not be discovered."
+
+    assert len(distributions.environments) == 2, \
+        "Two conda environments are expected."
+
+    NicemanProvenance.write(sys.stdout, distributions)
+    print(json.dumps(unknown_files, indent=4))
