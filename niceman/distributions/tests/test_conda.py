@@ -35,7 +35,8 @@ def create_test_conda():
          "bash -b Miniconda2-latest-Linux-x86_64.sh -b -p /tmp/niceman_conda_test/miniconda; "
          "/tmp/niceman_conda_test/miniconda/bin/conda create -y -n mytest python=2.7;"
          "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/conda install -y xz -n mytest;"
-         "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/pip install pluggy;",
+         "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/pip install pluggy;"
+         "ls -R /tmp/niceman_conda_test/miniconda/envs/mytest/lib/python2.7/site-packages/",
          shell=True)
 
 
