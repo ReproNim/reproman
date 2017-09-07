@@ -52,9 +52,11 @@ before_install:
   - git config --global user.name "Travis Almighty"
 
 install:
-  - sudo apt-get install python-apt python3-apt
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
+  - sudo apt-get install python-apt python3-apt
+  # install it into current python virtualenv
+  - pip install `python -c 'import apt;print(apt.__path__[0])'`
   # needed by html5lib
   - pip install --upgrade 'setuptools>=18.5'
   - pip install -r requirements-devel.txt
