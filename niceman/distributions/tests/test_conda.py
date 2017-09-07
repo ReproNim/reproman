@@ -15,6 +15,7 @@ from subprocess import call
 import yaml
 import attr
 from niceman.formats.niceman import NicemanProvenance
+from niceman.tests.utils import skip_if_no_network
 
 try:
     import apt
@@ -39,6 +40,7 @@ def create_test_conda():
          shell=True)
 
 
+@skip_if_no_network
 def test_conda_manager_identify_distributions():
     create_test_conda()
     files = ["/tmp/niceman_conda_test/miniconda/bin/sqlite3",
