@@ -125,7 +125,7 @@ since we use it to provide backports of recent fixed external modules we depend 
 
 ```sh
 apt-get install -y -q eatmydata  # to speed up subsequent installations
-eatmydata apt-get install -y -q python-{appdirs,argcomplete,humanize,mock,setuptools,six,yaml,debian,boto3,docker,tqdm,rdflib}
+eatmydata apt-get install -y -q python-{appdirs,argcomplete,humanize,mock,setuptools,six,yaml,debian,boto3,docker,tqdm,rdflib,libssl-dev,libffi-dev,python-dockerpty,python-docker}
 ```
 
 and additionally, for development we suggest to use tox and new
