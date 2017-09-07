@@ -35,8 +35,7 @@ def create_test_conda():
          "bash -b Miniconda2-latest-Linux-x86_64.sh -b -p /tmp/niceman_conda_test/miniconda; "
          "/tmp/niceman_conda_test/miniconda/bin/conda create -y -n mytest python=2.7;"
          "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/conda install -y xz -n mytest;"
-         "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/pip install pluggy;"
-         "ls -R /tmp/niceman_conda_test/miniconda/envs/mytest/lib/python2.7/site-packages/",
+         "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/pip install rpaths;",
          shell=True)
 
 
@@ -45,7 +44,7 @@ def test_conda_manager_identify_distributions():
     files = ["/tmp/niceman_conda_test/miniconda/bin/sqlite3",
              "/tmp/niceman_conda_test/miniconda/envs/mytest/bin/xz",
              "/tmp/niceman_conda_test/miniconda/envs/mytest/lib/python2.7/site-packages/pip/index.py",
-             "/tmp/niceman_conda_test/miniconda/envs/mytest/lib/python2.7/site-packages/pluggy.py",
+             "/tmp/niceman_conda_test/miniconda/envs/mytest/lib/python2.7/site-packages/rpaths.py",
              "/sbin/iptables"]
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
