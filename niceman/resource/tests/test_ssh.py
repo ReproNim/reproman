@@ -11,11 +11,12 @@ import logging
 import re
 import six
 
-from ...utils import swallow_logs
+from ...utils import swallow_logs, skip_if_no_network
 from ...tests.utils import assert_in
 from ..base import ResourceManager
 
 
+@skip_if_no_network
 def test_ssh_class():
 
     with swallow_logs(new_level=logging.DEBUG) as log:
