@@ -18,7 +18,6 @@ from ..base import ResourceManager
 def test_awsec2_class():
 
     with patch('boto3.resource') as client, \
-        patch('niceman.support.sshconnector2.SSHConnector2'), \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test connecting when a resource doesn't exist.
@@ -123,15 +122,6 @@ def test_awsec2_class():
         assert_in('EC2 instance i-11112777d52482d9c to start running!', log.lines)
         assert_in('Waiting for EC2 instance i-11112777d52482d9c to complete initialization...', log.lines)
         assert_in('EC2 instance i-11112777d52482d9c initialized!', log.lines)
-
-        # Test running commands in a resource.
-        command = ['apt-get', 'install', 'bc']
-        resource.add_command(command)
-        command = ['apt-get', 'install', 'xeyes']
-        resource.add_command(command)
-        resource.execute_command_buffer()
-        assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
-        assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
 
         # Test stopping resource.
         resource.stop()

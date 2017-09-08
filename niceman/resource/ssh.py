@@ -48,7 +48,8 @@ class Ssh(Resource):
         """
         Open a connection to the environment resource.
         """
-        self._ssh = SSHClient(self.host,
+        self._ssh = SSHClient(
+            self.host,
             username=self.user,
             password=self.password,
             private_key=self.key_filename,
