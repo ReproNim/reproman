@@ -11,8 +11,8 @@ import logging
 import re
 import six
 
-from ...utils import swallow_logs, skip_if_no_network
-from ...tests.utils import assert_in
+from ...utils import swallow_logs
+from ...tests.utils import assert_in, skip_if_no_network
 from ..base import ResourceManager
 
 
