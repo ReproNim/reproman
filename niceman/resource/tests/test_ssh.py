@@ -34,7 +34,8 @@ def test_ssh_class():
         resource = ResourceManager.factory(config)
         updated_config = resource.create()
         config.update(updated_config)
-        assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}', resource.id) is not None
+        assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}',
+                        resource.id) is not None
         assert resource.status == 'N/A'
 
         # Test running commands in a resource.
