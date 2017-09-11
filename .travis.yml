@@ -54,9 +54,7 @@ before_install:
 install:
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
-  - sudo apt-get install python-apt python3-apt
-  # install it into current python virtualenv
-  - pyver=`python -c 'import sys;print(sys.version[0])'`; export PYTHONPATH=$PYTHONPATH:`/usr/bin/python$pyver -c 'import apt, os; print(os.path.dirname(apt.__path__[0]))'`
+  - tools/ci/build_install_apt
   # needed by html5lib
   - pip install --upgrade 'setuptools>=18.5'
   - pip install -r requirements-devel.txt
