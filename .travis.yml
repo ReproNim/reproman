@@ -2,7 +2,7 @@
 # travis-ci.org definition for NICEMAN build
 language: python
 sudo: required
-dist: precise
+# dist: precise
 
 cache:
   - apt
@@ -52,10 +52,9 @@ before_install:
   - git config --global user.name "Travis Almighty"
 
 install:
-  # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
-  - tools/ci/build_install_apt
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
+  - tools/ci/build_install_apt
   # needed by html5lib
   - pip install --upgrade 'setuptools>=18.5'
   - pip install -r requirements-devel.txt
