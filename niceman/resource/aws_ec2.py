@@ -202,48 +202,6 @@ class AwsEc2(Resource):
         """
         self._ec2_instance.stop()
 
-    # TODO: RF into a separate Session and provide get_session
-    # then custom execute_command_buffer could go
-    def execute_command(self, ssh, command, env=None, cwd=None):
-        """
-        Execute the given command in the environment.
-
-        Parameters
-        ----------
-        ssh : SSHConnector2 instance
-            SSH connection object
-        command : list
-            Shell command string or list of command tokens to send to the
-            environment to execute.
-        env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
-        """
-        # TODO -- command_env is not used etc...
-        command_env = self.get_updated_env(env)
-
-        if cwd:
-            raise NotImplementedError("implement cwd support")
-        # if command_env:
-            # TODO: might not work - not tested it
-            # command = ['export %s=%s;' % k for k in command_env.items()] + command
-
-        # If a command fails, a CommandError exception will be thrown.
-        for i, line in enumerate(ssh(" ".join(command))):
-            lgr.debug("exec#%i: %s", i, line.rstrip())
-
-    def execute_command_buffer(self):
-        """
-        Send all the commands in the command buffer to the environment for
-        execution.
-        """
-        host = self._ec2_instance.public_ip_address
-
-        with niceman.support.sshconnector2.SSHConnector2(host, key_filename=self.key_filename) as ssh:
-            for command in self._command_buffer:
-                lgr.info("Running command '%s'", command['command'])
-                self.execute_command(ssh, command['command'], command['env'])
-
     def create_key_pair(self, key_name=None):
         """
         Walk the user through creating an SSH key pair that is saved to
@@ -306,11 +264,78 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         self.key_name = key_name
         self.key_filename = key_filename
 
-    def login(self):
+    def get_session(self, pty=False, shared=None):
         """
         Log into a container and get the command line
         """
-        lgr.debug("Opening TTY connection to AWS EC2 instance.")
+        assert self._ec2_instance, "We should create or connect to EC2 server first"
+
+        # TODO: remove use of SSHConnector2 with StarCluster SSHClient
         host = self._ec2_instance.public_ip_address
+        ssh = niceman.support.sshconnector2.SSHConnector2(host, key_filename=self.key_filename)
+
+        if pty and shared is not None and not shared:
+            lgr.warning("Cannot do non-shared pty session for EC2 server yet")
+        return (PtyEc2Session if pty else Ec2Session)(
+            ssh=ssh,
+            instance=self._ec2_instance,
+            key_filename=self.key_filename,
+            user=self.user
+        )
+
+
+from niceman.resource.session import POSIXSession
+
+
+@attr.s
+class Ec2Session(POSIXSession):
+    ssh = attr.ib()
+    instance = attr.ib()
+    key_filename = attr.ib()
+    user = attr.ib()
+
+    def _execute_command(self, command, env=None, cwd=None):
+        """
+        Execute the given command in the environment.
+
+        Parameters
+        ----------
+        ssh : SSHConnector2 instance
+            SSH connection object
+        command : list
+            Shell command string or list of command tokens to send to the
+            environment to execute.
+        env : dict
+            Additional (or replacement) environment variables which are applied
+            only to the current call
+        """
+        # TODO -- command_env is not used etc...
+        # command_env = self.get_updated_env(env)
+
+        if cwd:
+            raise NotImplementedError("implement cwd support")
+        # if command_env:
+            # TODO: might not work - not tested it
+            # command = ['export %s=%s;' % k for k in command_env.items()] + command
+
+        # If a command fails, a CommandError exception will be thrown.
+        for i, line in enumerate(self.ssh(" ".join(command))):
+            lgr.debug("exec#%i: %s", i, line.rstrip())
+
+
+@attr.s
+class PtyEc2Session(Ec2Session):
+    """Interactive EC2 Session"""
+
+    def open(self):
+        lgr.debug("Opening TTY connection to AWS EC2 instance.")
+        # TODO: probably call to super to assure that we have it running?
+        host = self.instance.public_ip_address
         ssh = SSHClient(host, private_key=self.key_filename)
         ssh.interactive_shell(self.user)
+
+    def close(self):
+        # XXX ?
+        pass
+
+    # XXX should we overload execute_command?
