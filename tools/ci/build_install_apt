@@ -8,7 +8,7 @@ set -eux
 ver=0.9.3.5ubuntu2
 cd /tmp
 sudo apt-get build-dep python-apt
-sudo apt-get install -y   libapt-pkg-dev=1.0.1ubuntu2 #.17
+sudo apt-get install -y   libapt-{pkg-dev,inst1.5,pkg4.12}=1.0.1ubuntu2 #.17
 # Install python-apt version 0.9.3.5 for Python 2 and 3
 sudo apt-get install xz-utils
 curl -O http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_$ver.tar.xz
