@@ -132,7 +132,7 @@ and additionally, for development we suggest to use tox and new
 versions of dependencies from pypi:
 
 ```sh
-eatmydata apt-get install -y -q python-{nose,pip,vcr,virtualenv,tox}
+eatmydata apt-get install -y -q python-{pip,vcr,virtualenv,tox}
 ```
 
 some of which you could also install from PyPi using pip
@@ -239,13 +239,7 @@ python setup.py develop
 Then use that virtual environment to run the tests, via
 
 ```sh
-python -m nose -s -v niceman
-```
-
-or similarly,
-
-```sh
-nosetests -s -v niceman
+niceman test
 ```
 
 then to later deactivate the virtualenv just simply enter
@@ -264,17 +258,10 @@ release of Debian or Ubuntu) with all dependencies listed in README.md pre-insta
 
 ### Coverage
 
-You can also check for common programming errors with the following tools:
-
-- Code with good unittest coverage (at least 80%), check with:
-
-          pip install nose coverage
-          nosetests --with-coverage path/to/tests_for_package
-
-- We rely on https://codecov.io to provide convenient view of code coverage.
-  Installation of the codecov extension for Firefox/Iceweasel or Chromium
-  is strongly advised, since it provides coverage annotation of pull
-  requests.
+We rely on https://codecov.io to provide convenient view of code coverage.
+Installation of the codecov extension for Firefox/Iceweasel or Chromium
+is strongly advised, since it provides coverage annotation of pull
+requests.
 
 ### Linting
 
