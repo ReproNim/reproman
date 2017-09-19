@@ -71,26 +71,6 @@ def get_used_release_specs(package, installed_version=None):
     e.g. for
 
         $> apt-cache policy afni python-nibabel
-        afni:
-          Installed: 16.2.07~dfsg.1-2~nd90+1
-          Candidate: 16.2.07~dfsg.1-2~nd90+1
-          Version table:
-         *** 16.2.07~dfsg.1-2~nd90+1 500
-                500 http://neuro.debian.net/debian stretch/contrib amd64 Packages
-                100 /var/lib/dpkg/status
-        python-nibabel:
-          Installed: 2.1.0-1
-          Candidate: 2.1.0-1
-          Version table:
-         *** 2.1.0-1 900
-                900 http://http.debian.net/debian stretch/main amd64 Packages
-                900 http://http.debian.net/debian stretch/main i386 Packages
-                600 http://http.debian.net/debian sid/main amd64 Packages
-                600 http://http.debian.net/debian sid/main i386 Packages
-                100 /var/lib/dpkg/status
-             2.1.0-1~nd90+1 500
-                500 http://neuro.debian.net/debian stretch/main amd64 Packages
-                500 http://neuro.debian.net/debian stretch/main i386 Packages
 
     should provide paths to release files
 
@@ -98,3 +78,49 @@ def get_used_release_specs(package, installed_version=None):
         /var/lib/apt/lists/neuro.debian.net_debian_dists_stretch_InRelease
 
     """
+    pass
+
+
+def _parse_apt_cache_policy_pkgs_output(output):
+    # first split per each package
+    import re
+    entries = filter(bool, re.split('\n(?=\S)', output, flags=re.MULTILINE))
+    return entries
+
+
+def parse_apt_cache_policy_pkgs_output(output):
+    import re
+    # findall wasn't greedy enough for some reason, so decided first to
+    # split into entries (one per package)
+    entries = filter(bool, re.split('\n(?=\S)', output, flags=re.MULTILINE))
+    # now we need to parse/match each entry
+    re_pkg = re.compile("""
+        ^(?P<name>[^\s:]+):(?P<architecture>\S+)?\s*\n                       # name of the package
+        \s+Installed:\s*(?P<installed>\S*)\s*\n    # Installed version
+        \s+Candidate:\s*(?P<candidate>\S*)\s*\n    # Candidate version
+        \s+Version\stable:\s*
+        (?P<version_table>(\n\s.*)+)
+        """, flags=re.VERBOSE)
+
+    re_versions = re.compile("""
+        ^(\s{5}|\s(?P<installed>\*\*\*)\s)
+        (?P<version>\S+)\s+
+        (?P<priority>\S+)\n.*
+        (?P<urls>(\n\s{8}.*)+)
+    """, flags=re.VERBOSE)
+    pkgs = {}
+    for entry in entries:
+        match = re_pkg.match(entry.strip())
+        if not match:
+            print "FAILED in ", entry
+            continue
+        info = match.groupdict()
+        pkgs[info.pop('name')] = info
+        info['versions'] = [
+            x.groupdict()
+            for x in re_versions.finditer(info.pop('version_table'))
+        ]
+        # process version_table
+    return pkgs
+    #for pkg_match in re_pkg.finditer(output):
+    #    print type(pkg_match), pkg_match.groupdict()

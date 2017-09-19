@@ -58,3 +58,47 @@ def test_get_spec_from_release_file(f=None):
             components='main non-free contrib',
             architectures='i386 amd64 sparc',
         ))
+
+
+def test_parse_apt_cache_policy_pkgs_output():
+    from ..debian import parse_apt_cache_policy_pkgs_output
+    txt1 = """\
+afni:
+  Installed: 16.2.07~dfsg.1-2~nd90+1
+  Candidate: 16.2.07~dfsg.1-2~nd90+1
+  Version table:
+ *** 16.2.07~dfsg.1-2~nd90+1 500
+        500 http://neuro.debian.net/debian stretch/contrib amd64 Packages
+        100 /var/lib/dpkg/status
+python-nibabel:
+  Installed: 2.1.0-1
+  Candidate: 2.1.0-1
+  Version table:
+ *** 2.1.0-1 900
+        900 http://http.debian.net/debian stretch/main amd64 Packages
+        900 http://http.debian.net/debian stretch/main i386 Packages
+        600 http://http.debian.net/debian sid/main amd64 Packages
+        600 http://http.debian.net/debian sid/main i386 Packages
+        100 /var/lib/dpkg/status
+     2.1.0-1~nd90+1 500
+        500 http://neuro.debian.net/debian stretch/main amd64 Packages
+        500 http://neuro.debian.net/debian stretch/main i386 Packages
+python-biotools:
+  Installed: (none)
+  Candidate: 1.2.12-2
+  Version table:
+     1.2.12-2 600
+        600 http://http.debian.net/debian sid/main amd64 Packages
+        600 http://http.debian.net/debian sid/main i386 Packages
+skype:i386:
+  Installed: (none)
+  Candidate: (none)
+  Version table:
+     4.3.0.37-1 -1
+        100 /var/lib/dpkg/status
+"""
+    out1 = {'afni': None, 'python-nibabel': None}
+    out = parse_apt_cache_policy_pkgs_output(txt1)
+    from pprint import pprint
+    print len(out)
+    pprint(out)
