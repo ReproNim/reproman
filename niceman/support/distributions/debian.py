@@ -112,7 +112,7 @@ def parse_apt_cache_policy_pkgs_output(output):
     for entry in entries:
         match = re_pkg.match(entry.strip())
         if not match:
-            print "FAILED in ", entry
+            print("FAILED in ", entry)
             continue
         info = match.groupdict()
         pkgs[info.pop('name')] = info

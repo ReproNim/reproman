@@ -100,5 +100,5 @@ skype:i386:
     out1 = {'afni': None, 'python-nibabel': None}
     out = parse_apt_cache_policy_pkgs_output(txt1)
     from pprint import pprint
-    print len(out)
+    print(len(out))
     pprint(out)
