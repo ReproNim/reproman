@@ -99,6 +99,52 @@ skype:i386:
 """
     out1 = {'afni': None, 'python-nibabel': None}
     out = parse_apt_cache_policy_pkgs_output(txt1)
+# TODO: Test discovered entities
+#    from pprint import pprint
+#    print(len(out))
+#    pprint(out)
+
+def test_parse_apt_cache_policy_source_info():
+    from ..debian import parse_apt_cache_policy_source_info
+    txt = """\
+Package files:
+ 100 /var/lib/dpkg/status
+     release a=now
+ 500 http://neuro.debian.net/debian xenial/non-free i386 Packages
+     release o=NeuroDebian,a=xenial,n=xenial,l=NeuroDebian,c=non-free,b=i386
+     origin neuro.debian.net
+ 500 http://neuro.debian.net/debian xenial/non-free amd64 Packages
+     release o=NeuroDebian,a=xenial,n=xenial,l=NeuroDebian,c=non-free,b=amd64
+     origin neuro.debian.net
+ 500 http://neuro.debian.net/debian data/non-free i386 Packages
+     release o=NeuroDebian,a=data,n=data,l=NeuroDebian,c=non-free,b=i386
+     origin neuro.debian.net
+ 500 http://neuro.debian.net/debian data/non-free amd64 Packages
+     release o=NeuroDebian,a=data,n=data,l=NeuroDebian,c=non-free,b=amd64
+     origin neuro.debian.net
+ 500 file:/my/repo2 ubuntu/ Packages
+     release c=
+ 500 file:/my/repo ./ Packages
+     release c=
+ 500 http://dl.google.com/linux/chrome/deb stable/main amd64 Packages
+     release v=1.0,o=Google, Inc.,a=stable,n=stable,l=Google,c=main,b=amd64
+     origin dl.google.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/restricted i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=restricted,b=i386
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=restricted,b=amd64
+     origin security.ubuntu.com
+ 500 http://us.archive.ubuntu.com/ubuntu xenial-updates/universe amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=universe,b=amd64
+     origin us.archive.ubuntu.com
+ 500 http://us.archive.ubuntu.com/ubuntu xenial-updates/multiverse i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=multiverse,b=i386
+     origin us.archive.ubuntu.com
+Pinned packages:
+"""
+    out = parse_apt_cache_policy_source_info(txt)
+    # TODO: Test discovered entities
     from pprint import pprint
     print(len(out))
     pprint(out)

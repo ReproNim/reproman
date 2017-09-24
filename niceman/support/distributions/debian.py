@@ -13,6 +13,8 @@
 from __future__ import absolute_import
 
 # Let's try to use attr module
+import re
+
 import attr
 
 import codecs
@@ -83,13 +85,11 @@ def get_used_release_specs(package, installed_version=None):
 
 def _parse_apt_cache_policy_pkgs_output(output):
     # first split per each package
-    import re
     entries = filter(bool, re.split('\n(?=\S)', output, flags=re.MULTILINE))
     return entries
 
 
 def parse_apt_cache_policy_pkgs_output(output):
-    import re
     # findall wasn't greedy enough for some reason, so decided first to
     # split into entries (one per package)
     entries = filter(bool, re.split('\n(?=\S)', output, flags=re.MULTILINE))
@@ -124,3 +124,57 @@ def parse_apt_cache_policy_pkgs_output(output):
     return pkgs
     #for pkg_match in re_pkg.finditer(output):
     #    print type(pkg_match), pkg_match.groupdict()
+
+
+def parse_apt_cache_policy_source_info(policy_output):
+    source_info = {}
+    re_section = re.compile("""
+        ^(?P<header_line>\S.*)$[\r\n]*  # Header - non whitespace at the
+                                        #          beginning of the line
+        (?P<body>(^\ .*$[\r\n]*)*)      # Body - All subsequent lines that
+                                        #        begin with a space
+        """, flags=re.VERBOSE + re.MULTILINE)
+    re_source = re.compile("""
+        ^(\ (?P<priority>[0-9]+)\ +(?P<source>.*)$[\r\n]+
+         (^(
+            (\ \ +release\ +(?P<release_info>.*))|
+            (\ \ +origin\ +(?P<origin_info>.*))|
+            (\ \ .*)
+           )$[\r\n]+
+          )*
+        )
+        """, flags=re.VERBOSE + re.MULTILINE)
+    re_rel_attrib = re.compile("""
+        (?P<tag>[a-z])=    # A tag is a single letter followed by "="
+        (?P<value>([^,]|(,(?![a-z]=)))*)
+                           # The value follows the "=", and include any
+                           # non commas, or commas not followed by another tag
+        """, flags=re.VERBOSE)
+    # The release line has a terse tag=value format. This maps
+    # the release tags to more meaningful values
+    tag_map = {"c": "component",
+               "n": "codename",
+               "a": "archive",
+               "b": "architecture",
+               "o": "origin",
+               "l": "label"}
+
+    sections = re_section.finditer(policy_output)
+    for section in sections:
+        if str.startswith(section.group("header_line"), "Package files:"):
+            sources = re_source.finditer(section.group("body"))
+            for source in sources:
+                info = source.groupdict()
+                if info.get("source"):
+                    src_detail = dict()
+                    src_detail["site"] = info.get("origin_info")
+                    src_detail["archive_uri"] = \
+                        re.search(r"\S+", info.get("source")).group()
+                    attribs = re_rel_attrib.finditer(info.get("release_info"))
+                    for attrib in attribs:
+                        if attrib.group("tag") in tag_map:
+                            src_detail[tag_map[attrib.group("tag")]] = \
+                                attrib.group("value")
+                    source_info[info.get("source")] = src_detail
+    return source_info
+
