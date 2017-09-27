@@ -12,13 +12,8 @@
 
 from __future__ import absolute_import
 
-# Let's try to use attr module
 import re
-
 import attr
-
-import codecs
-from debian import deb822
 
 __docformat__ = 'restructuredtext'
 
@@ -43,27 +38,34 @@ class DebianReleaseSpec(object):
     codename = attr.ib()
     suite = attr.ib()
     version = attr.ib()
-    date = attr.ib()     # in XXX format?
-    components = attr.ib()#validator=attr.validators.instance_of(list),convert=str.split),
-    architectures = attr.ib()#validator=attr.validators.instance_of(list),convert=str.split)
+    date = attr.ib()
+    components = attr.ib()
+    architectures = attr.ib()
 
 
-def get_spec_from_release_file(release_filename):
+def get_spec_from_release_file(content):
     """Provide specification object describing the component of the distribution
-
-    Examples
-    --------
-
-     SKIP TST FOR NOW >>> get_spec_from_release_file('/var/lib/apt/lists/neuro.debian.net_debian_dists_jessie_InRelease')
-
     """
-    release = deb822.Release(codecs.open(release_filename, 'r', 'utf-8'))
+    re_deb822_single_line_tag = re.compile("""
+        ^(?P<tag>[a-zA-Z][^:]*):[\ ]+  # Tag - begins at start of line
+        (?P<val>\S.*)$           # Value - after colon to the end of the line
+    """, flags=re.VERBOSE + re.MULTILINE)
+
+    # Split before PGP signature if present
+    if "-----BEGIN PGP SIGNATURE-----" in content:
+        content = content.split("-----BEGIN PGP SIGNATURE-----")[0]
+
+    release = {}
+    matches = re_deb822_single_line_tag.finditer(content)
+    for match in matches:
+        release[match.group("tag")] = match.group("val")
+
     # TODO: redo with conversions of components and architectures in into lists
     # and date in machine-readable presentation
     return DebianReleaseSpec(**{
-            a.name: release.get(a.name.title(), None)
-            for a in attr.fields(DebianReleaseSpec)
-    })
+        a.name: release.get(a.name.title(), None)
+        for a in attr.fields(DebianReleaseSpec)
+        })
 
 
 def get_used_release_specs(package, installed_version=None):

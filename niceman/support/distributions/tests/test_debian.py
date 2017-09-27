@@ -10,19 +10,14 @@
 
 """
 
-try:
-    from ..debian import DebianReleaseSpec
-    from ..debian import get_spec_from_release_file
-except:
-    DebianReleaseSpec = None
+from ..debian import DebianReleaseSpec
+from ..debian import get_spec_from_release_file
 
-from niceman.tests.utils import with_tempfile
 from niceman.tests.utils import eq_
-from niceman.tests.utils import skip_if
 
 
-@skip_if(not DebianReleaseSpec)
-@with_tempfile(content="""\
+def test_get_spec_from_release_file(f=None):
+    content = """\
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA256
 
@@ -44,10 +39,8 @@ iEYEAREIAAYFAlfZ+dEACgkQpdMvASZJpamBowCfXOPQimiIy2wnVY5U9sLs1jSn
 JZ0An0Uoocusvjco1t6RAwxt/y3lQoWV
 =a3Nn
 -----END PGP SIGNATURE-----
-""")
-def test_get_spec_from_release_file(f=None):
-    # ATM -- plain one to one, no conversions
-    eq_(get_spec_from_release_file(f),
+"""
+    eq_(get_spec_from_release_file(content),
         DebianReleaseSpec(
             origin='NeuroDebian',
             label='NeuroDebian2',
