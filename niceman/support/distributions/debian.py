@@ -12,8 +12,11 @@
 
 from __future__ import absolute_import
 
+import logging
 import re
 import attr
+
+lgr = logging.getLogger('niceman.distributions.debian')
 
 __docformat__ = 'restructuredtext'
 
@@ -53,8 +56,7 @@ def get_spec_from_release_file(content):
     """, flags=re.VERBOSE + re.MULTILINE)
 
     # Split before PGP signature if present
-    if "-----BEGIN PGP SIGNATURE-----" in content:
-        content = content.split("-----BEGIN PGP SIGNATURE-----")[0]
+    content = content.split("-----BEGIN PGP SIGNATURE-----")[0]
 
     # Parse the content for tags and values into a dictionary
     release = {
@@ -70,21 +72,36 @@ def get_spec_from_release_file(content):
         })
 
 
-def get_used_release_specs(package, installed_version=None):
-    """Given a name for an installed package, return a set of specs describing
-    the release this file could be obtained from
+def parse_apt_cache_show_pkgs_output(output):
+    package_info = {}
+    # Split into entries (one per package)
+    entries = filter(bool, re.split('\n(?=Package:)', output,
+                                    flags=re.MULTILINE))
 
-    e.g. for
+    # RegExp to pull a single line "tag: value" pair from a deb822 file
+    re_deb822_single_line_tag = re.compile("""
+        ^(?P<tag>[a-zA-Z][^:]*):[\ ]+  # Tag - begins at start of line
+        (?P<val>\S.*)$           # Value - after colon to the end of the line
+    """, flags=re.VERBOSE + re.MULTILINE)
 
-        $> apt-cache policy afni python-nibabel
-
-    should provide paths to release files
-
-        /var/lib/apt/lists/http.debian.net_debian_dists_stretch_InRelease
-        /var/lib/apt/lists/neuro.debian.net_debian_dists_stretch_InRelease
-
-    """
-    pass
+    # For each package entry, collect single line tag/value pairs into a
+    # dictionary
+    for entry in entries:
+        pkg = {
+           match.group("tag"): match.group("val")
+           for match in re_deb822_single_line_tag.finditer(entry)
+        }
+        # Name the dictionary on the Package and Version
+        if "Package" in pkg and "Version" in pkg:
+            if "Architecture" in pkg:
+                pkg_ident = "%s:%s=%s" % (pkg["Package"], pkg["Architecture"],
+                                          pkg["Version"])
+            else:
+                pkg_ident = "%s=%s" % (pkg["Package"], pkg["Version"])
+            if (pkg_ident in package_info):
+                lgr.warning("Duplicate package %s found " % pkg_ident)
+            package_info[pkg_ident] = pkg
+    return package_info
 
 
 def parse_apt_cache_policy_pkgs_output(output):
@@ -114,7 +131,7 @@ def parse_apt_cache_policy_pkgs_output(output):
     for entry in entries:
         match = re_pkg.match(entry.strip())
         if not match:
-            print("FAILED in ", entry)
+            lgr.warning("FAILED in ", entry)
             continue
         info = match.groupdict()
         pkgs[info.pop('name')] = info

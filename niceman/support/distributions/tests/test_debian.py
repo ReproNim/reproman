@@ -13,7 +13,7 @@
 from ..debian import DebianReleaseSpec
 from ..debian import get_spec_from_release_file
 
-from niceman.tests.utils import eq_
+from niceman.tests.utils import eq_, assert_is_subset_dict_recur
 
 
 def test_get_spec_from_release_file(f=None):
@@ -51,6 +51,112 @@ JZ0An0Uoocusvjco1t6RAwxt/y3lQoWV
             components='main non-free contrib',
             architectures='i386 amd64 sparc',
         ))
+
+
+def test_parse_apt_cache_show_pkgs_output():
+    from ..debian import parse_apt_cache_show_pkgs_output
+    txt1 = """\
+Package: openssl
+Status: install ok installed
+Priority: optional
+Section: utils
+Installed-Size: 934
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Architecture: amd64
+Version: 1.0.2g-1ubuntu4.5
+Depends: libc6 (>= 2.15), libssl1.0.0 (>= 1.0.2g)
+Suggests: ca-certificates
+Conffiles:
+ /etc/ssl/openssl.cnf 7df26c55291b33344dc15e3935dabaf3
+Description-en: Secure Sockets Layer toolkit - cryptographic utility
+ This package is part of the OpenSSL project's implementation of the SSL
+ and TLS cryptographic protocols for secure communication over the
+ Internet.
+ .
+ It contains the general-purpose command line binary /usr/bin/openssl,
+ useful for cryptographic operations such as:
+  * creating RSA, DH, and DSA key parameters;
+  * creating X.509 certificates, CSRs, and CRLs;
+  * calculating message digests;
+  * encrypting and decrypting with ciphers;
+  * testing SSL/TLS clients and servers;
+  * handling S/MIME signed or encrypted mail.
+Description-md5: 9b6de2bb6e1d9016aeb0f00bcf6617bd
+Original-Maintainer: Debian OpenSSL Team <pkg-openssl-devel@lists.alioth.debian.org>
+
+Package: openssl
+Priority: standard
+Section: utils
+Installed-Size: 934
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian OpenSSL Team <pkg-openssl-devel@lists.alioth.debian.org>
+Architecture: amd64
+Version: 1.0.2g-1ubuntu4
+Depends: libc6 (>= 2.15), libssl1.0.0 (>= 1.0.2g)
+Suggests: ca-certificates
+Filename: pool/main/o/openssl/openssl_1.0.2g-1ubuntu4_amd64.deb
+Size: 492190
+MD5sum: 8280148dc2991da94be5810ad4d91552
+SHA1: b5326f27aae83c303ff934121dede47d9fce7c76
+SHA256: e897ffc8d84b0d436baca5dbd684a85146ffa78d3f2d15093779d3f5a8189690
+Description-en: Secure Sockets Layer toolkit - cryptographic utility
+ This package is part of the OpenSSL project's implementation of the SSL
+ and TLS cryptographic protocols for secure communication over the
+ Internet.
+ .
+ It contains the general-purpose command line binary /usr/bin/openssl,
+ useful for cryptographic operations such as:
+  * creating RSA, DH, and DSA key parameters;
+  * creating X.509 certificates, CSRs, and CRLs;
+  * calculating message digests;
+  * encrypting and decrypting with ciphers;
+  * testing SSL/TLS clients and servers;
+  * handling S/MIME signed or encrypted mail.
+Description-md5: 9b6de2bb6e1d9016aeb0f00bcf6617bd
+Bugs: https://bugs.launchpad.net/ubuntu/+filebug
+Origin: Ubuntu
+Supported: 5y
+Task: standard, ubuntu-core, ubuntu-core, mythbuntu-frontend, mythbuntu-backend-slave, mythbuntu-backend-master, ubuntu-touch-core, ubuntu-touch, ubuntu-sdk-libs-tools, ubuntu-sdk
+
+Package: alienblaster
+Priority: extra
+Section: universe/games
+Installed-Size: 668
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian Games Team <pkg-games-devel@lists.alioth.debian.org>
+Architecture: amd64
+Version: 1.1.0-9
+Depends: alienblaster-data, libc6 (>= 2.14), libgcc1 (>= 1:3.0), libsdl-mixer1.2, libsdl1.2debian (>= 1.2.11), libstdc++6 (>= 5.2)
+Filename: pool/universe/a/alienblaster/alienblaster_1.1.0-9_amd64.deb
+Size: 180278
+MD5sum: e53379fd0d60e0af6304af78aa8ef2b7
+SHA1: ca405056cf66a1c2ae3ae1674c22b7d24cda4986
+SHA256: ff25bd843420801e9adea4f5ec1ca9656b2aeb327d8102107bf5ebbdb3046c38
+Description-en: Classic 2D shoot 'em up
+ Your mission is simple: Stop the invasion of the aliens and blast them!
+ .
+ Alien Blaster is a classic 2D shoot 'em up featuring lots of different
+ weapons, special items, aliens to blast and a big bad boss.
+ .
+ It supports both a single player mode and a cooperative two player mode
+ for two persons playing on one computer.
+Description-md5: da1f8f1a6453d62874036331e075d65f
+Homepage: http://www.schwardtnet.de/alienblaster/
+Bugs: https://bugs.launchpad.net/ubuntu/+filebug
+Origin: Ubuntu
+"""
+    out1 = {'alienblaster:amd64=1.1.0-9': {'Architecture': 'amd64',
+                                         'Package': 'alienblaster',
+                                           'Version': '1.1.0-9'},
+            'openssl:amd64=1.0.2g-1ubuntu4': {'Architecture': 'amd64',
+                                              'Package': 'openssl',
+                                              'Version': '1.0.2g-1ubuntu4'},
+            'openssl:amd64=1.0.2g-1ubuntu4.5': {'Architecture': 'amd64',
+                                                'Package': 'openssl',
+                                                'Status': 'install ok installed',
+                                                'Version': '1.0.2g-1ubuntu4.5'}}
+    out = parse_apt_cache_show_pkgs_output(txt1)
+    assert_is_subset_dict_recur(out1, out)
 
 
 def test_parse_apt_cache_policy_pkgs_output():
@@ -111,12 +217,26 @@ skype:i386:
      4.3.0.37-1 -1
         100 /var/lib/dpkg/status
 """
-    out1 = {'afni': None, 'python-nibabel': None}
+    out1 = {'openssl': {'architecture': None,
+             'candidate': '1.0.2g-1ubuntu4.8',
+             'installed': '1.0.2g-1ubuntu4.5',
+             'versions': [{'installed': None,
+                           'priority': '500',
+                           'sources': [{'priority': '500',
+                                        'source': 'http://security.ubuntu.com/ubuntu xenial-security/main amd64 Packages'}],
+                           'version': '1.0.2g-1ubuntu4.6'},
+                          {'installed': '***',
+                           'priority': '100',
+                           'sources': [{'priority': '100',
+                                        'source': '/var/lib/dpkg/status'}],
+                           'version': '1.0.2g-1ubuntu4.5'},
+                          {'installed': None,
+                           'priority': '500',
+                           'sources': [{'priority': '500',
+                                        'source': 'http://us.archive.ubuntu.com/ubuntu xenial/main amd64 Packages'}],
+                           'version': '1.0.2g-1ubuntu4'}]}}
     out = parse_apt_cache_policy_pkgs_output(txt1)
-# TODO: Test discovered entities
-#    from pprint import pprint
-#    print(len(out))
-#    pprint(out)
+    assert_is_subset_dict_recur(out1, out)
 
 def test_parse_apt_cache_policy_source_info():
     from ..debian import parse_apt_cache_policy_source_info
@@ -157,8 +277,24 @@ Package files:
      origin us.archive.ubuntu.com
 Pinned packages:
 """
+    out1 = {'http://neuro.debian.net/debian xenial/non-free i386 Packages':
+                {'architecture': 'i386',
+                 'archive': 'xenial',
+                 'archive_uri': 'http://neuro.debian.net/debian',
+                 'codename': 'xenial',
+                 'component': 'non-free',
+                 'label': 'NeuroDebian',
+                 'origin': 'NeuroDebian',
+                 'site': 'neuro.debian.net'
+                 },
+            'http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages':
+                {'architecture': 'amd64',
+                 'archive': 'xenial-security',
+                 'archive_uri': 'http://security.ubuntu.com/ubuntu',
+                 'codename': 'xenial',
+                 'component': 'restricted',
+                 'label': 'Ubuntu',
+                 'origin': 'Ubuntu',
+                 'site': 'security.ubuntu.com'}}
     out = parse_apt_cache_policy_source_info(txt)
-    # TODO: Test discovered entities
-#    from pprint import pprint
-#    print(len(out))
-#    pprint(out)
+    assert_is_subset_dict_recur(out1, out)
