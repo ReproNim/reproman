@@ -46,6 +46,7 @@ class DebianReleaseSpec(object):
 def get_spec_from_release_file(content):
     """Provide specification object describing the component of the distribution
     """
+    # RegExp to pull a single line "tag: value" pair from a deb822 file
     re_deb822_single_line_tag = re.compile("""
         ^(?P<tag>[a-zA-Z][^:]*):[\ ]+  # Tag - begins at start of line
         (?P<val>\S.*)$           # Value - after colon to the end of the line
@@ -55,10 +56,11 @@ def get_spec_from_release_file(content):
     if "-----BEGIN PGP SIGNATURE-----" in content:
         content = content.split("-----BEGIN PGP SIGNATURE-----")[0]
 
-    release = {}
-    matches = re_deb822_single_line_tag.finditer(content)
-    for match in matches:
-        release[match.group("tag")] = match.group("val")
+    # Parse the content for tags and values into a dictionary
+    release = {
+        match.group("tag"): match.group("val")
+        for match in re_deb822_single_line_tag.finditer(content)
+    }
 
     # TODO: redo with conversions of components and architectures in into lists
     # and date in machine-readable presentation
@@ -85,19 +87,13 @@ def get_used_release_specs(package, installed_version=None):
     pass
 
 
-def _parse_apt_cache_policy_pkgs_output(output):
-    # first split per each package
-    entries = filter(bool, re.split('\n(?=\S)', output, flags=re.MULTILINE))
-    return entries
-
-
 def parse_apt_cache_policy_pkgs_output(output):
     # findall wasn't greedy enough for some reason, so decided first to
     # split into entries (one per package)
     entries = filter(bool, re.split('\n(?=\S)', output, flags=re.MULTILINE))
     # now we need to parse/match each entry
     re_pkg = re.compile("""
-        ^(?P<name>[^\s:]+):(?P<architecture>\S+)?\s*\n                       # name of the package
+        ^(?P<name>[^\s:]+):((?P<architecture>\S+):)?\s*\n  # package name
         \s+Installed:\s*(?P<installed>\S*)\s*\n    # Installed version
         \s+Candidate:\s*(?P<candidate>\S*)\s*\n    # Candidate version
         \s+Version\stable:\s*
@@ -108,8 +104,12 @@ def parse_apt_cache_policy_pkgs_output(output):
         ^(\s{5}|\s(?P<installed>\*\*\*)\s)
         (?P<version>\S+)\s+
         (?P<priority>\S+)\n.*
-        (?P<urls>(\n\s{8}.*)+)
-    """, flags=re.VERBOSE)
+        (?P<sources>(\n\s{8}.*)+)
+    """, flags=re.VERBOSE + re.MULTILINE)
+    re_source = re.compile("""
+        ^\s{8}(?P<priority>\S+)\s+
+        (?P<source>.*)$
+    """, flags=re.VERBOSE + re.MULTILINE)
     pkgs = {}
     for entry in entries:
         match = re_pkg.match(entry.strip())
@@ -118,10 +118,14 @@ def parse_apt_cache_policy_pkgs_output(output):
             continue
         info = match.groupdict()
         pkgs[info.pop('name')] = info
-        info['versions'] = [
-            x.groupdict()
-            for x in re_versions.finditer(info.pop('version_table'))
-        ]
+        info['versions'] = []
+        for version in re_versions.finditer(info.pop('version_table')):
+            version_dict = version.groupdict()
+            version_dict["sources"] = [
+                source.groupdict()
+                for source in re_source.finditer(version.group("sources"))
+                ]
+            info['versions'].append(version_dict)
         # process version_table
     return pkgs
     #for pkg_match in re_pkg.finditer(output):

@@ -63,6 +63,18 @@ afni:
  *** 16.2.07~dfsg.1-2~nd90+1 500
         500 http://neuro.debian.net/debian stretch/contrib amd64 Packages
         100 /var/lib/dpkg/status
+openssl:
+  Installed: 1.0.2g-1ubuntu4.5
+  Candidate: 1.0.2g-1ubuntu4.8
+  Version table:
+     1.0.2g-1ubuntu4.8 500
+        500 http://us.archive.ubuntu.com/ubuntu xenial-updates/main amd64 Packages
+     1.0.2g-1ubuntu4.6 500
+        500 http://security.ubuntu.com/ubuntu xenial-security/main amd64 Packages
+ *** 1.0.2g-1ubuntu4.5 100
+        100 /var/lib/dpkg/status
+     1.0.2g-1ubuntu4 500
+        500 http://us.archive.ubuntu.com/ubuntu xenial/main amd64 Packages
 python-nibabel:
   Installed: 2.1.0-1
   Candidate: 2.1.0-1
@@ -83,6 +95,15 @@ python-biotools:
      1.2.12-2 600
         600 http://http.debian.net/debian sid/main amd64 Packages
         600 http://http.debian.net/debian sid/main i386 Packages
+alienblaster:
+  Installed: 1.1.0-9
+  Candidate: 1.1.0-9
+  Version table:
+ *** 1.1.0-9 500
+        500 http://us.archive.ubuntu.com/ubuntu xenial/universe amd64 Packages
+        500 file:/my/repo ./ Packages
+        500 file:/my/repo2 ubuntu/ Packages
+        100 /var/lib/dpkg/status
 skype:i386:
   Installed: (none)
   Candidate: (none)
@@ -138,6 +159,6 @@ Pinned packages:
 """
     out = parse_apt_cache_policy_source_info(txt)
     # TODO: Test discovered entities
-    from pprint import pprint
-    print(len(out))
-    pprint(out)
+#    from pprint import pprint
+#    print(len(out))
+#    pprint(out)
