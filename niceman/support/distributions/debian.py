@@ -14,6 +14,8 @@ from __future__ import absolute_import
 
 import logging
 import re
+import string
+
 import attr
 
 lgr = logging.getLogger('niceman.distributions.debian')
@@ -184,7 +186,7 @@ def parse_apt_cache_policy_source_info(policy_output):
 
     sections = re_section.finditer(policy_output)
     for section in sections:
-        if str.startswith(section.group("header_line"), "Package files:"):
+        if section.group("header_line").startswith("Package files:"):
             sources = re_source.finditer(section.group("body"))
             for source in sources:
                 info = source.groupdict()

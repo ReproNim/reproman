@@ -8,20 +8,14 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import os
-try:
-    import apt
-except ImportError:
-    apt = None
 
 from pprint import pprint
 
 from niceman.distributions.debian import DebTracer
 
 import mock
-from niceman.tests.utils import skip_if
 
 
-@skip_if(not apt)
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
     tracer = DebTracer()
@@ -37,6 +31,7 @@ def test_dpkg_manager_identify_packages():
     distributions = list(tracer.identify_distributions(files))
     assert len(distributions) == 1
     distribution, unknown_files = distributions[0]
+    pprint(distribution)
     assert distribution.apt_sources
     # Make sure both a non-local origin was found
     for o in distribution.apt_sources:
@@ -50,33 +45,31 @@ def test_dpkg_manager_identify_packages():
             break
     else:
         assert False, "A non-local origin must be found"
-    pprint(distribution)
 
 
-def test_find_release_file():
-    fp = lambda p: os.path.join('/var/lib/apt/lists', p)
+# def test_find_release_file():
+#     fp = lambda p: os.path.join('/var/lib/apt/lists', p)
+#
+#     def mocked_exists(path):
+#         return path in {
+#             fp('s_d_d_data_crap_InRelease'),
+#             fp('s_d_d_datas_InRelease'),
+#             fp('s_d_d_data_InRelease'),
+#             fp('s_d_d_sid_InRelease'),
+#             fp('s_d_d_InRelease')
+#         }
+#
+#     with mock.patch('os.path.exists', mocked_exists):
+#         assert DebTracer._find_release_file(
+#             fp('s_d_d_data_non-free_binary-amd64_Packages')) == \
+#                fp('s_d_d_data_InRelease')
+#         assert DebTracer._find_release_file(
+#             fp('s_d_d_data_non-free_binary-i386_Packages')) == \
+#                fp('s_d_d_data_InRelease')
+#         assert DebTracer._find_release_file(
+#             fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
 
-    def mocked_exists(path):
-        return path in {
-            fp('s_d_d_data_crap_InRelease'),
-            fp('s_d_d_datas_InRelease'),
-            fp('s_d_d_data_InRelease'),
-            fp('s_d_d_sid_InRelease'),
-            fp('s_d_d_InRelease')
-        }
 
-    with mock.patch('os.path.exists', mocked_exists):
-        assert DebTracer._find_release_file(
-            fp('s_d_d_data_non-free_binary-amd64_Packages')) == \
-               fp('s_d_d_data_InRelease')
-        assert DebTracer._find_release_file(
-            fp('s_d_d_data_non-free_binary-i386_Packages')) == \
-               fp('s_d_d_data_InRelease')
-        assert DebTracer._find_release_file(
-            fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
-
-
-@skip_if(not apt)
 def test_utf8_file():
     files = [u"/usr/share/ca-certificates/mozilla/"
              u"TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]

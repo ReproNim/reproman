@@ -7,42 +7,23 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Debian(-based) distribution(s)."""
-import copy
 import os
 from datetime import datetime
 
 import attr
-import collections
 from collections import defaultdict
 
 import pytz
-import yaml
 
 from niceman import utils
-from .base import Distribution
 
 import logging
 
-# ??? In principle apt is relevant only for tracing and here we are
-#     trying to collect everything Debian related, so it might not event
-#     need apt
-try:
-    import apt
-    import apt.utils as apt_utils
-    import apt_pkg
-    # TODO this one operates locally and not within Session
-    # So we would somehow need to point it inside the session
-    # if possible...  probably not without pain.  If we could
-    # "mount" that env then rootdir could be provided into Cache...
-    # bleh
-    apt_cache = apt.Cache()
-except ImportError:
-    apt = None
-    apt_utils = None
-    apt_pkg = None
-    apt_cache = None
-
 # Pick a conservative max command-line
+from niceman.support.distributions.debian import \
+    parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
+    parse_apt_cache_policy_source_info
+
 try:
     _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
 except (ValueError, AttributeError):
@@ -55,7 +36,6 @@ _DPKG_QUERY_PARSER = re.compile(
 )
 
 from niceman.distributions.base import DistributionTracer
-from niceman.support.exceptions import CommandError
 
 lgr = logging.getLogger('niceman.distributions.debian')
 
@@ -104,7 +84,7 @@ class DEBPackage(Package):
     sha1 = attr.ib(default=None)
     sha256 = attr.ib(default=None)
     source_version = attr.ib(default=None)
-    versions = attr.ib(default=None)
+    versions = attr.ib(default=None)  # Hash ver_str -> [Array of source names]
     install_date = attr.ib(default=None)
     # nah -- ATM goes directly into DebianDistribution.apt_sources
     # apt_sources = TypedList(APTSource)
@@ -196,7 +176,7 @@ class DebTracer(DistributionTracer):
     def _init(self):
         # TODO: we might want a generic helper for collections of things
         # where we could match based on the set of attrs which matter
-        self._apt_sources = {}
+        self._apt_sources = {}  # dict of source_name -> APTSource
         self._apt_source_names = set()
 
     def identify_distributions(self, files):
@@ -204,15 +184,14 @@ class DebTracer(DistributionTracer):
         try:
             debian_version = self._session.read('/etc/debian_version').strip()
             self._session.exists('/etc/os-release')
-            # debian_version, err = self._session.execute_command('cat /etc/debian_version')
-            #debian_version = debian_version.strip()  # would have new line
             # for now would also match Ubuntu -- there it would have
             # ID=ubuntu and ID_LIKE=debian
             # TODO: load/parse /etc/os-release into a dict and better use
             # VERSION_ID and then ID (to decide if Debian or Ubuntu or ...)
-            out, err = self._session.execute_command('grep -i "^ID.*=debian" /etc/os-release') # , expect_fail=True)
-            out, err = self._session.execute_command('ls -ld /etc/apt') #, expect_fail=True)
-        except CommandError as exc: # Exception as exc:
+            _, _ = self._session.execute_command('grep -i "^ID.*=debian"'
+                                                     ' /etc/os-release')
+            _, _ = self._session.execute_command('ls -ld /etc/apt')
+        except CommandError as exc:
             lgr.debug("Did not detect Debian (or derivative): %s", exc)
             return
 
@@ -273,81 +252,167 @@ class DebTracer(DistributionTracer):
         return file_to_package_dict
 
     def _create_package(self, name, architecture=None):
-        if not apt_cache:
-            return None
-        try:
-            query = name if not architecture else "%s:%s" % (name, architecture)
-            # TODO: use session, not apt_cache
-            pkg_info = apt_cache[query]
-        except KeyError:  # Package not found
-            lgr.warning("Was asked to create a spec for package %s but it was not found in apt", name)
-            return None
-
-        # prep our pkg object:
-        installed_info = pkg_info.installed
-        if architecture and installed_info.architecture and architecture != installed_info.architecture:
-            # should match or we whine a lot  and TODO: fail in the future after switching from apt module
-            lgr.warning(
-                "For package %s got different architecture %s != %s. Using installed for now",
-                name, architecture, installed_info.architecture
+        # Find apt sources if not defined
+        if not self._apt_sources:
+            # Use apt-cache policy to get all sources
+            out, _ = self._session.execute_command(
+                ['apt-cache', 'policy']
             )
+            out = utils.to_unicode(out, "utf-8")
+            src_info = parse_apt_cache_policy_source_info(out)
+            for src_name in src_info:
+                src_vals = src_info[src_name]
+                self._apt_sources[src_name] = \
+                    APTSource(
+                        name=src_name,  # TODO RENAME
+                        component=src_vals.get("component"),
+                        codename=src_vals.get("codename"),
+                        archive=src_vals.get("archive"),
+                        architecture=src_vals.get("architecture"),
+                        origin=src_vals.get("origin"),
+                        label=src_vals.get("label"),
+                        site=src_vals.get("site"),
+                        # date = date # TODO
+                        archive_uri=src_vals.get("archive_uri"))
 
-        pkg = DEBPackage(
-            name=name,
-            # type="dpkg"
-            version=installed_info.version,
-            # candidate=pkg_info.candidate.version
-            size=installed_info.size,
-            architecture=installed_info.architecture,
-            md5=installed_info.md5,
-            sha1=installed_info.sha1,
-            sha256=installed_info.sha256
+        # First use "dpkg -s pkg" to get the installed version and arch
+        query = name if not architecture \
+            else "%s:%s" % (name, architecture)
+        out, _ = self._session.execute_command(
+            ['dpkg', '-s', query]
         )
-        if installed_info.source_name:
-            pkg.source_name = pkg_info.installed.source_name
-            pkg.source_version = pkg_info.installed.source_version
-        pkg.files = []
+        out = utils.to_unicode(out, "utf-8")
+        # dpkg -s uses the same output as apt-cache show pkg
+        info = parse_apt_cache_show_pkgs_output(out)
+        if not info:
+            lgr.warning("Was unable query package %s" % query)
+            return None
+        _, info = info.popitem()  # Pull out first (and only) result
+        architecture = info.get("Architecture")
+        version = info.get("Version")
 
-        # Now get installation date
-        try:
-            pkg.install_date = str(
-                pytz.utc.localize(
-                    datetime.utcfromtimestamp(
-                        os.path.getmtime(
-                            "/var/lib/dpkg/info/" + name + ".list"))))
-        except OSError:  # file not found
-            pass
+        # Now use "apt-cache show pkg:arch=version" to get more detail
+        query = "%s=%s" % (name, version) if not architecture \
+            else "%s:%s=%s" % (name, architecture, version)
+        out, _ = self._session.execute_command(
+            ['apt-cache', 'show', query]
+        )
+        out = utils.to_unicode(out, "utf-8")
+        # dpkg -s uses the same output as apt-cache show pkg
+        info = parse_apt_cache_show_pkgs_output(out)
+        if not info:
+            lgr.warning("Was unable apt-cache show package %s" % query)
+            return None
+        _, info = info.popitem()  # Pull out first (and only) result
 
-        # Compile Version Table
-        pkg_versions = defaultdict(list)
-        for v in pkg_info.versions:
-            for (pf, _) in v._cand.file_list:
-                # Get the archive uri
-                indexfile = v.package._pcache._list.find_index(pf)
-                archive_uri = indexfile.archive_uri("") if indexfile else None
+        # Now use "apt-cache policy pkg:arch" to get versions
+        query = name if not architecture \
+            else "%s:%s" % (name, architecture)
+        out, _ = self._session.execute_command(
+            ['apt-cache', 'policy', query]
+        )
+        out = utils.to_unicode(out, "utf-8")
+        # dpkg -s uses the same output as apt-cache show pkg
+        ver = parse_apt_cache_policy_pkgs_output(out)
+        if not ver:
+            lgr.warning("Was unable apt-cache policy package %s" % query)
+            return None
+        _, ver = ver.popitem()  # Pull out first (and only) result
+        ver_dict = {}
+        for v in ver.get("versions"):
+            key = v.get("version")
+            ver_dict[key] = [s.get("source") for s in v.get("sources")]
 
-                # Pull origin information from package file
-                if pf.component == 'now':
-                    # just make sure that we have an entry:
-                    # but otherwise - don't store, what for?
-                    pkg_versions[v.version]
-                else:
-                    pkg_versions[v.version].append(
-                        self._get_apt_source(
-                            packages_filename=pf.filename,
-                            component=pf.component,
-                            codename=pf.codename,
-                            archive=pf.archive,
-                            architecture=pf.architecture,
-                            origin=pf.origin,
-                            label=pf.label,
-                            site=pf.site,
-                            archive_uri=archive_uri
-                        )
-                    )
-        pkg.versions = dict(pkg_versions)
-        lgr.debug("Found package %s", pkg)
-        return pkg
+        return DEBPackage(
+            name=name,
+            version=version,
+            architecture=architecture,
+            # TODO source_name=  Split info.get("Source")
+            # TODO source_version= Split info.get("Source")
+            size=info.get("Size"),
+            md5=info.get("MD5sum"),
+            sha1=info.get("SHA1"),
+            sha256=info.get("SHA256"),
+            versions=ver_dict
+            # TODO install_date = attr.ib(default=None)
+        )
+
+
+        # if not apt_cache:
+        #     return None
+        # try:
+        #     query = name if not architecture else "%s:%s" % (name, architecture)
+        #     # TODO: use session, not apt_cache
+        #     pkg_info = apt_cache[query]
+        # except KeyError:  # Package not found
+        #     lgr.warning("Was asked to create a spec for package %s but it was not found in apt", name)
+        #     return None
+        #
+        # # prep our pkg object:
+        # installed_info = pkg_info.installed
+        # if architecture and installed_info.architecture and architecture != installed_info.architecture:
+        #     # should match or we whine a lot  and TODO: fail in the future after switching from apt module
+        #     lgr.warning(
+        #         "For package %s got different architecture %s != %s. Using installed for now",
+        #         name, architecture, installed_info.architecture
+        #     )
+        #
+        # pkg = DEBPackage(
+        #     name=name,
+        #     # type="dpkg"
+        #     version=installed_info.version,
+        #     # candidate=pkg_info.candidate.version
+        #     size=installed_info.size,
+        #     architecture=installed_info.architecture,
+        #     md5=installed_info.md5,
+        #     sha1=installed_info.sha1,
+        #     sha256=installed_info.sha256
+        # )
+        # if installed_info.source_name:
+        #     pkg.source_name = pkg_info.installed.source_name
+        #     pkg.source_version = pkg_info.installed.source_version
+        # pkg.files = []
+        #
+        # # Now get installation date
+        # try:
+        #     pkg.install_date = str(
+        #         pytz.utc.localize(
+        #             datetime.utcfromtimestamp(
+        #                 os.path.getmtime(
+        #                     "/var/lib/dpkg/info/" + name + ".list"))))
+        # except OSError:  # file not found
+        #     pass
+        #
+        # # Compile Version Table
+        # pkg_versions = defaultdict(list)
+        # for v in pkg_info.versions:
+        #     for (pf, _) in v._cand.file_list:
+        #         # Get the archive uri
+        #         indexfile = v.package._pcache._list.find_index(pf)
+        #         archive_uri = indexfile.archive_uri("") if indexfile else None
+        #
+        #         # Pull origin information from package file
+        #         if pf.component == 'now':
+        #             # just make sure that we have an entry:
+        #             # but otherwise - don't store, what for?
+        #             pkg_versions[v.version]
+        #         else:
+        #             pkg_versions[v.version].append(
+        #                 self._get_apt_source(
+        #                     packages_filename=pf.filename,
+        #                     component=pf.component,
+        #                     codename=pf.codename,
+        #                     archive=pf.archive,
+        #                     architecture=pf.architecture,
+        #                     origin=pf.origin,
+        #                     label=pf.label,
+        #                     site=pf.site,
+        #                     archive_uri=archive_uri
+        #                 )
+        #             )
+        # pkg.versions = dict(pkg_versions)
+        # lgr.debug("Found package %s", pkg)
+        # return pkg
 
     def _get_apt_source_name(self, origin, archive, component, **other_attrs):
         # Create a unique name for the origin
@@ -433,33 +498,33 @@ class DebTracer(DistributionTracer):
                 res.pop('architecture')
         return res
 
-    @staticmethod
-    def _find_release_file(packages_filename):
-        # The release filename is a substring of the package
-        # filename (excluding the ending "Release" or "InRelease"
-        # The split between the release filename and the package filename
-        # is at an underscore, so split the package filename
-        # at underscores and test for the release file:
-        rfprefix = packages_filename
-        assert os.path.isabs(packages_filename), \
-            "must be given full path, got %s" % packages_filename
-        while "_" in rfprefix:
-            rfprefix = rfprefix.rsplit("_", 1)[0]
-            for ending in ['_InRelease', '_Release']:
-                release_filename = rfprefix + ending
-                if os.path.exists(release_filename):
-                    return release_filename
-        # No file found
-        return None
-
-    @staticmethod
-    def _find_release_date(rfile):
-        # Extract and format the date from the release file
-        rdate = None
-        if rfile:
-            rdate = apt_utils.get_release_date_from_release_file(rfile)
-            if rdate:
-                rdate = str(pytz.utc.localize(
-                    datetime.utcfromtimestamp(rdate)))
-        return rdate
+    # @staticmethod
+    # def _find_release_file(packages_filename):
+    #     # The release filename is a substring of the package
+    #     # filename (excluding the ending "Release" or "InRelease"
+    #     # The split between the release filename and the package filename
+    #     # is at an underscore, so split the package filename
+    #     # at underscores and test for the release file:
+    #     rfprefix = packages_filename
+    #     assert os.path.isabs(packages_filename), \
+    #         "must be given full path, got %s" % packages_filename
+    #     while "_" in rfprefix:
+    #         rfprefix = rfprefix.rsplit("_", 1)[0]
+    #         for ending in ['_InRelease', '_Release']:
+    #             release_filename = rfprefix + ending
+    #             if os.path.exists(release_filename):
+    #                 return release_filename
+    #     # No file found
+    #     return None
+    #
+    # @staticmethod
+    # def _find_release_date(rfile):
+    #     # Extract and format the date from the release file
+    #     rdate = None
+    #     if rfile:
+    #         rdate = apt_utils.get_release_date_from_release_file(rfile)
+    #         if rdate:
+    #             rdate = str(pytz.utc.localize(
+    #                 datetime.utcfromtimestamp(rdate)))
+    #     return rdate
 
