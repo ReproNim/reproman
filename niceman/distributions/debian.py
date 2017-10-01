@@ -178,6 +178,8 @@ class DebTracer(DistributionTracer):
         # where we could match based on the set of attrs which matter
         self._apt_sources = {}  # dict of source_name -> APTSource
         self._apt_source_names = set()
+        self._all_apt_sources = {}
+        self._source_line_to_name_map = {}
 
     def identify_distributions(self, files):
         debian_version = None
@@ -251,29 +253,20 @@ class DebTracer(DistributionTracer):
                 file_to_package_dict[found_name] = pkg
         return file_to_package_dict
 
+    def _get_apt_source_name(self, src):
+        # Create a unique name for the origin
+        name_fmt = "apt_%s_%s_%s_%%d" % (src.origin, src.archive,
+                                         src.component)
+        name = utils.generate_unique_name(name_fmt, self._apt_source_names)
+        # Remember the created name
+        self._apt_source_names.add(name)
+        # Create a named origin
+        return name
+
     def _create_package(self, name, architecture=None):
         # Find apt sources if not defined
-        if not self._apt_sources:
-            # Use apt-cache policy to get all sources
-            out, _ = self._session.execute_command(
-                ['apt-cache', 'policy']
-            )
-            out = utils.to_unicode(out, "utf-8")
-            src_info = parse_apt_cache_policy_source_info(out)
-            for src_name in src_info:
-                src_vals = src_info[src_name]
-                self._apt_sources[src_name] = \
-                    APTSource(
-                        name=src_name,  # TODO RENAME
-                        component=src_vals.get("component"),
-                        codename=src_vals.get("codename"),
-                        archive=src_vals.get("archive"),
-                        architecture=src_vals.get("architecture"),
-                        origin=src_vals.get("origin"),
-                        label=src_vals.get("label"),
-                        site=src_vals.get("site"),
-                        # date = date # TODO
-                        archive_uri=src_vals.get("archive_uri"))
+        if not self._all_apt_sources:
+            self._find_all_sources()
 
         # First use "dpkg -s pkg" to get the installed version and arch
         query = name if not architecture \
@@ -321,7 +314,25 @@ class DebTracer(DistributionTracer):
         ver_dict = {}
         for v in ver.get("versions"):
             key = v.get("version")
-            ver_dict[key] = [s.get("source") for s in v.get("sources")]
+            ver_dict[key] = []
+            for s in v.get("sources"):
+                s = s["source"]
+                # If we haven't named the source yet, name it
+                if s not in self._source_line_to_name_map:
+                    # Make sure we can find the source
+                    if s not in self._all_apt_sources:
+                        lgr.warning("Cannot find source %s" % s)
+                        continue
+                    # Grab and name the source
+                    source = self._all_apt_sources[s]
+                    src_name = self._get_apt_source_name(source)
+                    source.name = src_name
+                    # Now add the source to our used sources
+                    self._apt_sources[src_name] = source
+                    # add the name for easy future lookup
+                    self._source_line_to_name_map[s] = src_name
+                # Look up and add the short name for the source
+                ver_dict[key].append(self._source_line_to_name_map[s])
 
         return DEBPackage(
             name=name,
@@ -414,36 +425,49 @@ class DebTracer(DistributionTracer):
         # lgr.debug("Found package %s", pkg)
         # return pkg
 
-    def _get_apt_source_name(self, origin, archive, component, **other_attrs):
-        # Create a unique name for the origin
-        name_fmt = "apt_%s_%s_%s_%%d" % (origin, archive, component)
-        name = utils.generate_unique_name(name_fmt, self._apt_source_names)
-        # Remember the created name
-        self._apt_source_names.add(name)
-        # Create a named origin
-        return name
+    def _find_all_sources(self):
+        # Use apt-cache policy to get all sources
+        out, _ = self._session.execute_command(
+            ['apt-cache', 'policy']
+        )
+        out = utils.to_unicode(out, "utf-8")
+        src_info = parse_apt_cache_policy_source_info(out)
+        for src_name in src_info:
+            src_vals = src_info[src_name]
+            self._all_apt_sources[src_name] = \
+                APTSource(
+                    name=src_name,  # TODO RENAME
+                    component=src_vals.get("component"),
+                    codename=src_vals.get("codename"),
+                    archive=src_vals.get("archive"),
+                    architecture=src_vals.get("architecture"),
+                    origin=src_vals.get("origin"),
+                    label=src_vals.get("label"),
+                    site=src_vals.get("site"),
+                    # date = date # TODO
+                    archive_uri=src_vals.get("archive_uri"))
 
-    def _get_apt_source(self, packages_filename, **kwargs):
-        # Given a set of attributes, in this case just all provided,
-        # return either a new instance or the cached one
-        hashable = tuple(sorted(kwargs.items()))
-        if hashable not in self._apt_sources:
-            self._apt_sources[hashable] = apt_source = APTSource(
-                name=self._get_apt_source_name(**kwargs),
-                **kwargs
-            )
-            # we need to establish its date
-
-            # TODO: shouldn't be done per each package since
-            #       common within session for all packages from the
-            #       same Packages.  So should be done independently
-            #       and once per Packages file
-            # Get the release date
-            apt_source.date = self._find_release_date(
-                self._find_release_file(packages_filename))
-
-        # we return a unique name
-        return self._apt_sources[hashable].name
+    # def _get_apt_source(self, packages_filename, **kwargs):
+    #     # Given a set of attributes, in this case just all provided,
+    #     # return either a new instance or the cached one
+    #     hashable = tuple(sorted(kwargs.items()))
+    #     if hashable not in self._apt_sources:
+    #         self._apt_sources[hashable] = apt_source = APTSource(
+    #             name=self._get_apt_source_name(**kwargs),
+    #             **kwargs
+    #         )
+    #         # we need to establish its date
+    #
+    #         # TODO: shouldn't be done per each package since
+    #         #       common within session for all packages from the
+    #         #       same Packages.  So should be done independently
+    #         #       and once per Packages file
+    #         # Get the release date
+    #         apt_source.date = self._find_release_date(
+    #             self._find_release_file(packages_filename))
+    #
+    #     # we return a unique name
+    #     return self._apt_sources[hashable].name
     # # TODO: should become a part of "normalization" where common
     # # stuff floats up
     #
