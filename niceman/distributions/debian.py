@@ -255,8 +255,8 @@ class DebTracer(DistributionTracer):
 
     def _get_apt_source_name(self, src):
         # Create a unique name for the origin
-        name_fmt = "apt_%s_%s_%s_%%d" % (src.origin, src.archive,
-                                         src.component)
+        name_fmt = "apt_%s_%s_%s_%%d" % (src.origin or "", src.archive or "",
+                                         src.component or "")
         name = utils.generate_unique_name(name_fmt, self._apt_source_names)
         # Remember the created name
         self._apt_source_names.add(name)
