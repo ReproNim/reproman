@@ -10,6 +10,7 @@
 
 import attr
 import uuid
+from pipes import quote
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
@@ -19,22 +20,21 @@ from ..support.starcluster.sshutils import SSHClient
 
 
 @attr.s
-class Ssh(Resource):
+class SSH(Resource):
 
     # Generic properties of any Resource
     name = attr.ib()
 
     # Configurable options for each "instance"
-    host = attrib(default=None,
-        doc="DNS or IP address of server.")
+    host = attrib(doc="DNS or IP address of server")
     port = attrib(default=22,
-        doc="Port to connect to on remote host.")
+        doc="Port to connect to on remote host")
     key_filename = attrib(default=None,
-        doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
+        doc="Path to SSH private key file matched with AWS key name parameter")
     user = attrib(default=None,
-        doc="Username to use to log into remote environment.")
+        doc="Username to use to log into remote environment")
     password = attrib(default=None,
-        doc="Password to use to log into remote environment.")
+        doc="Password to use to log into remote environment")
 
     id = attr.ib(default=None)  # EC2 instance ID
 
@@ -90,18 +90,20 @@ class Ssh(Resource):
         """
         assert self._ssh, "We should create or connect to remote server first"
 
-        if pty and shared is not None and not shared:
-            lgr.warning("Cannot do non-shared pty session for ssh server yet")
-
-        return (PtySshSession if pty else SshSession)(
+        return (PTYSSHSession if pty else SSHSession)(
             ssh=self._ssh
         )
+
+# Alias SSH class so that it can be discovered by the ResourceManager.
+@attr.s
+class Ssh(SSH):
+    pass
 
 
 from niceman.resource.session import POSIXSession
 
 @attr.s
-class SshSession(POSIXSession):
+class SSHSession(POSIXSession):
     ssh = attr.ib()
 
     def _execute_command(self, command, env=None, cwd=None):
@@ -127,11 +129,54 @@ class SshSession(POSIXSession):
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
         # If a command fails, a CommandError exception will be thrown.
-        for i, line in enumerate(self.ssh.execute(" ".join(command))):
+        escaped_command = ' '.join(quote(s) for s in command)
+        for i, line in enumerate(self.ssh.execute(escaped_command)):
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
+    def exists(self, path):
+        """Return if file exists"""
+        return self.ssh.path_exists(path)
+
+    def copy_to(self, src_path, dest_path='.', preserve_perms=False,
+                owner=None, group=None, recursive=False):
+        """Take file on the local file system and copy over into the session
+        """
+        self.ssh.put([src_path], remotepath=dest_path)
+        if owner or group:
+            self.ssh.chown(owner, group, dest_path)
+
+    def copy_from(self, src_path, dest_path='', preserve_perms=False,
+                  owner=None, group=None, recursive=False):
+        """Retrieve a file from the remote system
+        """
+        self.ssh.get(src_path, localpath=dest_path)
+
+    def read(self, path, mode='r'):
+        """Return content of a file"""
+        return self.ssh.get_remote_file_lines(path)
+
+    def mkdir(self, path, parents=False):
+        """Create a directory (or with parent directories if `parents`
+        is True)
+        """
+        self.ssh.mkdir(path, mode=0o755)
+
+    def isdir(self, path):
+        """Return True if path is pointing to a directory
+        """
+        return self.ssh.isdir(path)
+
+
+
+
+
+
+
+
+
+
 @attr.s
-class PtySshSession(SshSession):
+class PTYSSHSession(SSHSession):
     """Interactive SSH Session"""
 
     def open(self):

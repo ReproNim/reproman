@@ -25,7 +25,7 @@ from ..utils import assure_dir
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from ..support.starcluster.sshutils import SSHClient
-from .ssh import SshSession, PtySshSession
+from .ssh import SSHSession, PTYSSHSession
 
 @attr.s
 class AwsEc2(Resource):
@@ -275,9 +275,6 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
             private_key=self.key_filename,
         )
 
-        if pty and shared is not None and not shared:
-            lgr.warning("Cannot do non-shared pty session for EC2 server yet")
-
-        return (PtySshSession if pty else SshSession)(
+        return (PTYSSHSession if pty else SSHSession)(
             ssh=ssh
         )
