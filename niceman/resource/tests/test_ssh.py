@@ -65,11 +65,11 @@ def test_ssh_class():
         assert session.exists('test_ssh.py') == True
 
         tmp_path = "/tmp/{}".format(uuid.uuid4().hex)
-        # session.copy_from('test_ssh.py', tmp_path)
-        # assert os.path.isfile(tmp_path) == True
+        session.copy_from('test_ssh.py', tmp_path)
+        assert os.path.isfile(tmp_path) == True
 
-        # file_contents = session.read('test_ssh.py')
-        # assert file_contents[8] == '# Test string to read\n'
+        file_contents = session.read('test_ssh.py')
+        assert file_contents[8] == '# Test string to read\n'
 
         session.mkdir('test-dir')
         assert session.isdir('test-dir') == True
