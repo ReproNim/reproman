@@ -111,6 +111,8 @@ class DEBPackage(Package):
     files = attr.ib(default=attr.Factory(list))  # Might want a File structure for advanced tracking
 
     def satisfies(self, other):
+        """return True if this package (self) satisfies the requirements of 
+        the passed package (other)"""
         if not isinstance(other, Package):
             raise TypeError('satisfies() requires a package argument')
         if not isinstance(other, DEBPackage):
@@ -191,6 +193,18 @@ class DebianDistribution(Distribution):
         #   e.g. component (main, contrib, non-free) to be a list!  but that
         #   would make us require supporting flexible typing -- string or a list
         pass
+
+    def satisfies_package(self, package):
+        """return True if this distribution (self) satisfies the requirements 
+        of the passed package"""
+        if not isinstance(package, Package):
+            raise TypeError('satisfies_package() requires a package argument')
+        if not isinstance(package, DEBPackage):
+            return False
+        for p in self.packages:
+            if p.satisfies(package):
+                return True
+        return False
 
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)

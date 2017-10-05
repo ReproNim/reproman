@@ -17,6 +17,7 @@ from pprint import pprint
 
 from niceman.distributions.debian import DebTracer
 from niceman.distributions.debian import DEBPackage
+from niceman.distributions.debian import DebianDistribution
 
 import pytest
 
@@ -151,12 +152,30 @@ def setup_packages():
     return (a, b, c, d)
 
 def test_package_satisfies(setup_packages):
-    (p1, p1v1, p1v11, p2) = setup_packages
+    (p1, p1v10, p1v11, p2) = setup_packages
     assert p1.satisfies(p1) is True
-    assert p1v1.satisfies(p1v1) is True
-    assert p1.satisfies(p1v1) is False
-    assert p1v1.satisfies(p1) is True
-    assert p1v1.satisfies(p1v11) is False
+    assert p1v10.satisfies(p1v10) is True
+    assert p1.satisfies(p1v10) is False
+    assert p1v10.satisfies(p1) is True
+    assert p1v10.satisfies(p1v11) is False
     assert p1.satisfies(p2) is False
-    assert p1v1.satisfies(p2) is False
-    assert p2.satisfies(p1v1) is False
+    assert p1v10.satisfies(p2) is False
+    assert p2.satisfies(p1v10) is False
+
+@pytest.fixture
+def setup_distributions():
+    (p1, p1v10, p1v11, p2) = setup_packages()
+    d1 = DebianDistribution(name='debian 1')
+    d1.packages = [p1]
+    d2 = DebianDistribution(name='debian 2')
+    d2.packages = [p1v11]
+    return (d1, d2)
+
+def test_distribution_satisfies_package(setup_distributions, setup_packages):
+    (d1, d2) = setup_distributions
+    (p1, p1v10, p1v11, p2) = setup_packages
+    assert d1.satisfies_package(p1) is True
+    assert d1.satisfies_package(p1v10) is False
+    assert d2.satisfies_package(p1) is True
+    assert d2.satisfies_package(p1v10) is False
+    assert d2.satisfies_package(p1v11) is True
