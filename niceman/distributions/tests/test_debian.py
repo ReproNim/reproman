@@ -16,6 +16,9 @@ except ImportError:
 from pprint import pprint
 
 from niceman.distributions.debian import DebTracer
+from niceman.distributions.debian import DEBPackage
+
+import pytest
 
 import mock
 from niceman.tests.utils import skip_if
@@ -137,3 +140,23 @@ fail2ban: /usr/bin/fail2ban-server
         '/usr/lib/afni/bin/afni': {'name': u'afni'},
         '/bin/sh': {'name': u'dash'}
     }
+
+@pytest.fixture
+def setup_packages():
+    """set up the package comparison tests"""
+    a = DEBPackage(name='p1')
+    b = DEBPackage(name='p1', version='1.0')
+    c = DEBPackage(name='p1', version='1.1')
+    d = DEBPackage(name='p2')
+    return (a, b, c, d)
+
+def test_package_satisfies(setup_packages):
+    (p1, p1v1, p1v11, p2) = setup_packages
+    assert p1.satisfies(p1) is True
+    assert p1v1.satisfies(p1v1) is True
+    assert p1.satisfies(p1v1) is False
+    assert p1v1.satisfies(p1) is True
+    assert p1v1.satisfies(p1v11) is False
+    assert p1.satisfies(p2) is False
+    assert p1v1.satisfies(p2) is False
+    assert p2.satisfies(p1v1) is False

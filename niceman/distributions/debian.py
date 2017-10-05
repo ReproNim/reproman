@@ -109,8 +109,21 @@ class DEBPackage(Package):
     # nah -- ATM goes directly into DebianDistribution.apt_sources
     # apt_sources = TypedList(APTSource)
     files = attr.ib(default=attr.Factory(list))  # Might want a File structure for advanced tracking
-_register_with_representer(DEBPackage)
 
+    def satisfies(self, other):
+        if not isinstance(other, Package):
+            raise TypeError('satisfies() requires a package argument')
+        if not isinstance(other, DEBPackage):
+            return False
+        if self.name != other.name:
+            return False
+        if self.version is None:
+            return other.version is None
+        if other.version is None:
+            return True
+        return self.version == other.version
+
+_register_with_representer(DEBPackage)
 
 @attr.s
 class DebianDistribution(Distribution):
