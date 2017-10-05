@@ -206,6 +206,18 @@ class DebianDistribution(Distribution):
                 return True
         return False
 
+    def satisfies(self, other):
+        """return True if this distribution (self) satisfies the requirements 
+        of the other distribution (other)"""
+        if not isinstance(other, Distribution):
+            raise TypeError('satisfies() requires a package argument')
+        if not isinstance(other, DebianDistribution):
+            return False
+        for p in other.packages:
+            if not self.satisfies_package(p):
+                return False
+        return True
+
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)
     #  def __add__(self, another_instance or DEBPackage, or APTSource)

@@ -179,3 +179,8 @@ def test_distribution_satisfies_package(setup_distributions, setup_packages):
     assert d2.satisfies_package(p1) is True
     assert d2.satisfies_package(p1v10) is False
     assert d2.satisfies_package(p1v11) is True
+
+def test_distributions(setup_distributions):
+    (d1, d2) = setup_distributions
+    assert d1.satisfies(d2) is False
+    assert d2.satisfies(d1) is True
