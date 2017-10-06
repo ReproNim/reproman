@@ -15,6 +15,8 @@ import attr
 import collections
 from collections import defaultdict
 
+from six.moves import map
+
 import pytz
 import yaml
 
@@ -213,10 +215,7 @@ class DebianDistribution(Distribution):
             raise TypeError('satisfies() requires a package argument')
         if not isinstance(other, DebianDistribution):
             return False
-        for p in other.packages:
-            if not self.satisfies_package(p):
-                return False
-        return True
+        return all(map(self.satisfies_package, other.packages))
 
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)
