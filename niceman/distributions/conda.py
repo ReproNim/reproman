@@ -42,7 +42,7 @@ class CondaPackage(Package):
 @attr.s
 class CondaChannel(SpecObject):
     name = attr.ib()
-    channel = attr.ib(default=None)
+    url = attr.ib(default=None)
 
 
 @attr.s
@@ -295,7 +295,7 @@ class CondaTracer(DistributionTracer):
         for idx, conda_path in enumerate(conda_paths):
             # Start with an empty channels list
             channels = []
-            channel_to_name = {}
+            found_channel_names = set()
 
             # Retrieve distribution details
             conda_info = self._get_conda_info(conda_path)
@@ -335,18 +335,15 @@ class CondaTracer(DistributionTracer):
                 details = conda_package_details[package_name]
 
                 # Look up or create the conda channel for the environment list
-                channel = details.get("channel")
-                channel_name = None
-                if channel:
-                    if channel not in channel_to_name:
-                        # New channel for our environment, so name and add it
-                        channel_name = "channel_%d" % len(channels)
-                        channel_to_name[channel] = channel_name
+                channel_name = details.get("schannel")
+                if channel_name:
+                    if channel_name not in found_channel_names:
+                        # New channel for our environment, so add it
+                        channel_url = details.get("channel")
+                        found_channel_names.add(channel_name)
                         channels.append(CondaChannel(
                             name=channel_name,
-                            channel=channel))
-                    else:
-                        channel_name = channel_to_name[channel]
+                            url=channel_url))
 
                 # Create the package
                 package = CondaPackage(
