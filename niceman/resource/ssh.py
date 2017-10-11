@@ -64,7 +64,8 @@ class SSH(Resource):
         -------
         dict : config and state parameters to capture in the inventory file
         """
-        self.id = str(uuid.uuid4())
+        if not self.id:
+            self.id = str(uuid.uuid4())
         self.status = 'N/A'
         return {
             'id': self.id,
@@ -76,6 +77,7 @@ class SSH(Resource):
         }
 
     def delete(self):
+        self._ssh = None
         return
 
     def start(self):
@@ -88,7 +90,8 @@ class SSH(Resource):
         """
         Log into remote environment and get the command line
         """
-        assert self._ssh, "We should create or connect to remote server first"
+        if not self._ssh:
+            self.connect()
 
         return (PTYSSHSession if pty else SSHSession)(
             ssh=self._ssh
@@ -137,42 +140,39 @@ class SSHSession(POSIXSession):
         """Return if file exists"""
         return self.ssh.path_exists(path)
 
-    def copy_to(self, src_path, dest_path='.', preserve_perms=False,
-                owner=None, group=None, recursive=False):
+    def copy_to(self, src_path, dest_path='.'):
         """Take file on the local file system and copy over into the session
         """
         self.ssh.put([src_path], remotepath=dest_path)
-        if owner or group:
-            self.ssh.chown(owner, group, dest_path)
 
-    def copy_from(self, src_path, dest_path='', preserve_perms=False,
-                  owner=None, group=None, recursive=False):
+    def copy_from(self, src_path, dest_path='.'):
         """Retrieve a file from the remote system
         """
         self.ssh.get(src_path, localpath=dest_path)
+
+    def chmod(self, mode, remote_path):
+        """Set the mode of a remote path
+        """
+        self.ssh.chmod(mode, remote_path)
+
+    def chown(self, uid, gid, remote_path):
+        """Set the user and group of a path
+        """
+        self.ssh.chown(uid, gid, remote_path)
 
     def read(self, path, mode='r'):
         """Return content of a file"""
         return self.ssh.get_remote_file_lines(path)
 
-    def mkdir(self, path, parents=False):
-        """Create a directory (or with parent directories if `parents`
-        is True)
+    def mkdir(self, path, mode="0755"):
+        """Create a directory. Create parent directories if non-existent
         """
-        self.ssh.mkdir(path, mode=0o755)
+        self.ssh.makedirs(path, int(mode, 8))
 
     def isdir(self, path):
         """Return True if path is pointing to a directory
         """
         return self.ssh.isdir(path)
-
-
-
-
-
-
-
-
 
 
 @attr.s

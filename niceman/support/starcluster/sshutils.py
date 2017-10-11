@@ -258,7 +258,7 @@ class SSHClient(object):
                 return
         self.mkdir(path, mode)
 
-    def mkdir(self, path, mode=0o755, ignore_failure=False):
+    def mkdir(self, path, mode="0755", ignore_failure=False):
         """
         Make a new directory on the remote machine
 
@@ -411,7 +411,6 @@ class SSHClient(object):
         return self._progress_bar
 
     def _file_transfer_progress(self, filename, size, sent):
-        pass
         pbar = self.progress_bar
         pbar.widgets[0] = filename
         pbar.maxval = size

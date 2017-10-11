@@ -48,7 +48,7 @@ def test_delete_interface(niceman_cfg_path):
 
         args = [
             'delete',
-            '--resource', 'my-resource',
+            '--name', 'my-resource',
             '--config', niceman_cfg_path,
             '--skip-confirmation'
         ]

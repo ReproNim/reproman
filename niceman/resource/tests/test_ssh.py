@@ -61,16 +61,18 @@ def test_ssh_class():
         assert session.exists('/etc/hosts') == True
         assert session.exists('/no/such/file') == False
 
-        session.copy_to(__file__)
-        assert session.exists('test_ssh.py') == True
+        # Copy this file to /root/test_ssh.py on the docker test container.
+        session.copy_to(__file__, 'remote_test_ssh.py')
+        assert session.exists('remote_test_ssh.py') == True
 
         tmp_path = "/tmp/{}".format(uuid.uuid4().hex)
-        session.copy_from('test_ssh.py', tmp_path)
+        session.copy_from('/etc/hosts', tmp_path)
         assert os.path.isfile(tmp_path) == True
 
-        file_contents = session.read('test_ssh.py')
+        file_contents = session.read('remote_test_ssh.py')
         assert file_contents[8] == '# Test string to read\n'
 
         session.mkdir('test-dir')
         assert session.isdir('test-dir') == True
         assert session.isdir('not-a-dir') == False
+        assert session.isdir('/etc/hosts') == False

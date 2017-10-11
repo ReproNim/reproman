@@ -133,7 +133,9 @@ class DockerContainer(Resource):
         """
         Log into a container and get the command line
         """
-        assert self._container, "We should create or connect to container first"
+        if not self._container:
+            self.connect()
+
         if pty and shared is not None and not shared:
             lgr.warning("Cannot do non-shared pty session for docker yet")
         return (PTYDockerSession if pty else DockerSession)(

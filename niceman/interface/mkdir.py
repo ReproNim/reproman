@@ -6,38 +6,49 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to delete an environment
+"""Helper utility to create a directory an environment
 """
 
 __docformat__ = 'restructuredtext'
 
 import re
 
-from .base import Interface, backend_help, backend_set_config
+from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr
+from ..support.constraints import EnsureStr, EnsureNone
 from ..resource import ResourceManager
 
 from logging import getLogger
-lgr = getLogger('niceman.api.login')
+lgr = getLogger('niceman.api.mkdir')
 
 
-class Login(Interface):
-    """Log into a computation environment
+class Mkdir(Interface):
+    """Make a directory in a computation environment
 
     Examples
     --------
 
-      $ niceman login --name=my-resource --config=niceman.cfg
+      $ niceman mkdir my-new-directory --name=my-resource --config=niceman.cfg
 
     """
 
     _params_ = dict(
+        path=Parameter(
+            doc="path of the directory to create",
+            metavar='PATH',
+            constraints=EnsureStr() | EnsureNone(),
+        ),
+        mode=Parameter(
+            args=("-m", "--mode"),
+            doc="mode of directory that is created",
+            metavar='MODE',
+            constraints=EnsureStr(),
+        ),
         name=Parameter(
             args=("-n", "--name"),
             doc="""Name of the resource to consider. To see
-            available resources, run the command 'niceman ls'""",
+            available resource, run the command 'niceman ls'""",
             constraints=EnsureStr(),
         ),
         # XXX reenable when we support working with multiple instances at once
@@ -58,15 +69,10 @@ class Login(Interface):
             metavar='CONFIG',
             # constraints=EnsureStr(),
         ),
-        backend=Parameter(
-            args=("-b", "--backend"),
-            nargs="+",
-            doc=backend_help()
-        ),
     )
 
     @staticmethod
-    def __call__(name, backend, resource_id=None, config=None):
+    def __call__(path, mode, name, resource_id=None, config=None):
         from niceman.ui import ui
         if not name and not resource_id:
             name = ui.question(
@@ -77,20 +83,19 @@ class Login(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
-        # TODO:  config too bad of a name here -- revert back to resource_info?
-        config, inventory = ResourceManager.get_resource_info(config, name, resource_id)
+        resource_info, inventory = ResourceManager.get_resource_info(config,
+            name, resource_id)
 
-        # Connect to resource environment
-        env_resource = ResourceManager.factory(config)
-
-        # Set resource properties to any backend specific command line arguments.
-        if backend:
-            config = backend_set_config(backend, env_resource, config)
-
+        # Delete resource environment
+        env_resource = ResourceManager.factory(resource_info)
         env_resource.connect()
 
         if not env_resource.id:
-            raise ValueError("No resource found given the info %s" % str(config))
+            raise ValueError("No resource found given the info %s" % str(resource_info))
 
-        with env_resource.get_session(pty=True):
-            pass
+        session = env_resource.get_session()
+        session.mkdir(path, mode)
+
+        ResourceManager.set_inventory(inventory)
+
+        lgr.info("Created directory %s in the environment %s", path, name)

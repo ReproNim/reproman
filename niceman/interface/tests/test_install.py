@@ -45,7 +45,7 @@ def test_install_interface(demo1_spec, niceman_cfg_path):
 
         args = ['install',
                 '--spec', demo1_spec,
-                '--resource', 'my-resource',
+                '--name', 'my-resource',
                 '--config', niceman_cfg_path
         ]
         main(args)

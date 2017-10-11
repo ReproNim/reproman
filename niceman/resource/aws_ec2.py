@@ -267,7 +267,8 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         """
         Log into remote EC2 environment and get the command line
         """
-        assert self._ec2_instance, "We should create or connect to EC2 server first"
+        if not self._ec2_instance:
+            self.connect()
 
         ssh = SSHClient(
             self._ec2_instance.public_ip_address,
