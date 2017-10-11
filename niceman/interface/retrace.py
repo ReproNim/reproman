@@ -139,6 +139,9 @@ def identify_distributions(files, session=None):
     # as they identify files beloning to them
     files_to_consider = files[:]
 
+    # Filter out files that are not directories
+    files_to_consider = [x for x in files_to_consider if not session.isdir(x)]
+
     distibutions = []
     for Tracer in Tracers:
         lgr.info("Tracing using %s", Tracer)
