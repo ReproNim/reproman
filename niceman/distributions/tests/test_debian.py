@@ -95,6 +95,9 @@ def test_parse_dpkgquery_line():
     assert parse('fail2ban: /usr/bin/fail2ban-client') == \
            {'name': 'fail2ban', 'path': '/usr/bin/fail2ban-client'}
 
+    assert parse('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0') == \
+           {'name': 'fsl-5.0-eddy-nonfree', 'path': '/usr/lib/fsl/5.0'}
+
     assert parse('diversion by dash from: /bin/sh') is None
 
 

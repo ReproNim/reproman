@@ -32,7 +32,7 @@ except (ValueError, AttributeError):
 # To parse output of dpkg-query
 import re
 _DPKG_QUERY_PARSER = re.compile(
-    "(?P<name>[^:]+)(:(?P<architecture>[^:]+))?: (?P<path>.*)$"
+    "(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(,.*)?: (?P<path>.*)$"
 )
 
 from niceman.distributions.base import DistributionTracer
@@ -515,6 +515,8 @@ class DebTracer(DistributionTracer):
     def _parse_dpkgquery_line(line):
         if line.startswith('diversion '):
             return None  # we are ignoring diversion details ATM  TODO
+        if ',' in line:
+            lgr.warning("dpkg-query line has multiple packages (%s)" % line)
         res = _DPKG_QUERY_PARSER.match(line)
         if res:
             res = res.groupdict()
