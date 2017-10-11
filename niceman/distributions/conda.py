@@ -191,8 +191,11 @@ class CondaTracer(DistributionTracer):
                 pip_deps = dep.get("pip")
 
         for pip_dep in pip_deps:
-            # Pip packages are recorded in conda exports as name==version
+            # Pip packages are recorded in conda exports as "name (loc)",
+            # "name==version" or "name (loc)==version".  So split on "=", then
+            # on " "
             name = pip_dep.split("=")[0]
+            name = name.split(" ")[0]
             try:
                 out, err = self._session.execute_command(
                     '%s/bin/pip show -f %s'
