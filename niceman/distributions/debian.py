@@ -172,6 +172,9 @@ class DebTracer(DistributionTracer):
     """.deb-based (and using apt and dpkg) systems package tracer
     """
 
+    # The Debian tracer is not designed to handle directories
+    HANDLES_DIRS = False
+
     # TODO: (Low Priority) handle cases from dpkg-divert
     def _init(self):
         # TODO: we might want a generic helper for collections of things
@@ -182,6 +185,9 @@ class DebTracer(DistributionTracer):
         self._source_line_to_name_map = {}
 
     def identify_distributions(self, files):
+        if not files:
+            return
+        
         debian_version = None
         try:
             debian_version = self._session.read('/etc/debian_version').strip()
