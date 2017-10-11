@@ -76,6 +76,9 @@ class ShellSession(POSIXSession):
             **run_kw
         )  # , shell=True)
 
+    def isdir(self, path):
+        return os.path.isdir(path)
+
 
 @attr.s
 class Shell(Resource):
