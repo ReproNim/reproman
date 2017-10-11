@@ -18,6 +18,7 @@ import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..resource import ResourceManager
+from .common_opts import resource_arg, resource_id_opt, resource_name_opt
 
 from logging import getLogger
 lgr = getLogger('niceman.api.login')
@@ -34,50 +35,42 @@ class Login(Interface):
     """
 
     _params_ = dict(
-        resource=Parameter(
-            args=("-r", "--resource"),
-            doc="""Name of the resource to consider. To see
-            available resource, run the command 'niceman ls'""",
-            constraints=EnsureStr(),
-        ),
+        resource=resource_arg,
+        resource_id=resource_id_opt,
+        resource_name=resource_name_opt,
         # XXX reenable when we support working with multiple instances at once
-        # resource_type=Parameter(
-        #     args=("-t", "--resource-type"),
-        #     doc="""Resource type to work on""",
-        #     constraints=EnsureStr(),
+        # resource_type=resource_type_opt,
+        # backend=Parameter(
+        #     args=("-b", "--backend"),
+        #     nargs="+",
+        #     doc=backend_help()
         # ),
-        resource_id=Parameter(
-            args=("-id", "--resource-id",),
-            doc="ID of the environment container",
-            # constraints=EnsureStr(),
-        ),
-        # TODO: should be moved into generic API
-        config=Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            # constraints=EnsureStr(),
-        ),
-        backend=Parameter(
-            args=("-b", "--backend"),
-            nargs="+",
-            doc=backend_help()
-        ),
+
     )
-
+    # XXX config option should be generic to niceman, so if someone
+    #     wants to point to another niceman.cfg
+    #
+    # XXX Many commands will require specification of the resource
+    #     which we are making "flexible" since could be one of the
+    #     three ways to identify it
+    #     - resource -- either a name or an id
+    #     - resource_name, resource_id -- specific ones
+    # eventually we might just want to have a helper decorator
+    # @resource_method  which would handle the logic centrally and
+    # just pass actual resource inside the __call__
     @staticmethod
-    def __call__(resource=None, resource_name=None, resource_id=None, config=None):
+    def __call__(resource=None, resource_name=None, resource_id=None):
         from niceman.ui import ui
-        if not resource and not resource_id:
-            resource = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
-            )
+        from niceman.resource import manager
 
-        # Instantiate the resources manager
-        manager = ResourceManager(config)
-        # Get corresponding known resource
-        env_resource = manager.get_resource(resource, name=resource, id_=resource_id)
+        # Get a corresponding known resource
+        env_resource = manager.get_resource(
+            resource, name=resource_name, id_=resource_id)
+
+        # TODO: reintroduce backend and also use of backend_set_config
+
         # Connect to resource environment
         env_resource.connect()
-        env_resource.login()
+        with env_resource.get_session(pty=True):
+            pass
+        # env_resource.login()

@@ -19,11 +19,14 @@ from os.path import join as opj
 from glob import glob
 import os.path
 
-from ..config import ConfigManager
+# from ..config import ConfigManager
+from .. import cfg
 from ..dochelpers import exc_str
+from ..support.exceptions import InsufficientArgumentsError
 from ..support.exceptions import ResourceError
 from ..support.exceptions import ResourceNotFoundError
 from ..support.exceptions import ResourceAlreadyExistsError
+from ..support.exceptions import MultipleResourceMatches
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
 from ..ui import ui
 
@@ -51,16 +54,33 @@ def attrib(*args, **kwargs):
 
 class ResourceManager(object):
     """
-    Class to help manage resources.
+    A manager of the available resources.
+
+    Provides a registry of the resources known to the user.
+    Should provide API to find an existing or allocate a new
+    resource and register it within the registry.
+    Typically a NICEMAN process will have a single ResourceManager
+    instance.
     """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, config_path=None):
-        self.config_manager = ResourceManager.get_config_manager(config_path)
-        inventory_path = self.config_manager.getpath('general', 'inventory_file')
+    # The keys which are known to be secret and should not be exposed
+    SECRET_KEYS = ('access_key_id', 'secret_access_key')
+
+    # TODO: might want an alternative
+    def __init__(self):  # , config_path=None):
+        self.config_manager = cfg  # ResourceManager.get_config_manager(config_path)
+        self._inventory_path = self.config_manager.getpath('general', 'inventory_file')
         # inventory is just a list of dict so can't do much on its own
-        self.inventory = ResourceManager.get_inventory(inventory_path)
+        # TODO: RF later to hide away all the get/set inventory
+        self.inventory = self.get_inventory()
+        # ATM inventory is actually containing just "configs", but ideally
+        # it should contain the actual representation of the resource
+        # objects, so we could easily reflect their state etc back within
+        # the inventory upon changes/exit
+        # XXX should we associate any resource we create with a manager and then
+        #  update registry representation on any field (name, state etc) change?
 
     @staticmethod
     def factory(config):
@@ -69,7 +89,7 @@ class ResourceManager(object):
 
         Parameters
         ----------
-        resource_config : ResourceConfig object
+        resource_config : dict
             Configuration parameters for the resource.
 
         Returns
@@ -79,13 +99,15 @@ class ResourceManager(object):
         if 'type' not in config:
             raise MissingConfigError("Resource 'type' parameter missing for resource.")
 
-
         type_ = config['type']
         module_name = '_'.join(type_.split('-'))
         class_name = ''.join([token.capitalize() for token in type_.split('-')])
         try:
             module = import_module('niceman.resource.{}'.format(module_name))
-        except ImportError as exc:
+        except Exception as exc:
+            # although typically it should be an ImportError, it might happen
+            # that it leads to some other error being thrown by the beast
+            # so we shouldn't blow with original msg
             raise ResourceError(
                 "Failed to import resource: {}.  Known ones are: {}".format(
                     exc_str(exc),
@@ -105,7 +127,7 @@ class ResourceManager(object):
             l.append(f_[:-3])
         return sorted(l)
 
-    def get_resource_config(self, name=None, id_=None):
+    def get_resource_config(self, name_id=None, name=None, id_=None):
         """
         Sort through the parameters supplied by the user at the command line and then
         request the ones that are missing that are needed to find the config and
@@ -114,15 +136,11 @@ class ResourceManager(object):
 
         Parameters
         ----------
-        config_path : string
-            Path to the niceman.cfg file.
-        name : string
+        name_id : string, optional
+        name : string, optional
             Name of the resource
-        id_ : string
+        id_ : string, optional
             The identifier of the resource as assigned to it by the backend
-        type_ : string
-            Type of the resource module used to manage the name, e.g.
-            "docker_container".
 
         Returns
         -------
@@ -130,39 +148,88 @@ class ResourceManager(object):
             The config settings for the name.
         """
 
-        assert name or id_, "either name or id_ should be specified"
+        # TODO: handle name_id
+        if not (name_id or name or id_):
+            raise InsufficientArgumentsError("Specify resource name or id")
 
-        # XXX: ATM mixes creation with querying existing resources.
-        #      IMHO (yoh) should just query, and leave creation to a dedicated function
-        # TODO: query could be done via ID
-        # TODO: check that if both name and id provided -- they are as it is in
-        #       inventory
-        # TODO:  if no name or id provided, then fail since this function
-        #        is not created to return a list of resources for a given type ATM
+        # make it easy on us for now
+        if name_id:
+            if name or id_:
+                raise ValueError("If you specify name_id, do not specify name or id explicitly")
+            # we need to search for the specific name/id
+            match = None
+            for iname, iconfig in self.inventory.items():
+                iname2 = iconfig.get('name')
+                if iname2 and iname2 != iname:
+                    lgr.warning(
+                        "Config name (%s) does not match name in the inventory %s",
+                        iname, iname2
+                    )
 
-        inventory_config = None
-        if name and name in self.inventory:
-            inventory_config = self.inventory[name]
-        elif id_:
-            for i in self.inventory.values():
-                if i.get('id') == id_:
-                    inventory_config = i
-                    break
+                iid = iconfig.get('id')
+                if (iname and iname.startswith(name_id)) or \
+                    (iid and iid.startswith(name_id)):
+                    if match:
+                        raise MultipleResourceMatches(
+                            "Resource %s matches %s, although another matched before: %s"
+                            % (iconfig, name_id, match)
+                        )
+                    match = iname, iconfig
+                    # keep going so we check if there is no multiple matches
+            if not match:
+                raise ResourceNotFoundError(
+                    "Could not find a resource having a name or an id "
+                    "starting with %s" % name_id)
+            inventory_name, inventory_config = match
+        else:
+            assert name or id_, "either name or id_ should be specified"
+
+            inventory_config = None
+            if name:
+                if name not in self.inventory:
+                    raise ResourceNotFoundError(
+                        "No resource with name %s in the inventory. Present: %s"
+                        % (name, ', '.join(self.inventory))
+                    )
+                inventory_config = self.inventory[name]
+                inventory_name = name
+                iid = inventory_config.get('id')
+                if id_ and iid and (id_ != iid):
+                    raise ResourceNotFoundError(
+                        "Found resource with name %s does not have requested "
+                        "id %s" % (name, id_)
+                    )
+            elif id_:
+                for iname, i in self.inventory.items():
+                    if i.get('id') == id_:
+                        inventory_config = i
+                        inventory_name = name
 
         if not inventory_config:
-            return None
+            raise ResourceNotFoundError(
+                "Could not find a resource with name=%s and/or id=%s"
+                % (name, id_)
+            )
+        if not inventory_config.get('name'):
+            inventory_config['name'] = inventory_name
 
         # XXX so what is our convention here on SMTH-SMTH defining the type?
-        config = dict(self.config_manager.items(inventory_config['type'].split('-')[0]))
+        config = dict(
+            self.config_manager.items(inventory_config['type'].split('-')[0])
+        )
         config.update(inventory_config)
         return config
 
-    def get_resource(self, name_id, name=None, id_=None):
-        config = self.get_resource_config(name=name, id_=id_)
+    def get_resource(self, name_id=None, name=None, id_=None):
+        config = self.get_resource_config(name_id=name_id, name=name, id_=id_)
         if not config:
             raise ResourceNotFoundError(
                 "Haven't found resource given name=%s id=%s" % (name, id_))
         return self.factory(config)
+
+    # sugaring
+    def __getitem__(self, name_id):
+        return self.get_resource(name_id=name_id)
 
     def create_resource(self, name=None, id_=None, type_=None):
         # TODO: place the logic I removed which would create the beast and
@@ -171,45 +238,48 @@ class ResourceManager(object):
         if config:
             raise ResourceAlreadyExistsError("TODO: provide details: %s" % str(config))
         # TODO: create the resource config and pass into the factory
+        # TODO: register within the inventory
 
+    # # XXX why do we need yet another ConfigManager here and not using the
+    # # niceman.cfg???
+    # @staticmethod
+    # def get_config_manager(config_path=None):
+    #     """
+    #     Returns the information stored in the niceman.cfg file.
+    #
+    #     Parameters
+    #     ----------
+    #     config_path : string
+    #         Path to the niceman.cfg file. (optional)
+    #
+    #     Returns
+    #     -------
+    #     cm : ConfigManager object
+    #         Information stored in the niceman.cfg file.
+    #     """
+    #     def get_cm(config_path):
+    #         if config_path:
+    #             cm = ConfigManager([config_path], False)
+    #         else:
+    #             cm = ConfigManager()
+    #         return cm
+    #
+    #     # Look for a niceman.cfg file in the local directory if none given.
+    #     if not config_path and os.path.isfile('niceman.cfg'):
+    #         config_path = 'niceman.cfg'
+    #     cm = get_cm(config_path=config_path)
+    #     if not config_path and len(cm._sections) == 1:
+    #         config = ui.question("Enter a config file", default="niceman.cfg")
+    #         cm = get_cm(config_path=config)
+    #     if len(cm._sections) == 1:
+    #         raise MissingConfigFileError(
+    #             "Unable to locate config file: {}".format(config_path))
+    #
+    #     return cm
 
-    @staticmethod
-    def get_config_manager(config_path=None):
-        """
-        Returns the information stored in the niceman.cfg file.
-
-        Parameters
-        ----------
-        config_path : string
-            Path to the niceman.cfg file. (optional)
-
-        Returns
-        -------
-        cm : ConfigManager object
-            Information stored in the niceman.cfg file.
-        """
-        def get_cm(config_path):
-            if config_path:
-                cm = ConfigManager([config_path], False)
-            else:
-                cm = ConfigManager()
-            return cm
-
-        # Look for a niceman.cfg file in the local directory if none given.
-        if not config_path and os.path.isfile('niceman.cfg'):
-            config_path = 'niceman.cfg'
-        cm = get_cm(config_path=config_path)
-        if not config_path and len(cm._sections) == 1:
-            config = ui.question("Enter a config file", default="niceman.cfg")
-            cm = get_cm(config_path=config)
-        if len(cm._sections) == 1:
-            raise MissingConfigFileError(
-                "Unable to locate config file: {}".format(config_path))
-
-        return cm
-
-    @staticmethod
-    def get_inventory(inventory_path):
+    # TODO: shouldn't be used by outsiders.  Inventory, if any explicitly,
+    #  should be manipulated transparently
+    def get_inventory(self):
         """
         Returns a dictionary containing the config information for all resources
         created by niceman.
@@ -225,39 +295,32 @@ class ResourceManager(object):
             Hash whose key is resource name and value is the config settings for
             the resource.
         """
+        inventory_path = self._inventory_path
         if not inventory_path:
             raise MissingConfigError(
-                "No resource inventory file declared in niceman.cfg")
+                "No resource inventory path is known to %s" % self
+            )
 
         # Create inventory file if it does not exist.
         if not os.path.isfile(inventory_path):
             lgr.info("Creating resources inventory file %s", inventory_path)
             # initiate empty inventory
-            ResourceManager.set_inventory({'_path': inventory_path})
+            self.set_inventory()
 
         with open(inventory_path, 'r') as fp:
             inventory = yaml.safe_load(fp)
 
-        inventory['_path'] = inventory_path
         return inventory
 
-    @staticmethod
-    def set_inventory(inventory):
+    # TODO: rename to _save inventory
+    def set_inventory(self):
         """
-        Save the resource inventory to a file. The location of the file is
-        declared in the niceman.cfg file.
-
-        Parameters
-        ----------
-        inventory : dict
-            Hash whose key is the name of the resource and value is the config
-            settings of the resource.
+        Save the resource inventory
         """
 
         # Operate on a copy so there is no side-effect of modifying original
         # inventory
-        inventory = inventory.copy()
-        inventory_path = inventory.pop('_path')
+        inventory = self.inventory.copy()
 
         for key in list(inventory):  # go through a copy of all keys since we modify
 
@@ -267,16 +330,15 @@ class ResourceManager(object):
                 del inventory[key]
 
             # Remove AWS credentials
-            # XXX(yoh) where do we get them from later?
-            for secret_key in ('access_key_id', 'secret_access_key'):
+            # TODO: split away handling of credentials.  Resource should probably
+            # just provide some kind of an id for a credential which should be
+            # stored in a safe credentials storage
+            for secret_key in ResourceManager.SECRET_KEYS:
                 if secret_key in inventory_item:
                     del inventory_item[secret_key]
 
-        with open(inventory_path, 'w') as fp:
+        with open(self._inventory_path, 'w') as fp:
             yaml.safe_dump(inventory, fp, default_flow_style=False)
-
-
-manager = ResourceManager()
 
 
 class Resource(object):
@@ -285,6 +347,9 @@ class Resource(object):
     """
 
     __metaclass__ = abc.ABCMeta
+
+    # TODO: it seems we rely on resources having a name and an id
+    # so we should define them here
 
     def __repr__(self):
         return 'Resource({})'.format(self.name)

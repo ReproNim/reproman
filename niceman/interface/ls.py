@@ -69,9 +69,8 @@ class Ls(Interface):
         # TODO?: we might want to embed get_resource_inventory()
         #       within ConfigManager (even though it would make it NICEMAN specific)
         #       This would allow to make more sensible error messages etc
-        cm = ResourceManager.get_config_manager(config)
-        inventory_path = cm.getpath('general', 'inventory_file')
-        inventory = ResourceManager.get_inventory(inventory_path)
+        from niceman.resource import manager
+        inventory = manager.inventory
 
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
@@ -84,9 +83,24 @@ class Ls(Interface):
 
             # if refresh:
             inventory_resource = inventory[name]
-            config = dict(cm.items(inventory_resource['type'].split('-')[0]))
+            # XXX(yoh): why do we need a config here?
+            config = dict(
+                manager.config_manager.items(inventory_resource['type'].split('-')[0])
+            )
             config.update(inventory_resource)
-            env_resource = ResourceManager.factory(config)
+            # XXX Now we might have a dichotomy somewhat.  Key in the inventory
+            #     is assumed to match a name as known to the resource.  But if not
+            #     specified or mismatches -- what should we do?
+            # #     For now let's just assume that every resource must have a name
+            # #     and its name, if not specified, will be the key in the inventory
+            if 'name' not in config:
+                config['name'] = name
+            try:
+                env_resource = manager.factory(config)
+            except Exception as e:
+                lgr.error("Failed to create an instance from config: %s",
+                          exc_str(e))
+                continue
             try:
                 if refresh:
                     env_resource.connect()

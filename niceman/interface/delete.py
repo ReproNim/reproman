@@ -68,11 +68,7 @@ class Delete(Interface):
     @staticmethod
     def __call__(resource, resource_id=None, skip_confirmation=False, config=None):
         from niceman.ui import ui
-        if not resource and not resource_id:
-            resource = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
-            )
+
 
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
