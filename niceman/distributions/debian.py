@@ -84,7 +84,7 @@ class DEBPackage(Package):
     sha256 = attr.ib(default=None)
     versions = attr.ib(default=None)  # Hash ver_str -> [Array of source names]
     install_date = attr.ib(default=None)
-    files = attr.ib(default=attr.Factory(list)) 
+    files = attr.ib(default=attr.Factory(list))
 _register_with_representer(DEBPackage)
 
 
@@ -300,6 +300,18 @@ class DebTracer(DistributionTracer):
             return None
         _, info = info.popitem()  # Pull out first (and only) result
 
+        # Get install date from the modify time of the dpkg info file
+        try:
+            out, _ = self._session.execute_command(
+                ['stat', '-c', '%Y', "/var/lib/dpkg/info/" + name + ".list"]
+            )
+            install_date = str(
+                pytz.utc.localize(
+                    datetime.utcfromtimestamp(float(out))))
+        except CommandError:  # file not found
+            install_date = None
+            pass
+
         # Now use "apt-cache policy pkg:arch" to get versions
         query = name if not architecture \
             else "%s:%s" % (name, architecture)
@@ -346,8 +358,8 @@ class DebTracer(DistributionTracer):
             md5=info.get("MD5sum"),
             sha1=info.get("SHA1"),
             sha256=info.get("SHA256"),
+            install_date=install_date,
             versions=ver_dict
-            # TODO install_date = attr.ib(default=None)
         )
 
 
