@@ -140,6 +140,39 @@ import termios
 import struct
 import fcntl
 import time
+from contextlib import contextmanager
+import signal
+
+# TODO: make it work with dockerpty'like proper handling of resizing
+# try:
+#     from dockerpty.tty import size
+# except:
+def size(fd):
+    return map(int, os.popen('stty size', 'r').read().split())
+
+# # borrowed from dockerpty.tty, modified to accept fd as int, not a file descriptor
+# def size(fd):
+#     """
+#     Return a tuple (rows,cols) representing the size of the TTY `fd`.
+#
+#     The provided file descriptor should be the stdout stream of the TTY.
+#
+#     If the TTY size cannot be determined, returns None.
+#     """
+#
+#     if not os.isatty(fd):
+#         return None
+#
+#     try:
+#         dims = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, 'hhhh'))
+#     except:
+#         try:
+#             dims = (os.environ['LINES'], os.environ['COLUMNS'])
+#         except:
+#             return None
+#
+#     return dims
+
 
 class PTYHandler(object):
     """A helper for handling a PTY session.
@@ -151,6 +184,7 @@ class PTYHandler(object):
         self.resized = False
         self.fd = None
         self._last_resize = None
+        self._dims = 0, 0
 
     def __call__(self, fd):
         if not self.fd:
@@ -170,6 +204,19 @@ class PTYHandler(object):
         # lgr.debug("is it fun???")
         return data
 
+    @contextmanager
+    def WINCHHandler(self):
+        """Handler for the SIGWINCH signal.
+
+        Unfortunately not yet working"""
+        def handle(signum, frame):
+            if signum == signal.SIGWINCH:
+                self.set_winsize()
+        original = signal.signal(signal.SIGWINCH, handle)
+        yield self
+        if original is not None:
+            signal.signal(signal.SIGWINCH, original)
+
     def set_winsize(self, row=None, col=None, xpix=0, ypix=0):
         """A helper to set the terminal size to desired size
         """
@@ -177,14 +224,20 @@ class PTYHandler(object):
             # query the terminal
             # This is probably Linux specific, although seems to be there also
             # on OSX
-            row, col = map(int, os.popen('stty size', 'r').read().split())
+            # TODO: avoid calling out to external tool:
+            #  (re)use dockerpty since they do have proper handling of the SIGWINCH
+            #  signal etc
+            dims = size(self.fd)
+            if not dims or dims == self._dims:
+                return
+            self._dims = row, col = dims
         winsize = struct.pack("HHHH", row, col, xpix, ypix)
         fcntl.ioctl(self.fd, termios.TIOCSWINSZ, winsize)
         self._last_resize = time.time()
 
 
 class PTYSession(ShellSession):
-
+    """Interactive PTY session for the local shell"""
     def open(self):
 
         lgr.debug("Opening local TTY connection.")
@@ -197,8 +250,9 @@ class PTYSession(ShellSession):
         # so we will use the PTYHandler which would dynamically adjust it
         # (from tim to time)
         hdlr = PTYHandler()
+        # for some reason leads to  (4, 'Interrupted system call') atm
+        #with hdlr.WINCHHandler():
         pty.spawn(shell, hdlr)
 
     def close(self):
-        # XXX ?
         pass
