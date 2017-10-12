@@ -90,7 +90,12 @@ class Diff(Interface):
             if dist_type not in env_dists:
                 needed_dists.append(dist_type)
                 continue
-            missing_packages = req_dists[dist_type] - env_dists[dist_type]
+            try:
+                missing_packages = req_dists[dist_type] + env_dists[dist_type]
+            except TypeError:
+                fmt = '%s not checked (difference operator unsupported)'
+                lgr.warning(fmt % dist_type)
+                continue
             if missing_packages:
                 needed_packages[dist_type] = missing_packages
 
