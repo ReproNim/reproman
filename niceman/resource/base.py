@@ -15,6 +15,7 @@ import abc
 import yaml
 from os.path import basename
 from os.path import dirname
+from os.path import exists
 from os.path import join as opj
 from glob import glob
 import os.path
@@ -71,9 +72,12 @@ class ResourceManager(object):
     # TODO: might want an alternative
     def __init__(self):  # , config_path=None):
         self.config_manager = cfg  # ResourceManager.get_config_manager(config_path)
-        self._inventory_path = self.config_manager.getpath('general', 'inventory_file')
+        self._inventory_path = self.config_manager.getpath(
+            'general', 'inventory_file', opj(cfg.dirs.user_config_dir, 'inventory.yml')
+        )
         # inventory is just a list of dict so can't do much on its own
         # TODO: RF later to hide away all the get/set inventory
+        self.inventory = None
         self.inventory = self.get_inventory()
         # ATM inventory is actually containing just "configs", but ideally
         # it should contain the actual representation of the resource
@@ -326,6 +330,7 @@ class ResourceManager(object):
             # initiate empty inventory
             self.set_inventory()
 
+
         with open(inventory_path, 'r') as fp:
             inventory = yaml.safe_load(fp)
 
@@ -339,7 +344,7 @@ class ResourceManager(object):
 
         # Operate on a copy so there is no side-effect of modifying original
         # inventory
-        inventory = self.inventory.copy()
+        inventory = {} if not self.inventory else self.inventory.copy()
 
         for key in list(inventory):  # go through a copy of all keys since we modify
 
@@ -355,6 +360,9 @@ class ResourceManager(object):
             for secret_key in ResourceManager.SECRET_KEYS:
                 if secret_key in inventory_item:
                     del inventory_item[secret_key]
+
+        if not exists(dirname(self._inventory_path)):
+            os.makedirs(dirname(self._inventory_path))
 
         with open(self._inventory_path, 'w') as fp:
             yaml.safe_dump(inventory, fp, default_flow_style=False)

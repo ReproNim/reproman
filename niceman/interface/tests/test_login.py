@@ -47,7 +47,7 @@ def test_login_interface(niceman_cfg_path):
         }
 
         args = ['login',
-                '--resource', 'my-test-resource',
+                '--resource-name', 'my-test-resource',
                 '--config', niceman_cfg_path
         ]
         main(args)

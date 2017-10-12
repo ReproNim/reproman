@@ -60,7 +60,7 @@ class ShellSession(POSIXSession):
         """
         # XXX should it be a generic behavior to auto-start?
         if self._runner is None:
-            self.start()
+            self.open()
         run_kw = {}
         if env:
             # if anything custom, then we need to get original full environment
