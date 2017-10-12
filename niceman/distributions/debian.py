@@ -264,83 +264,27 @@ class DebTracer(DistributionTracer):
         if not self._all_apt_sources:
             self._find_all_sources()
 
-        # First use "dpkg -s pkg" to get the installed version and arch
-        query = name if not architecture \
-            else "%s:%s" % (name, architecture)
-        out, _ = self._session.execute_command(
-            ['dpkg', '-s', query]
-        )
-        out = utils.to_unicode(out, "utf-8")
-        # dpkg -s uses the same output as apt-cache show pkg
-        info = parse_apt_cache_show_pkgs_output(out)
-        if not info:
-            lgr.warning("Was unable query package %s" % query)
+        # Use dpkg -s <pkg> to get arch and version
+        architecture, version = self._get_pkg_arch_and_version(name,
+                                                               architecture)
+        if not version:
+            lgr.warning("Unable to query package %s" % name)
             return None
-        _, info = info.popitem()  # Pull out first (and only) result
-        architecture = info.get("Architecture")
-        version = info.get("Version")
 
-        # Now use "apt-cache show pkg:arch=version" to get more detail
-        query = "%s=%s" % (name, version) if not architecture \
-            else "%s:%s=%s" % (name, architecture, version)
-        out, _ = self._session.execute_command(
-            ['apt-cache', 'show', query]
-        )
-        out = utils.to_unicode(out, "utf-8")
-        # dpkg -s uses the same output as apt-cache show pkg
-        info = parse_apt_cache_show_pkgs_output(out)
+        # Use apt-cache show <pkg> to get details
+        info = self._get_pkg_details(name, architecture, version)
         if not info:
-            lgr.warning("Was unable apt-cache show package %s" % query)
+            lgr.warning("Unable to get details for package %s" % name)
             return None
-        _, info = info.popitem()  # Pull out first (and only) result
 
         # Get install date from the modify time of the dpkg info file
-        try:
-            out, _ = self._session.execute_command(
-                ['stat', '-c', '%Y', "/var/lib/dpkg/info/" + name + ".list"]
-            )
-            install_date = str(
-                pytz.utc.localize(
-                    datetime.utcfromtimestamp(float(out))))
-        except CommandError:  # file not found
-            install_date = None
-            pass
+        install_date = self._get_pkg_install_date(name)
 
         # Now use "apt-cache policy pkg:arch" to get versions
-        query = name if not architecture \
-            else "%s:%s" % (name, architecture)
-        out, _ = self._session.execute_command(
-            ['apt-cache', 'policy', query]
-        )
-        out = utils.to_unicode(out, "utf-8")
-        # dpkg -s uses the same output as apt-cache show pkg
-        ver = parse_apt_cache_policy_pkgs_output(out)
-        if not ver:
-            lgr.warning("Was unable apt-cache policy package %s" % query)
+        ver_dict = self._get_pkg_versions_and_sources(name, architecture)
+        if not ver_dict:
+            lgr.warning("Was unable to get version table for %s" % name)
             return None
-        _, ver = ver.popitem()  # Pull out first (and only) result
-        ver_dict = {}
-        for v in ver.get("versions"):
-            key = v.get("version")
-            ver_dict[key] = []
-            for s in v.get("sources"):
-                s = s["source"]
-                # If we haven't named the source yet, name it
-                if s not in self._source_line_to_name_map:
-                    # Make sure we can find the source
-                    if s not in self._all_apt_sources:
-                        lgr.warning("Cannot find source %s" % s)
-                        continue
-                    # Grab and name the source
-                    source = self._all_apt_sources[s]
-                    src_name = self._get_apt_source_name(source)
-                    source.name = src_name
-                    # Now add the source to our used sources
-                    self._apt_sources[src_name] = source
-                    # add the name for easy future lookup
-                    self._source_line_to_name_map[s] = src_name
-                # Look up and add the short name for the source
-                ver_dict[key].append(self._source_line_to_name_map[s])
 
         return DEBPackage(
             name=name,
@@ -380,6 +324,94 @@ class DebTracer(DistributionTracer):
                     site=src_vals.get("site"),
                     date=date,
                     archive_uri=src_vals.get("archive_uri"))
+
+    def _get_pkg_arch_and_version(self, name, architecture):
+        # Use "dpkg -s pkg" to get the installed version and arch
+        query = name if not architecture \
+            else "%s:%s" % (name, architecture)
+        try:
+            out, _ = self._session.execute_command(
+                ['dpkg', '-s', query]
+            )
+            out = utils.to_unicode(out, "utf-8")
+            # dpkg -s uses the same output as apt-cache show pkg
+            info = parse_apt_cache_show_pkgs_output(out)
+            if info:
+                _, info = info.popitem()  # Pull out first (and only) result
+                architecture = info.get("Architecture")
+                version = info.get("Version")
+            else:
+                version = None
+        except CommandError as _:
+            return None, None
+        return architecture, version
+
+    def _get_pkg_details(self, name, architecture, version):
+        # Now use "apt-cache show pkg:arch=version" to get more detail
+        query = "%s=%s" % (name, version) if not architecture \
+            else "%s:%s=%s" % (name, architecture, version)
+        try:
+            out, _ = self._session.execute_command(
+                ['apt-cache', 'show', query]
+            )
+            out = utils.to_unicode(out, "utf-8")
+            # dpkg -s uses the same output as apt-cache show pkg
+            info = parse_apt_cache_show_pkgs_output(out)
+            if info:
+                _, info = info.popitem()  # Pull out first (and only) result
+        except CommandError as _:
+            return None
+        return info
+
+    def _get_pkg_install_date(self, name):
+        try:
+            out, _ = self._session.execute_command(
+                ['stat', '-c', '%Y', "/var/lib/dpkg/info/" + name + ".list"]
+            )
+            install_date = str(
+                pytz.utc.localize(
+                    datetime.utcfromtimestamp(float(out))))
+        except CommandError:  # file not found
+            install_date = None
+            pass
+
+        return install_date
+
+    def _get_pkg_versions_and_sources(self, name, architecture):
+        query = name if not architecture \
+            else "%s:%s" % (name, architecture)
+        out, _ = self._session.execute_command(
+            ['apt-cache', 'policy', query]
+        )
+        out = utils.to_unicode(out, "utf-8")
+        # dpkg -s uses the same output as apt-cache show pkg
+        ver = parse_apt_cache_policy_pkgs_output(out)
+        if not ver:
+            return None
+        _, ver = ver.popitem()  # Pull out first (and only) result
+        ver_dict = {}
+        for v in ver.get("versions"):
+            key = v.get("version")
+            ver_dict[key] = []
+            for s in v.get("sources"):
+                s = s["source"]
+                # If we haven't named the source yet, name it
+                if s not in self._source_line_to_name_map:
+                    # Make sure we can find the source
+                    if s not in self._all_apt_sources:
+                        lgr.warning("Cannot find source %s" % s)
+                        continue
+                    # Grab and name the source
+                    source = self._all_apt_sources[s]
+                    src_name = self._get_apt_source_name(source)
+                    source.name = src_name
+                    # Now add the source to our used sources
+                    self._apt_sources[src_name] = source
+                    # add the name for easy future lookup
+                    self._source_line_to_name_map[s] = src_name
+                # Look up and add the short name for the source
+                ver_dict[key].append(self._source_line_to_name_map[s])
+        return ver_dict
 
     def _get_date_from_release_file(self, archive_uri, uri_suite):
         date = None
