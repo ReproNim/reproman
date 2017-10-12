@@ -19,6 +19,64 @@ import os
 
 from .session import POSIXSession, get_updated_env
 
+@attr.s
+class Shell(Resource):
+
+    # Container properties
+    name = attr.ib()
+    id = attr.ib(default=None)
+    type = attr.ib(default='shell')
+
+    status = attr.ib(default=None)
+
+    def create(self):
+        """
+        Create a running environment.
+
+        Parameters
+        ----------
+        name : string
+            Name identifier of the environment to be created.
+        """
+        # Generic logic to reside in Resource???
+        if self.id is None:
+            self.id = Resource._generate_id()
+        return {
+            'id': self.id
+        }
+
+    def connect(self):
+        """
+        Connect to an existing environment.
+        """
+        return self
+
+    def delete(self):
+        """
+        Remove this environment from the backend.
+        """
+        return
+
+    def start(self):
+        """
+        Start this environment in the backend.
+        """
+        return self
+
+    def stop(self):
+        """
+        Stop this environment in the backend.
+        """
+        return
+
+    def get_session(self, pty=False, shared=None):
+        """
+        Log into a container and get the command line
+        """
+        if shared:
+            raise NotImplementedError
+        return PTYSession() if pty else ShellSession()
+
 
 # For now just assuming that local shell is a POSIX shell
 # Later we could specialize based on the OS, and that is why
@@ -77,65 +135,6 @@ class ShellSession(POSIXSession):
             cwd=cwd,
             **run_kw
         )  # , shell=True)
-
-
-@attr.s
-class Shell(Resource):
-
-    # Container properties
-    name = attr.ib()
-    id = attr.ib(default=None)
-    type = attr.ib(default='shell')
-
-    status = attr.ib(default=None)
-
-    def create(self):
-        """
-        Create a running environment.
-
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to be created.
-        """
-        # Generic logic to reside in Resource???
-        if self.id is None:
-            self.id = Resource._generate_id()
-        return {
-            'id': self.id
-        }
-
-    def connect(self):
-        """
-        Connect to an existing environment.
-        """
-        return self
-
-    def delete(self):
-        """
-        Remove this environment from the backend.
-        """
-        return
-
-    def start(self):
-        """
-        Start this environment in the backend.
-        """
-        return self
-
-    def stop(self):
-        """
-        Stop this environment in the backend.
-        """
-        return
-
-    def get_session(self, pty=False, shared=None):
-        """
-        Log into a container and get the command line
-        """
-        if shared:
-            raise NotImplementedError
-        return PTYSession() if pty else ShellSession()
 
 
 import termios

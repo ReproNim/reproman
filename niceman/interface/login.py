@@ -77,3 +77,25 @@ class Login(Interface):
             pass
         # env_resource.login()
         lgr.info("Finished the pty session for %s", env_resource)
+
+        """
+# Sample bashrc replacement for our sessions which would also inherit additional
+# environment setup etc, so we could start then bash session with --rcfile
+# option which would point to this file.
+# Cons: that rcfile not invoked for non interactive sessions
+
+echo "Sourcing default ones"
+
+[ -e /etc/bash.bashrc ] && { echo "Sourcing /etc/bash.bashrc";. /etc/bash.bashrc; }
+[ -e ~/.bashrc ] && { echo "Sourcing ~/.bashrc"; . ~/.bashrc; }
+
+echo "Our custom options"
+export MINE=1
+source /etc/fsl/fsl.sh
+
+So we might need to split this one into two
+#1 definining all customizations, and which will first be sourced if needed
+   in case of the non-interactive sessions
+#2 bashrc replacement file which would source default ones and ours #1
+
+"""
