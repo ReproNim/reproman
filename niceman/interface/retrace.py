@@ -160,8 +160,6 @@ def identify_distributions(files, session=None):
             for env, files_to_trace in tracer.identify_distributions(
                     files_to_trace):
                 distibutions.append(env)
-                if not files_to_trace:
-                    break
 
         # Re-combine any files that were skipped
         files_to_consider = files_to_trace + files_skipped
