@@ -125,7 +125,7 @@ def parse_apt_cache_policy_pkgs_output(output):
         ^(?P<name>[^\s:]+):((?P<architecture>\S+):)?\s*\n  # package name
         \s+Installed:\s*(?P<installed>\S*)\s*\n    # Installed version
         \s+Candidate:\s*(?P<candidate>\S*)\s*\n    # Candidate version
-        \s+Version\stable:\s*
+        \s+Version\stable:[^\n]*
         (?P<version_table>(\n\s.*)+)
         """, flags=re.VERBOSE)
 

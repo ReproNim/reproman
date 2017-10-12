@@ -228,7 +228,16 @@ skype:i386:
              'versions': [{'installed': None,
                            'priority': '500',
                            'sources': [{'priority': '500',
-                                        'source': 'http://security.ubuntu.com/ubuntu xenial-security/main amd64 Packages'}],
+                                        'source': 'http://us.archive.ubuntu.com/ubuntu '
+                                                  'xenial-updates/main amd64 '
+                                                  'Packages'}],
+                           'version': '1.0.2g-1ubuntu4.8'},
+                          {'installed': None,
+                           'priority': '500',
+                           'sources': [{'priority': '500',
+                                        'source': 'http://security.ubuntu.com/ubuntu '
+                                                  'xenial-security/main amd64 '
+                                                  'Packages'}],
                            'version': '1.0.2g-1ubuntu4.6'},
                           {'installed': '***',
                            'priority': '100',
@@ -238,7 +247,9 @@ skype:i386:
                           {'installed': None,
                            'priority': '500',
                            'sources': [{'priority': '500',
-                                        'source': 'http://us.archive.ubuntu.com/ubuntu xenial/main amd64 Packages'}],
+                                        'source': 'http://us.archive.ubuntu.com/ubuntu '
+                                                  'xenial/main amd64 '
+                                                  'Packages'}],
                            'version': '1.0.2g-1ubuntu4'}]}}
     out = parse_apt_cache_policy_pkgs_output(txt1)
     assert_is_subset_dict_recur(out1, out)
