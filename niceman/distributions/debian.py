@@ -217,6 +217,13 @@ class DebianDistribution(Distribution):
             return False
         return all(map(self.satisfies_package, other.packages))
 
+    def __sub__(self, other):
+        # the semantics of distribution subtraction are, for d1 - d2:
+        #     what is specified in d1 that is not specified in d2
+        #     or how does d2 fall short of d1
+        #     or what is in d1 that isn't satisfied by d2
+        return [ p for p in self.packages if not other.satisfies_package(p) ]
+
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)
     #  def __add__(self, another_instance or DEBPackage, or APTSource)

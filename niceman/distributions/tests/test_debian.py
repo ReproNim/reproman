@@ -184,3 +184,14 @@ def test_distribution_statisfies(setup_distributions):
     (d1, d2) = setup_distributions
     assert not d1.satisfies(d2)
     assert d2.satisfies(d1)
+
+def test_distribution_sub():
+    (p1, p1v10, p1v11, p2) = setup_packages()
+    d1 = DebianDistribution(name='debian 1')
+    d1.packages = [p1, p2]
+    d2 = DebianDistribution(name='debian 2')
+    d2.packages = [p1v11, p2]
+    assert d1-d2 == []
+    result = d2-d1
+    assert len(result) == 1
+    assert result[0] == p1v11
