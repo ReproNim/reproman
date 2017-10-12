@@ -17,12 +17,15 @@ import pytz
 
 from niceman import utils
 
+from email.utils import mktime_tz, parsedate_tz
+
 import logging
 
 # Pick a conservative max command-line
 from niceman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
-    parse_apt_cache_policy_source_info
+    parse_apt_cache_policy_source_info, get_apt_release_file_names, \
+    get_spec_from_release_file
 
 try:
     _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
@@ -446,12 +449,15 @@ class DebTracer(DistributionTracer):
             ['apt-cache', 'policy']
         )
         out = utils.to_unicode(out, "utf-8")
+
         src_info = parse_apt_cache_policy_source_info(out)
         for src_name in src_info:
             src_vals = src_info[src_name]
+            date = self._get_date_from_release_file(
+                src_vals.get("archive_uri"), src_vals.get("uri_suite"))
             self._all_apt_sources[src_name] = \
                 APTSource(
-                    name=src_name,  # TODO RENAME
+                    name=src_name,
                     component=src_vals.get("component"),
                     codename=src_vals.get("codename"),
                     archive=src_vals.get("archive"),
@@ -459,8 +465,27 @@ class DebTracer(DistributionTracer):
                     origin=src_vals.get("origin"),
                     label=src_vals.get("label"),
                     site=src_vals.get("site"),
-                    # date = date # TODO
+                    date=date,
                     archive_uri=src_vals.get("archive_uri"))
+
+    def _get_date_from_release_file(self, archive_uri, uri_suite):
+        date = None
+        for filename in get_apt_release_file_names(
+                archive_uri,
+                uri_suite):
+            try:
+                out, _ = self._session.execute_command(['cat', filename])
+                spec = get_spec_from_release_file(out)
+                try:
+                    date = str(pytz.utc.localize(
+                        datetime.utcfromtimestamp(
+                            mktime_tz(parsedate_tz(spec.date)))))
+                except TypeError as _:
+                    lgr.warning("Unexpected date format %s " % spec.date)
+                break
+            except CommandError as _:
+                pass
+        return date
 
     # def _get_apt_source(self, packages_filename, **kwargs):
     #     # Given a set of attributes, in this case just all provided,

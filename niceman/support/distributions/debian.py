@@ -185,6 +185,10 @@ def parse_apt_cache_policy_source_info(policy_output):
                            # The value follows the "=", and include any
                            # non commas, or commas not followed by another tag
         """, flags=re.VERBOSE)
+    re_source_line = re.compile("""
+        (?P<archive_uri>\S+)        # Archive URI up to the first " "
+        (\ (?P<uri_suite>[^/]+))?   # The suite goes up to the first "/"
+        """, flags=re.VERBOSE)
     # The release line has a terse tag=value format. This maps
     # the release tags to more meaningful values
     tag_map = {"c": "component",
@@ -203,8 +207,14 @@ def parse_apt_cache_policy_source_info(policy_output):
                 if info.get("source"):
                     src_detail = dict()
                     src_detail["site"] = info.get("origin_info")
-                    src_detail["archive_uri"] = \
-                        re.search(r"\S+", info.get("source")).group()
+                    match = re_source_line.search(info.get("source"))
+                    if match:
+                        match = match.groupdict()
+                        src_detail["archive_uri"] = match["archive_uri"]
+                        src_detail["uri_suite"] = match["uri_suite"]
+                    else:
+                        lgr.warning("Unexpected source line %s" %
+                                    info.get("source"))
                     attribs = re_rel_attrib.finditer(info.get("release_info"))
                     for attrib in attribs:
                         if attrib.group("tag") in tag_map:
@@ -213,3 +223,15 @@ def parse_apt_cache_policy_source_info(policy_output):
                     source_info[info.get("source")] = src_detail
     return source_info
 
+
+def get_apt_release_file_names(url, url_suite):
+    url = url.strip("/")              # Remove any trailing /
+    url = url.replace("http://", "")  # Remove leading http://
+    url = url.replace("file:/", "_")  # file:/ is converted to single _
+    url = url.replace("/", "_")       # Any other / becomes _
+    if url_suite:
+        filename = url + "_dists_" + url_suite
+    else:
+        filename = url
+    return ["/var/lib/apt/lists/" + filename + "_Release",
+            "/var/lib/apt/lists/" + filename + "_InRelease"]

@@ -286,6 +286,7 @@ Pinned packages:
                 {'architecture': 'i386',
                  'archive': 'xenial',
                  'archive_uri': 'http://neuro.debian.net/debian',
+                 'uri_suite': 'xenial',
                  'codename': 'xenial',
                  'component': 'non-free',
                  'label': 'NeuroDebian',
@@ -296,6 +297,7 @@ Pinned packages:
                 {'architecture': 'amd64',
                  'archive': 'xenial-security',
                  'archive_uri': 'http://security.ubuntu.com/ubuntu',
+                 'uri_suite': 'xenial-security',
                  'codename': 'xenial',
                  'component': 'restricted',
                  'label': 'Ubuntu',
@@ -303,3 +305,15 @@ Pinned packages:
                  'site': 'security.ubuntu.com'}}
     out = parse_apt_cache_policy_source_info(txt)
     assert_is_subset_dict_recur(out1, out)
+
+
+def test_get_apt_release_file_names():
+    from ..debian import get_apt_release_file_names
+    fn = get_apt_release_file_names('http://us.archive.ubuntu.com/ubuntu',
+                                    'xenial-backports')
+    assert "/var/lib/apt/lists/us.archive.ubuntu.com_ubuntu_dists_xenial-backports_InRelease" in fn
+    assert "/var/lib/apt/lists/us.archive.ubuntu.com_ubuntu_dists_xenial-backports_Release" in fn
+    fn = get_apt_release_file_names('file:/my/repo2/ubuntu',None)
+    assert "/var/lib/apt/lists/_my_repo2_ubuntu_InRelease" in fn
+    assert "/var/lib/apt/lists/_my_repo2_ubuntu_Release" in fn
+
