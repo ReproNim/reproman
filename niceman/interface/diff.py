@@ -91,7 +91,7 @@ class Diff(Interface):
                 needed_dists.append(dist_type)
                 continue
             try:
-                missing_packages = req_dists[dist_type] + env_dists[dist_type]
+                missing_packages = req_dists[dist_type] - env_dists[dist_type]
             except TypeError:
                 fmt = '%s not checked (difference operator unsupported)'
                 lgr.warning(fmt % dist_type)
