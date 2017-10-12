@@ -57,7 +57,7 @@ before_install:
   - docker run -d -p 49000:22 rastasheep/ubuntu-sshd:14.04
 
 install:
-  - sudo apt-get install python-apt python3-apt
+  - tools/ci/build_install_apt
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib
