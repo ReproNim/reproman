@@ -121,7 +121,8 @@ class Diff(Interface):
             print 'needed packages:'
             for dist in sorted(needed_packages):
                 print '    %s' % dist
-                for package in needed_packages[dist]:
+                for package in sorted(needed_packages[dist], 
+                                      key=lambda p: p.name.lower()):
                     if package.version:
                         print '        %s %s' % (package.name, package.version)
                     else:
