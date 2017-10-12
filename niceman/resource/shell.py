@@ -131,8 +131,74 @@ class Shell(Resource):
         """
         Log into a container and get the command line
         """
-        if pty:
-            raise NotImplementedError
         if shared:
             raise NotImplementedError
-        return ShellSession()
+        return PTYSession() if pty else ShellSession()
+
+
+import termios
+import struct
+import fcntl
+import time
+
+class PTYHandler(object):
+    """A helper for handling a PTY session.
+
+    Eventually might acquire some special super-powers
+    """
+
+    def __init__(self):
+        self.resized = False
+        self.fd = None
+        self._last_resize = None
+
+    def __call__(self, fd):
+        if not self.fd:
+            self.fd = fd
+            self.set_winsize()
+        else:
+            # paranoid Yarik does not know if fd could somehow miraculously
+            # change
+            if self.fd != fd:
+                lgr.warning("fd was changed from %s to %s", self.fd, fd)
+                self.fd = fd
+            if not self._last_resize or time.time() - self._last_resize > 1:
+                self.set_winsize()
+
+        data = os.read(fd, 1024)
+        # TODO: here we could potentially log
+        # lgr.debug("is it fun???")
+        return data
+
+    def set_winsize(self, row=None, col=None, xpix=0, ypix=0):
+        """A helper to set the terminal size to desired size
+        """
+        if row is None or col is None:
+            # query the terminal
+            # This is probably Linux specific, although seems to be there also
+            # on OSX
+            row, col = map(int, os.popen('stty size', 'r').read().split())
+        winsize = struct.pack("HHHH", row, col, xpix, ypix)
+        fcntl.ioctl(self.fd, termios.TIOCSWINSZ, winsize)
+        self._last_resize = time.time()
+
+
+class PTYSession(ShellSession):
+
+    def open(self):
+
+        lgr.debug("Opening local TTY connection.")
+        # TODO: probably call to super to assure that we have it running?
+        import pty
+        # With /bin/sh  I am loosing proper ANSI characters rendering
+        # etc.  With /bin/bash all good
+        shell = "/bin/bash"  # TODO: should be a (config?) option!!!
+        # the problem remains about size not matching the terminal size
+        # so we will use the PTYHandler which would dynamically adjust it
+        # (from tim to time)
+        hdlr = PTYHandler()
+        pty.spawn(shell, hdlr)
+
+    def close(self):
+        # XXX ?
+        pass

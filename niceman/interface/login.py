@@ -70,7 +70,10 @@ class Login(Interface):
         # TODO: reintroduce backend and also use of backend_set_config
 
         # Connect to resource environment
+        lgr.debug("Connecting to the resource")
         env_resource.connect()
+        lgr.info("Starting the pty session for %s", env_resource)
         with env_resource.get_session(pty=True):
             pass
         # env_resource.login()
+        lgr.info("Finished the pty session for %s", env_resource)
