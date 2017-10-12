@@ -182,11 +182,26 @@ class DockerSession(POSIXSession):
                 self.client.exec_start(exec_id=execute['Id'],
                 stream=True)
         ):
-            if line.startswith('rpc error'):
+            if line.startswith(b'rpc error'):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
     # XXX should we start/stop on open/close or just assume that it is running already?
+
+
+    def put(self, src_path, dest_path, preserve_perms=False,
+                owner=None, group=None, recursive=False):
+        """Take file on the local file system and copy over into the session
+        """
+        # self.ssh.put([src_path], remotepath=dest_path)
+        pass
+
+    def get(self, src_path, dest_path, preserve_perms=False,
+                  owner=None, group=None, recursive=False):
+        """Retrieve a file from the remote system
+        """
+        # self.ssh.get(src_path, localpath=dest_path)
+        pass
 
 
 @attr.s

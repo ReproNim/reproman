@@ -258,7 +258,7 @@ class SSHClient(object):
                 return
         self.mkdir(path, mode)
 
-    def mkdir(self, path, mode="0755", ignore_failure=False):
+    def mkdir(self, path, mode=0o755, ignore_failure=False):
         """
         Make a new directory on the remote machine
 

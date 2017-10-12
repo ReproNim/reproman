@@ -372,3 +372,8 @@ class Resource(object):
         # fingerprint it so to later be able to decide if it is 'ours'? ;)
         return str(uuid.uuid1())
 
+    @abc.abstractmethod
+    def get_session(self, pty=False, shared=None):
+        """Return an open session to a resource environment"""
+        raise NotImplementedError
+

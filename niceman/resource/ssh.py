@@ -140,12 +140,14 @@ class SSHSession(POSIXSession):
         """Return if file exists"""
         return self.ssh.path_exists(path)
 
-    def copy_to(self, src_path, dest_path='.'):
+    def put(self, src_path, dest_path, preserve_perms=False,
+                owner=None, group=None, recursive=False):
         """Take file on the local file system and copy over into the session
         """
         self.ssh.put([src_path], remotepath=dest_path)
 
-    def copy_from(self, src_path, dest_path='.'):
+    def get(self, src_path, dest_path, preserve_perms=False,
+                  owner=None, group=None, recursive=False):
         """Retrieve a file from the remote system
         """
         self.ssh.get(src_path, localpath=dest_path)
@@ -164,10 +166,13 @@ class SSHSession(POSIXSession):
         """Return content of a file"""
         return self.ssh.get_remote_file_lines(path)
 
-    def mkdir(self, path, mode="0755"):
+    def mkdir(self, path, parents=False):
         """Create a directory. Create parent directories if non-existent
         """
-        self.ssh.makedirs(path, int(mode, 8))
+        if parents:
+            self.ssh.makedirs(path)
+        else:
+            self.ssh.mkdir(path)
 
     def isdir(self, path):
         """Return True if path is pointing to a directory

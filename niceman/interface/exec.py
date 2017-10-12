@@ -6,12 +6,10 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to create a directory an environment
+"""Helper utility to run commands in an environment
 """
 
 __docformat__ = 'restructuredtext'
-
-import re
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
@@ -20,36 +18,36 @@ from ..support.constraints import EnsureStr, EnsureNone
 from ..resource import ResourceManager
 
 from logging import getLogger
-lgr = getLogger('niceman.api.mkdir')
+lgr = getLogger('niceman.api.exec')
 
 
-class Mkdir(Interface):
+class Exec(Interface):
     """Make a directory in a computation environment
 
     Examples
     --------
 
-      $ niceman mkdir my-new-directory --name=my-resource --config=niceman.cfg
+      $ niceman exec mkdir /home/blah/data --config=niceman.cfg
 
     """
 
     _params_ = dict(
-        path=Parameter(
-            doc="path of the directory to create",
-            metavar='PATH',
-            constraints=EnsureStr() | EnsureNone(),
+        command=Parameter(
+            doc="name of the command to run",
+            metavar='COMMAND',
+            constraints=EnsureStr(),
         ),
-        mode=Parameter(
-            args=("-m", "--mode"),
-            doc="mode of directory that is created",
-            metavar='MODE',
+        args=Parameter(
+            doc="list of positional and keyword args to pass to the command",
+            metavar='ARGS',
+            nargs="*",
             constraints=EnsureStr(),
         ),
         name=Parameter(
             args=("-n", "--name"),
             doc="""Name of the resource to consider. To see
             available resource, run the command 'niceman ls'""",
-            constraints=EnsureStr(),
+            # constraints=EnsureStr(),
         ),
         # XXX reenable when we support working with multiple instances at once
         # resource_type=Parameter(
@@ -72,7 +70,7 @@ class Mkdir(Interface):
     )
 
     @staticmethod
-    def __call__(path, mode, name, resource_id=None, config=None):
+    def __call__(command, args, name=None, resource_id=None, config=None):
         from niceman.ui import ui
         if not name and not resource_id:
             name = ui.question(
@@ -94,8 +92,9 @@ class Mkdir(Interface):
             raise ValueError("No resource found given the info %s" % str(resource_info))
 
         session = env_resource.get_session()
-        session.mkdir(path, mode)
+        session.niceman_exec(command, args)
 
         ResourceManager.set_inventory(inventory)
 
-        lgr.info("Created directory %s in the environment %s", path, name)
+        lgr.info("Executed the %s command in the environment %s", command,
+                 name)

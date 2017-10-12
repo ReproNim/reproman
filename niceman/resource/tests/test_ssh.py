@@ -62,11 +62,11 @@ def test_ssh_class():
         assert session.exists('/no/such/file') == False
 
         # Copy this file to /root/test_ssh.py on the docker test container.
-        session.copy_to(__file__, 'remote_test_ssh.py')
+        session.put(__file__, 'remote_test_ssh.py')
         assert session.exists('remote_test_ssh.py') == True
 
         tmp_path = "/tmp/{}".format(uuid.uuid4().hex)
-        session.copy_from('/etc/hosts', tmp_path)
+        session.get('/etc/hosts', tmp_path)
         assert os.path.isfile(tmp_path) == True
 
         file_contents = session.read('remote_test_ssh.py')
