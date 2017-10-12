@@ -91,6 +91,7 @@ Installed-Size: 934
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 Original-Maintainer: Debian OpenSSL Team <pkg-openssl-devel@lists.alioth.debian.org>
 Architecture: amd64
+Source: openssl-src (1.0.2g)
 Version: 1.0.2g-1ubuntu4
 Depends: libc6 (>= 2.15), libssl1.0.0 (>= 1.0.2g)
 Suggests: ca-certificates
@@ -125,6 +126,7 @@ Installed-Size: 668
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 Original-Maintainer: Debian Games Team <pkg-games-devel@lists.alioth.debian.org>
 Architecture: amd64
+Source: alienblaster-src
 Version: 1.1.0-9
 Depends: alienblaster-data, libc6 (>= 2.14), libgcc1 (>= 1:3.0), libsdl-mixer1.2, libsdl1.2debian (>= 1.2.11), libstdc++6 (>= 5.2)
 Filename: pool/universe/a/alienblaster/alienblaster_1.1.0-9_amd64.deb
@@ -146,9 +148,12 @@ Bugs: https://bugs.launchpad.net/ubuntu/+filebug
 Origin: Ubuntu
 """
     out1 = {'alienblaster:amd64=1.1.0-9': {'Architecture': 'amd64',
-                                         'Package': 'alienblaster',
+                                           'Source_name': 'alienblaster-src',
+                                           'Package': 'alienblaster',
                                            'Version': '1.1.0-9'},
             'openssl:amd64=1.0.2g-1ubuntu4': {'Architecture': 'amd64',
+                                              'Source_name': 'openssl-src',
+                                              'Source_version': '1.0.2g',
                                               'Package': 'openssl',
                                               'Version': '1.0.2g-1ubuntu4'},
             'openssl:amd64=1.0.2g-1ubuntu4.5': {'Architecture': 'amd64',

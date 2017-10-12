@@ -85,6 +85,11 @@ def parse_apt_cache_show_pkgs_output(output):
         ^(?P<tag>[a-zA-Z][^:]*):[\ ]+  # Tag - begins at start of line
         (?P<val>\S.*)$           # Value - after colon to the end of the line
     """, flags=re.VERBOSE + re.MULTILINE)
+    # RegExp to split source into source and version
+    re_source = re.compile("""
+        ^(?P<source_name>[^ ]+)                # source name before any space
+        ([^(]*\((?P<source_version>[^)]+)\))?  # source version in parentheses
+    """, flags=re.VERBOSE)
 
     # For each package entry, collect single line tag/value pairs into a
     # dictionary
@@ -93,6 +98,11 @@ def parse_apt_cache_show_pkgs_output(output):
            match.group("tag"): match.group("val")
            for match in re_deb822_single_line_tag.finditer(entry)
         }
+        # Parse source line to get source version (if present)
+        if "Source" in pkg:
+            for match in re_source.finditer(pkg["Source"]):
+                pkg["Source_name"] = match.group("source_name")
+                pkg["Source_version"] = match.group("source_version")
         # Name the dictionary on the Package and Version
         if "Package" in pkg and "Version" in pkg:
             if "Architecture" in pkg:
@@ -133,7 +143,7 @@ def parse_apt_cache_policy_pkgs_output(output):
     for entry in entries:
         match = re_pkg.match(entry.strip())
         if not match:
-            lgr.warning("FAILED in ", entry)
+            lgr.warning("FAILED in %s " % entry)
             continue
         info = match.groupdict()
         pkgs[info.pop('name')] = info

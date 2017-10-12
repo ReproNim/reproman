@@ -74,21 +74,17 @@ class DEBPackage(Package):
     """Debian package information"""
     name = attr.ib()
     # Optional
-    source_name = attr.ib(default=None)
-    upstream_name = attr.ib(default=None)
-
     version = attr.ib(default=None)
     architecture = attr.ib(default=None)
+    source_name = attr.ib(default=None)
+    source_version = attr.ib(default=None)
     size = attr.ib(default=None)
     md5 = attr.ib(default=None)
     sha1 = attr.ib(default=None)
     sha256 = attr.ib(default=None)
-    source_version = attr.ib(default=None)
     versions = attr.ib(default=None)  # Hash ver_str -> [Array of source names]
     install_date = attr.ib(default=None)
-    # nah -- ATM goes directly into DebianDistribution.apt_sources
-    # apt_sources = TypedList(APTSource)
-    files = attr.ib(default=attr.Factory(list))  # Might want a File structure for advanced tracking
+    files = attr.ib(default=attr.Factory(list)) 
 _register_with_representer(DEBPackage)
 
 
@@ -344,8 +340,8 @@ class DebTracer(DistributionTracer):
             name=name,
             version=version,
             architecture=architecture,
-            # TODO source_name=  Split info.get("Source")
-            # TODO source_version= Split info.get("Source")
+            source_name=info.get("Source_name"),
+            source_version=info.get("Source_version"),
             size=info.get("Size"),
             md5=info.get("MD5sum"),
             sha1=info.get("SHA1"),
