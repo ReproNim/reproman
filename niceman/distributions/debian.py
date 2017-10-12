@@ -212,7 +212,7 @@ class DebianDistribution(Distribution):
         """return True if this distribution (self) satisfies the requirements 
         of the other distribution (other)"""
         if not isinstance(other, Distribution):
-            raise TypeError('satisfies() requires a package argument')
+            raise TypeError('satisfies() requires a distribution argument')
         if not isinstance(other, DebianDistribution):
             return False
         return all(map(self.satisfies_package, other.packages))
