@@ -282,6 +282,9 @@ class CondaTracer(DistributionTracer):
         root_to_envs = defaultdict(list)
         # Start with all paths being set as unknown
         unknown_files = set(paths)
+        # Track count of found packages and files
+        found_package_count = 0
+        total_file_count = len(unknown_files)
 
         # First, loop through all the files and identify conda paths
         for path in paths:
@@ -365,6 +368,9 @@ class CondaTracer(DistributionTracer):
             else:
                 env_name = 'conda_env'
 
+            # Keep track of found package count
+            found_package_count += len(packages)
+
             # Create the conda environment (works with root environments too)
             conda_env = CondaEnvironment(
                 name=env_name,
@@ -375,6 +381,12 @@ class CondaTracer(DistributionTracer):
                 channels=channels
             )
             root_to_envs[root_path].append(conda_env)
+
+        lgr.info("%s: %d packages with %d files, and %d other files",
+                 self.__class__.__name__,
+                 found_package_count,
+                 total_file_count - len(unknown_files),
+                 len(unknown_files))
 
         # Find all the identified conda_roots
         conda_roots = root_to_envs.keys()
