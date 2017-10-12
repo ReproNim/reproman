@@ -89,7 +89,7 @@ class APTSource(SpecObject):
 _register_with_representer(APTSource)
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, frozen=True)
 class DEBPackage(Package):
     """Debian package information"""
     name = attr.ib()
@@ -282,8 +282,7 @@ class DebTracer(DistributionTracer):
         except KeyError:  # Package not found
             lgr.warning("Was asked to create a spec for package %s but it was not found in apt", name)
             return None
-
-        # prep our pkg object:
+# prep our pkg object:
         installed_info = pkg_info.installed
         if architecture and installed_info.architecture and architecture != installed_info.architecture:
             # should match or we whine a lot  and TODO: fail in the future after switching from apt module
@@ -292,31 +291,15 @@ class DebTracer(DistributionTracer):
                 name, architecture, installed_info.architecture
             )
 
-        pkg = DEBPackage(
-            name=name,
-            # type="dpkg"
-            version=installed_info.version,
-            # candidate=pkg_info.candidate.version
-            size=installed_info.size,
-            architecture=installed_info.architecture,
-            md5=installed_info.md5,
-            sha1=installed_info.sha1,
-            sha256=installed_info.sha256
-        )
-        if installed_info.source_name:
-            pkg.source_name = pkg_info.installed.source_name
-            pkg.source_version = pkg_info.installed.source_version
-        pkg.files = []
-
-        # Now get installation date
+        # Get installation date
         try:
-            pkg.install_date = str(
+            install_date = str(
                 pytz.utc.localize(
                     datetime.utcfromtimestamp(
                         os.path.getmtime(
                             "/var/lib/dpkg/info/" + name + ".list"))))
         except OSError:  # file not found
-            pass
+            install_date = None
 
         # Compile Version Table
         pkg_versions = defaultdict(list)
@@ -345,7 +328,38 @@ class DebTracer(DistributionTracer):
                             archive_uri=archive_uri
                         )
                     )
-        pkg.versions = dict(pkg_versions)
+
+        if installed_info.source_name:
+            pkg = DEBPackage(
+                name=name,
+                # type="dpkg"
+                version=installed_info.version,
+                # candidate=pkg_info.candidate.version
+                size=installed_info.size,
+                architecture=installed_info.architecture,
+                md5=installed_info.md5,
+                sha1=installed_info.sha1,
+                sha256=installed_info.sha256, 
+                source_name=pkg_info.installed.source_name, 
+                source_version=pkg_info.installed.source_version, 
+                install_date=install_date, 
+                versions = dict(pkg_versions)
+            )
+        else:
+            pkg = DEBPackage(
+                name=name,
+                # type="dpkg"
+                version=installed_info.version,
+                # candidate=pkg_info.candidate.version
+                size=installed_info.size,
+                architecture=installed_info.architecture,
+                md5=installed_info.md5,
+                sha1=installed_info.sha1,
+                sha256=installed_info.sha256, 
+                install_date=install_date, 
+                versions = dict(pkg_versions)
+            )
+
         lgr.debug("Found package %s", pkg)
         return pkg
 
