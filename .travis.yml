@@ -52,8 +52,7 @@ before_install:
   - git config --global user.name "Travis Almighty"
 
 install:
-  # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
-  - tools/ci/build_install_apt
+  # - tools/ci/build_install_apt  # Removed dependency on python-apt!
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib
