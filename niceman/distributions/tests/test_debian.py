@@ -180,7 +180,7 @@ def test_distribution_satisfies_package(setup_distributions, setup_packages):
     assert not d2.satisfies_package(p1v10)
     assert d2.satisfies_package(p1v11)
 
-def test_distributions(setup_distributions):
+def test_distribution_statisfies(setup_distributions):
     (d1, d2) = setup_distributions
     assert not d1.satisfies(d2)
     assert d2.satisfies(d1)
