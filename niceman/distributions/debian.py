@@ -148,12 +148,6 @@ class DebianDistribution(Distribution):
 
     def normalize(self):
         # TODO:
-        # - verify that no explicit apt_source is stored within
-        #   apt_sources of the package... actually those are gone (for) now
-        # - verify that there is no duplicate/conflicting apt sources and
-        #   package definitions and merge appropriately.  Will be used to
-        #   grow the spec interactively by adding more packages etc... although
-        #   possibly could be done at 'addition' time
         # - among apt-source we could merge some together if we allow for
         #   e.g. component (main, contrib, non-free) to be a list!  but that
         #   would make us require supporting flexible typing -- string or a list
@@ -188,7 +182,6 @@ class DebTracer(DistributionTracer):
         if not files:
             return
         
-        debian_version = None
         try:
             debian_version = self._session.read('/etc/debian_version').strip()
             self._session.exists('/etc/os-release')
@@ -366,83 +359,6 @@ class DebTracer(DistributionTracer):
             versions=ver_dict
         )
 
-
-        # if not apt_cache:
-        #     return None
-        # try:
-        #     query = name if not architecture else "%s:%s" % (name, architecture)
-        #     # TODO: use session, not apt_cache
-        #     pkg_info = apt_cache[query]
-        # except KeyError:  # Package not found
-        #     lgr.warning("Was asked to create a spec for package %s but it was not found in apt", name)
-        #     return None
-        #
-        # # prep our pkg object:
-        # installed_info = pkg_info.installed
-        # if architecture and installed_info.architecture and architecture != installed_info.architecture:
-        #     # should match or we whine a lot  and TODO: fail in the future after switching from apt module
-        #     lgr.warning(
-        #         "For package %s got different architecture %s != %s. Using installed for now",
-        #         name, architecture, installed_info.architecture
-        #     )
-        #
-        # pkg = DEBPackage(
-        #     name=name,
-        #     # type="dpkg"
-        #     version=installed_info.version,
-        #     # candidate=pkg_info.candidate.version
-        #     size=installed_info.size,
-        #     architecture=installed_info.architecture,
-        #     md5=installed_info.md5,
-        #     sha1=installed_info.sha1,
-        #     sha256=installed_info.sha256
-        # )
-        # if installed_info.source_name:
-        #     pkg.source_name = pkg_info.installed.source_name
-        #     pkg.source_version = pkg_info.installed.source_version
-        # pkg.files = []
-        #
-        # # Now get installation date
-        # try:
-        #     pkg.install_date = str(
-        #         pytz.utc.localize(
-        #             datetime.utcfromtimestamp(
-        #                 os.path.getmtime(
-        #                     "/var/lib/dpkg/info/" + name + ".list"))))
-        # except OSError:  # file not found
-        #     pass
-        #
-        # # Compile Version Table
-        # pkg_versions = defaultdict(list)
-        # for v in pkg_info.versions:
-        #     for (pf, _) in v._cand.file_list:
-        #         # Get the archive uri
-        #         indexfile = v.package._pcache._list.find_index(pf)
-        #         archive_uri = indexfile.archive_uri("") if indexfile else None
-        #
-        #         # Pull origin information from package file
-        #         if pf.component == 'now':
-        #             # just make sure that we have an entry:
-        #             # but otherwise - don't store, what for?
-        #             pkg_versions[v.version]
-        #         else:
-        #             pkg_versions[v.version].append(
-        #                 self._get_apt_source(
-        #                     packages_filename=pf.filename,
-        #                     component=pf.component,
-        #                     codename=pf.codename,
-        #                     archive=pf.archive,
-        #                     architecture=pf.architecture,
-        #                     origin=pf.origin,
-        #                     label=pf.label,
-        #                     site=pf.site,
-        #                     archive_uri=archive_uri
-        #                 )
-        #             )
-        # pkg.versions = dict(pkg_versions)
-        # lgr.debug("Found package %s", pkg)
-        # return pkg
-
     def _find_all_sources(self):
         # Use apt-cache policy to get all sources
         out, _ = self._session.execute_command(
@@ -474,7 +390,7 @@ class DebTracer(DistributionTracer):
                 archive_uri,
                 uri_suite):
             try:
-                out, _ = self._session.execute_command(['cat', filename])
+                out = self._session.read(filename)
                 spec = get_spec_from_release_file(out)
                 try:
                     date = str(pytz.utc.localize(
@@ -486,53 +402,6 @@ class DebTracer(DistributionTracer):
             except CommandError as _:
                 pass
         return date
-
-    # def _get_apt_source(self, packages_filename, **kwargs):
-    #     # Given a set of attributes, in this case just all provided,
-    #     # return either a new instance or the cached one
-    #     hashable = tuple(sorted(kwargs.items()))
-    #     if hashable not in self._apt_sources:
-    #         self._apt_sources[hashable] = apt_source = APTSource(
-    #             name=self._get_apt_source_name(**kwargs),
-    #             **kwargs
-    #         )
-    #         # we need to establish its date
-    #
-    #         # TODO: shouldn't be done per each package since
-    #         #       common within session for all packages from the
-    #         #       same Packages.  So should be done independently
-    #         #       and once per Packages file
-    #         # Get the release date
-    #         apt_source.date = self._find_release_date(
-    #             self._find_release_file(packages_filename))
-    #
-    #     # we return a unique name
-    #     return self._apt_sources[hashable].name
-    # # TODO: should become a part of "normalization" where common
-    # # stuff floats up
-    #
-    # def identify_package_origins(self, packages):
-    #     used_names = set()  # Set to avoid duplicate origin names
-    #     unnamed_origin_map = {}  # Map unnamed origins to named origins
-    #
-    #     raise RuntimeError("should be RFed")
-    #     # Iterate over all package origins
-    #     for p in packages:
-    #         for v in p.versions:
-    #             for i, o in enumerate(v.get("apt_sources", [])):
-    #                 # If we haven't seen this origin before, generate a
-    #                 # name for it
-    #                 if o not in unnamed_origin_map:
-    #                     unnamed_origin_map[o] = \
-    #                         self._get_apt_source_name(o, used_names)
-    #                 # Now replace the package origin with the name of the
-    #                 # yaml-prepared origin
-    #                 v["apt_sources"][i] = unnamed_origin_map[o].name
-    #
-    #     # Sort the origins by the name for the configuration file
-    #     origins = sorted(unnamed_origin_map.values(), key=lambda k: k.name)
-    #
-    #     return origins
 
     def _run_dpkg_query(self, subfiles):
         try:
@@ -563,34 +432,3 @@ class DebTracer(DistributionTracer):
             if res['architecture'] is None:
                 res.pop('architecture')
         return res
-
-    # @staticmethod
-    # def _find_release_file(packages_filename):
-    #     # The release filename is a substring of the package
-    #     # filename (excluding the ending "Release" or "InRelease"
-    #     # The split between the release filename and the package filename
-    #     # is at an underscore, so split the package filename
-    #     # at underscores and test for the release file:
-    #     rfprefix = packages_filename
-    #     assert os.path.isabs(packages_filename), \
-    #         "must be given full path, got %s" % packages_filename
-    #     while "_" in rfprefix:
-    #         rfprefix = rfprefix.rsplit("_", 1)[0]
-    #         for ending in ['_InRelease', '_Release']:
-    #             release_filename = rfprefix + ending
-    #             if os.path.exists(release_filename):
-    #                 return release_filename
-    #     # No file found
-    #     return None
-    #
-    # @staticmethod
-    # def _find_release_date(rfile):
-    #     # Extract and format the date from the release file
-    #     rdate = None
-    #     if rfile:
-    #         rdate = apt_utils.get_release_date_from_release_file(rfile)
-    #         if rdate:
-    #             rdate = str(pytz.utc.localize(
-    #                 datetime.utcfromtimestamp(rdate)))
-    #     return rdate
-
