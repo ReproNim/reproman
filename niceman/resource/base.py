@@ -227,10 +227,6 @@ class ResourceManager(object):
                 "Haven't found resource given name=%s id=%s" % (name, id_))
         return self.factory(config)
 
-    # sugaring
-    def __getitem__(self, name_id):
-        return self.get_resource(name_id=name_id)
-
     def create_resource(self, name=None, id_=None, type_=None):
         # TODO: place the logic I removed which would create the beast and
         # return it
@@ -239,6 +235,29 @@ class ResourceManager(object):
             raise ResourceAlreadyExistsError("TODO: provide details: %s" % str(config))
         # TODO: create the resource config and pass into the factory
         # TODO: register within the inventory
+
+    def names(self):
+        """Return names of the registered resources"""
+        return self.inventory.keys()
+
+    def ids(self):
+        """Return ids of the registered resources"""
+        return [
+            x['id']
+            for x in self.inventory.values()
+            if x.get('id')
+        ]
+
+    def __len__(self):
+        return len(self.inventory)
+
+    def __iter__(self):
+        for r in self.inventory:
+            yield r
+
+    # sugaring
+    def __getitem__(self, name_id):
+        return self.get_resource(name_id=name_id)
 
     # # XXX why do we need yet another ConfigManager here and not using the
     # # niceman.cfg???
@@ -353,6 +372,14 @@ class Resource(object):
 
     def __repr__(self):
         return 'Resource({})'.format(self.name)
+
+    def refresh(self):
+        """Connect to the resource possibly refreshing the status etc"""
+        self.connect()
+
+    @abc.abstractmethod
+    def connect(self):
+        pass
 
     def add_command(self, command, env=None):
         """

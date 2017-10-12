@@ -28,9 +28,17 @@ import logging
 lgr = logging.getLogger('niceman.session')
 
 
+# XXX should Session become a resource?
+#     should each resource potentially have a parent?
 @attr.s
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
+
+    # Need to be defined in the subclasses unfortunately since we need a default
+    # value for it. attr.s isn't flexible enough to do all the messy reordering
+    # etc
+    status = attr.ib(default=None)
+    #status = None
 
     def __attrs_post_init__(self):
         # both will be maintained
@@ -53,10 +61,12 @@ class Session(object):
         # XXX
         # we might right here already load possibly set permanent env variables
         # within that session?
+        self.status = 'open'
         pass
 
     def close(self):
         # XXX may be here we should dump permanent env settings?
+        self.status = 'closed'  # note: default is None!
         pass
 
     def set_envvar(self, variable, value=None, permanent=False, format=False):
@@ -184,6 +194,10 @@ class Session(object):
     @abc.abstractmethod
     def copy_from(self, src_path, dest_path, preserve_perms=False,
                   owner=None, group=None, recursive=False):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def delete(self, path, recursive=False):
         raise NotImplementedError
 
     @abc.abstractmethod

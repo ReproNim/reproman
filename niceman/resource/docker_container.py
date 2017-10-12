@@ -147,8 +147,9 @@ from niceman.resource.session import POSIXSession
 
 @attr.s
 class DockerSession(POSIXSession):
-    client = attr.ib()
-    container = attr.ib()
+
+    client = attr.ib(default=None)
+    container = attr.ib(default=None)
 
     def _execute_command(self, command, env=None, cwd=None):
         """
@@ -193,11 +194,8 @@ class PTYDockerSession(DockerSession):
 
     def open(self):
         lgr.debug("Opening TTY connection to docker container.")
+        super(PTYDockerSession, self).open()
         # TODO: probably call to super to assure that we have it running?
         dockerpty.start(self.client, self.container, logs=0)
-
-    def close(self):
-        # XXX ?
-        pass
 
     # XXX should we overload execute_command?

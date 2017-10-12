@@ -70,61 +70,68 @@ class Ls(Interface):
         #       within ConfigManager (even though it would make it NICEMAN specific)
         #       This would allow to make more sensible error messages etc
         from niceman.resource import manager
-        inventory = manager.inventory
 
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 
-        for name in sorted(inventory):
+        for name in sorted(manager):
+            resource = manager.get_resource(name=name)
             if name.startswith('_'):
                 continue
-
-            # if refresh:
-            inventory_resource = inventory[name]
-            # XXX(yoh): why do we need a config here?
-            config = dict(
-                manager.config_manager.items(inventory_resource['type'].split('-')[0])
-            )
-            config.update(inventory_resource)
+            # XXX(yoh): why do we need a config here?  I guess to update some
+            #   config settings which aren't recorded in the "inventory".  But
+            #   all that should be done by the manager imho
+            # config = dict(
+            #     manager.config_manager.items(resource['type'].split('-')[0])
+            # )
+            # config.update(resource)
             # XXX Now we might have a dichotomy somewhat.  Key in the inventory
             #     is assumed to match a name as known to the resource.  But if not
             #     specified or mismatches -- what should we do?
             # #     For now let's just assume that every resource must have a name
             # #     and its name, if not specified, will be the key in the inventory
-            if 'name' not in config:
-                config['name'] = name
-            try:
-                env_resource = manager.factory(config)
-            except Exception as e:
-                lgr.error("Failed to create an instance from config: %s",
-                          exc_str(e))
-                continue
+            # if not resource.name'name' not in config:
+            #     config['name'] = ''
+            # try:
+            #     env_resource = manager.factory(config)
+            # except Exception as e:
+            #     lgr.error("Failed to create an instance from config: %s",
+            #               exc_str(e))
+            #     continue
             try:
                 if refresh:
-                    env_resource.connect()
-                # TODO: handle the actual refreshing in the inventory
-                inventory_resource['id'] = env_resource.id
-                inventory_resource['status'] = env_resource.status
-                if not env_resource.id:
+                    try:
+                        resource.connect()
+                    except Exception as exc:
+                        lgr.warning("Cannot connect to the %s: %s", resource, exc_str(exc))
+                if not resource.id:
                     # continue  # A missing ID indicates a deleted resource.
-                    inventory_resource['id'] = 'DELETED'
+                    resource.id = 'DELETED'
+                    # TODO: API to wipe those out
             except ResourceError as exc:
                 ui.error("%s resource query error: %s" % (name, exc_str(exc)))
                 for f in 'id', 'status':
-                    inventory_resource[f] = inventory_resource.get(f, "?")
+                    if not getattr(resource, f):
+                        setattr(resource, f, "?")
             msgargs = (
                 name,
-                inventory_resource['type'],
-                inventory_resource['id'][:id_length],
-                inventory_resource['status']
+                resource.type,
+                resource.id[:id_length],
+                resource.status,
             )
-            ui.message(template.format(*msgargs))
-            lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
+            line = template.format(*msgargs)
+            ui.message(line)
+            lgr.debug('list result: %s', line)
 
         # if not refresh:
         #     ui.message('(Use --refresh option to view current status.)')
         #
         # if refresh:
         #     niceman.interface.base.set_resource_inventory(inventory)
+        if refresh:
+            lgr.debug("Storing manager's inventory upon refresh")
+            # ATM it is not in effect, since inventory contains dicts, and
+            # instances created "on the fly". TODO
+            manager.set_inventory()

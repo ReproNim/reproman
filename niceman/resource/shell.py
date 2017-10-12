@@ -30,11 +30,13 @@ class ShellSession(POSIXSession):
         super(ShellSession, self).__init__()
         self._runner = None
 
-    def start(self):
+    def open(self):
+        super(ShellSession, self).open()
         self._runner = Runner()
 
-    def stop(self):
+    def close(self):
         self._runner = None
+        super(ShellSession, self).close()
 
     #
     # Commands fulfilling a "Session" interface to interact with the environment
@@ -238,8 +240,18 @@ class PTYHandler(object):
 
 class PTYSession(ShellSession):
     """Interactive PTY session for the local shell"""
-    def open(self):
 
+    # TODO: how could we also execute_command in the same session!?
+    # because we do not run it in the background, and because of all the env
+    # vars etc, not sure how that is possible.  But we will need to "prime"
+    # it with our starting script at least.
+    #
+    # Besides open/close -- we would need to support multiple stages I guess
+    # so we could deploy our needed pieces first in there, then instruct
+    # shell to source before actually providing an interactive shell
+    def open(self):
+        # call ShellSession's parent, not ShellSession... dirty for now
+        super(ShellSession, self).open()
         lgr.debug("Opening local TTY connection.")
         # TODO: probably call to super to assure that we have it running?
         import pty
@@ -253,6 +265,3 @@ class PTYSession(ShellSession):
         # for some reason leads to  (4, 'Interrupted system call') atm
         #with hdlr.WINCHHandler():
         pty.spawn(shell, hdlr)
-
-    def close(self):
-        pass

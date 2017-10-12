@@ -289,10 +289,11 @@ from niceman.resource.session import POSIXSession
 
 @attr.s
 class Ec2Session(POSIXSession):
-    ssh = attr.ib()
-    instance = attr.ib()
-    key_filename = attr.ib()
-    user = attr.ib()
+
+    ssh = attr.ib(default=None)
+    instance = attr.ib(default=None)
+    key_filename = attr.ib(default=None)
+    user = attr.ib(default=None)
 
     def _execute_command(self, command, env=None, cwd=None):
         """
@@ -329,13 +330,14 @@ class PtyEc2Session(Ec2Session):
 
     def open(self):
         lgr.debug("Opening TTY connection to AWS EC2 instance.")
+        super(PtyEc2Session, self).open()
         # TODO: probably call to super to assure that we have it running?
         host = self.instance.public_ip_address
         ssh = SSHClient(host, private_key=self.key_filename)
         ssh.interactive_shell(self.user)
 
     def close(self):
-        # XXX ?
-        pass
+        super(PtyEc2Session, self).close()
+        # XXX? more?
 
     # XXX should we overload execute_command?

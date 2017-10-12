@@ -40,12 +40,15 @@ class Login(Interface):
         resource_name=resource_name_opt,
         # XXX reenable when we support working with multiple instances at once
         # resource_type=resource_type_opt,
+        # It seems that this should be just the convenience for creating new
+        # images/containers, and as such would just proxy fist to `create` call
+        # after which login-in to that session.  Need to work on it after
+        # create gets refactored
         # backend=Parameter(
         #     args=("-b", "--backend"),
         #     nargs="+",
         #     doc=backend_help()
         # ),
-
     )
     # XXX config option should be generic to niceman, so if someone
     #     wants to point to another niceman.cfg
@@ -60,14 +63,11 @@ class Login(Interface):
     # just pass actual resource inside the __call__
     @staticmethod
     def __call__(resource=None, resource_name=None, resource_id=None):
-        from niceman.ui import ui
         from niceman.resource import manager
 
         # Get a corresponding known resource
         env_resource = manager.get_resource(
             resource, name=resource_name, id_=resource_id)
-
-        # TODO: reintroduce backend and also use of backend_set_config
 
         # Connect to resource environment
         lgr.debug("Connecting to the resource")
