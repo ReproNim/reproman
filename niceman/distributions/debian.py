@@ -74,6 +74,7 @@ class DEBPackage(Package):
     """Debian package information"""
     name = attr.ib()
     # Optional
+    upstream_name = attr.ib(default=None)
     version = attr.ib(default=None)
     architecture = attr.ib(default=None)
     source_name = attr.ib(default=None)
