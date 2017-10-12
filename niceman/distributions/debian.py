@@ -229,24 +229,21 @@ class DebTracer(DistributionTracer):
 
             # Now go through the output and assign packages to files
             for outline in out.splitlines():
-                # Note, we must split after ": " instead of ":" in case the
-                # package name includes an architecture (like "zlib1g:amd64")
+                # Parse package name (architecture) and path
                 # TODO: Handle query of /bin/sh better
                 outdict = self._parse_dpkgquery_line(outline)
                 if not outdict:
                     lgr.debug("Skipping line %s", outline)
                     continue
-
+                # Pull the found path from the dictionary
                 found_name = outdict.pop('path')
                 if not found_name:
                     raise ValueError(
                         "Record %s got no path defined... skipping"
                         % repr(outdict)
                     )
-                # for now let's just return those dicts of fields not actual
-                # packages since then we would need create/kill them all the time
-                # to merge files etc... although could also be a part of "normalization"
-                pkg = outdict  # DEBPackage(**outdict)
+                # Associate the file to the package name (and architecture)
+                pkg = outdict
                 lgr.debug("Identified file %r to belong to package %s",
                           found_name, pkg)
                 file_to_package_dict[found_name] = pkg
