@@ -330,35 +330,27 @@ class DebTracer(DistributionTracer):
                     )
 
         if installed_info.source_name:
-            pkg = DEBPackage(
-                name=name,
-                # type="dpkg"
-                version=installed_info.version,
-                # candidate=pkg_info.candidate.version
-                size=installed_info.size,
-                architecture=installed_info.architecture,
-                md5=installed_info.md5,
-                sha1=installed_info.sha1,
-                sha256=installed_info.sha256, 
-                source_name=pkg_info.installed.source_name, 
-                source_version=pkg_info.installed.source_version, 
-                install_date=install_date, 
-                versions = dict(pkg_versions)
-            )
+            source_name = pkg_info.installed.source_name
+            source_version = pkg_info.installed.source_version
         else:
-            pkg = DEBPackage(
-                name=name,
-                # type="dpkg"
-                version=installed_info.version,
-                # candidate=pkg_info.candidate.version
-                size=installed_info.size,
-                architecture=installed_info.architecture,
-                md5=installed_info.md5,
-                sha1=installed_info.sha1,
-                sha256=installed_info.sha256, 
-                install_date=install_date, 
-                versions = dict(pkg_versions)
-            )
+            source_name = None
+            source_version = None
+
+        pkg = DEBPackage(
+            name=name,
+            # type="dpkg"
+            version=installed_info.version,
+            # candidate=pkg_info.candidate.version
+            size=installed_info.size,
+            architecture=installed_info.architecture,
+            md5=installed_info.md5,
+            sha1=installed_info.sha1,
+            sha256=installed_info.sha256, 
+            source_name=source_name, 
+            source_version=source_version, 
+            install_date=install_date, 
+            versions = dict(pkg_versions)
+        )
 
         lgr.debug("Found package %s", pkg)
         return pkg
