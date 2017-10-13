@@ -76,6 +76,9 @@ class ShellSession(POSIXSession):
             **run_kw
         )  # , shell=True)
 
+    def isdir(self, path):
+        return os.path.isdir(path)
+
     def mkdir(self, path, parents=False):
         if not os.path.exists(path):
             if parents:
