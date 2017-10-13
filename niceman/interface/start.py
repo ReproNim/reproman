@@ -29,13 +29,13 @@ class Start(Interface):
     Examples
     --------
 
-      $ niceman start --resource=my-resource --config=niceman.cfg
+      $ niceman start --name=my-resource --config=niceman.cfg
 
     """
 
     _params_ = dict(
-        resource=Parameter(
-            args=("-r", "--resource"),
+        name=Parameter(
+            args=("-n", "--name"),
             doc="""Name of the resource to consider. To see
             available resource, run the command 'niceman ls'""",
             constraints=EnsureStr(),
@@ -61,10 +61,10 @@ class Start(Interface):
     )
 
     @staticmethod
-    def __call__(resource, resource_id=None, config=None):
+    def __call__(name, resource_id=None, config=None):
         from niceman.ui import ui
-        if not resource and not resource_id:
-            resource = ui.question(
+        if not name and not resource_id:
+            name = ui.question(
                 "Enter a resource name",
                 error_message="Missing resource name"
             )
@@ -72,7 +72,7 @@ class Start(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
+        resource_info, inventory = ResourceManager.get_resource_info(config, name, resource_id)
 
         # Delete resource environment
         env_resource = ResourceManager.factory(resource_info)
@@ -83,4 +83,4 @@ class Start(Interface):
 
         env_resource.start()
 
-        lgr.info("Started the environment %s", resource)
+        lgr.info("Started the environment %s", name)

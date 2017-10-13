@@ -52,6 +52,7 @@ __version__ = "2.2"
 # 2005-06-02: v0.5 rewrite
 # 2004-??-??: v0.1 first version
 
+from six import string_types
 import sys
 import time
 from array import array
@@ -61,6 +62,7 @@ try:
 except ImportError:
     pass
 import signal
+
 
 
 class ProgressBarWidget(object):
@@ -170,14 +172,16 @@ class Bar(ProgressBarWidgetHFill):
         self.right = right
 
     def _format_marker(self, pbar):
-        if isinstance(self.marker, (str, unicode)):
+        if isinstance(self.marker, bytes):
+            self.marker = self.marker.decode('utf-8')
+        if isinstance(self.marker, string_types):
             return self.marker
         else:
             return self.marker.update(pbar)
 
     def update(self, pbar, width):
         percent = pbar.percentage()
-        cwidth = width - len(self.left) - len(self.right)
+        cwidth = int(width - len(self.left) - len(self.right))
         marked_width = int(percent * cwidth / 100)
         m = self._format_marker(pbar)
         bar = (self.left + (m * marked_width).ljust(cwidth) + self.right)
@@ -318,11 +322,13 @@ class ProgressBar(ProgressBarBase):
         num_hfill = 0
         currwidth = 0
         for i, w in enumerate(self.widgets):
+            if isinstance(w, bytes):
+                w = w.decode('utf-8')
             if isinstance(w, ProgressBarWidgetHFill):
                 r.append(w)
                 hfill_inds.append(i)
                 num_hfill += 1
-            elif isinstance(w, (str, unicode)):
+            elif isinstance(w, string_types):
                 r.append(w)
                 currwidth += len(w)
             else:
