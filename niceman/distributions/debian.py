@@ -89,26 +89,26 @@ class APTSource(SpecObject):
 _register_with_representer(APTSource)
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DEBPackage(Package):
     """Debian package information"""
-    name = attr.ib()
+    name = attr.ib(hash=True)
     # Optional
-    source_name = attr.ib(default=None)
+    source_name = attr.ib(default=None, hash=False)
     upstream_name = attr.ib(default=None)
 
-    version = attr.ib(default=None)
-    architecture = attr.ib(default=None)
-    size = attr.ib(default=None)
-    md5 = attr.ib(default=None)
-    sha1 = attr.ib(default=None)
-    sha256 = attr.ib(default=None)
-    source_version = attr.ib(default=None)
-    versions = attr.ib(default=None)
-    install_date = attr.ib(default=None)
+    version = attr.ib(default=None, hash=True)
+    architecture = attr.ib(default=None, hash=False)
+    size = attr.ib(default=None, hash=False)
+    md5 = attr.ib(default=None, hash=False)
+    sha1 = attr.ib(default=None, hash=False)
+    sha256 = attr.ib(default=None, hash=False)
+    source_version = attr.ib(default=None, hash=False)
+    versions = attr.ib(default=None, hash=False)
+    install_date = attr.ib(default=None, hash=False)
     # nah -- ATM goes directly into DebianDistribution.apt_sources
     # apt_sources = TypedList(APTSource)
-    files = attr.ib(default=attr.Factory(list))  # Might want a File structure for advanced tracking
+    files = attr.ib(default=attr.Factory(list), hash=False)  # Might want a File structure for advanced tracking
 _register_with_representer(DEBPackage)
 
 
