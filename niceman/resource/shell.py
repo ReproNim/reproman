@@ -79,6 +79,12 @@ class ShellSession(POSIXSession):
     def isdir(self, path):
         return os.path.isdir(path)
 
+    def mkdir(self, path, parents=False):
+        if not os.path.exists(path):
+            if parents:
+                os.makedirs(path)
+            else:
+                os.mkdir(path)
 
 @attr.s
 class Shell(Resource):
@@ -103,7 +109,8 @@ class Shell(Resource):
         if self.id is None:
             self.id = Resource._generate_id()
         return {
-            'id': self.id
+            'id': self.id,
+            'status': 'N/A'
         }
 
     def connect(self):
