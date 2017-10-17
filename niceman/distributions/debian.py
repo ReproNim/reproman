@@ -98,7 +98,7 @@ class DEBPackage(Package):
     upstream_name = attr.ib(default=None)
 
     version = attr.ib(default=None)
-    architecture = attr.ib(default=None, hash=False)
+    architecture = attr.ib(default=None)
     size = attr.ib(default=None, hash=False)
     md5 = attr.ib(default=None, hash=False)
     sha1 = attr.ib(default=None, hash=False)
