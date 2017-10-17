@@ -92,12 +92,12 @@ _register_with_representer(APTSource)
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DEBPackage(Package):
     """Debian package information"""
-    name = attr.ib(hash=True)
+    name = attr.ib()
     # Optional
     source_name = attr.ib(default=None, hash=False)
     upstream_name = attr.ib(default=None)
 
-    version = attr.ib(default=None, hash=True)
+    version = attr.ib(default=None)
     architecture = attr.ib(default=None, hash=False)
     size = attr.ib(default=None, hash=False)
     md5 = attr.ib(default=None, hash=False)
