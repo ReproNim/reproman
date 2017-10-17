@@ -282,7 +282,7 @@ class DebTracer(DistributionTracer):
         except KeyError:  # Package not found
             lgr.warning("Was asked to create a spec for package %s but it was not found in apt", name)
             return None
-# prep our pkg object:
+        # prep our pkg object:
         installed_info = pkg_info.installed
         if architecture and installed_info.architecture and architecture != installed_info.architecture:
             # should match or we whine a lot  and TODO: fail in the future after switching from apt module
