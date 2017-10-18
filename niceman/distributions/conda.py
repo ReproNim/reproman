@@ -9,6 +9,7 @@
 """Orchestrator sub-class to provide management of the localhost environment."""
 import json
 import os
+import re
 from collections import defaultdict
 
 import attr
@@ -36,6 +37,7 @@ class CondaPackage(Package):
     size = attr.ib()
     md5 = attr.ib()
     url = attr.ib()
+    origin_location = attr.ib(default=None)
     files = attr.ib(default=attr.Factory(list))
 
 
@@ -207,6 +209,10 @@ class CondaTracer(DistributionTracer):
                            "version": pip_info.get("Version"),
                            "installer": "pip"}
                 packages[pip_dep] = details
+                # Record the origin location (if installed from a local source)
+                if "(" in pip_dep:   # We have an origin location
+                    details["origin_location"] = \
+                        re.search('\(([^)]+)', pip_dep).group(1)
                 # Map the package files to the package
                 for f in pip_info.get("Files"):
                     full_path = os.path.normpath(
@@ -358,6 +364,7 @@ class CondaTracer(DistributionTracer):
                     size=details.get("size"),
                     md5=details.get("md5"),
                     url=details.get("url"),
+                    origin_location=details.get("origin_location"),
                     files=pkg_to_found_files[package_name]
                 )
                 packages.append(package)
