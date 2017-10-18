@@ -349,6 +349,17 @@ def skip_if_on_windows(func):
     return newfunc
 
 
+def skip_if_on_osx(func):
+    """Skip test completely under OSX
+    """
+    @wraps(func)
+    def newfunc(*args, **kwargs):
+        if on_osx:
+            raise SkipTest("Skipping on OSX")
+        return func(*args, **kwargs)
+    return newfunc
+
+
 @optional_args
 def skip_if(func, cond=True, msg=None):
     """Skip test for specific condition
