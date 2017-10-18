@@ -6,39 +6,48 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to delete an environment
+"""Helper utility to run commands in an environment
 """
 
 __docformat__ = 'restructuredtext'
 
-import re
-
 from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr
+from ..support.constraints import EnsureStr, EnsureNone
 from ..resource import ResourceManager
 
 from logging import getLogger
-lgr = getLogger('niceman.api.delete')
+lgr = getLogger('niceman.api.exec')
 
 
-class Delete(Interface):
-    """Delete a computation environment
+class Exec(Interface):
+    """Make a directory in a computation environment
 
     Examples
     --------
 
-      $ niceman delete --name=my-resource --config=niceman.cfg
+      $ niceman exec mkdir /home/blah/data --config=niceman.cfg
 
     """
 
     _params_ = dict(
+        command=Parameter(
+            doc="name of the command to run",
+            metavar='COMMAND',
+            constraints=EnsureStr(),
+        ),
+        args=Parameter(
+            doc="list of positional and keyword args to pass to the command",
+            metavar='ARGS',
+            nargs="*",
+            constraints=EnsureStr(),
+        ),
         name=Parameter(
             args=("-n", "--name"),
             doc="""Name of the resource to consider. To see
             available resource, run the command 'niceman ls'""",
-            constraints=EnsureStr(),
+            # constraints=EnsureStr(),
         ),
         # XXX reenable when we support working with multiple instances at once
         # resource_type=Parameter(
@@ -51,11 +60,6 @@ class Delete(Interface):
             doc="ID of the environment container",
             # constraints=EnsureStr(),
         ),
-        skip_confirmation=Parameter(
-            args=("--skip-confirmation",),
-            action="store_true",
-            doc="Delete resource without prompting user for confirmation",
-        ),
         # TODO: should be moved into generic API
         config=Parameter(
             args=("-c", "--config",),
@@ -66,9 +70,8 @@ class Delete(Interface):
     )
 
     @staticmethod
-    def __call__(name, resource_id=None, skip_confirmation=False, config=None):
+    def __call__(command, args, name=None, resource_id=None, config=None):
         from niceman.ui import ui
-
         if not name and not resource_id:
             name = ui.question(
                 "Enter a resource name",
@@ -78,7 +81,8 @@ class Delete(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(config, name, resource_id)
+        resource_info, inventory = ResourceManager.get_resource_info(config,
+            name, resource_id)
 
         # Delete resource environment
         env_resource = ResourceManager.factory(resource_info)
@@ -87,22 +91,10 @@ class Delete(Interface):
         if not env_resource.id:
             raise ValueError("No resource found given the info %s" % str(resource_info))
 
-        if skip_confirmation:
-            response = True
-        else:
-            response = ui.yesno(
-                "Delete the resource '{}'? (ID: {})".format(
-                    env_resource.name, env_resource.id[:20]),
-                default="no"
-            )
+        session = env_resource.get_session()
+        session.niceman_exec(command, args)
 
-        if response:
-            env_resource.delete()
+        ResourceManager.set_inventory(inventory)
 
-            # Save the updated configuration for this resource.
-            if name in inventory:
-                del inventory[name]
-
-            ResourceManager.set_inventory(inventory)
-
-            lgr.info("Deleted the environment %s", name)
+        lgr.info("Executed the %s command in the environment %s", command,
+                 name)

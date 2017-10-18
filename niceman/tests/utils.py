@@ -174,6 +174,7 @@ def ok_file_has_content(path, content):
     with open(path, 'r') as f:
         assert_equal(f.read(), content)
 
+
 #
 # Decorators
 #
@@ -540,6 +541,20 @@ def with_testsui(t, responses=None):
 
     return newfunc
 with_testsui.__test__ = False
+
+
+def assert_is_subset_dict_recur(a, b):
+    """Asserts that 'a' is a subset of 'b' (recursively checks children dicts)
+    """
+    if isinstance(a, dict) and isinstance(b, dict):
+        for key in a:
+            if key not in b:
+                raise AssertionError("Key %s is missing" % key)
+            assert_is_subset_dict_recur(a[key], b[key])
+    else:
+        if not a == b:
+            raise AssertionError("Value %s != %s" % (a, b))
+
 
 #
 # Context Managers

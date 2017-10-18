@@ -30,7 +30,7 @@ class Login(Interface):
     Examples
     --------
 
-      $ niceman login --resource=my-resource --config=niceman.cfg
+      $ niceman login --name=my-resource --config=niceman.cfg
 
     """
 
@@ -38,6 +38,7 @@ class Login(Interface):
         resource=resource_arg,
         resource_id=resource_id_opt,
         resource_name=resource_name_opt,
+
         # XXX reenable when we support working with multiple instances at once
         # resource_type=resource_type_opt,
         # It seems that this should be just the convenience for creating new

@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import os
+from six.moves.configparser import NoSectionError
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
@@ -100,6 +100,7 @@ class Ls(Interface):
             #     lgr.error("Failed to create an instance from config: %s",
             #               exc_str(e))
             #     continue
+
             try:
                 if refresh:
                     try:

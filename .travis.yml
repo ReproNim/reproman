@@ -4,6 +4,9 @@ language: python
 sudo: required
 #dist: precise
 
+services:
+  - docker
+
 cache:
   - apt
 
@@ -50,10 +53,11 @@ before_install:
   - travis_retry sudo apt-get update -qq
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
+  # Setup SSH docker service
+  - docker run -d -p 49000:22 rastasheep/ubuntu-sshd:14.04
 
 install:
-  # all mess below to get an elderly python-apt installed on elderly precise within python env -- we must build it
-  - tools/ci/build_install_apt
+  # - tools/ci/build_install_apt  # Removed dependency on python-apt!
   - cd ..; pip install -q codecov; cd -
   - pip install --upgrade pip
   # needed by html5lib

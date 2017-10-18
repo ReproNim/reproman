@@ -32,6 +32,7 @@ import scp
 import paramiko
 from Crypto.PublicKey import RSA
 from Crypto.PublicKey import DSA
+from six import text_type
 
 # windows does not have termios...
 try:
@@ -257,7 +258,7 @@ class SSHClient(object):
                 return
         self.mkdir(path, mode)
 
-    def mkdir(self, path, mode="0755", ignore_failure=False):
+    def mkdir(self, path, mode=0o755, ignore_failure=False):
         """
         Make a new directory on the remote machine
 
@@ -565,7 +566,7 @@ class SSHClient(object):
                                   only_printable=only_printable)
         exit_status = channel.recv_exit_status()
         self.__last_status = exit_status
-        out_str = '\n'.join(output)
+        out_str = b'\n'.join(output)
         if exit_status != 0:
             msg = "remote command '%s' failed with status %d"
             msg %= (command, exit_status)
@@ -787,10 +788,10 @@ class SSHGlob(object):
     def glob1(self, dirname, pattern):
         if not dirname:
             dirname = posixpath.curdir
-        if isinstance(pattern, unicode) and not isinstance(dirname, unicode):
+        if isinstance(pattern, text_type) and not isinstance(dirname, text_type):
             # enc = sys.getfilesystemencoding() or sys.getdefaultencoding()
-            # dirname = unicode(dirname, enc)
-            dirname = unicode(dirname, 'UTF-8')
+            # dirname = text_type(dirname, enc)
+            dirname = text_type(dirname, 'UTF-8')
         try:
             names = [posixpath.basename(n) for n in self.ssh.ls(dirname)]
         except os.error:

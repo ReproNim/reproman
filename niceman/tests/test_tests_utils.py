@@ -38,7 +38,8 @@ from .utils import eq_, ok_, assert_false, ok_startswith, nok_startswith, \
     rmtemp, OBSCURE_FILENAMES, get_most_obscure_supported_name, \
     swallow_outputs, swallow_logs, \
     on_windows, assert_raises, assert_cwd_unchanged, serve_path_via_http, \
-    ok_symlink, assert_true, ok_good_symlink, ok_broken_symlink
+    ok_symlink, assert_true, ok_good_symlink, ok_broken_symlink, \
+    assert_is_subset_dict_recur
 
 from .utils import ok_generator
 from .utils import assert_re_in
@@ -486,3 +487,21 @@ def test_run_under_dir(d=None):
     assert_raises(AssertionError, f, 1, 3)
     eq_(getpwd(), orig_pwd)
     eq_(os.getcwd(), orig_cwd)
+
+
+def test_assert_is_subset_dict_recur():
+    assert_is_subset_dict_recur(1, 1)
+    assert_is_subset_dict_recur({}, {'a': 1})
+    assert_raises(AssertionError, assert_is_subset_dict_recur,
+                  {'a': 1},
+                  {'b': 2})
+    assert_is_subset_dict_recur({'a': {'z': 1}},
+                                 {'a': {'y': 2, 'z': 1}})
+    assert_raises(AssertionError, assert_is_subset_dict_recur,
+                  {'a': {'y': 2, 'z': 1}},
+                  {'a': {'z': 1}})
+    assert_is_subset_dict_recur({'a': {'z': [1]}},
+                                 {'a': {'y': 2, 'z': [1]}})
+    assert_raises(AssertionError, assert_is_subset_dict_recur,
+                  {'a': {'y': 2, 'z': [1]}},
+                  {'a': {'z': [1]}})

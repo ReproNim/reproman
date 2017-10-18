@@ -52,7 +52,7 @@ def test_create_interface(niceman_cfg_path):
         }
 
         args = ['create',
-                '--resource', 'my-test-resource',
+                '--name', 'my-test-resource',
                 '--resource-type', 'docker-container',
                 '--config', niceman_cfg_path,
                 '--backend', 'engine_url=tcp://127.0.0.1:2376'

@@ -179,20 +179,43 @@ class Session(object):
     # Files query and manipulation
     # TODO:  should be in subspace (.path) may be? This would allow for
     #        more flexible mixups
+
+    def niceman_exec(self, command, args):
+        """Run a niceman utility "exec" command in the environment"""
+
+        authorized_commands = ['mkdir', 'isdir', 'put', 'get']
+        if command not in authorized_commands:
+            raise CommandError(cmd=command, msg="Invalid command")
+
+        pargs = [] # positional args to pass to session command
+        kwargs = {} # key word args to pass to session command
+        for arg in args:
+            if '=' in arg:
+                parts = arg.split('=')
+                if len(parts) != 2:
+                    raise CommandError(cmd=command,
+                                       msg="Invalid command line parameter")
+                kwargs[parts[0]] = parts[1]
+            else:
+                pargs.append(arg)
+
+        getattr(self, command)(*pargs, **kwargs)
+
+
     @abc.abstractmethod
     def exists(self, path):
         """Return if file exists"""
         pass
 
     @abc.abstractmethod
-    def copy_to(self, src_path, dest_path, preserve_perms=False,
+    def put(self, src_path, dest_path, preserve_perms=False,
                 owner=None, group=None, recursive=False):
         """Take file on the local file system and copy over into the session
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def copy_from(self, src_path, dest_path, preserve_perms=False,
+    def get(self, src_path, dest_path, preserve_perms=False,
                   owner=None, group=None, recursive=False):
         raise NotImplementedError
 
@@ -366,7 +389,10 @@ class POSIXSession(Session):
     def mkdir(self, path, parents=False):
         """Create a directory
         """
-        self.execute_command(["mkdir"] + ("-p" if parents else "") + [path])
+        self.execute_command(["mkdir"] + (["-p"] if parents else [""]) + [path])
+
+        if not self.isdir(path):
+            raise CommandError(cmd='mkdir', msg="Failed to create directory")
 
     def isdir(self, path):
         try:

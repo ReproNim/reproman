@@ -11,6 +11,7 @@
 import attr
 from importlib import import_module
 import abc
+from six.moves.configparser import NoSectionError
 
 import yaml
 from os.path import basename
@@ -470,4 +471,9 @@ class Resource(object):
         # just a random uuid for now, TODO: think if we somehow could
         # fingerprint it so to later be able to decide if it is 'ours'? ;)
         return str(uuid.uuid1())
+
+    @abc.abstractmethod
+    def get_session(self, pty=False, shared=None):
+        """Return an open session to a resource environment"""
+        raise NotImplementedError
 
