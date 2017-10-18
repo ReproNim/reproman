@@ -21,6 +21,7 @@ from os.path import join as opj
 from glob import glob
 import os.path
 
+from niceman.tests.constants import NICEMAN_INVENTORY_NAME
 # from ..config import ConfigManager
 from .. import cfg
 from ..dochelpers import exc_str
@@ -73,8 +74,10 @@ class ResourceManager(object):
     # TODO: might want an alternative
     def __init__(self):  # , config_path=None):
         self.config_manager = cfg  # ResourceManager.get_config_manager(config_path)
+
         self._inventory_path = self.config_manager.getpath(
-            'general', 'inventory_file', opj(cfg.dirs.user_config_dir, 'inventory.yml')
+            'general', 'inventory_file',
+            opj(cfg.dirs.user_config_dir, NICEMAN_INVENTORY_NAME)
         )
         # inventory is just a list of dict so can't do much on its own
         # TODO: RF later to hide away all the get/set inventory
@@ -219,9 +222,13 @@ class ResourceManager(object):
             inventory_config['name'] = inventory_name
 
         # XXX so what is our convention here on SMTH-SMTH defining the type?
-        config = dict(
-            self.config_manager.items(inventory_config['type'].split('-')[0])
-        )
+        type_ = inventory_config['type']
+        try:
+            config = dict(
+                self.config_manager.items(type_.split('-')[0])
+            )
+        except NoSectionError:
+            config = {}
         config.update(inventory_config)
         return config
 
@@ -230,7 +237,8 @@ class ResourceManager(object):
         if not config:
             raise ResourceNotFoundError(
                 "Haven't found resource given name=%s id=%s" % (name, id_))
-        return self.factory(config)
+        resource = self.factory(config)
+        # register it in the inventory
 
     def create_resource(self, name=None, id_=None, type_=None):
         # TODO: place the logic I removed which would create the beast and
@@ -342,7 +350,7 @@ class ResourceManager(object):
         """
         Save the resource inventory
         """
-
+        import pdb; pdb.set_trace()
         # Operate on a copy so there is no side-effect of modifying original
         # inventory
         inventory = {} if not self.inventory else self.inventory.copy()

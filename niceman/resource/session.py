@@ -28,7 +28,7 @@ import logging
 lgr = logging.getLogger('niceman.session')
 
 
-# XXX should Session become a resource?
+# XXX should Session become a Resource?
 #     should each resource potentially have a parent?
 @attr.s
 class Session(object):
@@ -39,6 +39,9 @@ class Session(object):
     # etc
     status = attr.ib(default=None)
     #status = None
+
+    # TODO
+    # __metaclass__ = abc.ABCMeta
 
     def __attrs_post_init__(self):
         # both will be maintained
@@ -62,12 +65,10 @@ class Session(object):
         # we might right here already load possibly set permanent env variables
         # within that session?
         self.status = 'open'
-        pass
 
     def close(self):
         # XXX may be here we should dump permanent env settings?
         self.status = 'closed'  # note: default is None!
-        pass
 
     def set_envvar(self, variable, value=None, permanent=False, format=False):
         """Set environment variable(s) to be used within the session

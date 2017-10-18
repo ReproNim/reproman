@@ -129,8 +129,8 @@ class Ls(Interface):
         # if not refresh:
         #     ui.message('(Use --refresh option to view current status.)')
         #
-        # if refresh:
-        #     niceman.interface.base.set_resource_inventory(inventory)
+        if refresh:
+            manager.set_inventory()
         if refresh:
             lgr.debug("Storing manager's inventory upon refresh")
             # ATM it is not in effect, since inventory contains dicts, and

@@ -107,7 +107,7 @@ from niceman.resource.session import POSIXSession
 
 @attr.s
 class SSHSession(POSIXSession):
-    ssh = attr.ib()
+    ssh = attr.ib(default=None)
 
     def _execute_command(self, command, env=None, cwd=None):
         """
