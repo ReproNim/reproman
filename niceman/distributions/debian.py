@@ -204,10 +204,7 @@ class DebianDistribution(Distribution):
             raise TypeError('satisfies_package() requires a package argument')
         if not isinstance(package, DEBPackage):
             return False
-        for p in self.packages:
-            if p.satisfies(package):
-                return True
-        return False
+        return any([ p.satisfies(package) for p in self.packages ])
 
     def satisfies(self, other):
         """return True if this distribution (self) satisfies the requirements 
