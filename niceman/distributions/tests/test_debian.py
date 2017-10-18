@@ -15,7 +15,10 @@ from niceman.distributions.debian import DebTracer
 
 import mock
 
+from ...tests.utils import skip_if_on_osx
 
+
+@skip_if_on_osx
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
     tracer = DebTracer()
@@ -70,6 +73,7 @@ def test_dpkg_manager_identify_packages():
 #             fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
 
 
+@skip_if_on_osx
 def test_utf8_file():
     files = [u"/usr/share/ca-certificates/mozilla/"
              u"TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
