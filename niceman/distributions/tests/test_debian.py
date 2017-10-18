@@ -148,11 +148,14 @@ def setup_packages():
     a = DEBPackage(name='p1')
     b = DEBPackage(name='p1', version='1.0')
     c = DEBPackage(name='p1', version='1.1')
-    d = DEBPackage(name='p2')
-    return (a, b, c, d)
+    d = DEBPackage(name='p1', architecture='i386')
+    e = DEBPackage(name='p1', architecture='alpha')
+    f = DEBPackage(name='p1', version='1.1', architecture='i386')
+    g = DEBPackage(name='p2')
+    return (a, b, c, d, e, f, g)
 
 def test_package_satisfies(setup_packages):
-    (p1, p1v10, p1v11, p2) = setup_packages
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
     assert p1.satisfies(p1)
     assert p1v10.satisfies(p1v10)
     assert not p1.satisfies(p1v10)
@@ -161,10 +164,16 @@ def test_package_satisfies(setup_packages):
     assert not p1.satisfies(p2)
     assert not p1v10.satisfies(p2)
     assert not p2.satisfies(p1v10)
+    assert not p1v10.satisfies(p1aa)
+    assert p1aa.satisfies(p1)
+    assert not p1aa.satisfies(p1v10)
+    assert not p1aa.satisfies(p1ai)
+    assert not p1v11.satisfies(p1v11ai)
+    assert p1v11ai.satisfies(p1v11)
 
 @pytest.fixture
 def setup_distributions():
-    (p1, p1v10, p1v11, p2) = setup_packages()
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
     d1 = DebianDistribution(name='debian 1')
     d1.packages = [p1]
     d2 = DebianDistribution(name='debian 2')
@@ -173,7 +182,7 @@ def setup_distributions():
 
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
     (d1, d2) = setup_distributions
-    (p1, p1v10, p1v11, p2) = setup_packages
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
     assert d1.satisfies_package(p1)
     assert not d1.satisfies_package(p1v10)
     assert d2.satisfies_package(p1)
@@ -186,7 +195,7 @@ def test_distribution_statisfies(setup_distributions):
     assert d2.satisfies(d1)
 
 def test_distribution_sub():
-    (p1, p1v10, p1v11, p2) = setup_packages()
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
     d1 = DebianDistribution(name='debian 1')
     d1.packages = [p1, p2]
     d2 = DebianDistribution(name='debian 2')

@@ -121,11 +121,12 @@ class DEBPackage(Package):
             return False
         if self.name != other.name:
             return False
-        if self.version is None:
-            return other.version is None
-        if other.version is None:
-            return True
-        return self.version == other.version
+        if other.version is not None and self.version != other.version:
+            return False
+        if other.architecture is not None \
+                and self.architecture != other.architecture:
+            return False
+        return True
 
 _register_with_representer(DEBPackage)
 
