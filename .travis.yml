@@ -4,6 +4,10 @@ language: python
 sudo: required
 #dist: precise
 
+os:
+  - linux
+  - osx
+
 services:
   - docker
 
