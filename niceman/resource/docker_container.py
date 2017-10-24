@@ -11,7 +11,10 @@
 import attr
 import docker
 import dockerpty
+import io
 import json
+import os
+import tarfile
 from ..support.exceptions import CommandError, ResourceError
 from .base import Resource, attrib
 
@@ -88,7 +91,7 @@ class DockerContainer(Resource):
         # image might be of the form repository:tag -- pull would split them
         # if needed
         for line in self._client.pull(repository=self.base_image_id, stream=True):
-            status = json.loads(line)
+            status = json.loads(line.decode("utf-8"))
             output = status['status']
             if 'progress' in status:
                 output += ' ' + status['progress']
@@ -182,26 +185,37 @@ class DockerSession(POSIXSession):
                 self.client.exec_start(exec_id=execute['Id'],
                 stream=True)
         ):
-            if line.startswith(b'rpc error'):
-                raise CommandError(cmd=command, msg="Docker error - %s" % line)
+            if self.client.exec_inspect(execute['Id'])['ExitCode'] > 0:
+                msg = line.decode('utf-8').strip("\n")
+                raise CommandError(cmd=command, msg=msg)
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
     # XXX should we start/stop on open/close or just assume that it is running already?
 
 
-    def put(self, src_path, dest_path, preserve_perms=False,
-                owner=None, group=None, recursive=False):
+    def put(self, src_path, dest_path, owner=None, group=None):
         """Take file on the local file system and copy over into the session
         """
-        # self.ssh.put([src_path], remotepath=dest_path)
-        pass
+        tar_stream = io.BytesIO()
+        tar_file = tarfile.TarFile(fileobj=tar_stream, mode='w')
+        tar_file.add(src_path, arcname=src_path)
+        tar_file.close()
+        tar_stream.seek(0)
+        self.client.put_archive(container=self.container['Id'], path=dest_path,
+                            data=tar_stream)
 
-    def get(self, src_path, dest_path, preserve_perms=False,
-                  owner=None, group=None, recursive=False):
+        if owner or group:
+            self.chown(owner, group, dest_path, recursive=True)
+
+    def get(self, src_path, dest_path, owner=None, group=None):
         """Retrieve a file from the remote system
         """
-        # self.ssh.get(src_path, localpath=dest_path)
-        pass
+        stream, stat = self.client.get_archive(self.container, src_path)
+        tarball = tarfile.open(fileobj=io.BytesIO(stream.read()))
+        tarball.extractall(path=dest_path)
+
+        if owner or group:
+            self.chown(owner, group, dest_path, recursive=True)
 
 
 @attr.s

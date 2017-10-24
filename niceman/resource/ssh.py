@@ -26,7 +26,7 @@ class SSH(Resource):
     name = attr.ib()
 
     # Configurable options for each "instance"
-    host = attrib(doc="DNS or IP address of server")
+    host = attrib(default='127.0.0.1', doc="DNS or IP address of server")
     port = attrib(default=22,
         doc="Port to connect to on remote host")
     key_filename = attrib(default=None,
@@ -140,27 +140,22 @@ class SSHSession(POSIXSession):
         """Return if file exists"""
         return self.ssh.path_exists(path)
 
-    def put(self, src_path, dest_path, preserve_perms=False,
-                owner=None, group=None, recursive=False):
+    def put(self, src_path, dest_path, owner=None, group=None):
         """Take file on the local file system and copy over into the session
         """
         self.ssh.put([src_path], remotepath=dest_path)
 
-    def get(self, src_path, dest_path, preserve_perms=False,
-                  owner=None, group=None, recursive=False):
+        if owner or group:
+            self.chown(owner, group, dest_path, recursive=True)
+
+
+    def get(self, src_path, dest_path, owner=None, group=None):
         """Retrieve a file from the remote system
         """
         self.ssh.get(src_path, localpath=dest_path)
 
-    def chmod(self, mode, remote_path):
-        """Set the mode of a remote path
-        """
-        self.ssh.chmod(mode, remote_path)
-
-    def chown(self, uid, gid, remote_path):
-        """Set the user and group of a path
-        """
-        self.ssh.chown(uid, gid, remote_path)
+        if owner or group:
+            self.chown(owner, group, dest_path, recursive=True)
 
     def read(self, path, mode='r'):
         """Return content of a file"""

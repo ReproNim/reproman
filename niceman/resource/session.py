@@ -32,6 +32,8 @@ lgr = logging.getLogger('niceman.session')
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
 
+    __metaclass__ = abc.ABCMeta
+
     def __attrs_post_init__(self):
         # both will be maintained
         self._env = {}           # environment which would be in-effect only for this session
@@ -173,7 +175,7 @@ class Session(object):
     def niceman_exec(self, command, args):
         """Run a niceman utility "exec" command in the environment"""
 
-        authorized_commands = ['mkdir', 'isdir', 'put', 'get']
+        authorized_commands = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
         if command not in authorized_commands:
             raise CommandError(cmd=command, msg="Invalid command")
 
@@ -198,15 +200,13 @@ class Session(object):
         pass
 
     @abc.abstractmethod
-    def put(self, src_path, dest_path, preserve_perms=False,
-                owner=None, group=None, recursive=False):
+    def put(self, src_path, dest_path, owner=None, group=None):
         """Take file on the local file system and copy over into the session
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get(self, src_path, dest_path, preserve_perms=False,
-                  owner=None, group=None, recursive=False):
+    def get(self, src_path, dest_path, owner=None, group=None):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -234,9 +234,17 @@ class Session(object):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def chmod(self, mode, remote_path, recursive=False):
+        """Set the mode of a remote path
+        """
+        pass
 
-    # chmod?
-    # chown?
+    @abc.abstractmethod
+    def chown(self, uid, gid, remote_path, recursive=False):
+        """Set the user and group of a path
+        """
+        pass
 
 
 @attr.s
@@ -385,9 +393,38 @@ class POSIXSession(Session):
             self.execute_command(['test', '-d', path])
             return True
         except CommandError:
+            lgr.error(cmd.msg)
             return False
-    # chmod?
-    # chown?
+
+    def chmod(self, mode, remote_path, recursive=False):
+        """Set the mode of a remote path
+        """
+        try:
+            command = ['chmod']
+            if recursive: command += ["-R"]
+            command += [mode] + [remote_path]
+            self.execute_command(command)
+            return True
+        except CommandError as cmd:
+            lgr.error(cmd.msg)
+            return False
+
+    def chown(self, uid, gid, remote_path, recursive=False):
+        """Set the user and group of a path
+        """
+        try:
+            command = ['chown']
+            if recursive: command += ["-R"]
+            if int(uid) > 0 and int(gid) > 0: command += ["{}.{}".format(uid, gid)]
+            elif int(uid) > 0: command += [uid]
+            elif int(uid) > 0: command = ['chgrp'] + [gid]
+            else: raise CommandError
+            command += [remote_path]
+            self.execute_command(command)
+            return True
+        except CommandError:
+            lgr.error(cmd.msg)
+            return False
 
 
 def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):

@@ -47,3 +47,6 @@ def test_get_updated_env():
     assert get_updated_env({'a': 1}, {'a': None}) == {}
     assert get_updated_env({'a': 1, 'b': 2}, {'a': None}) == {'b': 2}
     assert get_updated_env({'a': 1, 'b': 2}, {'a': None, 'b': 3}) == {'b': 3}
+
+
+# def test_posix_

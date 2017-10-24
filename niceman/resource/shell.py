@@ -86,6 +86,13 @@ class ShellSession(POSIXSession):
             else:
                 os.mkdir(path)
 
+    def get(self, src_path, dest_path, owner=None, group=None):
+        pass
+
+    def put(self, src_path, dest_path, owner=None, group=None):
+        pass
+
+
 @attr.s
 class Shell(Resource):
 
