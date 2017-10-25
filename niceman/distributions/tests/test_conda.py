@@ -26,12 +26,19 @@ from niceman.distributions.conda import CondaTracer
 def create_test_conda(test_dir):
     if os.path.exists(test_dir):
         return
+    if sys.platform.startswith('darwin'):
+        miniconda_sh = "Miniconda2-latest-MacOSX-x86_64.sh"
+    elif sys.platform.startswith('linux'):
+        miniconda_sh = "Miniconda2-latest-Linux-x86_64.sh"
+    else:
+        raise ValueError("Conda test not supported with platform %s " %
+                         sys.platform)
     call("mkdir -p " + test_dir + "; "
          "cd " + test_dir + "; "
-         "curl -O https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh; "
-         "bash -b Miniconda2-latest-Linux-x86_64.sh -b -p ./miniconda; "
-         "./miniconda/bin/conda create -y -n mytest python=2.7;" + \
-         "./miniconda/envs/mytest/bin/conda install -y xz -n mytest;" + \
+         "curl -O https://repo.continuum.io/miniconda/" + miniconda_sh + "; "
+         "bash -b " + miniconda_sh + " -b -p ./miniconda; "
+         "./miniconda/bin/conda create -y -n mytest python=2.7; "
+         "./miniconda/envs/mytest/bin/conda install -y xz -n mytest; "
          "./miniconda/envs/mytest/bin/pip install rpaths;",
          shell=True)
 
