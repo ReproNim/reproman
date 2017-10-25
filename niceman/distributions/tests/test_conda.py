@@ -18,11 +18,6 @@ import attr
 from niceman.formats.niceman import NicemanProvenance
 from niceman.tests.utils import skip_if_no_network
 
-try:
-    import apt
-except ImportError:
-    apt = None
-
 import json
 
 from niceman.distributions.conda import CondaTracer
