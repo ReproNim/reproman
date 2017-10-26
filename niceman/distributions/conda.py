@@ -193,11 +193,7 @@ class CondaTracer(DistributionTracer):
                 pip_deps = dep.get("pip")
 
         for pip_dep in pip_deps:
-            # Pip packages are recorded in conda exports as "name (loc)",
-            # "name==version" or "name (loc)==version".  So split on "=", then
-            # on " "
-            name = pip_dep.split("=")[0]
-            name = name.split(" ")[0]
+            name, origin_location = self.parse_pip_package_entry(pip_dep)
             try:
                 out, err = self._session.execute_command(
                     '%s/bin/pip show -f %s'
@@ -207,12 +203,9 @@ class CondaTracer(DistributionTracer):
                 # Record the details we care about
                 details = {"name": pip_info.get("Name"),
                            "version": pip_info.get("Version"),
-                           "installer": "pip"}
+                           "installer": "pip",
+                           "origin_location": origin_location}
                 packages[pip_dep] = details
-                # Record the origin location (if installed from a local source)
-                if "(" in pip_dep:   # We have an origin location
-                    details["origin_location"] = \
-                        re.search('\(([^)]+)', pip_dep).group(1)
                 # Map the package files to the package
                 for f in pip_info.get("Files"):
                     full_path = os.path.normpath(
@@ -225,6 +218,20 @@ class CondaTracer(DistributionTracer):
                 continue
 
         return packages, file_to_package_map
+
+    @staticmethod
+    def parse_pip_package_entry(pip_dep):
+        # Pip packages are recorded in conda exports as "name (loc)",
+        # "name==version" or "name (loc)==version".  So split on "=", then
+        # on " "
+        name = pip_dep.split("=")[0]
+        name = name.split(" ")[0]
+        # Record the origin location (if installed from a local source)
+        if "(" in pip_dep:  # We have an origin location
+            origin_location = re.search('\(([^)]+)', pip_dep).group(1)
+        else:
+            origin_location = None
+        return name, origin_location
 
     def _get_conda_env_export(self, root_prefix, conda_path):
         export = {}

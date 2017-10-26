@@ -88,3 +88,11 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
     assert_is_subset_recur(out, attr.asdict(distributions))
     NicemanProvenance.write(sys.stdout, distributions)
     print(json.dumps(unknown_files, indent=4))
+
+
+def test_parse_conda_export_pip_package_entry():
+    assert CondaTracer.parse_pip_package_entry("appdirs==1.4.3") == (
+        "appdirs", None)
+    assert CondaTracer.parse_pip_package_entry(
+        "niceman (/test/repronim)==0.0.2") == (
+           "niceman", "/test/repronim")
