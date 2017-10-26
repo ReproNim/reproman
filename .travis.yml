@@ -54,7 +54,7 @@ before_install:
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
   # Setup SSH docker service
-  - docker run -d -p 49000:22 rastasheep/ubuntu-sshd:14.04
+  - docker run --name testing-container -d -p 49000:22 rastasheep/ubuntu-sshd:14.04
 
 install:
   # - tools/ci/build_install_apt  # Removed dependency on python-apt!

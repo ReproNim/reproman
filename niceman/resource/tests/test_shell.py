@@ -9,6 +9,8 @@
 
 import logging
 import os
+import re
+import uuid
 from pytest import raises
 from mock import patch, call
 
@@ -102,3 +104,52 @@ def test_source_file_param(script=None):
 
 def test_session_passing_envvars():
     check_session_passing_envvars(ShellSession())
+
+
+def test_shell_resource():
+
+    config = {
+        'name': 'test-ssh-resource',
+        'type': 'shell'
+    }
+    resource = ResourceManager.factory(config)
+
+    status = resource.create()
+    print("====================", status)
+    assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
+
+    assert type(resource.connect()) == Shell
+    assert resource.delete() == None
+    assert type(resource.start()) == Shell
+    assert resource.stop() == None
+    assert type(resource.connect()) == Shell
+
+    with raises(NotImplementedError):
+        resource.get_session(pty=True)
+    with raises(NotImplementedError):
+        resource.get_session(pty=False, shared=True)
+
+
+def test_shell_session():
+
+    config = {
+        'name': 'test-ssh-resource',
+        'type': 'shell'
+    }
+    resource = ResourceManager.factory(config)
+    session = resource.get_session()
+
+    session._runner = 'abc'
+    session.stop()
+    assert session._runner == None
+
+    path = '/tmp/{}'.format(str(uuid.uuid4()))
+    assert os.path.exists(path) == False
+    session.mkdir(path)
+    assert os.path.exists(path) == True
+
+    path = '/tmp/{}/{}'.format(str(uuid.uuid4()), str(uuid.uuid4()))
+    assert os.path.exists(path) == False
+    session.mkdir(path, parents=True)
+    assert os.path.exists(path) == True
+

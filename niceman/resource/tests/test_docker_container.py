@@ -9,9 +9,12 @@
 
 import logging
 from mock import patch, MagicMock, call
+import os
+import uuid
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
+from ...tests.utils import with_tempfile
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
 
@@ -54,6 +57,7 @@ def test_dockercontainer_class():
         config = {
             'name': 'non-existent-resource',
             'type': 'docker-container',
+            'container_name': 'non-existent-resource'
         }
         resource = ResourceManager.factory(config)
         resource.connect()
@@ -64,6 +68,7 @@ def test_dockercontainer_class():
         config = {
             'name': 'duplicate-resource-name',
             'type': 'docker-container',
+            'container_name': 'duplicate-resource-name',
         }
         resource = ResourceManager.factory(config)
         with raises(ResourceError) as ecm:
@@ -73,6 +78,7 @@ def test_dockercontainer_class():
         # Test connecting to an existing resource.
         config = {
             'name': 'existing-test-resource',
+            'container_name': 'existing-test-resource',
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
@@ -94,6 +100,7 @@ def test_dockercontainer_class():
         # Test creating resource.
         config = {
             'name': 'new-test-resource',
+            'container_name': 'new-test-resource',
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
@@ -140,7 +147,23 @@ def test_dockercontainer_class():
         ]
         client.assert_has_calls(calls, any_order=True)
 
+@with_tempfile(content="abc 123")
+def test_docker_session(script=None):
+    config = {
+        'name': 'test-docker-container',
+        'type': 'docker-container',
+        'container_name': 'testing-container'
+    }
+    resource = ResourceManager.factory(config)
+    resource._container == None
+    session = resource.get_session()
+    assert resource._container['Command'] == '/usr/sbin/sshd -D'
 
+    assert session.exists(script) == False
+    session.put(script, "/", owner=None, group=None)
+    assert session.exists(script) == True
 
-
-
+    dest_path = '/var{}'.format(script)
+    assert os.path.isfile(dest_path) == False
+    session.get(script, os.path.dirname(dest_path))
+    assert os.path.isfile(dest_path) == True

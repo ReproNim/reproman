@@ -133,8 +133,12 @@ class SSHSession(POSIXSession):
 
         # If a command fails, a CommandError exception will be thrown.
         escaped_command = ' '.join(quote(s) for s in command)
+        out = []
         for i, line in enumerate(self.ssh.execute(escaped_command)):
+            out.append(line.rstrip())
             lgr.debug("exec#%i: %s", i, line.rstrip())
+
+        return (out, False)
 
     def exists(self, path):
         """Return if file exists"""

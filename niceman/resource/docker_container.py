@@ -28,9 +28,12 @@ class DockerContainer(Resource):
     Environment manager which manages a Docker container.
     """
 
-    # Container properties
+    # Generic properties of any Resource
     name = attr.ib()
+
+    # Container properties
     id = attr.ib(default=None)
+    container_name = attr.ib(default=None)
     type = attr.ib(default='docker-container')
 
     base_image_id = attrib(default='ubuntu:latest',
@@ -53,14 +56,16 @@ class DockerContainer(Resource):
 
         containers = []
         for container in self._client.containers(all=True):
-            assert self.id or self.name, "Name or id must be known"
+            assert self.id or self.container_name,\
+                "Container name or id must be known"
             if self.id and not container.get('Id').startswith(self.id):
                 lgr.log(5, "Container %s does not match by id: %s", container,
                         self.id)
                 continue
-            if self.name and ('/' + self.name) not in container.get('Names'):
+            if self.container_name and ('/' + self.container_name)\
+                    not in container.get('Names'):
                 lgr.log(5, "Container %s does not match by name: %s", container,
-                        self.name)
+                        self.container_name)
                 continue
             # TODO: make above more robust and centralize across different resources/backends?
             containers.append(container)
@@ -87,7 +92,7 @@ class DockerContainer(Resource):
         if self._container:
             raise ResourceError(
                 "Container '{}' (ID {}) already exists in Docker".format(
-                    self.name, self.id))
+                    self.container_name, self.id))
         # image might be of the form repository:tag -- pull would split them
         # if needed
         for line in self._client.pull(repository=self.base_image_id, stream=True):
@@ -97,7 +102,7 @@ class DockerContainer(Resource):
                 output += ' ' + status['progress']
             lgr.info(output)
         self._container = self._client.create_container(
-            name=self.name,
+            name=self.container_name,
             image=self.base_image_id,
             stdin_open=True,
             tty=True,
@@ -180,6 +185,7 @@ class DockerSession(POSIXSession):
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
         lgr.debug('Running command %r', command)
+        out = []
         execute = self.client.exec_create(container=self.container, cmd=command)
         for i, line in enumerate(
                 self.client.exec_start(exec_id=execute['Id'],
@@ -188,7 +194,10 @@ class DockerSession(POSIXSession):
             if self.client.exec_inspect(execute['Id'])['ExitCode'] > 0:
                 msg = line.decode('utf-8').strip("\n")
                 raise CommandError(cmd=command, msg=msg)
+            out.append(line.rstrip())
             lgr.debug("exec#%i: %s", i, line.rstrip())
+
+        return (out, self.client.exec_inspect(execute['Id'])['ExitCode'])
 
     # XXX should we start/stop on open/close or just assume that it is running already?
 

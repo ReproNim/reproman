@@ -197,7 +197,7 @@ class Session(object):
     @abc.abstractmethod
     def exists(self, path):
         """Return if file exists"""
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def put(self, src_path, dest_path, owner=None, group=None):
@@ -356,6 +356,7 @@ class POSIXSession(Session):
         else:
             lgr.debug("Standard error was not empty (%r), thus assuming that "
                       "test for file presence has failed", err)
+            return False
 
     # def lexists(self, path):
     #     """Return if file (or just a broken symlink) exists"""

@@ -13,10 +13,12 @@ import os
 import re
 import six
 import uuid
+from pytest import raises
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_if_no_network
 from ..base import ResourceManager
+from ...support.starcluster.sshutils import SSHClient
 
 
 @skip_if_no_network
@@ -72,7 +74,42 @@ def test_ssh_class():
         file_contents = session.read('remote_test_ssh.py')
         assert file_contents[8] == '# Test string to read\n'
 
-        session.mkdir('test-dir')
-        assert session.isdir('test-dir') == True
+        path = '/tmp/{}'.format(str(uuid.uuid4()))
+        assert session.isdir(path) == False
+        session.mkdir(path)
+        assert session.isdir(path) == True
+
+        path = '/tmp/{}/{}'.format(str(uuid.uuid4()), str(uuid.uuid4()))
+        assert session.isdir(path) == False
+        session.mkdir(path, parents=True)
+        assert session.isdir(path) == True
+
         assert session.isdir('not-a-dir') == False
         assert session.isdir('/etc/hosts') == False
+
+        with raises(NotImplementedError) as err:
+            session._execute_command('non-existent-command', cwd='/path')
+
+
+@skip_if_no_network
+def test_ssh_resource():
+
+    config = {
+        'name': 'ssh-test-resource',
+        'type': 'ssh',
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'port': '49000'
+    }
+    resource = ResourceManager.factory(config)
+    resource.connect()
+
+    assert resource.start() == None
+    assert resource.stop() == None
+
+    resource.delete()
+    assert resource._ssh == None
+
+    resource.get_session()
+    assert type(resource._ssh) == SSHClient

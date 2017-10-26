@@ -236,7 +236,7 @@ class SSHClient(object):
         rfile.close()
         return key
 
-    def makedirs(self, path, mode="0755"):
+    def makedirs(self, path, mode=0o755):
         """
         Same as os.makedirs - makes a new directory and automatically creates
         all parent directories if they do not exist.
