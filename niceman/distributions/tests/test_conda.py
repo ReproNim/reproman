@@ -18,7 +18,7 @@ from unittest import SkipTest
 import yaml
 import attr
 from niceman.formats.niceman import NicemanProvenance
-from niceman.tests.utils import skip_if_no_network, assert_is_subset_dict_recur
+from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
 import json
 
@@ -85,6 +85,6 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
                              }
                             ]
            }
-    assert_is_subset_dict_recur(out, attr.asdict(distributions))
+    assert_is_subset_recur(out, attr.asdict(distributions))
     NicemanProvenance.write(sys.stdout, distributions)
     print(json.dumps(unknown_files, indent=4))
