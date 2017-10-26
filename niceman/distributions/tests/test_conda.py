@@ -8,10 +8,12 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 import collections
 import os
+import pytest
 
 import sys
 from appdirs import AppDirs
 from subprocess import call
+from unittest import SkipTest
 
 import yaml
 import attr
@@ -23,9 +25,16 @@ import json
 from niceman.distributions.conda import CondaTracer
 
 
-def create_test_conda(test_dir):
+@pytest.fixture
+def get_conda_test_dir():
+    # Return none if no network is avaialble
+    if os.environ.get('NICEMAN_TESTS_NONETWORK'):
+        return None
+    dirs = AppDirs('niceman')
+    test_dir = os.path.join(dirs.user_cache_dir, 'conda_test')
     if os.path.exists(test_dir):
-        return
+        return test_dir
+    # Miniconda isn't installed, so install it
     if sys.platform.startswith('darwin'):
         miniconda_sh = "Miniconda2-latest-MacOSX-x86_64.sh"
     elif sys.platform.startswith('linux'):
@@ -41,14 +50,14 @@ def create_test_conda(test_dir):
          "./miniconda/envs/mytest/bin/conda install -y xz -n mytest; "
          "./miniconda/envs/mytest/bin/pip install rpaths;",
          shell=True)
+    return test_dir
 
 
-@skip_if_no_network
-def test_conda_manager_identify_distributions():
-    dirs = AppDirs('niceman')
-    test_dir = os.path.join(dirs.user_cache_dir, 'conda_test')
-    create_test_conda(test_dir)
-    print (test_dir + "\n")
+def test_conda_manager_identify_distributions(get_conda_test_dir):
+    # Skip if network is not available (skip_if_no_network fails with fixtures)
+    test_dir = get_conda_test_dir
+    if not test_dir:
+        raise SkipTest("Skipping since no network settings")
     files = [os.path.join(test_dir, "miniconda/bin/sqlite3"),
              os.path.join(test_dir, "miniconda/envs/mytest/bin/xz"),
              os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/pip/index.py"),
