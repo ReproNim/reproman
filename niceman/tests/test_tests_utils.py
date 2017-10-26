@@ -505,3 +505,9 @@ def test_assert_is_subset_dict_recur():
     assert_raises(AssertionError, assert_is_subset_dict_recur,
                   {'a': {'y': 2, 'z': [1]}},
                   {'a': {'z': [1]}})
+    assert_is_subset_dict_recur([1,2],[3,2,1])
+    assert_raises(AssertionError, assert_is_subset_dict_recur,
+                  [3,2,1],[1,2])
+    assert_is_subset_dict_recur([3, [2]], [3, [2, 1]])
+    assert_raises(AssertionError, assert_is_subset_dict_recur,
+                  [3, [2, 1]], [3, [2]])

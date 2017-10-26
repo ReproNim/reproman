@@ -544,13 +544,29 @@ with_testsui.__test__ = False
 
 
 def assert_is_subset_dict_recur(a, b):
-    """Asserts that 'a' is a subset of 'b' (recursively checks children dicts)
+    """Asserts that 'a' is a subset of 'b' (recursively checks dicts and lists)
     """
+    # For dictionaries recursively check children that are in a
     if isinstance(a, dict) and isinstance(b, dict):
         for key in a:
             if key not in b:
                 raise AssertionError("Key %s is missing" % key)
             assert_is_subset_dict_recur(a[key], b[key])
+    # For lists, recurse for every value a to make sure it is in b
+    # (note: two items in a may match the same item in b)
+    elif isinstance(a, list) and isinstance(b, list):
+        for a_val in a:
+            found = False
+            for b_val in b:
+                try:
+                    assert_is_subset_dict_recur(a_val, b_val)
+                    found = True
+                    break
+                except AssertionError:
+                    pass
+            if not found:
+                raise AssertionError("Array value %s is missing" % a_val)
+    # For anything else check for straight equality
     else:
         if not a == b:
             raise AssertionError("Value %s != %s" % (a, b))

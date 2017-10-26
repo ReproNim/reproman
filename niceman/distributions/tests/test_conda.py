@@ -18,7 +18,7 @@ from unittest import SkipTest
 import yaml
 import attr
 from niceman.formats.niceman import NicemanProvenance
-from niceman.tests.utils import skip_if_no_network
+from niceman.tests.utils import skip_if_no_network, assert_is_subset_dict_recur
 
 import json
 
@@ -70,12 +70,25 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
 
     (distributions, unknown_files) = dists[0]
 
-    assert (len(unknown_files) == 1) and \
-           (unknown_files[0] == "/sbin/iptables"), \
+    assert unknown_files == ["/sbin/iptables"], \
         "Exactly one file (/sbin/iptables) should not be discovered."
 
     assert len(distributions.environments) == 2, \
         "Two conda environments are expected."
 
+    out = {'environments': [{'packages': [{'files': ['bin/sqlite3'],
+                                           'name': 'sqlite'}]},
+                            {'packages': [{'files': ['bin/xz'],
+                                           'name': 'xz'},
+                                          {'files': ['lib/python2.7/site-packages/pip/index.py'],
+                                           'name': 'pip'},
+                                          {'files': ['lib/python2.7/site-packages/rpaths.py'],
+                                           'installer': 'pip',
+                                           'name': 'rpaths'}
+                                          ]
+                             }
+                            ]
+           }
+    assert_is_subset_dict_recur(out, attr.asdict(distributions))
     NicemanProvenance.write(sys.stdout, distributions)
     print(json.dumps(unknown_files, indent=4))
