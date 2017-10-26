@@ -25,11 +25,9 @@ import json
 from niceman.distributions.conda import CondaTracer
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
+@skip_if_no_network
 def get_conda_test_dir():
-    # Return none if no network is avaialble
-    if os.environ.get('NICEMAN_TESTS_NONETWORK'):
-        return None
     dirs = AppDirs('niceman')
     test_dir = os.path.join(dirs.user_cache_dir, 'conda_test')
     if os.path.exists(test_dir):
@@ -56,8 +54,6 @@ def get_conda_test_dir():
 def test_conda_manager_identify_distributions(get_conda_test_dir):
     # Skip if network is not available (skip_if_no_network fails with fixtures)
     test_dir = get_conda_test_dir
-    if not test_dir:
-        raise SkipTest("Skipping since no network settings")
     files = [os.path.join(test_dir, "miniconda/bin/sqlite3"),
              os.path.join(test_dir, "miniconda/envs/mytest/bin/xz"),
              os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/pip/index.py"),
