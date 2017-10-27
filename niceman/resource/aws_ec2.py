@@ -20,13 +20,12 @@ import logging
 lgr = logging.getLogger('niceman.resource.aws_ec2')
 
 from .base import Resource, attrib
-import niceman.support.sshconnector2 # Needed for test patching to work.
 from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from ..support.starcluster.sshutils import SSHClient
-
+from .ssh import SSHSession, PTYSSHSession
 
 @attr.s
 class AwsEc2(Resource):
@@ -266,76 +265,17 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
 
     def get_session(self, pty=False, shared=None):
         """
-        Log into a container and get the command line
+        Log into remote EC2 environment and get the command line
         """
-        assert self._ec2_instance, "We should create or connect to EC2 server first"
+        if not self._ec2_instance:
+            self.connect()
 
-        # TODO: remove use of SSHConnector2 with StarCluster SSHClient
-        host = self._ec2_instance.public_ip_address
-        ssh = niceman.support.sshconnector2.SSHConnector2(host, key_filename=self.key_filename)
-
-        if pty and shared is not None and not shared:
-            lgr.warning("Cannot do non-shared pty session for EC2 server yet")
-        return (PtyEc2Session if pty else Ec2Session)(
-            ssh=ssh,
-            instance=self._ec2_instance,
-            key_filename=self.key_filename,
-            user=self.user
+        ssh = SSHClient(
+            self._ec2_instance.public_ip_address,
+            username=self.user,
+            private_key=self.key_filename,
         )
 
-
-from niceman.resource.session import POSIXSession
-
-
-@attr.s
-class Ec2Session(POSIXSession):
-    ssh = attr.ib()
-    instance = attr.ib()
-    key_filename = attr.ib()
-    user = attr.ib()
-
-    def _execute_command(self, command, env=None, cwd=None):
-        """
-        Execute the given command in the environment.
-
-        Parameters
-        ----------
-        ssh : SSHConnector2 instance
-            SSH connection object
-        command : list
-            Shell command string or list of command tokens to send to the
-            environment to execute.
-        env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
-        """
-        # TODO -- command_env is not used etc...
-        # command_env = self.get_updated_env(env)
-
-        if cwd:
-            raise NotImplementedError("implement cwd support")
-        # if command_env:
-            # TODO: might not work - not tested it
-            # command = ['export %s=%s;' % k for k in command_env.items()] + command
-
-        # If a command fails, a CommandError exception will be thrown.
-        for i, line in enumerate(self.ssh(" ".join(command))):
-            lgr.debug("exec#%i: %s", i, line.rstrip())
-
-
-@attr.s
-class PtyEc2Session(Ec2Session):
-    """Interactive EC2 Session"""
-
-    def open(self):
-        lgr.debug("Opening TTY connection to AWS EC2 instance.")
-        # TODO: probably call to super to assure that we have it running?
-        host = self.instance.public_ip_address
-        ssh = SSHClient(host, private_key=self.key_filename)
-        ssh.interactive_shell(self.user)
-
-    def close(self):
-        # XXX ?
-        pass
-
-    # XXX should we overload execute_command?
+        return (PTYSSHSession if pty else SSHSession)(
+            ssh=ssh
+        )
