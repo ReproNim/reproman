@@ -85,7 +85,7 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
                              }
                             ]
            }
-    assert_is_subset_recur(out, attr.asdict(distributions))
+    assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
     NicemanProvenance.write(sys.stdout, distributions)
     print(json.dumps(unknown_files, indent=4))
 

@@ -491,31 +491,30 @@ def test_run_under_dir(d=None):
 
 def test_assert_is_subset_recur():
     assert_is_subset_recur(1, 1)
-    assert_is_subset_recur({}, {'a': 1})
+    assert_is_subset_recur({}, {'a': 1}, [dict])
     assert_raises(AssertionError, assert_is_subset_recur,
-                  {'a': 1},
-                  {'b': 2})
+                  {'a': 1}, {'b': 2}, [dict])
     assert_is_subset_recur({'a': {'z': 1}},
-                           {'a': {'y': 2, 'z': 1}})
+                           {'a': {'y': 2, 'z': 1}}, [dict])
     assert_raises(AssertionError, assert_is_subset_recur,
                   {'a': {'y': 2, 'z': 1}},
-                  {'a': {'z': 1}})
+                  {'a': {'z': 1}}, [dict])
     assert_is_subset_recur({'a': {'z': [1]}},
-                           {'a': {'y': 2, 'z': [1]}})
+                           {'a': {'y': 2, 'z': [1]}}, [dict])
     assert_raises(AssertionError, assert_is_subset_recur,
                   {'a': {'y': 2, 'z': [1]}},
-                  {'a': {'z': [1]}})
+                  {'a': {'z': [1]}}, [dict])
     assert_is_subset_recur({'a': {'z': [1]}},
-                           {'a': {'z': [1]}}, False)
+                           {'a': {'z': [1]}}, [])
     assert_raises(AssertionError, assert_is_subset_recur,
                   {'a': {'z': [1]}},
-                  {'a': {'y': 2, 'z': [1]}}, False)
-    assert_is_subset_recur([1, 2], [3, 2, 1])
+                  {'a': {'y': 2, 'z': [1]}}, [])
+    assert_is_subset_recur([1, 2], [3, 2, 1], [list])
     assert_raises(AssertionError, assert_is_subset_recur,
-                  [3,2,1], [1,2])
-    assert_is_subset_recur([3, [2]], [3, [2, 1]])
+                  [3, 2, 1], [1, 2], [list])
+    assert_is_subset_recur([3, [2]], [3, [2, 1]], [list])
     assert_raises(AssertionError, assert_is_subset_recur,
-                  [3, [2, 1]], [3, [2]])
-    assert_is_subset_recur([3, [2]], [3, [2]], True, False)
+                  [3, [2, 1]], [3, [2]], [list])
+    assert_is_subset_recur([3, [2]], [3, [2]], [dict])
     assert_raises(AssertionError, assert_is_subset_recur,
-                  [3, [2]], [3, [2, 1]], True, False)
+                  [3, [2]], [3, [2, 1]], [dict])

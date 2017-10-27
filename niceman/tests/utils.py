@@ -543,7 +543,7 @@ def with_testsui(t, responses=None):
 with_testsui.__test__ = False
 
 
-def assert_is_subset_recur(a, b, dict_subset=True, list_subset=True):
+def assert_is_subset_recur(a, b, subset_types=[]):
     """Asserts that 'a' is a subset of 'b' (recursive on dicts and lists)
 
     Parameters
@@ -552,25 +552,25 @@ def assert_is_subset_recur(a, b, dict_subset=True, list_subset=True):
         The desired subset collection (items that must be in b)
     b : dict or list
         The superset collection
-    dict_subset : Boolean
-        If false, dicts (and contents) must match exactly
-    list_subset : Boolean
-        If false, lists (and contents) must match exactly
+    subset_types : list
+        List of classes (from list, dict) that allow subsets. Otherwise
+        we use strict matching.
 """
+    # Currently we only allow lists and dicts
+    assert {list, dict}.issuperset(subset_types)
     # For dictionaries recursively check children that are in a
-    if isinstance(a, dict) and isinstance(b, dict) and dict_subset:
+    if isinstance(a, dict) and isinstance(b, dict) and dict in subset_types:
         for key in a:
             if key not in b:
                 raise AssertionError("Key %s is missing" % key)
-            assert_is_subset_recur(a[key], b[key], dict_subset, list_subset)
+            assert_is_subset_recur(a[key], b[key], subset_types)
     # For lists, recurse for every value a to make sure it is in b
     # (note: two items in a may match the same item in b)
-    elif isinstance(a, list) and isinstance(b, list) and list_subset:
+    elif isinstance(a, list) and isinstance(b, list) and list in subset_types:
         for a_val in a:
             for b_val in b:
                 try:
-                    assert_is_subset_recur(a_val, b_val, dict_subset,
-                                           list_subset)
+                    assert_is_subset_recur(a_val, b_val, subset_types)
                     break
                 except AssertionError:
                     pass
