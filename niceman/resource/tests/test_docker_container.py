@@ -167,3 +167,7 @@ def test_docker_session(script=None):
     assert os.path.isfile(dest_path) == False
     session.get(script, os.path.dirname(dest_path))
     assert os.path.isfile(dest_path) == True
+
+    path = '/tmp/{}'.format(str(uuid.uuid4()))
+    session.niceman_exec('mkdir', [path, "parents=False"])
+    assert session.isdir(path) == True

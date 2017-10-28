@@ -384,7 +384,10 @@ class POSIXSession(Session):
     def mkdir(self, path, parents=False):
         """Create a directory
         """
-        self.execute_command(["mkdir"] + (["-p"] if parents else [""]) + [path])
+        command = ["mkdir"]
+        if parents: command.append("-p")
+        command += [path]
+        self.execute_command(command)
 
         if not self.isdir(path):
             raise CommandError(cmd='mkdir', msg="Failed to create directory")
