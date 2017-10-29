@@ -13,7 +13,7 @@
 from ..debian import DebianReleaseSpec
 from ..debian import get_spec_from_release_file
 
-from niceman.tests.utils import eq_, assert_is_subset_dict_recur
+from niceman.tests.utils import eq_, assert_is_subset_recur
 
 
 def test_get_spec_from_release_file(f=None):
@@ -161,7 +161,7 @@ Origin: Ubuntu
                                                 'Status': 'install ok installed',
                                                 'Version': '1.0.2g-1ubuntu4.5'}}
     out = parse_apt_cache_show_pkgs_output(txt1)
-    assert_is_subset_dict_recur(out1, out)
+    assert_is_subset_recur(out1, out, [dict])
 
 
 def test_parse_apt_cache_policy_pkgs_output():
@@ -252,7 +252,7 @@ skype:i386:
                                                   'Packages'}],
                            'version': '1.0.2g-1ubuntu4'}]}}
     out = parse_apt_cache_policy_pkgs_output(txt1)
-    assert_is_subset_dict_recur(out1, out)
+    assert_is_subset_recur(out1, out, [dict])
 
 def test_parse_apt_cache_policy_source_info():
     from ..debian import parse_apt_cache_policy_source_info
@@ -315,7 +315,7 @@ Pinned packages:
                  'origin': 'Ubuntu',
                  'site': 'security.ubuntu.com'}}
     out = parse_apt_cache_policy_source_info(txt)
-    assert_is_subset_dict_recur(out1, out)
+    assert_is_subset_recur(out1, out, [dict])
 
 
 def test_get_apt_release_file_names():
