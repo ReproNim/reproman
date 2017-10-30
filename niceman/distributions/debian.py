@@ -13,6 +13,8 @@ from datetime import datetime
 import attr
 from collections import defaultdict
 
+from six.moves import map
+
 import pytz
 
 from niceman import utils
@@ -89,8 +91,24 @@ class DEBPackage(Package):
     versions = attr.ib(default=None)  # Hash ver_str -> [Array of source names]
     install_date = attr.ib(default=None)
     files = attr.ib(default=attr.Factory(list))
-_register_with_representer(DEBPackage)
 
+    def satisfies(self, other):
+        """return True if this package (self) satisfies the requirements of 
+        the passed package (other)"""
+        if not isinstance(other, Package):
+            raise TypeError('satisfies() requires a package argument')
+        if not isinstance(other, DEBPackage):
+            return False
+        if self.name != other.name:
+            return False
+        if other.version is not None and self.version != other.version:
+            return False
+        if other.architecture is not None \
+                and self.architecture != other.architecture:
+            return False
+        return True
+
+_register_with_representer(DEBPackage)
 
 @attr.s
 class DebianDistribution(Distribution):
@@ -152,6 +170,31 @@ class DebianDistribution(Distribution):
         #   e.g. component (main, contrib, non-free) to be a list!  but that
         #   would make us require supporting flexible typing -- string or a list
         pass
+
+    def satisfies_package(self, package):
+        """return True if this distribution (self) satisfies the requirements 
+        of the passed package"""
+        if not isinstance(package, Package):
+            raise TypeError('satisfies_package() requires a package argument')
+        if not isinstance(package, DEBPackage):
+            return False
+        return any([ p.satisfies(package) for p in self.packages ])
+
+    def satisfies(self, other):
+        """return True if this distribution (self) satisfies the requirements 
+        of the other distribution (other)"""
+        if not isinstance(other, Distribution):
+            raise TypeError('satisfies() requires a distribution argument')
+        if not isinstance(other, DebianDistribution):
+            return False
+        return all(map(self.satisfies_package, other.packages))
+
+    def __sub__(self, other):
+        # the semantics of distribution subtraction are, for d1 - d2:
+        #     what is specified in d1 that is not specified in d2
+        #     or how does d2 fall short of d1
+        #     or what is in d1 that isn't satisfied by d2
+        return [ p for p in self.packages if not other.satisfies_package(p) ]
 
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)
