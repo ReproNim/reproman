@@ -18,9 +18,43 @@ from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_if_no_network
 from ..base import ResourceManager
 
+import pytest
+import subprocess
 
-@skip_if_no_network
-def test_ssh_class():
+@pytest.fixture
+def setup_docker():
+    """pytest fixture for tests needing a running docker container
+
+    on setup, this fixture ensures that a docker container that maps 
+    host port 49000 to container port 22 is running and starts one if necessary
+
+    on teardown, this fixture stops the docker container if it was started by 
+    the fixture
+    """
+    po = subprocess.Popen(['docker', 'ps'], stdout=subprocess.PIPE)
+    stdout = po.communicate()[0]
+    po.wait()
+    if '0.0.0.0:49000->22/tcp' in stdout:
+        stop_container = False
+    else:
+        args = ['docker', 
+                'run', 
+                '-d', 
+                '-p', 
+                '49000:22', 
+                'rastasheep/ubuntu-sshd:14.04']
+        po = subprocess.Popen(args, stdout=subprocess.PIPE)
+        stdout = po.communicate()[0]
+        returncode = po.wait()
+        assert returncode == 0, 'error starting docker container'
+        container_id = stdout.strip()
+        stop_container = True
+    yield
+    if stop_container:
+        subprocess.check_call(['docker', 'stop', container_id])
+    return
+
+def test_ssh_class(setup_docker):
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
