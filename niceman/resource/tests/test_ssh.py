@@ -15,10 +15,11 @@ import six
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, skip_if_no_network
+from ...tests.utils import assert_in
 from ..base import ResourceManager
 
 import pytest
+from nose import SkipTest
 import subprocess
 
 @pytest.fixture
@@ -57,6 +58,9 @@ def setup_docker():
     return
 
 def test_ssh_class(setup_docker):
+
+    if os.environ.get('NICEMAN_TESTS_NONETWORK'):
+        raise SkipTest("Skipping since no network settings")
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
