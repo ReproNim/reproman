@@ -32,6 +32,8 @@ def setup_docker():
     on teardown, this fixture stops the docker container if it was started by 
     the fixture
     """
+    if os.environ.get('NICEMAN_TESTS_NONETWORK'):
+        raise SkipTest("Skipping since no network settings")
     po = subprocess.Popen(['docker', 'ps'], stdout=subprocess.PIPE)
     stdout = po.communicate()[0]
     po.wait()
@@ -58,9 +60,6 @@ def setup_docker():
     return
 
 def test_ssh_class(setup_docker):
-
-    if os.environ.get('NICEMAN_TESTS_NONETWORK'):
-        raise SkipTest("Skipping since no network settings")
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
