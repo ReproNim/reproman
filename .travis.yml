@@ -53,8 +53,6 @@ before_install:
   - travis_retry sudo apt-get update -qq
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
-  # Setup SSH docker service
-  - docker run -d -p 49000:22 rastasheep/ubuntu-sshd:14.04
 
 install:
   # - tools/ci/build_install_apt  # Removed dependency on python-apt!
