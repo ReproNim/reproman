@@ -34,7 +34,9 @@ def setup_docker():
     po = subprocess.Popen(['docker', 'ps'], stdout=subprocess.PIPE)
     stdout = po.communicate()[0]
     po.wait()
-    if '0.0.0.0:49000->22/tcp' in stdout:
+    # stdout is a bytes object in Python 3, so we need to make the 
+    # search string a bytes object as well
+    if b'0.0.0.0:49000->22/tcp' in stdout:
         stop_container = False
     else:
         args = ['docker', 
