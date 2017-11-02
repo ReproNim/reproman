@@ -45,6 +45,7 @@ def setup_docker():
         args = ['docker', 
                 'run', 
                 '-d', 
+                '--rm', 
                 '-p', 
                 '49000:22', 
                 'rastasheep/ubuntu-sshd:14.04']
