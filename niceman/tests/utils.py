@@ -578,7 +578,7 @@ def assert_is_subset_recur(a, b, subset_types=[]):
                 raise AssertionError("Array value %s is missing" % a_val)
     # For anything else check for straight equality
     else:
-        if not a == b:
+        if a != b:
             raise AssertionError("Value %s != %s" % (a, b))
 
 
