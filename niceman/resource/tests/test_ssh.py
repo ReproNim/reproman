@@ -34,9 +34,7 @@ def setup_docker():
     """
     skip_if_no_network()
     stdout, _ = Runner().run(['docker', 'ps'])
-    # stdout is a bytes object in Python 3, so we need to make the 
-    # search string a bytes object as well
-    if b'0.0.0.0:49000->22/tcp' in stdout:
+    if '0.0.0.0:49000->22/tcp' in stdout:
         stop_container = False
     else:
         args = ['docker', 
