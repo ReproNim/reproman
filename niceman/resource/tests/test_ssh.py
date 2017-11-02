@@ -22,7 +22,7 @@ from ...cmd import Runner
 import pytest
 from nose import SkipTest
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def setup_docker():
     """pytest fixture for tests needing a running docker container
 
