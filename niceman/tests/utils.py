@@ -26,6 +26,7 @@ from fnmatch import fnmatch
 import time
 from mock import patch
 
+from niceman.support.external_versions import external_versions
 from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
 from six.moves.BaseHTTPServer import HTTPServer
 from six import reraise
@@ -347,6 +348,26 @@ def skip_if_on_windows(func):
             raise SkipTest("Skipping on Windows")
         return func(*args, **kwargs)
     return newfunc
+
+
+def skip_if_no_apt_cache(func=None):
+    """Skip test completely if apt is unavailable
+
+    If not used as a decorator, and just a function, could be used at the module level
+    """
+
+    def check_and_raise():
+        if not external_versions["cmd:apt-cache"]:
+            raise SkipTest("Skipping since apt-cache is not available")
+
+    if func:
+        @wraps(func)
+        def newfunc(*args, **kwargs):
+            check_and_raise()
+            return func(*args, **kwargs)
+        return newfunc
+    else:
+        check_and_raise()
 
 
 @optional_args

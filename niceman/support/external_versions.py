@@ -50,6 +50,9 @@ def _get_git_version():
     """Return version of available git"""
     return _runner.run('git version'.split())[0].split()[-1]
 
+def _get_apt_cache_version():
+    """Return version of available git"""
+    return _runner.run('apt-cache -v'.split())[0].split()[1]
 
 class ExternalVersions(object):
     """Helper to figure out/use versions of the externals (modules, cmdline tools, etc).
@@ -69,7 +72,8 @@ class ExternalVersions(object):
 
     CUSTOM = {
         'cmd:annex': _get_annex_version,
-        'cmd:git': _get_git_version
+        'cmd:git': _get_git_version,
+        'cmd:apt-cache': _get_apt_cache_version
     }
 
     def __init__(self):
