@@ -17,10 +17,10 @@ import uuid
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ..base import ResourceManager
+from ...cmd import Runner
 
 import pytest
 from nose import SkipTest
-import subprocess
 
 @pytest.fixture
 def setup_docker():
@@ -34,9 +34,7 @@ def setup_docker():
     """
     if os.environ.get('NICEMAN_TESTS_NONETWORK'):
         raise SkipTest("Skipping since no network settings")
-    po = subprocess.Popen(['docker', 'ps'], stdout=subprocess.PIPE)
-    stdout = po.communicate()[0]
-    po.wait()
+    stdout, _ = Runner().run(['docker', 'ps'])
     # stdout is a bytes object in Python 3, so we need to make the 
     # search string a bytes object as well
     if b'0.0.0.0:49000->22/tcp' in stdout:
@@ -49,15 +47,12 @@ def setup_docker():
                 '-p', 
                 '49000:22', 
                 'rastasheep/ubuntu-sshd:14.04']
-        po = subprocess.Popen(args, stdout=subprocess.PIPE)
-        stdout = po.communicate()[0]
-        returncode = po.wait()
-        assert returncode == 0, 'error starting docker container'
+        stdout, _ = Runner().run(args)
         container_id = stdout.strip()
         stop_container = True
     yield
     if stop_container:
-        subprocess.check_call(['docker', 'stop', container_id])
+        Runner().run(['docker', 'stop', container_id])
     return
 
 def test_ssh_class(setup_docker):
