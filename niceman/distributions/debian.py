@@ -464,14 +464,13 @@ class DebTracer(DistributionTracer):
             try:
                 out = self._session.read(filename)
                 spec = get_spec_from_release_file(out)
-                try:
-                    date = str(pytz.utc.localize(
-                        datetime.utcfromtimestamp(
-                            mktime_tz(parsedate_tz(spec.date)))))
-                except TypeError as _:
-                    lgr.warning("Unexpected date format %s " % spec.date)
-                break
+                date = str(pytz.utc.localize(
+                    datetime.utcfromtimestamp(
+                        mktime_tz(parsedate_tz(spec.date)))))
             except CommandError as _:
+                # NOTE: We will be trying release files that end in
+                # "Release" and "InRelease", so we expect to fail in opening
+                # specific attempts.
                 pass
         return date
 
