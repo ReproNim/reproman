@@ -285,6 +285,10 @@ Package files:
  500 http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages
      release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=restricted,b=amd64
      origin security.ubuntu.com
+ 500 http://debproxy:9999/debian/ jessie-backports/contrib Translation-en
+ 100 http://debproxy:9999/debian/ jessie-backports/non-free amd64 Packages
+     release o=Debian Backports,a=jessie-backports,n=jessie-backports,l=Debian Backports,c=non-free
+     origin debproxy
  500 http://us.archive.ubuntu.com/ubuntu xenial-updates/universe amd64 Packages
      release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=universe,b=amd64
      origin us.archive.ubuntu.com

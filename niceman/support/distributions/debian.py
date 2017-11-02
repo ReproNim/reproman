@@ -215,11 +215,13 @@ def parse_apt_cache_policy_source_info(policy_output):
                     else:
                         lgr.warning("Unexpected source line %s" %
                                     info.get("source"))
-                    attribs = re_rel_attrib.finditer(info.get("release_info"))
-                    for attrib in attribs:
-                        if attrib.group("tag") in tag_map:
-                            src_detail[tag_map[attrib.group("tag")]] = \
-                                attrib.group("value")
+                    release_info = info.get("release_info")
+                    if release_info:
+                        attribs = re_rel_attrib.finditer(release_info)
+                        for attrib in attribs:
+                            if attrib.group("tag") in tag_map:
+                                src_detail[tag_map[attrib.group("tag")]] = \
+                                    attrib.group("value")
                     source_info[info.get("source")] = src_detail
     return source_info
 
