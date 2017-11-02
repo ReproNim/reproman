@@ -15,7 +15,7 @@ import six
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in
+from ...tests.utils import assert_in, skip_if_no_network
 from ..base import ResourceManager
 from ...cmd import Runner
 
@@ -32,8 +32,7 @@ def setup_docker():
     on teardown, this fixture stops the docker container if it was started by 
     the fixture
     """
-    if os.environ.get('NICEMAN_TESTS_NONETWORK'):
-        raise SkipTest("Skipping since no network settings")
+    skip_if_no_network()
     stdout, _ = Runner().run(['docker', 'ps'])
     # stdout is a bytes object in Python 3, so we need to make the 
     # search string a bytes object as well
