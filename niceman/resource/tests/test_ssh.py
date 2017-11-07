@@ -15,10 +15,11 @@ import six
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, skip_if_no_network
+from ...tests.utils import assert_in, skip_if_no_network, skip_ssh
 from ..base import ResourceManager
 
 
+@skip_ssh
 @skip_if_no_network
 def test_ssh_class():
 
