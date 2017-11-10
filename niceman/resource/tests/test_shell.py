@@ -72,6 +72,11 @@ def test_source_file_crash(script=None):
     with raises(Exception):  # TODO: unify?
         ses.source_script(script)
 
+def test_isdir():
+    ses = ShellSession()
+    assert not ses.isdir(__file__)
+    assert ses.isdir("/bin")
+
 
 @with_tempfile(content="""
 if ! [ "$1" = "test" ]; then

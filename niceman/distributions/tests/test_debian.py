@@ -8,20 +8,21 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import os
-try:
-    import apt
-except ImportError:
-    apt = None
 
 from pprint import pprint
 
 from niceman.distributions.debian import DebTracer
+from niceman.distributions.debian import DEBPackage
+from niceman.distributions.debian import DebianDistribution
+
+import pytest
 
 import mock
-from niceman.tests.utils import skip_if
+
+from niceman.tests.utils import skip_if_no_apt_cache
 
 
-@skip_if(not apt)
+@skip_if_no_apt_cache
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
     tracer = DebTracer()
@@ -37,6 +38,7 @@ def test_dpkg_manager_identify_packages():
     distributions = list(tracer.identify_distributions(files))
     assert len(distributions) == 1
     distribution, unknown_files = distributions[0]
+    pprint(distribution)
     assert distribution.apt_sources
     # Make sure both a non-local origin was found
     for o in distribution.apt_sources:
@@ -50,33 +52,31 @@ def test_dpkg_manager_identify_packages():
             break
     else:
         assert False, "A non-local origin must be found"
-    pprint(distribution)
 
 
-def test_find_release_file():
-    fp = lambda p: os.path.join('/var/lib/apt/lists', p)
+# def test_find_release_file():
+#     fp = lambda p: os.path.join('/var/lib/apt/lists', p)
+#
+#     def mocked_exists(path):
+#         return path in {
+#             fp('s_d_d_data_crap_InRelease'),
+#             fp('s_d_d_datas_InRelease'),
+#             fp('s_d_d_data_InRelease'),
+#             fp('s_d_d_sid_InRelease'),
+#             fp('s_d_d_InRelease')
+#         }
+#
+#     with mock.patch('os.path.exists', mocked_exists):
+#         assert DebTracer._find_release_file(
+#             fp('s_d_d_data_non-free_binary-amd64_Packages')) == \
+#                fp('s_d_d_data_InRelease')
+#         assert DebTracer._find_release_file(
+#             fp('s_d_d_data_non-free_binary-i386_Packages')) == \
+#                fp('s_d_d_data_InRelease')
+#         assert DebTracer._find_release_file(
+#             fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
 
-    def mocked_exists(path):
-        return path in {
-            fp('s_d_d_data_crap_InRelease'),
-            fp('s_d_d_datas_InRelease'),
-            fp('s_d_d_data_InRelease'),
-            fp('s_d_d_sid_InRelease'),
-            fp('s_d_d_InRelease')
-        }
 
-    with mock.patch('os.path.exists', mocked_exists):
-        assert DebTracer._find_release_file(
-            fp('s_d_d_data_non-free_binary-amd64_Packages')) == \
-               fp('s_d_d_data_InRelease')
-        assert DebTracer._find_release_file(
-            fp('s_d_d_data_non-free_binary-i386_Packages')) == \
-               fp('s_d_d_data_InRelease')
-        assert DebTracer._find_release_file(
-            fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
-
-
-@skip_if(not apt)
 def test_utf8_file():
     files = [u"/usr/share/ca-certificates/mozilla/"
              u"TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
@@ -101,6 +101,9 @@ def test_parse_dpkgquery_line():
 
     assert parse('fail2ban: /usr/bin/fail2ban-client') == \
            {'name': 'fail2ban', 'path': '/usr/bin/fail2ban-client'}
+
+    assert parse('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0') == \
+           {'name': 'fsl-5.0-eddy-nonfree', 'path': '/usr/lib/fsl/5.0'}
 
     assert parse('diversion by dash from: /bin/sh') is None
 
@@ -137,3 +140,66 @@ fail2ban: /usr/bin/fail2ban-server
         '/usr/lib/afni/bin/afni': {'name': u'afni'},
         '/bin/sh': {'name': u'dash'}
     }
+
+@pytest.fixture
+def setup_packages():
+    """set up the package comparison tests"""
+    a = DEBPackage(name='p1')
+    b = DEBPackage(name='p1', version='1.0')
+    c = DEBPackage(name='p1', version='1.1')
+    d = DEBPackage(name='p1', architecture='i386')
+    e = DEBPackage(name='p1', architecture='alpha')
+    f = DEBPackage(name='p1', version='1.1', architecture='i386')
+    g = DEBPackage(name='p2')
+    return (a, b, c, d, e, f, g)
+
+def test_package_satisfies(setup_packages):
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    assert p1.satisfies(p1)
+    assert p1v10.satisfies(p1v10)
+    assert not p1.satisfies(p1v10)
+    assert p1v10.satisfies(p1)
+    assert not p1v10.satisfies(p1v11)
+    assert not p1.satisfies(p2)
+    assert not p1v10.satisfies(p2)
+    assert not p2.satisfies(p1v10)
+    assert not p1v10.satisfies(p1aa)
+    assert p1aa.satisfies(p1)
+    assert not p1aa.satisfies(p1v10)
+    assert not p1aa.satisfies(p1ai)
+    assert not p1v11.satisfies(p1v11ai)
+    assert p1v11ai.satisfies(p1v11)
+
+@pytest.fixture
+def setup_distributions():
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
+    d1 = DebianDistribution(name='debian 1')
+    d1.packages = [p1]
+    d2 = DebianDistribution(name='debian 2')
+    d2.packages = [p1v11]
+    return (d1, d2)
+
+def test_distribution_satisfies_package(setup_distributions, setup_packages):
+    (d1, d2) = setup_distributions
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    assert d1.satisfies_package(p1)
+    assert not d1.satisfies_package(p1v10)
+    assert d2.satisfies_package(p1)
+    assert not d2.satisfies_package(p1v10)
+    assert d2.satisfies_package(p1v11)
+
+def test_distribution_statisfies(setup_distributions):
+    (d1, d2) = setup_distributions
+    assert not d1.satisfies(d2)
+    assert d2.satisfies(d1)
+
+def test_distribution_sub():
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
+    d1 = DebianDistribution(name='debian 1')
+    d1.packages = [p1, p2]
+    d2 = DebianDistribution(name='debian 2')
+    d2.packages = [p1v11, p2]
+    assert d1-d2 == []
+    result = d2-d1
+    assert len(result) == 1
+    assert result[0] == p1v11

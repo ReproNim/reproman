@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import os
+from six.moves.configparser import NoSectionError
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
@@ -84,7 +84,10 @@ class Ls(Interface):
 
             # if refresh:
             inventory_resource = inventory[name]
-            config = dict(cm.items(inventory_resource['type'].split('-')[0]))
+            try:
+                config = dict(cm.items(inventory_resource['type'].split('-')[0]))
+            except NoSectionError:
+                config = {}
             config.update(inventory_resource)
             env_resource = ResourceManager.factory(config)
             try:

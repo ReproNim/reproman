@@ -26,6 +26,7 @@ from fnmatch import fnmatch
 import time
 from mock import patch
 
+from niceman.support.external_versions import external_versions
 from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
 from six.moves.BaseHTTPServer import HTTPServer
 from six import reraise
@@ -173,6 +174,7 @@ def ok_file_has_content(path, content):
     assert(exists(path))
     with open(path, 'r') as f:
         assert_equal(f.read(), content)
+
 
 #
 # Decorators
@@ -346,6 +348,26 @@ def skip_if_on_windows(func):
             raise SkipTest("Skipping on Windows")
         return func(*args, **kwargs)
     return newfunc
+
+
+def skip_if_no_apt_cache(func=None):
+    """Skip test completely if apt is unavailable
+
+    If not used as a decorator, and just a function, could be used at the module level
+    """
+
+    def check_and_raise():
+        if not external_versions["cmd:apt-cache"]:
+            raise SkipTest("Skipping since apt-cache is not available")
+
+    if func:
+        @wraps(func)
+        def newfunc(*args, **kwargs):
+            check_and_raise()
+            return func(*args, **kwargs)
+        return newfunc
+    else:
+        check_and_raise()
 
 
 @optional_args
@@ -540,6 +562,46 @@ def with_testsui(t, responses=None):
 
     return newfunc
 with_testsui.__test__ = False
+
+
+def assert_is_subset_recur(a, b, subset_types=[]):
+    """Asserts that 'a' is a subset of 'b' (recursive on dicts and lists)
+
+    Parameters
+    ----------
+    a : dict or list
+        The desired subset collection (items that must be in b)
+    b : dict or list
+        The superset collection
+    subset_types : list
+        List of classes (from list, dict) that allow subsets. Otherwise
+        we use strict matching.
+"""
+    # Currently we only allow lists and dicts
+    assert {list, dict}.issuperset(subset_types)
+    # For dictionaries recursively check children that are in a
+    if isinstance(a, dict) and isinstance(b, dict) and dict in subset_types:
+        for key in a:
+            if key not in b:
+                raise AssertionError("Key %s is missing" % key)
+            assert_is_subset_recur(a[key], b[key], subset_types)
+    # For lists, recurse for every value a to make sure it is in b
+    # (note: two items in a may match the same item in b)
+    elif isinstance(a, list) and isinstance(b, list) and list in subset_types:
+        for a_val in a:
+            for b_val in b:
+                try:
+                    assert_is_subset_recur(a_val, b_val, subset_types)
+                    break
+                except AssertionError:
+                    pass
+            else:
+                raise AssertionError("Array value %s is missing" % a_val)
+    # For anything else check for straight equality
+    else:
+        if a != b:
+            raise AssertionError("Value %s != %s" % (a, b))
+
 
 #
 # Context Managers

@@ -139,18 +139,30 @@ def identify_distributions(files, session=None):
     # as they identify files beloning to them
     files_to_consider = files[:]
 
+    # Identify directories from the files_to_consider
+    dirs = set(filter(session.isdir, files_to_consider))
+
     distibutions = []
     for Tracer in Tracers:
         lgr.info("Tracing using %s", Tracer)
-        if not files_to_consider:
-            lgr.info("No files left to consider, not considering remaining tracers")
-            break
+
+        # Pull out directories if the tracer can't handle them
+        if Tracer.HANDLES_DIRS:
+            files_to_trace = files_to_consider
+            files_skipped = []
+        else:
+            files_to_trace = [x for x in files_to_consider if x not in dirs]
+            files_skipped = [x for x in files_to_consider if x in dirs]
+
         tracer = Tracer(session=session)
         begin = time.time()
-        # might need to pass more into "identify_distributions" of the tracer
-        for env, files_to_consider in tracer.identify_distributions(
-                files_to_consider):
-            distibutions.append(env)
+        if files_to_trace:
+            for env, files_to_trace in tracer.identify_distributions(
+                    files_to_trace):
+                distibutions.append(env)
+
+        # Re-combine any files that were skipped
+        files_to_consider = files_to_trace + files_skipped
 
         lgr.debug("Assigning files to packages by %s took %f seconds",
                   tracer, time.time() - begin)

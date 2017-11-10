@@ -43,10 +43,10 @@ class Install(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
-        resource=Parameter(
-            args=("-r", "--resource",),
+        name=Parameter(
+            args=("-n", "--name",),
             doc="name of target resource to install spec on",
-            metavar='RESOURCE',
+            metavar='NAME',
             constraints=EnsureStr(),
         ),
         resource_id=Parameter(
@@ -63,14 +63,14 @@ class Install(Interface):
     )
 
     @staticmethod
-    def __call__(spec, resource, resource_id, config):
+    def __call__(spec, name, resource_id, config):
 
         from niceman.ui import ui
         if not spec:
             spec = [ui.question("Enter a spec filename", default="spec.yml")]
 
-        if not resource and not resource_id:
-            resource = ui.question(
+        if not name and not resource_id:
+            name = ui.question(
                 "Enter a resource name",
                 error_message="Missing resource name"
             )
@@ -85,7 +85,7 @@ class Install(Interface):
         #    resource to use
 
         # Get configuration and environment inventory
-        config, inventory = ResourceManager.get_resource_info(config, resource, resource_id)
+        config, inventory = ResourceManager.get_resource_info(config, name, resource_id)
 
         env_resource = ResourceManager.factory(config)
         env_resource.connect()
