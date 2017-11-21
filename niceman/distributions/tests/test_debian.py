@@ -19,7 +19,10 @@ import pytest
 
 import mock
 
+from niceman.tests.utils import skip_if_no_apt_cache
 
+
+@skip_if_no_apt_cache
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
     tracer = DebTracer()

@@ -285,6 +285,10 @@ Package files:
  500 http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages
      release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=restricted,b=amd64
      origin security.ubuntu.com
+ 500 http://debproxy:9999/debian/ jessie-backports/contrib Translation-en
+ 100 http://debproxy:9999/debian/ jessie-backports/non-free amd64 Packages
+     release o=Debian Backports,a=jessie-backports,n=jessie-backports,l=Debian Backports,c=non-free
+     origin debproxy
  500 http://us.archive.ubuntu.com/ubuntu xenial-updates/universe amd64 Packages
      release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=universe,b=amd64
      origin us.archive.ubuntu.com
@@ -313,7 +317,23 @@ Pinned packages:
                  'component': 'restricted',
                  'label': 'Ubuntu',
                  'origin': 'Ubuntu',
-                 'site': 'security.ubuntu.com'}}
+                 'site': 'security.ubuntu.com'
+                 },
+            'http://debproxy:9999/debian/ jessie-backports/contrib Translation-en':
+                {'archive_uri': 'http://debproxy:9999/debian/',
+                 'uri_suite': 'jessie-backports'
+                 },
+            'http://debproxy:9999/debian/ jessie-backports/non-free amd64 Packages':
+                {'archive': 'jessie-backports',
+                 'archive_uri': 'http://debproxy:9999/debian/',
+                 'codename': 'jessie-backports',
+                 'component': 'non-free',
+                 'label': 'Debian Backports',
+                 'origin': 'Debian Backports',
+                 'site': 'debproxy',
+                 'uri_suite': 'jessie-backports'
+                 },
+            }
     out = parse_apt_cache_policy_source_info(txt)
     assert_is_subset_recur(out1, out, [dict])
 

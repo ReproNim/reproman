@@ -15,7 +15,7 @@ import six
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, skip_if_no_network
+from ...tests.utils import assert_in, skip_if_no_network, skip_ssh
 from ..base import ResourceManager
 from ...cmd import Runner
 
@@ -53,6 +53,8 @@ def setup_docker():
     return
 
 def test_ssh_class(setup_docker):
+
+    skip_ssh()
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 

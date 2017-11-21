@@ -26,6 +26,7 @@ from fnmatch import fnmatch
 import time
 from mock import patch
 
+from niceman.support.external_versions import external_versions
 from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
 from six.moves.BaseHTTPServer import HTTPServer
 from six import reraise
@@ -349,6 +350,26 @@ def skip_if_on_windows(func):
     return newfunc
 
 
+def skip_if_no_apt_cache(func=None):
+    """Skip test completely if apt is unavailable
+
+    If not used as a decorator, and just a function, could be used at the module level
+    """
+
+    def check_and_raise():
+        if not external_versions["cmd:apt-cache"]:
+            raise SkipTest("Skipping since apt-cache is not available")
+
+    if func:
+        @wraps(func)
+        def newfunc(*args, **kwargs):
+            check_and_raise()
+            return func(*args, **kwargs)
+        return newfunc
+    else:
+        check_and_raise()
+
+
 @optional_args
 def skip_if(func, cond=True, msg=None):
     """Skip test for specific condition
@@ -361,18 +382,25 @@ def skip_if(func, cond=True, msg=None):
     return newfunc
 
 
-def skip_ssh(func):
+def skip_ssh(func=None):
     """Skips SSH tests if on windows or if environment variable
     NICEMAN_TESTS_SSH was not set
     """
-    @wraps(func)
-    def newfunc(*args, **kwargs):
-        if on_windows:
-            raise SkipTest("SSH currently not available on windows.")
+
+    def check_and_raise():
         if not os.environ.get('NICEMAN_TESTS_SSH'):
             raise SkipTest("Run this test by setting NICEMAN_TESTS_SSH")
-        return func(*args, **kwargs)
-    return newfunc
+
+    if func:
+        @wraps(func)
+        def newfunc(*args, **kwargs):
+            if on_windows:
+                raise SkipTest("SSH currently not available on windows.")
+            check_and_raise()
+            return func(*args, **kwargs)
+        return newfunc
+    else:
+        check_and_raise()
 
 
 @optional_args
@@ -578,7 +606,7 @@ def assert_is_subset_recur(a, b, subset_types=[]):
                 raise AssertionError("Array value %s is missing" % a_val)
     # For anything else check for straight equality
     else:
-        if not a == b:
+        if a != b:
             raise AssertionError("Value %s != %s" % (a, b))
 
 
