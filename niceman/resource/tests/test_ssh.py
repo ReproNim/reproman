@@ -32,7 +32,9 @@ def setup_docker():
     on teardown, this fixture stops the docker container if it was started by 
     the fixture
     """
+
     skip_if_no_network()
+    skip_ssh()
     stdout, _ = Runner().run(['docker', 'ps'])
     if '0.0.0.0:49000->22/tcp' in stdout:
         stop_container = False
@@ -52,9 +54,8 @@ def setup_docker():
         Runner().run(['docker', 'stop', container_id])
     return
 
-def test_ssh_class(setup_docker):
 
-    skip_ssh()
+def test_ssh_class(setup_docker):
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
