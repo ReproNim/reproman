@@ -518,3 +518,24 @@ def test_assert_is_subset_recur():
     assert_is_subset_recur([3, [2]], [3, [2]], [dict])
     assert_raises(AssertionError, assert_is_subset_recur,
                   [3, [2]], [3, [2, 1]], [dict])
+
+
+def test_skip_ssh():
+    from .utils import skip_ssh
+
+    try:
+        @skip_ssh
+        def func(x):
+            return x + 2
+
+        with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': "1"}):
+            assert func(2) == 4
+    except SkipTest:
+        raise AssertionError("must have not skipped")
+
+    with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': ""}):
+        try:
+            func(2)
+            assert "Must have thrown SkipTest"
+        except SkipTest:
+            pass
