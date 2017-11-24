@@ -382,18 +382,25 @@ def skip_if(func, cond=True, msg=None):
     return newfunc
 
 
-def skip_ssh(func):
+def skip_ssh(func=None):
     """Skips SSH tests if on windows or if environment variable
     NICEMAN_TESTS_SSH was not set
     """
-    @wraps(func)
-    def newfunc(*args, **kwargs):
-        if on_windows:
-            raise SkipTest("SSH currently not available on windows.")
+
+    def check_and_raise():
         if not os.environ.get('NICEMAN_TESTS_SSH'):
             raise SkipTest("Run this test by setting NICEMAN_TESTS_SSH")
-        return func(*args, **kwargs)
-    return newfunc
+
+    if func:
+        @wraps(func)
+        def newfunc(*args, **kwargs):
+            if on_windows:
+                raise SkipTest("SSH currently not available on windows.")
+            check_and_raise()
+            return func(*args, **kwargs)
+        return newfunc
+    else:
+        check_and_raise()
 
 
 @optional_args
