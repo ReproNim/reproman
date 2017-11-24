@@ -23,7 +23,7 @@ import pytest
 from nose import SkipTest
 
 @pytest.fixture(scope='module')
-def setup_docker():
+def setup_ssh():
     """pytest fixture for tests needing a running docker container
 
     on setup, this fixture ensures that a docker container that maps 
@@ -55,7 +55,7 @@ def setup_docker():
     return
 
 
-def test_ssh_class(setup_docker):
+def test_ssh_class(setup_ssh):
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
