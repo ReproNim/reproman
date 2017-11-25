@@ -27,7 +27,10 @@ def setup_ssh():
     """pytest fixture for tests needing a running docker container
 
     on setup, this fixture ensures that a docker container that maps 
-    host port 49000 to container port 22 is running and starts one if necessary
+    host port 49000 to container port 22 is running and starts one if necessary.
+
+    Fixture yields parameters of the ssh connection suitable to be used as is
+    for ssh type resource.
 
     on teardown, this fixture stops the docker container if it was started by 
     the fixture
@@ -39,36 +42,38 @@ def setup_ssh():
     if '0.0.0.0:49000->22/tcp' in stdout:
         stop_container = False
     else:
+        params = {
+            'host': 'localhost',
+            'user': 'root',
+            'password': 'root',
+            'port': '49000',
+        }
         args = ['docker', 
                 'run', 
                 '-d', 
                 '--rm', 
                 '-p', 
-                '49000:22', 
+                '{port}:22'.format(**params),
                 'rastasheep/ubuntu-sshd:14.04']
         stdout, _ = Runner().run(args)
         container_id = stdout.strip()
         stop_container = True
-    yield
+    yield params
     if stop_container:
         Runner().run(['docker', 'stop', container_id])
     return
 
 
 def test_ssh_class(setup_ssh):
-
     with swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test connecting to test SSH server.
         # TODO: Add a test using a SSH key pair.
-        config = {
-            'name': 'ssh-test-resource',
-            'type': 'ssh',
-            'host': 'localhost',
-            'user': 'root',
-            'password': 'root',
-            'port': '49000'
-        }
+        config = dict(
+            name='ssh-test-resource',
+            type='ssh',
+            **setup_ssh
+        )
         resource = ResourceManager.factory(config)
         updated_config = resource.create()
         config.update(updated_config)
