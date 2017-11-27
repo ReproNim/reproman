@@ -13,6 +13,8 @@ from datetime import datetime
 import attr
 from collections import defaultdict
 
+from six.moves import map
+
 import pytz
 
 from niceman import utils
@@ -72,7 +74,7 @@ class APTSource(SpecObject):
 _register_with_representer(APTSource)
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DEBPackage(Package):
     """Debian package information"""
     name = attr.ib()
@@ -80,17 +82,33 @@ class DEBPackage(Package):
     upstream_name = attr.ib(default=None)
     version = attr.ib(default=None)
     architecture = attr.ib(default=None)
-    source_name = attr.ib(default=None)
-    source_version = attr.ib(default=None)
-    size = attr.ib(default=None)
-    md5 = attr.ib(default=None)
-    sha1 = attr.ib(default=None)
-    sha256 = attr.ib(default=None)
-    versions = attr.ib(default=None)  # Hash ver_str -> [Array of source names]
-    install_date = attr.ib(default=None)
-    files = attr.ib(default=attr.Factory(list))
-_register_with_representer(DEBPackage)
+    source_name = attr.ib(default=None, hash=False)
+    source_version = attr.ib(default=None, hash=False)
+    size = attr.ib(default=None, hash=False)
+    md5 = attr.ib(default=None, hash=False)
+    sha1 = attr.ib(default=None, hash=False)
+    sha256 = attr.ib(default=None, hash=False)
+    versions = attr.ib(default=None, hash=False)  # Hash ver_str -> [Array of source names]
+    install_date = attr.ib(default=None, hash=False)
+    files = attr.ib(default=attr.Factory(list), hash=False)
 
+    def satisfies(self, other):
+        """return True if this package (self) satisfies the requirements of 
+        the passed package (other)"""
+        if not isinstance(other, Package):
+            raise TypeError('satisfies() requires a package argument')
+        if not isinstance(other, DEBPackage):
+            return False
+        if self.name != other.name:
+            return False
+        if other.version is not None and self.version != other.version:
+            return False
+        if other.architecture is not None \
+                and self.architecture != other.architecture:
+            return False
+        return True
+
+_register_with_representer(DEBPackage)
 
 @attr.s
 class DebianDistribution(Distribution):
@@ -152,6 +170,31 @@ class DebianDistribution(Distribution):
         #   e.g. component (main, contrib, non-free) to be a list!  but that
         #   would make us require supporting flexible typing -- string or a list
         pass
+
+    def satisfies_package(self, package):
+        """return True if this distribution (self) satisfies the requirements 
+        of the passed package"""
+        if not isinstance(package, Package):
+            raise TypeError('satisfies_package() requires a package argument')
+        if not isinstance(package, DEBPackage):
+            return False
+        return any([ p.satisfies(package) for p in self.packages ])
+
+    def satisfies(self, other):
+        """return True if this distribution (self) satisfies the requirements 
+        of the other distribution (other)"""
+        if not isinstance(other, Distribution):
+            raise TypeError('satisfies() requires a distribution argument')
+        if not isinstance(other, DebianDistribution):
+            return False
+        return all(map(self.satisfies_package, other.packages))
+
+    def __sub__(self, other):
+        # the semantics of distribution subtraction are, for d1 - d2:
+        #     what is specified in d1 that is not specified in d2
+        #     or how does d2 fall short of d1
+        #     or what is in d1 that isn't satisfied by d2
+        return [ p for p in self.packages if not other.satisfies_package(p) ]
 
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)
@@ -421,14 +464,13 @@ class DebTracer(DistributionTracer):
             try:
                 out = self._session.read(filename)
                 spec = get_spec_from_release_file(out)
-                try:
-                    date = str(pytz.utc.localize(
-                        datetime.utcfromtimestamp(
-                            mktime_tz(parsedate_tz(spec.date)))))
-                except TypeError as _:
-                    lgr.warning("Unexpected date format %s " % spec.date)
-                break
+                date = str(pytz.utc.localize(
+                    datetime.utcfromtimestamp(
+                        mktime_tz(parsedate_tz(spec.date)))))
             except CommandError as _:
+                # NOTE: We will be trying release files that end in
+                # "Release" and "InRelease", so we expect to fail in opening
+                # specific attempts.
                 pass
         return date
 

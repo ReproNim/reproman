@@ -105,6 +105,7 @@ def test_custom_versions():
     # assert_equal(set(ev.versions.keys()), {'cmd:annex'})
     # assert(ev['cmd:git'] > '1.7')  # git must be present and recentish
     # assert_equal(set(ev.versions.keys()), {'cmd:annex', 'cmd:git'})
+    # assert (ev['cmd:apt-cache'] > '1.1') # apt-cache must be present and recentish
 
     ev.CUSTOM = {'bogus': lambda: 1/0}
     assert_equal(ev['bogus'], None)

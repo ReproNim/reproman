@@ -15,12 +15,46 @@ import six
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, skip_if_no_network
+from ...tests.utils import assert_in, skip_if_no_network, skip_ssh
 from ..base import ResourceManager
+from ...cmd import Runner
 
+import pytest
+from nose import SkipTest
 
-@skip_if_no_network
-def test_ssh_class():
+@pytest.fixture(scope='module')
+def setup_docker():
+    """pytest fixture for tests needing a running docker container
+
+    on setup, this fixture ensures that a docker container that maps 
+    host port 49000 to container port 22 is running and starts one if necessary
+
+    on teardown, this fixture stops the docker container if it was started by 
+    the fixture
+    """
+    skip_if_no_network()
+    stdout, _ = Runner().run(['docker', 'ps'])
+    if '0.0.0.0:49000->22/tcp' in stdout:
+        stop_container = False
+    else:
+        args = ['docker', 
+                'run', 
+                '-d', 
+                '--rm', 
+                '-p', 
+                '49000:22', 
+                'rastasheep/ubuntu-sshd:14.04']
+        stdout, _ = Runner().run(args)
+        container_id = stdout.strip()
+        stop_container = True
+    yield
+    if stop_container:
+        Runner().run(['docker', 'stop', container_id])
+    return
+
+def test_ssh_class(setup_docker):
+
+    skip_ssh()
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 

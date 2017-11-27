@@ -80,10 +80,9 @@ def test_source_file_crash(script=None):
     with raises(Exception):  # TODO: unify?
         ses.source_script(script)
 
-@with_tempfile(content="content")
-def test_isdir(script=None):
+def test_isdir():
     ses = ShellSession()
-    assert not ses.isdir(script)
+    assert not ses.isdir(__file__)
     assert ses.isdir("/bin")
 
 
