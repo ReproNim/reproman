@@ -39,20 +39,20 @@ def setup_ssh():
     skip_if_no_network()
     skip_ssh()
     stdout, _ = Runner().run(['docker', 'ps'])
-    if '0.0.0.0:49000->22/tcp' in stdout:
+    params = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'port': '49000',
+    }
+    if '0.0.0.0:{port}->22/tcp'.format(**params) in stdout:
         stop_container = False
     else:
-        params = {
-            'host': 'localhost',
-            'user': 'root',
-            'password': 'root',
-            'port': '49000',
-        }
-        args = ['docker', 
-                'run', 
-                '-d', 
-                '--rm', 
-                '-p', 
+        args = ['docker',
+                'run',
+                '-d',
+                '--rm',
+                '-p',
                 '{port}:22'.format(**params),
                 'rastasheep/ubuntu-sshd:14.04']
         stdout, _ = Runner().run(args)
@@ -62,6 +62,13 @@ def setup_ssh():
     if stop_container:
         Runner().run(['docker', 'stop', container_id])
     return
+
+
+def test_setup_ssh(setup_ssh):
+    # Rudimentary smoke test for setup_ssh so we have
+    # multiple uses for the setup_ssh
+    assert 'port' in setup_ssh
+    assert setup_ssh['host'] == 'localhost'
 
 
 def test_ssh_class(setup_ssh):
