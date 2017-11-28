@@ -534,8 +534,4 @@ def test_skip_ssh():
         raise AssertionError("must have not skipped")
 
     with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': ""}):
-        try:
-            func(2)
-            assert "Must have thrown SkipTest"
-        except SkipTest:
-            pass
+        assert_raises(SkipTest, func, 2)
