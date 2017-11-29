@@ -54,6 +54,11 @@ def test_dpkg_manager_identify_packages():
         assert False, "A non-local origin must be found"
 
 
+@pytest.mark.slow
+@skip_if_no_apt_cache
+def test_check_bin_packages():
+    pass
+
 # def test_find_release_file():
 #     fp = lambda p: os.path.join('/var/lib/apt/lists', p)
 #
