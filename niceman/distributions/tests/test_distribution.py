@@ -21,6 +21,32 @@ import niceman.tests.fixtures
 
 def test_distributions(demo1_spec):
 
+    def mock_execute_command(command):
+        if type(command) is list:
+            if command == ['apt-cache', 'policy', 'libc6-dev:amd64']:
+                return (
+                    b'libc6-dev: \
+                        Installed: (none) \
+                        Candidate: 2.19-18+deb8u4 \
+                        Version table: \
+                            2.19-18+deb8u4 500 \
+                            500 http://archive.ubuntu.com/ubuntu xenial/universe amd64 Packages',
+                    0
+                )
+            if command == ['apt-cache', 'policy', 'afni']:
+                return (
+                    b'afni: \
+                        Installed: 16.2.07~dfsg.1-2~nd90+1 \
+                        Candidate: 16.2.07~dfsg.1-2~nd90+1 \
+                        Version table: \
+                            16.2.07~dfsg.1-2~nd90+1 500 \
+                            500 http://archive.ubuntu.com/ubuntu xenial/universe amd64 Packages',
+                    0
+                )
+        if type(command) is str:
+            if command.startswith('grep'):
+                return (None, 1)
+
     provenance = Provenance.factory(demo1_spec)
     distributions = provenance.get_distributions()
     distributions = items_to_dict(distributions)
@@ -28,18 +54,15 @@ def test_distributions(demo1_spec):
     # Test DebianDistribution class.
     debian_distribution = distributions['debian']
     environment = MagicMock()
+    environment.execute_command = mock_execute_command
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
         debian_distribution.initiate(environment)
         debian_distribution.install_packages(environment)
 
-        calls = [
-            call.execute_command(['apt-get', 'update']),
-            call.execute_command(['apt-get', 'install', '-y', 'libc6-dev=2.19-18+deb8u4', 'afni=16.2.07~dfsg.1-2~nd90+1']),
-        ]
-        environment.assert_has_calls(calls, any_order=True)
         assert_in("Adding Debian update to environment command list.", log.lines)
+        assert_in("Installing libc6-dev=2.19-18+deb8u4, afni=16.2.07~dfsg.1-2~nd90+1", log.lines)
 
     """
     no longer in that demo spec

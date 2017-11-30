@@ -150,6 +150,7 @@ class DebianDistribution(Distribution):
         package_specs = []
 
         for package in self.packages:
+            self._verify_package_source(session, package)
             package_spec = package.name
             if use_version and package.version:
                 package_spec += '=%s' % package.version
@@ -160,9 +161,48 @@ class DebianDistribution(Distribution):
         lgr.debug("Installing %s", ', '.join(package_specs))
         session.execute_command(
             # TODO: Pull env out of provenance for this command.
-            ['apt-get', 'install', '-y'] + package_specs,
+            ['apt-get', 'install', '-y', '--force-yes'] + package_specs,
             # env={'DEBIAN_FRONTEND': 'noninteractive'}
         )
+
+    def _verify_package_source(self, session, package):
+        """
+        Update /etc/apt/sources if necessary based on package version and install date.
+
+        Parameters
+        ----------
+        session : Session object
+        package : DEBPackage object
+        """
+        query = package.name if not package.architecture \
+            else "%s:%s" % (package.name, package.architecture)
+        out, _ = session.execute_command(
+            ['apt-cache', 'policy', query]
+        )
+        out = utils.to_unicode(out, "utf-8")
+        cache = parse_apt_cache_policy_pkgs_output(out)[package.name]
+
+        # If the package is not installed and has does not have a repo source defined, then add
+        # the repo source provided by the the spec.
+        if cache['installed'] == '(none)' \
+            and len([v for v in cache['versions'] if v['version'] == package.version]) == 0:
+
+            # Pull the source definition for the version listed in the package and verify
+            # it is a Debian source (i.e. not an Ubuntu source)
+            for source in [s for s in self.apt_sources \
+                if s.name in package.versions[package.version] and s.origin == 'Debian']:
+                
+                # Build the entry for the /etc/apt/sources.list file and add it to the file.
+                if package.install_date:
+                    lgr.debug("Adding Debian snapshot repo for package {}.".format(package.name))
+                    date = datetime.strptime(package.install_date.split('+')[0], "%Y-%m-%d %H:%M:%S")
+                    template = 'deb http://snapshot.debian.org/archive/debian/{}/ {} main'
+                    source_line = template.format(date.strftime("%Y%m%d"), source.codename)
+                    command = "grep -q '{}' /etc/apt/sources.list"
+                    out, line_not_found = session.execute_command(command.format(source_line))
+                    if line_not_found:
+                        session.execute_command("sh -c 'echo {} >> /etc/apt/sources.list'".format(source_line))
+                        session.execute_command(['apt-get', '-o', 'Acquire::Check-Valid-Until=false', 'update'])
 
     def normalize(self):
         # TODO:

@@ -37,9 +37,7 @@ def test_identify_packages():
 def test_identify_myself():
     distributions, files = identify_distributions([__file__, '/nonexisting-for-sure'])
     assert len(distributions) == 1
-    assert distributions[0].name == 'git'
-    assert distributions[0].packages[0].files == [__file__]
-
+    assert distributions[0].name == 'conda'
     assert files == ['/nonexisting-for-sure']
 
 

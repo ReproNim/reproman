@@ -12,6 +12,7 @@ import attr
 import docker
 import dockerpty
 import json
+from niceman import utils
 from ..support.exceptions import CommandError, ResourceError
 from .base import Resource, attrib
 
@@ -88,7 +89,7 @@ class DockerContainer(Resource):
         # image might be of the form repository:tag -- pull would split them
         # if needed
         for line in self._client.pull(repository=self.base_image_id, stream=True):
-            status = json.loads(line)
+            status = json.loads(utils.to_unicode(line, "utf-8"))
             output = status['status']
             if 'progress' in status:
                 output += ' ' + status['progress']
@@ -163,6 +164,10 @@ class DockerSession(POSIXSession):
             be a string or a list of tokens that create the command.
         env : dict
             Complete environment to be used
+
+        Returns
+        -------
+        out, err
         """
         #command_env = self.get_updated_env(env)
         if env:
@@ -178,13 +183,16 @@ class DockerSession(POSIXSession):
         #    docker.errors.APIError - If the server returns an error.
         lgr.debug('Running command %r', command)
         execute = self.client.exec_create(container=self.container, cmd=command)
+        out = ''
         for i, line in enumerate(
                 self.client.exec_start(exec_id=execute['Id'],
                 stream=True)
         ):
             if line.startswith(b'rpc error'):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
+            out += utils.to_unicode(line, "utf-8")
             lgr.debug("exec#%i: %s", i, line.rstrip())
+        return (out, self.client.exec_inspect(execute['Id'])['ExitCode'])
 
     # XXX should we start/stop on open/close or just assume that it is running already?
 

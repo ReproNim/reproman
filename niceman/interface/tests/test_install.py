@@ -19,6 +19,7 @@ from ...tests.utils import assert_in
 def test_install_interface(demo1_spec, niceman_cfg_path):
 
     with patch('docker.Client') as client, \
+        patch('niceman.distributions.debian.DebianDistribution.install_packages'), \
         patch('niceman.resource.ResourceManager.set_inventory'), \
         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
@@ -55,6 +56,7 @@ def test_install_interface(demo1_spec, niceman_cfg_path):
                 cmd=cmd,
                 container={'State': 'running', 'Id': '326b0fdfbf838', 'Names': ['/my-resource']}
             )
+
         calls = [
             call(base_url='tcp://127.0.0.1:2375'),
             container_call(['apt-get', 'update']),
@@ -72,9 +74,9 @@ def test_install_interface(demo1_spec, niceman_cfg_path):
             #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
             # call().exec_create(cmd=['apt-get', 'install', '-y', 'python-pip'],
             #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            container_call(
-                ['apt-get', 'install', '-y', 'libc6-dev=2.19-18+deb8u4', 'afni=16.2.07~dfsg.1-2~nd90+1']
-            ),
+            # container_call(
+            #     ['apt-get', 'install', '-y', 'libc6-dev=2.19-18+deb8u4', 'afni=16.2.07~dfsg.1-2~nd90+1']
+            # ),
             # call().exec_create(cmd=['apt-get', 'install', '-y', 'python-nibabel'],
             #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
             # call().exec_create(cmd=['pip', 'install', 'piponlypkg'],
