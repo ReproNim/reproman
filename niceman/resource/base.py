@@ -11,6 +11,7 @@
 import attr
 from importlib import import_module
 import abc
+from six.moves.configparser import NoSectionError
 
 import yaml
 from os.path import basename
@@ -139,14 +140,20 @@ class ResourceManager(object):
         # TODO:  if no name or id provided, then fail since this function
         #        is not created to return a list of resources for a given type ATM
 
-        vald_resource_types = [t.replace("_", "-") for t in ResourceManager._discover_types()]
+        valid_resource_types = [t.replace("_", "-") for t in ResourceManager._discover_types()]
 
         if name in inventory:
             # XXX so what is our convention here on SMTH-SMTH defining the type?
-            config = dict(cm.items(inventory[name]['type'].split('-')[0]))
+            try:
+                config = dict(cm.items(inventory[name]['type'].split('-')[0]))
+            except NoSectionError:
+                config = {}
             config.update(inventory[name])
-        elif type_ and type_ in vald_resource_types:
-            config = dict(cm.items(type_.split('-')[0]))
+        elif type_ and type_ in valid_resource_types:
+            try:
+                config = dict(cm.items(type_.split('-')[0]))
+            except NoSectionError:
+                config = {}
         else:
             type_ = ui.question(
                 "Enter a resource type",
@@ -157,7 +164,7 @@ class ResourceManager(object):
                 default="docker-container"
             )
             config = {}
-            if type_ not in vald_resource_types:
+            if type_ not in valid_resource_types:
                 raise MissingConfigError(
                     "Resource type '{}' is not valid".format(type_))
 
@@ -364,4 +371,9 @@ class Resource(object):
         # just a random uuid for now, TODO: think if we somehow could
         # fingerprint it so to later be able to decide if it is 'ours'? ;)
         return str(uuid.uuid1())
+
+    @abc.abstractmethod
+    def get_session(self, pty=False, shared=None):
+        """Return an open session to a resource environment"""
+        raise NotImplementedError
 

@@ -151,6 +151,9 @@ class DistributionTracer(object):
 
     __metaclass__ = abc.ABCMeta
 
+    # Default to being able to handle directories
+    HANDLES_DIRS = True
+
     def __init__(self, session=None):
         # will be (re)used to run external commands, and let's hardcode LC_ALL
         # codepage just in case since we might want to comprehend error

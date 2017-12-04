@@ -48,11 +48,10 @@ class Create(Interface):
         #     # provide options, like --no-exec, etc  per each spec
         #     # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         # ),
-        resource=Parameter(
-            args=("-r", "--resource"),
-            # TODO:  is that a --name kind?  note that example mentions --name
+        name=Parameter(
+            args=("-n", "--name"),
             doc="""For which resource to create a new environment. To see
-            available resource, run the command 'niceman ls'""",
+            available resources, run the command 'niceman ls'""",
             constraints=EnsureStr(),
         ),
         resource_type=Parameter(
@@ -95,7 +94,7 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(resource, resource_type, config, resource_id, clone, only_env,
+    def __call__(name, resource_type, config, resource_id, clone, only_env,
                  backend, existing='fail '):
 
         # Load, while possible merging/augmenting sequentially
@@ -122,12 +121,13 @@ class Create(Interface):
 
         from niceman.ui import ui
 
-        # TODO: allow resource to be name or id...
-        if not resource:
-            resource = ui.question(
+        if not name and not resource_id:
+            name = ui.question(
                 "Enter a resource name",
                 error_message="Missing resource name"
             )
+        if not name:
+            name = resource_id
 
         # if only_env:
         #     raise NotImplementedError
@@ -135,11 +135,11 @@ class Create(Interface):
         # Get configuration and environment inventory
         if clone:
             config, inventory = ResourceManager.get_resource_info(config, clone, resource_id, resource_type)
-            config['name'] = resource
+            config['name'] = name
             del config['id']
             del config['status']
         else:
-            config, inventory = ResourceManager.get_resource_info(config, resource, resource_id, resource_type)
+            config, inventory = ResourceManager.get_resource_info(config, name, resource_id, resource_type)
 
         # Create resource environment
         env_resource = ResourceManager.factory(config)
@@ -153,12 +153,12 @@ class Create(Interface):
 
         # Save the updated configuration for this resource.
         config.update(resource_attrs)
-        inventory[resource] = config
+        inventory[name] = config
         ResourceManager.set_inventory(inventory)
 
-        lgr.info("Created the environment %s", resource)
+        lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env
         # if not only_env:
         #     from repronim.api import install
-        #     install(provenance, resource, resource_id, config)
+        #     install(provenance, name, resource_id, config)
