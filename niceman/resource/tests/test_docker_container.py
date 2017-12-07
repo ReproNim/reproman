@@ -50,7 +50,8 @@ def test_dockercontainer_class():
             ],
             create_container=lambda name, image, stdin_open, tty, command: {
                 'Id': '18b31b30e3a5'
-            }
+            },
+            exec_inspect=lambda id: { 'ExitCode': 0 }
         )
 
         # Test connecting when a resource doens't exist.

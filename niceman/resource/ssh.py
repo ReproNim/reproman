@@ -17,6 +17,8 @@ lgr = logging.getLogger('niceman.resource.ssh')
 
 from .base import Resource, attrib
 from ..support.starcluster.sshutils import SSHClient
+from ..support.starcluster.exception import RemoteCommandFailed
+from ..support.exceptions import CommandError
 
 
 @attr.s
@@ -134,11 +136,14 @@ class SSHSession(POSIXSession):
         # If a command fails, a CommandError exception will be thrown.
         escaped_command = ' '.join(quote(s) for s in command)
         out = []
-        for i, line in enumerate(self.ssh.execute(escaped_command)):
-            out.append(line.rstrip())
-            lgr.debug("exec#%i: %s", i, line.rstrip())
+        try:
+            for i, line in enumerate(self.ssh.execute(escaped_command)):
+                out.append(line.rstrip())
+                lgr.debug("exec#%i: %s", i, line.rstrip())
+        except RemoteCommandFailed as e:
+            raise CommandError(cmd=escaped_command, msg=e.msg)
 
-        return (out, False)
+        return (out, None)
 
     def exists(self, path):
         """Return if file exists"""

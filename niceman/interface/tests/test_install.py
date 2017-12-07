@@ -30,7 +30,8 @@ def test_install_interface(demo1_spec, niceman_cfg_path):
                     'Names': ['/my-resource'],
                     'State': 'running'
                 }
-            ]
+            ],
+            exec_inspect=lambda id: { 'ExitCode': 0 }
         )
 
         get_inventory.return_value = {

@@ -191,13 +191,14 @@ class DockerSession(POSIXSession):
                 self.client.exec_start(exec_id=execute['Id'],
                 stream=True)
         ):
-            if self.client.exec_inspect(execute['Id'])['ExitCode'] > 0:
-                msg = line.decode('utf-8').strip("\n")
-                raise CommandError(cmd=command, msg=msg)
             out.append(line.rstrip())
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
-        return (out, self.client.exec_inspect(execute['Id'])['ExitCode'])
+        exit_code = self.client.exec_inspect(execute['Id'])['ExitCode']
+        if exit_code not in [0, None]:
+            raise CommandError(cmd=' '.join(command), msg='Exit code: {}'.format(exit_code))
+
+        return (out, None)
 
     # XXX should we start/stop on open/close or just assume that it is running already?
 

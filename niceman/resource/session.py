@@ -394,41 +394,36 @@ class POSIXSession(Session):
 
     def isdir(self, path):
         try:
-            self.execute_command(['test', '-d', path])
+            out, err = self.execute_command(['test', '-d', path])
+        except Exception as exc:  # TODO: More specific exception?
+            lgr.debug("Check for directory failed: %s", exc_str(exc))
+            return False
+        if not err:
             return True
-        except CommandError:
-            lgr.error(cmd.msg)
+        else:
+            lgr.debug("Standard error was not empty (%r), thus assuming that "
+                      "test for directory has failed", err)
             return False
 
     def chmod(self, mode, remote_path, recursive=False):
         """Set the mode of a remote path
         """
-        try:
-            command = ['chmod']
-            if recursive: command += ["-R"]
-            command += [mode] + [remote_path]
-            self.execute_command(command)
-            return True
-        except CommandError as cmd:
-            lgr.error(cmd.msg)
-            return False
+        command = ['chmod']
+        if recursive: command += ["-R"]
+        command += [mode] + [remote_path]
+        self.execute_command(command)
 
     def chown(self, uid, gid, remote_path, recursive=False):
         """Set the user and group of a path
         """
-        try:
-            command = ['chown']
-            if recursive: command += ["-R"]
-            if int(uid) > 0 and int(gid) > 0: command += ["{}.{}".format(uid, gid)]
-            elif int(uid) > 0: command += [uid]
-            elif int(uid) > 0: command = ['chgrp'] + [gid]
-            else: raise CommandError
-            command += [remote_path]
-            self.execute_command(command)
-            return True
-        except CommandError:
-            lgr.error(cmd.msg)
-            return False
+        command = ['chown']
+        if recursive: command += ["-R"]
+        if int(uid) > 0 and int(gid) > 0: command += ["{}.{}".format(uid, gid)]
+        elif int(uid) > 0: command += [uid]
+        elif int(uid) > 0: command = ['chgrp'] + [gid]
+        else: raise CommandError
+        command += [remote_path]
+        self.execute_command(command)
 
 
 def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):
@@ -442,7 +437,6 @@ def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):
     if env:
         session.set_envvar(env)
     return session
-
 
 def get_updated_env(env, update):
     """Given an environment and set of updates, return updated one
