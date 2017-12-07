@@ -140,7 +140,7 @@ def identify_distributions(files, session=None):
     files_to_consider = files[:]
 
     # Identify directories from the files_to_consider
-    dirs = set([x for x in files_to_consider if session.isdir(x)])
+    dirs = set(filter(session.isdir, files_to_consider))
 
     distibutions = []
     for Tracer in Tracers:

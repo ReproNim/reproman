@@ -12,10 +12,17 @@ import os
 from pprint import pprint
 
 from niceman.distributions.debian import DebTracer
+from niceman.distributions.debian import DEBPackage
+from niceman.distributions.debian import DebianDistribution
+
+import pytest
 
 import mock
 
+from niceman.tests.utils import skip_if_no_apt_cache
 
+
+@skip_if_no_apt_cache
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
     tracer = DebTracer()
@@ -133,3 +140,66 @@ fail2ban: /usr/bin/fail2ban-server
         '/usr/lib/afni/bin/afni': {'name': u'afni'},
         '/bin/sh': {'name': u'dash'}
     }
+
+@pytest.fixture
+def setup_packages():
+    """set up the package comparison tests"""
+    a = DEBPackage(name='p1')
+    b = DEBPackage(name='p1', version='1.0')
+    c = DEBPackage(name='p1', version='1.1')
+    d = DEBPackage(name='p1', architecture='i386')
+    e = DEBPackage(name='p1', architecture='alpha')
+    f = DEBPackage(name='p1', version='1.1', architecture='i386')
+    g = DEBPackage(name='p2')
+    return (a, b, c, d, e, f, g)
+
+def test_package_satisfies(setup_packages):
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    assert p1.satisfies(p1)
+    assert p1v10.satisfies(p1v10)
+    assert not p1.satisfies(p1v10)
+    assert p1v10.satisfies(p1)
+    assert not p1v10.satisfies(p1v11)
+    assert not p1.satisfies(p2)
+    assert not p1v10.satisfies(p2)
+    assert not p2.satisfies(p1v10)
+    assert not p1v10.satisfies(p1aa)
+    assert p1aa.satisfies(p1)
+    assert not p1aa.satisfies(p1v10)
+    assert not p1aa.satisfies(p1ai)
+    assert not p1v11.satisfies(p1v11ai)
+    assert p1v11ai.satisfies(p1v11)
+
+@pytest.fixture
+def setup_distributions():
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
+    d1 = DebianDistribution(name='debian 1')
+    d1.packages = [p1]
+    d2 = DebianDistribution(name='debian 2')
+    d2.packages = [p1v11]
+    return (d1, d2)
+
+def test_distribution_satisfies_package(setup_distributions, setup_packages):
+    (d1, d2) = setup_distributions
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    assert d1.satisfies_package(p1)
+    assert not d1.satisfies_package(p1v10)
+    assert d2.satisfies_package(p1)
+    assert not d2.satisfies_package(p1v10)
+    assert d2.satisfies_package(p1v11)
+
+def test_distribution_statisfies(setup_distributions):
+    (d1, d2) = setup_distributions
+    assert not d1.satisfies(d2)
+    assert d2.satisfies(d1)
+
+def test_distribution_sub():
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
+    d1 = DebianDistribution(name='debian 1')
+    d1.packages = [p1, p2]
+    d2 = DebianDistribution(name='debian 2')
+    d2.packages = [p1v11, p2]
+    assert d1-d2 == []
+    result = d2-d1
+    assert len(result) == 1
+    assert result[0] == p1v11

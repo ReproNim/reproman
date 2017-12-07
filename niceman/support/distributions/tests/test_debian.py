@@ -13,7 +13,7 @@
 from ..debian import DebianReleaseSpec
 from ..debian import get_spec_from_release_file
 
-from niceman.tests.utils import eq_, assert_is_subset_dict_recur
+from niceman.tests.utils import eq_, assert_is_subset_recur
 
 
 def test_get_spec_from_release_file(f=None):
@@ -161,7 +161,7 @@ Origin: Ubuntu
                                                 'Status': 'install ok installed',
                                                 'Version': '1.0.2g-1ubuntu4.5'}}
     out = parse_apt_cache_show_pkgs_output(txt1)
-    assert_is_subset_dict_recur(out1, out)
+    assert_is_subset_recur(out1, out, [dict])
 
 
 def test_parse_apt_cache_policy_pkgs_output():
@@ -252,7 +252,7 @@ skype:i386:
                                                   'Packages'}],
                            'version': '1.0.2g-1ubuntu4'}]}}
     out = parse_apt_cache_policy_pkgs_output(txt1)
-    assert_is_subset_dict_recur(out1, out)
+    assert_is_subset_recur(out1, out, [dict])
 
 def test_parse_apt_cache_policy_source_info():
     from ..debian import parse_apt_cache_policy_source_info
@@ -285,6 +285,10 @@ Package files:
  500 http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages
      release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=restricted,b=amd64
      origin security.ubuntu.com
+ 500 http://debproxy:9999/debian/ jessie-backports/contrib Translation-en
+ 100 http://debproxy:9999/debian/ jessie-backports/non-free amd64 Packages
+     release o=Debian Backports,a=jessie-backports,n=jessie-backports,l=Debian Backports,c=non-free
+     origin debproxy
  500 http://us.archive.ubuntu.com/ubuntu xenial-updates/universe amd64 Packages
      release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=universe,b=amd64
      origin us.archive.ubuntu.com
@@ -313,9 +317,25 @@ Pinned packages:
                  'component': 'restricted',
                  'label': 'Ubuntu',
                  'origin': 'Ubuntu',
-                 'site': 'security.ubuntu.com'}}
+                 'site': 'security.ubuntu.com'
+                 },
+            'http://debproxy:9999/debian/ jessie-backports/contrib Translation-en':
+                {'archive_uri': 'http://debproxy:9999/debian/',
+                 'uri_suite': 'jessie-backports'
+                 },
+            'http://debproxy:9999/debian/ jessie-backports/non-free amd64 Packages':
+                {'archive': 'jessie-backports',
+                 'archive_uri': 'http://debproxy:9999/debian/',
+                 'codename': 'jessie-backports',
+                 'component': 'non-free',
+                 'label': 'Debian Backports',
+                 'origin': 'Debian Backports',
+                 'site': 'debproxy',
+                 'uri_suite': 'jessie-backports'
+                 },
+            }
     out = parse_apt_cache_policy_source_info(txt)
-    assert_is_subset_dict_recur(out1, out)
+    assert_is_subset_recur(out1, out, [dict])
 
 
 def test_get_apt_release_file_names():
