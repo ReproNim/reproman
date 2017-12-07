@@ -19,7 +19,7 @@ from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_if_no_network, skip_ssh
 from ..base import ResourceManager
 from ...support.starcluster.sshutils import SSHClient
-from ..cmd import Runner
+from ...cmd import Runner
 
 import pytest
 from nose import SkipTest
