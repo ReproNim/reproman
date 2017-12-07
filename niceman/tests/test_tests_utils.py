@@ -39,7 +39,7 @@ from .utils import eq_, ok_, assert_false, ok_startswith, nok_startswith, \
     swallow_outputs, swallow_logs, \
     on_windows, assert_raises, assert_cwd_unchanged, serve_path_via_http, \
     ok_symlink, assert_true, ok_good_symlink, ok_broken_symlink, \
-    assert_is_subset_dict_recur
+    assert_is_subset_recur
 
 from .utils import ok_generator
 from .utils import assert_re_in
@@ -489,19 +489,49 @@ def test_run_under_dir(d=None):
     eq_(os.getcwd(), orig_cwd)
 
 
-def test_assert_is_subset_dict_recur():
-    assert_is_subset_dict_recur(1, 1)
-    assert_is_subset_dict_recur({}, {'a': 1})
-    assert_raises(AssertionError, assert_is_subset_dict_recur,
-                  {'a': 1},
-                  {'b': 2})
-    assert_is_subset_dict_recur({'a': {'z': 1}},
-                                 {'a': {'y': 2, 'z': 1}})
-    assert_raises(AssertionError, assert_is_subset_dict_recur,
+def test_assert_is_subset_recur():
+    assert_is_subset_recur(1, 1)
+    assert_is_subset_recur({}, {'a': 1}, [dict])
+    assert_raises(AssertionError, assert_is_subset_recur,
+                  {'a': 1}, {'b': 2}, [dict])
+    assert_is_subset_recur({'a': {'z': 1}},
+                           {'a': {'y': 2, 'z': 1}}, [dict])
+    assert_raises(AssertionError, assert_is_subset_recur,
                   {'a': {'y': 2, 'z': 1}},
-                  {'a': {'z': 1}})
-    assert_is_subset_dict_recur({'a': {'z': [1]}},
-                                 {'a': {'y': 2, 'z': [1]}})
-    assert_raises(AssertionError, assert_is_subset_dict_recur,
+                  {'a': {'z': 1}}, [dict])
+    assert_is_subset_recur({'a': {'z': [1]}},
+                           {'a': {'y': 2, 'z': [1]}}, [dict])
+    assert_raises(AssertionError, assert_is_subset_recur,
                   {'a': {'y': 2, 'z': [1]}},
-                  {'a': {'z': [1]}})
+                  {'a': {'z': [1]}}, [dict])
+    assert_is_subset_recur({'a': {'z': [1]}},
+                           {'a': {'z': [1]}}, [])
+    assert_raises(AssertionError, assert_is_subset_recur,
+                  {'a': {'z': [1]}},
+                  {'a': {'y': 2, 'z': [1]}}, [])
+    assert_is_subset_recur([1, 2], [3, 2, 1], [list])
+    assert_raises(AssertionError, assert_is_subset_recur,
+                  [3, 2, 1], [1, 2], [list])
+    assert_is_subset_recur([3, [2]], [3, [2, 1]], [list])
+    assert_raises(AssertionError, assert_is_subset_recur,
+                  [3, [2, 1]], [3, [2]], [list])
+    assert_is_subset_recur([3, [2]], [3, [2]], [dict])
+    assert_raises(AssertionError, assert_is_subset_recur,
+                  [3, [2]], [3, [2, 1]], [dict])
+
+
+def test_skip_ssh():
+    from .utils import skip_ssh
+
+    try:
+        @skip_ssh
+        def func(x):
+            return x + 2
+
+        with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': "1"}):
+            assert func(2) == 4
+    except SkipTest:
+        raise AssertionError("must have not skipped")
+
+    with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': ""}):
+        assert_raises(SkipTest, func, 2)

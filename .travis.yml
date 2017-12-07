@@ -15,8 +15,8 @@ matrix:
   - python: 2.7
   # no loop dev support on travis yet :-/ https://github.com/travis-ci/travis-ci/issues/2700
   #- python: 2.7
-  #  env:
-  #  - NOSE_WRAPPER="tools/eval_under_testloopfs"
+    env:
+    - NICEMAN_TESTS_SSH=1
   - python: 2.7
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
@@ -34,6 +34,8 @@ matrix:
     - https_proxy=
   - python: 3.4
   - python: 3.5
+    env:
+    - NICEMAN_TESTS_SSH=1
   # Those aren't yet ready since lxml Ibelieve fails to install
   #- python: pypy
   #- python: pypy3
