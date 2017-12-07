@@ -19,6 +19,7 @@ from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_if_no_network
 from ..base import ResourceManager
 from ...support.starcluster.sshutils import SSHClient
+from ..cmd import Runner
 
 
 @skip_if_no_network
