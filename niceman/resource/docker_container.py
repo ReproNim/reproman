@@ -31,7 +31,7 @@ class DockerContainer(Resource):
     id = attr.ib(default=None)
     type = attr.ib(default='docker-container')
 
-    base_image_id = attrib(default='ubuntu:latest',
+    image = attrib(default='ubuntu:latest',
         doc="Docker base image ID from which to create the running instance")
     engine_url = attrib(default='unix:///var/run/docker.sock',
         doc="Docker server URL where engine is listening for connections")
@@ -88,7 +88,7 @@ class DockerContainer(Resource):
                     self.name, self.id))
         # image might be of the form repository:tag -- pull would split them
         # if needed
-        for line in self._client.pull(repository=self.base_image_id, stream=True):
+        for line in self._client.pull(repository=self.image, stream=True):
             status = json.loads(utils.to_unicode(line, "utf-8"))
             output = status['status']
             if 'progress' in status:
@@ -96,7 +96,7 @@ class DockerContainer(Resource):
             lgr.info(output)
         self._container = self._client.create_container(
             name=self.name,
-            image=self.base_image_id,
+            image=self.image,
             stdin_open=True,
             tty=True,
             command='/bin/bash',

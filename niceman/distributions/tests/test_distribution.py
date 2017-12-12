@@ -22,7 +22,7 @@ import niceman.tests.fixtures
 def test_distributions(demo1_spec):
 
     def mock_execute_command(command):
-        if type(command) is list:
+        if isinstance(command, list):
             if command == ['apt-cache', 'policy', 'libc6-dev:amd64']:
                 return (
                     b'libc6-dev: \
@@ -33,7 +33,7 @@ def test_distributions(demo1_spec):
                             500 http://archive.ubuntu.com/ubuntu xenial/universe amd64 Packages',
                     0
                 )
-            if command == ['apt-cache', 'policy', 'afni']:
+            if command == ['apt-cache', 'policy', 'afni:amd64']:
                 return (
                     b'afni: \
                         Installed: 16.2.07~dfsg.1-2~nd90+1 \
@@ -43,7 +43,17 @@ def test_distributions(demo1_spec):
                             500 http://archive.ubuntu.com/ubuntu xenial/universe amd64 Packages',
                     0
                 )
-        if type(command) is str:
+            if command == ['apt-cache', 'policy', 'dcm2niix:amd64']:
+                return (
+                    b'dcm2niix: \
+                        Installed: (none) \
+                        Candidate: 1:1.0.20171017+git3-g9ccc4c0-1~nd16.04+1 \
+                        Version table: \
+                            1:1.0.20171017+git3-g9ccc4c0-1~nd16.04+1 500 \
+                            500 http://archive.ubuntu.com/ubuntu xenial/universe amd64 Packages',
+                    0
+                )
+        if isinstance(command, str):
             if command.startswith('grep'):
                 return (None, 1)
 
@@ -55,6 +65,7 @@ def test_distributions(demo1_spec):
     debian_distribution = distributions['debian']
     environment = MagicMock()
     environment.execute_command = mock_execute_command
+    environment.exists.return_value = False
 
     with swallow_logs(new_level=logging.DEBUG) as log:
 
@@ -62,7 +73,17 @@ def test_distributions(demo1_spec):
         debian_distribution.install_packages(environment)
 
         assert_in("Adding Debian update to environment command list.", log.lines)
-        assert_in("Installing libc6-dev=2.19-18+deb8u4, afni=16.2.07~dfsg.1-2~nd90+1", log.lines)
+        assert_in('Adding Debian snapshot repo for package libc6-dev.', log.lines)
+        assert_in("Adding line 'deb http://snapshot.debian.org/archive/debian/20170531T084046Z/ sid main \
+contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Adding NeuroDebian snapshot repo for package afni.', log.lines)
+        assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ \
+xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Adding NeuroDebian snapshot repo for package dcm2niix.', log.lines)
+        assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ \
+xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Installing libc6-dev=2.19-18+deb8u4, afni=16.2.07~dfsg.1-5~nd16.04+1, \
+dcm2niix=1:1.0.20171017+git3-g9ccc4c0-1~nd16.04+1', log.lines)
 
     """
     no longer in that demo spec
