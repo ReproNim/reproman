@@ -22,7 +22,7 @@ from .session import POSIXSession, get_updated_env
 @attr.s
 class Shell(Resource):
 
-    # Container properties
+    # Shell properties
     name = attr.ib()
     id = attr.ib(default=None)
     type = attr.ib(default='shell')

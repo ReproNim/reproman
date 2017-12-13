@@ -482,7 +482,8 @@ class VCSTracer(DistributionTracer):
         """Given a path, return path of the repository it belongs to"""
         # very naive just to get a ball rolling
         if not isabs(path):
-            raise ValueError("ATM operating on full paths, got %s" % path)
+            lgr.warning("ATM operating on full paths, got %s" % path)
+            return
         dirpath = path if isdir(path) else dirname(path)
 
         # quick check first

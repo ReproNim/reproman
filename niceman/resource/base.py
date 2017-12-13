@@ -236,18 +236,25 @@ class ResourceManager(object):
         config = self.get_resource_config(name_id=name_id, name=name, id_=id_)
         if not config:
             raise ResourceNotFoundError(
-                "Haven't found resource given name=%s id=%s" % (name, id_))
+                "Haven't found resource given name=%s id=%s" % (name, id_)
+            )
         resource = self.factory(config)
-        # register it in the inventory
+        # TODO: register it in the inventory?
+        return resource
 
+    # XXX is it just creating an instance?
+    #     so pretty much registering already existing resource,
+    #     not really creating it
     def create_resource(self, name=None, id_=None, type_=None):
         # TODO: place the logic I removed which would create the beast and
         # return it
-        config = self.get_resouce_config(name, id_=id_)
+        config = self.get_resource_config(name=name, id_=id_)
         if config:
             raise ResourceAlreadyExistsError("TODO: provide details: %s" % str(config))
         # TODO: create the resource config and pass into the factory
         # TODO: register within the inventory
+        raise NotImplementedError
+
 
     def names(self):
         """Return names of the registered resources"""
@@ -339,7 +346,6 @@ class ResourceManager(object):
             # initiate empty inventory
             self.set_inventory()
 
-
         with open(inventory_path, 'r') as fp:
             inventory = yaml.safe_load(fp)
 
@@ -388,7 +394,7 @@ class Resource(object):
     # so we should define them here
 
     def __repr__(self):
-        return 'Resource({})'.format(self.name)
+        return '{}({})'.format(self.__class__.__name__, self.name)
 
     def refresh(self):
         """Connect to the resource possibly refreshing the status etc"""

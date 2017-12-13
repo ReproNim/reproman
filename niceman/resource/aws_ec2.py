@@ -27,6 +27,7 @@ from ..support.exceptions import ResourceError
 from ..support.starcluster.sshutils import SSHClient
 from .ssh import SSHSession, PTYSSHSession
 
+
 @attr.s
 class AwsEc2(Resource):
 

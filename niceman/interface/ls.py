@@ -77,8 +77,11 @@ class Ls(Interface):
         ui.message(template.format('-------------', '----', '--', '------'))
 
         for name in sorted(manager):
-            resource = manager.get_resource(name=name)
             if name.startswith('_'):
+                continue
+            resource = manager.get_resource(name=name)
+            if not resource:
+                lgr.warning("Manager returned no resource for %s", name)
                 continue
             # XXX(yoh): why do we need a config here?  I guess to update some
             #   config settings which aren't recorded in the "inventory".  But
@@ -102,6 +105,7 @@ class Ls(Interface):
             #     continue
 
             try:
+                old_id = resource.id
                 if refresh:
                     try:
                         resource.connect()
@@ -109,7 +113,8 @@ class Ls(Interface):
                         lgr.warning("Cannot connect to the %s: %s", resource, exc_str(exc))
                 if not resource.id:
                     # continue  # A missing ID indicates a deleted resource.
-                    resource.id = 'DELETED'
+                    if old_id:
+                        resource.id = 'DELETED'
                     # TODO: API to wipe those out
             except ResourceError as exc:
                 ui.error("%s resource query error: %s" % (name, exc_str(exc)))
@@ -119,7 +124,7 @@ class Ls(Interface):
             msgargs = (
                 name,
                 resource.type,
-                resource.id[:id_length],
+                resource.id[:id_length] if resource.id else '',
                 resource.status,
             )
             line = template.format(*msgargs)
@@ -129,10 +134,9 @@ class Ls(Interface):
         # if not refresh:
         #     ui.message('(Use --refresh option to view current status.)')
         #
-        if refresh:
-            manager.set_inventory()
+        # TODO: how do we want to reflect changes back?
         if refresh:
             lgr.debug("Storing manager's inventory upon refresh")
             # ATM it is not in effect, since inventory contains dicts, and
             # instances created "on the fly". TODO
-            manager.set_inventory()
+            # TODO manager.set_inventory()
