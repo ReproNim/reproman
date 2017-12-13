@@ -52,7 +52,6 @@ requires = {
         'tqdm',
         'paramiko',
         'cryptography>=1.5',
-        'enum34',
         'pytz',
         'scp',
         'pycrypto',
