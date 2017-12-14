@@ -147,21 +147,22 @@ Homepage: http://www.schwardtnet.de/alienblaster/
 Bugs: https://bugs.launchpad.net/ubuntu/+filebug
 Origin: Ubuntu
 """
-    out1 = {'alienblaster:amd64=1.1.0-9': {'Architecture': 'amd64',
-                                           'Source_name': 'alienblaster-src',
-                                           'Package': 'alienblaster',
-                                           'Version': '1.1.0-9'},
-            'openssl:amd64=1.0.2g-1ubuntu4': {'Architecture': 'amd64',
-                                              'Source_name': 'openssl-src',
-                                              'Source_version': '1.0.2g',
-                                              'Package': 'openssl',
-                                              'Version': '1.0.2g-1ubuntu4'},
-            'openssl:amd64=1.0.2g-1ubuntu4.5': {'Architecture': 'amd64',
-                                                'Package': 'openssl',
-                                                'Status': 'install ok installed',
-                                                'Version': '1.0.2g-1ubuntu4.5'}}
+    out1 = [{'Architecture': 'amd64',
+             'Package': 'openssl',
+             'Status': 'install ok installed',
+             'Version': '1.0.2g-1ubuntu4.5'},
+            {'Architecture': 'amd64',
+             'Source_name': 'openssl-src',
+             'Source_version': '1.0.2g',
+             'Package': 'openssl',
+             'Version': '1.0.2g-1ubuntu4'},
+            {'Architecture': 'amd64',
+             'Source_name': 'alienblaster-src',
+             'Package': 'alienblaster',
+             'Version': '1.1.0-9'},
+            ]
     out = parse_apt_cache_show_pkgs_output(txt1)
-    assert_is_subset_recur(out1, out, [dict])
+    assert_is_subset_recur(out1, out, [dict, list])
 
 
 def test_parse_apt_cache_policy_pkgs_output():

@@ -63,7 +63,6 @@ def test_dpkg_manager_identify_packages():
 def test_check_bin_packages():
     # Gather files in /usr/bin and /usr/lib
     files = list_all_files("/usr/bin") + list_all_files("/usr/lib")
-    files = files[1:10]  # TEMPORARY!!!!
     tracer = DebTracer()
     distributions = list(tracer.identify_distributions(files))
     assert len(distributions) == 1

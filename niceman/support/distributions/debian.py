@@ -75,7 +75,7 @@ def get_spec_from_release_file(content):
 
 
 def parse_apt_cache_show_pkgs_output(output):
-    package_info = {}
+    package_info = []
     # Split into entries (one per package)
     entries = filter(bool, re.split('\n(?=Package:)', output,
                                     flags=re.MULTILINE))
@@ -112,7 +112,7 @@ def parse_apt_cache_show_pkgs_output(output):
                 pkg_ident = "%s=%s" % (pkg["Package"], pkg["Version"])
             if (pkg_ident in package_info):
                 lgr.warning("Duplicate package %s found " % pkg_ident)
-            package_info[pkg_ident] = pkg
+            package_info.append(pkg)
     return package_info
 
 
