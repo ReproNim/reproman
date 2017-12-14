@@ -492,8 +492,6 @@ class DebTracer(DistributionTracer):
                     out = exc.stdout  # One file not found, so continue
                 else:
                     raise  # some other fault -- handle it above
-                    install_date = None
-                    pass
             # Parse the output and store by filename
             for outlines in out.splitlines():
                 (fname, ftime) = outlines.split(": ")
