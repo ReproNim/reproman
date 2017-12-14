@@ -244,6 +244,9 @@ class DebTracer(DistributionTracer):
         # found association
         if not packages:
             return
+
+        packages = self.get_details_for_packages(packages)
+
         # TODO: Depending on ID might be debian or ubuntu -- we might want to
         # absorb them all within DebianDistribution or have custom classes??
         # So far they seems to be largely similar
@@ -302,45 +305,63 @@ class DebTracer(DistributionTracer):
         # Create a named origin
         return name
 
-    def _create_package(self, name, architecture=None):
+    def get_details_for_packages(self, packages):
         # Find apt sources if not defined
         if not self._all_apt_sources:
             self._find_all_sources()
 
-        # Use dpkg -s <pkg> to get arch and version
-        architecture, version = self._get_pkg_arch_and_version(name,
-                                                               architecture)
-        if not version:
-            lgr.warning("Unable to query package %s" % name)
-            return None
+        # Store the package details as dicts so that we can easily add to them
+        pkg_details = [attr.asdict(pkg) for pkg in packages]
 
-        # Use apt-cache show <pkg> to get details
-        info = self._get_pkg_details(name, architecture, version)
-        if not info:
-            lgr.warning("Unable to get details for package %s" % name)
-            return None
+        new_packages = []
+        for pkg in pkg_details:
+            name = pkg.get("name")
+            architecture = pkg.get("architecture")
+            # Use dpkg -s <pkg> to get arch and version
+            architecture, version = self._get_pkg_arch_and_version(name,
+                                                                   architecture)
+            if not version:
+                lgr.warning("Unable to query package %s" % name)
+                return None
+            pkg["architecture"] = architecture
+            pkg["version"] = version
 
-        # Get install date from the modify time of the dpkg info file
-        install_date = self._get_pkg_install_date(name)
+            # Use apt-cache show <pkg> to get details
+            info = self._get_pkg_details(name, architecture, version)
+            if not info:
+                lgr.warning("Unable to get details for package %s" % name)
+                return None
+            pkg["source_name"] = info.get("Source_name")
+            pkg["source_version"] = info.get("Source_version")
+            pkg["size"] = info.get("Size")
+            pkg["md5"] = info.get("MD5sum")
+            pkg["sha1"] = info.get("SHA1")
+            pkg["sha256"] = info.get("SHA256")
 
-        # Now use "apt-cache policy pkg:arch" to get versions
-        ver_dict = self._get_pkg_versions_and_sources(name, architecture)
-        if not ver_dict:
-            lgr.warning("Was unable to get version table for %s" % name)
-            return None
+            # Get install date from the modify time of the dpkg info file
+            install_date = self._get_pkg_install_date(name)
+            pkg["install_date"] = install_date
 
+            # Now use "apt-cache policy pkg:arch" to get versions
+            ver_dict = self._get_pkg_versions_and_sources(name, architecture)
+            if not ver_dict:
+                lgr.warning("Was unable to get version table for %s" % name)
+                return None
+            pkg["versions"] = ver_dict
+
+        new_packages = []
+        for pkg in pkg_details:
+            new_pkg = DEBPackage(**pkg)
+            new_packages.append(new_pkg)
+
+        return new_packages
+
+    def _create_package(self, name, architecture=None):
+
+        # Store the details we currently know, we will populate the rest later
         return DEBPackage(
             name=name,
-            version=version,
             architecture=architecture,
-            source_name=info.get("Source_name"),
-            source_version=info.get("Source_version"),
-            size=info.get("Size"),
-            md5=info.get("MD5sum"),
-            sha1=info.get("SHA1"),
-            sha256=info.get("SHA256"),
-            install_date=install_date,
-            versions=ver_dict
         )
 
     def _find_all_sources(self):
@@ -427,7 +448,6 @@ class DebTracer(DistributionTracer):
             ['apt-cache', 'policy', query]
         )
         out = utils.to_unicode(out, "utf-8")
-        # dpkg -s uses the same output as apt-cache show pkg
         ver = parse_apt_cache_policy_pkgs_output(out)
         if not ver:
             return None
