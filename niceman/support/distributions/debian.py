@@ -103,15 +103,8 @@ def parse_apt_cache_show_pkgs_output(output):
             for match in re_source.finditer(pkg["Source"]):
                 pkg["Source_name"] = match.group("source_name")
                 pkg["Source_version"] = match.group("source_version")
-        # Name the dictionary on the Package and Version
-        if "Package" in pkg and "Version" in pkg:
-            if "Architecture" in pkg:
-                pkg_ident = "%s:%s=%s" % (pkg["Package"], pkg["Architecture"],
-                                          pkg["Version"])
-            else:
-                pkg_ident = "%s=%s" % (pkg["Package"], pkg["Version"])
-            if (pkg_ident in package_info):
-                lgr.warning("Duplicate package %s found " % pkg_ident)
+        # Append package entry
+        if "Package" in pkg:
             package_info.append(pkg)
     return package_info
 

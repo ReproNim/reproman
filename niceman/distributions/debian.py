@@ -385,7 +385,7 @@ class DebTracer(DistributionTracer):
         max_len = max([len(q) for q in queries])
         num_queries = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
 
-        dpkg_results = []
+        cmd_results = []
         # Execute dpkg -s, parse, and collate the output
         for subqueries in (queries[pos:pos + num_queries]
                            for pos in range(0, len(queries), num_queries)):
@@ -395,18 +395,34 @@ class DebTracer(DistributionTracer):
                 )
                 out = utils.to_unicode(out, "utf-8")
                 # dpkg -s uses the same output as apt-cache show pkg
-                dpkg_results += parse_apt_cache_show_pkgs_output(out)
+                cmd_results += parse_apt_cache_show_pkgs_output(out)
             except CommandError as _:
                 raise  # Currently raise any exception we encounter
 
-        # TODO: Better handling if one package is skipped
-        for (p, r) in zip(pkg_dicts, dpkg_results):
-            if p["name"] == r.get("Package"):
-                p["architecture"] = r.get("Architecture")
-                p["version"] = r.get("Version")
-            else:
-                lgr.warning("Unable to query package %s (we found %s)" %
-                            (p["name"], r.get("Package")))
+        # Turn dpkg -s results into a lookup table by package name
+        cmd_results = self.create_lookup_from_apt_cache_show(cmd_results)
+
+        for p in pkg_dicts:
+            # find the version table in the parsed command results for the
+            # current package
+            r = cmd_results.get("%s:%s" % (p.get("name"),
+                                             p.get("architecture")))
+            if not r:
+                r = cmd_results.get(p.get("name"))
+            if not r:
+                lgr.warning("Was unable to run dpkg -s for %s" %
+                            p.get("name"))
+                continue
+            p["architecture"] = r.get("Architecture")
+            p["version"] = r.get("Version")
+
+    def create_lookup_from_apt_cache_show(self, cmd_results):
+        lookup_results = {}
+        for r in cmd_results:
+            lookup_results[r.get("Package")] = r
+            lookup_results["%s:%s" % (r.get("Package"),
+                                      r.get("architecture"))] = r
+        return lookup_results
 
     def _get_pkgs_details_from_apt_cache_show(self, pkg_dicts):
         # Convert package names to name:arch format
@@ -423,7 +439,7 @@ class DebTracer(DistributionTracer):
         max_len = max([len(q) for q in queries])
         num_queries = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
 
-        apt_cache_results = []
+        cmd_results = []
         # Execute dpkg -s, parse, and collate the output
         for subqueries in (queries[pos:pos + num_queries]
                            for pos in range(0, len(queries), num_queries)):
@@ -432,23 +448,30 @@ class DebTracer(DistributionTracer):
                     ['apt-cache', 'show'] + subqueries
                 )
                 out = utils.to_unicode(out, "utf-8")
-                # dpkg -s uses the same output as apt-cache show pkg
-                apt_cache_results += parse_apt_cache_show_pkgs_output(out)
+                cmd_results += parse_apt_cache_show_pkgs_output(out)
             except CommandError as _:
                 raise  # Currently raise any exception we encounter
 
-        # TODO: Better handling if one package is skipped
-        for (p, r) in zip(pkg_dicts, apt_cache_results):
-            if p["name"] == r.get("Package"):
-                p["source_name"] = r.get("Source_name")
-                p["source_version"] = r.get("Source_version")
-                p["size"] = r.get("Size")
-                p["md5"] = r.get("MD5sum")
-                p["sha1"] = r.get("SHA1")
-                p["sha256"] = r.get("SHA256")
-            else:
-                lgr.warning("Unable to query package %s (we found %s)" %
-                            (p["name"], r.get("Package")))
+        # Turn apt-cache show results into a lookup table by package name
+        cmd_results = self.create_lookup_from_apt_cache_show(cmd_results)
+
+        for p in pkg_dicts:
+            # find the version table in the parsed command results for the
+            # current package
+            r = cmd_results.get("%s:%s" % (p.get("name"),
+                                             p.get("architecture")))
+            if not r:
+                r = cmd_results.get(p.get("name"))
+            if not r:
+                lgr.warning("Was unable to run apt-cache show for %s" %
+                            p.get("name"))
+                continue
+            p["source_name"] = r.get("Source_name")
+            p["source_version"] = r.get("Source_version")
+            p["size"] = r.get("Size")
+            p["md5"] = r.get("MD5sum")
+            p["sha1"] = r.get("SHA1")
+            p["sha256"] = r.get("SHA256")
 
     def _get_pkg_install_date(self, name):
         try:
