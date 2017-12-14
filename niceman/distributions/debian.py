@@ -322,14 +322,8 @@ class DebTracer(DistributionTracer):
         # Now use "apt-cache policy pkg:arch" to get versions
         self._get_pkgs_versions_and_sources(pkg_dicts)
 
-        for p in pkg_dicts:
-            name = p.get("name")
-            architecture = p.get("architecture")
-            version = p.get("version")
-
-            # Get install date from the modify time of the dpkg info file
-            install_date = self._get_pkg_install_date(name)
-            p["install_date"] = install_date
+        # Get install date from the modify time of the dpkg info file
+        self._get_pkgs_install_date(pkg_dicts)
 
         new_packages = []
         for p in pkg_dicts:
@@ -416,7 +410,8 @@ class DebTracer(DistributionTracer):
             p["architecture"] = r.get("Architecture")
             p["version"] = r.get("Version")
 
-    def create_lookup_from_apt_cache_show(self, cmd_results):
+    @staticmethod
+    def create_lookup_from_apt_cache_show(cmd_results):
         lookup_results = {}
         for r in cmd_results:
             lookup_results[r.get("Package")] = r
@@ -473,19 +468,47 @@ class DebTracer(DistributionTracer):
             p["sha1"] = r.get("SHA1")
             p["sha256"] = r.get("SHA256")
 
-    def _get_pkg_install_date(self, name):
-        try:
-            out, _ = self._session.execute_command(
-                ['stat', '-c', '%Y', "/var/lib/dpkg/info/" + name + ".list"]
-            )
-            install_date = str(
-                pytz.utc.localize(
-                    datetime.utcfromtimestamp(float(out))))
-        except CommandError:  # file not found
-            install_date = None
-            pass
+    def _get_pkgs_install_date(self, pkg_dicts):
+        # Convert package names to dpkg list filenames
+        queries = []
+        for p in pkg_dicts:
+            queries.append(self._pkg_name_to_dpkg_list_file(p.get("name")))
 
-        return install_date
+        # Find out how many packages we can query at once
+        max_len = max([len(q) for q in queries])
+        num_queries = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
+
+        cmd_results = {}
+        # Execute dpkg -s, parse, and collate the output
+        for subqueries in (queries[pos:pos + num_queries]
+                           for pos in range(0, len(queries), num_queries)):
+            try:
+                out, _ = self._session.execute_command(
+                    ['stat', '-c', '%n: %Y'] + subqueries
+                )
+            except CommandError as exc:  # file not found
+                stderr = utils.to_unicode(exc.stderr, "utf-8")
+                if 'No such file or directory' in stderr:
+                    out = exc.stdout  # One file not found, so continue
+                else:
+                    raise  # some other fault -- handle it above
+                    install_date = None
+                    pass
+            # Parse the output and store by filename
+            for outlines in out.splitlines():
+                (fname, ftime) = outlines.split(": ")
+                cmd_results[fname] = str(
+                    pytz.utc.localize(
+                        datetime.utcfromtimestamp(float(ftime))))
+        # Now lookup the packages in the results
+        for p in pkg_dicts:
+            fname = self._pkg_name_to_dpkg_list_file(p.get("name"))
+            if fname in cmd_results:
+                p["install_date"] = cmd_results[fname]
+
+    def _pkg_name_to_dpkg_list_file(self, name):
+        query = "/var/lib/dpkg/info/" + name + ".list"
+        return query
 
     def _get_pkgs_versions_and_sources(self, pkg_dicts):
         # Convert package names to name:arch format
