@@ -110,28 +110,28 @@ class Diff(Interface):
         if not needed_dists and not needed_packages and not needed_files:
             # log line needed for test
             lgr.info('requirements satisfied')
-            print 'requirements satisfied'
+            print('requirements satisfied')
 
         if needed_dists:
-            print 'needed distributions:'
+            print('needed distributions:')
             for dist in sorted(needed_dists):
-                print '    %s' % dist
+                print('    %s' % dist)
 
         if needed_packages:
-            print 'needed packages:'
+            print('needed packages:')
             for dist in sorted(needed_packages):
-                print '    %s' % dist
+                print('    %s' % dist)
                 for package in sorted(needed_packages[dist], 
                                       key=lambda p: p.name.lower()):
                     if package.version:
-                        print '        %s %s' % (package.name, package.version)
+                        print('        %s %s' % (package.name, package.version))
                     else:
-                        print '        %s' % package.name
+                        print('        %s' % package.name)
 
         if needed_files:
-            print 'needed files:'
+            print('needed files:')
             for fname in sorted(needed_files):
-                print '    %s' % fname
+                print('    %s' % fname)
 
         return
 
