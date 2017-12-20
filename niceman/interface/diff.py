@@ -72,14 +72,14 @@ class Diff(Interface):
 
         try:
             env_dists = dictify_distributions(env_prov.get_distributions())
-        except MultipleDistributionsError, data:
+        except MultipleDistributionsError as data:
             lgr.error('diff: panic!')
             fmt = 'multiple occurrences of %s in environment specification'
             raise ValueError(fmt % str(data.cls))
 
         try:
             req_dists = dictify_distributions(req_prov.get_distributions())
-        except MultipleDistributionsError, data:
+        except MultipleDistributionsError as data:
             lgr.error('diff: panic!')
             fmt = 'multiple occurrences of %s in requirements specification'
             raise ValueError(fmt % str(data.cls))
