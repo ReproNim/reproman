@@ -78,7 +78,6 @@ def test_install_interface(demo1_spec, niceman_cfg_path):
 
         client.assert_has_calls(calls, any_order=True)
 
-        assert_in("Reading files: ['/home/matt/Documents/repronim/niceman/niceman/tests/files/niceman.cfg']", log.lines)
         assert_in('Adding Debian update to environment command list.', log.lines)
         assert_in("Running command ['[', '-e', '/etc/apt/sources.list.d/niceman.sources.list', ']']", log.lines)
         assert_in('Running command \'sh -c \\\'echo "# Niceman repo sources" > /etc/apt/sources.list.d/niceman.sources.list\\\'\'', log.lines)
