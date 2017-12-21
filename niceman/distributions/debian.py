@@ -23,6 +23,10 @@ from email.utils import mktime_tz, parsedate_tz
 
 import logging
 
+import re
+
+import requests
+
 # Pick a conservative max command-line
 from niceman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
@@ -130,9 +134,101 @@ class DebianDistribution(Distribution):
             The Environment sub-class object.
         """
         lgr.debug("Adding Debian update to environment command list.")
-        session.execute_command(['apt-get', 'update'])
+        self._init_apt_sources(session)
+        session.execute_command(['apt-get', '-o',
+            'Acquire::Check-Valid-Until=false', 'update'])
         #session.execute_command(['apt-get', 'install', '-y', 'python-pip'])
         # session.set_env(DEBIAN_FRONTEND='noninteractive', this_session_only=True)
+
+    def _init_apt_sources(self, session,
+        apt_source_file='/etc/apt/sources.list.d/niceman.sources.list'):
+        """
+        Update /etc/apt/sources if necessary based on source date.
+
+        Parameters
+        ----------
+        session : Session object
+        apt_source_file: string
+        """
+
+        repo_info = {
+            'Debian': {
+                'url': 'snapshot.debian.org',
+                'keyserver': None,
+                'key': None
+            },
+            'NeuroDebian': {
+                'url': 'snapshot-neuro.debian.net:5002',
+                'keyserver': 'hkp://pool.sks-keyservers.net:80',
+                'key': '0xA5D32F012649A5A9'
+            }
+        }
+
+        # Create a new apt sources file if needed.
+        if not session.exists(apt_source_file):
+            session.execute_command(
+                "sh -c 'echo \"# Niceman repo sources\" > {}'"
+                .format(apt_source_file))
+
+        for source in [s for s in self.apt_sources
+            if s.origin in repo_info.keys()]:
+            
+            # Write snapshot repo to apt sources file.
+            date = datetime.strptime(source.date.split('+')[0], "%Y-%m-%d %X")
+            template = 'deb http://{}/archive/{}/{}/ {} main contrib non-free'
+            source_line = template.format(
+                repo_info[source.origin]['url'],
+                source.origin.lower(),
+                date.strftime("%Y%m%dT%H%M%SZ"),
+                source.codename
+            )
+            self._write_apt_sources(session, apt_source_file, source_line)
+
+            # Write "next" snapshot repo to apt sources file.
+            template_list_page = 'http://{}/archive/{}/{}/dists/{}/'
+            url = template_list_page.format(
+                repo_info[source.origin]['url'],
+                source.origin.lower(),
+                date.strftime("%Y%m%dT%H%M%SZ"),
+                source.codename
+            )
+            r = requests.get(url)
+            m = re.search(
+                '<a href="/archive/\w*debian/(\w+)/dists/\w+/">next change</a>',
+                r.text)
+            if m:
+                source_line = template.format(
+                    repo_info[source.origin]['url'],
+                    source.origin.lower(),
+                    m.group(1),
+                    source.codename
+                )
+                self._write_apt_sources(session, apt_source_file, source_line)
+
+            # Add keyserver if needed.
+            if repo_info[source.origin]['keyserver']:
+                session.execute_command(['apt-key', 'adv', '--recv-keys',
+                    '--keyserver', repo_info[source.origin]['keyserver'],
+                    repo_info[source.origin]['key']])
+
+    def _write_apt_sources(self, session, apt_source_file, source_line):
+        """
+        Write a line to the /etc/apt/sources.d/ file
+
+        Parameters
+        ----------
+        session : Session object
+        apt_source_file: string
+        source_line: string
+        """
+        command = "grep -q '{}' {}"
+        out, line_not_found = session.execute_command(command.format(
+            source_line, apt_source_file))
+        if line_not_found:
+            lgr.debug("Adding line '{}' to {}".format(source_line,
+                apt_source_file))
+            session.execute_command("sh -c 'echo {} >> {}'".format(
+                source_line, apt_source_file))
 
     def install_packages(self, session, use_version=True):
         """
@@ -150,7 +246,6 @@ class DebianDistribution(Distribution):
         package_specs = []
 
         for package in self.packages:
-            self._verify_package_source(session, package)
             package_spec = package.name
             if use_version and package.version:
                 package_spec += '=%s' % package.version
@@ -164,68 +259,6 @@ class DebianDistribution(Distribution):
             ['apt-get', 'install', '-y'] + package_specs,
             # env={'DEBIAN_FRONTEND': 'noninteractive'}
         )
-
-    def _verify_package_source(self, session, package):
-        """
-        Update /etc/apt/sources if necessary based on package version and install date.
-
-        Parameters
-        ----------
-        session : Session object
-        package : DEBPackage object
-        """
-        source_file = '/etc/apt/sources.list.d/niceman.sources.list'
-
-        query = package.name if not package.architecture \
-            else "%s:%s" % (package.name, package.architecture)
-        out, _ = session.execute_command(
-            ['apt-cache', 'policy', query]
-        )
-        out = utils.to_unicode(out, "utf-8")
-        if out:
-            cache = parse_apt_cache_policy_pkgs_output(out)[package.name]
-
-        # If the package is not installed and has does not have a repo source defined, then add
-        # the repo source provided by the the spec.
-        if not out or (cache['installed'] == '(none)' \
-            and len([v for v in cache['versions'] if v['version'] == package.version])) == 0:
-
-            if not session.exists(source_file):
-                session.execute_command("sh -c 'echo \"# Niceman repo sources\" > {}'".format(source_file))
-
-            # Pull the source definition for the version listed in the package and verify
-            # it is a Debian source (i.e. not an Ubuntu source)
-            for source in [s for s in self.apt_sources \
-                if s.name in package.versions[package.version] and s.origin == 'Debian']:
-                
-                # Build the entry for the /etc/apt/sources.list file and add it to the file.
-                lgr.debug("Adding Debian snapshot repo for package {}.".format(package.name))
-                date = datetime.strptime(source.date.split('+')[0], "%Y-%m-%d %X")
-                template = 'deb http://snapshot.debian.org/archive/debian/{}/ {} main contrib non-free'
-                source_line = template.format(date.strftime("%Y%m%dT%H%M%SZ"), source.codename)
-                command = "grep -q '{}' {}"
-                out, line_not_found = session.execute_command(command.format(source_line, source_file))
-                if line_not_found:
-                    lgr.debug("Adding line '{}' to {}".format(source_line, source_file))
-                    session.execute_command("sh -c 'echo {} >> {}'".format(source_line, source_file))
-                    session.execute_command(['apt-get', '-o', 'Acquire::Check-Valid-Until=false', 'update'])
-
-            for source in [s for s in self.apt_sources \
-                if s.name in package.versions[package.version] and s.origin == 'NeuroDebian']:
-              
-                # Build the entry for the /etc/apt/sources.list file and add it to the file.
-                lgr.debug("Adding NeuroDebian snapshot repo for package {}.".format(package.name))
-                date = datetime.strptime(source.date.split('+')[0], "%Y-%m-%d %X")
-                template = 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/{}/ {} main contrib non-free'
-                source_line = template.format(date.strftime("%Y%m%dT%H%M%SZ"), source.codename)
-                command = "grep -q '{}' {}"
-                out, line_not_found = session.execute_command(command.format(source_line, source_file))
-                if line_not_found:
-                    lgr.debug("Adding line '{}' to {}".format(source_line, source_file))
-                    session.execute_command("sh -c 'echo {} >> {}'".format(source_line, source_file))
-                    session.execute_command(['apt-key', 'adv', '--recv-keys', '--keyserver',
-                        'hkp://pool.sks-keyservers.net:80', '0xA5D32F012649A5A9'])
-                    session.execute_command(['apt-get', '-o', 'Acquire::Check-Valid-Until=false', 'update'])
 
     def normalize(self):
         # TODO:

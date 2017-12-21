@@ -59,35 +59,44 @@ def test_install_interface(demo1_spec, niceman_cfg_path):
 
         calls = [
             call(base_url='tcp://127.0.0.1:2375'),
-            container_call(['apt-get', 'update']),
-            # call().exec_create(cmd=['apt-get', 'install', '-y', 'python-pip'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # call().exec_create(cmd=['apt-get', 'install', '-y', 'libc6-dev'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # call().exec_create(cmd=['apt-get', 'install', '-y', 'python-nibabel'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # call().exec_create(cmd=['apt-get', 'update'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # call().exec_create(cmd=['apt-get', 'install', '-y', 'python-pip'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # call().exec_create(cmd=['apt-get', 'update'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # call().exec_create(cmd=['apt-get', 'install', '-y', 'python-pip'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # container_call(
-            #     ['apt-get', 'install', '-y', 'libc6-dev=2.19-18+deb8u4', 'afni=16.2.07~dfsg.1-2~nd90+1']
-            # ),
-            # call().exec_create(cmd=['apt-get', 'install', '-y', 'python-nibabel'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
-            # call().exec_create(cmd=['pip', 'install', 'piponlypkg'],
-            #     container={'State': 'running', 'Id': '326b0fdfbf83', 'Names': ['/my-resource']}),
+            call().exec_create(cmd=['[', '-e', '/etc/apt/sources.list.d/niceman.sources.list', ']'], container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd='sh -c \'echo "# Niceman repo sources" > /etc/apt/sources.list.d/niceman.sources.list\'', container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="grep -q 'deb http://snapshot.debian.org/archive/debian/20170531T084046Z/ sid main contrib non-free' /etc/apt/sources.list.d/niceman.sources.list", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="sh -c 'echo deb http://snapshot.debian.org/archive/debian/20170531T084046Z/ sid main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list'", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="grep -q 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free' /etc/apt/sources.list.d/niceman.sources.list", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="sh -c 'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list'", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="grep -q 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free' /etc/apt/sources.list.d/niceman.sources.list", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="sh -c 'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list'", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd=['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://pool.sks-keyservers.net:80', '0xA5D32F012649A5A9'], container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="grep -q 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free' /etc/apt/sources.list.d/niceman.sources.list", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="sh -c 'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list'", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="grep -q 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free' /etc/apt/sources.list.d/niceman.sources.list", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd="sh -c 'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list'", container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd=['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://pool.sks-keyservers.net:80', '0xA5D32F012649A5A9'], container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
+            call().exec_create(cmd=['apt-get', '-o', 'Acquire::Check-Valid-Until=false', 'update'], container={'Id': '326b0fdfbf838', 'Names': ['/my-resource'], 'State': 'running'}),
         ]
+
         client.assert_has_calls(calls, any_order=True)
 
-        assert_in("Adding Debian update to environment command list.", log.lines)
-        assert_in("Running command ['apt-get', 'update']", log.lines)
-        # assert_in("Running command '['apt-get', 'install', '-y', 'python-pip']'", log.lines)
-        # assert_in("Running command '['apt-get', 'install', '-y', 'libc6-dev']'", log.lines)
-        # assert_in("Running command '['apt-get', 'install', '-y', 'python-nibabel']'", log.lines)
-        # assert_in("Running command '['apt-get', 'install', '-y', 'afni']'", log.lines)
-        # assert_in("Running command '['pip', 'install', 'piponlypkg']'", log.lines)
+        assert_in("Reading files: ['/home/matt/Documents/repronim/niceman/niceman/tests/files/niceman.cfg']", log.lines)
+        assert_in('Adding Debian update to environment command list.', log.lines)
+        assert_in("Running command ['[', '-e', '/etc/apt/sources.list.d/niceman.sources.list', ']']", log.lines)
+        assert_in('Running command \'sh -c \\\'echo "# Niceman repo sources" > /etc/apt/sources.list.d/niceman.sources.list\\\'\'', log.lines)
+        assert_in('Running command "grep -q \'deb http://snapshot.debian.org/archive/debian/20170531T084046Z/ sid main contrib non-free\' /etc/apt/sources.list.d/niceman.sources.list"', log.lines)
+        assert_in("Adding line 'deb http://snapshot.debian.org/archive/debian/20170531T084046Z/ sid main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Running command "sh -c \'echo deb http://snapshot.debian.org/archive/debian/20170531T084046Z/ sid main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list\'"', log.lines)
+        assert_in('Running command "grep -q \'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free\' /etc/apt/sources.list.d/niceman.sources.list"', log.lines)
+        assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Running command "sh -c \'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list\'"', log.lines)
+        assert_in('Running command "grep -q \'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free\' /etc/apt/sources.list.d/niceman.sources.list"', log.lines)
+        assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Running command "sh -c \'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list\'"', log.lines)
+        assert_in("Running command ['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://pool.sks-keyservers.net:80', '0xA5D32F012649A5A9']", log.lines)
+        assert_in('Running command "grep -q \'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free\' /etc/apt/sources.list.d/niceman.sources.list"', log.lines)
+        assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Running command "sh -c \'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list\'"', log.lines)
+        assert_in('Running command "grep -q \'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free\' /etc/apt/sources.list.d/niceman.sources.list"', log.lines)
+        assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
+        assert_in('Running command "sh -c \'echo deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171212T140401Z/ xenial main contrib non-free >> /etc/apt/sources.list.d/niceman.sources.list\'"', log.lines)
+        assert_in("Running command ['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://pool.sks-keyservers.net:80', '0xA5D32F012649A5A9']", log.lines)
+        assert_in("Running command ['apt-get', '-o', 'Acquire::Check-Valid-Until=false', 'update']", log.lines)

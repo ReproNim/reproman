@@ -73,13 +73,10 @@ def test_distributions(demo1_spec):
         debian_distribution.install_packages(environment)
 
         assert_in("Adding Debian update to environment command list.", log.lines)
-        assert_in('Adding Debian snapshot repo for package libc6-dev.', log.lines)
         assert_in("Adding line 'deb http://snapshot.debian.org/archive/debian/20170531T084046Z/ sid main \
 contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
-        assert_in('Adding NeuroDebian snapshot repo for package afni.', log.lines)
         assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ \
 xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
-        assert_in('Adding NeuroDebian snapshot repo for package dcm2niix.', log.lines)
         assert_in("Adding line 'deb http://snapshot-neuro.debian.net:5002/archive/neurodebian/20171208T032012Z/ \
 xenial main contrib non-free' to /etc/apt/sources.list.d/niceman.sources.list", log.lines)
         assert_in('Installing libc6-dev=2.19-18+deb8u4, afni=16.2.07~dfsg.1-5~nd16.04+1, \

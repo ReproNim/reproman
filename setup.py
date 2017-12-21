@@ -48,13 +48,15 @@ requires = {
         'humanize',
         'mock',  # mock is also used for auto.py, not only for testing
         'pyyaml',
-        'six>=1.8.0',
+        'six>=1.9',
         'tqdm',
         'paramiko',
         'cryptography>=1.5',
         'pytz',
         'scp',
         'pycrypto',
+        'pyOpenSSL==16.2.0',
+        'requests',
     ],
     'debian': [
         'python-debian',

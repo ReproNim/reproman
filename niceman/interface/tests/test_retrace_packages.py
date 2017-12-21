@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from os.path import join as opj, sep, dirname
+from os.path import join as opj, pardir, dirname
 from os.path import lexists
 from pprint import pprint
 
@@ -33,7 +33,7 @@ def test_identify_packages():
     assert True
 
 
-@skip_if(not lexists(opj(dirname(__file__)[:-25], sep, '.git')))
+@skip_if(not lexists(opj(dirname(__file__), pardir, pardir, pardir, '.git')))
 def test_identify_myself():
     distributions, files = identify_distributions([__file__, '/nonexisting-for-sure'])
     assert len(distributions) == 1
