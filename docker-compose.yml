@@ -1,0 +1,16 @@
+version: '3'
+services:
+  niceman:
+    build:
+      context: $PWD
+      dockerfile: Dockerfile
+      args:
+        - IMAGE=debian:jessie
+        - UNAME=$USER
+        - UID=1000
+        - GID=1000
+    image: niceman:latest
+    container_name: niceman
+    volumes:
+      - $PWD:/home/$USER/niceman
+      - /var/run/docker.sock:/var/run/docker.sock
