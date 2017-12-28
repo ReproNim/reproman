@@ -407,15 +407,15 @@ class DebTracer(DistributionTracer):
                 lgr.warning("Was unable to run dpkg -s for %s" %
                             p.get("name"))
                 continue
-            p["architecture"] = r.get("Architecture")
-            p["version"] = r.get("Version")
+            p["architecture"] = r.get("architecture")
+            p["version"] = r.get("version")
 
     @staticmethod
     def create_lookup_from_apt_cache_show(cmd_results):
         lookup_results = {}
         for r in cmd_results:
-            lookup_results[r.get("Package")] = r
-            lookup_results["%s:%s" % (r.get("Package"),
+            lookup_results[r.get("package")] = r
+            lookup_results["%s:%s" % (r.get("package"),
                                       r.get("architecture"))] = r
         return lookup_results
 
@@ -461,12 +461,12 @@ class DebTracer(DistributionTracer):
                 lgr.warning("Was unable to run apt-cache show for %s" %
                             p.get("name"))
                 continue
-            p["source_name"] = r.get("Source_name")
-            p["source_version"] = r.get("Source_version")
-            p["size"] = r.get("Size")
-            p["md5"] = r.get("MD5sum")
-            p["sha1"] = r.get("SHA1")
-            p["sha256"] = r.get("SHA256")
+            p["source_name"] = r.get("source_name")
+            p["source_version"] = r.get("source_version")
+            p["size"] = r.get("size")
+            p["md5"] = r.get("md5")
+            p["sha1"] = r.get("sha1")
+            p["sha256"] = r.get("sha256")
 
     def _get_pkgs_install_date(self, pkg_dicts):
         # Convert package names to dpkg list filenames
