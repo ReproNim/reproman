@@ -372,7 +372,7 @@ class DebTracer(DistributionTracer):
             # Use "dpkg -s pkg" to get the installed version and arch
             # Note: "architecture" is in the dict, but may be null
             queries.append(p["name"] if not p["architecture"]
-                           else "%s:%s" % (p["name"], p["architecture"]))
+                           else "%(name)s:%(architecture)s" % p)
 
         # Find out how many packages we can query at once
         max_len = max([len(q) for q in queries])
@@ -399,7 +399,7 @@ class DebTracer(DistributionTracer):
             # find the version table in the parsed command results for the
             # current package
             r = cmd_results.get(p["name"] if not p["architecture"]
-                                else "%s:%s" % (p["name"], p["architecture"]))
+                                else "%(name)s:%(architecture)s" % p)
             if not r:
                 lgr.warning("Was unable to run dpkg -s for %s" %
                             p["name"])
@@ -413,7 +413,7 @@ class DebTracer(DistributionTracer):
         lookup_results = {}
         for r in cmd_results:
             lookup_results[r["package"]] = r
-            lookup_results["%s:%s" % (r["package"], r["architecture"])] = r
+            lookup_results["%(package)s:%(architecture)s" % r] = r
         return lookup_results
 
     def _get_pkgs_details_from_apt_cache_show(self, pkg_dicts):
@@ -421,8 +421,7 @@ class DebTracer(DistributionTracer):
         queries = []
         for p in pkg_dicts:
             # Use "dpkg -s pkg" to get the installed version and arch
-            queries.append("%s:%s=%s" % (p["name"], p["architecture"],
-                                         p["version"]))
+            queries.append("%(name)s:%(architecture)s=%(version)s" % p)
 
         # Find out how many packages we can query at once
         max_len = max([len(q) for q in queries])
@@ -447,7 +446,7 @@ class DebTracer(DistributionTracer):
         for p in pkg_dicts:
             # find the version table in the parsed command results for the
             # current package
-            r = cmd_results.get("%s:%s" % (p["name"], p["architecture"]))
+            r = cmd_results.get("%(name)s:%(architecture)s" % p)
             if not r:
                 lgr.warning("Was unable to run apt-cache show for %s" %
                             p["name"])
@@ -503,7 +502,7 @@ class DebTracer(DistributionTracer):
         queries = []
         for p in pkg_dicts:
             # Use "dpkg -s pkg" to get the installed version and arch
-            queries.append("%s:%s" % (p["name"], p["architecture"]))
+            queries.append("%(name)s:%(architecture)s" % p)
 
         # Find out how many packages we can query at once
         max_len = max([len(q) for q in queries])
@@ -525,7 +524,7 @@ class DebTracer(DistributionTracer):
         for p in pkg_dicts:
             # find the version table in the parsed command results for the
             # current package (it could be listed by name or name:arch)
-            ver = cmd_results.get("%s:%s" % (p["name"], p["architecture"]))
+            ver = cmd_results.get("%(name)s:%(architecture)s" % p)
             if not ver:
                 ver = cmd_results.get(p["name"])
             if not ver:
