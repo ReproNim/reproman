@@ -11,7 +11,10 @@
 
 __docformat__ = 'restructuredtext'
 
+from collections import OrderedDict
 from six.moves.configparser import NoSectionError
+
+from pyout import Tabular
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
@@ -75,8 +78,16 @@ class Ls(Interface):
 
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
-        ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
-        ui.message(template.format('-------------', '----', '--', '------'))
+
+        out = Tabular(OrderedDict([("name", "RESOURCE NAME"),
+                                   ("type", "TYPE"),
+                                   ("id", "ID"),
+                                   ("status", "STATUS")]),
+                      style={"header_": {"underline": True},
+                             "name": {"width": 13},
+                             "type": {"width": 16},
+                             "id": {"width": 19},
+                             "status": {"width": 7}})
 
         for name in sorted(inventory):
             if name.startswith('_'):
@@ -109,7 +120,7 @@ class Ls(Interface):
                 inventory_resource['id'][:id_length],
                 inventory_resource['status']
             )
-            ui.message(template.format(*msgargs))
+            out(dict(inventory_resource, id=inventory_resource['id'][:id_length]))
             lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
 
         # if not refresh:
