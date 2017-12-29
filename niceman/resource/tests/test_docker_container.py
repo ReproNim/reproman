@@ -47,7 +47,12 @@ def test_dockercontainer_class():
             ],
             create_container=lambda name, image, stdin_open, tty, command: {
                 'Id': '18b31b30e3a5'
-            }
+            },
+            exec_start=lambda exec_id, stream: [
+                b'stdout line 1',
+                b'stdout line 2',
+                b'stdout line 3'
+            ]
         )
 
         # Test connecting when a resource doens't exist.
@@ -78,7 +83,7 @@ def test_dockercontainer_class():
         }
         resource = ResourceManager.factory(config)
         resource.connect()
-        assert resource.base_image_id == 'ubuntu:latest'
+        assert resource.image == 'ubuntu:latest'
         assert resource.engine_url == 'tcp://127.0.0.1:2375'
         assert resource.id == '326b0fdfbf83'
         assert resource.name == 'existing-test-resource'
