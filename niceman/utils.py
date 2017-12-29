@@ -968,7 +968,7 @@ def batch_process_list(proc_func, proc_list, batch_len, start_val):
 
     Parameters
     ----------
-    proc_func : function
+    proc_func : func
       f(batch, prev_value) -> result_value
     proc_list : list
       The list to process
