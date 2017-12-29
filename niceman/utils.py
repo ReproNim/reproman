@@ -956,6 +956,64 @@ class HashableDict(dict):
         return hash(frozenset(self.values()))
 
 
+def batch_process_list(proc_func, proc_list, batch_len, start_val):
+    """Process a long list in smaller batches
+
+    This calls proc_func(batch, prev_value) -> next_value iteratively for
+    blocks of arglist broken into max_batch_size sublists. The first time
+    proc_func is called, prev_value is set to start_val. In subsequent calls
+    to proc_func, prev_value is set to the value returned by the previous call
+    to prov_func. So proc_func essentially maps and reduces over batches of
+    arglist. batch_process_list returns the last value returned by proc_func.
+
+    Parameters
+    ----------
+    proc_func : function
+      f(batch, prev_value) -> result_value
+    proc_list : list
+      The list to process
+    batch_len : number
+      The maximum number of arguments in each batch
+    start_val
+      The initial prev_value passed to proc_func
+    """
+    prev_value = start_val
+    while proc_list:
+        batch, proc_list = proc_list[:batch_len], proc_list[batch_len:]
+        prev_value = proc_func(batch, prev_value)
+    return prev_value
+
+
+def get_cmd_batch_len(arg_list, cmd_len):
+    """Estimate the maximum batch length for a given argument list
+
+    To make sure we don't call shell commands with too many arguments
+    this function looks at an argument list and the command length without
+    any arguments, and estimates the number of arguments we want to batch
+    together at one time.
+
+    Parameters
+    ----------
+    arg_list : list
+      The list to process in the command
+    cmd_len : number
+      The length of the command without arguments
+
+    Returns
+    -------
+    number
+      The maximum number in a single batch
+    """
+    # Pick a conservative max command-line length
+    try:
+        _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
+    except (ValueError, AttributeError):
+        _MAX_LEN_CMDLINE = 2048
+    # Find out how many files we can query at once
+    max_len = max(map(len, arg_list))
+    return max((_MAX_LEN_CMDLINE - cmd_len) // (max_len + 1), 1)
+
+
 def items_to_dict(l, attrs='name', ordered=False):
     """Given a list of attr instances, return a dict using specified attrs as keys
     
@@ -986,6 +1044,7 @@ def items_to_dict(l, attrs='name', ordered=False):
             )
         out[k] = i
     return out
+
 
 # TODO: just absorb into SpecObject __init__ but would require more handling
 # to allow *args as well

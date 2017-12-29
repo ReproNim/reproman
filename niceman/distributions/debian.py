@@ -23,16 +23,13 @@ from email.utils import mktime_tz, parsedate_tz
 
 import logging
 
-# Pick a conservative max command-line
 from niceman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
     parse_apt_cache_policy_source_info, get_apt_release_file_names, \
     get_spec_from_release_file
 
-try:
-    _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
-except (ValueError, AttributeError):
-    _MAX_LEN_CMDLINE = 2048
+# Pick a conservative max command-line
+from niceman.utils import get_cmd_batch_len, batch_process_list
 
 # To parse output of dpkg-query
 import re
@@ -263,14 +260,9 @@ class DebTracer(DistributionTracer):
         yield dist, remaining_files
 
     def _get_packagefields_for_files(self, files):
-        file_to_package_dict = {}
-
-        # Find out how many files we can query at once
-        max_len = max([len(f) for f in files])
-        num_files = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
-
-        for subfiles in (files[pos:pos + num_files]
-                         for pos in range(0, len(files), num_files)):
+        # Define a function to process batches of files and return
+        # a dictionary that maps files to packages
+        def proc_dpkg_query(subfiles, file_to_package_dict):
             out = self._run_dpkg_query(subfiles)
 
             # Now go through the output and assign packages to files
@@ -293,7 +285,12 @@ class DebTracer(DistributionTracer):
                 lgr.debug("Identified file %r to belong to package %s",
                           found_name, pkg)
                 file_to_package_dict[found_name] = pkg
-        return file_to_package_dict
+            return file_to_package_dict
+
+        # Determine how big our batches can be
+        num_files = get_cmd_batch_len(files, 13)
+        # Now process our file list and return the file to package mapping
+        return batch_process_list(proc_dpkg_query, files, num_files, {})
 
     def _get_apt_source_name(self, src):
         # Create a unique name for the origin
@@ -366,22 +363,9 @@ class DebTracer(DistributionTracer):
                     archive_uri=src_vals.get("archive_uri"))
 
     def _get_pkgs_arch_and_version(self, pkg_dicts):
-        # Convert package names to name:arch format
-        queries = []
-        for p in pkg_dicts:
-            # Use "dpkg -s pkg" to get the installed version and arch
-            # Note: "architecture" is in the dict, but may be null
-            queries.append(p["name"] if not p["architecture"]
-                           else "%(name)s:%(architecture)s" % p)
-
-        # Find out how many packages we can query at once
-        max_len = max([len(q) for q in queries])
-        num_queries = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
-
-        cmd_results = []
-        # Execute dpkg -s, parse, and collate the output
-        for subqueries in (queries[pos:pos + num_queries]
-                           for pos in range(0, len(queries), num_queries)):
+        # Define a function to process batches of packages and return
+        # an array of parsed dpkg -s output
+        def proc_dpkg_cmd(subqueries, cmd_results):
             try:
                 out, _ = self._session.execute_command(
                     ['dpkg', '-s'] + subqueries
@@ -391,15 +375,25 @@ class DebTracer(DistributionTracer):
                 cmd_results += parse_apt_cache_show_pkgs_output(out)
             except CommandError as _:
                 raise  # Currently raise any exception we encounter
+            return cmd_results
 
-        # Turn dpkg -s results into a lookup table by package name
-        cmd_results = self.create_lookup_from_apt_cache_show(cmd_results)
-
+        # Convert package names to name:arch format
+        queries = []
         for p in pkg_dicts:
-            # find the version table in the parsed command results for the
-            # current package
-            r = cmd_results.get(p["name"] if not p["architecture"]
-                                else "%(name)s:%(architecture)s" % p)
+            # Use "dpkg -s pkg" to get the installed version and arch
+            # Note: "architecture" is in the dict, but may be null
+            queries.append(p["name"] if not p["architecture"]
+                           else "%(name)s:%(architecture)s" % p)
+        # Determine how big our batches can be
+        num_files = get_cmd_batch_len(queries, 8)
+        # Now process our file list and return the file to package mapping
+        results = batch_process_list(proc_dpkg_cmd, queries, num_files, [])
+        # Turn dpkg -s results into a lookup table by package name
+        results = self.create_lookup_from_apt_cache_show(results)
+        # Loop through each package and find the respective dpkg results
+        for p in pkg_dicts:
+            r = results.get(p["name"] if not p["architecture"]
+                            else "%(name)s:%(architecture)s" % p)
             if not r:
                 lgr.warning("Was unable to run dpkg -s for %s" %
                             p["name"])
@@ -417,20 +411,9 @@ class DebTracer(DistributionTracer):
         return lookup_results
 
     def _get_pkgs_details_from_apt_cache_show(self, pkg_dicts):
-        # Convert package names to name:arch format
-        queries = []
-        for p in pkg_dicts:
-            # Use "dpkg -s pkg" to get the installed version and arch
-            queries.append("%(name)s:%(architecture)s=%(version)s" % p)
-
-        # Find out how many packages we can query at once
-        max_len = max([len(q) for q in queries])
-        num_queries = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
-
-        cmd_results = []
-        # Execute dpkg -s, parse, and collate the output
-        for subqueries in (queries[pos:pos + num_queries]
-                           for pos in range(0, len(queries), num_queries)):
+        # Define a function to process batches of packages and return
+        # an array of parsed apt-cache show output
+        def proc_apt_cache_show_cmd(subqueries, cmd_results):
             try:
                 out, _ = self._session.execute_command(
                     ['apt-cache', 'show'] + subqueries
@@ -439,14 +422,22 @@ class DebTracer(DistributionTracer):
                 cmd_results += parse_apt_cache_show_pkgs_output(out)
             except CommandError as _:
                 raise  # Currently raise any exception we encounter
+            return cmd_results
 
-        # Turn apt-cache show results into a lookup table by package name
-        cmd_results = self.create_lookup_from_apt_cache_show(cmd_results)
-
+        # Convert package names to name:arch=version format
+        queries = []
         for p in pkg_dicts:
-            # find the version table in the parsed command results for the
-            # current package
-            r = cmd_results.get("%(name)s:%(architecture)s" % p)
+            queries.append("%(name)s:%(architecture)s=%(version)s" % p)
+        # Determine how big our batches can be
+        num_files = get_cmd_batch_len(queries, 15)
+        # Now process our file list and return the parsed data array
+        results = batch_process_list(proc_apt_cache_show_cmd, queries,
+                                     num_files, [])
+        # Turn apt-cache show results into a lookup table by package name
+        results = self.create_lookup_from_apt_cache_show(results)
+        # Loop through each package and find the respective apt-cache results
+        for p in pkg_dicts:
+            r = results.get("%(name)s:%(architecture)s" % p)
             if not r:
                 lgr.warning("Was unable to run apt-cache show for %s" %
                             p["name"])
@@ -458,19 +449,9 @@ class DebTracer(DistributionTracer):
                     p[f] = r[f]
 
     def _get_pkgs_install_date(self, pkg_dicts):
-        # Convert package names to dpkg list filenames
-        queries = []
-        for p in pkg_dicts:
-            queries.append(self._pkg_name_to_dpkg_list_file(p["name"]))
-
-        # Find out how many packages we can query at once
-        max_len = max([len(q) for q in queries])
-        num_queries = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
-
-        cmd_results = {}
-        # Execute dpkg -s, parse, and collate the output
-        for subqueries in (queries[pos:pos + num_queries]
-                           for pos in range(0, len(queries), num_queries)):
+        # Define a function to process batches of packages and return
+        # a dict from dpkg list filename to creation date
+        def proc_stat_cmd(subqueries, cmd_results):
             try:
                 out, _ = self._session.execute_command(
                     ['stat', '-c', '%n: %Y'] + subqueries
@@ -487,31 +468,31 @@ class DebTracer(DistributionTracer):
                 cmd_results[fname] = str(
                     pytz.utc.localize(
                         datetime.utcfromtimestamp(float(ftime))))
+            return cmd_results
+
+        # Convert package names to dpkg list filenames
+        queries = []
+        for p in pkg_dicts:
+            queries.append(self._pkg_name_to_dpkg_list_file(p["name"]))
+        # Determine how big our batches can be
+        num_files = get_cmd_batch_len(queries, 15)
+        # Now process our file list and return the file to package mapping
+        results = batch_process_list(proc_stat_cmd, queries, num_files, {})
         # Now lookup the packages in the results
         for p in pkg_dicts:
             fname = self._pkg_name_to_dpkg_list_file(p["name"])
-            if fname in cmd_results:
-                p["install_date"] = cmd_results[fname]
+            if fname in results:
+                p["install_date"] = results[fname]
 
-    def _pkg_name_to_dpkg_list_file(self, name):
+    @staticmethod
+    def _pkg_name_to_dpkg_list_file(name):
         query = "/var/lib/dpkg/info/" + name + ".list"
         return query
 
     def _get_pkgs_versions_and_sources(self, pkg_dicts):
-        # Convert package names to name:arch format
-        queries = []
-        for p in pkg_dicts:
-            # Use "dpkg -s pkg" to get the installed version and arch
-            queries.append("%(name)s:%(architecture)s" % p)
-
-        # Find out how many packages we can query at once
-        max_len = max([len(q) for q in queries])
-        num_queries = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
-
-        cmd_results = {}
-        # Execute dpkg -s, parse, and collate the output
-        for subqueries in (queries[pos:pos + num_queries]
-                           for pos in range(0, len(queries), num_queries)):
+        # Define a function to process batches of packages and return
+        # a dictionary of parsed apt-cache policy output
+        def proc_apt_cache_policy_cmd(subqueries, cmd_results):
             try:
                 out, _ = self._session.execute_command(
                     ['apt-cache', 'policy'] + subqueries
@@ -520,18 +501,27 @@ class DebTracer(DistributionTracer):
                 cmd_results.update(parse_apt_cache_policy_pkgs_output(out))
             except CommandError as _:
                 raise  # Currently raise any exception we encounter
+            return cmd_results
 
+        # Convert package names to name:arch format
+        queries = []
         for p in pkg_dicts:
-            # find the version table in the parsed command results for the
-            # current package (it could be listed by name or name:arch)
-            ver = cmd_results.get("%(name)s:%(architecture)s" % p)
+            queries.append("%(name)s:%(architecture)s" % p)
+        # Determine how big our batches can be
+        num_files = get_cmd_batch_len(queries, 16)
+        # Now process our file list and return the parsed data dict
+        results = batch_process_list(proc_apt_cache_policy_cmd, queries,
+                                     num_files, {})
+        # Loop through each package and find the respective apt-cache results
+        for p in pkg_dicts:
+            ver = results.get("%(name)s:%(architecture)s" % p)
             if not ver:
-                ver = cmd_results.get(p["name"])
+                ver = results.get(p["name"])
             if not ver:
                 lgr.warning("Was unable to get version table for %s" %
                             p["name"])
                 continue
-
+            # Now construct the version table
             ver_dict = {}
             for v in ver.get("versions"):
                 key = v["version"]
@@ -579,7 +569,7 @@ class DebTracer(DistributionTracer):
                 ['dpkg-query', '-S'] + subfiles,
                 # TODO: what should we do about those additional flags we have
                 # in Runner but not yet in execute_command for all sessions
-                #expect_stderr=True, expect_fail=True
+                # expect_stderr=True, expect_fail=True
             )
         except CommandError as exc:
             stderr = utils.to_unicode(exc.stderr, "utf-8")
