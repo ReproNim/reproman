@@ -11,7 +11,7 @@ from niceman.cmdline.main import main
 
 import logging
 
-from niceman.utils import swallow_logs
+from niceman.utils import swallow_logs, make_tempfile
 from niceman.tests.utils import assert_in
 
 
@@ -25,3 +25,11 @@ def test_retrace(reprozip_spec2):
                 ]
         main(args)
         assert_in("reading spec file " + reprozip_spec2, log.lines)
+
+
+def test_retrace_to_output_file(reprozip_spec2):
+    with make_tempfile() as outfile:
+        args = ['retrace',
+                '--spec', reprozip_spec2,
+                '--output-file', outfile]
+        main(args)
