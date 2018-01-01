@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from niceman.cmdline.main import main
+from niceman.formats import Provenance
 
 import logging
 
@@ -33,3 +34,8 @@ def test_retrace_to_output_file(reprozip_spec2):
                 '--spec', reprozip_spec2,
                 '--output-file', outfile]
         main(args)
+
+        ## Perform a simple check of whether the output file can be
+        ## loaded.
+        provenance = Provenance.factory(outfile)
+        assert len(provenance.get_distributions()) == 1
