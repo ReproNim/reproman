@@ -103,7 +103,10 @@ class Retrace(Interface):
 
         # TODO: generic writer!
         from niceman.formats.niceman import NicemanProvenance
-        NicemanProvenance.write(output_file or sys.stdout, spec)
+        stream = open(output_file, "w") if output_file else sys.stdout
+        NicemanProvenance.write(stream, spec)
+        if stream is not sys.stdout:
+            stream.close()
 
 
 # TODO: session should be with a state.  Idea is that if we want

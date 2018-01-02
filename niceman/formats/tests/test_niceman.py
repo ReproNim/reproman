@@ -26,7 +26,7 @@ def test_write():
     # just a basic test that we loaded stuff correctly
     assert len(env.distributions) == 2
     assert env.distributions[0].name == 'conda'
-    assert len(env.distributions[1].apt_sources) == 2
+    assert len(env.distributions[1].apt_sources) == 3
     # and save
     NicemanProvenance.write(output, env)
     out = output.getvalue()
