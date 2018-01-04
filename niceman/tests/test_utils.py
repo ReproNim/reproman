@@ -24,7 +24,7 @@ from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
 from ..dochelpers import exc_str
-from ..utils import updated, HashableDict
+from ..utils import updated, HashableDict, batch_process_list
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
@@ -433,3 +433,14 @@ def test_hashable_dict():
     d[key_a] = 1
     assert(key_b in d)
     assert(key_c not in d)
+
+
+def test_batch_process_list():
+    # Let's sum the numbers from 1 to 100 in different batches
+    l = list(range(1,101))
+    f = lambda b, p: sum(b) + p
+    s = sum(l)  # I know, it should be 5050 :)
+    assert(batch_process_list(f, l, 200, 0) == s)
+    assert(batch_process_list(f, l, 50, 0) == s)
+    assert(batch_process_list(f, l, 10, 0) == s)
+    assert(batch_process_list(f, l, 1, 0) == s)
