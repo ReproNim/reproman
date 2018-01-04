@@ -75,7 +75,7 @@ def get_spec_from_release_file(content):
 
 
 def parse_apt_cache_show_pkgs_output(output):
-    package_info = {}
+    package_info = []
     # Split into entries (one per package)
     entries = filter(bool, re.split('\n(?=Package:)', output,
                                     flags=re.MULTILINE))
@@ -95,24 +95,20 @@ def parse_apt_cache_show_pkgs_output(output):
     # dictionary
     for entry in entries:
         pkg = {
-           match.group("tag"): match.group("val")
+           match.group("tag").lower(): match.group("val")
            for match in re_deb822_single_line_tag.finditer(entry)
         }
-        # Parse source line to get source version (if present)
-        if "Source" in pkg:
-            for match in re_source.finditer(pkg["Source"]):
-                pkg["Source_name"] = match.group("source_name")
-                pkg["Source_version"] = match.group("source_version")
-        # Name the dictionary on the Package and Version
-        if "Package" in pkg and "Version" in pkg:
-            if "Architecture" in pkg:
-                pkg_ident = "%s:%s=%s" % (pkg["Package"], pkg["Architecture"],
-                                          pkg["Version"])
-            else:
-                pkg_ident = "%s=%s" % (pkg["Package"], pkg["Version"])
-            if (pkg_ident in package_info):
-                lgr.warning("Duplicate package %s found " % pkg_ident)
-            package_info[pkg_ident] = pkg
+        # Process the package if one was found
+        if "package" in pkg:
+            # Parse source line to get source version (if present)
+            if "source" in pkg:
+                for match in re_source.finditer(pkg["source"]):
+                    pkg["source_name"] = match.group("source_name")
+                    pkg["source_version"] = match.group("source_version")
+            # Move md5sum to md5
+            pkg["md5"] = pkg.pop("md5sum", None)
+            # Append package entry
+            package_info.append(pkg)
     return package_info
 
 

@@ -105,6 +105,8 @@ requires.update({
         # to the dbus whenever installed or smth like that, thus disabled here
         # but you might need it
         # 'dbus-python',
+        # For running with coverage within py.test
+        'pytest-cov',
     ],
     'devel-neuroimaging': [
         # Specifically needed for tests here (e.g. example scripts testing)

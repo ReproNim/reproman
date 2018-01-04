@@ -6,10 +6,14 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-
+import json
 import os
+from os.path import islink
+from os.path import join, isfile
 
 from pprint import pprint
+
+import attr
 
 from niceman.distributions.debian import DebTracer
 from niceman.distributions.debian import DEBPackage
@@ -38,7 +42,7 @@ def test_dpkg_manager_identify_packages():
     distributions = list(tracer.identify_distributions(files))
     assert len(distributions) == 1
     distribution, unknown_files = distributions[0]
-    pprint(distribution)
+    print(json.dumps(attr.asdict(distribution), indent=4))
     assert distribution.apt_sources
     # Make sure both a non-local origin was found
     for o in distribution.apt_sources:
@@ -52,6 +56,34 @@ def test_dpkg_manager_identify_packages():
             break
     else:
         assert False, "A non-local origin must be found"
+
+
+@pytest.mark.slow
+@skip_if_no_apt_cache
+def test_check_bin_packages():
+    # Gather files in /usr/bin and /usr/lib
+    files = list_all_files("/usr/bin") + list_all_files("/usr/lib")
+    tracer = DebTracer()
+    distributions = list(tracer.identify_distributions(files))
+    assert len(distributions) == 1
+    distribution, unknown_files = distributions[0]
+    print(json.dumps(attr.asdict(distribution), indent=4))
+    non_local_origins = [o for o in distribution.apt_sources if o.site]
+    assert len(non_local_origins) > 0, "A non-local origin must be found"
+    for o in non_local_origins:
+        # Loop over mandatory attributes
+        for a in ["name", "component", "archive", "codename",
+                  "origin", "label", "site", "archive_uri"]:
+            assert getattr(o, a), "A non-local origin needs a " + a
+    assert len(unknown_files) == 0, "Files not found in packages: " + \
+                                    str(unknown_files)
+
+
+def list_all_files(dir):
+    files = [join(dir, f) for f in os.listdir(dir)
+             if (isfile(join(dir, f)) and
+                 not islink(join(dir, f)))]
+    return files
 
 
 # def test_find_release_file():
@@ -84,6 +116,7 @@ def test_utf8_file():
     # Simple sanity check that the pipeline works with utf-8
     (packages, unknown_files) = \
         manager.identify_packages_from_files(files)
+    packages = manager.get_details_for_packages(packages)
     # Print for manual debugging
     pprint(unknown_files)
     pprint(packages)
