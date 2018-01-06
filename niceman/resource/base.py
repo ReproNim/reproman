@@ -356,7 +356,6 @@ class ResourceManager(object):
         """
         Save the resource inventory
         """
-        import pdb; pdb.set_trace()
         # Operate on a copy so there is no side-effect of modifying original
         # inventory
         inventory = {} if not self.inventory else self.inventory.copy()

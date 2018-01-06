@@ -131,12 +131,12 @@ class Ls(Interface):
             ui.message(line)
             lgr.debug('list result: %s', line)
 
-        # if not refresh:
-        #     ui.message('(Use --refresh option to view current status.)')
-        #
         # TODO: how do we want to reflect changes back?
         if refresh:
             lgr.debug("Storing manager's inventory upon refresh")
             # ATM it is not in effect, since inventory contains dicts, and
             # instances created "on the fly". TODO
-            # TODO manager.set_inventory()
+            # TODO
+            manager.set_inventory()
+        else:
+            ui.message('(Use --refresh option to view current status.)')
