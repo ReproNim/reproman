@@ -14,8 +14,26 @@ distributions:
        site: http.debian.net
        archive_uri: 'http://http.debian.net/debian/'
        date: '2017-05-31 08:40:46+00:00'
-     - name: neurodebian
+     - name: apt_NeuroDebian_xenial_contrib_0
        component: contrib
+       archive: xenial
+       architecture: amd64
+       codename: xenial
+       origin: NeuroDebian
+       label: NeuroDebian
+       site: neuro.debian.net
+       archive_uri: 'http://neuro.debian.net/debian'
+       date: '2017-12-08 03:20:12+00:00'
+     - name: apt_NeuroDebian_xenial_main_0
+       component: main
+       archive: xenial
+       architecture: amd64,
+       codename: xenial
+       origin: NeuroDebian
+       label: NeuroDebian
+       site: neuro.debian.net,
+       archive_uri: 'http://neuro.debian.net/debian'
+       date: '2017-12-08 03:20:12+00:00'
    packages:
      - name: libc6-dev
        source_name: glibc
@@ -30,10 +48,31 @@ distributions:
        sha256: 0619d49952775fd1d9c1453aa2a065b876ec016e1dbcead09a90e44d1d82c561
        sha1: 470747b71b367b1bfa472ad294a51f44cfba874b
        md5: 17ba9548d5f3937431dab210b1a97aff
+       install_date: '2017-11-29 15:01:38+00:00'
        files:
         - "/usr/lib/x86_64-linux-gnu/libc.so"
      - name: afni
-       version: 16.2.07~dfsg.1-2~nd90+1
+       version: 16.2.07~dfsg.1-5~nd16.04+1
+       architecture: amd64
+       size: '12769372'
+       md5: c29c7583dc8dc1fbe6cb19944af018eb
+       sha1: 285eedc811f662b4fac6f3f78b19d0df78d9d208
+       sha256: c32a4e7a67c8e7b78be0f587d5dc612e6c89149fa7c301aec2e9ea0bc987a92c
+       versions:
+         16.2.07~dfsg.1-5~nd16.04+1: [apt_NeuroDebian_xenial_contrib_0, apt__now__0]
+       install_date: '2017-12-12 21:09:06+00:00'
+       files: [/usr/bin/afni]
+     - name: dcm2niix
+       version: 1:1.0.20171017+git3-g9ccc4c0-1~nd16.04+1
+       architecture: amd64
+       size: '136356'
+       md5: 6a387a9c9f436ff244403d6f3736438c
+       sha1: 2c01046f8637099aacae37ee665dccb991d7da04
+       sha256: f9c8b1938cb8c88688be15e7ebb9e1810108056e9505f973993fee646d16d834
+       versions:
+         1:1.0.20171017+git3-g9ccc4c0-1~nd16.04+1: [apt_NeuroDebian_xenial_main_0, apt__now__0]
+       install_date: '2017-12-08 16:38:50+00:00'
+       files: [/usr/bin/dcm2niix]
 
  conda:
 # TODO: later -- first polish down work with Debian

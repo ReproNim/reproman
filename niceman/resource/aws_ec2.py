@@ -49,7 +49,7 @@ class AwsEc2(Resource):
         doc="AWS subscription name of SSH key-pair registered.")  # Name of SSH key registered on AWS.
     key_filename = attrib(default=None,
         doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
-    base_image_id = attrib(default='ami-c8580bdf',
+    image = attrib(default='ami-c8580bdf',
         doc="AWS image ID from which to create the running instance")  # Ubuntu 14.04 LTS
     user = attrib(default='ubuntu',
         doc="Login account to EC2 instance.")
@@ -125,7 +125,7 @@ class AwsEc2(Resource):
             self.create_key_pair()
 
         create_kwargs = dict(
-            ImageId=self.base_image_id,
+            ImageId=self.image,
             InstanceType=self.instance_type,
             KeyName=self.key_name,
             MinCount=1,
