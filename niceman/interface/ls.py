@@ -132,7 +132,7 @@ class Ls(Interface):
                 name,
                 resource.type,
                 resource.id[:id_length] if resource.id else '',
-                resource.status,
+                resource.status or '',
             )
             out(msgargs)
             lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
