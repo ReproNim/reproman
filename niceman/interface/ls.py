@@ -11,7 +11,10 @@
 
 __docformat__ = 'restructuredtext'
 
+from collections import OrderedDict
 from six.moves.configparser import NoSectionError
+
+from pyout import Tabular
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
@@ -72,9 +75,13 @@ class Ls(Interface):
         from niceman.resource import manager
 
         id_length = 19  # todo: make it possible to output them long
-        template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
-        ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
-        ui.message(template.format('-------------', '----', '--', '------'))
+
+        out = Tabular(OrderedDict([("name", "RESOURCE NAME"),
+                                   ("type", "TYPE"),
+                                   ("id", "ID"),
+                                   ("status", "STATUS")]),
+                      style={"header_": {"underline": True},
+                             "id": {"width": {"auto": True, "max": 22}}})
 
         for name in sorted(manager):
             if name.startswith('_'):
@@ -127,9 +134,8 @@ class Ls(Interface):
                 resource.id[:id_length] if resource.id else '',
                 resource.status,
             )
-            line = template.format(*msgargs)
-            ui.message(line)
-            lgr.debug('list result: %s', line)
+            out(msgargs)
+            lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
 
         # TODO: how do we want to reflect changes back?
         if refresh:
