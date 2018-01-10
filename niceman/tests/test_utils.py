@@ -327,20 +327,6 @@ def test_find_files_exclude_vcs(repo=None):
     assert_in(opj(repo, '.git'), files)
 
 
-def test_line_profile():
-    skip_if_no_module('line_profiler')
-
-    @line_profile
-    def f(j):
-        i = j + 1  # xyz
-        return i
-
-    with swallow_outputs() as cmo:
-        assert_equal(f(3), 4)
-        assert_equal(cmo.err, '')
-        assert_in('i = j + 1  # xyz', cmo.out)
-
-
 def test_not_supported_on_windows():
     with patch('niceman.utils.on_windows', True):
         assert_raises(NotImplementedError, not_supported_on_windows)
@@ -459,3 +445,17 @@ def test_execute_command_batch():
     cmd_gen = execute_command_batch(session, ["ValueError"], args, ValueError)
     for (_, _, err) in cmd_gen:
         assert isinstance(err, ValueError)
+
+
+def test_line_profile():
+    skip_if_no_module('line_profiler')
+
+    @line_profile
+    def f(j):
+        i = j + 1  # xyz
+        return i
+
+    with swallow_outputs() as cmo:
+        assert_equal(f(3), 4)
+        assert_equal(cmo.err, '')
+        assert_in('i = j + 1  # xyz', cmo.out)
