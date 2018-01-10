@@ -11,6 +11,7 @@
 """
 
 import os
+import pytest
 import shutil
 import sys
 import logging
@@ -24,7 +25,7 @@ from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
 from ..dochelpers import exc_str
-from ..utils import updated, HashableDict, batch_process_list
+from ..utils import updated, HashableDict, execute_command_batch
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
@@ -435,12 +436,26 @@ def test_hashable_dict():
     assert(key_c not in d)
 
 
-def test_batch_process_list():
-    # Let's sum the numbers from 1 to 100 in different batches
-    l = list(range(1,101))
-    f = lambda b, p: sum(b) + p
-    s = sum(l)  # I know, it should be 5050 :)
-    assert(batch_process_list(f, l, 200, 0) == s)
-    assert(batch_process_list(f, l, 50, 0) == s)
-    assert(batch_process_list(f, l, 10, 0) == s)
-    assert(batch_process_list(f, l, 1, 0) == s)
+def test_execute_command_batch():
+    # Create a dummy session that can possibly raise a ValueError
+    class DummySession(object):
+        def execute_command(self, cmd):
+            if cmd[0] == "ValueError":
+                raise ValueError
+            else:
+                return (len(cmd), None)
+    session = DummySession()
+    # First let's do a simple test to count the args
+    args = list(map(str, range(1, 101)))
+    cmd_gen = execute_command_batch(session, [], args, None)
+    for (out, _, _) in cmd_gen:
+        assert out == 100
+    # Now let's raise an exception but not list it as handled
+    cmd_gen = execute_command_batch(session, ["ValueError"], args, None)
+    with pytest.raises(ValueError):
+        for (_, _, _) in cmd_gen:
+            pass
+    # Now let's raise an exception
+    cmd_gen = execute_command_batch(session, ["ValueError"], args, ValueError)
+    for (_, _, err) in cmd_gen:
+        assert isinstance(err, ValueError)
