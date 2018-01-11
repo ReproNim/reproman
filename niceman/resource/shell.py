@@ -86,10 +86,10 @@ class ShellSession(POSIXSession):
             else:
                 os.mkdir(path)
 
-    def get(self, src_path, dest_path, owner=None, group=None):
+    def get(self, src_path, dest_path, uid=-1, gid=-1):
         pass
 
-    def put(self, src_path, dest_path, owner=None, group=None):
+    def put(self, src_path, dest_path, uid=-1, gid=-1):
         pass
 
 

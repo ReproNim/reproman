@@ -19,7 +19,7 @@ import os
 import re
 
 from niceman.support.exceptions import SessionRuntimeError
-from niceman.dochelpers import exc_str
+from niceman.dochelpers import exc_str, borrowdoc
 from niceman.support.exceptions import CommandError
 from niceman.utils import updated
 from niceman.utils import to_unicode
@@ -35,7 +35,12 @@ class Session(object):
     __metaclass__ = abc.ABCMeta
 
     def __attrs_post_init__(self):
-        # both will be maintained
+        """
+        Maintain both current and future session environments.
+        
+        For persistent resources, we will save the environment information
+        to make it available for sessions beyond the current one.
+        """
         self._env = {}           # environment which would be in-effect only for this session
         self._env_permanent = {} # environment variables which would be in-effect in future sessions if resource is persistent
 
@@ -52,12 +57,18 @@ class Session(object):
 
     # By default don't do anything special
     def open(self):
+        """
+        Called when a session is started.
+        """
         # XXX
         # we might right here already load possibly set permanent env variables
         # within that session?
         pass
 
     def close(self):
+        """
+        Called when a session ends.
+        """
         # XXX may be here we should dump permanent env settings?
         pass
 
@@ -103,7 +114,20 @@ class Session(object):
             raise NotImplementedError
 
     def get_envvars(self, permanent=False):
-        """Get stored session environment variables"""
+        """Get stored session environment variables
+        
+        Parameters
+        ----------
+        permanent : {bool}, optional
+            Indicate that the environment variables that persist across
+            sessions should be returned (the default is False, which will
+            return the environment variables specific to the current session.)
+        
+        Returns
+        -------
+        dict
+            Key/value pairs of environment variables
+        """
         # TODO: should we parametrize to be able to query for permanent ones
         # if were defined or those we store in our variables etc?
         return self._env_permanent if permanent else self._env
@@ -112,14 +136,24 @@ class Session(object):
         """Query full session environment settings within the session"""
         raise NotImplementedError
 
-    def source_script(self, script_or_cmd, permanent=False, diff=True):
+    def source_script(self, command, permanent=False, diff=True, shell=None):
         """Source a script which would modify the environment
-        
+
+        Note: if command is composite (e.g. "activate envname" for conda), it
+        would work only in bash or zsh shell.
+
         Parameters
         ----------
-        permanent: bool, optional
-        diff: bool, optional
+        command : str or list
+          Name of the script or composite command (if a list, such as 
+          ["activate", "envname"] in conda) to be "sourced"
+        permanent : bool, optional
+        diff : bool, optional
           Store only variables values of which were changed by sourcing the file
+        shell : str, optional
+          Which shell to use.  If none specified, the one specified by SHELL
+          in the environment would be used. If that one is not specified -- /bin/sh
+          will be used for simple command, or /bin/bash if composite
         """
         raise NotImplementedError
 
@@ -135,14 +169,16 @@ class Session(object):
         command : list
             Shell command string or list of command tokens to send to the
             environment to execute.
-        env : dict
+        env : dict, optional
             Additional environment variables which are applied
             only to the current call.  If value is None -- variable will be 
             removed
+        cwd : string, optional
+            Path of directory in which to run the command
 
         Returns
         -------
-        out, err
+        (STDOUT, STDERR)
         """
         # TODO: bring back updated_env?
         command_env = dict(self._env, **(env or {}))
@@ -158,12 +194,24 @@ class Session(object):
 
     @abc.abstractmethod
     def _execute_command(self, command, env=None, cwd=None):
-        """Execute a command
-        
+        """
+        Execute the given command in the environment.
+
         Parameters
         ----------
-        env: dict, optional
-          Complete environment (if provided) to use while executing the command
+        command : list
+            Shell command string or list of command tokens to send to the
+            environment to execute.
+        env : dict, optional
+            Additional environment variables which are applied
+            only to the current call.  If value is None -- variable will be 
+            removed
+        cwd : string, optional
+            Path of directory in which to run the command
+
+        Returns
+        -------
+        (STDOUT, STDERR)
         """
         raise NotImplementedError
 
@@ -173,8 +221,20 @@ class Session(object):
     #        more flexible mixups
 
     def niceman_exec(self, command, args):
-        """Run a niceman utility "exec" command in the environment"""
-
+        """Run a niceman utility "exec" command in the environment
+        
+        Parameters
+        ----------
+        command : string
+            The session method name to run. (e.g. mkdir, chown, etc.)
+        args : list of strings
+            Arguments passed in from the command line for the command
+        
+        Raises
+        ------
+        CommandError
+            Exception if an invalid command argument is passed in.
+        """
         authorized_commands = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
         if command not in authorized_commands:
             raise CommandError(cmd=command, msg="Invalid command")
@@ -196,21 +256,73 @@ class Session(object):
 
     @abc.abstractmethod
     def exists(self, path):
-        """Return if file exists"""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def put(self, src_path, dest_path, owner=None, group=None):
-        """Take file on the local file system and copy over into the session
+        """Determine if a path exists in the resource.
+        
+        Parameters
+        ----------
+        path : string
+            Path to check for existence in the resource environment.
+        
+        Returns
+        -------
+        bool
+            True if path exists
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get(self, src_path, dest_path, owner=None, group=None):
+    def put(self, src_path, dest_path, uid=-1, gid=-1):
+        """Take file on the local file system and copy over into the resource
+        
+        Parameters
+        ----------
+        src_path : string
+            Path to file to push to resource environment
+        dest_path : string
+            Path of resource directory to put local file in
+        uid : number, optional
+            System user ID to assign ownership of file on resource  (the
+            default is -1, which will preserve the user owner of the local file)
+        gid : number, optional
+            System group ID to assign group ownership of file on resource (the
+            default is -1, which will preserve the group id of the local file)
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get(self, src_path, dest_path, uid=-1, gid=-1):
+        """Take file on the resource and copy over into the local system
+        
+        Parameters
+        ----------
+        src_path : string
+            Path to file to pull from resource environment
+        dest_path : string
+            Path in local file system to put local file in
+        uid : number, optional
+            System user ID to assign ownership of file on resource  (the
+            default is -1, which will preserve the user owner of the local file)
+        gid : number, optional
+            System group ID to assign group ownership of file on resource (the
+            default is -1, which will preserve the group id of the local file)
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def get_mtime(self, path):
+        """Returns the modification time for a file in the resource
+        
+        Parameters
+        ----------
+        path : string
+            Path to file on resource
+        
+        Returns
+        -------
+        string
+            epoch timestamp
+
+        """
         raise NotImplementedError
 
     #
@@ -218,31 +330,61 @@ class Session(object):
     #
     @abc.abstractmethod
     def read(self, path, mode='r'):
-        """Return content of a file"""
+        """Return content of a file
+        
+        Parameters
+        ----------
+        path : string
+            Filesystem path to file to be read
+        mode : string, optional
+            Access mode when reading file (the default is 'r', which is read-only)
+        
+        Returns
+        -------
+        list of strings
+            Contents of the file, one output line for each list item
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def mkdir(self, path, parents=False):
-        """Create a directory (or with parent directories if `parents` 
-        is True)
+        """Create a directory
+        
+        Parameters
+        ----------
+        path : string
+            Path to file in resource
+        parents : bool, optional
+            Include parent directories (the default is False)
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def isdir(self, path):
         """Return True if path is pointing to a directory
+        
+        Parameters
+        ----------
+        path : string
+            Path to test in the resource
+        
+        Returns
+        -------
+        bool
+            True if path is a directory
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def chmod(self, mode, remote_path, recursive=False):
+    def chmod(self, path, mode, recursive=False):
         """Set the mode of a remote path
+        
         """
         pass
 
     @abc.abstractmethod
-    def chown(self, uid, gid, remote_path, recursive=False):
-        """Set the user and group of a path
+    def chown(self, path, uid, gid, recursive=False):
+        """Set the user and gid of a path
         """
         pass
 
@@ -255,35 +397,30 @@ class POSIXSession(Session):
 
     _GET_ENVIRON_CMD = ['python', '-c', 'import os,json,sys; sys.stdout.write(json.dumps(dict(os.environ)))']
 
+    @borrowdoc(Session)
     def query_envvars(self):
-        """Query session environment settings"""
         out, err = self.execute_command(self._GET_ENVIRON_CMD)
         env = self._parse_envvars_output(out)
         # TODO:  should we update with our .env or .env_permament????
         return env
 
     def _parse_envvars_output(self, out):
-        return json.loads(to_unicode(out))
-
-    def source_script(self, command, permanent=False, diff=True, shell=None):
-        """Source a script which would modify the environment
-
-        Note: if command is composite (e.g. "activate envname" for conda), it
-        would work only in bash or zsh shell.
-
+        """Decode a JSON string into an object
+        
         Parameters
         ----------
-        command: str or list
-          Name of the script or composite command (if a list, such as 
-          ["activate", "envname"] in conda) to be "sourced"
-        permanent: bool, optional
-        diff: bool, optional
-          Store only variables values of which were changed by sourcing the file
-        shell: str, optional
-          Which shell to use.  If none specified, the one specified by SHELL
-          in the environment would be used. If that one is not specified -- /bin/sh
-          will be used for simple command, or /bin/bash if composite
+        out : string
+            JSON string to decode.
+        
+        Returns
+        -------
+        object
+            Decoded representation of the JSON string
         """
+        return json.loads(to_unicode(out))
+
+    @borrowdoc(Session)
+    def source_script(self, command, permanent=False, diff=True, shell=None):
         orig_env = self.query_envvars()
         # Might want to be reimplemented in derived classes?  e.g.
         # if session is persistent (i.e all commands run in persistent session)
@@ -374,7 +511,7 @@ class POSIXSession(Session):
     #
     # Somewhat optional since could be implemented with native "POSIX" commands
     #
-    def read(self, path):
+    def read(self, path, mode='r'):
         """Return context manager to open files for reading or editing"""
         out, err = self.execute_command(["cat", path])
         if err:
@@ -405,25 +542,36 @@ class POSIXSession(Session):
                       "test for directory has failed", err)
             return False
 
-    def chmod(self, mode, remote_path, recursive=False):
+    def chmod(self, path, mode, recursive=False):
         """Set the mode of a remote path
         """
         command = ['chmod']
         if recursive: command += ["-R"]
-        command += [mode] + [remote_path]
+        command += [mode] + [path]
         self.execute_command(command)
 
-    def chown(self, uid, gid, remote_path, recursive=False):
-        """Set the user and group of a path
+    def chown(self, path, uid=-1, gid=-1, recursive=False):
+        """Set the user and gid of a path
         """
         command = ['chown']
         if recursive: command += ["-R"]
         if int(uid) > 0 and int(gid) > 0: command += ["{}.{}".format(uid, gid)]
-        elif int(uid) > 0: command += [uid]
-        elif int(uid) > 0: command = ['chgrp'] + [gid]
-        else: raise CommandError
-        command += [remote_path]
+        elif int(uid) > -1: command += [uid]
+        elif int(uid) > -1: command = ['chgrp'] + [gid]
+        else: raise CommandError(cmd='chown', msg="Invalid command \
+            parameters.")
+        command += [path]
         self.execute_command(command)
+
+    def local_chown(self, src_path, dest_path, uid=-1, gid=-1):
+        target = dest_path + os.sep + os.path.basename(src_path)
+        os.chown(target, int(uid), int(gid))
+        if os.path.isdir(target):
+            for root, dirs, files in os.walk(target):
+                for dir in dirs:
+                    os.chown(os.path.join(root, dir), int(uid), int(gid))
+                for file in files:
+                    os.chown(os.path.join(root, file), int(uid), int(gid))
 
 
 def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):

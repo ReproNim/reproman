@@ -16,6 +16,7 @@ import json
 import os
 import tarfile
 from ..support.exceptions import CommandError, ResourceError
+from niceman.dochelpers import borrowdoc
 from .base import Resource, attrib
 
 import logging
@@ -53,6 +54,9 @@ class DockerContainer(Resource):
         """
         # Open a client connection to the Docker engine.
         self._client = docker.Client(base_url=self.engine_url)
+
+        if not self.container_name:
+            self.container_name = self.name
 
         containers = []
         for container in self._client.containers(all=True):
@@ -152,7 +156,7 @@ class DockerContainer(Resource):
         )
 
 
-from niceman.resource.session import POSIXSession
+from niceman.resource.session import POSIXSession, Session
 
 
 @attr.s
@@ -203,9 +207,10 @@ class DockerSession(POSIXSession):
     # XXX should we start/stop on open/close or just assume that it is running already?
 
 
-    def put(self, src_path, dest_path, owner=None, group=None):
-        """Take file on the local file system and copy over into the session
-        """
+    @borrowdoc(Session)
+    def put(self, src_path, dest_path, uid=-1, gid=-1):
+        # To copy one or more files to the container, the API recommends
+        # to do so with a tar archive. http://docker-py.readthedocs.io/en/1.5.0/api/#copy
         tar_stream = io.BytesIO()
         tar_file = tarfile.TarFile(fileobj=tar_stream, mode='w')
         tar_file.add(src_path, arcname=src_path)
@@ -214,18 +219,19 @@ class DockerSession(POSIXSession):
         self.client.put_archive(container=self.container['Id'], path=dest_path,
                             data=tar_stream)
 
-        if owner or group:
-            self.chown(owner, group, dest_path, recursive=True)
+        if uid > -1 or gid > -1:
+            self.chown(dest_path, uid, gid, recursive=True)
 
-    def get(self, src_path, dest_path, owner=None, group=None):
+    @borrowdoc(Session)
+    def get(self, src_path, dest_path, uid=-1, gid=-1):
         """Retrieve a file from the remote system
         """
         stream, stat = self.client.get_archive(self.container, src_path)
         tarball = tarfile.open(fileobj=io.BytesIO(stream.read()))
         tarball.extractall(path=dest_path)
 
-        if owner or group:
-            self.chown(owner, group, dest_path, recursive=True)
+        if uid > -1 or gid > -1:
+            self.local_chown(src_path, dest_path, uid, gid)
 
 
 @attr.s

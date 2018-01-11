@@ -21,10 +21,6 @@ from niceman.tests.utils import assert_in
 
 
 def test_exec_interface(niceman_cfg_path):
-    """
-    Test deleting a resource.
-    """
-
 
     with patch('niceman.resource.ResourceManager.set_inventory'), \
         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \

@@ -32,8 +32,7 @@ lgr = logging.getLogger('niceman.resource.base')
 
 
 def attrib(*args, **kwargs):
-    """
-    Extend the attr.ib to include our metadata elements.
+    """Extend the attr.ib to include our metadata elements.
     
     ATM we support additional keyword args which are then stored within
     `metadata`:
@@ -57,8 +56,7 @@ class ResourceManager(object):
 
     @staticmethod
     def factory(config):
-        """
-        Factory method for creating the appropriate Container sub-class.
+        """Factory method for creating the appropriate Container sub-class.
 
         Parameters
         ----------
@@ -90,6 +88,13 @@ class ResourceManager(object):
     # TODO: Following methods might better be in their own class
     @staticmethod
     def _discover_types():
+        """Discover resource types by instpecting the resource directory files.
+        
+        Returns
+        -------
+        string list
+            List of resource identifiers extracted from file names.
+        """
         l = []
         for f in glob(opj(dirname(__file__), '*.py')):
             f_ = basename(f)
@@ -100,8 +105,7 @@ class ResourceManager(object):
 
     @staticmethod
     def get_resource_info(config_path, name, id_=None, type_=None):
-        """
-        Sort through the parameters supplied by the user at the command line and then
+        """Sort through the parameters supplied by the user at the command line and then
         request the ones that are missing that are needed to find the config and
         inventory files and then build the config dictionary needed to connect
         to the environment.
@@ -179,8 +183,7 @@ class ResourceManager(object):
 
     @staticmethod
     def get_config_manager(config_path=None):
-        """
-        Returns the information stored in the niceman.cfg file.
+        """Returns the information stored in the niceman.cfg file.
 
         Parameters
         ----------
@@ -214,8 +217,7 @@ class ResourceManager(object):
 
     @staticmethod
     def get_inventory(inventory_path):
-        """
-        Returns a dictionary containing the config information for all resources
+        """Returns a dictionary containing the config information for all resources
         created by niceman.
 
         Parameters
@@ -247,8 +249,7 @@ class ResourceManager(object):
 
     @staticmethod
     def set_inventory(inventory):
-        """
-        Save the resource inventory to a file. The location of the file is
+        """Save the resource inventory to a file. The location of the file is
         declared in the niceman.cfg file.
 
         Parameters
@@ -291,8 +292,7 @@ class Resource(object):
         return 'Resource({})'.format(self.name)
 
     def add_command(self, command, env=None):
-        """
-        Add a command to the command buffer so that all commands can be
+        """Add a command to the command buffer so that all commands can be
         run at once in a batch submit to the environment.
 
         Parameters
@@ -310,9 +310,15 @@ class Resource(object):
         self._command_buffer.append({'command': command, 'env': env})
 
     def execute_command_buffer(self, session=None):
-        """
-        Send all the commands in the command buffer to the environment for
+        """Send all the commands in the command buffer to the environment for
         execution.
+        
+        Parameters
+        ----------
+        session : Sesson object, optional
+            Session object reflects the resource type. (the default is None,
+            which will cause the Session object to be retrieved from the
+            Resource object.)
         """
         if not session:
             session = self.get_session(pty=False)
@@ -321,19 +327,14 @@ class Resource(object):
             session.execute_command(command['command'], env=command['env'])
 
     def set_envvar(self, var, value):
-        """
-        Save an environment variable for inclusion in the environment
+        """Save an environment variable for inclusion in the environment
 
         Parameters
         ----------
         var : string
-            Variable name
+            Env variable name
         value : string
-            Variable value
-
-        Returns
-        -------
-
+            Env variable value
         """
         # TODO: This wouldn't work correctly since pretty much each command
         # then should have its desired env recorded since set_envvar
@@ -344,8 +345,7 @@ class Resource(object):
         self._env[var] = value
 
     def get_updated_env(self, custom_env):
-        """
-        Returns an env dictionary with additional or replaced values.
+        """Returns an env dictionary with additional or replaced values.
 
         Parameters
         ----------
@@ -355,7 +355,8 @@ class Resource(object):
 
         Returns
         -------
-        dictionary
+        dict
+            Environment variables merged with additional custom variables.
         """
         if hasattr(self, '_env'):
             merged_env = self._env.copy()
@@ -367,6 +368,13 @@ class Resource(object):
 
     @classmethod
     def _generate_id(cls):
+        """Utility class method to generate a UUID.
+        
+        Returns
+        -------
+        string
+            Newly crated UUID
+        """
         import uuid
         # just a random uuid for now, TODO: think if we somehow could
         # fingerprint it so to later be able to decide if it is 'ours'? ;)
@@ -374,6 +382,19 @@ class Resource(object):
 
     @abc.abstractmethod
     def get_session(self, pty=False, shared=None):
-        """Return an open session to a resource environment"""
+        """Returns the Session object for this resource.
+        
+        Parameters
+        ----------
+        pty : bool, optional
+            Terminal session (the default is False)
+        shared : string, optional
+            Shared session identifier (the default is None)
+        
+        Raises
+        ------
+        NotImplementedError
+            [description]
+        """
         raise NotImplementedError
 

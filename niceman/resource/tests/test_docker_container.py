@@ -161,7 +161,7 @@ def test_docker_session(script=None):
     assert resource._container['Command'] == '/usr/sbin/sshd -D'
 
     assert session.exists(script) == False
-    session.put(script, "/", owner=None, group=None)
+    session.put(script, "/", uid=-1, gid=-1)
     assert session.exists(script) == True
 
     dest_path = '/var{}'.format(script)
