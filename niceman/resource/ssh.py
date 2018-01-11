@@ -16,6 +16,7 @@ import logging
 lgr = logging.getLogger('niceman.resource.ssh')
 
 from .base import Resource, attrib
+from niceman import utils
 from ..support.starcluster.sshutils import SSHClient
 from ..support.starcluster.exception import RemoteCommandFailed
 from ..support.exceptions import CommandError
@@ -123,6 +124,10 @@ class SSHSession(POSIXSession):
         env : dict
             Additional (or replacement) environment variables which are applied
             only to the current call
+
+        Returns
+        -------
+        out, err
         """
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
@@ -135,14 +140,10 @@ class SSHSession(POSIXSession):
 
         # If a command fails, a CommandError exception will be thrown.
         escaped_command = ' '.join(quote(s) for s in command)
-        out = []
-        try:
-            for i, line in enumerate(self.ssh.execute(escaped_command)):
-                out.append(line.rstrip())
-                lgr.debug("exec#%i: %s", i, line.rstrip())
-        except RemoteCommandFailed as e:
-            raise CommandError(cmd=escaped_command, msg=e.msg)
-
+        out = ''
+        for i, line in enumerate(self.ssh.execute(escaped_command)):
+            out += utils.to_unicode(line, "utf-8")
+            lgr.debug("exec#%i: %s", i, line.rstrip())
         return (out, None)
 
     def exists(self, path):

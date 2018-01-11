@@ -8,10 +8,11 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from niceman.cmdline.main import main
+from niceman.formats import Provenance
 
 import logging
 
-from niceman.utils import swallow_logs
+from niceman.utils import swallow_logs, make_tempfile
 from niceman.tests.utils import assert_in
 
 
@@ -25,3 +26,16 @@ def test_retrace(reprozip_spec2):
                 ]
         main(args)
         assert_in("reading spec file " + reprozip_spec2, log.lines)
+
+
+def test_retrace_to_output_file(reprozip_spec2):
+    with make_tempfile() as outfile:
+        args = ['retrace',
+                '--spec', reprozip_spec2,
+                '--output-file', outfile]
+        main(args)
+
+        ## Perform a simple check of whether the output file can be
+        ## loaded.
+        provenance = Provenance.factory(outfile)
+        assert len(provenance.get_distributions()) == 1

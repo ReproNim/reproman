@@ -15,6 +15,7 @@ import io
 import json
 import os
 import tarfile
+from niceman import utils
 from ..support.exceptions import CommandError, ResourceError
 from niceman.dochelpers import borrowdoc
 from .base import Resource, attrib
@@ -37,7 +38,7 @@ class DockerContainer(Resource):
     container_name = attr.ib(default=None)
     type = attr.ib(default='docker-container')
 
-    base_image_id = attrib(default='ubuntu:latest',
+    image = attrib(default='ubuntu:latest',
         doc="Docker base image ID from which to create the running instance")
     engine_url = attrib(default='unix:///var/run/docker.sock',
         doc="Docker server URL where engine is listening for connections")
@@ -99,15 +100,15 @@ class DockerContainer(Resource):
                     self.container_name, self.id))
         # image might be of the form repository:tag -- pull would split them
         # if needed
-        for line in self._client.pull(repository=self.base_image_id, stream=True):
-            status = json.loads(line.decode("utf-8"))
+        for line in self._client.pull(repository=self.image, stream=True):
+            status = json.loads(utils.to_unicode(line, "utf-8"))
             output = status['status']
             if 'progress' in status:
                 output += ' ' + status['progress']
             lgr.info(output)
         self._container = self._client.create_container(
             name=self.container_name,
-            image=self.base_image_id,
+            image=self.image,
             stdin_open=True,
             tty=True,
             command='/bin/bash',
@@ -175,6 +176,10 @@ class DockerSession(POSIXSession):
             be a string or a list of tokens that create the command.
         env : dict
             Complete environment to be used
+
+        Returns
+        -------
+        out, err
         """
         #command_env = self.get_updated_env(env)
         if env:
@@ -191,12 +196,16 @@ class DockerSession(POSIXSession):
         lgr.debug('Running command %r', command)
         out = []
         execute = self.client.exec_create(container=self.container, cmd=command)
+        out = ''
         for i, line in enumerate(
                 self.client.exec_start(exec_id=execute['Id'],
                 stream=True)
         ):
-            out.append(line.rstrip())
+            if line.startswith(b'rpc error'):
+                raise CommandError(cmd=command, msg="Docker error - %s" % line)
+            out += utils.to_unicode(line, "utf-8")
             lgr.debug("exec#%i: %s", i, line.rstrip())
+        return (out, self.client.exec_inspect(execute['Id'])['ExitCode'])
 
         exit_code = self.client.exec_inspect(execute['Id'])['ExitCode']
         if exit_code not in [0, None]:
