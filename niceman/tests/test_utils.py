@@ -429,18 +429,17 @@ def test_execute_command_batch():
             if cmd[0] == "ValueError":
                 raise ValueError
             else:
-                return (len(cmd), None)
+                return (str(len(cmd)), None)
     session = DummySession()
     # First let's do a simple test to count the args
     args = list(map(str, range(1, 101)))
     cmd_gen = execute_command_batch(session, [], args, None)
     for (out, _, _) in cmd_gen:
-        assert out == 100
+        assert out == "100"
     # Now let's raise an exception but not list it as handled
     cmd_gen = execute_command_batch(session, ["ValueError"], args, None)
     with pytest.raises(ValueError):
-        for (_, _, _) in cmd_gen:
-            pass
+        list(cmd_gen)
     # Now let's raise an exception
     cmd_gen = execute_command_batch(session, ["ValueError"], args, ValueError)
     for (_, _, err) in cmd_gen:

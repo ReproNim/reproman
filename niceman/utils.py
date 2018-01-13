@@ -1000,9 +1000,9 @@ def execute_command_batch(session, command, args, expected_exceptions=None):
     ----------
     session
       Session object that implements the execute_command() member
-    command : array
+    command : sequence
       The command that we wish to execute
-    args : array
+    args : sequence
       The long list of additional arguments we wish to pass to the command
     expected_exceptions : tuple
       A tuple of exception types that the calling code will gracefully handle
@@ -1022,6 +1022,7 @@ def execute_command_batch(session, command, args, expected_exceptions=None):
             out, err = session.execute_command(
                 command + batch
             )
+            out = to_unicode(out, "utf-8")
             yield (out, err, None)
         except Exception as e:
             if expected_exceptions and isinstance(e, expected_exceptions):

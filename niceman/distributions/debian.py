@@ -8,6 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Debian(-based) distribution(s)."""
 import os
+
+import itertools
 from datetime import datetime
 
 import attr
@@ -368,7 +370,6 @@ class DebTracer(DistributionTracer):
                     out = exc.stdout  # One file not found, so continue
                 else:
                     raise exc  # some other fault -- handle it above
-            out = utils.to_unicode(out, "utf-8")
             # Now go through the output and assign packages to files
             for outline in out.splitlines():
                 # Parse package name (architecture) and path
@@ -463,21 +464,20 @@ class DebTracer(DistributionTracer):
 
     def _get_pkgs_arch_and_version(self, pkg_dicts):
         # Convert package names to name:arch format
-        queries = []
-        for p in pkg_dicts:
-            # Use "dpkg -s pkg" to get the installed version and arch
-            # Note: "architecture" is in the dict, but may be null
-            queries.append(p["name"] if not p["architecture"]
-                           else "%(name)s:%(architecture)s" % p)
+        # Use "dpkg -s pkg" to get the installed version and arch
+        # Note: "architecture" is in the dict, but may be null
+        queries = [(p["name"] if not p["architecture"]
+                    else "%(name)s:%(architecture)s" % p)
+                   for p in pkg_dicts]
         # Call "dpkg -s" in batches
         exec_gen = execute_command_batch(self._session, ['dpkg', '-s'],
                                          queries)
-        # Parse and accumulate "dpkg -s" results in an array
-        results = []
-        for (out, _, _) in exec_gen:
-            out = utils.to_unicode(out, "utf-8")
-            # dpkg -s uses the same output as apt-cache show pkg
-            results += parse_apt_cache_show_pkgs_output(out)
+        # Parse and accumulate "dpkg -s" results
+        # dpkg -s uses the same output as apt-cache show pkg
+        results = (parse_apt_cache_show_pkgs_output(out)
+                   for (out, _, _) in exec_gen)
+        # Combine sequence of lists
+        results = itertools.chain.from_iterable(results)
         # Turn dpkg -s results into a lookup table by package name
         results = self.create_lookup_from_apt_cache_show(results)
         # Loop through each package and find the respective dpkg results
@@ -502,17 +502,16 @@ class DebTracer(DistributionTracer):
 
     def _get_pkgs_details_from_apt_cache_show(self, pkg_dicts):
         # Convert package names to name:arch=version format
-        queries = []
-        for p in pkg_dicts:
-            queries.append("%(name)s:%(architecture)s=%(version)s" % p)
+        queries = ["%(name)s:%(architecture)s=%(version)s" % p
+                   for p in pkg_dicts]
         # Call "apt-cache show" in batches
         exec_gen = execute_command_batch(self._session, ['apt-cache', 'show'],
                                          queries)
-        # Parse and accumulate "apt-cache show" results in an array
-        results = []
-        for (out, _, _) in exec_gen:
-            out = utils.to_unicode(out, "utf-8")
-            results += parse_apt_cache_show_pkgs_output(out)
+        # Parse and accumulate "apt-cache show" results
+        results = (parse_apt_cache_show_pkgs_output(out)
+                   for (out, _, _) in exec_gen)
+        # Combine sequence of lists
+        results = itertools.chain.from_iterable(results)
         # Turn apt-cache show results into a lookup table by package name
         results = self.create_lookup_from_apt_cache_show(results)
         # Loop through each package and find the respective apt-cache results
@@ -530,9 +529,8 @@ class DebTracer(DistributionTracer):
 
     def _get_pkgs_install_date(self, pkg_dicts):
         # Convert package names to dpkg list filenames
-        queries = []
-        for p in pkg_dicts:
-            queries.append(self._pkg_name_to_dpkg_list_file(p["name"]))
+        queries = [self._pkg_name_to_dpkg_list_file(p["name"])
+                   for p in pkg_dicts]
         # Call stat in batches
         exec_gen = execute_command_batch(self._session,
                                          ['stat', '-c', '%n: %Y'],
@@ -547,7 +545,6 @@ class DebTracer(DistributionTracer):
                     out = exc.stdout  # One file not found, so continue
                 else:
                     raise exc  # some other fault -- handle it above
-            out = utils.to_unicode(out, "utf-8")
             # Parse the output and store by filename
             for outlines in out.splitlines():
                 (fname, ftime) = outlines.split(": ")
@@ -568,18 +565,16 @@ class DebTracer(DistributionTracer):
 
     def _get_pkgs_versions_and_sources(self, pkg_dicts):
         # Convert package names to name:arch format
-        queries = []
-        for p in pkg_dicts:
-            queries.append("%(name)s:%(architecture)s" % p)
+        queries = ["%(name)s:%(architecture)s" % p for p in pkg_dicts]
         # Call apt-cache policy in batches
         exec_gen = execute_command_batch(self._session,
                                          ['apt-cache', 'policy'],
                                          queries)
-        # Parse and accumulate stat results in a dict
-        results = {}
-        for (out, _, _) in exec_gen:
-            out = utils.to_unicode(out, "utf-8")
-            results.update(parse_apt_cache_policy_pkgs_output(out))
+        # Parse results into a single generator
+        results = (parse_apt_cache_policy_pkgs_output(out)
+                   for (out, _, _) in exec_gen)
+        # Combine sequence of dicts
+        results = {k: v for d in results for k, v in d.items()}
         # Loop through each package and find the respective apt-cache results
         for p in pkg_dicts:
             ver = results.get("%(name)s:%(architecture)s" % p)
