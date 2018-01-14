@@ -185,7 +185,7 @@ class CondaTracer(DistributionTracer):
     def _get_conda_pip_package_details(self, env_export, conda_path):
         packages = {}
         file_to_package_map = {}
-        dependencies = env_export.get("dependencies")
+        dependencies = env_export.get("dependencies", [])
 
         pip_deps = []
         for dep in dependencies:
@@ -244,9 +244,15 @@ class CondaTracer(DistributionTracer):
             )
             export = yaml.load(out)
         except Exception as exc:
-            lgr.warning("Could not retrieve conda environment "
-                        "export from path %s: %s", conda_path,
-                        exc_str(exc))
+            if "unrecognized arguments: -p" in exc_str(exc):
+                lgr.warning("Could not retrieve conda environment "
+                            "export from path %s: "
+                            "Please use Conda 4.3.19 or greater",
+                            conda_path)
+            else:
+                lgr.warning("Could not retrieve conda environment "
+                            "export from path %s: %s", conda_path,
+                            exc_str(exc))
         return export
 
     def _get_conda_info(self, conda_path):
