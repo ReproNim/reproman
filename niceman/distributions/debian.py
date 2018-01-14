@@ -33,7 +33,8 @@ from niceman.support.distributions.debian import \
     get_spec_from_release_file
 
 # Pick a conservative max command-line
-from niceman.utils import get_cmd_batch_len, execute_command_batch
+from niceman.utils import get_cmd_batch_len, execute_command_batch, \
+    cmd_err_filter
 
 # To parse output of dpkg-query
 import re
@@ -357,19 +358,14 @@ class DebTracer(DistributionTracer):
 
     def _get_packagefields_for_files(self, files):
         # Call dpkg query in batches
-        exec_gen = execute_command_batch(self._session,
-                                         ['dpkg-query', '-S'],
-                                         files,
-                                         CommandError)
+        exec_gen = execute_command_batch(
+            self._session, ['dpkg-query', '-S'], files,
+            cmd_err_filter('no path found matching pattern'))
         # Parse and accumulate stat results in a dict
         file_to_package_dict = {}
         for (out, _, exc) in exec_gen:
             if exc:
-                stderr = utils.to_unicode(exc.stderr, "utf-8")
-                if 'no path found matching pattern' in stderr:
-                    out = exc.stdout  # One file not found, so continue
-                else:
-                    raise exc  # some other fault -- handle it above
+                out = exc.stdout  # One file not found, so continue
             # Now go through the output and assign packages to files
             for outline in out.splitlines():
                 # Parse package name (architecture) and path
@@ -532,19 +528,14 @@ class DebTracer(DistributionTracer):
         queries = [self._pkg_name_to_dpkg_list_file(p["name"])
                    for p in pkg_dicts]
         # Call stat in batches
-        exec_gen = execute_command_batch(self._session,
-                                         ['stat', '-c', '%n: %Y'],
-                                         queries,
-                                         CommandError)
+        exec_gen = execute_command_batch(
+            self._session, ['stat', '-c', '%n: %Y'], queries,
+            cmd_err_filter('No such file or directory'))
         # Parse and accumulate stat results in a dict
         results = {}
         for (out, _, exc) in exec_gen:
             if exc:
-                stderr = utils.to_unicode(exc.stderr, "utf-8")
-                if 'No such file or directory' in stderr:
-                    out = exc.stdout  # One file not found, so continue
-                else:
-                    raise exc  # some other fault -- handle it above
+                out = exc.stdout  # One file not found, so continue
             # Parse the output and store by filename
             for outlines in out.splitlines():
                 (fname, ftime) = outlines.split(": ")

@@ -25,7 +25,8 @@ from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
 from ..dochelpers import exc_str
-from ..utils import updated, HashableDict, execute_command_batch
+from ..utils import updated, HashableDict, execute_command_batch, \
+    cmd_err_filter
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
@@ -47,7 +48,7 @@ from ..utils import generate_unique_name
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
 from .utils import with_tempfile, assert_in, with_tree, to_binarystring, \
-    is_unicode, is_binarystring
+    is_unicode, is_binarystring, CommandError
 from .utils import SkipTest
 from .utils import assert_cwd_unchanged, skip_if_on_windows
 from .utils import assure_dict_from_str, assure_list_from_str
@@ -422,6 +423,13 @@ def test_hashable_dict():
     assert(key_c not in d)
 
 
+def test_cmd_err_filter():
+    my_filter = cmd_err_filter("testing")
+    assert my_filter(CommandError("", "", None, "", "testing"))
+    assert not my_filter(CommandError("", "", None, "", "failure"))
+    assert not my_filter(ValueError("not CommandError"))
+
+
 def test_execute_command_batch():
     # Create a dummy session that can possibly raise a ValueError
     class DummySession(object):
@@ -441,7 +449,8 @@ def test_execute_command_batch():
     with pytest.raises(ValueError):
         list(cmd_gen)
     # Now let's raise an exception
-    cmd_gen = execute_command_batch(session, ["ValueError"], args, ValueError)
+    cmd_gen = execute_command_batch(session, ["ValueError"], args,
+                                    lambda x: isinstance(x, ValueError))
     for (_, _, err) in cmd_gen:
         assert isinstance(err, ValueError)
 

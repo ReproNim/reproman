@@ -32,6 +32,8 @@ from functools import wraps
 from time import sleep
 from inspect import getargspec
 
+from niceman.support.exceptions import CommandError
+
 lgr = logging.getLogger("niceman.utils")
 
 lgr.log(5, "Importing niceman.utils")
@@ -986,7 +988,24 @@ def get_cmd_batch_len(arg_list, cmd_len):
     return max((_MAX_LEN_CMDLINE - cmd_len) // (max_len + 1), 1)
 
 
-def execute_command_batch(session, command, args, expected_exceptions=None):
+def cmd_err_filter(err_string):
+    """
+    Creates a filter for CommandErrors that match a specific error string
+
+    Parameters
+    ----------
+    err_string: basestring
+        The error string we want to match
+
+    Returns
+    -------
+    func object -> boolean
+    """
+    return (lambda x: isinstance(x, CommandError) and
+            err_string in to_unicode(x.stderr, "utf-8"))
+
+
+def execute_command_batch(session, command, args, exception_filter=None):
     """
     Generator that executes session.execute_command, with batches of args
 
@@ -1004,8 +1023,8 @@ def execute_command_batch(session, command, args, expected_exceptions=None):
       The command that we wish to execute
     args : sequence
       The long list of additional arguments we wish to pass to the command
-    expected_exceptions : tuple
-      A tuple of exception types that the calling code will gracefully handle
+    exception_filter : func x -> bool
+      A filter of exception types that the calling code will gracefully handle
 
     Returns
     -------
@@ -1025,10 +1044,10 @@ def execute_command_batch(session, command, args, expected_exceptions=None):
             out = to_unicode(out, "utf-8")
             yield (out, err, None)
         except Exception as e:
-            if expected_exceptions and isinstance(e, expected_exceptions):
+            if exception_filter and exception_filter(e):
                 yield (None, None, e)
             else:
-                raise e
+                raise
 
 
 def items_to_dict(l, attrs='name', ordered=False):
