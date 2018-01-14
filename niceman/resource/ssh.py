@@ -164,7 +164,7 @@ class SSHSession(POSIXSession):
         self.ssh.get(src_path, localpath=dest_path)
 
         if uid > -1 or gid > -1:
-            self.local_chown(src_path, dest_path, uid, gid)
+            self.chown(dest_path, uid, gid, recursive=True, remote=False)
 
     def read(self, path, mode='r'):
         """Return content of a file"""

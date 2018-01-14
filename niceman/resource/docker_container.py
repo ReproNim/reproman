@@ -35,7 +35,6 @@ class DockerContainer(Resource):
 
     # Container properties
     id = attr.ib(default=None)
-    container_name = attr.ib(default=None)
     type = attr.ib(default='docker-container')
 
     image = attrib(default='ubuntu:latest',
@@ -56,21 +55,18 @@ class DockerContainer(Resource):
         # Open a client connection to the Docker engine.
         self._client = docker.Client(base_url=self.engine_url)
 
-        if not self.container_name:
-            self.container_name = self.name
-
         containers = []
         for container in self._client.containers(all=True):
-            assert self.id or self.container_name,\
+            assert self.id or self.name,\
                 "Container name or id must be known"
             if self.id and not container.get('Id').startswith(self.id):
                 lgr.log(5, "Container %s does not match by id: %s", container,
                         self.id)
                 continue
-            if self.container_name and ('/' + self.container_name)\
+            if self.name and ('/' + self.name) \
                     not in container.get('Names'):
                 lgr.log(5, "Container %s does not match by name: %s", container,
-                        self.container_name)
+                        self.name)
                 continue
             # TODO: make above more robust and centralize across different resources/backends?
             containers.append(container)
@@ -97,7 +93,7 @@ class DockerContainer(Resource):
         if self._container:
             raise ResourceError(
                 "Container '{}' (ID {}) already exists in Docker".format(
-                    self.container_name, self.id))
+                    self.name, self.id))
         # image might be of the form repository:tag -- pull would split them
         # if needed
         for line in self._client.pull(repository=self.image, stream=True):
@@ -107,7 +103,7 @@ class DockerContainer(Resource):
                 output += ' ' + status['progress']
             lgr.info(output)
         self._container = self._client.create_container(
-            name=self.container_name,
+            name=self.name,
             image=self.image,
             stdin_open=True,
             tty=True,
@@ -233,14 +229,12 @@ class DockerSession(POSIXSession):
 
     @borrowdoc(Session)
     def get(self, src_path, dest_path, uid=-1, gid=-1):
-        """Retrieve a file from the remote system
-        """
         stream, stat = self.client.get_archive(self.container, src_path)
         tarball = tarfile.open(fileobj=io.BytesIO(stream.read()))
         tarball.extractall(path=dest_path)
 
         if uid > -1 or gid > -1:
-            self.local_chown(src_path, dest_path, uid, gid)
+            self.chown(dest_path, uid, gid, recursive=True, remote=False)
 
 
 @attr.s

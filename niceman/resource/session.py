@@ -19,6 +19,7 @@ import os
 import re
 
 from niceman.support.exceptions import SessionRuntimeError
+from niceman.cmd import Runner
 from niceman.dochelpers import exc_str, borrowdoc
 from niceman.support.exceptions import CommandError
 from niceman.utils import updated
@@ -280,10 +281,10 @@ class Session(object):
             Path to file to push to resource environment
         dest_path : string
             Path of resource directory to put local file in
-        uid : number, optional
+        uid : int, optional
             System user ID to assign ownership of file on resource  (the
             default is -1, which will preserve the user owner of the local file)
-        gid : number, optional
+        gid : int, optional
             System group ID to assign group ownership of file on resource (the
             default is -1, which will preserve the group id of the local file)
         """
@@ -299,10 +300,10 @@ class Session(object):
             Path to file to pull from resource environment
         dest_path : string
             Path in local file system to put local file in
-        uid : number, optional
+        uid : int, optional
             System user ID to assign ownership of file on resource  (the
             default is -1, which will preserve the user owner of the local file)
-        gid : number, optional
+        gid : int, optional
             System group ID to assign group ownership of file on resource (the
             default is -1, which will preserve the group id of the local file)
         """
@@ -383,7 +384,7 @@ class Session(object):
         pass
 
     @abc.abstractmethod
-    def chown(self, path, uid, gid, recursive=False):
+    def chown(self, path, uid, gid, recursive=False, remote=True):
         """Set the user and gid of a path
         """
         pass
@@ -550,29 +551,29 @@ class POSIXSession(Session):
         command += [mode] + [path]
         self.execute_command(command)
 
-    def chown(self, path, uid=-1, gid=-1, recursive=False):
+    def chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
         """Set the user and gid of a path
         """
-        command = ['chown']
+        uid = int(uid) # Command line parameters getting passed as type str
+        gid = int(gid)
+
+        if uid == -1 and gid > -1:
+            command = ['chgrp']
+        else:
+            command = ['chown']
         if recursive: command += ["-R"]
-        if int(uid) > 0 and int(gid) > 0: command += ["{}.{}".format(uid, gid)]
-        elif int(uid) > -1: command += [uid]
-        elif int(uid) > -1: command = ['chgrp'] + [gid]
+        if uid > -1 and gid > -1: command += ["{}.{}".format(uid, gid)]
+        elif uid > -1: command += [uid]
+        elif gid > -1: command += [gid]
         else: raise CommandError(cmd='chown', msg="Invalid command \
             parameters.")
         command += [path]
-        self.execute_command(command)
-
-    def local_chown(self, src_path, dest_path, uid=-1, gid=-1):
-        target = dest_path + os.sep + os.path.basename(src_path)
-        os.chown(target, int(uid), int(gid))
-        if os.path.isdir(target):
-            for root, dirs, files in os.walk(target):
-                for dir in dirs:
-                    os.chown(os.path.join(root, dir), int(uid), int(gid))
-                for file in files:
-                    os.chown(os.path.join(root, file), int(uid), int(gid))
-
+        if remote:
+            self.execute_command(command)
+        else:
+            # Run on the local file system
+            Runner().run(command)
+            
 
 def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):
     """A shortcut to get a local session"""
