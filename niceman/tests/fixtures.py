@@ -10,7 +10,7 @@
 import pytest
 from .constants import NICEMAN_CFG_PATH
 from niceman.cmd import Runner
-from niceman.tests.utils import skip_if_no_network, skip_ssh
+from niceman.tests.utils import skip_if_no_network
 
 # Substitutes in for user's ~/.config/niceman.cfg file
 CONFIGURATION = [
@@ -69,7 +69,6 @@ def get_docker_fixture(image, portmaps={}, name=None,
         """
 
         skip_if_no_network()
-        skip_ssh()
         args = ['docker',
                 'run',
                 '-d',

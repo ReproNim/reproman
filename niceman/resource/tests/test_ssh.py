@@ -15,11 +15,13 @@ import six
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in
+from ...tests.utils import assert_in, skip_ssh
 from ..base import ResourceManager
 from niceman.tests.fixtures import get_docker_fixture
 
-setup_ssh = get_docker_fixture(
+# Note: due to skip_ssh right here, it would skip the entire module with
+# all the tests here if no ssh testing is requested
+setup_ssh = skip_ssh(get_docker_fixture)(
     'rastasheep/ubuntu-sshd:14.04',
     portmaps={
         49000: 22
