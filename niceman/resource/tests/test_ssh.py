@@ -22,8 +22,8 @@ from ...cmd import Runner
 import pytest
 from nose import SkipTest
 
-@pytest.fixture(scope='module')
-def setup_ssh():
+
+def setup_docker(image, portmaps={}, name=None):
     """pytest fixture for tests needing a running docker container
 
     on setup, this fixture ensures that a docker container that maps 
@@ -38,30 +38,42 @@ def setup_ssh():
 
     skip_if_no_network()
     skip_ssh()
-    stdout, _ = Runner().run(['docker', 'ps'])
     params = {
         'host': 'localhost',
         'user': 'root',
         'password': 'root',
-        'port': '49000',
     }
-    if '0.0.0.0:{port}->22/tcp'.format(**params) in stdout:
-        stop_container = False
-    else:
-        args = ['docker',
-                'run',
-                '-d',
-                '--rm',
-                '-p',
-                '{port}:22'.format(**params),
-                'rastasheep/ubuntu-sshd:14.04']
-        stdout, _ = Runner().run(args)
-        container_id = stdout.strip()
-        stop_container = True
+    args = ['docker',
+            'run',
+            '-d',
+            '--rm',
+            ]
+    if name:
+        args += ['--name', name]
+        params['name'] = name
+
+    if portmaps:
+        for from_to in portmaps.items():
+            args += ['-p', '%d:%d' % from_to]
+            params['port'] = from_to[0]
+    args += [image]
+
+    stdout, _ = Runner().run(args)
+    container_id = stdout.strip()
     yield params
-    if stop_container:
-        Runner().run(['docker', 'stop', container_id])
+    Runner().run(['docker', 'stop', container_id])
     return
+
+
+@pytest.fixture(scope='module')
+def setup_ssh():
+    for i in setup_docker(
+        image='rastasheep/ubuntu-sshd:14.04',
+        portmaps={
+            49000: 22
+        }
+    ):
+        yield i
 
 
 def test_setup_ssh(setup_ssh):
