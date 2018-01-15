@@ -23,58 +23,67 @@ import pytest
 from nose import SkipTest
 
 
-def setup_docker(image, portmaps={}, name=None):
-    """pytest fixture for tests needing a running docker container
+def get_docker_fixture(scope='function', **kwargs):
 
-    on setup, this fixture ensures that a docker container that maps 
-    host port 49000 to container port 22 is running and starts one if necessary.
+    def docker_fixture(image, portmaps={}, name=None):
+        """pytest fixture for tests needing a running docker container
 
-    Fixture yields parameters of the ssh connection suitable to be used as is
-    for ssh type resource.
+        on setup, this fixture ensures that a docker container that maps
+        host port 49000 to container port 22 is running and starts one if necessary.
 
-    on teardown, this fixture stops the docker container if it was started by 
-    the fixture
-    """
+        Fixture yields parameters of the ssh connection suitable to be used as is
+        for ssh type resource.
 
-    skip_if_no_network()
-    skip_ssh()
-    params = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': 'root',
-    }
-    args = ['docker',
-            'run',
-            '-d',
-            '--rm',
-            ]
-    if name:
-        args += ['--name', name]
-        params['name'] = name
+        on teardown, this fixture stops the docker container if it was started by
+        the fixture
+        """
 
-    if portmaps:
-        for from_to in portmaps.items():
-            args += ['-p', '%d:%d' % from_to]
-            params['port'] = from_to[0]
-    args += [image]
-
-    stdout, _ = Runner().run(args)
-    container_id = stdout.strip()
-    yield params
-    Runner().run(['docker', 'stop', container_id])
-    return
-
-
-@pytest.fixture(scope='module')
-def setup_ssh():
-    for i in setup_docker(
-        image='rastasheep/ubuntu-sshd:14.04',
-        portmaps={
-            49000: 22
+        skip_if_no_network()
+        skip_ssh()
+        params = {
+            'host': 'localhost',
+            'user': 'root',
+            'password': 'root',
         }
-    ):
-        yield i
+        args = ['docker',
+                'run',
+                '-d',
+                '--rm',
+                ]
+        if name:
+            args += ['--name', name]
+            params['name'] = name
 
+        if portmaps:
+            for from_to in portmaps.items():
+                args += ['-p', '%d:%d' % from_to]
+                params['port'] = from_to[0]
+        args += [image]
+        stdout, _ = Runner().run(args)
+        container_id = stdout.strip()
+        print("STARTED %s" % container_id)
+        yield params
+        Runner().run(['docker', 'stop', container_id])
+        print("STOPPED %s" % container_id)
+        return
+
+    # we think we need this one to actually pass those kwargs inside
+    @pytest.fixture(scope=scope)
+    def fixture():
+        for i in docker_fixture(
+            **kwargs
+        ):
+            yield i
+    return fixture
+
+
+setup_ssh = get_docker_fixture(
+    scope='module',
+    image='rastasheep/ubuntu-sshd:14.04',
+    portmaps={
+        49000: 22
+    }
+)
 
 def test_setup_ssh(setup_ssh):
     # Rudimentary smoke test for setup_ssh so we have
