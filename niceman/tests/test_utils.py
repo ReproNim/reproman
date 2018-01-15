@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 from ..dochelpers import exc_str
 from ..utils import updated, HashableDict, execute_command_batch, \
-    cmd_err_filter
+    cmd_err_filter, join_sequence_of_dicts
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
@@ -429,6 +429,12 @@ def test_cmd_err_filter():
     assert not my_filter(CommandError("", "", None, "", "failure"))
     assert not my_filter(ValueError("not CommandError"))
 
+
+def test_join_sequence_of_dicts():
+    assert join_sequence_of_dicts(({"a": 1, "b": 2}, {"c": 3}, {"d": 4})) == \
+           {"a": 1, "b": 2, "c": 3, "d": 4}
+    with pytest.raises(RuntimeError):
+        join_sequence_of_dicts(({"a": 1, "b": 2}, {"b": 3}, {"d": 4}))
 
 def test_execute_command_batch():
     # Create a dummy session that can possibly raise a ValueError

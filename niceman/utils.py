@@ -988,6 +988,28 @@ def get_cmd_batch_len(arg_list, cmd_len):
     return max((_MAX_LEN_CMDLINE - cmd_len) // (max_len + 1), 1)
 
 
+def join_sequence_of_dicts(seq):
+    """
+    Joins a sequence of dicts into a single dict, trows RuntimeError if dupe
+
+    Parameters
+    ----------
+    seq: sequence
+        Sequence of dicts to join
+
+    Returns
+    -------
+    dict
+    """
+    r = {}
+    for d in seq:
+        for k, v in d.items():
+            if k in r:
+                raise RuntimeError("")
+            r[k] = v
+    return r
+
+
 def cmd_err_filter(err_string):
     """
     Creates a filter for CommandErrors that match a specific error string

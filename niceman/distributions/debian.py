@@ -34,7 +34,7 @@ from niceman.support.distributions.debian import \
 
 # Pick a conservative max command-line
 from niceman.utils import get_cmd_batch_len, execute_command_batch, \
-    cmd_err_filter
+    cmd_err_filter, join_sequence_of_dicts
 
 # To parse output of dpkg-query
 import re
@@ -565,7 +565,7 @@ class DebTracer(DistributionTracer):
         results = (parse_apt_cache_policy_pkgs_output(out)
                    for (out, _, _) in exec_gen)
         # Combine sequence of dicts
-        results = {k: v for d in results for k, v in d.items()}
+        results = join_sequence_of_dicts(results)
         # Loop through each package and find the respective apt-cache results
         for p in pkg_dicts:
             ver = results.get("%(name)s:%(architecture)s" % p)
