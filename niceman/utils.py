@@ -1005,7 +1005,8 @@ def join_sequence_of_dicts(seq):
     for d in seq:
         for k, v in d.items():
             if k in r:
-                raise RuntimeError("")
+                raise RuntimeError("Duplicate key %r (new value: %r, "
+                                   "was: %r)" % (k, v, r[k]))
             r[k] = v
     return r
 
