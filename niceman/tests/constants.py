@@ -9,6 +9,10 @@
 
 from os.path import join as opj, dirname
 
+# TODO: move upstairs
+
 # Configuration file for testing
-NICEMAN_CFG_PATH = opj(dirname(__file__), 'files', 'niceman.cfg')
-NICEMAN_CFG = open(NICEMAN_CFG_PATH).read()
+NICEMAN_CFG_NAME = 'niceman.cfg'
+NICEMAN_INVENTORY_NAME = 'inventory.yml'
+NICEMAN_CFG_SAMPLE_PATH = opj(dirname(__file__), 'files', NICEMAN_CFG_NAME)
+# NICEMAN_CFG = open(NICEMAN_CFG_SAMPLE_PATH).read()

@@ -15,60 +15,40 @@ __docformat__ = 'restructuredtext'
 from niceman.support.param import Parameter
 from niceman.support.constraints import EnsureInt, EnsureNone, EnsureStr
 
-dataset_description = Parameter(
-    args=("-D", "--description",),
-    constraints=EnsureStr() | EnsureNone(),
-    doc="""short description of this dataset instance that humans can use to
-    identify the repository/location, e.g. "Precious data on my laptop.""")
 
-recursion_flag = Parameter(
-    args=("-r", "--recursive",),
-    action="store_true",
-    doc="""if set, recurse into potential subdataset""")
+#
+# Resource specifications
+#
 
-recursion_limit = Parameter(
-    args=("--recursion-limit",),
-    metavar="LEVELS",
-    constraints=EnsureInt() | EnsureNone(),
-    doc="""limit recursion into subdataset to the given number of levels""")
+# This is a positional argument...
+resource_arg = Parameter(
+    args=("resource",),
+    nargs="?",
+    doc="""Name of the resource to consider. To see
+    available resource, run the command 'niceman ls'""",
+    constraints=EnsureStr() | EnsureNone()
+)
 
-add_to_superdataset = Parameter(
-    args=("--add-to-super",),
-    doc="""add the new dataset as a component to a super dataset""",
-    action="store_true")
+resource_name_opt = Parameter(
+    args=("--resource-name",),
+    doc="Name of the environment container",
+    constraints=EnsureStr() | EnsureNone()
+)
 
-git_opts = Parameter(
-    args=("--git-opts",),
-    metavar='STRING',
-    constraints=EnsureStr() | EnsureNone(),
-    doc="""option string to be passed to :command:`git` calls""")
+resource_id_opt = Parameter(
+    args=("-id", "--resource-id",),
+    doc="ID of the environment container",
+    constraints=EnsureStr() | EnsureNone()
+)
 
-annex_opts = Parameter(
-    args=("--annex-opts",),
-    metavar='STRING',
-    constraints=EnsureStr() | EnsureNone(),
-    doc="""option string to be passed to :command:`git annex` calls""")
+# XXX thought to combine 3 above into a single entry to ease
+# reuse but wouldn't be possible to use ATM since _params is a dict
+# and we can't easily "add" dicts
+#resouce_spec = []
 
-annex_init_opts = Parameter(
-    args=("--annex-init-opts",),
-    metavar='STRING',
-    constraints=EnsureStr() | EnsureNone(),
-    doc="""option string to be passed to :command:`git annex init` calls""")
-
-annex_add_opts = Parameter(
-    args=("--annex-add-opts",),
-    metavar='STRING',
-    constraints=EnsureStr() | EnsureNone(),
-    doc="""option string to be passed to :command:`git annex add` calls""")
-
-annex_get_opts = Parameter(
-    args=("--annex-get-opts",),
-    metavar='STRING',
-    constraints=EnsureStr() | EnsureNone(),
-    doc="""option string to be passed to :command:`git annex get` calls""")
-
-annex_copy_opts = Parameter(
-    args=("--annex-copy-opts",),
-    metavar='STRING',
-    constraints=EnsureStr() | EnsureNone(),
-    doc="""option string to be passed to :command:`git annex copy` calls""")
+# XXX reenable when we support working with multiple instances at once
+resource_type_opt = Parameter(
+    args=("-t", "--resource-type"),
+    doc="""Resource type to work on""",
+    constraints=EnsureStr(),
+)

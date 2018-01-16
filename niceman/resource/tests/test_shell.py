@@ -65,6 +65,14 @@ def test_source_file(script=None):
     assert new_env_diff['PATH'].startswith('/custom:')
     assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
 
+    # and what if we run the command, will it inherit those newly
+    # defined variables?
+    out, err = ses.execute_command(
+        ["python", "-c", 'import os; print(">%s<" % os.environ["EXPORTED_VAR"])']
+    )
+    assert not err
+    assert out.rstrip() == ">\nmultiline\n<"
+
 
 @with_tempfile(content="exit 1")
 def test_source_file_crash(script=None):

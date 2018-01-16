@@ -8,13 +8,13 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import pytest
-from .constants import NICEMAN_CFG_PATH
+from .constants import NICEMAN_CFG_SAMPLE_PATH
 
 # Substitutes in for user's ~/.config/niceman.cfg file
 CONFIGURATION = [
-    NICEMAN_CFG_PATH
+    NICEMAN_CFG_SAMPLE_PATH
 ]
 
-@pytest.fixture(params=CONFIGURATION)
-def niceman_cfg_path(request):
+@pytest.fixture()
+def niceman_cfg_path(request, tmpdir):
     yield request.param

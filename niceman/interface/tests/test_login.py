@@ -45,10 +45,11 @@ def test_login_interface(niceman_cfg_path):
                 "id": "18b31b30e3a5"
             }
         }
-
         args = ['login',
-                '--name', 'my-test-resource',
-                '--config', niceman_cfg_path
+                # should work with either
+                '--resource-name', 'my-test-resource',
+                #'--resource', 'my-test-resource',
+                #'--config', niceman_cfg_path
         ]
         main(args)
 

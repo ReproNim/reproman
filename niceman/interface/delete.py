@@ -68,6 +68,7 @@ class Delete(Interface):
     @staticmethod
     def __call__(name, resource_id=None, skip_confirmation=False, config=None):
         from niceman.ui import ui
+
         if not name and not resource_id:
             name = ui.question(
                 "Enter a resource name",

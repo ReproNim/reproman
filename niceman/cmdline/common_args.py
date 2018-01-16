@@ -39,3 +39,5 @@ log_level = (
          default='warning',
          help="""level of verbosity.  Integers provide even more debugging information""")
 )
+
+# TODO: --config

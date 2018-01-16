@@ -11,7 +11,10 @@
 
 __docformat__ = 'restructuredtext'
 
+from collections import OrderedDict
 from six.moves.configparser import NoSectionError
+
+from pyout import Tabular
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
@@ -69,51 +72,77 @@ class Ls(Interface):
         # TODO?: we might want to embed get_resource_inventory()
         #       within ConfigManager (even though it would make it NICEMAN specific)
         #       This would allow to make more sensible error messages etc
-        cm = ResourceManager.get_config_manager(config)
-        inventory_path = cm.getpath('general', 'inventory_file')
-        inventory = ResourceManager.get_inventory(inventory_path)
+        from niceman.resource import manager
 
         id_length = 19  # todo: make it possible to output them long
-        template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
-        ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
-        ui.message(template.format('-------------', '----', '--', '------'))
 
-        for name in sorted(inventory):
+        out = Tabular(OrderedDict([("name", "RESOURCE NAME"),
+                                   ("type", "TYPE"),
+                                   ("id", "ID"),
+                                   ("status", "STATUS")]),
+                      style={"header_": {"underline": True},
+                             "id": {"width": {"auto": True, "max": 22}}})
+
+        for name in sorted(manager):
             if name.startswith('_'):
                 continue
+            resource = manager.get_resource(name=name)
+            if not resource:
+                lgr.warning("Manager returned no resource for %s", name)
+                continue
+            # XXX(yoh): why do we need a config here?  I guess to update some
+            #   config settings which aren't recorded in the "inventory".  But
+            #   all that should be done by the manager imho
+            # config = dict(
+            #     manager.config_manager.items(resource['type'].split('-')[0])
+            # )
+            # config.update(resource)
+            # XXX Now we might have a dichotomy somewhat.  Key in the inventory
+            #     is assumed to match a name as known to the resource.  But if not
+            #     specified or mismatches -- what should we do?
+            # #     For now let's just assume that every resource must have a name
+            # #     and its name, if not specified, will be the key in the inventory
+            # if not resource.name'name' not in config:
+            #     config['name'] = ''
+            # try:
+            #     env_resource = manager.factory(config)
+            # except Exception as e:
+            #     lgr.error("Failed to create an instance from config: %s",
+            #               exc_str(e))
+            #     continue
 
-            # if refresh:
-            inventory_resource = inventory[name]
             try:
-                config = dict(cm.items(inventory_resource['type'].split('-')[0]))
-            except NoSectionError:
-                config = {}
-            config.update(inventory_resource)
-            env_resource = ResourceManager.factory(config)
-            try:
+                old_id = resource.id
                 if refresh:
-                    env_resource.connect()
-                # TODO: handle the actual refreshing in the inventory
-                inventory_resource['id'] = env_resource.id
-                inventory_resource['status'] = env_resource.status
-                if not env_resource.id:
+                    try:
+                        resource.connect()
+                    except Exception as exc:
+                        lgr.warning("Cannot connect to the %s: %s", resource, exc_str(exc))
+                if not resource.id:
                     # continue  # A missing ID indicates a deleted resource.
-                    inventory_resource['id'] = 'DELETED'
+                    if old_id:
+                        resource.id = 'DELETED'
+                    # TODO: API to wipe those out
             except ResourceError as exc:
                 ui.error("%s resource query error: %s" % (name, exc_str(exc)))
                 for f in 'id', 'status':
-                    inventory_resource[f] = inventory_resource.get(f, "?")
+                    if not getattr(resource, f):
+                        setattr(resource, f, "?")
             msgargs = (
                 name,
-                inventory_resource['type'],
-                inventory_resource['id'][:id_length],
-                inventory_resource['status']
+                resource.type,
+                resource.id[:id_length] if resource.id else '',
+                resource.status or '',
             )
-            ui.message(template.format(*msgargs))
+            out(msgargs)
             lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
 
-        # if not refresh:
-        #     ui.message('(Use --refresh option to view current status.)')
-        #
-        # if refresh:
-        #     niceman.interface.base.set_resource_inventory(inventory)
+        # TODO: how do we want to reflect changes back?
+        if refresh:
+            lgr.debug("Storing manager's inventory upon refresh")
+            # ATM it is not in effect, since inventory contains dicts, and
+            # instances created "on the fly". TODO
+            # TODO
+            manager.set_inventory()
+        else:
+            ui.message('(Use --refresh option to view current status.)')

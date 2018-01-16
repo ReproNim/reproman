@@ -277,6 +277,7 @@ def backend_set_config(backend, env_resource, config):
     Set config settings based and env_resource properties based on
     backend parameters passed through command line.
     """
+    config = config.copy()
     for backend_arg in backend:
         key, value = backend_arg.split("=")
         if hasattr(env_resource, key):
