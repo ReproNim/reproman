@@ -18,8 +18,10 @@ from niceman.utils import swallow_logs
 from ...resource.base import ResourceManager
 from ...support.exceptions import CommandError
 from niceman.tests.utils import assert_in
+from ...tests.utils import skip_if_no_docker_container
 
 
+@skip_if_no_docker_container('testing-container')
 def test_exec_interface(niceman_cfg_path):
 
     with patch('niceman.resource.ResourceManager.set_inventory'), \
@@ -30,21 +32,20 @@ def test_exec_interface(niceman_cfg_path):
             "status": "running",
             "engine_url": "unix:///var/run/docker.sock",
             "type": "docker-container",
-            "name": "my-test-resource",
-            "container_name": "testing-container"
+            "name": "testing-container",
         }
 
         path = '/tmp/{}'.format(str(uuid.uuid4()))
 
         get_inventory.return_value = {
-            "my-test-resource": config
+            "testing-container": config
         }
 
         main([
             'exec',
             'mkdir',
             path,
-            '--name', 'my-test-resource',
+            '--name', 'testing-container',
             '--config', niceman_cfg_path
         ])
 

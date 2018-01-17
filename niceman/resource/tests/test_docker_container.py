@@ -13,10 +13,10 @@ import os
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in
-from ...tests.utils import with_tempfile
+from ...tests.utils import assert_in, with_tempfile
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
+from ...tests.utils import skip_if_no_docker_container
 
 from pytest import raises
 
@@ -62,8 +62,7 @@ def test_dockercontainer_class():
         # Test connecting when a resource doens't exist.
         config = {
             'name': 'non-existent-resource',
-            'type': 'docker-container',
-            'container_name': 'non-existent-resource'
+            'type': 'docker-container'
         }
         resource = ResourceManager.factory(config)
         resource.connect()
@@ -73,8 +72,7 @@ def test_dockercontainer_class():
         # Test catching exception when multiple resources are found at connection.
         config = {
             'name': 'duplicate-resource-name',
-            'type': 'docker-container',
-            'container_name': 'duplicate-resource-name',
+            'type': 'docker-container'
         }
         resource = ResourceManager.factory(config)
         with raises(ResourceError) as ecm:
@@ -84,7 +82,6 @@ def test_dockercontainer_class():
         # Test connecting to an existing resource.
         config = {
             'name': 'existing-test-resource',
-            'container_name': 'existing-test-resource',
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
@@ -106,7 +103,6 @@ def test_dockercontainer_class():
         # Test creating resource.
         config = {
             'name': 'new-test-resource',
-            'container_name': 'new-test-resource',
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
@@ -153,12 +149,12 @@ def test_dockercontainer_class():
         ]
         client.assert_has_calls(calls, any_order=True)
 
+@skip_if_no_docker_container('testing-container')
 @with_tempfile(content="abc 123")
 def test_docker_session(script=None):
     config = {
-        'name': 'test-docker-container',
-        'type': 'docker-container',
-        'container_name': 'testing-container'
+        'name': 'testing-container',
+        'type': 'docker-container'
     }
     resource = ResourceManager.factory(config)
     resource._container == None

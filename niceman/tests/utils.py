@@ -403,6 +403,32 @@ def skip_ssh(func=None):
         check_and_raise()
 
 
+def skip_if_no_docker_container(container_name):
+    """Test decorator that will skip a test if the Docker container the test is
+    going to connect to is not running in the Docker engine.
+    
+    Parameters
+    ----------
+    container_name : str
+        Name of the container that needs to be running for the test to work.
+    
+    Returns
+    -------
+    func
+        Decorator function
+    
+    Raises
+    ------
+    SkipTest
+    """
+    def decorator(func):
+        stdout, _ = Runner().run(['docker', 'ps'])
+        if container_name not in stdout:
+            raise SkipTest("Docker container '{}' not running, skipping test \
+                {}".format(container_name, func.__name__))
+        return func
+    return decorator
+
 @optional_args
 def assert_cwd_unchanged(func, ok_to_chdir=False):
     """Decorator to test whether the current working directory remains unchanged

@@ -139,7 +139,7 @@ def test_ssh_class(setup_ssh):
 
 
 @skip_if_no_network
-def test_ssh_resource():
+def test_ssh_resource(setup_ssh):
 
     config = {
         'name': 'ssh-test-resource',
