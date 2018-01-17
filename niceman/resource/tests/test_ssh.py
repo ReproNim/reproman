@@ -138,7 +138,6 @@ def test_ssh_class(setup_ssh):
             session._execute_command('non-existent-command', cwd='/path')
 
 
-@skip_if_no_network
 def test_ssh_resource(setup_ssh):
 
     config = {
