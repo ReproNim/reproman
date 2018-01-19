@@ -990,7 +990,7 @@ def get_cmd_batch_len(arg_list, cmd_len):
 
 def join_sequence_of_dicts(seq):
     """
-    Joins a sequence of dicts into a single dict, trows RuntimeError if dupe
+    Joins a sequence of dicts into a single dict
 
     Parameters
     ----------
@@ -1000,6 +1000,10 @@ def join_sequence_of_dicts(seq):
     Returns
     -------
     dict
+
+    Raises
+    ------
+    RuntimeError if a duplicate key is encountered.
     """
     r = {}
     for d in seq:
