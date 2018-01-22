@@ -23,6 +23,7 @@ import pytest
 
 import mock
 
+from niceman.support.exceptions import CommandError
 from niceman.tests.utils import skip_if_no_apt_cache
 
 
@@ -151,9 +152,11 @@ def test_get_packagefields_for_files():
              '/bogus'
              ]
 
-    def _run_dpkg_query(subfiles):
+    def exec_cmd_batch_mock(session, cmd, subfiles, exc_classes):
         assert subfiles == files  # we get all of the passed in
-        return """\
+        assert cmd == ['dpkg-query', '-S']
+
+        yield ("""\
 diversion by dash from: /bin/sh
 diversion by dash to: /bin/sh.distrib
 dash: /bin/sh
@@ -162,8 +165,9 @@ zlib1g:amd64: /lib/x86_64-linux-gnu/libz.so.1.2.8
 afni: /usr/lib/afni/bin/afni
 fail2ban: /usr/bin/fail2ban-server
 fail2ban: /usr/bin/fail2ban-server
-"""
-    with mock.patch.object(manager, "_run_dpkg_query", _run_dpkg_query):
+""", None, None)
+    with mock.patch('niceman.distributions.debian.execute_command_batch',
+                    exec_cmd_batch_mock):
         out = manager._get_packagefields_for_files(files)
 
     assert out == {
