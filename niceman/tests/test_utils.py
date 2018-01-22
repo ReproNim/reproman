@@ -44,6 +44,7 @@ from ..utils import on_windows
 from ..utils import _path_
 from ..utils import to_unicode
 from ..utils import generate_unique_name
+from ..utils import PathRoot
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -473,3 +474,13 @@ def test_line_profile():
         assert_equal(f(3), 4)
         assert_equal(cmo.err, '')
         assert_in('i = j + 1  # xyz', cmo.out)
+
+
+def test_pathroot():
+    proot = PathRoot(lambda s: s.endswith("root"))
+    assert proot("") is None
+    assert proot("/") is None
+    assert proot("/not_a_r_oot") is None
+    assert proot("/root") == "/root"
+    assert proot("/root/a_root_it_is_not") == "/root"
+    assert proot("/root/x/child_root") == "/root/x/child_root"

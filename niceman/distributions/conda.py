@@ -23,6 +23,7 @@ from .base import Package
 from .base import TypedList
 from .piputils import parse_pip_show
 from niceman.dochelpers import exc_str
+from niceman.utils import PathRoot
 
 import logging
 lgr = logging.getLogger('niceman.distributions.conda')
@@ -106,7 +107,7 @@ class CondaTracer(DistributionTracer):
     """
 
     def _init(self):
-        self._paths_cache = {}      # path -> False or CondaDistribution
+        self._path_root = PathRoot(self._is_conda_directory)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -243,32 +244,19 @@ class CondaTracer(DistributionTracer):
         return details
 
     def _get_conda_path(self, path):
-        paths = []
-        conda_path = None
-        while path not in {None, os.path.pathsep, '', '/'}:
-            if path in self._paths_cache:
-                conda_path = self._paths_cache[path]
-                break
-            paths.append(path)
-            try:
-                _, _ = self._session.execute_command(
-                    'ls -ld %s/bin/conda %s/conda-meta'
-                    % (path, path)
-                )
-            except Exception as exc:
-                lgr.debug("Did not detect conda at the path %s: %s", path,
-                          exc_str(exc))
-                path = os.path.dirname(path)  # go to the parent
-                continue
+        return self._path_root(path)
 
-            conda_path = path
-            lgr.info("Detected conda %s", conda_path)
-            break
-
-        for path in paths:
-            self._paths_cache[path] = conda_path
-
-        return conda_path
+    def _is_conda_directory(self, path):
+        try:
+            _, _ = self._session.execute_command(
+                'ls -ld %s/bin/conda %s/conda-meta'
+                % (path, path)
+            )
+        except Exception as exc:
+            lgr.debug("Did not detect conda at the path %s: %s", path,
+                      exc_str(exc))
+            return False
+        return True
 
     def identify_distributions(self, paths):
         conda_paths = set()
