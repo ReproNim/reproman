@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from niceman.distributions.piputils import parse_pip_show
+from niceman.distributions.piputils import parse_pip_show, parse_pip_list
 
 
 def test_parse_pip_show():
@@ -46,3 +46,15 @@ Cannot locate installed-files.txt"""
     info_nofiles = parse_pip_show(out_no_files)
     assert set(info_nofiles.keys()) == fields
     assert info_nofiles["Files"] == []
+
+
+def test_parse_pip_list():
+    out= """\
+pythis (1.4.3)
+pythat (0.1.0, /local/path)
+pypypypy (2.2.0)"""
+    expect = [("pythis", "1.4.3", None),
+              ("pythat", "0.1.0", "/local/path"),
+              ("pypypypy", "2.2.0", None)]
+    result = list(parse_pip_list(out))
+    assert expect == result

@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Utilities for working with pip.
 """
+import re
 
 
 def parse_pip_show(out):
@@ -35,3 +36,26 @@ def parse_pip_show(out):
                 pip_info[list_tag] = []
 
     return pip_info
+
+
+def parse_pip_list(out):
+    """Parse the output of `pip list --format=legacy`.
+
+    Parameters
+    ----------
+    out : string
+        Output of `pip list --format=legacy`.
+
+    Returns
+    -------
+    A generator that yields (name, version, location) for each
+    package.  Location will be None unless the package is editable.
+    """
+    pkg_re = re.compile(r"^([^(]+) \((.+)\)$", re.MULTILINE)
+    for pkg, version_location in pkg_re.findall(out):
+        if "," in version_location:
+            version, location = version_location.split(", ")
+        else:
+            version = version_location
+            location = None
+        yield pkg, version, location
