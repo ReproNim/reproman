@@ -21,6 +21,7 @@ from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
+from .piputils import parse_pip_show
 from niceman.dochelpers import exc_str
 
 import logging
@@ -155,33 +156,6 @@ class CondaTracer(DistributionTracer):
 
         return packages, file_to_package_map
 
-    @staticmethod
-    def _parse_pip_show(out):
-        pip_info = {}
-        list_tag = None
-        for line in out.splitlines():
-            if line.startswith("#"):   # Skip if comment
-                continue
-            if line.startswith("  "):  # List item
-                item = line[2:].strip()
-                if list_tag and item:  # Add the item to the existing list
-                    pip_info[list_tag].append(item)
-                continue
-            if ":" in line:            # List tag or tag/value
-                split_line = line.split(":", 1)
-                tag = split_line[0].strip()
-                value = None
-                if len(split_line) > 1:  # Parse the value if there
-                    value = split_line[1].strip()
-                if value:                # We have both a tag and a value
-                    pip_info[tag] = value
-                    list_tag = None      # A new tag stops the previous list
-                else:                    # We have just a list_tag so start it
-                    list_tag = tag
-                    pip_info[list_tag] = []
-
-        return pip_info
-
     def _get_conda_pip_package_details(self, env_export, conda_path):
         packages = {}
         file_to_package_map = {}
@@ -199,7 +173,7 @@ class CondaTracer(DistributionTracer):
                     '%s/bin/pip show -f %s'
                     % (conda_path, name)
                 )
-                pip_info = self._parse_pip_show(out)
+                pip_info = parse_pip_show(out)
                 # Record the details we care about
                 details = {"name": pip_info.get("Name"),
                            "version": pip_info.get("Version"),
