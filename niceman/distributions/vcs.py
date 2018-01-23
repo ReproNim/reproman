@@ -360,12 +360,12 @@ class GitRepoShim(GitSVNRepoShim):
         # which remotes contain this commit, so we could provide this
         # possibly valuable information
         if not hexsha:  # just initialized
-            return []
+            return {}
         remote_branches = self._run_git(
             'branch -r --contains %s' % hexsha,
             expect_fail=True)
         if not remote_branches:
-            return []
+            return {}
         containing_remotes = set(x.split('/', 1)[0] for x in remote_branches)
         remotes = {}
         for remote in self._run_git('remote').splitlines():
