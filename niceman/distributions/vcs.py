@@ -372,10 +372,12 @@ class GitRepoShim(GitSVNRepoShim):
             rec = {}
             for f in 'url', 'pushurl':
                 try:
-                    rec[f] = self._run_git('config remote.%s.%s' % (remote, f)
-                                           , expect_fail=True
-                                           #, expect_stderr=True
-                                           )
+                    v = self._run_git('config remote.%s.%s' % (remote, f)
+                                      , expect_fail=True
+                                      #, expect_stderr=True
+                                     )
+                    if v is not None:
+                        rec[f] = v
                 except CommandError:
                     # must have no value
                     pass
