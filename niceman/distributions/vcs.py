@@ -87,7 +87,7 @@ class GitRepo(VCSRepo):
     hexsha = attr.ib(default=None)
     describe = attr.ib(default=None)
     tracked_remote = attr.ib(default=None)
-    remotes = attr.ib(default=attr.Factory(list))
+    remotes = attr.ib(default=attr.Factory(dict))
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
