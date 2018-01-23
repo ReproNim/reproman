@@ -38,9 +38,15 @@ def test_identify_myself():
     distributions, files = identify_distributions([__file__, '/nonexisting-for-sure'])
     assert len(distributions) == 1
     assert distributions[0].name == 'git'
-    assert distributions[0].packages[0].files == [__file__]
+    repo = distributions[0].packages[0]
+    assert repo.files == [__file__]
 
     assert files == ['/nonexisting-for-sure']
+    # there should be None rurl's or pushurl's
+    for remote in repo.remotes.values():
+        for f in 'url', 'pushurl':
+            if f in remote:
+                assert remote[f] is not None  # we do not store None's
 
 
 @with_tempfile(mkdir=True)

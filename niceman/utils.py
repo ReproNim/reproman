@@ -32,6 +32,8 @@ from functools import wraps
 from time import sleep
 from inspect import getargspec
 
+from niceman.support.exceptions import CommandError
+
 lgr = logging.getLogger("niceman.utils")
 
 lgr.log(5, "Importing niceman.utils")
@@ -956,6 +958,125 @@ class HashableDict(dict):
         return hash(frozenset(self.values()))
 
 
+def get_cmd_batch_len(arg_list, cmd_len):
+    """Estimate the maximum batch length for a given argument list
+
+    To make sure we don't call shell commands with too many arguments
+    this function looks at an argument list and the command length without
+    any arguments, and estimates the number of arguments we want to batch
+    together at one time.
+
+    Parameters
+    ----------
+    arg_list : list
+      The list to process in the command
+    cmd_len : number
+      The length of the command without arguments
+
+    Returns
+    -------
+    number
+      The maximum number in a single batch
+    """
+    # Pick a conservative max command-line length
+    try:
+        _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
+    except (ValueError, AttributeError):
+        _MAX_LEN_CMDLINE = 2048
+    # Find out how many files we can query at once
+    max_len = max(map(len, arg_list))
+    return max((_MAX_LEN_CMDLINE - cmd_len) // (max_len + 1), 1)
+
+
+def join_sequence_of_dicts(seq):
+    """
+    Joins a sequence of dicts into a single dict
+
+    Parameters
+    ----------
+    seq: sequence
+        Sequence of dicts to join
+
+    Returns
+    -------
+    dict
+
+    Raises
+    ------
+    RuntimeError if a duplicate key is encountered.
+    """
+    r = {}
+    for d in seq:
+        for k, v in d.items():
+            if k in r:
+                raise RuntimeError("Duplicate key %r (new value: %r, "
+                                   "was: %r)" % (k, v, r[k]))
+            r[k] = v
+    return r
+
+
+def cmd_err_filter(err_string):
+    """
+    Creates a filter for CommandErrors that match a specific error string
+
+    Parameters
+    ----------
+    err_string: basestring
+        The error string we want to match
+
+    Returns
+    -------
+    func object -> boolean
+    """
+    return (lambda x: isinstance(x, CommandError) and
+            err_string in to_unicode(x.stderr, "utf-8"))
+
+
+def execute_command_batch(session, command, args, exception_filter=None):
+    """
+    Generator that executes session.execute_command, with batches of args
+
+    We want to call commands like "apt-cache policy" on a large number of
+    packages, but risk creating command-lines that are too long. This
+    function is a generator that will call execute_command but with batches
+    of arguments (to stay within the command-line length limit) and yield the
+    results.
+
+    Parameters
+    ----------
+    session
+      Session object that implements the execute_command() member
+    command : sequence
+      The command that we wish to execute
+    args : sequence
+      The long list of additional arguments we wish to pass to the command
+    exception_filter : func x -> bool
+      A filter of exception types that the calling code will gracefully handle
+
+    Returns
+    -------
+    (out, err, exception)
+        stdout of the command, stderr of the command, and an exception
+        that is in the list of expected exceptions
+
+    """
+    cmd_length = sum(map(len, command)) + len(command)
+    num_args = get_cmd_batch_len(args, cmd_length)
+    while args:
+        batch, args = args[:num_args], args[num_args:]
+        try:
+            out, err = session.execute_command(
+                command + batch
+            )
+            out = to_unicode(out, "utf-8")
+            yield (out, err, None)
+        except Exception as e:
+            if exception_filter and exception_filter(e):
+                yield (None, None, e)
+            else:
+                raise
+
+
 def items_to_dict(l, attrs='name', ordered=False):
     """Given a list of attr instances, return a dict using specified attrs as keys
     
@@ -986,6 +1107,7 @@ def items_to_dict(l, attrs='name', ordered=False):
             )
         out[k] = i
     return out
+
 
 # TODO: just absorb into SpecObject __init__ but would require more handling
 # to allow *args as well

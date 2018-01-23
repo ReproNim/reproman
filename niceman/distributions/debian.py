@@ -8,6 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Debian(-based) distribution(s)."""
 import os
+
+import itertools
 from datetime import datetime
 
 import attr
@@ -23,20 +25,16 @@ from email.utils import mktime_tz, parsedate_tz
 
 import logging
 
-import re
-
 import requests
 
-# Pick a conservative max command-line
 from niceman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
     parse_apt_cache_policy_source_info, get_apt_release_file_names, \
     get_spec_from_release_file
 
-try:
-    _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2
-except (ValueError, AttributeError):
-    _MAX_LEN_CMDLINE = 2048
+# Pick a conservative max command-line
+from niceman.utils import get_cmd_batch_len, execute_command_batch, \
+    cmd_err_filter, join_sequence_of_dicts
 
 # To parse output of dpkg-query
 import re
@@ -340,6 +338,9 @@ class DebTracer(DistributionTracer):
         # found association
         if not packages:
             return
+
+        packages = self.get_details_for_packages(packages)
+
         # TODO: Depending on ID might be debian or ubuntu -- we might want to
         # absorb them all within DebianDistribution or have custom classes??
         # So far they seems to be largely similar
@@ -356,16 +357,15 @@ class DebTracer(DistributionTracer):
         yield dist, remaining_files
 
     def _get_packagefields_for_files(self, files):
+        # Call dpkg query in batches
+        exec_gen = execute_command_batch(
+            self._session, ['dpkg-query', '-S'], files,
+            cmd_err_filter('no path found matching pattern'))
+        # Parse and accumulate stat results in a dict
         file_to_package_dict = {}
-
-        # Find out how many files we can query at once
-        max_len = max([len(f) for f in files])
-        num_files = max((_MAX_LEN_CMDLINE - 13) // (max_len + 1), 1)
-
-        for subfiles in (files[pos:pos + num_files]
-                         for pos in range(0, len(files), num_files)):
-            out = self._run_dpkg_query(subfiles)
-
+        for (out, _, exc) in exec_gen:
+            if exc:
+                out = exc.stdout  # One file not found, so continue
             # Now go through the output and assign packages to files
             for outline in out.splitlines():
                 # Parse package name (architecture) and path
@@ -398,45 +398,39 @@ class DebTracer(DistributionTracer):
         # Create a named origin
         return name
 
-    def _create_package(self, name, architecture=None):
+    def get_details_for_packages(self, packages):
         # Find apt sources if not defined
         if not self._all_apt_sources:
             self._find_all_sources()
 
+        # Store the package details as dicts so that we can easily add to them
+        pkg_dicts = [attr.asdict(pkg) for pkg in packages]
+
         # Use dpkg -s <pkg> to get arch and version
-        architecture, version = self._get_pkg_arch_and_version(name,
-                                                               architecture)
-        if not version:
-            lgr.warning("Unable to query package %s" % name)
-            return None
+        self._get_pkgs_arch_and_version(pkg_dicts)
 
         # Use apt-cache show <pkg> to get details
-        info = self._get_pkg_details(name, architecture, version)
-        if not info:
-            lgr.warning("Unable to get details for package %s" % name)
-            return None
-
-        # Get install date from the modify time of the dpkg info file
-        install_date = self._get_pkg_install_date(name)
+        self._get_pkgs_details_from_apt_cache_show(pkg_dicts)
 
         # Now use "apt-cache policy pkg:arch" to get versions
-        ver_dict = self._get_pkg_versions_and_sources(name, architecture)
-        if not ver_dict:
-            lgr.warning("Was unable to get version table for %s" % name)
-            return None
+        self._get_pkgs_versions_and_sources(pkg_dicts)
 
+        # Get install date from the modify time of the dpkg info file
+        self._get_pkgs_install_date(pkg_dicts)
+
+        new_packages = []
+        for p in pkg_dicts:
+            new_pkg = DEBPackage(**p)
+            new_packages.append(new_pkg)
+
+        return new_packages
+
+    def _create_package(self, name, architecture=None):
+
+        # Store the details we currently know, we will populate the rest later
         return DEBPackage(
             name=name,
-            version=version,
             architecture=architecture,
-            source_name=info.get("Source_name"),
-            source_version=info.get("Source_version"),
-            size=info.get("Size"),
-            md5=info.get("MD5sum"),
-            sha1=info.get("SHA1"),
-            sha256=info.get("SHA256"),
-            install_date=install_date,
-            versions=ver_dict
         )
 
     def _find_all_sources(self):
@@ -464,99 +458,152 @@ class DebTracer(DistributionTracer):
                     date=date,
                     archive_uri=src_vals.get("archive_uri"))
 
-    def _get_pkg_arch_and_version(self, name, architecture):
+    def _get_pkgs_arch_and_version(self, pkg_dicts):
+        # Convert package names to name:arch format
         # Use "dpkg -s pkg" to get the installed version and arch
-        query = name if not architecture \
-            else "%s:%s" % (name, architecture)
-        try:
-            out, _ = self._session.execute_command(
-                ['dpkg', '-s', query]
-            )
-            out = utils.to_unicode(out, "utf-8")
-            # dpkg -s uses the same output as apt-cache show pkg
-            info = parse_apt_cache_show_pkgs_output(out)
-            if info:
-                _, info = info.popitem()  # Pull out first (and only) result
-                architecture = info.get("Architecture")
-                version = info.get("Version")
-            else:
-                version = None
-        except CommandError as _:
-            return None, None
-        return architecture, version
-
-    def _get_pkg_details(self, name, architecture, version):
-        # Now use "apt-cache show pkg:arch=version" to get more detail
-        query = "%s=%s" % (name, version) if not architecture \
-            else "%s:%s=%s" % (name, architecture, version)
-        try:
-            out, _ = self._session.execute_command(
-                ['apt-cache', 'show', query]
-            )
-            out = utils.to_unicode(out, "utf-8")
-            # dpkg -s uses the same output as apt-cache show pkg
-            info = parse_apt_cache_show_pkgs_output(out)
-            if info:
-                _, info = info.popitem()  # Pull out first (and only) result
-        except CommandError as _:
-            return None
-        return info
-
-    def _get_pkg_install_date(self, name):
-        try:
-            out, _ = self._session.execute_command(
-                ['stat', '-c', '%Y', "/var/lib/dpkg/info/" + name + ".list"]
-            )
-            install_date = str(
-                pytz.utc.localize(
-                    datetime.utcfromtimestamp(float(out))))
-        except CommandError:  # file not found
-            install_date = None
-            pass
-
-        return install_date
-
-    def _get_pkg_versions_and_sources(self, name, architecture):
-        query = name if not architecture \
-            else "%s:%s" % (name, architecture)
-        out, _ = self._session.execute_command(
-            ['apt-cache', 'policy', query]
-        )
-        out = utils.to_unicode(out, "utf-8")
+        # Note: "architecture" is in the dict, but may be null
+        queries = [(p["name"] if not p["architecture"]
+                    else "%(name)s:%(architecture)s" % p)
+                   for p in pkg_dicts]
+        # Call "dpkg -s" in batches
+        exec_gen = execute_command_batch(self._session, ['dpkg', '-s'],
+                                         queries)
+        # Parse and accumulate "dpkg -s" results
         # dpkg -s uses the same output as apt-cache show pkg
-        ver = parse_apt_cache_policy_pkgs_output(out)
-        if not ver:
-            return None
-        _, ver = ver.popitem()  # Pull out first (and only) result
-        ver_dict = {}
-        for v in ver.get("versions"):
-            key = v.get("version")
-            ver_dict[key] = []
-            for s in v.get("sources"):
-                s = s["source"]
-                # If we haven't named the source yet, name it
-                if s not in self._source_line_to_name_map:
-                    # Make sure we can find the source
-                    if s not in self._all_apt_sources:
-                        lgr.warning("Cannot find source %s" % s)
-                        continue
-                    # Grab and name the source
-                    source = self._all_apt_sources[s]
-                    src_name = self._get_apt_source_name(source)
-                    source.name = src_name
-                    # Now add the source to our used sources
-                    self._apt_sources[src_name] = source
-                    # add the name for easy future lookup
-                    self._source_line_to_name_map[s] = src_name
-                # Look up and add the short name for the source
-                ver_dict[key].append(self._source_line_to_name_map[s])
-        return ver_dict
+        results = (parse_apt_cache_show_pkgs_output(out)
+                   for (out, _, _) in exec_gen)
+        # Combine sequence of lists
+        results = itertools.chain.from_iterable(results)
+        # Turn dpkg -s results into a lookup table by package name
+        results = self.create_lookup_from_apt_cache_show(results)
+        # Loop through each package and find the respective dpkg results
+        for p in pkg_dicts:
+            r = results.get(p["name"] if not p["architecture"]
+                            else "%(name)s:%(architecture)s" % p)
+            if not r:
+                lgr.warning("Was unable to run dpkg -s for %s" %
+                            p["name"])
+                continue
+            # Update the dictionary with found results
+            p["architecture"] = r["architecture"]
+            p["version"] = r["version"]
+
+    @staticmethod
+    def create_lookup_from_apt_cache_show(cmd_results):
+        lookup_results = {}
+        for r in cmd_results:
+            lookup_results[r["package"]] = r
+            lookup_results["%(package)s:%(architecture)s" % r] = r
+        return lookup_results
+
+    def _get_pkgs_details_from_apt_cache_show(self, pkg_dicts):
+        # Convert package names to name:arch=version format
+        queries = ["%(name)s:%(architecture)s=%(version)s" % p
+                   for p in pkg_dicts]
+        # Call "apt-cache show" in batches
+        exec_gen = execute_command_batch(self._session, ['apt-cache', 'show'],
+                                         queries)
+        # Parse and accumulate "apt-cache show" results
+        results = (parse_apt_cache_show_pkgs_output(out)
+                   for (out, _, _) in exec_gen)
+        # Combine sequence of lists
+        results = itertools.chain.from_iterable(results)
+        # Turn apt-cache show results into a lookup table by package name
+        results = self.create_lookup_from_apt_cache_show(results)
+        # Loop through each package and find the respective apt-cache results
+        for p in pkg_dicts:
+            r = results.get("%(name)s:%(architecture)s" % p)
+            if not r:
+                lgr.warning("Was unable to run apt-cache show for %s" %
+                            p["name"])
+                continue
+            # Update the dictionary with found results (if present)
+            for f in ("source_name", "source_version", "size", "md5",
+                      "sha1", "sha256"):
+                if f in r:
+                    p[f] = r[f]
+
+    def _get_pkgs_install_date(self, pkg_dicts):
+        # Convert package names to dpkg list filenames
+        queries = [self._pkg_name_to_dpkg_list_file(p["name"])
+                   for p in pkg_dicts]
+        # Call stat in batches
+        exec_gen = execute_command_batch(
+            self._session, ['stat', '-c', '%n: %Y'], queries,
+            cmd_err_filter('No such file or directory'))
+        # Parse and accumulate stat results in a dict
+        results = {}
+        for (out, _, exc) in exec_gen:
+            if exc:
+                out = exc.stdout  # One file not found, so continue
+            # Parse the output and store by filename
+            for outlines in out.splitlines():
+                (fname, ftime) = outlines.split(": ")
+                results[fname] = str(
+                    pytz.utc.localize(
+                        datetime.utcfromtimestamp(float(ftime))))
+
+        # Now lookup the packages in the results
+        for p in pkg_dicts:
+            fname = self._pkg_name_to_dpkg_list_file(p["name"])
+            if fname in results:
+                p["install_date"] = results[fname]
+
+    @staticmethod
+    def _pkg_name_to_dpkg_list_file(name):
+        query = "/var/lib/dpkg/info/" + name + ".list"
+        return query
+
+    def _get_pkgs_versions_and_sources(self, pkg_dicts):
+        # Convert package names to name:arch format
+        queries = ["%(name)s:%(architecture)s" % p for p in pkg_dicts]
+        # Call apt-cache policy in batches
+        exec_gen = execute_command_batch(self._session,
+                                         ['apt-cache', 'policy'],
+                                         queries)
+        # Parse results into a single generator
+        results = (parse_apt_cache_policy_pkgs_output(out)
+                   for (out, _, _) in exec_gen)
+        # Combine sequence of dicts
+        results = join_sequence_of_dicts(results)
+        # Loop through each package and find the respective apt-cache results
+        for p in pkg_dicts:
+            ver = results.get("%(name)s:%(architecture)s" % p)
+            if not ver:
+                ver = results.get(p["name"])
+            if not ver:
+                lgr.warning("Was unable to get version table for %s" %
+                            p["name"])
+                continue
+            # Now construct the version table
+            ver_dict = {}
+            for v in ver.get("versions"):
+                key = v["version"]
+                ver_dict[key] = []
+                for s in v.get("sources"):
+                    s = s["source"]
+                    # If we haven't named the source yet, name it
+                    if s not in self._source_line_to_name_map:
+                        # Make sure we can find the source
+                        if s not in self._all_apt_sources:
+                            lgr.warning("Cannot find source %s" % s)
+                            continue
+                        # Grab and name the source
+                        source = self._all_apt_sources[s]
+                        src_name = self._get_apt_source_name(source)
+                        source.name = src_name
+                        # Now add the source to our used sources
+                        self._apt_sources[src_name] = source
+                        # add the name for easy future lookup
+                        self._source_line_to_name_map[s] = src_name
+                    # Look up and add the short name for the source
+                    ver_dict[key].append(
+                        self._source_line_to_name_map[s])
+            p["versions"] = ver_dict
 
     def _get_date_from_release_file(self, archive_uri, uri_suite):
         date = None
-        for filename in get_apt_release_file_names(
-                archive_uri,
-                uri_suite):
+        for filename in get_apt_release_file_names(archive_uri, uri_suite):
             try:
                 out = self._session.read(filename)
                 spec = get_spec_from_release_file(out)
@@ -569,23 +616,6 @@ class DebTracer(DistributionTracer):
                 # specific attempts.
                 pass
         return date
-
-    def _run_dpkg_query(self, subfiles):
-        try:
-            out, err = self._session.execute_command(
-                ['dpkg-query', '-S'] + subfiles,
-                # TODO: what should we do about those additional flags we have
-                # in Runner but not yet in execute_command for all sessions
-                #expect_stderr=True, expect_fail=True
-            )
-        except CommandError as exc:
-            stderr = utils.to_unicode(exc.stderr, "utf-8")
-            if 'no path found matching pattern' in stderr:
-                out = exc.stdout  # One file not found, so continue
-            else:
-                raise  # some other fault -- handle it above
-        out = utils.to_unicode(out, "utf-8")
-        return out
 
     @staticmethod
     def _parse_dpkgquery_line(line):

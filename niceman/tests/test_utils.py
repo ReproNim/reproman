@@ -11,6 +11,7 @@
 """
 
 import os
+import pytest
 import shutil
 import sys
 import logging
@@ -24,7 +25,8 @@ from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
 from ..dochelpers import exc_str
-from ..utils import updated, HashableDict
+from ..utils import updated, HashableDict, execute_command_batch, \
+    cmd_err_filter, join_sequence_of_dicts
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
@@ -46,7 +48,7 @@ from ..utils import generate_unique_name
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
 from .utils import with_tempfile, assert_in, with_tree, to_binarystring, \
-    is_unicode, is_binarystring
+    is_unicode, is_binarystring, CommandError
 from .utils import SkipTest
 from .utils import assert_cwd_unchanged, skip_if_on_windows
 from .utils import assure_dict_from_str, assure_list_from_str
@@ -326,20 +328,6 @@ def test_find_files_exclude_vcs(repo=None):
     assert_in(opj(repo, '.git'), files)
 
 
-def test_line_profile():
-    skip_if_no_module('line_profiler')
-
-    @line_profile
-    def f(j):
-        i = j + 1  # xyz
-        return i
-
-    with swallow_outputs() as cmo:
-        assert_equal(f(3), 4)
-        assert_equal(cmo.err, '')
-        assert_in('i = j + 1  # xyz', cmo.out)
-
-
 def test_not_supported_on_windows():
     with patch('niceman.utils.on_windows', True):
         assert_raises(NotImplementedError, not_supported_on_windows)
@@ -433,3 +421,55 @@ def test_hashable_dict():
     d[key_a] = 1
     assert(key_b in d)
     assert(key_c not in d)
+
+
+def test_cmd_err_filter():
+    my_filter = cmd_err_filter("testing")
+    assert my_filter(CommandError("", "", None, "", "testing"))
+    assert not my_filter(CommandError("", "", None, "", "failure"))
+    assert not my_filter(ValueError("not CommandError"))
+
+
+def test_join_sequence_of_dicts():
+    assert join_sequence_of_dicts(({"a": 1, "b": 2}, {"c": 3}, {"d": 4})) == \
+           {"a": 1, "b": 2, "c": 3, "d": 4}
+    with pytest.raises(RuntimeError):
+        join_sequence_of_dicts(({"a": 1, "b": 2}, {"b": 3}, {"d": 4}))
+
+def test_execute_command_batch():
+    # Create a dummy session that can possibly raise a ValueError
+    class DummySession(object):
+        def execute_command(self, cmd):
+            if cmd[0] == "ValueError":
+                raise ValueError
+            else:
+                return (str(len(cmd)), None)
+    session = DummySession()
+    # First let's do a simple test to count the args
+    args = list(map(str, range(1, 101)))
+    cmd_gen = execute_command_batch(session, [], args, None)
+    for (out, _, _) in cmd_gen:
+        assert out == "100"
+    # Now let's raise an exception but not list it as handled
+    cmd_gen = execute_command_batch(session, ["ValueError"], args, None)
+    with pytest.raises(ValueError):
+        list(cmd_gen)
+    # Now let's raise an exception
+    cmd_gen = execute_command_batch(session, ["ValueError"], args,
+                                    lambda x: isinstance(x, ValueError))
+    for (_, _, err) in cmd_gen:
+        assert isinstance(err, ValueError)
+
+
+def test_line_profile():
+    skip_if_no_module('line_profiler')
+
+    @line_profile
+    def f(j):
+        i = j + 1  # xyz
+        return i
+
+    with swallow_outputs() as cmo:
+        assert_equal(f(3), 4)
+        assert_equal(cmo.err, '')
+        assert_in('i = j + 1  # xyz', cmo.out)

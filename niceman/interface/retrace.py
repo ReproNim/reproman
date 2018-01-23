@@ -11,6 +11,7 @@
 
 from __future__ import unicode_literals
 
+from os.path import normpath
 import sys
 import time
 
@@ -82,7 +83,9 @@ class Retrace(Interface):
             paths += spec.get_files() or []
 
         # Convert paths to unicode
-        paths = list(map(to_unicode, paths))
+        paths = map(to_unicode, paths)
+        # The tracers assume normalized paths.
+        paths = list(map(normpath, paths))
 
         session = get_local_session()
 
