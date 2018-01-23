@@ -87,7 +87,7 @@ class GitRepo(VCSRepo):
     hexsha = attr.ib(default=None)
     describe = attr.ib(default=None)
     tracked_remote = attr.ib(default=None)
-    remotes = attr.ib(default=attr.Factory(list))
+    remotes = attr.ib(default=attr.Factory(dict))
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -360,22 +360,24 @@ class GitRepoShim(GitSVNRepoShim):
         # which remotes contain this commit, so we could provide this
         # possibly valuable information
         if not hexsha:  # just initialized
-            return []
+            return {}
         remote_branches = self._run_git(
             'branch -r --contains %s' % hexsha,
             expect_fail=True)
         if not remote_branches:
-            return []
+            return {}
         containing_remotes = set(x.split('/', 1)[0] for x in remote_branches)
         remotes = {}
         for remote in self._run_git('remote').splitlines():
             rec = {}
             for f in 'url', 'pushurl':
                 try:
-                    rec[f] = self._run_git('config remote.%s.%s' % (remote, f)
-                                           , expect_fail=True
-                                           #, expect_stderr=True
-                                           )
+                    v = self._run_git('config remote.%s.%s' % (remote, f)
+                                      , expect_fail=True
+                                      #, expect_stderr=True
+                                     )
+                    if v is not None:
+                        rec[f] = v
                 except CommandError:
                     # must have no value
                     pass
