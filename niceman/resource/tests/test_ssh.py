@@ -17,60 +17,32 @@ import uuid
 from pytest import raises
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, skip_if_no_network, skip_ssh
+from ...tests.utils import assert_in, skip_ssh
 from ..base import ResourceManager
-from ...cmd import Runner
+from niceman.tests.fixtures import get_docker_fixture
 
-import pytest
-from nose import SkipTest
-
-@pytest.fixture(scope='module')
-def setup_ssh():
-    """pytest fixture for tests needing a running docker container
-
-    on setup, this fixture ensures that a docker container that maps 
-    host port 49000 to container port 22 is running and starts one if necessary.
-
-    Fixture yields parameters of the ssh connection suitable to be used as is
-    for ssh type resource.
-
-    on teardown, this fixture stops the docker container if it was started by 
-    the fixture
-    """
-
-    skip_if_no_network()
-    skip_ssh()
-    stdout, _ = Runner().run(['docker', 'ps'])
-    params = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': 'root',
-        'port': '49000',
-    }
-    if '0.0.0.0:{port}->22/tcp'.format(**params) in stdout:
-        stop_container = False
-    else:
-        args = ['docker',
-                'run',
-                '-d',
-                '--rm',
-                '-p',
-                '{port}:22'.format(**params),
-                'rastasheep/ubuntu-sshd:14.04']
-        stdout, _ = Runner().run(args)
-        container_id = stdout.strip()
-        stop_container = True
-    yield params
-    if stop_container:
-        Runner().run(['docker', 'stop', container_id])
-    return
+# Note: due to skip_ssh right here, it would skip the entire module with
+# all the tests here if no ssh testing is requested
+setup_ssh = skip_ssh(get_docker_fixture)(
+    'rastasheep/ubuntu-sshd:14.04',
+    portmaps={
+        49000: 22
+    },
+    custom_params={
+            'host': 'localhost',
+            'user': 'root',
+            'password': 'root',
+            'port': 49000,
+    },
+    scope='module'
+)
 
 
 def test_setup_ssh(setup_ssh):
     # Rudimentary smoke test for setup_ssh so we have
     # multiple uses for the setup_ssh
-    assert 'port' in setup_ssh
-    assert setup_ssh['host'] == 'localhost'
+    assert 'port' in setup_ssh['custom']
+    assert setup_ssh['custom']['host'] == 'localhost'
 
 
 def test_ssh_class(setup_ssh):
@@ -81,7 +53,7 @@ def test_ssh_class(setup_ssh):
         config = dict(
             name='ssh-test-resource',
             type='ssh',
-            **setup_ssh
+            **setup_ssh['custom']
         )
         resource = ResourceManager.factory(config)
         updated_config = resource.create()

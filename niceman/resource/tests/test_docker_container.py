@@ -17,7 +17,15 @@ from ...tests.utils import assert_in, with_tempfile
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
 
+from niceman.tests.fixtures import get_docker_fixture
+
 from pytest import raises
+
+setup_ubuntu = get_docker_fixture(
+    'ubuntu:xenial',
+    scope='module'
+)
+
 
 def test_dockercontainer_class():
 
@@ -147,3 +155,7 @@ def test_dockercontainer_class():
             call().remove_container({'Id': '18b31b30e3a5'}, force=True),
         ]
         client.assert_has_calls(calls, any_order=True)
+
+def test_setup_ubuntu(setup_ubuntu):
+    print(setup_ubuntu)
+    assert setup_ubuntu['container_id']

@@ -32,6 +32,8 @@ from functools import wraps
 from time import sleep
 from inspect import getargspec
 
+from niceman.support.exceptions import CommandError
+
 lgr = logging.getLogger("niceman.utils")
 
 lgr.log(5, "Importing niceman.utils")
@@ -956,34 +958,6 @@ class HashableDict(dict):
         return hash(frozenset(self.values()))
 
 
-def batch_process_list(proc_func, proc_list, batch_len, start_val):
-    """Process a long list in smaller batches
-
-    This calls proc_func(batch, prev_value) -> next_value iteratively for
-    blocks of arglist broken into max_batch_size sublists. The first time
-    proc_func is called, prev_value is set to start_val. In subsequent calls
-    to proc_func, prev_value is set to the value returned by the previous call
-    to prov_func. So proc_func essentially maps and reduces over batches of
-    arglist. batch_process_list returns the last value returned by proc_func.
-
-    Parameters
-    ----------
-    proc_func : func
-      f(batch, prev_value) -> result_value
-    proc_list : list
-      The list to process
-    batch_len : number
-      The maximum number of arguments in each batch
-    start_val
-      The initial prev_value passed to proc_func
-    """
-    prev_value = start_val
-    while proc_list:
-        batch, proc_list = proc_list[:batch_len], proc_list[batch_len:]
-        prev_value = proc_func(batch, prev_value)
-    return prev_value
-
-
 def get_cmd_batch_len(arg_list, cmd_len):
     """Estimate the maximum batch length for a given argument list
 
@@ -1012,6 +986,95 @@ def get_cmd_batch_len(arg_list, cmd_len):
     # Find out how many files we can query at once
     max_len = max(map(len, arg_list))
     return max((_MAX_LEN_CMDLINE - cmd_len) // (max_len + 1), 1)
+
+
+def join_sequence_of_dicts(seq):
+    """
+    Joins a sequence of dicts into a single dict
+
+    Parameters
+    ----------
+    seq: sequence
+        Sequence of dicts to join
+
+    Returns
+    -------
+    dict
+
+    Raises
+    ------
+    RuntimeError if a duplicate key is encountered.
+    """
+    r = {}
+    for d in seq:
+        for k, v in d.items():
+            if k in r:
+                raise RuntimeError("Duplicate key %r (new value: %r, "
+                                   "was: %r)" % (k, v, r[k]))
+            r[k] = v
+    return r
+
+
+def cmd_err_filter(err_string):
+    """
+    Creates a filter for CommandErrors that match a specific error string
+
+    Parameters
+    ----------
+    err_string: basestring
+        The error string we want to match
+
+    Returns
+    -------
+    func object -> boolean
+    """
+    return (lambda x: isinstance(x, CommandError) and
+            err_string in to_unicode(x.stderr, "utf-8"))
+
+
+def execute_command_batch(session, command, args, exception_filter=None):
+    """
+    Generator that executes session.execute_command, with batches of args
+
+    We want to call commands like "apt-cache policy" on a large number of
+    packages, but risk creating command-lines that are too long. This
+    function is a generator that will call execute_command but with batches
+    of arguments (to stay within the command-line length limit) and yield the
+    results.
+
+    Parameters
+    ----------
+    session
+      Session object that implements the execute_command() member
+    command : sequence
+      The command that we wish to execute
+    args : sequence
+      The long list of additional arguments we wish to pass to the command
+    exception_filter : func x -> bool
+      A filter of exception types that the calling code will gracefully handle
+
+    Returns
+    -------
+    (out, err, exception)
+        stdout of the command, stderr of the command, and an exception
+        that is in the list of expected exceptions
+
+    """
+    cmd_length = sum(map(len, command)) + len(command)
+    num_args = get_cmd_batch_len(args, cmd_length)
+    while args:
+        batch, args = args[:num_args], args[num_args:]
+        try:
+            out, err = session.execute_command(
+                command + batch
+            )
+            out = to_unicode(out, "utf-8")
+            yield (out, err, None)
+        except Exception as e:
+            if exception_filter and exception_filter(e):
+                yield (None, None, e)
+            else:
+                raise
 
 
 def items_to_dict(l, attrs='name', ordered=False):

@@ -7,11 +7,14 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 import collections
+import io
+import logging
 import os
 import pytest
 
 import sys
 from appdirs import AppDirs
+from mock import mock
 from subprocess import call
 from unittest import SkipTest
 
@@ -96,3 +99,34 @@ def test_parse_conda_export_pip_package_entry():
     assert CondaTracer.parse_pip_package_entry(
         "niceman (/test/repronim)==0.0.2") == (
            "niceman", "/test/repronim")
+
+
+def test_get_conda_env_export_exceptions():
+    # Mock to capture logs
+    def log_warning(msg, *args):
+        log_warning.val = msg % args if args else msg
+
+    # Mock to throw unrecognized argument exception
+    def raise_unrec_args(_):
+        raise Exception("conda-env: error: unrecognized arguments: -p"
+                        "/home/butch/old_conda/")
+
+    # Mock to raise some other exception
+    def raise_other(_):
+        raise Exception("unknown")
+
+    from niceman.distributions.conda import lgr
+
+    tracer = CondaTracer()
+    with mock.patch.object(tracer._session, "execute_command",
+                           raise_unrec_args), \
+         mock.patch.object(lgr, "warning", log_warning):
+        tracer._get_conda_env_export("", "/conda")
+        assert "Please use Conda 4.3.19" in log_warning.val
+
+    with mock.patch.object(tracer._session, "execute_command",
+                           raise_other), \
+        mock.patch.object(lgr, "warning", log_warning):
+        tracer._get_conda_env_export("", "/conda")
+        assert "unknown" in log_warning.val
+
