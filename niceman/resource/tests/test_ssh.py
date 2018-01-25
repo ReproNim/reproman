@@ -45,7 +45,7 @@ def test_setup_ssh(setup_ssh):
     assert setup_ssh['custom']['host'] == 'localhost'
 
 
-def test_ssh_class(setup_ssh):
+def test_ssh_class(setup_ssh, resource_test_dir):
     with swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test connecting to test SSH server.
@@ -86,12 +86,11 @@ def test_ssh_class(setup_ssh):
         session.put(__file__, 'remote_test_ssh.py')
         assert session.exists('remote_test_ssh.py') == True
 
-        tmp_path = "/tmp/{}".format(uuid.uuid4().hex)
+        tmp_path = "{}/{}".format(resource_test_dir, uuid.uuid4().hex)
         session.get('/etc/hosts', tmp_path)
         assert os.path.isfile(tmp_path) == True
 
         file_contents = session.read('remote_test_ssh.py')
-        # import pdb; pdb.set_trace() # PDB-BREAK
         file_contents = file_contents.split('\n')
         assert file_contents[8] == '# Test string to read'
 

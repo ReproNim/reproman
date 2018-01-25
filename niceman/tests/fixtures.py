@@ -24,48 +24,39 @@ def niceman_cfg_path(request):
     yield request.param
 
 
-class FixtureTempFile:
-	"""Utility class for the "temp_file" pytest fixture to help manage the
-	temporary file.
-	
-	Attributes
-	----------
-	_fd : int
-		File descriptor id of temp file
-	_path : str
-		Path to temp file
-	"""
-	def __init__(self, fid, path):
-		self.fid = fid
-		self.path = path
-	def __call__(self, content):
-		if content:
-			file = open(self.path, "w")
-			file.write(content)
-			file.close()
-	def __repr__(self):
-		return self.path
 
 @pytest.fixture(scope="module")
 def temp_file():
-	"""Provide an empty temporary file for a test.
-	
-	The fixture will create a temp file and remove it when the test is complete.
-	To add content to the temporary file, call the object in the test function
-	with the content passed as the first argument of the call.
+    """Provide an empty temporary file for a test.
 
-	e.g. tmp_file("my content")
+    The fixture will create a temp file and remove it when the test is complete.
+    To add content to the temporary file, call the object in the test function
+    with the content passed as the first argument of the call.
 
-	Returns
-	-------
-	FixtureTempFile object
-	"""
-	fid, path = tempfile.mkstemp()
-	temp_file = FixtureTempFile(fid, path)
-	yield temp_file
-	os.remove(path)
+    e.g. tmp_file("my content")
 
-  
+    Returns
+    -------
+    FixtureTempFile object
+    """
+    class FixtureTempFile:
+        def __init__(self, fid, path):
+            self.fid = fid
+            self.path = path
+        def __call__(self, content):
+            if content:
+                file = open(self.path, "w")
+                file.write(content)
+                file.close()
+        def __repr__(self):
+            return self.path
+
+    fid, path = tempfile.mkstemp()
+    temp_file = FixtureTempFile(fid, path)
+    yield temp_file
+    os.remove(path)
+
+
 def get_docker_fixture(image, portmaps={}, name=None,
                        custom_params={}, scope='function'):
     """Produce a fixture which starts/stops a docker container
@@ -132,6 +123,6 @@ def get_docker_fixture(image, portmaps={}, name=None,
         params['container_id'] = container_id = stdout.strip( )
         params['custom'] = custom_params
         yield params
-        Runner().run(['docker', 'stop', container_id])
+        Runner().run(['docker', 'rm', '--force', container_id])
 
     return docker_fixture

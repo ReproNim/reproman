@@ -19,7 +19,26 @@ from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
 from ..shell import ShellSession
 from ..ssh import SSHSession, PTYSSHSession
-from ...tests.utils import skip_if_no_docker_container
+from ...tests.utils import skip_ssh
+from ...tests.fixtures import get_docker_fixture
+
+
+# Note: due to skip_ssh right here, it would skip the entire module with
+# all the tests here if no ssh testing is requested
+docker_container = skip_ssh(get_docker_fixture)(
+    'rastasheep/ubuntu-sshd:14.04',
+    name='testing-container',
+    portmaps={
+        49000: 22
+    },
+    custom_params={
+            'host': 'localhost',
+            'user': 'root',
+            'password': 'root',
+            'port': 49000,
+    },
+    scope='module'
+)
 
 
 @pytest.mark.skip(reason="TODO")
@@ -213,8 +232,8 @@ def resource_session(request):
     return request.param() 
 
 
-@skip_if_no_docker_container('testing-container')
-def test_session_abstract_methods(resource_session, temp_file):
+def test_session_abstract_methods(docker_container, resource_session,
+    temp_file, resource_test_dir):
 
     session = resource_session
 
@@ -294,7 +313,8 @@ line 3
     assert output[1] == 'line 2'
 
     # Check get() method
-    local_path = '/tmp/niceman-download/{}'.format(uuid.uuid4().hex)
+    local_path = '{}/download/{}'.format(resource_test_dir,
+        uuid.uuid4().hex)
     session.get(remote_path, local_path, uid=3, gid=3)
     # TODO: In some cases, updating uid and gid does not work if not root
     assert os.path.isfile(local_path) == True
