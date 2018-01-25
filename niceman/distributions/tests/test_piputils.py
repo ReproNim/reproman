@@ -15,6 +15,7 @@ def test_parse_pip_show():
 Name: pkg
 Version: 0.3.0
 Summary: foo
+# Comment line
 Home-page: https://github.com/ReproNim/niceman/
 Author: marty
 Author-email: marty@nowhere
