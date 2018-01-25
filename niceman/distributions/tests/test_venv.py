@@ -17,6 +17,8 @@ import pytest
 from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 from niceman.distributions.venv import VenvTracer
 
+PY_VERSION = "python{v.major}.{v.minor}".format(v=sys.version_info)
+
 
 @pytest.fixture(scope="session")
 @skip_if_no_network
@@ -27,8 +29,8 @@ def venv_test_dir():
         return test_dir
     call("mkdir -p " + test_dir + " && "
          "cd " + test_dir + " && "
-         "virtualenv venv0 && "
-         "virtualenv venv1 && "
+         "virtualenv --python=" + PY_VERSION + " venv0 && "
+         "virtualenv --python=" + PY_VERSION + " venv1 && "
          "./venv0/bin/pip install pyyaml && "
          "./venv1/bin/pip install attrs",
          shell=True)
@@ -37,8 +39,8 @@ def venv_test_dir():
 
 def test_venv_identify_distributions(venv_test_dir):
     pydir = "python{v.major}.{v.minor}".format(v=sys.version_info)
-    paths = ["lib/" + pydir + "/site-packages/yaml/parser.py",
-             "lib/" + pydir + "/site-packages/attr/filters.py"]
+    paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
+             "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
     full_paths = [os.path.join(venv_test_dir, "venv{}".format(idx), f)
                   for idx, f in  enumerate(paths)]
     full_paths.append("/sbin/iptables")
