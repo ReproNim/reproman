@@ -29,10 +29,12 @@ def venv_test_dir():
         return test_dir
     call("mkdir -p " + test_dir + " && "
          "cd " + test_dir + " && "
-         "virtualenv --python=" + PY_VERSION + " venv0 && "
-         "virtualenv --python=" + PY_VERSION + " venv1 && "
-         "./venv0/bin/pip install pyyaml && "
-         "./venv1/bin/pip install attrs",
+         # Use the same basename for vitrualenv directories to test
+         # that we lengthen the environment name to make it unique.
+         "virtualenv --python=" + PY_VERSION + " d0/venv && "
+         "virtualenv --python=" + PY_VERSION + " d1/venv && "
+         "./d0/venv/bin/pip install pyyaml && "
+         "./d1/venv/bin/pip install attrs",
          shell=True)
     return test_dir
 
@@ -41,7 +43,7 @@ def test_venv_identify_distributions(venv_test_dir):
     pydir = "python{v.major}.{v.minor}".format(v=sys.version_info)
     paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
              "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
-    full_paths = [os.path.join(venv_test_dir, "venv{}".format(idx), f)
+    full_paths = [os.path.join(venv_test_dir, "d{}/venv".format(idx), f)
                   for idx, f in  enumerate(paths)]
     full_paths.append("/sbin/iptables")
 
@@ -56,8 +58,8 @@ def test_venv_identify_distributions(venv_test_dir):
     assert len(distributions.environments) == 2
 
     expect = {"environments":
-              [{"name": "venv0",
+              [{"name": "d0/venv",
                 "packages": [{"files": [paths[0]], "name": "PyYAML"}]},
-               {"name": "venv1",
+               {"name": "d1/venv",
                 "packages": [{"files": [paths[1]], "name": "attrs"}]}]}
     assert_is_subset_recur(expect, attr.asdict(distributions), [dict, list])

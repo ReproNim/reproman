@@ -17,7 +17,7 @@ import attr
 from niceman.distributions import Distribution
 from niceman.distributions.piputils import parse_pip_show, parse_pip_list
 from niceman.dochelpers import exc_str
-from niceman.utils import execute_command_batch, PathRoot
+from niceman.utils import execute_command_batch, abbreviate, PathRoot
 
 from .base import DistributionTracer
 from .base import Package
@@ -114,6 +114,7 @@ class VenvTracer(DistributionTracer):
         venv_paths = map(self._get_venv_path, files)
         venv_paths = set(filter(None, venv_paths))
 
+        short_names = abbreviate(venv_paths)
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
@@ -132,9 +133,8 @@ class VenvTracer(DistributionTracer):
 
             found_package_count += len(packages)
 
-            # FIXME: Check for non-unique names and lengthen if needed.
             venvs.append(
-                VenvEnvironment(name=os.path.basename(venv_path),
+                VenvEnvironment(name=short_names[venv_path],
                                 path=venv_path,
                                 python_version=self._python_version(venv_path),
                                 packages=packages))
