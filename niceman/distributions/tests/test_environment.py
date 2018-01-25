@@ -38,4 +38,4 @@ def test_sub(envs):
     assert denv.base is None
     assert denv.files == ['/usr/lib/locale/locale-archive']
     # WIP; will fail
-#    assert denv.distributions
+    assert denv.distributions
