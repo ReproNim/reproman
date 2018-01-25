@@ -1,0 +1,37 @@
+# NICEMAN Environment Configuration File
+# This file was created by NICEMAN 0.0.2 on 2017-10-12 17:42:04.973465
+version: 0.0.1
+distributions:
+- name: debian
+  apt_sources:
+  - {name: apt_Debian_stable_main_1, component: main, archive: stable, architecture: amd64,
+    codename: stretch, origin: Debian, label: Debian-Security, site: security.debian.org,
+    archive_uri: 'http://security.debian.org/', date: '2017-10-11 21:41:08+00:00'}
+  - {name: apt_Debian_stable_main_0, component: main, archive: stable, architecture: amd64,
+    codename: stretch, origin: Debian, label: Debian, site: cdn-aws.deb.debian.org,
+    archive_uri: 'http://cdn-aws.deb.debian.org/debian/', date: '2017-10-07 09:44:42+00:00'}
+  packages:
+  - name: libx11-6
+    source_name: libx11
+    version: 2:1.6.4-3
+    architecture: amd64
+    size: 747114
+    md5: 8ad41adbd147ffe4bf64c50efcac497b
+    sha256: 1b52b32b63e8dc55ebd2562cee9207ff6048ff4824cb8ee7ee0222e1207ff492
+    source_version: 2:1.6.4-3
+    versions:
+      2:1.6.4-3: [apt_Debian_stable_main_0]
+    files: [/usr/lib/x86_64-linux-gnu/libX11.so.6, /usr/lib/x86_64-linux-gnu/libX11.so.6.3.0]
+  - name: libxdmcp6
+    source_name: libxdmcp
+    version: 1:1.1.2-3
+    architecture: amd64
+    size: 26344
+    md5: 4a27341c3dfb3067bc473fc241144ca9
+    sha256: ecb8536f5fb34543b55bb9dc5f5b14c9dbb4150a7bddb3f2287b7cab6e9d25ef
+    source_version: 1:1.1.2-3
+    versions:
+      1:1.1.2-3: [apt_Debian_stable_main_0]
+    files: [/usr/lib/x86_64-linux-gnu/libXdmcp.so.6.0.0, /usr/lib/x86_64-linux-gnu/libXdmcp.so.6]
+  version: '9.1'
+files: [/etc/ld.so.cache, /home/ch/.Xauthority]
