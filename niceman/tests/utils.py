@@ -403,7 +403,7 @@ def skip_ssh(func=None):
         check_and_raise()
 
 
-def skip_if_no_docker_container(container_name):
+def skip_if_no_docker_container(container_name='testing-container'):
     """Test decorator that will skip a test if the Docker container the test is
     going to connect to is not running in the Docker engine.
     

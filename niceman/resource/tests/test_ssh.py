@@ -10,6 +10,7 @@
 
 import logging
 import os
+import paramiko
 import re
 import six
 import uuid
@@ -18,7 +19,6 @@ from pytest import raises
 from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_if_no_network, skip_ssh
 from ..base import ResourceManager
-from ...support.starcluster.sshutils import SSHClient
 from ...cmd import Runner
 
 import pytest
@@ -119,7 +119,9 @@ def test_ssh_class(setup_ssh):
         assert os.path.isfile(tmp_path) == True
 
         file_contents = session.read('remote_test_ssh.py')
-        assert file_contents[8] == '# Test string to read\n'
+        # import pdb; pdb.set_trace() # PDB-BREAK
+        file_contents = file_contents.split('\n')
+        assert file_contents[8] == '# Test string to read'
 
         path = '/tmp/{}'.format(str(uuid.uuid4()))
         assert session.isdir(path) == False
@@ -158,4 +160,4 @@ def test_ssh_resource(setup_ssh):
     assert resource._ssh == None
 
     resource.get_session()
-    assert type(resource._ssh) == SSHClient
+    assert type(resource._ssh) == paramiko.SSHClient

@@ -8,7 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Generic interface(s) for handling session interactions."""
 
-import abc
 import logging
 
 lgr = logging.getLogger('niceman.resource.session')
@@ -32,8 +31,6 @@ lgr = logging.getLogger('niceman.session')
 @attr.s
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
-
-    __metaclass__ = abc.ABCMeta
 
     def __attrs_post_init__(self):
         """
@@ -107,7 +104,7 @@ class Session(object):
                     del env[newvar]
                 else:
                     if format:
-                        newvalue = newvalue.format(env)
+                        newvalue = newvalue.format(env[newvar])
                     env[newvar] = newvalue
         if permanent:
             # We should store adjusted environment within the session for future
@@ -155,6 +152,11 @@ class Session(object):
           Which shell to use.  If none specified, the one specified by SHELL
           in the environment would be used. If that one is not specified -- /bin/sh
           will be used for simple command, or /bin/bash if composite
+
+        Returns
+        -------
+        dict
+            Key/value pairs of the new environment
         """
         raise NotImplementedError
 
@@ -179,7 +181,7 @@ class Session(object):
 
         Returns
         -------
-        (STDOUT, STDERR)
+        (stdout, stderr)
         """
         # TODO: bring back updated_env?
         command_env = dict(self._env, **(env or {}))
@@ -193,7 +195,6 @@ class Session(object):
             **run_kw
         )  # , shell=True)
 
-    @abc.abstractmethod
     def _execute_command(self, command, env=None, cwd=None):
         """
         Execute the given command in the environment.
@@ -212,7 +213,7 @@ class Session(object):
 
         Returns
         -------
-        (STDOUT, STDERR)
+        (stdout, stderr)
         """
         raise NotImplementedError
 
@@ -254,8 +255,6 @@ class Session(object):
 
         getattr(self, command)(*pargs, **kwargs)
 
-
-    @abc.abstractmethod
     def exists(self, path):
         """Determine if a path exists in the resource.
         
@@ -271,9 +270,11 @@ class Session(object):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         """Take file on the local file system and copy over into the resource
+
+        The src_path and dest_path must include the name of the file being
+        transferred.
         
         Parameters
         ----------
@@ -290,9 +291,11 @@ class Session(object):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def get(self, src_path, dest_path, uid=-1, gid=-1):
         """Take file on the resource and copy over into the local system
+
+        The src_path and dest_path must include the name of the file being
+        transferred.
         
         Parameters
         ----------
@@ -309,7 +312,6 @@ class Session(object):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def get_mtime(self, path):
         """Returns the modification time for a file in the resource
         
@@ -329,7 +331,6 @@ class Session(object):
     #
     # Somewhat optional since could be implemented with native "POSIX" commands
     #
-    @abc.abstractmethod
     def read(self, path, mode='r'):
         """Return content of a file
         
@@ -347,7 +348,6 @@ class Session(object):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def mkdir(self, path, parents=False):
         """Create a directory
         
@@ -360,7 +360,6 @@ class Session(object):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def isdir(self, path):
         """Return True if path is pointing to a directory
         
@@ -376,18 +375,44 @@ class Session(object):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def chmod(self, path, mode, recursive=False):
-        """Set the mode of a remote path
+        """Set the mode of the indicated path
         
+        Parameters
+        ----------
+        path : string
+            Path to file or directory whose permissions we want to update
+        mode : string
+            Octal number representing the permission bit pattern
+        recursive : bool, optional
+            Recurse the permission updates into the subdirectores (the default
+            is False)
         """
-        pass
+        raise NotImplementedError
 
-    @abc.abstractmethod
-    def chown(self, path, uid, gid, recursive=False, remote=True):
-        """Set the user and gid of a path
+    def chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
+        """Set the owner and group ownership of a file or directory.
+        
+        Parameters
+        ----------
+        path : string
+            Path to file or directory whose ownship we want to update
+        uid : number, optional
+            System id of user (the default is -1, which leaves the existing
+            user owner as is)
+        gid : number, optional
+            System id of group (the default is -1, which leaves the existing
+            group owner as is)
+        recursive : bool, optional
+            Recurse into the path directory provided and update the ownership
+            to all files and directories. (the default is False, which does
+            not recurse)
+        remote : bool, optional
+            Runs the chown command to the path in the resource environment (the
+            default is True, which runs in the resource environment, False
+            runs the chown command in the local, host file system)
         """
-        pass
+        raise NotImplementedError
 
 
 @attr.s
@@ -485,11 +510,12 @@ class POSIXSession(Session):
     def exists(self, path):
         """Return if file exists"""
         try:
-            out, err = self.execute_command(["[", "-e", path, "]"])
+            command = ['test', '-e', path, '&&', 'echo', 'Found']
+            out, err = self.execute_command(['bash', '-c', ' '.join(command)])
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for file presence failed: %s", exc_str(exc))
             return False
-        if not err:
+        if out == 'Found\n':
             return True
         else:
             lgr.debug("Standard error was not empty (%r), thus assuming that "
@@ -532,15 +558,16 @@ class POSIXSession(Session):
 
     def isdir(self, path):
         try:
-            out, err = self.execute_command(['test', '-d', path])
+            command = ['test', '-d', path, '&&', 'echo', 'Found']
+            out, err = self.execute_command(['bash', '-c', ' '.join(command)])
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for directory failed: %s", exc_str(exc))
             return False
-        if not err:
+        if out == 'Found\n':
             return True
         else:
             lgr.debug("Standard error was not empty (%r), thus assuming that "
-                      "test for directory has failed", err)
+                      "test for direcory has failed", err)
             return False
 
     def chmod(self, path, mode, recursive=False):

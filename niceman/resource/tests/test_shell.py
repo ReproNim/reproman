@@ -50,7 +50,9 @@ def test_shell_class():
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
 
 
-@with_tempfile(content="""
+def test_source_file(temp_file):
+
+    temp_file("""
 echo "Enabling special environment"
 echo "We could even spit out an stderr output">&2
 export EXPORTED_VAR="
@@ -58,42 +60,45 @@ multiline
 "
 export PATH=/custom:$PATH
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-""")
-def test_source_file(script=None):
-    ses = ShellSession()
-    assert ses.get_envvars() == {}
-    new_env_diff = ses.source_script(script, diff=True)
-    assert len(new_env_diff) == 2
+    """)
+    script = temp_file.path
+    session = ShellSession()
+    assert session.get_envvars() == {}
+    new_env_diff = session.source_script(script, diff=True)
+    assert 'EXPORTED_VAR' in new_env_diff
     assert new_env_diff['PATH'].startswith('/custom:')
     assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
 
 
-@with_tempfile(content="exit 1")
-def test_source_file_crash(script=None):
-    ses = ShellSession()
+def test_source_file_crash(temp_file):
+    temp_file('exit 1')
+    script = temp_file.path
+    session = ShellSession()
     with raises(Exception):  # TODO: unify?
-        ses.source_script(script)
+        session.source_script(script)
 
 def test_isdir():
-    ses = ShellSession()
-    assert not ses.isdir(__file__)
-    assert ses.isdir("/bin")
+    session = ShellSession()
+    assert not session.isdir(__file__)
+    assert session.isdir("/bin")
 
 
-@with_tempfile(content="""
+def test_source_file_param(temp_file):
+    temp_file("""
 if ! [ "$1" = "test" ]; then
    exit 1
 fi
 export EXPORTED_VAR=${1}1
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-""")
-def test_source_file_param(script=None):
-    ses = ShellSession()
-    assert ses.get_envvars() == {}
-    new_env_diff = ses.source_script([script, "test"])
-    assert new_env_diff == {'EXPORTED_VAR': 'test1'}
+    """)
+    script = temp_file.path
+    session = ShellSession()
+    assert session.get_envvars() == {}
+    new_env_diff = session.source_script([script, "test"])
+    assert 'EXPORTED_VAR' in new_env_diff
+    assert new_env_diff['EXPORTED_VAR'] == 'test1'
 
-    new_env_diff = ses.source_script([script, "test"],
+    new_env_diff = session.source_script([script, "test"],
                                      shell="/bin/bash")
     assert new_env_diff == {}
 
@@ -127,28 +132,3 @@ def test_shell_resource():
         resource.get_session(pty=True)
     with raises(NotImplementedError):
         resource.get_session(pty=False, shared=True)
-
-
-def test_shell_session():
-
-    config = {
-        'name': 'test-ssh-resource',
-        'type': 'shell'
-    }
-    resource = ResourceManager.factory(config)
-    session = resource.get_session()
-
-    session._runner = 'abc'
-    session.stop()
-    assert session._runner == None
-
-    path = '/tmp/{}'.format(str(uuid.uuid4()))
-    assert os.path.exists(path) == False
-    session.mkdir(path)
-    assert os.path.exists(path) == True
-
-    path = '/tmp/{}/{}'.format(str(uuid.uuid4()), str(uuid.uuid4()))
-    assert os.path.exists(path) == False
-    session.mkdir(path, parents=True)
-    assert os.path.exists(path) == True
-

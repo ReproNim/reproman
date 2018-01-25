@@ -11,15 +11,23 @@
 import attr
 import uuid
 from pipes import quote
+import socket
+import termios
+import tty
+import sys
+import select
+import paramiko
+import os
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
 
 from .base import Resource, attrib
+from niceman.dochelpers import borrowdoc
+from niceman.resource.session import Session
 from niceman import utils
-from ..support.starcluster.sshutils import SSHClient
-from ..support.starcluster.exception import RemoteCommandFailed
-from ..support.exceptions import CommandError
+from ..support.exceptions import CommandError, SSHError, SSHConnectionError, \
+    SSHAuthException
 
 
 @attr.s
@@ -48,15 +56,16 @@ class SSH(Resource):
     _ssh = attr.ib(default=None)
 
     def connect(self):
+        """Open a connection to the environment resource.
         """
-        Open a connection to the environment resource.
-        """
-        self._ssh = SSHClient(
+        self._ssh = paramiko.SSHClient()
+        self._ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self._ssh.connect(
             self.host,
+            port=self.port,
             username=self.user,
             password=self.password,
-            private_key=self.key_filename,
-            port=int(self.port)
+            key_filename=self.key_filename
         )
 
     def create(self):
@@ -112,25 +121,12 @@ from niceman.resource.session import POSIXSession
 class SSHSession(POSIXSession):
     ssh = attr.ib()
 
+    @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
-        """
-        Execute the given command in the environment.
-
-        Parameters
-        ----------
-        command : list
-            Shell command string or list of command tokens to send to the
-            environment to execute.
-        env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
-
-        Returns
-        -------
-        out, err
-        """
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
+        if env:
+            raise NotImplementedError("passing env variables to execution")
 
         if cwd:
             raise NotImplementedError("implement cwd support")
@@ -138,61 +134,135 @@ class SSHSession(POSIXSession):
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
-        # If a command fails, a CommandError exception will be thrown.
         escaped_command = ' '.join(quote(s) for s in command)
-        out = ''
-        for i, line in enumerate(self.ssh.execute(escaped_command)):
-            out += utils.to_unicode(line, "utf-8")
-            lgr.debug("exec#%i: %s", i, line.rstrip())
-        return (out, None)
+        stdin, stdout, stderr = self.ssh.exec_command(escaped_command)
+        return (utils.to_unicode(stdout.read(), "utf-8"),
+            utils.to_unicode(stderr.read(), "utf-8"))
 
-    def exists(self, path):
-        """Return if file exists"""
-        return self.ssh.path_exists(path)
-
+    @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        """Take file on the local file system and copy over into the session
-        """
-        self.ssh.put([src_path], remotepath=dest_path)
+        dest_dir, dest_basename = os.path.split(dest_path)
+        if not self.exists(dest_dir):
+            self.mkdir(dest_dir, parents=True)
+        sftp = self.ssh.open_sftp()
+        sftp.put(src_path, dest_path)
+        sftp.close()
 
         if uid > -1 or gid > -1:
-            self.chown(dest_path, uid, gid, recursive=True)
+            self.chown(dest_path, uid, gid)
 
+    @borrowdoc(Session)
     def get(self, src_path, dest_path, uid=-1, gid=-1):
-        """Retrieve a file from the remote system
-        """
-        self.ssh.get(src_path, localpath=dest_path)
+        dest_dir, dest_basename = os.path.split(dest_path)
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+        sftp = self.ssh.open_sftp()
+        sftp.get(src_path, dest_path)
+        sftp.close()
 
         if uid > -1 or gid > -1:
-            self.chown(dest_path, uid, gid, recursive=True, remote=False)
-
-    def read(self, path, mode='r'):
-        """Return content of a file"""
-        return self.ssh.get_remote_file_lines(path)
-
-    def mkdir(self, path, parents=False):
-        """Create a directory. Create parent directories if non-existent
-        """
-        if parents:
-            self.ssh.makedirs(path)
-        else:
-            self.ssh.mkdir(path)
-
-    def isdir(self, path):
-        """Return True if path is pointing to a directory
-        """
-        return self.ssh.isdir(path)
+            self.chown(dest_path, uid, gid, remote=False)
 
 
 @attr.s
 class PTYSSHSession(SSHSession):
     """Interactive SSH Session"""
 
+    @borrowdoc(Session)
     def open(self):
         lgr.debug("Opening TTY connection via SSH.")
         assert self.ssh, "We should create or connect to remote server first"
-        self.ssh.interactive_shell(self.ssh._username)
 
+        # TODO: Can we make these values dynamic based on the user's screen size?
+        self.term = 'screen'
+        self.cols = 80
+        self.lines = 24
+        self.timeout = 30
+
+        self.interactive_shell()
+
+    @borrowdoc(Session)
     def close(self):
         # XXX ?
         pass
+
+    def interactive_shell(self):
+        """Open an interactive TTY shell.
+        
+        The code in this method was generously provided by our friends at
+        StarCluster (http://star.mit.edu/cluster/)
+        """
+
+        try:
+            addrinfo = socket.getaddrinfo(self.ssh._host, self.ssh._port,
+                socket.AF_UNSPEC, socket.SOCK_STREAM)
+            for (family, socktype, proto, canonname, sockaddr) in addrinfo:
+                if socktype == socket.SOCK_STREAM:
+                    af = family
+                    break
+                else:
+                    raise exception.SSHError(
+                        'No suitable address family for %s' % self.ssh._host)
+            sock = socket.socket(af, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            sock.connect((self.ssh._host, self.ssh._port))
+            transport = paramiko.Transport(sock)
+            transport.banner_timeout = self.timeout
+        except socket.error:
+            raise exception.SSHConnectionError(self.ssh._host, self.ssh._port)
+        try:
+            transport.connect(username=self.ssh._username, pkey=self.ssh._pkey,
+                password=self.ssh._password)
+        except paramiko.AuthenticationException:
+            raise exception.SSHAuthException(self.ssh._username,
+                self.ssh._host)
+        except paramiko.SSHException as e:
+            msg = e.args[0]
+            raise exception.SSHError(msg)
+        except socket.error:
+            raise exception.SSHConnectionError(self.ssh._host, self.ssh._port)
+        except EOFError:
+            raise exception.SSHConnectionError(self.ssh._host, self.ssh._port)
+        except Exception as e:
+            raise exception.SSHError(str(e))
+        try:
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            assert sftp is not None
+            sftp.close()
+        except paramiko.SFTPError as e:
+            if 'Garbage packet received' in e:
+                log.debug("Garbage packet received", exc_info=True)
+                raise exception.SSHAccessDeniedViaAuthKeys(self.ssh._username)
+            raise
+
+        chan = transport.open_session()
+        chan.get_pty(self.term, self.cols, self.lines)
+        chan.invoke_shell()
+
+        oldtty = termios.tcgetattr(sys.stdin)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            tty.setcbreak(sys.stdin.fileno())
+            chan.settimeout(0.0)
+
+            while True:
+                r, w, e = select.select([chan, sys.stdin], [], [])
+                if chan in r:
+                    try:
+                        x = chan.recv(1024)
+                        if len(x) == 0:
+                            break
+                        sys.stdout.write(x.decode('utf-8'))
+                        sys.stdout.flush()
+                    except socket.timeout:
+                        pass
+                if sys.stdin in r:
+                    # Fixes up arrow problem
+                    x = os.read(sys.stdin.fileno(), 1)
+                    if len(x) == 0:
+                        break
+                    chan.send(x)
+        finally:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
+
+        chan.close()

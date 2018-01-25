@@ -16,7 +16,6 @@ from ...utils import swallow_logs
 from ...tests.utils import assert_in, with_tempfile
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
-from ...tests.utils import skip_if_no_docker_container
 
 from pytest import raises
 
@@ -148,28 +147,3 @@ def test_dockercontainer_class():
             call().remove_container({'Id': '18b31b30e3a5'}, force=True),
         ]
         client.assert_has_calls(calls, any_order=True)
-
-@skip_if_no_docker_container('testing-container')
-@with_tempfile(content="abc 123")
-def test_docker_session(script=None):
-    config = {
-        'name': 'testing-container',
-        'type': 'docker-container'
-    }
-    resource = ResourceManager.factory(config)
-    resource._container == None
-    session = resource.get_session()
-    assert resource._container['Command'] == '/usr/sbin/sshd -D'
-
-    assert session.exists(script) == False
-    session.put(script, "/", uid=-1, gid=-1)
-    assert session.exists(script) == True
-
-    dest_path = '/var{}'.format(script)
-    assert os.path.isfile(dest_path) == False
-    session.get(script, os.path.dirname(dest_path))
-    assert os.path.isfile(dest_path) == True
-
-    path = '/tmp/{}'.format(str(uuid.uuid4()))
-    session.niceman_exec('mkdir', [path, "parents=False"])
-    assert session.isdir(path) == True
