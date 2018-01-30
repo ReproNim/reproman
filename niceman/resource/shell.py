@@ -77,7 +77,7 @@ class ShellSession(POSIXSession):
             else:
                 try:
                     os.mkdir(path)
-                except FileNotFoundError:
+                except OSError:
                     raise CommandError(
                         msg="Failed to make directory {}".format(path))
 

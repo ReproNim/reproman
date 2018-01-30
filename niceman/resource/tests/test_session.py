@@ -253,8 +253,8 @@ def test_session_abstract_methods(docker_container, resource_session,
     assert err == ''
 
     # Check _execute_command failure
-    out, err = session._execute_command(['cat', '/no/such/file'])
-    assert 'No such file or directory' in err
+    with pytest.raises(CommandError):
+        session._execute_command(['cat', '/no/such/file'])
 
     # Check _execute_command with env set
     # TODO: Implement env parameter for _execute_command()
@@ -292,10 +292,13 @@ line 2
 line 3
 """)
     local_path = temp_file.path
-    remote_path = '/tmp/niceman-upload/{}'.format(uuid.uuid4().hex)
+    remote_path = '{}/niceman-upload/{}'.format(resource_test_dir,
+        uuid.uuid4().hex)
 
     # Check put() method
-    session.put(local_path, remote_path, uid=3, gid=3) # UID for sys, GID for sys
+    # session.put(local_path, remote_path, uid=3, gid=3) # UID for sys, GID for sys
+    # TODO: Sort out permissions issues with chown for SSH when no sudo
+    session.put(local_path, remote_path) # UID for sys, GID for sys
     result = session.exists(remote_path)
     assert result == True
     # TODO: Check uid and gid of remote file
@@ -315,7 +318,7 @@ line 3
     # Check get() method
     local_path = '{}/download/{}'.format(resource_test_dir,
         uuid.uuid4().hex)
-    session.get(remote_path, local_path, uid=3, gid=3)
+    session.get(remote_path, local_path)
     # TODO: In some cases, updating uid and gid does not work if not root
     assert os.path.isfile(local_path) == True
     with open(local_path, 'r') as f:
@@ -325,18 +328,18 @@ line 3
     os.rmdir(os.path.dirname(local_path))
 
     # Check mkdir() method
-    test_dir = '/tmp/niceman-create-dir'
+    test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir)
     result = session.isdir(test_dir)
     assert result == True
     # Check making parent dirs without setting flag
-    test_dir = '/tmp/failed/niceman-create-dir'
+    test_dir = '/tmp/failed/{}'.format(resource_test_dir, uuid.uuid4().hex)
     with pytest.raises(CommandError):
         session.mkdir(test_dir, parents=False)
     result = session.isdir(test_dir)
     assert result == False
     # Check making parent dirs when parents flag set
-    test_dir = '/tmp/success/niceman-create-dir'
+    test_dir = '{}/success/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir, parents=True)
     result = session.isdir(test_dir)
     assert result == True

@@ -123,6 +123,6 @@ def get_docker_fixture(image, portmaps={}, name=None,
         params['container_id'] = container_id = stdout.strip( )
         params['custom'] = custom_params
         yield params
-        Runner().run(['docker', 'rm', '--force', container_id])
+        Runner().run(['docker', 'stop', container_id])
 
     return docker_fixture

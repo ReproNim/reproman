@@ -73,8 +73,8 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         assert_in("Running command '['ls', '/']'", log.lines)
         # TODO: Figure out why PY3 logger is not picking up STDOUT from SSH server.
         if six.PY2:
-            assert_in('exec#0: Reading package lists...', log.lines)
-            assert_in('exec#0: bin', log.lines)
+            assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
+            assert_in("Running command '['ls', '/']'", log.lines)
 
         # Test SSHSession methods
         session = resource.get_session()

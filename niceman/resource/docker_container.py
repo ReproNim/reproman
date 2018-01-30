@@ -188,7 +188,12 @@ class DockerSession(POSIXSession):
 
         exit_code = self.client.exec_inspect(execute['Id'])['ExitCode']
         if exit_code not in [0, None]:
-            return ('', out)
+            msg = "Failed to run %r. Exit code=%d. out=%s err=%s" \
+                % (command, exit_code, out, out)
+            raise CommandError(str(command), msg, exit_code, '', out)
+        else:
+            lgr.log(8, "Finished running %r with status %s", command,
+                exit_code)
 
         return (out, '')
 

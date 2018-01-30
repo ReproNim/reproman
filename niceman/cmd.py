@@ -290,7 +290,13 @@ class Runner(object):
                     # as directed
                     self._log_err(out[1], expected=expect_stderr)
 
-            self.log("Finished running %r with status %s" % (cmd, status),
+            if status not in [0, None]:
+                msg = "Failed to run %r%s. Exit code=%d. out=%s err=%s" \
+                    % (cmd, " under %r" % (cwd or self.cwd), status, out[0], out[1])
+                (lgr.debug if expect_fail else lgr.error)(msg)
+                raise CommandError(str(cmd), msg, status, out[0], out[1])
+            else:
+                self.log("Finished running %r with status %s" % (cmd, status),
                          level=8)
 
         else:

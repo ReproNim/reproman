@@ -136,8 +136,19 @@ class SSHSession(POSIXSession):
 
         escaped_command = ' '.join(quote(s) for s in command)
         stdin, stdout, stderr = self.ssh.exec_command(escaped_command)
-        return (utils.to_unicode(stdout.read(), "utf-8"),
-            utils.to_unicode(stderr.read(), "utf-8"))
+        exit_code = stdout.channel.recv_exit_status()
+        stdout = utils.to_unicode(stdout.read(), "utf-8")
+        stderr = utils.to_unicode(stderr.read(), "utf-8")
+
+        if exit_code not in [0, None]:
+            msg = "Failed to run %r. Exit code=%d. out=%s err=%s" \
+                % (command, exit_code, stdout, stderr)
+            raise CommandError(str(command), msg, exit_code, stdout, stderr)
+        else:
+            lgr.log(8, "Finished running %r with status %s", command,
+                exit_code)
+
+        return (stdout, stderr)
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):

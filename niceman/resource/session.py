@@ -214,6 +214,13 @@ class Session(object):
         Returns
         -------
         (stdout, stderr)
+
+        Raises
+        ------
+        CommandError
+           if command's exitcode wasn't 0 or None. exitcode is passed to
+           CommandError's `code`-field. Command's stdout and stderr are stored
+           in CommandError's `stdout` and `stderr` fields respectively.
         """
         raise NotImplementedError
 
