@@ -11,7 +11,7 @@
 
 # Some commonly used fixtures
 
-from niceman.tests.fixtures import niceman_cfg_path, temp_file
+from niceman.tests.fixtures import niceman_cfg_path
 from niceman.formats.tests.fixtures import demo1_spec, reprozip_spec2
 
 import pytest

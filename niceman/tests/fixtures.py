@@ -24,39 +24,6 @@ def niceman_cfg_path(request):
     yield request.param
 
 
-
-@pytest.fixture(scope="module")
-def temp_file():
-    """Provide an empty temporary file for a test.
-
-    The fixture will create a temp file and remove it when the test is complete.
-    To add content to the temporary file, call the object in the test function
-    with the content passed as the first argument of the call.
-
-    e.g. tmp_file("my content")
-
-    Returns
-    -------
-    FixtureTempFile object
-    """
-    class FixtureTempFile:
-        def __init__(self, fid, path):
-            self.fid = fid
-            self.path = path
-        def __call__(self, content):
-            if content:
-                file = open(self.path, "w")
-                file.write(content)
-                file.close()
-        def __repr__(self):
-            return self.path
-
-    fid, path = tempfile.mkstemp()
-    temp_file = FixtureTempFile(fid, path)
-    yield temp_file
-    os.remove(path)
-
-
 def get_docker_fixture(image, portmaps={}, name=None,
                        custom_params={}, scope='function'):
     """Produce a fixture which starts/stops a docker container

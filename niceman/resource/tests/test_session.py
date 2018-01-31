@@ -12,6 +12,7 @@ import docker
 import os
 import paramiko
 import pytest
+import tempfile
 import uuid
 
 from ..session import get_updated_env, Session, POSIXSession
@@ -233,7 +234,7 @@ def resource_session(request):
 
 
 def test_session_abstract_methods(docker_container, resource_session,
-    temp_file, resource_test_dir):
+    resource_test_dir):
 
     session = resource_session
 
@@ -286,22 +287,22 @@ def test_session_abstract_methods(docker_container, resource_session,
     result = session.isdir('/no/such/dir')
     assert result == False
 
-    # Write content to the temp_file
-    temp_file("""NICEMAN test content
-line 2
-line 3
-""")
-    local_path = temp_file.path
-    remote_path = '{}/niceman-upload/{}'.format(resource_test_dir,
-        uuid.uuid4().hex)
+    # Create a temporary test file
+    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+    with temp_file as f:
+        f.write('NICEMAN test content\nline 2\nline 3'.encode('utf8'))
+        f.flush()
+        local_path = temp_file.name
+        remote_path = '{}/niceman-upload/{}'.format(resource_test_dir,
+            uuid.uuid4().hex)
 
-    # Check put() method
-    # session.put(local_path, remote_path, uid=3, gid=3) # UID for sys, GID for sys
-    # TODO: Sort out permissions issues with chown for SSH when no sudo
-    session.put(local_path, remote_path) # UID for sys, GID for sys
-    result = session.exists(remote_path)
-    assert result == True
-    # TODO: Check uid and gid of remote file
+        # Check put() method
+        # session.put(local_path, remote_path, uid=3, gid=3) # UID for sys, GID for sys
+        # TODO: Sort out permissions issues with chown for SSH when no sudo
+        session.put(local_path, remote_path)
+        result = session.exists(remote_path)
+        assert result == True
+        # TODO: Check uid and gid of remote file
 
     # Check get_mtime() method by checking new file has today's date
     result = int(session.get_mtime(remote_path).split('.')[0])

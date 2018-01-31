@@ -13,7 +13,7 @@ import os
 import uuid
 
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, with_tempfile
+from ...tests.utils import assert_in
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
 

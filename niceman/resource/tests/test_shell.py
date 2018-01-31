@@ -10,12 +10,12 @@
 import logging
 import os
 import re
+import tempfile
 import uuid
 from pytest import raises
 from mock import patch, call
 
 from ...utils import swallow_logs
-from ...tests.utils import with_tempfile
 from ...tests.utils import assert_in
 from ..base import ResourceManager
 from ...cmd import Runner
@@ -50,9 +50,12 @@ def test_shell_class():
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
 
 
-def test_source_file(temp_file):
+def test_source_file(resource_test_dir):
 
-    temp_file("""
+    # Create a temporary test file
+    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+    with temp_file as f:
+        f.write("""
 echo "Enabling special environment"
 echo "We could even spit out an stderr output">&2
 export EXPORTED_VAR="
@@ -60,22 +63,26 @@ multiline
 "
 export PATH=/custom:$PATH
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-    """)
-    script = temp_file.path
-    session = ShellSession()
-    assert session.get_envvars() == {}
-    new_env_diff = session.source_script(script, diff=True)
-    assert 'EXPORTED_VAR' in new_env_diff
-    assert new_env_diff['PATH'].startswith('/custom:')
-    assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
+    """.encode('utf8'))
+        f.flush()
+        script = temp_file.name
+        session = ShellSession()
+        assert session.get_envvars() == {}
+        new_env_diff = session.source_script(script, diff=True)
+        assert 'EXPORTED_VAR' in new_env_diff
+        assert new_env_diff['PATH'].startswith('/custom:')
+        assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
 
 
-def test_source_file_crash(temp_file):
-    temp_file('exit 1')
-    script = temp_file.path
-    session = ShellSession()
-    with raises(Exception):  # TODO: unify?
-        session.source_script(script)
+def test_source_file_crash(resource_test_dir):
+    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+    with temp_file as f:
+        f.write('exit 1'.encode('utf8'))
+        f.flush()
+        script = temp_file.name
+        session = ShellSession()
+        with raises(Exception):  # TODO: unify?
+            session.source_script(script)
 
 def test_isdir():
     session = ShellSession()
@@ -83,27 +90,30 @@ def test_isdir():
     assert session.isdir("/bin")
 
 
-def test_source_file_param(temp_file):
-    temp_file("""
+def test_source_file_param(resource_test_dir):
+    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+    with temp_file as f:
+        f.write("""
 if ! [ "$1" = "test" ]; then
    exit 1
 fi
 export EXPORTED_VAR=${1}1
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-    """)
-    script = temp_file.path
-    session = ShellSession()
-    assert session.get_envvars() == {}
-    new_env_diff = session.source_script([script, "test"])
-    assert 'EXPORTED_VAR' in new_env_diff
-    assert new_env_diff['EXPORTED_VAR'] == 'test1'
+    """.encode('utf8'))
+        f.flush()
+        script = temp_file.name
+        session = ShellSession()
+        assert session.get_envvars() == {}
+        new_env_diff = session.source_script([script, "test"])
+        assert 'EXPORTED_VAR' in new_env_diff
+        assert new_env_diff['EXPORTED_VAR'] == 'test1'
 
-    new_env_diff = session.source_script([script, "test"],
-                                     shell="/bin/bash")
-    assert new_env_diff == {}
+        new_env_diff = session.source_script([script, "test"],
+                                         shell="/bin/bash")
+        assert new_env_diff == {}
 
-    # just for "fun"
-    #print ses.source_script([os.path.expanduser('~/anaconda2/bin/activate'), 'datalad'])
+        # just for "fun"
+        #print ses.source_script([os.path.expanduser('~/anaconda2/bin/activate'), 'datalad'])
 
 
 def test_session_passing_envvars():

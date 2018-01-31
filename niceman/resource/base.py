@@ -373,7 +373,7 @@ class Resource(object):
         Returns
         -------
         string
-            Newly crated UUID
+            Newly created UUID
         """
         import uuid
         # just a random uuid for now, TODO: think if we somehow could

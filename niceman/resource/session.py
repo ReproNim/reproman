@@ -392,7 +392,7 @@ class Session(object):
         mode : string
             Octal number representing the permission bit pattern
         recursive : bool, optional
-            Recurse the permission updates into the subdirectores (the default
+            Recurse the permission updates into the subdirectories (the default
             is False)
         """
         raise NotImplementedError
