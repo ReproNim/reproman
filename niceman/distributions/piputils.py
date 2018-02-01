@@ -8,7 +8,11 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Utilities for working with pip.
 """
+import itertools
+import os
 import re
+
+from niceman.utils import execute_command_batch
 
 
 def parse_pip_show(out):
@@ -36,6 +40,50 @@ def parse_pip_show(out):
                 pip_info[list_tag] = []
 
     return pip_info
+
+
+def _pip_batched_show(session, which_pip, pkgs):
+    cmd = [which_pip, "show", "-f"]
+    batch = execute_command_batch(session, cmd, pkgs)
+    entries = (stacked.split("---") for stacked, _, _ in batch)
+
+    for pkg, entry in zip(pkgs, itertools.chain(*entries)):
+        info = parse_pip_show(entry)
+        yield pkg, info
+
+
+def pip_show(session, which_pip, pkgs):
+    """Gather package details from `pip show`.
+
+    Parameters
+    ----------
+    session : Session instance
+        Session in which to execute the command.
+    which_pip : str
+        Name of the pip executable.
+    pkgs : sequence
+        Collection of packages pass to the command.
+
+    Returns
+    -------
+    A tuple of two dicts, where the first maps a package name to its
+    details, and the second maps package files to the package name.
+    """
+    packages = {}
+    file_to_pkg = {}
+
+    show_entries = _pip_batched_show(session, which_pip, pkgs)
+
+    for pkg, info in show_entries:
+        details = {"name": info["Name"],
+                   "version": info["Version"],
+                   "origin_location": info["Location"]}
+        packages[pkg] = details
+        for path in info["Files"]:
+            full_path = os.path.normpath(
+                os.path.join(info["Location"], path))
+            file_to_pkg[full_path] = pkg
+    return packages, file_to_pkg
 
 
 def parse_pip_list(out):

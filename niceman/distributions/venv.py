@@ -8,16 +8,15 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Python's virtualenv."""
 from collections import defaultdict
-import itertools
 import logging
 import os
 
 import attr
 
 from niceman.distributions import Distribution
-from niceman.distributions.piputils import parse_pip_show, parse_pip_list
+from niceman.distributions.piputils import pip_show, parse_pip_list
 from niceman.dochelpers import exc_str
-from niceman.utils import execute_command_batch, PathRoot
+from niceman.utils import PathRoot
 
 from .base import DistributionTracer
 from .base import Package
@@ -72,26 +71,9 @@ class VenvTracer(DistributionTracer):
         raise NotImplementedError
 
     def _get_package_details(self, venv_path):
-        packages = {}
-        file_to_pkg = {}
-
-        pkgs, locs = map(list, zip(*self._pip_packages(venv_path)))
-        batch = execute_command_batch(self._session,
-                                      [venv_path + "/bin/pip", "show", "-f"],
-                                      pkgs)
-        entries = (stacked.split("---") for stacked, _, _ in batch)
-
-        for pkg, loc, entry in zip(pkgs, locs, itertools.chain(*entries)):
-            info = parse_pip_show(entry)
-            details = {"name": info["Name"],
-                       "version": info["Version"],
-                       "location": loc}
-            packages[pkg] = details
-            for path in info["Files"]:
-                full_path = os.path.normpath(
-                    os.path.join(info["Location"], path))
-                file_to_pkg[full_path] = pkg
-        return packages, file_to_pkg
+        pip = venv_path + "/bin/pip"
+        pkgs = list(self._pip_packages(venv_path))
+        return pip_show(self._session, pip, pkgs)
 
     def _is_venv_directory(self, path):
         try:
@@ -117,8 +99,7 @@ class VenvTracer(DistributionTracer):
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
-            local_pkgs = set(p for p, _ in self._pip_packages(venv_path,
-                                                              local_only=True))
+            local_pkgs = set(self._pip_packages(venv_path, local_only=True))
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but
@@ -132,7 +113,7 @@ class VenvTracer(DistributionTracer):
             packages = [VenvPackage(name=details["name"],
                                     version=details["version"],
                                     local=name in local_pkgs,
-                                    origin_location=details["location"],
+                                    origin_location=details["origin_location"],
                                     files=pkg_to_found_files[name])
                         for name, details in package_details.items()]
 
@@ -179,8 +160,10 @@ class VenvTracer(DistributionTracer):
             lgr.warning("Could determine pip packages for %s: %s",
                         venv_path, exc_str(exc))
             return
-        for pkg, _, loc in parse_pip_list(out):
-            yield pkg, loc
+        # Drop the version and location information from the output
+        # because the `pip show` call will include it.
+        for pkg, _, _ in parse_pip_list(out):
+            yield pkg
 
     def _python_version(self, venv_path):
         try:
