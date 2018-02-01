@@ -17,12 +17,18 @@ from pytest import raises
 from niceman.utils import swallow_logs
 from ...resource.base import ResourceManager
 from ...support.exceptions import CommandError
-from niceman.tests.utils import assert_in
-from ...tests.utils import skip_if_no_docker_container
+from ...tests.utils import skip_ssh
+from ...tests.utils import assert_in
+from ...tests.fixtures import get_docker_fixture
 
 
-@skip_if_no_docker_container('testing-container')
-def test_exec_interface(niceman_cfg_path):
+docker_container = skip_ssh(get_docker_fixture)(
+    'rastasheep/ubuntu-sshd:14.04',
+    name='testing-container',
+    scope='module'
+)
+
+def test_exec_interface(niceman_cfg_path, docker_container):
 
     with patch('niceman.resource.ResourceManager.set_inventory'), \
         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \

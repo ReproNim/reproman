@@ -21,11 +21,11 @@ from niceman.tests.fixtures import get_docker_fixture
 
 from pytest import raises
 
+
 setup_ubuntu = get_docker_fixture(
-    'ubuntu:xenial',
+    'rastasheep/ubuntu-sshd:14.04',
     scope='module'
 )
-
 
 def test_dockercontainer_class():
 
