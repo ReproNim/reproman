@@ -7,13 +7,14 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 import os
-from subprocess import call
 import sys
 
 from appdirs import AppDirs
 import attr
 import pytest
 
+from niceman.cmd import Runner
+from niceman.utils import chpwd
 from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 from niceman.distributions.venv import VenvTracer
 
@@ -27,13 +28,14 @@ def venv_test_dir():
     test_dir = os.path.join(dirs.user_cache_dir, 'venv_test')
     if os.path.exists(test_dir):
         return test_dir
-    call("mkdir -p " + test_dir + " && "
-         "cd " + test_dir + " && "
-         "virtualenv --python=" + PY_VERSION + " venv0 && "
-         "virtualenv --python=" + PY_VERSION + " venv1 && "
-         "./venv0/bin/pip install pyyaml && "
-         "./venv1/bin/pip install attrs",
-         shell=True)
+
+    runner = Runner()
+    runner.run(["mkdir", "-p", test_dir])
+    with chpwd(test_dir):
+        runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
+        runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
+        runner.run(["./venv0/bin/pip", "install", "pyyaml"])
+        runner.run(["./venv1/bin/pip", "install", "attrs"])
     return test_dir
 
 
