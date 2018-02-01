@@ -21,7 +21,7 @@ from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
-from .piputils import parse_pip_show
+from .piputils import pip_show
 from niceman.dochelpers import exc_str
 from niceman.utils import PathRoot
 
@@ -158,8 +158,6 @@ class CondaTracer(DistributionTracer):
         return packages, file_to_package_map
 
     def _get_conda_pip_package_details(self, env_export, conda_path):
-        packages = {}
-        file_to_package_map = {}
         dependencies = env_export.get("dependencies", [])
 
         pip_deps = []
@@ -167,31 +165,11 @@ class CondaTracer(DistributionTracer):
             if isinstance(dep, dict) and "pip" in dep:
                 pip_deps = dep.get("pip")
 
-        for pip_dep in pip_deps:
-            name, origin_location = self.parse_pip_package_entry(pip_dep)
-            try:
-                out, err = self._session.execute_command(
-                    '%s/bin/pip show -f %s'
-                    % (conda_path, name)
-                )
-                pip_info = parse_pip_show(out)
-                # Record the details we care about
-                details = {"name": pip_info.get("Name"),
-                           "version": pip_info.get("Version"),
-                           "installer": "pip",
-                           "origin_location": origin_location}
-                packages[pip_dep] = details
-                # Map the package files to the package
-                for f in pip_info.get("Files"):
-                    full_path = os.path.normpath(
-                        os.path.join(pip_info.get("Location"), f))
-                    file_to_package_map[full_path] = pip_dep
-            except Exception as exc:
-                lgr.warning("Could not retrieve pip info "
-                            "export from path %s: %s", conda_path,
-                            exc_str(exc))
-                continue
-
+        pip = conda_path + "/bin/pip"
+        pkgs = [pkg for pkg, _ in map(self.parse_pip_package_entry, pip_deps)]
+        packages, file_to_package_map = pip_show(self._session, pip, pkgs)
+        for entry in packages.values():
+            entry["installer"] = "pip"
         return packages, file_to_package_map
 
     @staticmethod
