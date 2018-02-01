@@ -160,10 +160,13 @@ class CondaTracer(DistributionTracer):
     def _get_conda_pip_package_details(self, env_export, conda_path):
         dependencies = env_export.get("dependencies", [])
 
+        # If there are pip dependencies, they'll be listed under a
+        # {"pip": [...]} entry.
         pip_deps = []
         for dep in dependencies:
             if isinstance(dep, dict) and "pip" in dep:
-                pip_deps = dep.get("pip")
+                pip_deps = dep["pip"]
+                break
 
         pip = conda_path + "/bin/pip"
         pkgs = [pkg for pkg, _ in map(self.parse_pip_package_entry, pip_deps)]
