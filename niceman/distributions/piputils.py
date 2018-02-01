@@ -107,3 +107,40 @@ def parse_pip_list(out):
             version = version_location
             location = None
         yield pkg, version, location
+
+
+def pip_packages(session, which_pip, local_only=False):
+    """List pip packages.
+
+    Parameters
+    ----------
+    session : Session instance
+        Session in which to execute the command.
+    which_pip : str
+        Name of the pip executable.
+    local_only : boolean, optional
+        Do not include globally installed packages.  Otherwise, global
+        packages will be included if pip has global access (e.g.,
+        "--system-site-packages" was used when creating the virtualenv
+        directory).
+
+    Returns
+    -------
+    A generator that yields package names.
+    """
+    # We could use either 'pip list' or 'pip freeze' to get a list
+    # of packages.  The choice to use 'list' rather than 'freeze'
+    # is based on how they show editable packages.  'list' outputs
+    # a source directory of the package, whereas 'freeze' outputs
+    # a URL like "-e git+https://github.com/[...]".
+    #
+    # It would be nice to use 'pip list --format=json' rather than
+    # the legacy format.  However, currently (pip 9.0.1, 2018/01),
+    # the json format does not include location information for
+    # editable packages (though it is supported in a developmental
+    # version).
+    cmd = [which_pip, "list", "--format=legacy"]
+    if local_only:
+        cmd.append("--local")
+    out, _ = session.execute_command(cmd)
+    return (pkg for pkg, _, _ in parse_pip_list(out))

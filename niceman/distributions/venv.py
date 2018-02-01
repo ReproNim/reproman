@@ -14,7 +14,7 @@ import os
 import attr
 
 from niceman.distributions import Distribution
-from niceman.distributions.piputils import pip_show, parse_pip_list
+from niceman.distributions.piputils import pip_show, pip_packages
 from niceman.dochelpers import exc_str
 from niceman.utils import PathRoot
 
@@ -72,7 +72,12 @@ class VenvTracer(DistributionTracer):
 
     def _get_package_details(self, venv_path):
         pip = venv_path + "/bin/pip"
-        pkgs = list(self._pip_packages(venv_path))
+        try:
+            pkgs = list(pip_packages(self._session, pip))
+        except Exception as exc:
+            lgr.warning("Could determine pip packages for %s: %s",
+                        venv_path, exc_str(exc))
+            return
         return pip_show(self._session, pip, pkgs)
 
     def _is_venv_directory(self, path):
@@ -99,7 +104,9 @@ class VenvTracer(DistributionTracer):
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
-            local_pkgs = set(self._pip_packages(venv_path, local_only=True))
+            local_pkgs = set(pip_packages(self._session,
+                                          venv_path + "/bin/pip",
+                                          local_only=True))
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but
@@ -136,34 +143,6 @@ class VenvTracer(DistributionTracer):
                                     path=self._venv_exe_path(),
                                     environments=venvs),
                    list(unknown_files))
-
-    def _pip_packages(self, venv_path, local_only=False):
-        # We could use either 'pip list' or 'pip freeze' to get a list
-        # of packages.  The choice to use 'list' rather than 'freeze'
-        # is based on how they show editable packages.  'list' outputs
-        # a source directory of the package, whereas 'freeze' outputs
-        # a URL like "-e git+https://github.com/[...]".
-        #
-        # It would be nice to use 'pip list --format=json' rather than
-        # the legacy format.  However, currently (pip 9.0.1, 2018/01),
-        # the json format does not include location information for
-        # editable packages (though it is supported in a developmental
-        # version).
-        cmd = [venv_path + "/bin/pip", "list", "--format=legacy"]
-        if local_only:
-            cmd.append("--local")
-
-        try:
-            out, _ = self._session.execute_command(cmd)
-
-        except Exception as exc:
-            lgr.warning("Could determine pip packages for %s: %s",
-                        venv_path, exc_str(exc))
-            return
-        # Drop the version and location information from the output
-        # because the `pip show` call will include it.
-        for pkg, _, _ in parse_pip_list(out):
-            yield pkg
 
     def _python_version(self, venv_path):
         try:
