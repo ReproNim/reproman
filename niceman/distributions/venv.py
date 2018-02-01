@@ -94,8 +94,8 @@ class VenvTracer(DistributionTracer):
 
     def _is_venv_directory(self, path):
         try:
-            self._session.execute_command("grep -q VIRTUAL_ENV "
-                                          "{}/bin/activate".format(path))
+            self._session.execute_command(["grep", "-q", "VIRTUAL_ENV",
+                                           "{}/bin/activate".format(path)])
         except Exception as exc:
             lgr.debug("Did not detect virtualenv at the path %s: %s",
                       path, exc_str(exc))
@@ -175,7 +175,7 @@ class VenvTracer(DistributionTracer):
     def _python_version(self, venv_path):
         try:
             out, err = self._session.execute_command(
-                venv_path + "/bin/python --version")
+                [venv_path + "/bin/python", "--version"])
             # Python 2 sends its version to stderr, while Python 3
             # sends it to stdout.  Version has format "Python
             pyver = out if "Python" in out else err
@@ -191,7 +191,7 @@ class VenvTracer(DistributionTracer):
 
     def _venv_version(self):
         try:
-            out, _ = self._session.execute_command("virtualenv --version")
+            out, _ = self._session.execute_command(["virtualenv", "--version"])
         except Exception as exc:
             lgr.debug("Could not determine virtualenv version: %s",
                       exc_str(exc))
@@ -200,7 +200,7 @@ class VenvTracer(DistributionTracer):
 
     def _venv_exe_path(self):
         try:
-            out, _ = self._session.execute_command("which virtualenv")
+            out, _ = self._session.execute_command(["which", "virtualenv"])
         except Exception as exc:
             lgr.debug("Could not determine virtualenv path: %s",
                       exc_str(exc))
