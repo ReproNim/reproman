@@ -21,7 +21,7 @@ from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
-from .piputils import pip_show
+from .piputils import pip_show, pip_packages
 from niceman.dochelpers import exc_str
 from niceman.utils import PathRoot
 
@@ -157,37 +157,17 @@ class CondaTracer(DistributionTracer):
 
         return packages, file_to_package_map
 
-    def _get_conda_pip_package_details(self, env_export, conda_path):
-        dependencies = env_export.get("dependencies", [])
-
-        # If there are pip dependencies, they'll be listed under a
-        # {"pip": [...]} entry.
-        pip_deps = []
-        for dep in dependencies:
-            if isinstance(dep, dict) and "pip" in dep:
-                pip_deps = dep["pip"]
-                break
-
+    def _get_conda_pip_package_details(self, conda_path):
         pip = conda_path + "/bin/pip"
-        pkgs = [pkg for pkg, _ in map(self.parse_pip_package_entry, pip_deps)]
+        try:
+            pkgs = list(pip_packages(self._session, pip))
+        except Exception as exc:
+            lgr.warning("Could determine pip packages for %s: %s",
+                        conda_path, exc_str(exc))
         packages, file_to_package_map = pip_show(self._session, pip, pkgs)
         for entry in packages.values():
             entry["installer"] = "pip"
         return packages, file_to_package_map
-
-    @staticmethod
-    def parse_pip_package_entry(pip_dep):
-        # Pip packages are recorded in conda exports as "name (loc)",
-        # "name==version" or "name (loc)==version".  So split on "=", then
-        # on " "
-        name = pip_dep.split("=")[0]
-        name = name.split(" ")[0]
-        # Record the origin location (if installed from a local source)
-        if "(" in pip_dep:  # We have an origin location
-            origin_location = re.search('\(([^)]+)', pip_dep).group(1)
-        else:
-            origin_location = None
-        return name, origin_location
 
     def _get_conda_env_export(self, root_prefix, conda_path):
         export = {}
@@ -270,7 +250,7 @@ class CondaTracer(DistributionTracer):
             (conda_package_details, file_to_pkg) = \
                 self._get_conda_package_details(conda_path)
             (conda_pip_package_details, file_to_pip_pkg) = \
-                self._get_conda_pip_package_details(env_export, conda_path)
+                self._get_conda_pip_package_details(conda_path)
             # Join our conda and pip packages
             conda_package_details.update(conda_pip_package_details)
             file_to_pkg.update(file_to_pip_pkg)
