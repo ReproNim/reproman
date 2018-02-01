@@ -44,7 +44,7 @@ from ..utils import on_windows
 from ..utils import _path_
 from ..utils import to_unicode
 from ..utils import generate_unique_name
-from ..utils import abbreviate, PathRoot
+from ..utils import PathRoot
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -484,27 +484,3 @@ def test_pathroot():
     assert proot("/root") == "/root"
     assert proot("/root/a_root_it_is_not") == "/root"
     assert proot("/root/x/child_root") == "/root/x/child_root"
-
-
-def test_abbreviate():
-    assert abbreviate(["/t/a", "/t/b"]) == {"/t/a": "a",
-                                            "/t/b": "b"}
-    # Trailing slashes are handled.
-    assert abbreviate(["/t/a/", "/t/b/"]) == {"/t/a/": "a/",
-                                              "/t/b/": "b/"}
-    # Relative paths work too.
-    assert abbreviate(["x", "y", "z"]) == {"x": "x",
-                                           "y": "y",
-                                           "z": "z"}
-    assert abbreviate(["a/x", "b/x", "z"]) == {"a/x": "a/x",
-                                               "b/x": "b/x",
-                                               "z": "z"}
-    # Must extend with one parent directory to be unique.
-    assert abbreviate(["u", "/t/a/x", "/t/b/x"]) == {"u": "u",
-                                                     "/t/a/x": "a/x",
-                                                     "/t/b/x": "b/x"}
-    # Duplicate item gets removed.
-    assert abbreviate(["/t/a/x", "/t/a/x"]) == {"/t/a/x": "x"}
-    # Empty values result in an error.
-    with pytest.raises(ValueError):
-        abbreviate(["/t/a", "/"])
