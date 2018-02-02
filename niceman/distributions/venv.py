@@ -118,9 +118,12 @@ class VenvTracer(DistributionTracer):
             package_details, file_to_pkg = self._get_package_details(venv_path)
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
-                if path in file_to_pkg:
+                # The supplied path may be relative or absolute, but
+                # file_to_pkg keys are absolute paths.
+                fullpath = os.path.abspath(path)
+                if fullpath in file_to_pkg:
                     unknown_files.remove(path)
-                    pkg_to_found_files[file_to_pkg[path]].append(
+                    pkg_to_found_files[file_to_pkg[fullpath]].append(
                         os.path.relpath(path, venv_path))
 
             packages = [VenvPackage(name=details["name"],
