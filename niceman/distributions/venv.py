@@ -31,6 +31,7 @@ lgr = logging.getLogger("niceman.distributions.venv")
 class VenvPackage(Package):
     name = attr.ib()
     version = attr.ib()
+    local = attr.ib()
     origin_location = attr.ib(default=None)
     files = attr.ib(default=attr.Factory(list))
 
@@ -116,6 +117,8 @@ class VenvTracer(DistributionTracer):
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
+            local_pkgs = set(p for p, _ in self._pip_packages(venv_path,
+                                                              local_only=True))
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but
@@ -128,6 +131,7 @@ class VenvTracer(DistributionTracer):
 
             packages = [VenvPackage(name=details["name"],
                                     version=details["version"],
+                                    local=name in local_pkgs,
                                     origin_location=details["location"],
                                     files=pkg_to_found_files[name])
                         for name, details in package_details.items()]
@@ -152,7 +156,7 @@ class VenvTracer(DistributionTracer):
                                     environments=venvs),
                    list(unknown_files))
 
-    def _pip_packages(self, venv_path):
+    def _pip_packages(self, venv_path, local_only=False):
         # We could use either 'pip list' or 'pip freeze' to get a list
         # of packages.  The choice to use 'list' rather than 'freeze'
         # is based on how they show editable packages.  'list' outputs
@@ -164,9 +168,12 @@ class VenvTracer(DistributionTracer):
         # the json format does not include location information for
         # editable packages (though it is supported in a developmental
         # version).
+        cmd = [venv_path + "/bin/pip", "list", "--format=legacy"]
+        if local_only:
+            cmd.append("--local")
+
         try:
-            out, _ = self._session.execute_command([venv_path + "/bin/pip",
-                                                    "list", "--format=legacy"])
+            out, _ = self._session.execute_command(cmd)
 
         except Exception as exc:
             lgr.warning("Could determine pip packages for %s: %s",
