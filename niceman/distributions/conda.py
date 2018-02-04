@@ -79,6 +79,8 @@ class CondaDistribution(Distribution):
         environment : object
             The Environment sub-class object.
         """
+        print("We got" + str(environment))
+        print ("We are" + str(self.environments))
         return
 
     def install_packages(self, session=None):
@@ -97,6 +99,7 @@ class CondaDistribution(Distribution):
         #     session.add_command(['conda',
         #                            'install',
         #                            package['name']])
+
         return
 
 

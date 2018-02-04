@@ -25,7 +25,8 @@ from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
 import json
 
-from niceman.distributions.conda import CondaTracer
+from niceman.distributions.conda import CondaTracer, CondaDistribution, \
+    CondaEnvironment, CondaPackage, CondaChannel
 
 
 @pytest.fixture(scope="session")
@@ -55,7 +56,6 @@ def get_conda_test_dir():
 
 
 def test_conda_manager_identify_distributions(get_conda_test_dir):
-    # Skip if network is not available (skip_if_no_network fails with fixtures)
     test_dir = get_conda_test_dir
     files = [os.path.join(test_dir, "miniconda/bin/sqlite3"),
              os.path.join(test_dir, "miniconda/envs/mytest/bin/xz"),
@@ -91,6 +91,53 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
     assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
     NicemanProvenance.write(sys.stdout, distributions)
     print(json.dumps(unknown_files, indent=4))
+
+
+def test_create_conda_export():
+    dist = CondaDistribution(
+        name="conda",
+        conda_version="4.3.31",
+        python_version="3.6.3.final.0",
+        path="/home/butch/.cache/niceman/conda_test/miniconda",
+        environments=[CondaEnvironment(
+            name="conda_env-0",
+            path="/home/butch/.cache/niceman/conda_test/miniconda",
+            conda_version="4.3.31",
+            python_version="3.6.3.final.0",
+        ), CondaEnvironment(
+            name="conda_env-1",
+            path="/home/butch/.cache/niceman/conda_test/miniconda/envs/mytest",
+            conda_version="4.3.31",
+            python_version="3.6.3.final.0",
+            packages=[CondaPackage(
+                name="xz",
+                installer=None,
+                version="5.2.3",
+                build="0",
+                channel_name="conda-forge",
+                md5="f4e0d30b3caf631be7973cba1cf6f601",
+                size="874292",
+                url="https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
+                files=["bin/xz", ],
+            ), CondaPackage(
+                name="rpaths",
+                installer="pip",
+                version="0.13",
+                build=None,
+                channel_name=None,
+                md5=None,
+                size=None,
+                url=None,
+                files=["lib/python2.7/site-packages/rpaths.py", ],
+            ),],
+            channels=[CondaChannel(
+                name="conda-forge",
+                url="url: https://conda.anaconda.org/conda-forge/linux-64",
+            ), ],
+        ), ],
+    )
+
+
 
 
 def test_parse_conda_export_pip_package_entry():
