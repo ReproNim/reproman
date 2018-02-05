@@ -79,8 +79,6 @@ class CondaDistribution(Distribution):
         environment : object
             The Environment sub-class object.
         """
-        print("We got" + str(environment))
-        print ("We are" + str(self.environments))
         return
 
     def install_packages(self, session=None):
@@ -94,13 +92,42 @@ class CondaDistribution(Distribution):
             Environment sub-class instance.
         """
 
-        # TODO: Need to figure out a graceful way to install conda before we can install packages here.
-        # for package in self.provenance['packages']:
-        #     session.add_command(['conda',
-        #                            'install',
-        #                            package['name']])
+        # TODO: Install Conda
+#        print("We got" + str(environment))
+        # Loop through non-root packages, creating the conda-env export
+        # file to import
+        for env in self.environments:
+            if env.path == self.path:
+                continue
+            export_contents = self.create_conda_export(env)
+            print ("EXPORT\n" + export_contents)
 
         return
+
+    @staticmethod
+    def create_conda_export(env):
+        # TODO: The environment name should be discovered on retrace
+        name = os.path.basename(os.path.normpath(env.path))
+        export = "name: %s\n" % name
+        # Collect channels
+        export += "channels:\n"
+        for c in env.channels:
+            export += "- %s\n" % c["name"]
+        export += "dependencies:\n"
+        # Collect packages (separating pip installed packages)
+        pip_export = ""
+        for p in env.packages:
+            if p.get("installer") is None:
+                export += "- %s=%s=%s\n" % (p["name"], p["version"],
+                                            p["build"])
+            if p.get("installer") == "pip":
+                pip_export += "  - %s==%s\n" % (p["name"], p["version"])
+        # Add any pip installed packages
+        if pip_export:
+            export += "- pip:\n" + pip_export
+        # Add the prefix
+        export += "prefix: %s\n" % env.path
+        return export
 
 
 class CondaTracer(DistributionTracer):
