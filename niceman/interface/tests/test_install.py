@@ -16,7 +16,6 @@ from ...utils import swallow_logs
 from ...tests.utils import assert_in
 
 
-
 def test_install_interface(demo1_spec, niceman_cfg_path):
 
     with patch('docker.Client') as client, \

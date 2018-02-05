@@ -140,7 +140,7 @@ def test_dockercontainer_class():
         # Test logging into the container.
         with resource.get_session(pty=True):
             pass # we do nothing really
-        assert dockerpty.called == True
+        assert dockerpty.called
 
         # Test stopping resource.
         resource.stop()

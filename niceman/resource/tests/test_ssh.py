@@ -79,16 +79,16 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         # Test SSHSession methods
         session = resource.get_session()
 
-        assert session.exists('/etc/hosts') == True
+        assert session.exists('/etc/hosts')
         assert session.exists('/no/such/file') == False
 
         # Copy this file to /root/test_ssh.py on the docker test container.
         session.put(__file__, 'remote_test_ssh.py')
-        assert session.exists('remote_test_ssh.py') == True
+        assert session.exists('remote_test_ssh.py')
 
         tmp_path = "{}/{}".format(resource_test_dir, uuid.uuid4().hex)
         session.get('/etc/hosts', tmp_path)
-        assert os.path.isfile(tmp_path) == True
+        assert os.path.isfile(tmp_path)
 
         file_contents = session.read('remote_test_ssh.py')
         file_contents = file_contents.split('\n')
@@ -97,12 +97,12 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         path = '/tmp/{}'.format(str(uuid.uuid4()))
         assert session.isdir(path) == False
         session.mkdir(path)
-        assert session.isdir(path) == True
+        assert session.isdir(path)
 
         path = '/tmp/{}/{}'.format(str(uuid.uuid4()), str(uuid.uuid4()))
         assert session.isdir(path) == False
         session.mkdir(path, parents=True)
-        assert session.isdir(path) == True
+        assert session.isdir(path)
 
         assert session.isdir('not-a-dir') == False
         assert session.isdir('/etc/hosts') == False

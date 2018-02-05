@@ -273,15 +273,15 @@ def test_session_abstract_methods(docker_container, resource_session,
 
     # Check exists() method
     result = session.exists('/etc')
-    assert result == True
+    assert result
     result = session.exists('/etc/hosts')
-    assert result == True
+    assert result
     result = session.exists('/no/such/file')
     assert result == False
 
     # Check isdir() method
     result = session.isdir('/etc')
-    assert result == True
+    assert result
     result = session.isdir('/etc/hosts') # A file, not a dir
     assert result == False
     result = session.isdir('/no/such/dir')
@@ -301,7 +301,7 @@ def test_session_abstract_methods(docker_container, resource_session,
         # TODO: Sort out permissions issues with chown for SSH when no sudo
         session.put(local_path, remote_path)
         result = session.exists(remote_path)
-        assert result == True
+        assert result
         # TODO: Check uid and gid of remote file
 
     # Check get_mtime() method by checking new file has today's date
@@ -321,7 +321,7 @@ def test_session_abstract_methods(docker_container, resource_session,
         uuid.uuid4().hex)
     session.get(remote_path, local_path)
     # TODO: In some cases, updating uid and gid does not work if not root
-    assert os.path.isfile(local_path) == True
+    assert os.path.isfile(local_path)
     with open(local_path, 'r') as f:
         content = f.read().split('\n')
         assert content[0] == 'NICEMAN test content'
@@ -332,7 +332,7 @@ def test_session_abstract_methods(docker_container, resource_session,
     test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir)
     result = session.isdir(test_dir)
-    assert result == True
+    assert result
     # Check making parent dirs without setting flag
     test_dir = '/tmp/failed/{}'.format(resource_test_dir, uuid.uuid4().hex)
     with pytest.raises(CommandError):
@@ -343,7 +343,7 @@ def test_session_abstract_methods(docker_container, resource_session,
     test_dir = '{}/success/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir, parents=True)
     result = session.isdir(test_dir)
-    assert result == True
+    assert result
 
     # TODO: How to test chmod and chown? Need to be able to read remote file attributes
     # session.chmod(self, path, mode, recursive=False):
