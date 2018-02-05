@@ -57,4 +57,4 @@ def test_exec_interface(niceman_cfg_path, docker_container):
 
         session = ResourceManager.factory(config).get_session()
 
-        assert session.exists(path) == True
+        assert session.exists(path)
