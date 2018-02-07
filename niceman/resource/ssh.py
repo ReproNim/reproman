@@ -28,6 +28,7 @@ from niceman.resource.session import Session
 from niceman import utils
 from ..support.exceptions import CommandError, SSHError, SSHConnectionError, \
     SSHAuthException
+from ..support import exceptions as exception  # to minimize diff for adopted code
 
 
 @attr.s
@@ -241,8 +242,8 @@ class PTYSSHSession(SSHSession):
             assert sftp is not None
             sftp.close()
         except paramiko.SFTPError as e:
-            if 'Garbage packet received' in e:
-                log.debug("Garbage packet received", exc_info=True)
+            if 'Garbage packet received' in str(e):
+                lgr.debug("Garbage packet received", exc_info=True)
                 raise exception.SSHAccessDeniedViaAuthKeys(self.ssh._username)
             raise
 

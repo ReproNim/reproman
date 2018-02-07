@@ -73,8 +73,8 @@ def test_dockercontainer_class():
         }
         resource = ResourceManager.factory(config)
         resource.connect()
-        assert resource.id == None
-        assert resource.status == None
+        assert resource.id is None
+        assert resource.status is None
 
         # Test catching exception when multiple resources are found at connection.
         config = {

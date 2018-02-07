@@ -26,17 +26,17 @@ from ...tests.fixtures import get_docker_fixture
 
 # Note: due to skip_ssh right here, it would skip the entire module with
 # all the tests here if no ssh testing is requested
-docker_container = skip_ssh(get_docker_fixture)(
+testing_container = skip_ssh(get_docker_fixture)(
     'rastasheep/ubuntu-sshd:14.04',
     name='testing-container',
     portmaps={
         49000: 22
     },
     custom_params={
-            'host': 'localhost',
-            'user': 'root',
-            'password': 'root',
-            'port': 49000,
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'port': 49000,
     },
     scope='module'
 )
@@ -214,8 +214,10 @@ def resource_session(request):
     # Initialize docker connection to testing container.
     if request.param in [DockerSession, PTYDockerSession]:
         client = docker.Client()
-        container = [c for c in client.containers()
-            if '/testing-container' in c['Names']][0]
+        container = [
+            c for c in client.containers()
+            if '/testing-container' in c['Names']
+        ][0]
         return request.param(client, container)
 
     # Initialize SSH connection to testing Docker container.
@@ -233,7 +235,7 @@ def resource_session(request):
     return request.param() 
 
 
-def test_session_abstract_methods(docker_container, resource_session,
+def test_session_abstract_methods(testing_container, resource_session,
     resource_test_dir):
 
     session = resource_session
@@ -277,15 +279,15 @@ def test_session_abstract_methods(docker_container, resource_session,
     result = session.exists('/etc/hosts')
     assert result
     result = session.exists('/no/such/file')
-    assert result == False
+    assert not result
 
     # Check isdir() method
     result = session.isdir('/etc')
     assert result
     result = session.isdir('/etc/hosts') # A file, not a dir
-    assert result == False
+    assert not result
     result = session.isdir('/no/such/dir')
-    assert result == False
+    assert not result
 
     # Create a temporary test file
     temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
@@ -338,7 +340,7 @@ def test_session_abstract_methods(docker_container, resource_session,
     with pytest.raises(CommandError):
         session.mkdir(test_dir, parents=False)
     result = session.isdir(test_dir)
-    assert result == False
+    assert not result
     # Check making parent dirs when parents flag set
     test_dir = '{}/success/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir, parents=True)
