@@ -7,7 +7,9 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import os
 import pytest
+import tempfile
 from .constants import NICEMAN_CFG_PATH
 from niceman.cmd import Runner
 from niceman.tests.utils import skip_if_no_network
@@ -91,4 +93,3 @@ def get_docker_fixture(image, portmaps={}, name=None,
         Runner().run(['docker', 'stop', container_id])
 
     return docker_fixture
-

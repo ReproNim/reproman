@@ -69,3 +69,29 @@ class ResourceError(RuntimeError):
 # Session errors
 class SessionRuntimeError(RuntimeError):
     pass
+
+
+class SSHError(Exception):
+    """Base class for all SSH related errors"""
+    def __init__(self, *args):
+        self.args = args
+        self.msg = args[0]
+
+    def __str__(self):
+        return self.msg
+
+    def explain(self):
+        return "%s: %s" % (self.__class__.__name__, self.msg)
+
+
+class SSHConnectionError(SSHError):
+    """Raised when ssh fails to to connect to a host (socket error)"""
+    def __init__(self, host, port):
+        self.msg = "failed to connect to host %s on port %s" % (host, port)
+
+
+class SSHAuthException(SSHError):
+    """Raised when an ssh connection fails to authenticate"""
+    def __init__(self, user, host):
+        self.msg = "failed to authenticate to host %s as user %s" % (host,
+                                                                     user)

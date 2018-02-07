@@ -10,9 +10,11 @@
 
 import logging
 import os
+import paramiko
 import re
 import six
 import uuid
+from pytest import raises
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_ssh
@@ -43,7 +45,7 @@ def test_setup_ssh(setup_ssh):
     assert setup_ssh['custom']['host'] == 'localhost'
 
 
-def test_ssh_class(setup_ssh):
+def test_ssh_class(setup_ssh, resource_test_dir):
     with swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test connecting to test SSH server.
@@ -71,27 +73,62 @@ def test_ssh_class(setup_ssh):
         assert_in("Running command '['ls', '/']'", log.lines)
         # TODO: Figure out why PY3 logger is not picking up STDOUT from SSH server.
         if six.PY2:
-            assert_in('exec#0: Reading package lists...', log.lines)
-            assert_in('exec#0: bin', log.lines)
+            assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
+            assert_in("Running command '['ls', '/']'", log.lines)
 
         # Test SSHSession methods
         session = resource.get_session()
 
-        assert session.exists('/etc/hosts') == True
+        assert session.exists('/etc/hosts')
         assert session.exists('/no/such/file') == False
 
         # Copy this file to /root/test_ssh.py on the docker test container.
         session.put(__file__, 'remote_test_ssh.py')
-        assert session.exists('remote_test_ssh.py') == True
+        assert session.exists('remote_test_ssh.py')
 
-        tmp_path = "/tmp/{}".format(uuid.uuid4().hex)
+        tmp_path = "{}/{}".format(resource_test_dir, uuid.uuid4().hex)
         session.get('/etc/hosts', tmp_path)
-        assert os.path.isfile(tmp_path) == True
+        assert os.path.isfile(tmp_path)
 
         file_contents = session.read('remote_test_ssh.py')
-        assert file_contents[8] == '# Test string to read\n'
+        file_contents = file_contents.split('\n')
+        assert file_contents[8] == '# Test string to read'
 
-        session.mkdir('test-dir')
-        assert session.isdir('test-dir') == True
+        path = '/tmp/{}'.format(str(uuid.uuid4()))
+        assert session.isdir(path) == False
+        session.mkdir(path)
+        assert session.isdir(path)
+
+        path = '/tmp/{}/{}'.format(str(uuid.uuid4()), str(uuid.uuid4()))
+        assert session.isdir(path) == False
+        session.mkdir(path, parents=True)
+        assert session.isdir(path)
+
         assert session.isdir('not-a-dir') == False
         assert session.isdir('/etc/hosts') == False
+
+        with raises(NotImplementedError) as err:
+            session._execute_command('non-existent-command', cwd='/path')
+
+
+def test_ssh_resource(setup_ssh):
+
+    config = {
+        'name': 'ssh-test-resource',
+        'type': 'ssh',
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'port': '49000'
+    }
+    resource = ResourceManager.factory(config)
+    resource.connect()
+
+    assert resource.start() == None
+    assert resource.stop() == None
+
+    resource.delete()
+    assert resource._ssh == None
+
+    resource.get_session()
+    assert type(resource._ssh) == paramiko.SSHClient

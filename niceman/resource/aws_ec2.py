@@ -24,7 +24,6 @@ from ..ui import ui
 from ..utils import assure_dir
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
-from ..support.starcluster.sshutils import SSHClient
 from .ssh import SSHSession, PTYSSHSession
 
 @attr.s
