@@ -20,13 +20,11 @@ from os.path import exists, lexists
 from os.path import join as opj
 
 from logging import getLogger
-from six import viewvalues
 
 from niceman.dochelpers import exc_str
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
 
-from niceman.cmd import Runner
 from niceman.cmd import CommandError
 
 lgr = getLogger('niceman.distributions.vcs')
