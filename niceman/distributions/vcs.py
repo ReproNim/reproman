@@ -15,7 +15,7 @@ import attr
 import os
 
 from collections import defaultdict
-from os.path import dirname, isdir, isabs
+from os.path import dirname, isdir, isabs, abspath
 from os.path import exists, lexists
 from os.path import join as opj
 
@@ -482,7 +482,7 @@ class VCSTracer(DistributionTracer):
         """Given a path, return path of the repository it belongs to"""
         # very naive just to get a ball rolling
         if not isabs(path):
-            raise ValueError("ATM operating on full paths, got %s" % path)
+            path = abspath(path)
         dirpath = path if isdir(path) else dirname(path)
 
         # quick check first

@@ -76,8 +76,10 @@ def test_git_repo_empty(git_repo_empty):
 
 def test_git_repo(git_repo):
     paths = [
-        # Full paths work.
+        # Both full ...
         os.path.join(git_repo, "foo"),
+        # ... and relative paths work.
+        "bar",
         # So do paths in subdirectories.
         os.path.join(git_repo, "subdir/baz")
     ]
@@ -96,10 +98,6 @@ def test_git_repo(git_repo):
                                            "branch": "master"}]})
 
         assert dists[0][0].packages[0].hexsha
-
-        with pytest.raises(ValueError):
-            # VCS tracer can't currently handle relative paths.
-            list(tracer.identify_distributions(["bar"]))
 
         # Above we identify a subdirectory file, but we should not
         # identify the subdirectory itself because in principle Git is
