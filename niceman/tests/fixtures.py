@@ -146,7 +146,7 @@ def git_repo_fixture(kind="default", scope="function"):
         # We can't use pytest's tempdir because that is limited to
         # scope=function.
         tmpdir = tempfile.mkdtemp(prefix="niceman-tests-")
-        repodir = os.path.join(tmpdir, "repo0")
+        repodir = os.path.realpath(os.path.join(tmpdir, "repo0"))
         os.mkdir(repodir)
 
         retval = repodir
@@ -162,7 +162,7 @@ def git_repo_fixture(kind="default", scope="function"):
                 add_and_commit("subdir/baz")
 
             if kind == "pair":
-                localdir = os.path.join(tmpdir, "repo1")
+                localdir = os.path.realpath(os.path.join(tmpdir, "repo1"))
                 runner.run(["git", "clone", repodir, localdir])
                 with chpwd(localdir):
                     setup_user()
