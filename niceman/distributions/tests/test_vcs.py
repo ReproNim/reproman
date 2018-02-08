@@ -138,6 +138,11 @@ def test_git_repo_remotes(git_repo_pair):
     # configured to point to "origin".
     runner.run(["git", "config", "remote.pushdefault", "notexisting"],
                cwd=repo_local)
+    # Add another remote that doesn't contain the current commit (in
+    # fact doesn't actually exist), so that we test the "listed as
+    # remote but doesn't contain" case.
+    runner.run(["git", "remote", "add", "fakeremote", "fakepath"],
+               cwd=repo_local)
 
     paths = [os.path.join(repo_local, "foo")]
 
@@ -151,12 +156,19 @@ def test_git_repo_remotes(git_repo_pair):
                                        "branch": "master",
                                        "tracked_remote": "origin",
                                        "remotes": {"origin":
-                                                   {"url": repo_remote}}}]})
+                                                   {"url": repo_remote,
+                                                    "contains": True},
+                                                   "fakeremote":
+                                                   {"url": "fakepath"}}}]})
+    pkg_nopush = dists_nopush[0][0].packages[0]
+    assert set(pkg_nopush.remotes.keys()) == {"origin", "fakeremote"}
 
+    # fakeremote, which doesn't contain the current commit, doesn't
+    # have contains=True.
+    assert "contains" in pkg_nopush.remotes["origin"]
+    assert "contains" not in pkg_nopush.remotes["fakeremote"]
     # pushurl is not included in the output above because it is not
     # set.
-    pkg_nopush = dists_nopush[0][0].packages[0]
-    assert list(pkg_nopush.remotes.keys()) == ["origin"]
     assert "pushurl" not in list(pkg_nopush.remotes.values())
 
     # If we set the pushurl and retrace, it is included.

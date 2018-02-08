@@ -359,9 +359,14 @@ class GitRepoShim(GitSVNRepoShim):
         # possibly valuable information
         if not hexsha:  # just initialized
             return {}
+
         remote_branches = self._run_git(
-            'branch -r --contains %s' % hexsha,
-            expect_fail=True)
+            ["for-each-ref", "--contains", hexsha,
+             # refs/remotes/<remote>/<name> => <remote>/<name>
+             "--format=%(refname:lstrip=2)",
+             "refs/remotes"],
+            expect_fail=True).splitlines()
+
         if not remote_branches:
             return {}
         containing_remotes = set(x.split('/', 1)[0] for x in remote_branches)
