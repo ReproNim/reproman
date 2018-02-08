@@ -70,6 +70,9 @@ class ResourceError(RuntimeError):
 class SessionRuntimeError(RuntimeError):
     pass
 
+#
+# SSH support errors, largely adopted from starcluster
+#
 
 class SSHError(Exception):
     """Base class for all SSH related errors"""
@@ -95,3 +98,13 @@ class SSHAuthException(SSHError):
     def __init__(self, user, host):
         self.msg = "failed to authenticate to host %s as user %s" % (host,
                                                                      user)
+
+
+class SSHAccessDeniedViaAuthKeys(BaseException):
+    """
+    Raised when SSH access for a given user has been restricted via
+    authorized_keys (common approach on UEC AMIs to allow root SSH access to be
+    'toggled' via cloud-init)
+    """
+    def __init__(self, user):
+        self.msg = "access for user '%s' denied via authorized_keys" % user

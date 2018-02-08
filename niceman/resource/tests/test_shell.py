@@ -133,9 +133,9 @@ def test_shell_resource():
     assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
 
     assert type(resource.connect()) == Shell
-    assert resource.delete() == None
+    assert resource.delete() is None
     assert type(resource.start()) == Shell
-    assert resource.stop() == None
+    assert resource.stop() is None
     assert type(resource.connect()) == Shell
 
     with raises(NotImplementedError):

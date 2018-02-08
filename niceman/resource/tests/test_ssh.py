@@ -124,11 +124,11 @@ def test_ssh_resource(setup_ssh):
     resource = ResourceManager.factory(config)
     resource.connect()
 
-    assert resource.start() == None
-    assert resource.stop() == None
+    assert resource.start() is None
+    assert resource.stop() is None
 
     resource.delete()
-    assert resource._ssh == None
+    assert resource._ssh is None
 
     resource.get_session()
     assert type(resource._ssh) == paramiko.SSHClient
