@@ -10,7 +10,7 @@
 import json
 import os
 import re
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import attr
 import yaml
@@ -106,28 +106,29 @@ class CondaDistribution(Distribution):
 
     @staticmethod
     def create_conda_export(env):
+        # Collect the environment into a dictionary in the same manner as
+        # https://github.com/conda/conda/blob/master/conda_env/env.py
+        d = {}
         # TODO: The environment name should be discovered on retrace
         name = os.path.basename(os.path.normpath(env.path))
-        export = "name: %s\n" % name
+        d["name"] = name
         # Collect channels
-        export += "channels:\n"
-        for c in env.channels:
-            export += "- %s\n" % c["name"]
-        export += "dependencies:\n"
-        # Collect packages (separating pip installed packages)
-        pip_export = ""
-        for p in env.packages:
-            if p.get("installer") is None:
-                export += "- %s=%s=%s\n" % (p["name"], p["version"],
+        d["channels"] = [c["name"] for c in env.channels]
+        # Collect packages (dependencies) with no installer
+        d["dependencies"] = ["%s=%s=%s" % (p["name"], p["version"],
                                             p["build"])
-            if p.get("installer") == "pip":
-                pip_export += "  - %s==%s\n" % (p["name"], p["version"])
-        # Add any pip installed packages
-        if pip_export:
-            export += "- pip:\n" + pip_export
+                             for p in env.packages
+                             if p.get("installer") is None]
+        # Collect pip-installed dependencies
+        pip_deps = ["%s==%s" % (p["name"], p["version"])
+                    for p in env.packages
+                    if p.get("installer") is "pip"]
+        if (pip_deps):
+            d["dependencies"].append({"pip": pip_deps})
         # Add the prefix
-        export += "prefix: %s\n" % env.path
-        return export
+        d["prefix"] = env.path
+        # Now dump the export as a yaml file
+        return yaml.safe_dump(d, default_flow_style=False)
 
 
 class CondaTracer(DistributionTracer):

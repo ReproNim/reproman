@@ -125,16 +125,13 @@ def test_create_conda_export():
             "url": "url: https://conda.anaconda.org/conda-forge/linux-64",
         }, ],
     )
-    out = """name: mytest
-channels:
-- conda-forge
-dependencies:
-- xz=5.2.3=0
-- pip:
-  - rpaths==0.13
-prefix: /home/butch/.cache/niceman/conda_test/miniconda/envs/mytest
-"""
-    export = CondaDistribution.create_conda_export(env)
+    out = {"name": "mytest",
+           "channels": ["conda-forge"],
+           "dependencies": ["xz=5.2.3=0",
+                            {"pip": ["rpaths==0.13"]}],
+           "prefix": "/home/butch/.cache/niceman/conda_test/miniconda/envs/mytest"
+           }
+    export = yaml.safe_load(CondaDistribution.create_conda_export(env))
     assert export == out
 
 
