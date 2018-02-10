@@ -89,8 +89,20 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
                             ]
            }
     assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
-    NicemanProvenance.write(sys.stdout, distributions)
-    print(json.dumps(unknown_files, indent=4))
+    # NicemanProvenance.write(sys.stdout, distributions)
+    # print(json.dumps(unknown_files, indent=4))
+
+
+def test_format_conda_package():
+    assert "p" == CondaDistribution.format_conda_package("p")
+    assert "p=v" == CondaDistribution.format_conda_package("p", "v")
+    assert "p=v=b" == CondaDistribution.format_conda_package("p", "v", "b")
+    assert "p" == CondaDistribution.format_conda_package("p", None, "b")
+
+
+def test_format_pip_package():
+    assert "p" == CondaDistribution.format_pip_package("p")
+    assert "p==v" == CondaDistribution.format_pip_package("p", "v")
 
 
 def test_create_conda_export():

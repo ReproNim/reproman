@@ -105,6 +105,18 @@ class CondaDistribution(Distribution):
         return
 
     @staticmethod
+    def format_conda_package(name, version=None, build=None, **_):
+        # Note: Conda does not accept a build without a version
+        return ("%s=%s=%s" % (name, version, build) if version and build
+                 else ("%s=%s" % (name, version) if version
+                       else "%s" % name))
+
+    @staticmethod
+    def format_pip_package(name, version=None, **_):
+        return ("%s==%s" % (name, version) if version
+                       else "%s" % name)
+
+    @staticmethod
     def create_conda_export(env):
         # Collect the environment into a dictionary in the same manner as
         # https://github.com/conda/conda/blob/master/conda_env/env.py
@@ -115,12 +127,12 @@ class CondaDistribution(Distribution):
         # Collect channels
         d["channels"] = [c["name"] for c in env.channels]
         # Collect packages (dependencies) with no installer
-        d["dependencies"] = ["%s=%s=%s" % (p["name"], p["version"],
-                                            p["build"])
+        d["dependencies"] = [CondaDistribution.format_conda_package(**p)
                              for p in env.packages
                              if p.get("installer") is None]
+        #            p.get("name"), p.get("version"), p.get("build"))
         # Collect pip-installed dependencies
-        pip_deps = ["%s==%s" % (p["name"], p["version"])
+        pip_deps = [CondaDistribution.format_pip_package(**p)
                     for p in env.packages
                     if p.get("installer") is "pip"]
         if (pip_deps):
