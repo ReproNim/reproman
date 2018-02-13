@@ -20,6 +20,7 @@ from unittest import SkipTest
 
 import yaml
 import attr
+
 from niceman.formats.niceman import NicemanProvenance
 from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
@@ -134,7 +135,7 @@ def test_create_conda_export():
         }, ],
         channels=[{
             "name": "conda-forge",
-            "url": "url: https://conda.anaconda.org/conda-forge/linux-64",
+            "url": "https://conda.anaconda.org/conda-forge/linux-64",
         }, ],
     )
     out = {"name": "mytest",
@@ -145,6 +146,95 @@ def test_create_conda_export():
            }
     export = yaml.safe_load(CondaDistribution.create_conda_export(env))
     assert export == out
+
+
+@skip_if_no_network
+def test_conda_init_and_install():
+    dist = CondaDistribution(
+        name="conda",
+        path="/tmp/niceman_conda/miniconda",
+        conda_version="4.3.31",
+        python_version="2.7.14.final.0",
+        environments=[
+            CondaEnvironment(
+                name="root",
+                path="/tmp/niceman_conda/miniconda",
+                conda_version="4.3.31",
+                python_version="2.7.14.final.0",
+                packages=[{
+                    "name": "pip",
+                    "installer": None,
+                    "version": "9.0.1",
+                    "build": None,
+                    "channel_name": None,
+                    "md5": None,
+                    "size": None,
+                    "url": None,
+                    "files": None,
+                }, {
+                    "name": "pytest",
+                    "installer": "pip",
+                    "version": "3.4.0",
+                    "build": None,
+                    "channel_name": None,
+                    "md5": None,
+                    "size": None,
+                    "url": None,
+                    "files": None,
+                }, ],
+                channels=[{
+                    "name": "conda-forge",
+                    "url": "https://conda.anaconda.org/conda-forge/linux-64",
+                }, {
+                    "name": "defaults",
+                    "url": "https://repo.continuum.io/pkgs/main/linux-64",
+                }, ],
+            ),
+            CondaEnvironment(
+                name="mytest",
+                path="/tmp/niceman_conda/miniconda/envs/mytest",
+                conda_version="4.3.31",
+                python_version="3.6.3.final.0",
+                packages=[{
+                    "name": "pip",
+                    "installer": None,
+                    "version": "9.0.1",
+                    "build": None,
+                    "channel_name": None,
+                    "md5": None,
+                    "size": None,
+                    "url": None,
+                    "files": None,
+                }, {
+                    "name": "xz",
+                    "installer": None,
+                    "version": "5.2.3",
+                    "build": "0",
+                    "channel_name": "conda-forge",
+                    "md5": "f4e0d30b3caf631be7973cba1cf6f601",
+                    "size": "874292",
+                    "url": "https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
+                    "files": ["bin/xz", ],
+                }, {
+                    "name": "rpaths",
+                    "installer": "pip",
+                    "version": "0.13",
+                    "build": None,
+                    "channel_name": None,
+                    "md5": None,
+                    "size": None,
+                    "url": None,
+                    "files": ["lib/python2.7/site-packages/rpaths.py", ],
+                }, ],
+                channels=[{
+                    "name": "conda-forge",
+                    "url": "https://conda.anaconda.org/conda-forge/linux-64",
+                }, ],
+            ),
+        ])
+    dist.initiate(None)
+    dist.install_packages()
+    # TODO: Verify installation!
 
 
 def test_parse_conda_export_pip_package_entry():

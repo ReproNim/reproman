@@ -14,8 +14,10 @@ from collections import defaultdict, OrderedDict
 
 import attr
 import yaml
+from niceman.resource.session import get_local_session
 
 from niceman.distributions import Distribution
+from niceman.utils import make_tempfile
 
 from .base import SpecObject
 from .base import DistributionTracer
@@ -92,15 +94,55 @@ class CondaDistribution(Distribution):
             Environment sub-class instance.
         """
 
-        # TODO: Install Conda
-#        print("We got" + str(environment))
-        # Loop through non-root packages, creating the conda-env export
-        # file to import
-        for env in self.environments:
-            if env.path == self.path:
-                continue
-            export_contents = self.create_conda_export(env)
-            print ("EXPORT\n" + export_contents)
+        if not session:
+            session = get_local_session()
+
+        # Make a temporary directory for our installation files
+        # TODO: Write session.mktmpdir()
+        # TODO: Handle expected errors
+        tmp_dir, _ = session.execute_command("mktemp -d")
+        tmp_dir = tmp_dir.rstrip()
+        try:
+            # Install Conda
+            # See if Conda root path exists and if not, install Conda
+            if not session.isdir(self.path):
+                # TODO: Support OSX and non x86_64 (and move to helper func)
+                miniconda_url = "https://repo.continuum.io/miniconda/"
+                if self.python_version.startswith("2"):
+                    miniconda_url += "Miniconda2-latest-Linux-x86_64.sh"
+                else:
+                    miniconda_url += "Miniconda3-latest-Linux-x86_64.sh"
+                # TODO: Handle expected errors
+                session.execute_command("curl %s -o %s/miniconda.sh" %
+                                        (miniconda_url, tmp_dir))
+                # NOTE: miniconda.sh makes parent directories automatically
+                session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
+                                        (tmp_dir, self.path))
+            # TODO: conda info doesn't return a version of python we can use!
+            ## Update root versions of python and conda
+            # session.execute_command(
+            #    "%s/bin/conda install -y conda=%s python=%s" %
+            #    (self.path, self.conda_version, self.python_version))
+
+            # Loop through non-root packages, creating the conda-env config
+            for env in self.environments:
+                export_contents = self.create_conda_export(env)
+                with make_tempfile(export_contents) as local_config:
+                    remote_config = os.path.join(tmp_dir, env.name)
+                    session.put(local_config, remote_config)
+                    if not session.isdir(env.path):
+                        session.execute_command(
+                            "%s/bin/conda-env create -p %s -f %s " %
+                            (self.path, env.path, remote_config))
+                    else:
+                        session.execute_command(
+                            "%s/bin/conda-env update -p %s -f %s " %
+                            (self.path, env.path, remote_config ))
+
+        finally:
+            if tmp_dir:
+                # Remove the tmp dir
+                session.execute_command(["rm", "-R", tmp_dir])
 
         return
 
