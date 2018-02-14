@@ -1062,6 +1062,7 @@ def execute_command_batch(session, command, args, exception_filter=None):
     """
     cmd_length = sum(map(len, command)) + len(command)
     num_args = get_cmd_batch_len(args, cmd_length)
+    args = list(args)  # we might get in with a set
     while args:
         batch, args = args[:num_args], args[num_args:]
         try:

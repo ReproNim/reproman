@@ -118,12 +118,17 @@ class VenvTracer(DistributionTracer):
                     pkg_to_found_files[file_to_pkg[fullpath]].append(
                         os.path.relpath(path, venv_path))
 
-            packages = [VenvPackage(name=details["name"],
-                                    version=details["version"],
-                                    local=name in local_pkgs,
-                                    origin_location=details["origin_location"],
-                                    files=pkg_to_found_files[name])
-                        for name, details in package_details.items()]
+            packages = []
+            for name, details in iteritems(package_details):
+                origin_location = details["origin_location"]
+                packages.append(
+                    VenvPackage(name=details["name"],
+                                version=details["version"],
+                                local=name in local_pkgs,
+                                origin_location=origin_location,
+                                files=pkg_to_found_files[name]))
+                if origin_location:
+                    unknown_files.add(origin_location)
 
             found_package_count += len(packages)
 
@@ -143,7 +148,7 @@ class VenvTracer(DistributionTracer):
                                     venv_version=self._venv_version(),
                                     path=self._venv_exe_path(),
                                     environments=venvs),
-                   list(unknown_files))
+                   unknown_files)
 
     def _python_version(self, venv_path):
         try:

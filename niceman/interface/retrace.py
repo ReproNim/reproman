@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 from os.path import normpath
 import sys
 import time
+from copy import copy
 
 from niceman.resource.session import get_local_session
 from .base import Interface
@@ -144,32 +145,41 @@ def identify_distributions(files, session=None):
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files beloning to them
-    files_to_consider = files[:]
+    files_to_consider = set(copy(files))
 
     # Identify directories from the files_to_consider
     dirs = set(filter(session.isdir, files_to_consider))
 
     distibutions = []
+    files_processed = set()
     for Tracer in Tracers:
         lgr.info("Tracing using %s", Tracer)
 
         # Pull out directories if the tracer can't handle them
         if Tracer.HANDLES_DIRS:
             files_to_trace = files_to_consider
-            files_skipped = []
+            files_skipped = set()
         else:
-            files_to_trace = [x for x in files_to_consider if x not in dirs]
-            files_skipped = [x for x in files_to_consider if x in dirs]
+            files_to_trace = files_to_consider - dirs
+            files_skipped = files_to_consider - files_to_trace
 
         tracer = Tracer(session=session)
         begin = time.time()
+        # yoh things the idea was that tracer might trace even without
+        #     files, so we should not just 'continue' the loop if there is no
+        #     files_to_trace
         if files_to_trace:
-            for env, files_to_trace in tracer.identify_distributions(
+            remaining_files_to_trace = set()
+            for env, remaining_files_to_trace in tracer.identify_distributions(
                     files_to_trace):
                 distibutions.append(env)
+                assert len(remaining_files_to_trace) <= len(files_to_trace)
+
+            files_processed |= files_to_trace - remaining_files_to_trace
+            files_to_trace = remaining_files_to_trace
 
         # Re-combine any files that were skipped
-        files_to_consider = files_to_trace + files_skipped
+        files_to_consider = files_to_trace | files_skipped
 
         lgr.debug("Assigning files to packages by %s took %f seconds",
                   tracer, time.time() - begin)

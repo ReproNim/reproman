@@ -243,7 +243,7 @@ class DistributionTracer(object):
                  nb_pkg_files,
                  len(unknown_files))
 
-        return list(viewvalues(found_packages)), list(unknown_files)
+        return list(viewvalues(found_packages)), unknown_files
 
     @abc.abstractmethod
     def _get_packagefields_for_files(self, files):
