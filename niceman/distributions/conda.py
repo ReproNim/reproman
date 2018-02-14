@@ -94,6 +94,9 @@ class CondaDistribution(Distribution):
             Environment sub-class instance.
         """
 
+        if not self.path:  # Permit dummy tests
+            return
+
         if not session:
             session = get_local_session()
 
