@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from niceman.distributions.piputils import parse_pip_show, parse_pip_list
+from niceman.distributions import piputils
 
 
 def test_parse_pip_show():
@@ -29,7 +29,7 @@ Requires: six, funcsigs
 Files:
   pkg-0.3.0.dist-info/DESCRIPTION.rst
   pkg/__init__.py"""
-    info_files = parse_pip_show(out_files)
+    info_files = piputils.parse_pip_show(out_files)
 
     fields = {"Name", "Version", "Summary", "Home-page", "Author",
               "Author-email", "License", "Location", "Requires", "Files"}
@@ -44,7 +44,7 @@ Files:
     out_no_files = out_base + """\
 Files:
 Cannot locate installed-files.txt"""
-    info_nofiles = parse_pip_show(out_no_files)
+    info_nofiles = piputils.parse_pip_show(out_no_files)
     assert set(info_nofiles.keys()) == fields
     assert info_nofiles["Files"] == []
 
@@ -57,5 +57,5 @@ pypypypy (2.2.0)"""
     expect = [("pythis", "1.4.3", None),
               ("pythat", "0.1.0", "/local/path"),
               ("pypypypy", "2.2.0", None)]
-    result = list(parse_pip_list(out))
+    result = list(piputils.parse_pip_list(out))
     assert expect == result
