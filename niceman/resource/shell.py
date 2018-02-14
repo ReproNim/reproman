@@ -95,21 +95,6 @@ class ShellSession(POSIXSession):
         # put is the same as get for the shell resource
         self.get(src_path, dest_path, uid, gid)
 
-
-    def put(self, src_path, dest_path, preserve_perms=False,
-            owner=None, group=None, recursive=False):
-        """Take file on the local file system and copy over into the session
-        """
-        # TODO: Add unit tests!
-        if recursive:
-            raise NotImplementedError
-        shutil.copy(src_path, dest_path)
-        if preserve_perms:
-            shutil.copystat(src_path, dest_path)
-        if owner or group:
-            shutil.chown(dest_path, owner, group)
-
-
 @attr.s
 class Shell(Resource):
 
