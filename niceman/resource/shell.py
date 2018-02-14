@@ -13,6 +13,9 @@ import shutil
 
 from .base import Resource
 from niceman.cmd import Runner
+from niceman.dochelpers import borrowdoc
+from niceman.resource.session import Session
+from niceman.support.exceptions import CommandError
 
 import logging
 lgr = logging.getLogger('niceman.resource.shell')
@@ -32,35 +35,19 @@ class ShellSession(POSIXSession):
         super(ShellSession, self).__init__()
         self._runner = None
 
-    def start(self):
+    @borrowdoc(Session)
+    def open(self):
         self._runner = Runner()
 
-    def stop(self):
+    @borrowdoc(Session)
+    def close(self):
         self._runner = None
 
-    #
-    # Commands fulfilling a "Session" interface to interact with the environment
-    #
+    @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
-        """
-        Execute the given command in the environment.
-
-        Parameters
-        ----------
-        command : list
-            Shell command string or list of command tokens to send to the
-            environment to execute.
-        env : dict
-            Additional (or replacement) environment variables which are applied
-            only to the current call
-
-        Returns
-        -------
-        out, err
-        """
         # XXX should it be a generic behavior to auto-start?
         if self._runner is None:
-            self.start()
+            self.open()
         run_kw = {}
         if env:
             # if anything custom, then we need to get original full environment
@@ -78,15 +65,36 @@ class ShellSession(POSIXSession):
             **run_kw
         )  # , shell=True)
 
+    @borrowdoc(Session)
     def isdir(self, path):
         return os.path.isdir(path)
 
+    @borrowdoc(Session)
     def mkdir(self, path, parents=False):
         if not os.path.exists(path):
             if parents:
                 os.makedirs(path)
             else:
-                os.mkdir(path)
+                try:
+                    os.mkdir(path)
+                except OSError:
+                    raise CommandError(
+                        msg="Failed to make directory {}".format(path))
+
+    @borrowdoc(Session)
+    def get(self, src_path, dest_path, uid=-1, gid=-1):
+        dest_dir, dest_basename = os.path.split(dest_path)
+        if not self.exists(dest_dir):
+            self.mkdir(dest_dir, parents=True)
+        shutil.copy(src_path, dest_path)
+        if uid > -1 or gid > -1:
+            self.chown(dest_path, uid, gid, recursive=True)
+
+    @borrowdoc(Session)
+    def put(self, src_path, dest_path, uid=-1, gid=-1):
+        # put is the same as get for the shell resource
+        self.get(src_path, dest_path, uid, gid)
+
 
     def put(self, src_path, dest_path, preserve_perms=False,
             owner=None, group=None, recursive=False):

@@ -134,12 +134,14 @@ class Create(Interface):
 
         # Get configuration and environment inventory
         if clone:
-            config, inventory = ResourceManager.get_resource_info(config, clone, resource_id, resource_type)
+            config, inventory = ResourceManager.get_resource_info(config,
+                clone, resource_id, resource_type)
             config['name'] = name
             del config['id']
             del config['status']
         else:
-            config, inventory = ResourceManager.get_resource_info(config, name, resource_id, resource_type)
+            config, inventory = ResourceManager.get_resource_info(config, name,
+                resource_id, resource_type)
 
         # Create resource environment
         env_resource = ResourceManager.factory(config)

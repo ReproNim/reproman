@@ -9,6 +9,8 @@
 
 import logging
 from mock import patch, MagicMock, call
+import os
+import uuid
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
@@ -19,11 +21,11 @@ from niceman.tests.fixtures import get_docker_fixture
 
 from pytest import raises
 
+
 setup_ubuntu = get_docker_fixture(
-    'ubuntu:xenial',
+    'rastasheep/ubuntu-sshd:14.04',
     scope='module'
 )
-
 
 def test_dockercontainer_class():
 
@@ -50,12 +52,13 @@ def test_dockercontainer_class():
                 }
             ],
             pull=lambda repository, stream: [
-                '{ "status" : "status 1", "progress" : "progress 1" }',
-                '{ "status" : "status 2", "progress" : "progress 2" }'
+                b'{ "status" : "status 1", "progress" : "progress 1" }',
+                b'{ "status" : "status 2", "progress" : "progress 2" }'
             ],
             create_container=lambda name, image, stdin_open, tty, command: {
                 'Id': '18b31b30e3a5'
             },
+            exec_inspect=lambda id: { 'ExitCode': 0 },
             exec_start=lambda exec_id, stream: [
                 b'stdout line 1',
                 b'stdout line 2',
@@ -66,17 +69,17 @@ def test_dockercontainer_class():
         # Test connecting when a resource doens't exist.
         config = {
             'name': 'non-existent-resource',
-            'type': 'docker-container',
+            'type': 'docker-container'
         }
         resource = ResourceManager.factory(config)
         resource.connect()
-        assert resource.id == None
-        assert resource.status == None
+        assert resource.id is None
+        assert resource.status is None
 
         # Test catching exception when multiple resources are found at connection.
         config = {
             'name': 'duplicate-resource-name',
-            'type': 'docker-container',
+            'type': 'docker-container'
         }
         resource = ResourceManager.factory(config)
         with raises(ResourceError) as ecm:
@@ -137,7 +140,7 @@ def test_dockercontainer_class():
         # Test logging into the container.
         with resource.get_session(pty=True):
             pass # we do nothing really
-        assert dockerpty.called == True
+        assert dockerpty.called
 
         # Test stopping resource.
         resource.stop()
@@ -153,9 +156,7 @@ def test_dockercontainer_class():
         ]
         client.assert_has_calls(calls, any_order=True)
 
-
 def test_setup_ubuntu(setup_ubuntu):
     print(setup_ubuntu)
     assert setup_ubuntu['container_id']
-
 
