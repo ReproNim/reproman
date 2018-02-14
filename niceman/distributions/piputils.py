@@ -109,7 +109,7 @@ def parse_pip_list(out):
         yield pkg, version, location
 
 
-def pip_packages(session, which_pip, local_only=False):
+def get_pip_packages(session, which_pip, local_only=False):
     """List pip packages.
 
     Parameters

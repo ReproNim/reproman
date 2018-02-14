@@ -13,8 +13,9 @@ import os
 
 import attr
 
+from six import iteritems
 from niceman.distributions import Distribution
-from niceman.distributions.piputils import pip_show, pip_packages
+from niceman.distributions.piputils import pip_show, get_pip_packages
 from niceman.dochelpers import exc_str
 from niceman.utils import PathRoot
 
@@ -73,7 +74,7 @@ class VenvTracer(DistributionTracer):
     def _get_package_details(self, venv_path):
         pip = venv_path + "/bin/pip"
         try:
-            pkgs = list(pip_packages(self._session, pip))
+            pkgs = list(get_pip_packages(self._session, pip))
         except Exception as exc:
             lgr.warning("Could not determine pip packages for %s: %s",
                         venv_path, exc_str(exc))
@@ -104,9 +105,9 @@ class VenvTracer(DistributionTracer):
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
-            local_pkgs = set(pip_packages(self._session,
-                                          venv_path + "/bin/pip",
-                                          local_only=True))
+            local_pkgs = set(get_pip_packages(self._session,
+                                              venv_path + "/bin/pip",
+                                              local_only=True))
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but

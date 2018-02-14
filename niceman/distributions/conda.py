@@ -21,7 +21,7 @@ from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
-from .piputils import pip_show, pip_packages
+from .piputils import pip_show, get_pip_packages
 from niceman.dochelpers import exc_str
 from niceman.utils import PathRoot
 
@@ -160,7 +160,7 @@ class CondaTracer(DistributionTracer):
     def _get_conda_pip_package_details(self, conda_path):
         pip = conda_path + "/bin/pip"
         try:
-            pkgs = list(pip_packages(self._session, pip))
+            pkgs = list(get_pip_packages(self._session, pip))
         except Exception as exc:
             lgr.warning("Could not determine pip packages for %s: %s",
                         conda_path, exc_str(exc))
