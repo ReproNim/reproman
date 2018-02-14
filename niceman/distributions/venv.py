@@ -10,6 +10,7 @@
 from collections import defaultdict
 import logging
 import os
+import os.path as op
 
 import attr
 
@@ -127,7 +128,11 @@ class VenvTracer(DistributionTracer):
                                 local=name in local_pkgs,
                                 origin_location=origin_location,
                                 files=pkg_to_found_files[name]))
-                if origin_location:
+                # op.relpath comparison is to check if to get from venv_path
+                # (which will be converted to full path if needed) to the
+                # origin_location will not go upstairs
+                if origin_location and \
+                        op.relpath(origin_location, venv_path).startswith(op.pardir):
                     unknown_files.add(origin_location)
 
             found_package_count += len(packages)
