@@ -75,7 +75,7 @@ class VenvTracer(DistributionTracer):
         try:
             pkgs = list(pip_packages(self._session, pip))
         except Exception as exc:
-            lgr.warning("Could determine pip packages for %s: %s",
+            lgr.warning("Could not determine pip packages for %s: %s",
                         venv_path, exc_str(exc))
             return
         return pip_show(self._session, pip, pkgs)

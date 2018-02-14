@@ -162,7 +162,7 @@ class CondaTracer(DistributionTracer):
         try:
             pkgs = list(pip_packages(self._session, pip))
         except Exception as exc:
-            lgr.warning("Could determine pip packages for %s: %s",
+            lgr.warning("Could not determine pip packages for %s: %s",
                         conda_path, exc_str(exc))
         packages, file_to_package_map = pip_show(self._session, pip, pkgs)
         for entry in packages.values():
