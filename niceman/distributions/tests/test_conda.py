@@ -235,6 +235,7 @@ def test_conda_init_and_install():
     dist.initiate(None)
     dist.install_packages()
     # TODO: Verify installation!
+    # TODO: Mock instead of real execution
 
 
 def test_parse_conda_export_pip_package_entry():
