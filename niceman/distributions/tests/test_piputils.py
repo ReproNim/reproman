@@ -7,7 +7,44 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import mock
+
 from niceman.distributions import piputils
+from niceman.tests.utils import assert_is_subset_recur
+
+
+def test_pip_batched_show():
+    pkgs = ["pkg0", "pkg1", "pkg2"]
+    batches= [("""\
+Name: pkg0
+Version: 4.1
+Home-page: urlwith---three-dashes
+Files:
+  file0
+---
+Name: pkg1
+Version: 17.4.0
+Files:
+  file1""",
+              None, None),  # err, exception
+             ("""\
+Name: pkg2
+Version: 4""",
+              None, None)]
+
+    with mock.patch("niceman.distributions.piputils.execute_command_batch",
+                    return_value=batches):
+        pkg_entries = list(piputils._pip_batched_show(None, None, pkgs))
+
+    expect = [("pkg0",
+               {"Name": "pkg0", "Version": "4.1", "Files": ["file0"],
+                # We did not split on the URL's "---".
+                "Home-page": "urlwith---three-dashes"}),
+              ("pkg1",
+               {"Name": "pkg1", "Version": "17.4.0", "Files": ["file1"]}),
+              ("pkg2",
+               {"Name": "pkg2", "Version": "4"})]
+    assert_is_subset_recur(expect, pkg_entries, [dict, list])
 
 
 def test_parse_pip_show():

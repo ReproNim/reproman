@@ -45,7 +45,8 @@ def parse_pip_show(out):
 def _pip_batched_show(session, which_pip, pkgs):
     cmd = [which_pip, "show", "-f"]
     batch = execute_command_batch(session, cmd, pkgs)
-    entries = (stacked.split("---") for stacked, _, _ in batch)
+    sep_re = re.compile("^---$", flags=re.MULTILINE)
+    entries = (sep_re.split(stacked) for stacked, _, _ in batch)
 
     for pkg, entry in zip(pkgs, itertools.chain(*entries)):
         info = parse_pip_show(entry)
