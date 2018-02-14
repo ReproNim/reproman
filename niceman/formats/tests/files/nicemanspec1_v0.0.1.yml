@@ -74,7 +74,7 @@ distributions:
        install_date: '2017-12-08 16:38:50+00:00'
        files: [/usr/bin/dcm2niix]
 
-conda:
+ conda:
 # TODO: later -- first polish down work with Debian
 #   packages:
 #    - name: nilearn
