@@ -1202,4 +1202,5 @@ def is_subpath(path, directory):
     """
     return not os.path.relpath(path, directory).startswith(os.path.pardir)
 
+
 lgr.log(5, "Done importing niceman.utils")
