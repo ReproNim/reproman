@@ -134,15 +134,6 @@ class EnvironmentSpec(SpecObject):
     #        those would also be useful for tracing for presence of distributions
     #        e.g. depending on what is in the PATH
 
-    def __sub__(self, other):
-        if not isinstance(other, EnvironmentSpec):
-            raise TypeError("unsupported operand type(s) for -: " + \
-                            "'EnvironmentSpec' and '%s'" % type(other).__name__)
-        base = None
-        distributions = []
-        files = list(set(self.files) - set(other.files))
-        return EnvironmentSpec(base, distributions, files)
-
 _register_with_representer(EnvironmentSpec)
 
 
