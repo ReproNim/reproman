@@ -116,7 +116,7 @@ class Retrace(Interface):
 # TODO: session should be with a state.  Idea is that if we want
 #  to trace while inheriting all custom PATHs which that run might have
 #  had
-def identify_distributions(files, session=None):
+def identify_distributions(files, session=None, tracer_classes=None):
     """Identify packages files belong to
 
     Parameters
@@ -130,18 +130,15 @@ def identify_distributions(files, session=None):
     unknown_files : list of str
       Files which were not determined to belong to any specific distribution
     """
-    # TODO: automate discovery of available tracers
-    from niceman.distributions.debian import DebTracer
-    from niceman.distributions.conda import CondaTracer
-    from niceman.distributions.venv import VenvTracer
-    from niceman.distributions.vcs import VCSTracer
+    if tracer_classes is None:
+        tracer_classes = get_tracer_classes()
 
     session = session or get_local_session()
     # TODO create list of appropriate for the `environment` OS tracers
     #      in case of no environment -- get current one
     # TODO: should operate in the session, might be given additional information
     #       not just files
-    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer]
+
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files beloning to them
@@ -167,7 +164,7 @@ def identify_distributions(files, session=None):
         # Identify directories from the files_to_consider
         dirs = set(filter(session.isdir, files_to_trace))
 
-        for Tracer in Tracers:
+        for Tracer in tracer_classes:
             lgr.debug("Tracing using %s", Tracer.__name__)
 
             # Pull out directories if the tracer can't handle them
@@ -209,3 +206,17 @@ def identify_distributions(files, session=None):
             break
 
     return distibutions, files_to_consider
+
+
+def get_tracer_classes():
+    """A helper which returns a list of all available Tracers
+
+    The order should not but does matter and ATM is magically provided
+    """
+    # TODO: automate discovery of available tracers
+    from niceman.distributions.debian import DebTracer
+    from niceman.distributions.conda import CondaTracer
+    from niceman.distributions.venv import VenvTracer
+    from niceman.distributions.vcs import VCSTracer
+    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer]
+    return Tracers
