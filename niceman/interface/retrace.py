@@ -145,47 +145,67 @@ def identify_distributions(files, session=None):
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files beloning to them
-    files_to_consider = set(copy(files))
-
-    # Identify directories from the files_to_consider
-    dirs = set(filter(session.isdir, files_to_consider))
+    files_to_consider = set(files)
 
     distibutions = []
     files_processed = set()
-    for Tracer in Tracers:
-        lgr.debug("Tracing using %s", Tracer.__name__)
+    files_to_trace = files_to_consider
 
-        # Pull out directories if the tracer can't handle them
-        if Tracer.HANDLES_DIRS:
-            files_to_trace = files_to_consider
-            files_skipped = set()
-        else:
-            files_to_trace = files_to_consider - dirs
-            files_skipped = files_to_consider - files_to_trace
+    niter = 0
+    max_niter = 10
+    while True:
+        niter += 1
+        nfiles_processed = len(files_processed)
+        nfiles_to_trace = len(files_to_trace)
+        lgr.info("Entering iteration #%d over Tracers", niter)
+        if niter > max_niter:
+            lgr.error(
+                "We did %s iterations already, something is not right"
+                % max_niter)
+            break
 
-        tracer = Tracer(session=session)
-        begin = time.time()
-        # yoh things the idea was that tracer might trace even without
-        #     files, so we should not just 'continue' the loop if there is no
-        #     files_to_trace
-        if files_to_trace:
-            remaining_files_to_trace = files_to_trace
-            nenvs = 0
-            for env, remaining_files_to_trace in tracer.identify_distributions(
-                    files_to_trace):
-                distibutions.append(env)
-                nenvs += 1
-            files_processed |= files_to_trace - remaining_files_to_trace
-            files_to_trace = remaining_files_to_trace
-            lgr.info("%s: %d envs with %d other files remaining",
-                     Tracer.__name__,
-                     nenvs,
-                     len(files_to_trace))
+        # Identify directories from the files_to_consider
+        dirs = set(filter(session.isdir, files_to_trace))
 
-        # Re-combine any files that were skipped
-        files_to_consider = files_to_trace | files_skipped
+        for Tracer in Tracers:
+            lgr.debug("Tracing using %s", Tracer.__name__)
 
-        lgr.debug("Assigning files to packages by %s took %f seconds",
-                  tracer, time.time() - begin)
+            # Pull out directories if the tracer can't handle them
+            if Tracer.HANDLES_DIRS:
+                files_to_trace = files_to_consider
+                files_skipped = set()
+            else:
+                files_to_trace = files_to_consider - dirs
+                files_skipped = files_to_consider - files_to_trace
+
+            tracer = Tracer(session=session)
+            begin = time.time()
+            # yoh things the idea was that tracer might trace even without
+            #     files, so we should not just 'continue' the loop if there is no
+            #     files_to_trace
+            if files_to_trace:
+                remaining_files_to_trace = files_to_trace
+                nenvs = 0
+                for env, remaining_files_to_trace in tracer.identify_distributions(
+                        files_to_trace):
+                    distibutions.append(env)
+                    nenvs += 1
+                files_processed |= files_to_trace - remaining_files_to_trace
+                files_to_trace = remaining_files_to_trace
+                lgr.info("%s: %d envs with %d other files remaining",
+                         Tracer.__name__,
+                         nenvs,
+                         len(files_to_trace))
+
+            # Re-combine any files that were skipped
+            files_to_consider = files_to_trace | files_skipped
+
+            lgr.debug("Assigning files to packages by %s took %f seconds",
+                      tracer, time.time() - begin)
+        if len(files_to_trace) == 0 or (
+            nfiles_processed == len(files_processed) and
+            nfiles_to_trace == len(files_to_trace)):
+            lgr.info("No more changes or files to track.  Exiting the loop")
+            break
 
     return distibutions, files_to_consider
