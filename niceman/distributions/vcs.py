@@ -364,8 +364,7 @@ class GitRepoShim(GitSVNRepoShim):
             ["for-each-ref", "--contains", hexsha,
              # refs/remotes/<remote>/<name> => <remote>/<name>
              "--format=%(refname:strip=2)",
-             "refs/remotes"],
-            expect_fail=True).splitlines()
+             "refs/remotes"]).splitlines()
 
         if not remote_branches:
             return {}
