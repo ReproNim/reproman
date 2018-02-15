@@ -10,6 +10,7 @@
 from collections import defaultdict
 import logging
 import os
+import os.path as op
 
 import attr
 
@@ -117,6 +118,16 @@ class VenvTracer(DistributionTracer):
                     unknown_files.remove(path)
                     pkg_to_found_files[file_to_pkg[fullpath]].append(
                         os.path.relpath(path, venv_path))
+
+            # Some files, like venvs/dev/lib/python2.7/abc.py could be
+            # symlinks populated by virtualenv itself during venv creation
+            # since it relies on system wide python environment.  So we need
+            # to resolve those into filenames which could be associated with
+            # system wide installation of python
+            for path in unknown_files.copy():
+                if is_subpath(path, venv_path) and op.islink(path):
+                    unknown_files.add(op.realpath(path))
+                    unknown_files.remove(path)
 
             packages = []
             for name, details in iteritems(package_details):
