@@ -173,8 +173,6 @@ def identify_distributions(files, session=None):
             for env, remaining_files_to_trace in tracer.identify_distributions(
                     files_to_trace):
                 distibutions.append(env)
-                assert len(remaining_files_to_trace) <= len(files_to_trace)
-
             files_processed |= files_to_trace - remaining_files_to_trace
             files_to_trace = remaining_files_to_trace
 
