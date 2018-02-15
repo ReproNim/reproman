@@ -121,19 +121,19 @@ class VenvTracer(DistributionTracer):
 
             packages = []
             for name, details in iteritems(package_details):
-                origin_location = details["origin_location"]
+                location = details["origin_location"]
                 packages.append(
                     VenvPackage(name=details["name"],
                                 version=details["version"],
                                 local=name in local_pkgs,
-                                origin_location=origin_location,
+                                origin_location=location,
                                 files=pkg_to_found_files[name]))
                 # op.relpath comparison is to check if to get from venv_path
                 # (which will be converted to full path if needed) to the
-                # origin_location will not go upstairs
-                if origin_location and \
-                        op.relpath(origin_location, venv_path).startswith(op.pardir):
-                    unknown_files.add(origin_location)
+                # location will not go upstairs
+                if location and \
+                        op.relpath(location, venv_path).startswith(op.pardir):
+                    unknown_files.add(location)
 
             found_package_count += len(packages)
 
