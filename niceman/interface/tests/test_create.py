@@ -33,8 +33,8 @@ def test_create_interface(niceman_cfg_path):
         client.return_value = MagicMock(
             containers=lambda all: [],
             pull=lambda repository, stream: [
-                '{ "status" : "status 1", "progress" : "progress 1" }',
-                '{ "status" : "status 2", "progress" : "progress 2" }'
+                b'{ "status" : "status 1", "progress" : "progress 1" }',
+                b'{ "status" : "status 2", "progress" : "progress 2" }'
             ],
             create_container=lambda name, image, stdin_open, tty, command: {
                 'Id': '18b31b30e3a5'

@@ -7,10 +7,16 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import os
+import shutil
+import tempfile
+
 import pytest
+import tempfile
 from .constants import NICEMAN_CFG_PATH
 from niceman.cmd import Runner
 from niceman.tests.utils import skip_if_no_network
+from niceman.utils import chpwd
 
 # Substitutes in for user's ~/.config/niceman.cfg file
 CONFIGURATION = [
@@ -92,3 +98,75 @@ def get_docker_fixture(image, portmaps={}, name=None,
 
     return docker_fixture
 
+
+def git_repo_fixture(kind="default", scope="function"):
+    """Create a Git repository fixture.
+
+    Parameters
+    ----------
+    kind : {"empty", "default", "pair"}, optional
+        Kind git repository.
+
+        - empty: a repository with no commits.
+
+        - default: a repository with three commits, each adding one of
+          its three files: "foo", "bar", and "subdir/baz".
+
+        - pair: a (local, remote) pair of Git repos.  The repos have
+          the same structure as the "default" repo, but "local" has a
+          remote "origin" with a URL that points to "remote".
+
+    scope : {"function", "class", "module", "session"}, optional
+        A `pytest.fixture` scope argument.
+
+    Returns
+    -------
+    A fixture function.
+    """
+    runner = Runner()
+
+    def setup_user():
+        # Set the user in the local Git configuration rather than
+        # through environmental variables so that test functions using
+        # this fixture can make commits under the same user.
+        runner(["git", "config", "user.name", "A U Thor"])
+        runner(["git", "config", "user.email", "a.thor@example.com"])
+
+    def add_and_commit(fname):
+        directory = os.path.dirname(fname)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(fname, "w") as fh:
+            fh.write(fname + "content")
+        runner.run(["git", "add", fname])
+        runner.run(["git", "commit", "-m", "add " + fname])
+
+    @pytest.fixture(scope=scope)
+    def fixture():
+        # We can't use pytest's tempdir because that is limited to
+        # scope=function.
+        tmpdir = tempfile.mkdtemp(prefix="niceman-tests-")
+        repodir = os.path.realpath(os.path.join(tmpdir, "repo0"))
+        os.mkdir(repodir)
+
+        retval = repodir
+
+        with chpwd(repodir):
+            runner.run(["git", "init"])
+            setup_user()
+
+            if kind != "empty":
+                add_and_commit("foo")
+                add_and_commit("bar")
+                runner.run(["git", "tag", "tag0"])
+                add_and_commit("subdir/baz")
+
+            if kind == "pair":
+                localdir = os.path.realpath(os.path.join(tmpdir, "repo1"))
+                runner.run(["git", "clone", repodir, localdir])
+                with chpwd(localdir):
+                    setup_user()
+                retval = localdir, repodir
+        yield retval
+        shutil.rmtree(tmpdir)
+    return fixture

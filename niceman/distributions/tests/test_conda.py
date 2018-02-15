@@ -93,14 +93,6 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
     print(json.dumps(unknown_files, indent=4))
 
 
-def test_parse_conda_export_pip_package_entry():
-    assert CondaTracer.parse_pip_package_entry("appdirs==1.4.3") == (
-        "appdirs", None)
-    assert CondaTracer.parse_pip_package_entry(
-        "niceman (/test/repronim)==0.0.2") == (
-           "niceman", "/test/repronim")
-
-
 def test_get_conda_env_export_exceptions():
     # Mock to capture logs
     def log_warning(msg, *args):
@@ -129,4 +121,3 @@ def test_get_conda_env_export_exceptions():
         mock.patch.object(lgr, "warning", log_warning):
         tracer._get_conda_env_export("", "/conda")
         assert "unknown" in log_warning.val
-

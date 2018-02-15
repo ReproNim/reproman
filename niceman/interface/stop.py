@@ -35,7 +35,7 @@ class Stop(Interface):
 
     _params_ = dict(
         name=Parameter(
-            args=("-r", "--name"),
+            args=("-n", "--name"),
             doc="""Name of the resource to consider. To see
             available resource, run the command 'niceman ls'""",
             constraints=EnsureStr(),

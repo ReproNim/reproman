@@ -99,6 +99,7 @@ class Ls(Interface):
                 if not env_resource.id:
                     # continue  # A missing ID indicates a deleted resource.
                     inventory_resource['id'] = 'DELETED'
+                    inventory_resource['status'] = 'N/A'
             except ResourceError as exc:
                 ui.error("%s resource query error: %s" % (name, exc_str(exc)))
                 for f in 'id', 'status':

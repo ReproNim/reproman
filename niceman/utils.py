@@ -1136,4 +1136,61 @@ def instantiate_attr_object(item_type, kws):
         # if couldn't figure it out -- just raise original
         raise
 
+
+class PathRoot(object):
+    """Find the root of paths based on a predicate function.
+
+    The path -> root mapping is cached across calls.
+
+    Parameters
+    ----------
+    predicate : callable
+        A callable that will be passed a path and should return true
+        if that path should be considered a root.
+    """
+    def __init__(self, predicate):
+        self._pred = predicate
+        self._cache = {}  # path -> root
+
+    def __call__(self, path):
+        """Find root of `path` based on `predicate`.
+
+        Parameters
+        ----------
+        path : str
+            Find this path's root.
+
+        Returns
+        -------
+        str or None
+        """
+        to_cache = []
+        root = None
+        for pth in self._walk_up(path):
+            if pth in self._cache:
+                root = self._cache[pth]
+                break
+
+            to_cache.append(pth)
+
+            if self._pred(pth):
+                root = pth
+                break
+
+        for pth in to_cache:
+            self._cache[pth] = root
+        return root
+
+    @staticmethod
+    def _walk_up(path):
+        """Yield PATH, chopping off the right-most directory each iteration.
+
+        Parameters
+        ----------
+        path : string
+        """
+        while path not in [os.path.pathsep, os.path.sep, ""]:
+            yield path
+            path = os.path.dirname(path)
+
 lgr.log(5, "Done importing niceman.utils")

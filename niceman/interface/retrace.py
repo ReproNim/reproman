@@ -132,6 +132,7 @@ def identify_distributions(files, session=None):
     # TODO: automate discovery of available tracers
     from niceman.distributions.debian import DebTracer
     from niceman.distributions.conda import CondaTracer
+    from niceman.distributions.venv import VenvTracer
     from niceman.distributions.vcs import VCSTracer
 
     session = session or get_local_session()
@@ -139,7 +140,7 @@ def identify_distributions(files, session=None):
     #      in case of no environment -- get current one
     # TODO: should operate in the session, might be given additional information
     #       not just files
-    Tracers = [DebTracer, CondaTracer, VCSTracer]
+    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer]
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files beloning to them

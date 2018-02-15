@@ -45,5 +45,8 @@ def write_config(stream, rec):
     """TODO"""
     return safe_write(
         stream,
-        yaml.safe_dump(rec, encoding="utf-8", allow_unicode=True)
+        yaml.safe_dump(
+            rec, encoding="utf-8", allow_unicode=True,
+            default_flow_style=False
+        )
     )

@@ -9,11 +9,13 @@
 
 import logging
 import os
+import re
+import tempfile
+import uuid
 from pytest import raises
 from mock import patch, call
 
 from ...utils import swallow_logs
-from ...tests.utils import with_tempfile
 from ...tests.utils import assert_in
 from ..base import ResourceManager
 from ...cmd import Runner
@@ -48,7 +50,12 @@ def test_shell_class():
         assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
 
 
-@with_tempfile(content="""
+def test_source_file(resource_test_dir):
+
+    # Create a temporary test file
+    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+    with temp_file as f:
+        f.write("""
 echo "Enabling special environment"
 echo "We could even spit out an stderr output">&2
 export EXPORTED_VAR="
@@ -56,48 +63,82 @@ multiline
 "
 export PATH=/custom:$PATH
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-""")
-def test_source_file(script=None):
-    ses = ShellSession()
-    assert ses.get_envvars() == {}
-    new_env_diff = ses.source_script(script, diff=True)
-    assert len(new_env_diff) == 2
-    assert new_env_diff['PATH'].startswith('/custom:')
-    assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
+    """.encode('utf8'))
+        f.flush()
+        script = temp_file.name
+        session = ShellSession()
+        assert session.get_envvars() == {}
+        new_env_diff = session.source_script(script, diff=True)
+        assert 'EXPORTED_VAR' in new_env_diff
+        assert new_env_diff['PATH'].startswith('/custom:')
+        assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
 
 
-@with_tempfile(content="exit 1")
-def test_source_file_crash(script=None):
-    ses = ShellSession()
-    with raises(Exception):  # TODO: unify?
-        ses.source_script(script)
+def test_source_file_crash(resource_test_dir):
+    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+    with temp_file as f:
+        f.write('exit 1'.encode('utf8'))
+        f.flush()
+        script = temp_file.name
+        session = ShellSession()
+        with raises(Exception):  # TODO: unify?
+            session.source_script(script)
 
 def test_isdir():
-    ses = ShellSession()
-    assert not ses.isdir(__file__)
-    assert ses.isdir("/bin")
+    session = ShellSession()
+    assert not session.isdir(__file__)
+    assert session.isdir("/bin")
 
 
-@with_tempfile(content="""
+def test_source_file_param(resource_test_dir):
+    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+    with temp_file as f:
+        f.write("""
 if ! [ "$1" = "test" ]; then
    exit 1
 fi
 export EXPORTED_VAR=${1}1
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-""")
-def test_source_file_param(script=None):
-    ses = ShellSession()
-    assert ses.get_envvars() == {}
-    new_env_diff = ses.source_script([script, "test"])
-    assert new_env_diff == {'EXPORTED_VAR': 'test1'}
+    """.encode('utf8'))
+        f.flush()
+        script = temp_file.name
+        session = ShellSession()
+        assert session.get_envvars() == {}
+        new_env_diff = session.source_script([script, "test"])
+        assert 'EXPORTED_VAR' in new_env_diff
+        assert new_env_diff['EXPORTED_VAR'] == 'test1'
 
-    new_env_diff = ses.source_script([script, "test"],
-                                     shell="/bin/bash")
-    assert new_env_diff == {}
+        new_env_diff = session.source_script([script, "test"],
+                                         shell="/bin/bash")
+        assert new_env_diff == {}
 
-    # just for "fun"
-    #print ses.source_script([os.path.expanduser('~/anaconda2/bin/activate'), 'datalad'])
+        # just for "fun"
+        #print ses.source_script([os.path.expanduser('~/anaconda2/bin/activate'), 'datalad'])
 
 
 def test_session_passing_envvars():
     check_session_passing_envvars(ShellSession())
+
+
+def test_shell_resource():
+
+    config = {
+        'name': 'test-ssh-resource',
+        'type': 'shell'
+    }
+    resource = ResourceManager.factory(config)
+
+    status = resource.create()
+    print("====================", status)
+    assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
+
+    assert type(resource.connect()) == Shell
+    assert resource.delete() is None
+    assert type(resource.start()) == Shell
+    assert resource.stop() is None
+    assert type(resource.connect()) == Shell
+
+    with raises(NotImplementedError):
+        resource.get_session(pty=True)
+    with raises(NotImplementedError):
+        resource.get_session(pty=False, shared=True)

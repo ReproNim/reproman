@@ -11,9 +11,14 @@
 import attr
 import docker
 import dockerpty
+import io
 import json
+import os
+import tarfile
 from niceman import utils
 from ..support.exceptions import CommandError, ResourceError
+from niceman.dochelpers import borrowdoc
+from niceman.resource.session import POSIXSession, Session
 from .base import Resource, attrib
 
 import logging
@@ -26,8 +31,10 @@ class DockerContainer(Resource):
     Environment manager which manages a Docker container.
     """
 
-    # Container properties
+    # Generic properties of any Resource
     name = attr.ib()
+
+    # Container properties
     id = attr.ib(default=None)
     type = attr.ib(default='docker-container')
 
@@ -51,12 +58,14 @@ class DockerContainer(Resource):
 
         containers = []
         for container in self._client.containers(all=True):
-            assert self.id or self.name, "Name or id must be known"
+            assert self.id or self.name,\
+                "Container name or id must be known"
             if self.id and not container.get('Id').startswith(self.id):
                 lgr.log(5, "Container %s does not match by id: %s", container,
                         self.id)
                 continue
-            if self.name and ('/' + self.name) not in container.get('Names'):
+            if self.name and ('/' + self.name) \
+                    not in container.get('Names'):
                 lgr.log(5, "Container %s does not match by name: %s", container,
                         self.name)
                 continue
@@ -145,30 +154,13 @@ class DockerContainer(Resource):
         )
 
 
-from niceman.resource.session import POSIXSession
-
-
 @attr.s
 class DockerSession(POSIXSession):
     client = attr.ib()
     container = attr.ib()
 
+    @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
-        """
-        Execute the given command in the container.
-
-        Parameters
-        ----------
-        command : string or list
-            Shell command to send to the container to execute. The command can
-            be a string or a list of tokens that create the command.
-        env : dict
-            Complete environment to be used
-
-        Returns
-        -------
-        out, err
-        """
         #command_env = self.get_updated_env(env)
         if env:
             raise NotImplementedError("passing env variables to docker session execution")
@@ -182,6 +174,7 @@ class DockerSession(POSIXSession):
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
         lgr.debug('Running command %r', command)
+        out = []
         execute = self.client.exec_create(container=self.container, cmd=command)
         out = ''
         for i, line in enumerate(
@@ -192,35 +185,65 @@ class DockerSession(POSIXSession):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
             out += utils.to_unicode(line, "utf-8")
             lgr.debug("exec#%i: %s", i, line.rstrip())
-        return (out, self.client.exec_inspect(execute['Id'])['ExitCode'])
+
+        exit_code = self.client.exec_inspect(execute['Id'])['ExitCode']
+        if exit_code not in [0, None]:
+            msg = "Failed to run %r. Exit code=%d. out=%s err=%s" \
+                % (command, exit_code, out, out)
+            raise CommandError(str(command), msg, exit_code, '', out)
+        else:
+            lgr.log(8, "Finished running %r with status %s", command,
+                exit_code)
+
+        return (out, '')
 
     # XXX should we start/stop on open/close or just assume that it is running already?
 
 
-    def put(self, src_path, dest_path, preserve_perms=False,
-                owner=None, group=None, recursive=False):
-        """Take file on the local file system and copy over into the session
-        """
-        # self.ssh.put([src_path], remotepath=dest_path)
-        pass
+    @borrowdoc(Session)
+    def put(self, src_path, dest_path, uid=-1, gid=-1):
+        # To copy one or more files to the container, the API recommends
+        # to do so with a tar archive. http://docker-py.readthedocs.io/en/1.5.0/api/#copy
+        dest_dir, dest_basename = os.path.split(dest_path)
+        if not self.exists(dest_dir):
+            self.mkdir(dest_dir, parents=True)
+        tar_stream = io.BytesIO()
+        tar_file = tarfile.TarFile(fileobj=tar_stream, mode='w')
+        tar_file.add(src_path, arcname=dest_basename)
+        tar_file.close()
+        tar_stream.seek(0)
+        self.client.put_archive(container=self.container['Id'], path=dest_dir,
+            data=tar_stream)
 
-    def get(self, src_path, dest_path, preserve_perms=False,
-                  owner=None, group=None, recursive=False):
-        """Retrieve a file from the remote system
-        """
-        # self.ssh.get(src_path, localpath=dest_path)
-        pass
+        if uid > -1 or gid > -1:
+            self.chown(dest_path, uid, gid)
+
+    @borrowdoc(Session)
+    def get(self, src_path, dest_path, uid=-1, gid=-1):
+        src_dir, src_basename = os.path.split(src_path)
+        dest_dir, dest_basename = os.path.split(dest_path)
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+        stream, stat = self.client.get_archive(self.container, src_path)
+        tarball = tarfile.open(fileobj=io.BytesIO(stream.read()))
+        tarball.extractall(path=dest_dir)
+        os.rename(os.path.join(dest_dir, src_basename), dest_path)
+
+        if uid > -1 or gid > -1:
+            self.chown(dest_path, uid, gid, remote=False)
 
 
 @attr.s
 class PTYDockerSession(DockerSession):
     """Interactive Docker Session"""
 
+    @borrowdoc(Session)
     def open(self):
         lgr.debug("Opening TTY connection to docker container.")
         # TODO: probably call to super to assure that we have it running?
         dockerpty.start(self.client, self.container, logs=0)
 
+    @borrowdoc(Session)
     def close(self):
         # XXX ?
         pass
