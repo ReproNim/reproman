@@ -325,11 +325,12 @@ class CondaTracer(DistributionTracer):
             )
             root_to_envs[root_path].append(conda_env)
 
-        lgr.info("%s: %d packages with %d files, and %d other files",
-                 self.__class__.__name__,
-                 found_package_count,
-                 total_file_count - len(unknown_files),
-                 len(unknown_files))
+        lgr.debug(
+            "%s: %d packages with %d files, and %d other files",
+            self.__class__.__name__,
+            found_package_count,
+            total_file_count - len(unknown_files),
+            len(unknown_files))
 
         # Find all the identified conda_roots
         conda_roots = root_to_envs.keys()

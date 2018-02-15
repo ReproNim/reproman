@@ -153,7 +153,7 @@ def identify_distributions(files, session=None):
     distibutions = []
     files_processed = set()
     for Tracer in Tracers:
-        lgr.info("Tracing using %s", Tracer)
+        lgr.debug("Tracing using %s", Tracer.__name__)
 
         # Pull out directories if the tracer can't handle them
         if Tracer.HANDLES_DIRS:
@@ -169,12 +169,18 @@ def identify_distributions(files, session=None):
         #     files, so we should not just 'continue' the loop if there is no
         #     files_to_trace
         if files_to_trace:
-            remaining_files_to_trace = set()
+            remaining_files_to_trace = files_to_trace
+            nenvs = 0
             for env, remaining_files_to_trace in tracer.identify_distributions(
                     files_to_trace):
                 distibutions.append(env)
+                nenvs += 1
             files_processed |= files_to_trace - remaining_files_to_trace
             files_to_trace = remaining_files_to_trace
+            lgr.info("%s: %d envs with %d other files remaining",
+                     Tracer.__name__,
+                     nenvs,
+                     len(files_to_trace))
 
         # Re-combine any files that were skipped
         files_to_consider = files_to_trace | files_skipped

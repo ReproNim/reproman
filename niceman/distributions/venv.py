@@ -148,12 +148,6 @@ class VenvTracer(DistributionTracer):
                                 python_version=self._python_version(venv_path),
                                 packages=packages))
 
-        lgr.info("%s: %d packages with %d files, and %d other files",
-                 self.__class__.__name__,
-                 found_package_count,
-                 total_file_count - len(unknown_files),
-                 len(unknown_files))
-
         if venvs:
             yield (VenvDistribution(name="venv",
                                     venv_version=self._venv_version(),
