@@ -83,6 +83,7 @@ class CondaDistribution(Distribution):
         environment : object
             The Environment sub-class object.
         """
+        # TODO Move conda installation here (environment is actually session)
         return
 
     def install_packages(self, session=None):
@@ -112,12 +113,14 @@ class CondaDistribution(Distribution):
             # See if Conda root path exists and if not, install Conda
             if not session.isdir(self.path):
                 # TODO: Support OSX and non x86_64 (and move to helper func)
+                # TODO: Determine if we can detect miniconda vs anaconad
+                # TODO: Learn more about downgrading ability vs. installing correct version of conda to begin with
                 miniconda_url = "https://repo.continuum.io/miniconda/"
                 if self.python_version.startswith("2"):
                     miniconda_url += "Miniconda2-latest-Linux-x86_64.sh"
                 else:
                     miniconda_url += "Miniconda3-latest-Linux-x86_64.sh"
-                # TODO: Handle expected errors
+                # TODO: Handle expected errors (or note that we throw errors)
                 session.execute_command("curl %s -o %s/miniconda.sh" %
                                         (miniconda_url, tmp_dir))
                 # NOTE: miniconda.sh makes parent directories automatically

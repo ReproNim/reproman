@@ -150,6 +150,8 @@ def test_create_conda_export():
 
 @skip_if_no_network
 def test_conda_init_and_install():
+    # TODO: Make situations where is fails
+    # TODO: Make a marker as an "integration test" (and mark the debian /usr/bin detection test)
     dist = CondaDistribution(
         name="conda",
         path="/tmp/niceman_conda/miniconda",
