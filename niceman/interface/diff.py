@@ -17,8 +17,6 @@ from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
 
-from niceman.formats.niceman import NicemanProvenance
-
 __docformat__ = 'restructuredtext'
 
 from logging import getLogger
@@ -64,21 +62,23 @@ class Diff(Interface):
         if not req:
             raise InsufficientArgumentsError("req undefined")
 
+        from niceman.formats.niceman import NicemanProvenance
+
         env_prov = NicemanProvenance(env)
         req_prov = NicemanProvenance(req)
 
-        env_env = env_prov.get_environment()
-        req_env = req_prov.get_environment()
+#        print env_prov.get_environment()
+        lgr.warning('diff: environment not checked')
 
         try:
-            env_dists = dictify_distributions(env_env.distributions)
+            env_dists = dictify_distributions(env_prov.get_distributions())
         except MultipleDistributionsError as data:
             lgr.error('diff: panic!')
             fmt = 'multiple occurrences of %s in environment specification'
             raise ValueError(fmt % str(data.cls))
 
         try:
-            req_dists = dictify_distributions(req_env.distributions)
+            req_dists = dictify_distributions(req_prov.get_distributions())
         except MultipleDistributionsError as data:
             lgr.error('diff: panic!')
             fmt = 'multiple occurrences of %s in requirements specification'
@@ -99,8 +99,8 @@ class Diff(Interface):
             if missing_packages:
                 needed_packages[dist_type] = missing_packages
 
-        env_files = set(env_env.files)
-        req_files = set(req_env.files)
+        env_files = set(env_prov.get_files())
+        req_files = set(req_prov.get_files())
         needed_files = req_files - env_files
 
         lgr.info('needed distributions: %d' % len(needed_dists))
