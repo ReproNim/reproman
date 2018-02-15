@@ -10,7 +10,6 @@
 from collections import defaultdict
 import logging
 import os
-import os.path as op
 
 import attr
 
@@ -18,7 +17,7 @@ from six import iteritems
 from niceman.distributions import Distribution
 from niceman.distributions.piputils import pip_show, get_pip_packages
 from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot
+from niceman.utils import PathRoot, is_subpath
 
 from .base import DistributionTracer
 from .base import Package
@@ -128,11 +127,7 @@ class VenvTracer(DistributionTracer):
                                 local=name in local_pkgs,
                                 origin_location=location,
                                 files=pkg_to_found_files[name]))
-                # op.relpath comparison is to check if to get from venv_path
-                # (which will be converted to full path if needed) to the
-                # location will not go upstairs
-                if location and \
-                        op.relpath(location, venv_path).startswith(op.pardir):
+                if location and not is_subpath(location, venv_path):
                     unknown_files.add(location)
 
             found_package_count += len(packages)

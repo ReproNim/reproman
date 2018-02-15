@@ -1194,4 +1194,12 @@ class PathRoot(object):
             yield path
             path = os.path.dirname(path)
 
+
+def is_subpath(path, directory):
+    """Test whether `path` is below (or is itself) `directory`.
+
+    Symbolic links are not resolved before the check.
+    """
+    return not os.path.relpath(path, directory).startswith(os.path.pardir)
+
 lgr.log(5, "Done importing niceman.utils")
