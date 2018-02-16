@@ -50,32 +50,100 @@ def test_retrace_normalize_paths():
         assert "name: debian" in cm.out
 
 
-def test_retrace_loop_over_tracers():
-    def get_tracer_session(protocol):
+def get_tracer_session(protocols):
+    class FakeSession(object):
+        """A fake session attributes and methods of which should not
+        actually be used only but isdir.
+        If anything else is accessed, it means that we have some assumptions
+        """
+
+        def isdir(self, _):
+            return False  # TODO: make it parametric
+
+    tracer_classes = []
+    for itracer, protocol in enumerate(protocols):
         # Test the loop logic
         class FakeTracer(object):
-            _protocol = protocol
+            _protocol = protocol[:]
             HANDLES_DIRS = False  # ???
+
             def __init__(self, session):
                 assert session
+                assert self._protocol, \
+                    "No more protocols to go through, but were were asked to"
                 self._current_protocol = self._protocol.pop(0)
 
             def identify_distributions(self, files):
                 for item in self._current_protocol:
                     yield item
+        FakeTracer.__name__ = "FakeTracer%d" % itracer
+        tracer_classes.append(FakeTracer)
+    return tracer_classes, FakeSession()
 
-        class FakeSession(object):
-            """A fake session attributes and methods of which should not
-            actually be used only but isdir.
-            If anything else is accessed, it means that we have some assumptions
-            """
-            def isdir(self, _):
-                return False   # TODO: make it parametric
 
-        return [FakeTracer], FakeSession()
-
-    tracer_classes, session = get_tracer_session([[("TheEnvironment1", {"thefile"})]])
-    dists, unknown_files = identify_distributions(["thefile"], session, tracer_classes=tracer_classes)
+def _check_loop_protocol(protocols, files, tenvs, tfiles):
+    tracer_classes, session = get_tracer_session(protocols)
+    dists, unknown_files = identify_distributions(
+        files, session, tracer_classes=tracer_classes)
     assert not any(t._protocol for t in tracer_classes), "we exhausted the protocol"
-    assert dists == ['TheEnvironment1']
-    assert unknown_files == {"thefile"}
+    assert dists == tenvs
+    assert unknown_files == tfiles
+
+
+def test_retrace_loop_over_tracers():
+    _check_loop_protocol(
+        [  # Tracers
+            [  # Tracer passes
+                [  # what to yield
+                    ("Env1", {"thefile"})
+                ]
+            ]
+        ],
+        files=["thefile"],
+        tenvs=['Env1'],
+        tfiles={"thefile"})
+
+    # The 2nd tracer consumes everything
+    _check_loop_protocol(
+        [  # Tracers
+            [  # Tracer passes
+                [  # what to yield
+                    ("Env1", {"thefile"})
+                ],
+            ],
+            [  # Tracer passes
+                [  # what to yield
+                    ("Env2", set())
+                ],
+            ]
+        ],
+        files=["thefile"],
+        tenvs=['Env1', 'Env2'],
+        tfiles=set())
+
+    # The fancy multi-yield and producing stuff
+    _check_loop_protocol(
+        [  # Tracers
+            [  # Tracer passes
+                [  # what to yield
+                    ("Env1", {"file2", "file3"}),
+                ],
+                [
+                    ("Env3", {"file3"})  # consume file4
+                ],
+                []  # finale
+            ],
+            [  # Tracer passes
+                [  # what to yield
+                    ("Env2", {"file3", "file4", "file5"}),
+                    ("Env2.1", {"file3", "file4"})
+                ],
+                [
+
+                ],
+                []  # finale
+            ]
+        ],
+        files=["file1", "file2"],
+        tenvs=['Env1', 'Env2', 'Env2.1', 'Env3'],
+        tfiles={'file3'})
