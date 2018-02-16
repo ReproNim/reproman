@@ -363,9 +363,8 @@ class GitRepoShim(GitSVNRepoShim):
         remote_branches = self._run_git(
             ["for-each-ref", "--contains", hexsha,
              # refs/remotes/<remote>/<name> => <remote>/<name>
-             "--format=%(refname:lstrip=2)",
-             "refs/remotes"],
-            expect_fail=True).splitlines()
+             "--format=%(refname:strip=2)",
+             "refs/remotes"]).splitlines()
 
         if not remote_branches:
             return {}
