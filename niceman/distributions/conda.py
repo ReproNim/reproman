@@ -38,7 +38,8 @@ class CondaPackage(Package):
     size = attr.ib()
     md5 = attr.ib()
     url = attr.ib()
-    origin_location = attr.ib(default=None)
+    location = attr.ib(default=None)
+    editable = attr.ib(default=False)
     files = attr.ib(default=attr.Factory(list))
 
 
@@ -160,33 +161,23 @@ class CondaTracer(DistributionTracer):
 
         # If there are pip dependencies, they'll be listed under a
         # {"pip": [...]} entry.
-        pip_deps = []
+        pip_pkgs = []
         for dep in dependencies:
             if isinstance(dep, dict) and "pip" in dep:
-                pip_deps = dep["pip"]
+                # Pip packages are recorded in conda exports as "name (loc)",
+                # "name==version" or "name (loc)==version".
+                pip_pkgs = [p.split("=")[0].split(" ")[0] for p in dep["pip"]]
                 break
 
+        if not pip_pkgs:
+            return {}, {}
+
         pip = conda_path + "/bin/pip"
-        pkgs = [pkg for pkg, _  in map(self.parse_pip_package_entry, pip_deps)]
-        packages, file_to_package_map = piputils.pip_show(
-            self._session, pip, pkgs)
+        packages, file_to_package_map = piputils.get_package_details(
+            self._session, pip, pip_pkgs)
         for entry in packages.values():
             entry["installer"] = "pip"
         return packages, file_to_package_map
-
-    @staticmethod
-    def parse_pip_package_entry(pip_dep):
-        # Pip packages are recorded in conda exports as "name (loc)",
-        # "name==version" or "name (loc)==version".  So split on "=", then
-        # on " "
-        name = pip_dep.split("=")[0]
-        name = name.split(" ")[0]
-        # Record the origin location (if installed from a local source)
-        if "(" in pip_dep:  # We have an origin location
-            origin_location = re.search('\(([^)]+)', pip_dep).group(1)
-        else:
-            origin_location = None
-        return name, origin_location
 
     def _get_conda_env_export(self, root_prefix, conda_path):
         export = {}
@@ -315,7 +306,8 @@ class CondaTracer(DistributionTracer):
                     size=details.get("size"),
                     md5=details.get("md5"),
                     url=details.get("url"),
-                    origin_location=details.get("origin_location"),
+                    location=details.get("location"),
+                    editable=details.get("editable"),
                     files=pkg_to_found_files[package_name]
                 )
                 packages.append(package)

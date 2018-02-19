@@ -33,7 +33,8 @@ class VenvPackage(Package):
     name = attr.ib()
     version = attr.ib()
     local = attr.ib()
-    origin_location = attr.ib(default=None)
+    location = attr.ib(default=None)
+    editable = attr.ib(default=False)
     files = attr.ib(default=attr.Factory(list))
 
 
@@ -75,12 +76,13 @@ class VenvTracer(DistributionTracer):
     def _get_package_details(self, venv_path):
         pip = venv_path + "/bin/pip"
         try:
-            pkgs = list(piputils.get_pip_packages(self._session, pip))
+            packages, file_to_pkg = piputils.get_package_details(
+                self._session, pip)
         except Exception as exc:
-            lgr.warning("Could not determine pip packages for %s: %s",
+            lgr.warning("Could not determine pip package details for %s: %s",
                         venv_path, exc_str(exc))
-            return
-        return piputils.pip_show(self._session, pip, pkgs)
+            return {}, {}
+        return packages, file_to_pkg
 
     def _is_venv_directory(self, path):
         try:
@@ -131,12 +133,13 @@ class VenvTracer(DistributionTracer):
 
             packages = []
             for name, details in iteritems(package_details):
-                location = details["origin_location"]
+                location = details["location"]
                 packages.append(
                     VenvPackage(name=details["name"],
                                 version=details["version"],
                                 local=name in local_pkgs,
-                                origin_location=location,
+                                location=location,
+                                editable=details["editable"],
                                 files=pkg_to_found_files[name]))
                 if location and not is_subpath(location, venv_path):
                     unknown_files.add(location)

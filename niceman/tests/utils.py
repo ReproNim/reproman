@@ -636,6 +636,27 @@ def assert_is_subset_recur(a, b, subset_types=[]):
             raise AssertionError("Value %s != %s" % (a, b))
 
 
+def create_pymodule(directory):
+    """Create a skeleton Python module in `directory`.
+
+    Parameters
+    ----------
+    directory : str
+        Path to a non-existing directory.
+    """
+    os.makedirs(directory)
+    with open(os.path.join(directory, "setup.py"), "w") as ofh:
+        ofh.write("""\
+from setuptools import setup
+
+setup(name='nmtest',
+      version='0.1.0',
+      py_modules=['nmtest'])""")
+
+    with open(os.path.join(directory, "nmtest"), "w") as ofh:
+        ofh.write("")
+
+
 #
 # Context Managers
 #

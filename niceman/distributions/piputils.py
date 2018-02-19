@@ -78,7 +78,7 @@ def pip_show(session, which_pip, pkgs):
     for pkg, info in show_entries:
         details = {"name": info["Name"],
                    "version": info["Version"],
-                   "origin_location": info["Location"]}
+                   "location": info["Location"]}
         packages[pkg] = details
         for path in info["Files"]:
             full_path = os.path.normpath(
@@ -158,3 +158,36 @@ def get_pip_packages(session, which_pip, local_only=False):
     A generator that yields package names.
     """
     return (pkg for pkg, _, _ in pip_list(session, which_pip, local_only))
+
+
+def get_package_details(session, which_pip, packages=None):
+    """Get package details from `pip show` and `pip list`.
+
+    This is similar to `pip_show`, but it uses `pip list` to get information
+    about editable locations and to optionally generate the list of packages.
+
+    Parameters
+    ----------
+    session : Session instance
+        Session in which to execute the command.
+    which_pip : str
+        Name of the pip executable.
+    packages : list of str, optional
+        Package names.  If not given, all packages returned by `pip list` are
+        used.
+
+    Returns
+    -------
+    A tuple of two dicts, where the first maps a package name to its
+    details and the second maps package files to the package name.
+    """
+    pkgs, _, editlocs = map(list, zip(*pip_list(session, which_pip)))
+
+    if packages is None:
+        packages = pkgs
+
+    pkg_to_editloc = dict(zip(pkgs, editlocs))
+    details, file_to_pkg = pip_show(session, which_pip, packages)
+    for pkg in details:
+        details[pkg]["editable"] = pkg_to_editloc[pkg] is not None
+    return details, file_to_pkg
