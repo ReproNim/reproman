@@ -14,15 +14,15 @@ from collections import defaultdict
 import attr
 import yaml
 
-from niceman.distributions import Distribution
+from niceman.distributions import Distribution, piputils
+from niceman.dochelpers import exc_str
+from niceman.utils import PathRoot
 
 from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
-from .piputils import pip_show
-from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot
+
 
 import logging
 lgr = logging.getLogger('niceman.distributions.conda')
@@ -168,7 +168,8 @@ class CondaTracer(DistributionTracer):
 
         pip = conda_path + "/bin/pip"
         pkgs = [pkg for pkg, _  in map(self.parse_pip_package_entry, pip_deps)]
-        packages, file_to_package_map = pip_show(self._session, pip, pkgs)
+        packages, file_to_package_map = piputils.pip_show(
+            self._session, pip, pkgs)
         for entry in packages.values():
             entry["installer"] = "pip"
         return packages, file_to_package_map
