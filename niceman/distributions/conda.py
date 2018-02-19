@@ -351,4 +351,4 @@ class CondaTracer(DistributionTracer):
                 path=root_path,
                 environments=root_to_envs[root_path]
             )
-            yield dist, list(unknown_files)
+            yield dist, unknown_files
