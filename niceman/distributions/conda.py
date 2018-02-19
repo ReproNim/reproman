@@ -9,7 +9,6 @@
 """Orchestrator sub-class to provide management of the localhost environment."""
 import json
 import os
-import re
 from collections import defaultdict
 
 import attr
