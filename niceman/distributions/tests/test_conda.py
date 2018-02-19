@@ -94,6 +94,19 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
            }
     assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
 
+    # conda packages are not repeated as "pip" packages.
+    for pkg in distributions.environments[1].packages:
+        if pkg.name == "pip":
+            assert pkg.installer is None
+
+
+def test_parse_conda_export_pip_package_entry():
+    assert CondaTracer.parse_pip_package_entry("appdirs==1.4.3") == (
+        "appdirs", None)
+    assert CondaTracer.parse_pip_package_entry(
+        "niceman (/test/repronim)==0.0.2") == (
+           "niceman", "/test/repronim")
+
 
 def test_get_conda_env_export_exceptions():
     # Mock to capture logs
