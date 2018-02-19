@@ -102,7 +102,7 @@ def parse_pip_list(out):
     """
     pkg_re = re.compile(r"^([^(]+) \((.+)\)$", re.MULTILINE)
     for pkg, version_location in pkg_re.findall(out):
-        if "," in version_location:
+        if ", " in version_location:
             version, location = version_location.split(", ")
         else:
             version = version_location
