@@ -44,7 +44,7 @@ from ..utils import on_windows
 from ..utils import _path_
 from ..utils import to_unicode
 from ..utils import generate_unique_name
-from ..utils import PathRoot
+from ..utils import PathRoot, is_subpath
 
 from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -470,6 +470,25 @@ def test_pathroot():
     assert proot("/root") == "/root"
     assert proot("/root/a_root_it_is_not") == "/root"
     assert proot("/root/x/child_root") == "/root/x/child_root"
+
+
+def test_is_subpath(tmpdir):
+    tmpdir = str(tmpdir)
+
+    assert is_subpath("a/b", "a")
+    assert not is_subpath("b", "a/b")
+
+    # Partial matches in the parent directory are not false positives.
+    assert not is_subpath("abc/b", "a")
+
+    assert is_subpath("/tmp/a", "/tmp")
+    assert is_subpath("/tmp/a/b/c", "/tmp")
+    assert is_subpath("/tmp/a/b/c", "/tmp")
+    assert not is_subpath("/tmp", "/tmp/a/b/c")
+    # Same path is considered a "subpath".
+    assert is_subpath("/tmp", "/tmp")
+    # Trailing slashes don't matter.
+    assert is_subpath("/tmp/", "/tmp")
 
 
 def test_line_profile():

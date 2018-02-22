@@ -1062,6 +1062,7 @@ def execute_command_batch(session, command, args, exception_filter=None):
     """
     cmd_length = sum(map(len, command)) + len(command)
     num_args = get_cmd_batch_len(args, cmd_length)
+    args = list(args)  # we might get in with a set
     while args:
         batch, args = args[:num_args], args[num_args:]
         try:
@@ -1192,5 +1193,14 @@ class PathRoot(object):
         while path not in [os.path.pathsep, os.path.sep, ""]:
             yield path
             path = os.path.dirname(path)
+
+
+def is_subpath(path, directory):
+    """Test whether `path` is below (or is itself) `directory`.
+
+    Symbolic links are not resolved before the check.
+    """
+    return not os.path.relpath(path, directory).startswith(os.path.pardir)
+
 
 lgr.log(5, "Done importing niceman.utils")
