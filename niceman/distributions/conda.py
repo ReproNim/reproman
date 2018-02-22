@@ -53,8 +53,6 @@ class CondaChannel(SpecObject):
 class CondaEnvironment(SpecObject):
     name = attr.ib()
     path = attr.ib(default=None)
-    conda_version = attr.ib(default=None)
-    python_version = attr.ib(default=None)
     packages = TypedList(CondaPackage)
     channels = TypedList(CondaChannel)
 
@@ -107,7 +105,8 @@ class CondaTracer(DistributionTracer):
     """
 
     def _init(self):
-        self._path_root = PathRoot(self._is_conda_directory)
+        self._env_path_root = PathRoot(self._is_conda_env_directory)
+        self._root_path_root = PathRoot(self._is_conda_root_directory)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -243,17 +242,32 @@ class CondaTracer(DistributionTracer):
                         conda_path, exc_str(exc))
         return details
 
-    def _get_conda_path(self, path):
-        return self._path_root(path)
+    def _get_conda_env_path(self, path):
+        return self._env_path_root(path)
 
-    def _is_conda_directory(self, path):
+    def _is_conda_env_directory(self, path):
         try:
             _, _ = self._session.execute_command(
-                'ls -ld %s/bin/conda %s/conda-meta'
-                % (path, path)
+                'ls -ld %s/conda-meta'
+                % path
             )
         except Exception as exc:
-            lgr.debug("Did not detect conda at the path %s: %s", path,
+            lgr.debug("Did not detect conda env at the path %s: %s", path,
+                      exc_str(exc))
+            return False
+        return True
+
+    def _get_conda_root_path(self, path):
+        return self._root_path_root(path)
+
+    def _is_conda_root_directory(self, path):
+        try:
+            _, _ = self._session.execute_command(
+                'ls -ld %s/bin %s/envs %s/conda-meta'
+                % (path, path, path)
+            )
+        except Exception as exc:
+            lgr.debug("Did not detect conda root at the path %s: %s", path,
                       exc_str(exc))
             return False
         return True
@@ -269,7 +283,7 @@ class CondaTracer(DistributionTracer):
 
         # First, loop through all the files and identify conda paths
         for path in paths:
-            conda_path = self._get_conda_path(path)
+            conda_path = self._get_conda_env_path(path)
             if conda_path:
                 if conda_path not in conda_paths:
                     conda_paths.add(conda_path)
@@ -281,9 +295,13 @@ class CondaTracer(DistributionTracer):
             channels = []
             found_channel_names = set()
 
-            # Retrieve distribution details
-            conda_info = self._get_conda_info(conda_path)
-            root_path = conda_info["root_prefix"]
+            # Find the root path for the environment
+            root_path = self._get_conda_root_path(conda_path)
+            if not root_path:
+                lgr.warning("Could not find root path for conda environment %s"
+                            % conda_path)
+                continue
+            # Retrieve the environment details
             env_export = self._get_conda_env_export(
                root_path, conda_path)
             (conda_package_details, file_to_pkg) = \
@@ -357,8 +375,6 @@ class CondaTracer(DistributionTracer):
             # Create the conda environment (works with root environments too)
             conda_env = CondaEnvironment(
                 name=env_name,
-                conda_version=conda_info.get("conda_version"),
-                python_version=conda_info.get("python_version"),
                 path=conda_path,
                 packages=packages,
                 channels=channels
