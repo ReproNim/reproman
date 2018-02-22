@@ -105,8 +105,8 @@ class CondaTracer(DistributionTracer):
     """
 
     def _init(self):
-        self._env_path_root = PathRoot(self._is_conda_env_directory)
-        self._root_path_root = PathRoot(self._is_conda_root_directory)
+        self._get_conda_env_path = PathRoot(self._is_conda_env_path)
+        self._get_conda_root_path = PathRoot(self._is_conda_root_path)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -242,16 +242,10 @@ class CondaTracer(DistributionTracer):
                         conda_path, exc_str(exc))
         return details
 
-    def _get_conda_env_path(self, path):
-        return self._env_path_root(path)
-
-    def _is_conda_env_directory(self, path):
+    def _is_conda_env_path(self, path):
         return self._session.exists('%s/conda-meta' % path)
 
-    def _get_conda_root_path(self, path):
-        return self._root_path_root(path)
-
-    def _is_conda_root_directory(self, path):
+    def _is_conda_root_path(self, path):
         return all(map(self._session.exists, ('%s/%s' % (path, d) for d in
                                               ('bin', 'envs', 'conda-meta'))))
 
