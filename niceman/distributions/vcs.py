@@ -15,18 +15,16 @@ import attr
 import os
 
 from collections import defaultdict
-from os.path import dirname, isdir, isabs
+from os.path import dirname, isdir, isabs, abspath
 from os.path import exists, lexists
 from os.path import join as opj
 
 from logging import getLogger
-from six import viewvalues
 
 from niceman.dochelpers import exc_str
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
 
-from niceman.cmd import Runner
 from niceman.cmd import CommandError
 
 lgr = getLogger('niceman.distributions.vcs')
@@ -361,9 +359,13 @@ class GitRepoShim(GitSVNRepoShim):
         # possibly valuable information
         if not hexsha:  # just initialized
             return {}
+
         remote_branches = self._run_git(
-            'branch -r --contains %s' % hexsha,
-            expect_fail=True)
+            ["for-each-ref", "--contains", hexsha,
+             # refs/remotes/<remote>/<name> => <remote>/<name>
+             "--format=%(refname:strip=2)",
+             "refs/remotes"]).splitlines()
+
         if not remote_branches:
             return {}
         containing_remotes = set(x.split('/', 1)[0] for x in remote_branches)
@@ -484,7 +486,7 @@ class VCSTracer(DistributionTracer):
         """Given a path, return path of the repository it belongs to"""
         # very naive just to get a ball rolling
         if not isabs(path):
-            raise ValueError("ATM operating on full paths, got %s" % path)
+            path = abspath(path)
         dirpath = path if isdir(path) else dirname(path)
 
         # quick check first

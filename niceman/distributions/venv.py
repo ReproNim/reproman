@@ -8,16 +8,15 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Python's virtualenv."""
 from collections import defaultdict
-import itertools
 import logging
 import os
 
 import attr
 
 from niceman.distributions import Distribution
-from niceman.distributions.piputils import parse_pip_show, parse_pip_list
+from niceman.distributions.piputils import pip_show, pip_packages
 from niceman.dochelpers import exc_str
-from niceman.utils import execute_command_batch, PathRoot
+from niceman.utils import PathRoot
 
 from .base import DistributionTracer
 from .base import Package
@@ -72,26 +71,14 @@ class VenvTracer(DistributionTracer):
         raise NotImplementedError
 
     def _get_package_details(self, venv_path):
-        packages = {}
-        file_to_pkg = {}
-
-        pkgs, locs = map(list, zip(*self._pip_packages(venv_path)))
-        batch = execute_command_batch(self._session,
-                                      [venv_path + "/bin/pip", "show", "-f"],
-                                      pkgs)
-        entries = (stacked.split("---") for stacked, _, _ in batch)
-
-        for pkg, loc, entry in zip(pkgs, locs, itertools.chain(*entries)):
-            info = parse_pip_show(entry)
-            details = {"name": info["Name"],
-                       "version": info["Version"],
-                       "location": loc}
-            packages[pkg] = details
-            for path in info["Files"]:
-                full_path = os.path.normpath(
-                    os.path.join(info["Location"], path))
-                file_to_pkg[full_path] = pkg
-        return packages, file_to_pkg
+        pip = venv_path + "/bin/pip"
+        try:
+            pkgs = list(pip_packages(self._session, pip))
+        except Exception as exc:
+            lgr.warning("Could not determine pip packages for %s: %s",
+                        venv_path, exc_str(exc))
+            return
+        return pip_show(self._session, pip, pkgs)
 
     def _is_venv_directory(self, path):
         try:
@@ -117,8 +104,9 @@ class VenvTracer(DistributionTracer):
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
-            local_pkgs = set(p for p, _ in self._pip_packages(venv_path,
-                                                              local_only=True))
+            local_pkgs = set(pip_packages(self._session,
+                                          venv_path + "/bin/pip",
+                                          local_only=True))
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but
@@ -132,7 +120,7 @@ class VenvTracer(DistributionTracer):
             packages = [VenvPackage(name=details["name"],
                                     version=details["version"],
                                     local=name in local_pkgs,
-                                    origin_location=details["location"],
+                                    origin_location=details["origin_location"],
                                     files=pkg_to_found_files[name])
                         for name, details in package_details.items()]
 
@@ -155,32 +143,6 @@ class VenvTracer(DistributionTracer):
                                     path=self._venv_exe_path(),
                                     environments=venvs),
                    list(unknown_files))
-
-    def _pip_packages(self, venv_path, local_only=False):
-        # We could use either 'pip list' or 'pip freeze' to get a list
-        # of packages.  The choice to use 'list' rather than 'freeze'
-        # is based on how they show editable packages.  'list' outputs
-        # a source directory of the package, whereas 'freeze' outputs
-        # a URL like "-e git+https://github.com/[...]".
-        #
-        # It would be nice to use 'pip list --format=json' rather than
-        # the legacy format.  However, currently (pip 9.0.1, 2018/01),
-        # the json format does not include location information for
-        # editable packages (though it is supported in a developmental
-        # version).
-        cmd = [venv_path + "/bin/pip", "list", "--format=legacy"]
-        if local_only:
-            cmd.append("--local")
-
-        try:
-            out, _ = self._session.execute_command(cmd)
-
-        except Exception as exc:
-            lgr.warning("Could determine pip packages for %s: %s",
-                        venv_path, exc_str(exc))
-            return
-        for pkg, _, loc in parse_pip_list(out):
-            yield pkg, loc
 
     def _python_version(self, venv_path):
         try:

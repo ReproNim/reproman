@@ -8,7 +8,11 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Utilities for working with pip.
 """
+import itertools
+import os
 import re
+
+from niceman.utils import execute_command_batch
 
 
 def parse_pip_show(out):
@@ -38,6 +42,51 @@ def parse_pip_show(out):
     return pip_info
 
 
+def _pip_batched_show(session, which_pip, pkgs):
+    cmd = [which_pip, "show", "-f"]
+    batch = execute_command_batch(session, cmd, pkgs)
+    sep_re = re.compile("^---$", flags=re.MULTILINE)
+    entries = (sep_re.split(stacked) for stacked, _, _ in batch)
+
+    for pkg, entry in zip(pkgs, itertools.chain(*entries)):
+        info = parse_pip_show(entry)
+        yield pkg, info
+
+
+def pip_show(session, which_pip, pkgs):
+    """Gather package details from `pip show`.
+
+    Parameters
+    ----------
+    session : Session instance
+        Session in which to execute the command.
+    which_pip : str
+        Name of the pip executable.
+    pkgs : sequence
+        Collection of packages pass to the command.
+
+    Returns
+    -------
+    A tuple of two dicts, where the first maps a package name to its
+    details, and the second maps package files to the package name.
+    """
+    packages = {}
+    file_to_pkg = {}
+
+    show_entries = _pip_batched_show(session, which_pip, pkgs)
+
+    for pkg, info in show_entries:
+        details = {"name": info["Name"],
+                   "version": info["Version"],
+                   "origin_location": info["Location"]}
+        packages[pkg] = details
+        for path in info["Files"]:
+            full_path = os.path.normpath(
+                os.path.join(info["Location"], path))
+            file_to_pkg[full_path] = pkg
+    return packages, file_to_pkg
+
+
 def parse_pip_list(out):
     """Parse the output of `pip list --format=legacy`.
 
@@ -59,3 +108,40 @@ def parse_pip_list(out):
             version = version_location
             location = None
         yield pkg, version, location
+
+
+def pip_packages(session, which_pip, local_only=False):
+    """List pip packages.
+
+    Parameters
+    ----------
+    session : Session instance
+        Session in which to execute the command.
+    which_pip : str
+        Name of the pip executable.
+    local_only : boolean, optional
+        Do not include globally installed packages.  Otherwise, global
+        packages will be included if pip has global access (e.g.,
+        "--system-site-packages" was used when creating the virtualenv
+        directory).
+
+    Returns
+    -------
+    A generator that yields package names.
+    """
+    # We could use either 'pip list' or 'pip freeze' to get a list
+    # of packages.  The choice to use 'list' rather than 'freeze'
+    # is based on how they show editable packages.  'list' outputs
+    # a source directory of the package, whereas 'freeze' outputs
+    # a URL like "-e git+https://github.com/[...]".
+    #
+    # It would be nice to use 'pip list --format=json' rather than
+    # the legacy format.  However, currently (pip 9.0.1, 2018/01),
+    # the json format does not include location information for
+    # editable packages (though it is supported in a developmental
+    # version).
+    cmd = [which_pip, "list", "--format=legacy"]
+    if local_only:
+        cmd.append("--local")
+    out, _ = session.execute_command(cmd)
+    return (pkg for pkg, _, _ in parse_pip_list(out))
