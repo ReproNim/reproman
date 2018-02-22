@@ -84,10 +84,20 @@ def test_source_file_crash(resource_test_dir):
         with raises(Exception):  # TODO: unify?
             session.source_script(script)
 
+
 def test_isdir():
     session = ShellSession()
     assert not session.isdir(__file__)
     assert session.isdir("/bin")
+
+
+def test_exists():
+    session = ShellSession()
+    (_, name) = tempfile.mkstemp()
+    assert session.exists(name)
+    os.remove(name)
+    assert not session.exists(name)
+    assert session.exists("/bin")
 
 
 def test_source_file_param(resource_test_dir):

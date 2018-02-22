@@ -48,7 +48,7 @@ def get_conda_test_dir():
          "curl -O https://repo.continuum.io/miniconda/" + miniconda_sh + "; "
          "bash -b " + miniconda_sh + " -b -p ./miniconda; "
          "./miniconda/bin/conda create -y -n mytest python=2.7; "
-         "./miniconda/envs/mytest/bin/conda install -y xz -n mytest; "
+         "./miniconda/bin/conda install -y xz -n mytest; "
          "./miniconda/envs/mytest/bin/pip install rpaths;",
          shell=True)
     return test_dir
@@ -69,15 +69,20 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
 
     (distributions, unknown_files) = dists[0]
 
+    NicemanProvenance.write(sys.stdout, distributions)
+    print(json.dumps(unknown_files, indent=4))
+
     assert unknown_files == ["/sbin/iptables"], \
         "Exactly one file (/sbin/iptables) should not be discovered."
 
     assert len(distributions.environments) == 2, \
         "Two conda environments are expected."
 
-    out = {'environments': [{'packages': [{'files': ['bin/sqlite3'],
+    out = {'environments': [{'name': 'root',
+                             'packages': [{'files': ['bin/sqlite3'],
                                            'name': 'sqlite'}]},
-                            {'packages': [{'files': ['bin/xz'],
+                            {'name': 'mytest',
+                             'packages': [{'files': ['bin/xz'],
                                            'name': 'xz'},
                                           {'files': ['lib/python2.7/site-packages/pip/index.py'],
                                            'name': 'pip'},
@@ -89,8 +94,6 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
                             ]
            }
     assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
-    NicemanProvenance.write(sys.stdout, distributions)
-    print(json.dumps(unknown_files, indent=4))
 
 
 def test_get_conda_env_export_exceptions():
