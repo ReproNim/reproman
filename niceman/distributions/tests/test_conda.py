@@ -75,9 +75,11 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
     assert len(distributions.environments) == 2, \
         "Two conda environments are expected."
 
-    out = {'environments': [{'packages': [{'files': ['bin/sqlite3'],
+    out = {'environments': [{'name': 'root',
+                             'packages': [{'files': ['bin/sqlite3'],
                                            'name': 'sqlite'}]},
-                            {'packages': [{'files': ['bin/xz'],
+                            {'name': 'mytest',
+                             'packages': [{'files': ['bin/xz'],
                                            'name': 'xz'},
                                           {'files': ['lib/python2.7/site-packages/pip/index.py'],
                                            'name': 'pip'},

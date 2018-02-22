@@ -345,10 +345,11 @@ class CondaTracer(DistributionTracer):
                 packages.append(package)
 
             # Give the distribution a name
-            if (len(conda_paths)) > 1:
-                env_name = 'conda_env-%d' % idx
+            # Determine name from path (Alt approach: use conda-env info)
+            if os.path.normpath(conda_path) == os.path.normpath(root_path):
+                env_name = "root"
             else:
-                env_name = 'conda_env'
+                env_name = os.path.basename(os.path.normpath(conda_path))
 
             # Keep track of found package count
             found_package_count += len(packages)
