@@ -246,31 +246,14 @@ class CondaTracer(DistributionTracer):
         return self._env_path_root(path)
 
     def _is_conda_env_directory(self, path):
-        try:
-            _, _ = self._session.execute_command(
-                'ls -ld %s/conda-meta'
-                % path
-            )
-        except Exception as exc:
-            lgr.debug("Did not detect conda env at the path %s: %s", path,
-                      exc_str(exc))
-            return False
-        return True
+        return self._session.exists('%s/conda-meta' % path)
 
     def _get_conda_root_path(self, path):
         return self._root_path_root(path)
 
     def _is_conda_root_directory(self, path):
-        try:
-            _, _ = self._session.execute_command(
-                'ls -ld %s/bin %s/envs %s/conda-meta'
-                % (path, path, path)
-            )
-        except Exception as exc:
-            lgr.debug("Did not detect conda root at the path %s: %s", path,
-                      exc_str(exc))
-            return False
-        return True
+        return all(map(self._session.exists, ('%s/%s' % (path, d) for d in
+                                              ('bin', 'envs', 'conda-meta'))))
 
     def identify_distributions(self, paths):
         conda_paths = set()
