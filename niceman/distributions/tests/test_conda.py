@@ -70,9 +70,8 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
     (distributions, unknown_files) = dists[0]
 
     NicemanProvenance.write(sys.stdout, distributions)
-    print(json.dumps(unknown_files, indent=4))
 
-    assert unknown_files == ["/sbin/iptables"], \
+    assert unknown_files == {"/sbin/iptables"}, \
         "Exactly one file (/sbin/iptables) should not be discovered."
 
     assert len(distributions.environments) == 2, \

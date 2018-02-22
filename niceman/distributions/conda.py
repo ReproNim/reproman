@@ -21,7 +21,7 @@ from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
-from .piputils import pip_show, pip_packages
+from .piputils import pip_show, get_pip_packages
 from niceman.dochelpers import exc_str
 from niceman.utils import PathRoot
 
@@ -159,7 +159,7 @@ class CondaTracer(DistributionTracer):
     def _get_conda_pip_package_details(self, conda_path):
         pip = conda_path + "/bin/pip"
         try:
-            pkgs = list(pip_packages(self._session, pip))
+            pkgs = list(get_pip_packages(self._session, pip))
         except Exception as exc:
             lgr.warning("Could not determine pip packages for %s: %s",
                         conda_path, exc_str(exc))
@@ -319,11 +319,12 @@ class CondaTracer(DistributionTracer):
             )
             root_to_envs[root_path].append(conda_env)
 
-        lgr.info("%s: %d packages with %d files, and %d other files",
-                 self.__class__.__name__,
-                 found_package_count,
-                 total_file_count - len(unknown_files),
-                 len(unknown_files))
+        lgr.debug(
+            "%s: %d packages with %d files, and %d other files",
+            self.__class__.__name__,
+            found_package_count,
+            total_file_count - len(unknown_files),
+            len(unknown_files))
 
         # Find all the identified conda_roots
         conda_roots = root_to_envs.keys()
@@ -344,4 +345,4 @@ class CondaTracer(DistributionTracer):
                 path=root_path,
                 environments=root_to_envs[root_path]
             )
-            yield dist, list(unknown_files)
+            yield dist, unknown_files
