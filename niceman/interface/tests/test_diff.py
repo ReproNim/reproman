@@ -10,32 +10,19 @@
 from os.path import join as opj, dirname
 from niceman.cmdline.main import main
 
-import logging
+from niceman.utils import swallow_outputs
+from niceman.tests.utils import assert_in, assert_not_in, assert_equal
 
-from niceman.utils import swallow_logs
-from niceman.tests.utils import assert_in
+files1_yaml = opj(dirname(__file__), 'files', 'files1.yaml')
+files2_yaml = opj(dirname(__file__), 'files', 'files2.yaml')
 
-xeyes_yaml = opj(dirname(__file__), 'files', 'xeyes.yaml')
-xeyes_no_x11_yaml = opj(dirname(__file__), 'files', 'xeyes_no_x11-apps.yaml')
-
-def test_diff_same():
-    with swallow_logs(new_level=logging.DEBUG) as log:
-        args = ['diff', 
-                '--env', 
-                'niceman/interface/tests/files/xeyes.yaml', 
-                '--req', 
-                'niceman/interface/tests/files/xeyes_no_x11-apps.yaml'
-                ]
+def test_diff_files():
+    with swallow_outputs() as outputs:
+        args = ['diff', files1_yaml, files2_yaml]
         main(args)
-        assert_in('requirements satisfied', log.lines)
-
-def test_diff_different():
-    with swallow_logs(new_level=logging.DEBUG) as log:
-        args = ['diff', 
-                '--env', 
-                'niceman/interface/tests/files/xeyes_no_x11-apps.yaml', 
-                '--req', 
-                'niceman/interface/tests/files/xeyes.yaml'
-                ]
-        main(args)
-        assert_in('needed packages: 1', log.lines)
+        assert_in('Files:', outputs.out)
+        assert_in('< /etc/a', outputs.out)
+        assert_in('> /etc/c', outputs.out)
+        assert_not_in('< /etc/b', outputs.out)
+        assert_not_in('> /etc/b', outputs.out)
+        assert_equal(outputs.err, '')

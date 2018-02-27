@@ -16,6 +16,7 @@ from .base import Interface
 from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
+from niceman.formats.niceman import NicemanProvenance
 
 __docformat__ = 'restructuredtext'
 
@@ -41,33 +42,39 @@ class Diff(Interface):
     """
 
     _params_ = dict(
-        env=Parameter(
-            args=("--env",),
-            doc="NICEMAN environment specification", 
-            metavar='env',
+        prov1=Parameter(
+            doc="NICEMAN provenance file", 
+            metavar='prov1',
             constraints=EnsureStr()),
-        req=Parameter(
-            args=("--req",),
-            metavar="req",
-            doc="NICEMAN requirements", 
+        prov2=Parameter(
+            metavar="prov2",
+            doc="NICEMAN provenance file", 
             constraints=EnsureStr())
     )
 
     @staticmethod
-    def __call__(env, req):
+    def __call__(prov1, prov2):
 
-        if not env:
-            raise InsufficientArgumentsError("env undefined")
+        env1 = NicemanProvenance(prov1).get_environment()
+        env2 = NicemanProvenance(prov2).get_environment()
 
-        if not req:
-            raise InsufficientArgumentsError("req undefined")
+        files1 = set(env1.files)
+        files2 = set(env2.files)
 
-        from niceman.formats.niceman import NicemanProvenance
+        files_1_only = files1 - files2
+        files_2_only = files2 - files1
 
-        env_prov = NicemanProvenance(env)
-        req_prov = NicemanProvenance(req)
+        if files_1_only or files_2_only:
+            print('Files:')
+            for fname in files_1_only:
+                print('< %s' % fname)
+            if files_1_only and files_2_only:
+                print('---')
+            for fname in files_2_only:
+                print('> %s' % fname)
 
-#        print env_prov.get_environment()
+        return
+
         lgr.warning('diff: environment not checked')
 
         try:
