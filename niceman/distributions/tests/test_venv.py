@@ -59,7 +59,7 @@ def test_venv_identify_distributions(venv_test_dir):
         assert len(dists) == 1
 
         distributions, unknown_files = dists[0]
-        assert unknown_files == ["/sbin/iptables"]
+        assert unknown_files == {"/sbin/iptables"}
 
         assert len(distributions.environments) == 2
 

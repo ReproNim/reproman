@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 from os.path import normpath
 import sys
 import time
+from copy import copy
 
 from niceman.resource.session import get_local_session
 from .base import Interface
@@ -115,7 +116,7 @@ class Retrace(Interface):
 # TODO: session should be with a state.  Idea is that if we want
 #  to trace while inheriting all custom PATHs which that run might have
 #  had
-def identify_distributions(files, session=None):
+def identify_distributions(files, session=None, tracer_classes=None):
     """Identify packages files belong to
 
     Parameters
@@ -129,49 +130,93 @@ def identify_distributions(files, session=None):
     unknown_files : list of str
       Files which were not determined to belong to any specific distribution
     """
-    # TODO: automate discovery of available tracers
-    from niceman.distributions.debian import DebTracer
-    from niceman.distributions.conda import CondaTracer
-    from niceman.distributions.venv import VenvTracer
-    from niceman.distributions.vcs import VCSTracer
+    if tracer_classes is None:
+        tracer_classes = get_tracer_classes()
 
     session = session or get_local_session()
     # TODO create list of appropriate for the `environment` OS tracers
     #      in case of no environment -- get current one
     # TODO: should operate in the session, might be given additional information
     #       not just files
-    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer]
+
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files beloning to them
-    files_to_consider = files[:]
-
-    # Identify directories from the files_to_consider
-    dirs = set(filter(session.isdir, files_to_consider))
+    files_to_consider = set(files)
 
     distibutions = []
-    for Tracer in Tracers:
-        lgr.info("Tracing using %s", Tracer)
+    files_processed = set()
+    files_to_trace = files_to_consider
 
-        # Pull out directories if the tracer can't handle them
-        if Tracer.HANDLES_DIRS:
-            files_to_trace = files_to_consider
-            files_skipped = []
-        else:
-            files_to_trace = [x for x in files_to_consider if x not in dirs]
-            files_skipped = [x for x in files_to_consider if x in dirs]
+    niter = 0
+    max_niter = 10
+    while True:
+        niter += 1
+        nfiles_processed = len(files_processed)
+        nfiles_to_trace = len(files_to_trace)
+        lgr.info("Entering iteration #%d over Tracers", niter)
+        if niter > max_niter:
+            lgr.error(
+                "We did %s iterations already, something is not right"
+                % max_niter)
+            break
 
-        tracer = Tracer(session=session)
-        begin = time.time()
-        if files_to_trace:
-            for env, files_to_trace in tracer.identify_distributions(
-                    files_to_trace):
-                distibutions.append(env)
+        # Identify directories from the files_to_consider
+        dirs = set(filter(session.isdir, files_to_trace))
 
-        # Re-combine any files that were skipped
-        files_to_consider = files_to_trace + files_skipped
+        for Tracer in tracer_classes:
+            lgr.debug("Tracing using %s", Tracer.__name__)
 
-        lgr.debug("Assigning files to packages by %s took %f seconds",
-                  tracer, time.time() - begin)
+            # Pull out directories if the tracer can't handle them
+            if Tracer.HANDLES_DIRS:
+                files_to_trace = files_to_consider
+                files_skipped = set()
+            else:
+                files_to_trace = files_to_consider - dirs
+                files_skipped = files_to_consider - files_to_trace
+
+            tracer = Tracer(session=session)
+            begin = time.time()
+            # yoh things the idea was that tracer might trace even without
+            #     files, so we should not just 'continue' the loop if there is no
+            #     files_to_trace
+            if files_to_trace:
+                remaining_files_to_trace = files_to_trace
+                nenvs = 0
+                for env, remaining_files_to_trace in tracer.identify_distributions(
+                        files_to_trace):
+                    distibutions.append(env)
+                    nenvs += 1
+                files_processed |= files_to_trace - remaining_files_to_trace
+                files_to_trace = remaining_files_to_trace
+                lgr.info("%s: %d envs with %d other files remaining",
+                         Tracer.__name__,
+                         nenvs,
+                         len(files_to_trace))
+
+            # Re-combine any files that were skipped
+            files_to_consider = files_to_trace | files_skipped
+
+            lgr.debug("Assigning files to packages by %s took %f seconds",
+                      tracer, time.time() - begin)
+        if len(files_to_trace) == 0 or (
+            nfiles_processed == len(files_processed) and
+            nfiles_to_trace == len(files_to_trace)):
+            lgr.info("No more changes or files to track.  Exiting the loop")
+            break
 
     return distibutions, files_to_consider
+
+
+def get_tracer_classes():
+    """A helper which returns a list of all available Tracers
+
+    The order should not but does matter and ATM is magically provided
+    """
+    # TODO: automate discovery of available tracers
+    from niceman.distributions.debian import DebTracer
+    from niceman.distributions.conda import CondaTracer
+    from niceman.distributions.venv import VenvTracer
+    from niceman.distributions.vcs import VCSTracer
+    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer]
+    return Tracers
