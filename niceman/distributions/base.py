@@ -237,13 +237,14 @@ class DistributionTracer(object):
                         else:
                             unknown_files.add(f)
 
-        lgr.info("%s: %d packages with %d files, and %d other files",
-                 self.__class__.__name__,
-                 len(found_packages),
-                 nb_pkg_files,
-                 len(unknown_files))
+        lgr.debug(
+            "%s: %d packages with %d files, and %d other files",
+            self.__class__.__name__,
+            len(found_packages),
+            nb_pkg_files,
+            len(unknown_files))
 
-        return list(viewvalues(found_packages)), list(unknown_files)
+        return list(viewvalues(found_packages)), unknown_files
 
     @abc.abstractmethod
     def _get_packagefields_for_files(self, files):
