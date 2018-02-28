@@ -21,6 +21,7 @@ from unittest import SkipTest
 import yaml
 import attr
 from niceman.formats.niceman import NicemanProvenance
+from niceman.tests.utils import create_pymodule
 from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
 import json
@@ -43,13 +44,18 @@ def get_conda_test_dir():
     else:
         raise ValueError("Conda test not supported with platform %s " %
                          sys.platform)
+
+    pymod_dir = os.path.join(test_dir, "minimal_pymodule")
+    create_pymodule(pymod_dir)
+
     call("mkdir -p " + test_dir + "; "
          "cd " + test_dir + "; "
          "curl -O https://repo.continuum.io/miniconda/" + miniconda_sh + "; "
          "bash -b " + miniconda_sh + " -b -p ./miniconda; "
          "./miniconda/bin/conda create -y -n mytest python=2.7; "
          "./miniconda/bin/conda install -y xz -n mytest; "
-         "./miniconda/envs/mytest/bin/pip install rpaths;",
+         "./miniconda/envs/mytest/bin/pip install rpaths; "
+         "./miniconda/envs/mytest/bin/pip install -e " + pymod_dir + ";",
          shell=True)
     return test_dir
 
@@ -87,12 +93,22 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
                                            'name': 'pip'},
                                           {'files': ['lib/python2.7/site-packages/rpaths.py'],
                                            'installer': 'pip',
-                                           'name': 'rpaths'}
+                                           'name': 'rpaths',
+                                           'editable': False},
+                                          {"files": [],
+                                           "installer": "pip",
+                                           "name": "nmtest",
+                                           "editable": True}
                                           ]
                              }
                             ]
            }
     assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
+
+    # conda packages are not repeated as "pip" packages.
+    for pkg in distributions.environments[1].packages:
+        if pkg.name == "pip":
+            assert pkg.installer is None
 
 
 def test_get_conda_env_export_exceptions():

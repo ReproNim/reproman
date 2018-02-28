@@ -9,21 +9,20 @@
 """Orchestrator sub-class to provide management of the localhost environment."""
 import json
 import os
-import re
 from collections import defaultdict
 
 import attr
 import yaml
 
-from niceman.distributions import Distribution
+from niceman.distributions import Distribution, piputils
+from niceman.dochelpers import exc_str
+from niceman.utils import PathRoot
 
 from .base import SpecObject
 from .base import DistributionTracer
 from .base import Package
 from .base import TypedList
-from .piputils import pip_show, get_pip_packages
-from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot
+
 
 import logging
 lgr = logging.getLogger('niceman.distributions.conda')
@@ -39,7 +38,8 @@ class CondaPackage(Package):
     size = attr.ib()
     md5 = attr.ib()
     url = attr.ib()
-    origin_location = attr.ib(default=None)
+    location = attr.ib(default=None)
+    editable = attr.ib(default=False)
     files = attr.ib(default=attr.Factory(list))
 
 
@@ -156,14 +156,25 @@ class CondaTracer(DistributionTracer):
 
         return packages, file_to_package_map
 
-    def _get_conda_pip_package_details(self, conda_path):
+    def _get_conda_pip_package_details(self, env_export, conda_path):
+        dependencies = env_export.get("dependencies", [])
+
+        # If there are pip dependencies, they'll be listed under a
+        # {"pip": [...]} entry.
+        pip_pkgs = []
+        for dep in dependencies:
+            if isinstance(dep, dict) and "pip" in dep:
+                # Pip packages are recorded in conda exports as "name (loc)",
+                # "name==version" or "name (loc)==version".
+                pip_pkgs = [p.split("=")[0].split(" ")[0] for p in dep["pip"]]
+                break
+
+        if not pip_pkgs:
+            return {}, {}
+
         pip = conda_path + "/bin/pip"
-        try:
-            pkgs = list(get_pip_packages(self._session, pip))
-        except Exception as exc:
-            lgr.warning("Could not determine pip packages for %s: %s",
-                        conda_path, exc_str(exc))
-        packages, file_to_package_map = pip_show(self._session, pip, pkgs)
+        packages, file_to_package_map = piputils.get_package_details(
+            self._session, pip, pip_pkgs)
         for entry in packages.values():
             entry["installer"] = "pip"
         return packages, file_to_package_map
@@ -245,7 +256,7 @@ class CondaTracer(DistributionTracer):
             (conda_package_details, file_to_pkg) = \
                 self._get_conda_package_details(conda_path)
             (conda_pip_package_details, file_to_pip_pkg) = \
-                self._get_conda_pip_package_details(conda_path)
+                self._get_conda_pip_package_details(env_export, conda_path)
             # Join our conda and pip packages
             conda_package_details.update(conda_pip_package_details)
             file_to_pkg.update(file_to_pip_pkg)
@@ -295,7 +306,8 @@ class CondaTracer(DistributionTracer):
                     size=details.get("size"),
                     md5=details.get("md5"),
                     url=details.get("url"),
-                    origin_location=details.get("origin_location"),
+                    location=details.get("location"),
+                    editable=details.get("editable"),
                     files=pkg_to_found_files[package_name]
                 )
                 packages.append(package)
