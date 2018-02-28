@@ -90,14 +90,12 @@ def pip_show(session, which_pip, pkgs):
 def parse_pip_list(out):
     """Parse the output of `pip list --format=legacy`.
     """
-    pkg_re = re.compile(r"^([^(]+) \((.+)\)$", re.MULTILINE)
-    for pkg, version_location in pkg_re.findall(out):
-        if ", " in version_location:
-            version, location = version_location.split(", ")
-        else:
-            version = version_location
-            location = None
-        yield pkg, version, location
+    pkg_re = re.compile(r"^(?P<package>[^(]+) "
+                        r"\((?P<version>.*?)"
+                        r"(?:, (?P<location>.*))?\)$",
+                        re.MULTILINE)
+    for pkg, version, location in pkg_re.findall(out):
+        yield pkg, version, location or None
 
 
 def pip_list(session, which_pip, local_only=False):
@@ -181,7 +179,7 @@ def get_package_details(session, which_pip, packages=None):
     A tuple of two dicts, where the first maps a package name to its
     details and the second maps package files to the package name.
     """
-    pkgs, _, editlocs = map(list, zip(*pip_list(session, which_pip)))
+    pkgs, _, editlocs = zip(*pip_list(session, which_pip))
 
     if packages is None:
         packages = pkgs
