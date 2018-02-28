@@ -16,7 +16,7 @@ import yaml
 
 from niceman.distributions import Distribution, piputils
 from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot
+from niceman.utils import PathRoot, is_subpath
 
 from .base import SpecObject
 from .base import DistributionTracer
@@ -296,6 +296,7 @@ class CondaTracer(DistributionTracer):
                             name=channel_name,
                             url=channel_url))
 
+                location = details.get("location")
                 # Create the package
                 package = CondaPackage(
                     name=details.get("name"),
@@ -306,11 +307,15 @@ class CondaTracer(DistributionTracer):
                     size=details.get("size"),
                     md5=details.get("md5"),
                     url=details.get("url"),
-                    location=details.get("location"),
+                    location=location,
                     editable=details.get("editable"),
                     files=pkg_to_found_files[package_name]
                 )
                 packages.append(package)
+
+                # Make editable pip packages available to other tracers.
+                if location and not is_subpath(location, conda_path):
+                    unknown_files.add(location)
 
             # Give the distribution a name
             # Determine name from path (Alt approach: use conda-env info)
