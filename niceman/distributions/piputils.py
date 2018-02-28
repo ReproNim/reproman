@@ -181,7 +181,7 @@ def get_package_details(session, which_pip, packages=None):
     A tuple of two dicts, where the first maps a package name to its
     details and the second maps package files to the package name.
     """
-    pkgs, _, editlocs = map(list, zip(*pip_list(session, which_pip)))
+    pkgs, _, editlocs = zip(*pip_list(session, which_pip))
 
     if packages is None:
         packages = pkgs
