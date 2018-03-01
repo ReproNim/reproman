@@ -15,6 +15,7 @@ import pytest
 
 from niceman.cmd import Runner
 from niceman.utils import chpwd
+from niceman.tests.utils import create_pymodule
 from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 from niceman.distributions.venv import VenvTracer
 
@@ -31,10 +32,15 @@ def venv_test_dir():
 
     runner = Runner()
     runner.run(["mkdir", "-p", test_dir])
+
+    pymod_dir = os.path.join(test_dir, "minimal_pymodule")
+    create_pymodule(pymod_dir)
+
     with chpwd(test_dir):
         runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
         runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
         runner.run(["./venv0/bin/pip", "install", "pyyaml"])
+        runner.run(["./venv0/bin/pip", "install", "-e", pymod_dir])
         runner.run(["./venv1/bin/pip", "install", "attrs"])
     return test_dir
 
@@ -59,11 +65,18 @@ def test_venv_identify_distributions(venv_test_dir):
         assert len(dists) == 1
 
         distributions, unknown_files = dists[0]
-        assert unknown_files == ["/sbin/iptables"]
+        assert unknown_files == {
+            "/sbin/iptables",
+            # The editable package was added by VenvTracer as an unknown file.
+            os.path.join(venv_test_dir, "minimal_pymodule")}
 
         assert len(distributions.environments) == 2
 
         expect = {"environments":
-                  [{"packages": [{"files": [paths[0]], "name": "PyYAML"}]},
-                   {"packages": [{"files": [paths[1]], "name": "attrs"}]}]}
+                  [{"packages": [{"files": [paths[0]], "name": "PyYAML",
+                                  "editable": False},
+                                 {"files": [], "name": "nmtest",
+                                  "editable": True}]},
+                   {"packages": [{"files": [paths[1]], "name": "attrs",
+                                  "editable": False}]}]}
         assert_is_subset_recur(expect, attr.asdict(distributions), [dict, list])

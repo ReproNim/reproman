@@ -10,13 +10,15 @@
 from collections import defaultdict
 import logging
 import os
+import os.path as op
 
 import attr
 
+from six import iteritems
 from niceman.distributions import Distribution
-from niceman.distributions.piputils import pip_show, pip_packages
+from niceman.distributions import piputils
 from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot
+from niceman.utils import PathRoot, is_subpath
 
 from .base import DistributionTracer
 from .base import Package
@@ -31,7 +33,8 @@ class VenvPackage(Package):
     name = attr.ib()
     version = attr.ib()
     local = attr.ib()
-    origin_location = attr.ib(default=None)
+    location = attr.ib(default=None)
+    editable = attr.ib(default=False)
     files = attr.ib(default=attr.Factory(list))
 
 
@@ -73,12 +76,13 @@ class VenvTracer(DistributionTracer):
     def _get_package_details(self, venv_path):
         pip = venv_path + "/bin/pip"
         try:
-            pkgs = list(pip_packages(self._session, pip))
+            packages, file_to_pkg = piputils.get_package_details(
+                self._session, pip)
         except Exception as exc:
-            lgr.warning("Could not determine pip packages for %s: %s",
+            lgr.warning("Could not determine pip package details for %s: %s",
                         venv_path, exc_str(exc))
-            return
-        return pip_show(self._session, pip, pkgs)
+            return {}, {}
+        return packages, file_to_pkg
 
     def _is_venv_directory(self, path):
         try:
@@ -104,9 +108,9 @@ class VenvTracer(DistributionTracer):
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
-            local_pkgs = set(pip_packages(self._session,
-                                          venv_path + "/bin/pip",
-                                          local_only=True))
+            local_pkgs = set(piputils.get_pip_packages(self._session,
+                                                       venv_path + "/bin/pip",
+                                                       local_only=True))
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but
@@ -117,12 +121,28 @@ class VenvTracer(DistributionTracer):
                     pkg_to_found_files[file_to_pkg[fullpath]].append(
                         os.path.relpath(path, venv_path))
 
-            packages = [VenvPackage(name=details["name"],
-                                    version=details["version"],
-                                    local=name in local_pkgs,
-                                    origin_location=details["origin_location"],
-                                    files=pkg_to_found_files[name])
-                        for name, details in package_details.items()]
+            # Some files, like venvs/dev/lib/python2.7/abc.py could be
+            # symlinks populated by virtualenv itself during venv creation
+            # since it relies on system wide python environment.  So we need
+            # to resolve those into filenames which could be associated with
+            # system wide installation of python
+            for path in unknown_files.copy():
+                if is_subpath(path, venv_path) and op.islink(path):
+                    unknown_files.add(op.realpath(path))
+                    unknown_files.remove(path)
+
+            packages = []
+            for name, details in iteritems(package_details):
+                location = details["location"]
+                packages.append(
+                    VenvPackage(name=details["name"],
+                                version=details["version"],
+                                local=name in local_pkgs,
+                                location=location,
+                                editable=details["editable"],
+                                files=pkg_to_found_files[name]))
+                if location and not is_subpath(location, venv_path):
+                    unknown_files.add(location)
 
             found_package_count += len(packages)
 
@@ -131,18 +151,12 @@ class VenvTracer(DistributionTracer):
                                 python_version=self._python_version(venv_path),
                                 packages=packages))
 
-        lgr.info("%s: %d packages with %d files, and %d other files",
-                 self.__class__.__name__,
-                 found_package_count,
-                 total_file_count - len(unknown_files),
-                 len(unknown_files))
-
         if venvs:
             yield (VenvDistribution(name="venv",
                                     venv_version=self._venv_version(),
                                     path=self._venv_exe_path(),
                                     environments=venvs),
-                   list(unknown_files))
+                   unknown_files)
 
     def _python_version(self, venv_path):
         try:

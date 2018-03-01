@@ -67,7 +67,7 @@ def test_git_repo_empty(git_repo_empty):
     assert_distributions(
         tracer.identify_distributions([git_repo_empty]),
         expected_length=1,
-        expected_unknown=[],
+        expected_unknown=set(),
         expected_subset={"name": "git",
                          "packages": [{"path": git_repo_empty,
                                        # We do not include repo path itself.
@@ -91,7 +91,7 @@ def test_git_repo(git_repo):
         assert_distributions(
             dists,
             expected_length=1,
-            expected_unknown=["/sbin/iptables"],
+            expected_unknown={"/sbin/iptables"},
             expected_subset={"name": "git",
                              "packages": [{"files": paths,
                                            "path": git_repo,
