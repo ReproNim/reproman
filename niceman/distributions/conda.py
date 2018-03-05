@@ -16,6 +16,7 @@ import yaml
 
 from niceman.distributions import Distribution, piputils
 from niceman.dochelpers import exc_str
+from niceman.support.exceptions import CommandError
 from niceman.utils import PathRoot, is_subpath
 
 from .base import SpecObject
@@ -121,9 +122,12 @@ class CondaTracer(DistributionTracer):
                 % conda_path
             )
             return iter(out.splitlines())
+        except CommandError:  # Empty conda environment
+            return iter(())
         except Exception as exc:
             lgr.warning("Could not retrieve conda-meta files in path %s: %s",
                         conda_path, exc_str(exc))
+            return iter(())
 
     def _get_conda_package_details(self, conda_path):
         packages = {}
