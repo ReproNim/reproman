@@ -81,6 +81,9 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
         "/sbin/iptables",
         os.path.join(test_dir, "minimal_pymodule")}
 
+    assert distributions.platform in ["linux-64", "osx-64"], \
+        "A conda platform is expected."
+
     assert len(distributions.environments) == 2, \
         "Two conda environments are expected."
 

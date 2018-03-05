@@ -68,6 +68,7 @@ class CondaDistribution(Distribution):
     path = attr.ib(default=None)
     conda_version = attr.ib(default=None)
     python_version = attr.ib(default=None)
+    platform = attr.ib(default=None)
     environments = TypedList(CondaEnvironment)
 
     def initiate(self, environment):
@@ -359,6 +360,7 @@ class CondaTracer(DistributionTracer):
                 name=dist_name,
                 conda_version=conda_info.get("conda_version"),
                 python_version=conda_info.get("python_version"),
+                platform=conda_info.get("platform"),
                 path=root_path,
                 environments=root_to_envs[root_path]
             )
