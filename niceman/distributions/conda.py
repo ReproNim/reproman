@@ -122,9 +122,7 @@ class CondaTracer(DistributionTracer):
                 % conda_path
             )
             return iter(out.splitlines())
-        except CommandError:  # Empty conda environment
-            return iter(())
-        except Exception as exc:
+        except Exception as exc:  # Empty conda environment (unusual situation)
             lgr.warning("Could not retrieve conda-meta files in path %s: %s",
                         conda_path, exc_str(exc))
             return iter(())
