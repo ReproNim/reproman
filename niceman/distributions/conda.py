@@ -27,6 +27,37 @@ from .base import TypedList
 import logging
 lgr = logging.getLogger('niceman.distributions.conda')
 
+# Provides the conda platform mapping from comda/models/enum.py
+# Note that these are python prefixes (both 'linux2' and 'linux' from python
+# map to 'linux' in conda.
+python_to_conda_platform_map = {
+    'darwin': 'osx',
+    'linux': 'linux',
+    'openbsd': 'openbsd',
+    'win': 'win',
+    'zos': 'zos',
+}
+
+
+def get_conda_platform_from_python(py_platform):
+    """
+    Converts a python platform string to a corresponding conda platform
+
+    Parameters
+    ----------
+    py_platform : basestring
+        The python platform string
+
+    Returns
+    -------
+    basestring
+        The conda platform string
+
+    """
+    for k in python_to_conda_platform_map:
+        if py_platform.startswith(k):
+            return python_to_conda_platform_map[k]
+    return None
 
 @attr.s
 class CondaPackage(Package):

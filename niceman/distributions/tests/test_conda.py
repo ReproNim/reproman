@@ -26,7 +26,8 @@ from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
 import json
 
-from niceman.distributions.conda import CondaTracer
+from niceman.distributions.conda import CondaTracer, \
+    get_conda_platform_from_python
 
 
 @pytest.fixture(scope="session")
@@ -60,6 +61,10 @@ def get_conda_test_dir():
     return test_dir
 
 
+def test_get_conda_platform_from_python():
+    assert get_conda_platform_from_python("linux2") == "linux"
+    assert get_conda_platform_from_python("darwin") == "osx"
+
 def test_conda_manager_identify_distributions(get_conda_test_dir):
     # Skip if network is not available (skip_if_no_network fails with fixtures)
     test_dir = get_conda_test_dir
@@ -81,7 +86,10 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
         "/sbin/iptables",
         os.path.join(test_dir, "minimal_pymodule")}
 
-    assert distributions.platform in ["linux-64", "osx-64"], \
+
+
+    assert distributions.platform.startswith(
+        get_conda_platform_from_python(sys.platform)), \
         "A conda platform is expected."
 
     assert len(distributions.environments) == 2, \
