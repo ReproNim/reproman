@@ -16,7 +16,6 @@ import yaml
 
 from niceman.distributions import Distribution, piputils
 from niceman.dochelpers import exc_str
-from niceman.support.exceptions import CommandError
 from niceman.utils import PathRoot, is_subpath
 
 from .base import SpecObject
