@@ -77,8 +77,9 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
 
     NicemanProvenance.write(sys.stdout, distributions)
 
-    assert unknown_files == {"/sbin/iptables"}, \
-        "Exactly one file (/sbin/iptables) should not be discovered."
+    assert unknown_files == {
+        "/sbin/iptables",
+        os.path.join(test_dir, "minimal_pymodule")}
 
     assert len(distributions.environments) == 2, \
         "Two conda environments are expected."
