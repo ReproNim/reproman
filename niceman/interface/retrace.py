@@ -14,7 +14,6 @@ from __future__ import unicode_literals
 from os.path import normpath
 import sys
 import time
-from copy import copy
 
 from niceman.resource.session import get_local_session
 from .base import Interface
@@ -218,5 +217,6 @@ def get_tracer_classes():
     from niceman.distributions.conda import CondaTracer
     from niceman.distributions.venv import VenvTracer
     from niceman.distributions.vcs import VCSTracer
-    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer]
+    from niceman.distributions.docker import DockerTracer
+    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer, DockerTracer]
     return Tracers
