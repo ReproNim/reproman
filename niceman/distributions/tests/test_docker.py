@@ -15,9 +15,10 @@ from ...distributions.docker import DockerImage
 from ...distributions.docker import DockerTracer
 from ...resource.session import get_local_session
 from ...support.exceptions import CommandError
-from ...tests.utils import skip_if_no_docker_engine
+from ...tests.utils import skip_if_no_docker_engine, skip_if_no_network
 
 
+@skip_if_no_network
 @skip_if_no_docker_engine
 def test_docker_trace():
     client = docker.Client()
@@ -53,6 +54,7 @@ def test_docker_trace():
     client.remove_image(new_image['Id'])
 
 
+@skip_if_no_network
 @skip_if_no_docker_engine
 def test_docker_distribution():
 
