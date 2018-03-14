@@ -1,0 +1,18 @@
+# NICEMAN Environment Configuration File
+version: 0.0.1
+distributions:
+- name: debian
+  packages:
+  - name: lib1only
+    architecture: x86
+    version: 2:1.6.4-3
+  - name: libsame
+    architecture: x86
+    version: 2.4.6
+  - name: libarchdiff
+    architecture: x86
+    version: 2.4.6
+  - name: libversdiff
+    architecture: x86
+    version: 2.4.6
+files: [/etc/a, /etc/b]

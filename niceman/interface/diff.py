@@ -17,6 +17,7 @@ from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
 from niceman.formats.niceman import NicemanProvenance
+from ..distributions.debian import DebianDistribution
 
 __docformat__ = 'restructuredtext'
 
@@ -55,11 +56,42 @@ class Diff(Interface):
     @staticmethod
     def __call__(prov1, prov2):
 
-        env1 = NicemanProvenance(prov1).get_environment()
-        env2 = NicemanProvenance(prov2).get_environment()
+        env_1 = NicemanProvenance(prov1).get_environment()
+        env_2 = NicemanProvenance(prov2).get_environment()
 
-        files1 = set(env1.files)
-        files2 = set(env2.files)
+        deb_pkgs_1 = get_debian_packages(env_1)
+        deb_pkgs_2 = get_debian_packages(env_2)
+
+        deb_pkgs_1_s = set(deb_pkgs_1)
+        deb_pkgs_2_s = set(deb_pkgs_2)
+
+        deb_pkgs_only_1 = deb_pkgs_1_s - deb_pkgs_2_s
+        deb_pkgs_only_2 = deb_pkgs_2_s - deb_pkgs_1_s
+
+        if deb_pkgs_only_1 or deb_pkgs_only_2:
+            print('Debian packages:')
+        if deb_pkgs_only_1:
+            for (name, arch) in sorted(deb_pkgs_only_1):
+                package = deb_pkgs_1[(name, arch)]
+                print('< %s %s %s' % (name, arch, package.version))
+        if deb_pkgs_only_2 and deb_pkgs_only_2:
+            print('---')
+        if deb_pkgs_only_2:
+            for (name, arch) in sorted(deb_pkgs_only_2):
+                package = deb_pkgs_2[(name, arch)]
+                print('> %s %s %s' % (name, arch, package.version))
+
+        for (name, arch) in deb_pkgs_1_s.intersection(deb_pkgs_2_s):
+            package_1 = deb_pkgs_1[(name, arch)]
+            package_2 = deb_pkgs_2[(name, arch)]
+            if package_1.version != package_2.version:
+                print('Debian package %s %s:' % (name, arch))
+                print('< %s' % package_1.version)
+                print('---')
+                print('> %s' % package_2.version)
+
+        files1 = set(env_1.files)
+        files2 = set(env_2.files)
 
         files_1_only = files1 - files2
         files_2_only = files2 - files1
@@ -72,73 +104,6 @@ class Diff(Interface):
                 print('---')
             for fname in files_2_only:
                 print('> %s' % fname)
-
-        return
-
-        lgr.warning('diff: environment not checked')
-
-        try:
-            env_dists = dictify_distributions(env_prov.get_distributions())
-        except MultipleDistributionsError as data:
-            lgr.error('diff: panic!')
-            fmt = 'multiple occurrences of %s in environment specification'
-            raise ValueError(fmt % str(data.cls))
-
-        try:
-            req_dists = dictify_distributions(req_prov.get_distributions())
-        except MultipleDistributionsError as data:
-            lgr.error('diff: panic!')
-            fmt = 'multiple occurrences of %s in requirements specification'
-            raise ValueError(fmt % str(data.cls))
-
-        needed_dists = []
-        needed_packages = {}
-        for dist_type in req_dists:
-            if dist_type not in env_dists:
-                needed_dists.append(dist_type)
-                continue
-            try:
-                missing_packages = req_dists[dist_type] - env_dists[dist_type]
-            except TypeError:
-                fmt = '%s not checked (difference operator unsupported)'
-                lgr.warning(fmt % dist_type)
-                continue
-            if missing_packages:
-                needed_packages[dist_type] = missing_packages
-
-        env_files = set(env_prov.get_files())
-        req_files = set(req_prov.get_files())
-        needed_files = req_files - env_files
-
-        lgr.info('needed distributions: %d' % len(needed_dists))
-        lgr.info('needed packages: %d' % len(needed_packages))
-        lgr.info('needed files: %d' % len(needed_files))
-
-        if not needed_dists and not needed_packages and not needed_files:
-            # log line needed for test
-            lgr.info('requirements satisfied')
-            print('requirements satisfied')
-
-        if needed_dists:
-            print('needed distributions:')
-            for dist in sorted(needed_dists):
-                print('    %s' % dist)
-
-        if needed_packages:
-            print('needed packages:')
-            for dist in sorted(needed_packages):
-                print('    %s' % dist)
-                for package in sorted(needed_packages[dist], 
-                                      key=lambda p: p.name.lower()):
-                    if package.version:
-                        print('        %s %s' % (package.name, package.version))
-                    else:
-                        print('        %s' % package.name)
-
-        if needed_files:
-            print('needed files:')
-            for fname in sorted(needed_files):
-                print('    %s' % fname)
 
         return
 
@@ -155,3 +120,31 @@ def dictify_distributions(dist_list):
             raise MultipleDistributionsError(dist_type)
         dist_dict[dist_type] = dist
     return dist_dict
+
+def get_debian_distribution(env):
+    """get_debian_distribution(environment) -> distribution
+
+    Returns the Debian distribution in the given envirionment.  Returns 
+    None if there are no Debian distributions.  Raises ValueError if there 
+    is more than one Debian distribution.
+    """
+    deb_dist = None
+    for dist in env.distributions:
+        if isinstance(dist, DebianDistribution):
+            if deb_dist:
+                raise ValueError('multiple Debian distributions found')
+            deb_dist = dist
+    return deb_dist
+
+def get_debian_packages(env):
+    """get_debian_packages(environment) -> dictionary
+
+    Returns the Debian packages as a dictionary of (name, arch) -> package.  
+    Returns an empty dictionary if there are no Debian distributions.  
+    Propagates ValueError from get_debian_distribution() if there is more 
+    than one Debian distribution.
+    """
+    deb_dist = get_debian_distribution(env)
+    if not deb_dist:
+        return {}
+    return { (p.name, p.architecture): p for p in deb_dist.packages }

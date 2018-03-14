@@ -176,6 +176,13 @@ def ok_file_has_content(path, content):
         assert_equal(f.read(), content)
 
 
+def assert_in_in(substr, lst):
+    """Verify that a substring is in an element of a list"""
+    for s in lst:
+        if substr in s:
+            return
+    assert False, '"%s" is not in "%s"' % (substr, str(lst))
+
 #
 # Decorators
 #
