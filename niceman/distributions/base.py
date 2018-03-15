@@ -61,7 +61,10 @@ class Package(SpecObject):
     # https://github.com/python-attrs/attrs/issues/38
     # So for now will be defined specifically per each subclass
     # files = attr.ib(default=attr.Factory(list))
-    pass
+
+    @property
+    def _cmp_id(self):
+        return tuple(getattr(self, a) for a in self._cmp_fields)
 
 
 @attr.s

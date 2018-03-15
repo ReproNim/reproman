@@ -24,12 +24,13 @@ __docformat__ = 'restructuredtext'
 from logging import getLogger
 lgr = getLogger('niceman.api.retrace')
 
-class MultipleDistributionsError(Exception):
 
-    """multiple distributions of a given type found"""
+class MultipleDistributionsError(Exception):
+    """Multiple distributions of a given type found"""
 
     def __init__(self, cls):
         self.cls = cls
+
 
 class Diff(Interface):
     """Report if a specification satisfies the requirements in another 
@@ -58,54 +59,53 @@ class Diff(Interface):
 
         env_1 = NicemanProvenance(prov1).get_environment()
         env_2 = NicemanProvenance(prov2).get_environment()
-
-        deb_pkgs_1 = get_debian_packages(env_1)
-        deb_pkgs_2 = get_debian_packages(env_2)
-
-        deb_pkgs_1_s = set(deb_pkgs_1)
-        deb_pkgs_2_s = set(deb_pkgs_2)
-
-        deb_pkgs_only_1 = deb_pkgs_1_s - deb_pkgs_2_s
-        deb_pkgs_only_2 = deb_pkgs_2_s - deb_pkgs_1_s
-
-        if deb_pkgs_only_1 or deb_pkgs_only_2:
-            print('Debian packages:')
-        if deb_pkgs_only_1:
-            for (name, arch) in sorted(deb_pkgs_only_1):
-                package = deb_pkgs_1[(name, arch)]
-                print('< %s %s %s' % (name, arch, package.version))
-        if deb_pkgs_only_2 and deb_pkgs_only_2:
-            print('---')
-        if deb_pkgs_only_2:
-            for (name, arch) in sorted(deb_pkgs_only_2):
-                package = deb_pkgs_2[(name, arch)]
-                print('> %s %s %s' % (name, arch, package.version))
-
-        for (name, arch) in deb_pkgs_1_s.intersection(deb_pkgs_2_s):
-            package_1 = deb_pkgs_1[(name, arch)]
-            package_2 = deb_pkgs_2[(name, arch)]
-            if package_1.version != package_2.version:
-                print('Debian package %s %s:' % (name, arch))
-                print('< %s' % package_1.version)
+        
+        for pkgs_1, pkgs_2, pkg_type in get_packages(env_1, env_2):
+            pkgs_1_s = set(pkgs_1)
+            pkgs_2_s = set(pkgs_2)
+    
+            pkgs_only_1 = pkgs_1_s - pkgs_2_s
+            pkgs_only_2 = pkgs_2_s - pkgs_1_s
+    
+            if pkgs_only_1 or pkgs_only_2:
+                print(pkg_type + ':')
+            if pkgs_only_1:
+                for cmp_key in sorted(pkgs_only_1):
+                    package = pkgs_1[cmp_key]
+                    print('< %s %s' % (" ".join(cmp_key), package.version))
+            if pkgs_only_2 and pkgs_only_2:
                 print('---')
-                print('> %s' % package_2.version)
-
-        files1 = set(env_1.files)
-        files2 = set(env_2.files)
-
-        files_1_only = files1 - files2
-        files_2_only = files2 - files1
-
-        if files_1_only or files_2_only:
-            print('Files:')
-            for fname in files_1_only:
-                print('< %s' % fname)
-            if files_1_only and files_2_only:
-                print('---')
-            for fname in files_2_only:
-                print('> %s' % fname)
+            if pkgs_only_2:
+                for cmp_key in sorted(pkgs_only_2):
+                    package = pkgs_2[cmp_key]
+                    print('> %s %s' % (" ".join(cmp_key), package.version))
+    
+            for cmp_key in pkgs_1_s.intersection(pkgs_2_s):
+                package_1 = pkgs_1[cmp_key]
+                package_2 = pkgs_2[cmp_key]
+                if package_1.version != package_2.version:
+                    print(' %s %s:' % (pkg_type, " ".join(cmp_key)))
+                    print('< %s' % package_1.version)
+                    print('---')
+                    print('> %s' % package_2.version)
+    
+            files1 = set(env_1.files)
+            files2 = set(env_2.files)
+    
+            files_1_only = files1 - files2
+            files_2_only = files2 - files1
+    
+            if files_1_only or files_2_only:
+                print('Files:')
+                for fname in files_1_only:
+                    print('< %s' % fname)
+                if files_1_only and files_2_only:
+                    print('---')
+                for fname in files_2_only:
+                    print('> %s' % fname)
 
         return
+
 
 def dictify_distributions(dist_list):
     """Make a dictionary of distributions from a list of distributions.
@@ -121,10 +121,11 @@ def dictify_distributions(dist_list):
         dist_dict[dist_type] = dist
     return dist_dict
 
+
 def get_debian_distribution(env):
     """get_debian_distribution(environment) -> distribution
 
-    Returns the Debian distribution in the given envirionment.  Returns 
+    Returns the Debian distribution in the given environment.  Returns
     None if there are no Debian distributions.  Raises ValueError if there 
     is more than one Debian distribution.
     """
@@ -136,10 +137,11 @@ def get_debian_distribution(env):
             deb_dist = dist
     return deb_dist
 
+
 def get_debian_packages(env):
     """get_debian_packages(environment) -> dictionary
 
-    Returns the Debian packages as a dictionary of (name, arch) -> package.  
+    Returns the Debian packages as a dictionary of cmp_key -> package.  
     Returns an empty dictionary if there are no Debian distributions.  
     Propagates ValueError from get_debian_distribution() if there is more 
     than one Debian distribution.
@@ -147,4 +149,8 @@ def get_debian_packages(env):
     deb_dist = get_debian_distribution(env)
     if not deb_dist:
         return {}
-    return { (p.name, p.architecture): p for p in deb_dist.packages }
+    return {p._cmp_id: p for p in deb_dist.packages}
+
+
+def get_packages(env1, env2):
+    yield get_debian_packages(env1), get_debian_packages(env2), "Debian package"

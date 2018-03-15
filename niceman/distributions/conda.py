@@ -31,7 +31,7 @@ lgr = logging.getLogger('niceman.distributions.conda')
 @attr.s
 class CondaPackage(Package):
     name = attr.ib()
-    installer = attr.ib()
+    installer = attr.ib()  # ask Bucc, probably conda vs pip
     version = attr.ib()
     build = attr.ib()
     channel_name = attr.ib()
@@ -42,6 +42,7 @@ class CondaPackage(Package):
     editable = attr.ib(default=False)
     files = attr.ib(default=attr.Factory(list))
 
+    _cmp_fields = ('name', 'build')
 
 @attr.s
 class CondaChannel(SpecObject):
@@ -69,6 +70,8 @@ class CondaDistribution(Distribution):
     conda_version = attr.ib(default=None)
     python_version = attr.ib(default=None)
     environments = TypedList(CondaEnvironment)
+
+    _cmp_field = ('path',)
 
     def initiate(self, environment):
         """
