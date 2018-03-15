@@ -28,6 +28,36 @@ import logging
 lgr = logging.getLogger('niceman.distributions.conda')
 
 
+def get_conda_platform_from_python(py_platform):
+    """
+    Converts a python platform string to a corresponding conda platform
+
+    Parameters
+    ----------
+    py_platform : str
+        The python platform string
+
+    Returns
+    -------
+    str
+        The conda platform string
+
+    """
+    # Provides the conda platform mapping from conda/models/enum.py
+    # Note that these are python prefixes (both 'linux2' and 'linux' from
+    # python map to 'linux' in conda.)
+    python_to_conda_platform_map = {
+        'darwin': 'osx',
+        'linux': 'linux',
+        'openbsd': 'openbsd',
+        'win': 'win',
+        'zos': 'zos',
+    }
+    for k in python_to_conda_platform_map:
+        if py_platform.startswith(k):
+            return python_to_conda_platform_map[k]
+    return None
+
 @attr.s
 class CondaPackage(Package):
     name = attr.ib()
@@ -68,6 +98,7 @@ class CondaDistribution(Distribution):
     path = attr.ib(default=None)
     conda_version = attr.ib(default=None)
     python_version = attr.ib(default=None)
+    platform = attr.ib(default=None)
     environments = TypedList(CondaEnvironment)
 
     def initiate(self, environment):
@@ -359,6 +390,7 @@ class CondaTracer(DistributionTracer):
                 name=dist_name,
                 conda_version=conda_info.get("conda_version"),
                 python_version=conda_info.get("python_version"),
+                platform=conda_info.get("platform"),
                 path=root_path,
                 environments=root_to_envs[root_path]
             )
