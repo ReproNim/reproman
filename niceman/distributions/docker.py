@@ -60,7 +60,7 @@ class DockerDistribution(Distribution):
         # engine is not to be found.
         session.execute_command(['docker', 'info'])
 
-    def install_packages(self, session=None):
+    def install_packages(self, session):
         """
         Install the Docker images associated to this distribution by the
         provenance into the environment.
@@ -105,7 +105,7 @@ class DockerTracer(DistributionTracer):
     """Docker image tracer
 
     If a Docker engine is not found running in the session, the files
-    are quietly passed on to thep next tracer.
+    are quietly passed on to the next tracer.
     """
 
     HANDLES_DIRS = False
@@ -116,7 +116,7 @@ class DockerTracer(DistributionTracer):
             return
 
         images = []
-        remaining_files = []
+        remaining_files = set()
 
         for file in files:
             try:
@@ -148,7 +148,7 @@ class DockerTracer(DistributionTracer):
                         msg="The Docker image '{}' has not been saved to a \
 repository. Please push to a repository before running the trace.".format(
                         file))
-                remaining_files.append(file)
+                remaining_files.add(file)
 
         if not images:
             return
@@ -158,7 +158,7 @@ repository. Please push to a repository before running the trace.".format(
             images=images
         )
 
-        yield dist, set(remaining_files)
+        yield dist, remaining_files
 
     @borrowdoc(DistributionTracer)
     def _get_packagefields_for_files(self, files):
