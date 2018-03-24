@@ -28,7 +28,7 @@ from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 import json
 
 from niceman.distributions.conda import CondaTracer, CondaDistribution, \
-    CondaEnvironment, CondaPackage, CondaChannel
+    CondaEnvironment, get_conda_platform_from_python
 
 
 @pytest.fixture(scope="session")
