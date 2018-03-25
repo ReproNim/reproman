@@ -76,7 +76,6 @@ def get_miniconda_url(conda_platform, python_version):
     -------
     str
         The Miniconda insaller URL
-
     """
     if conda_platform.startswith("linux"):
         platform = "Linux"
@@ -153,6 +152,13 @@ class CondaDistribution(Distribution):
         ----------
         session : object
             Environment sub-class instance.
+
+        Raises
+        ------
+        ValueError
+            Unexpected conda platform or python version
+        CommandError
+            If unexpected error in install commands occur
         """
 
         if not self.path:  # Permit empty conda config entry
@@ -162,9 +168,7 @@ class CondaDistribution(Distribution):
             session = get_local_session()
 
         # Make a temporary directory for our installation files
-        # TODO: Write session.mktmpdir()
-        # TODO: Handle expected errors
-        tmp_dir, _ = session.execute_command("mktemp -d")
+        tmp_dir = session.mktmpdir()
         tmp_dir = tmp_dir.rstrip()
         try:
             # Install Conda
@@ -173,7 +177,6 @@ class CondaDistribution(Distribution):
                 # TODO: Determine if we can detect miniconda vs anaconad
                 miniconda_url = get_miniconda_url(self.platform,
                                                   self.python_version)
-                # TODO: Handle expected errors (or note that we throw errors)
                 session.execute_command("curl %s -o %s/miniconda.sh" %
                                         (miniconda_url, tmp_dir))
                 # NOTE: miniconda.sh makes parent directories automatically
