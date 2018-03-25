@@ -353,7 +353,7 @@ def test_session_abstract_methods(testing_container, resource_session,
     # Check mktmpdir() method
     test_dir = session.mktmpdir()
     result = session.isdir(test_dir)
-    assert result
+    assert result, "The path %s is not a directory" % test_dir
 
     # TODO: How to test chmod and chown? Need to be able to read remote file attributes
     # session.chmod(self, path, mode, recursive=False):
