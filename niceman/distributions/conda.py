@@ -59,6 +59,36 @@ def get_conda_platform_from_python(py_platform):
             return python_to_conda_platform_map[k]
     return None
 
+
+def get_miniconda_url(conda_platform, python_version):
+    """
+    Gets the Miniconda install URL given the conda platform and python version
+
+    Parameters
+    ----------
+    conda_platform : str
+        The conda platform (e.g. "linux-64")
+
+    python_version : str
+        The python version (e.g. "2.7.1")
+
+    Returns
+    -------
+    str
+        The Miniconda insaller URL
+
+    """
+    if conda_platform.startswith("linux"):
+        platform = "Linux"
+    elif conda_platform.startswith("osx"):
+        platform = "MacOSX"
+    else:
+        raise ValueError("Unsupported platform %s for conda installation" %
+                         conda_platform)
+    platform += "-x86_64" if ("64" in conda_platform) else "-x86"
+    return "https://repo.continuum.io/miniconda/Miniconda%s-latest-%s.sh" \
+                    % (python_version[0], platform)
+
 @attr.s
 class CondaPackage(Package):
     name = attr.ib()
@@ -125,7 +155,7 @@ class CondaDistribution(Distribution):
             Environment sub-class instance.
         """
 
-        if not self.path:  # Permit dummy tests
+        if not self.path:  # Permit empty conda config entry
             return
 
         if not session:
@@ -140,14 +170,9 @@ class CondaDistribution(Distribution):
             # Install Conda
             # See if Conda root path exists and if not, install Conda
             if not session.isdir(self.path):
-                # TODO: Support OSX and non x86_64 (and move to helper func)
                 # TODO: Determine if we can detect miniconda vs anaconad
-                # TODO: Learn more about downgrading ability vs. installing correct version of conda to begin with
-                miniconda_url = "https://repo.continuum.io/miniconda/"
-                if self.python_version.startswith("2"):
-                    miniconda_url += "Miniconda2-latest-Linux-x86_64.sh"
-                else:
-                    miniconda_url += "Miniconda3-latest-Linux-x86_64.sh"
+                miniconda_url = get_miniconda_url(self.platform,
+                                                  self.python_version)
                 # TODO: Handle expected errors (or note that we throw errors)
                 session.execute_command("curl %s -o %s/miniconda.sh" %
                                         (miniconda_url, tmp_dir))

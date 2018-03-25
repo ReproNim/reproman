@@ -813,7 +813,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
 
     Parameters
     ----------
-    mkdir : bool, optional make_temp(default: False)
+    mkdir : bool, optional (default: False)
         If True, temporary directory created using tempfile.mkdtemp()
     content : str or bytes, optional
         Content to be stored in the file created
