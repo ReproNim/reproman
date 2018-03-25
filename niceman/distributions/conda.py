@@ -167,9 +167,8 @@ class CondaDistribution(Distribution):
         if not session:
             session = get_local_session()
 
-        # Make a temporary directory for our installation files
+        # Use the session to make a temporary directory for our install files
         tmp_dir = session.mktmpdir()
-        tmp_dir = tmp_dir.rstrip()
         try:
             # Install Conda
             # See if Conda root path exists and if not, install Conda
