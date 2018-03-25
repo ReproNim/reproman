@@ -574,7 +574,7 @@ class POSIXSession(Session):
             raise CommandError(cmd='mkdir', msg="Failed to create directory")
 
     def mktmpdir(self):
-        path, err = self.execute_command("mktemp -d")
+        path, err = self.execute_command(["mktemp", "-d"])
         if err:
             raise SessionRuntimeError("mktmpdir had error output: %s" % err)
         return path
