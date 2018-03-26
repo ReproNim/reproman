@@ -73,8 +73,8 @@ def test_check_bin_packages():
     assert len(non_local_origins) > 0, "A non-local origin must be found"
     for o in non_local_origins:
         # Loop over mandatory attributes
-        for a in ["name", "component", "archive", "codename",
-                  "origin", "label", "site", "archive_uri"]:
+        for a in ["name", "component", "archive", "origin",
+                  "label", "site", "archive_uri"]:
             assert getattr(o, a), "A non-local origin needs a " + a
     assert len(unknown_files) == 0, "Files not found in packages: " + \
                                     str(unknown_files)
