@@ -59,7 +59,7 @@ def test_dpkg_manager_identify_packages():
         assert False, "A non-local origin must be found"
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 @skip_if_no_apt_cache
 def test_check_bin_packages():
     # Gather files in /usr/bin and /usr/lib

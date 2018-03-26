@@ -97,11 +97,11 @@ def test_create_conda_export():
     assert export == out
 
 
+@pytest.mark.integration
 @skip_if_no_network
 def test_conda_init_install_and_detect():
     test_dir = "/tmp/niceman_conda/miniconda"
 
-    # TODO: Make a marker as an "integration test" (and mark the debian /usr/bin detection test)
     dist = CondaDistribution(
         name="conda",
         path=test_dir,
