@@ -31,38 +31,6 @@ from niceman.distributions.conda import CondaTracer, CondaDistribution, \
     CondaEnvironment, get_conda_platform_from_python, get_miniconda_url
 
 
-@pytest.fixture(scope="session")
-@skip_if_no_network
-def get_conda_test_dir():
-    dirs = AppDirs('niceman')
-    test_dir = os.path.join(dirs.user_cache_dir, 'conda_test')
-    if os.path.exists(test_dir):
-        return test_dir
-    # Miniconda isn't installed, so install it
-    if sys.platform.startswith('darwin'):
-        miniconda_sh = "Miniconda2-latest-MacOSX-x86_64.sh"
-    elif sys.platform.startswith('linux'):
-        miniconda_sh = "Miniconda2-latest-Linux-x86_64.sh"
-    else:
-        raise ValueError("Conda test not supported with platform %s " %
-                         sys.platform)
-
-    pymod_dir = os.path.join(test_dir, "minimal_pymodule")
-    create_pymodule(pymod_dir)
-
-    call("mkdir -p " + test_dir + "; "
-         "cd " + test_dir + "; "
-         "curl -O https://repo.continuum.io/miniconda/" + miniconda_sh + "; "
-         "bash -b " + miniconda_sh + " -b -p ./miniconda; "
-         "./miniconda/bin/conda create -y -n mytest python=2.7; "
-         "./miniconda/bin/conda create -y -n empty; "
-         "./miniconda/bin/conda install -y xz -n mytest; "
-         "./miniconda/envs/mytest/bin/pip install rpaths; "
-         "./miniconda/envs/mytest/bin/pip install -e " + pymod_dir + ";",
-         shell=True)
-    return test_dir
-
-
 def test_get_conda_platform_from_python():
     assert get_conda_platform_from_python("linux2") == "linux"
     assert get_conda_platform_from_python("darwin") == "osx"
@@ -75,63 +43,6 @@ def test_get_miniconda_url():
            "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86.sh"
     assert get_miniconda_url("osx-64", "3.5.1") == \
            "https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
-
-
-def test_conda_manager_identify_distributions(get_conda_test_dir):
-    test_dir = get_conda_test_dir
-    files = [os.path.join(test_dir, "miniconda/bin/sqlite3"),
-             os.path.join(test_dir, "miniconda/envs/empty/conda-meta/history"),
-             os.path.join(test_dir, "miniconda/envs/mytest/bin/xz"),
-             os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/pip/index.py"),
-             os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/rpaths.py"),
-             "/sbin/iptables"]
-    tracer = CondaTracer()
-    dists = list(tracer.identify_distributions(files))
-
-    assert len(dists) == 1, "Exactly one Conda distribution expected."
-
-    (distributions, unknown_files) = dists[0]
-
-    # NicemanProvenance.write(sys.stdout, distributions)
-
-    assert unknown_files == {
-        "/sbin/iptables",
-        os.path.join(test_dir, "minimal_pymodule"),
-        os.path.join(test_dir, "miniconda/envs/empty/conda-meta/history")}
-
-    assert distributions.platform.startswith(
-        get_conda_platform_from_python(sys.platform)), \
-        "A conda platform is expected."
-
-    assert len(distributions.environments) == 3, \
-        "Three conda environments are expected."
-
-    out = {'environments': [{'name': 'root',
-                             'packages': [{'files': ['bin/sqlite3'],
-                                           'name': 'sqlite'}]},
-                            {'name': 'mytest',
-                             'packages': [{'files': ['bin/xz'],
-                                           'name': 'xz'},
-                                          {'files': ['lib/python2.7/site-packages/pip/index.py'],
-                                           'name': 'pip'},
-                                          {'files': ['lib/python2.7/site-packages/rpaths.py'],
-                                           'installer': 'pip',
-                                           'name': 'rpaths',
-                                           'editable': False},
-                                          {"files": [],
-                                           "installer": "pip",
-                                           "name": "nmtest",
-                                           "editable": True}
-                                          ]
-                             }
-                            ]
-           }
-    assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
-
-    # conda packages are not repeated as "pip" packages.
-    for pkg in distributions.environments[1].packages:
-        if pkg.name == "pip":
-            assert pkg.installer is None
 
 
 def test_format_conda_package():
@@ -273,10 +184,16 @@ def test_conda_init_install_and_detect():
     # First install the environment in /tmp/niceman_conda/miniconda
     dist.initiate(None)
     dist.install_packages()
+    # Add an empty environment to test detection of them
+    if not os.path.exists(os.path.join(test_dir, "envs/empty")):
+        call("cd " + test_dir + "; " +
+             "./bin/conda create -y -n empty; ",
+             shell=True)
 
     # Now pick some files we know are in the conda install and detect them
     files = [os.path.join(test_dir, "bin/pip"),
              os.path.join(test_dir, "envs/mytest/bin/xz"),
+             os.path.join(test_dir, "envs/empty/conda-meta/history"),
              ]
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
@@ -291,8 +208,8 @@ def test_conda_init_install_and_detect():
         get_conda_platform_from_python(sys.platform)), \
         "A conda platform is expected."
 
-    assert len(distributions.environments) == 2, \
-        "Two conda environments are expected."
+    assert len(distributions.environments) == 3, \
+        "Three conda environments are expected."
 
     out = {'environments': [{'name': 'root',
                              'packages': [{'name': 'pip'}]},
@@ -303,6 +220,12 @@ def test_conda_init_install_and_detect():
                             ]
            }
     assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
+
+    # conda packages are not repeated as "pip" packages.
+    for envs in distributions.environments:
+        for pkg in envs.packages:
+            if pkg.name == "pip":
+                assert pkg.installer is None
 
 
 def test_get_conda_env_export_exceptions():
