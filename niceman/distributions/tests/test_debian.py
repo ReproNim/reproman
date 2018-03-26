@@ -76,8 +76,9 @@ def test_check_bin_packages():
         for a in ["name", "component", "origin",
                   "label", "site", "archive_uri"]:
             assert getattr(o, a), "A non-local origin needs a " + a
-    assert len(unknown_files) == 0, "Files not found in packages: " + \
-                                    str(unknown_files)
+# Allow bin files to be not associated with a specific package
+#    assert len(unknown_files) == 0, "Files not found in packages: " + \
+#                                    str(unknown_files)
 
 
 def list_all_files(dir):
