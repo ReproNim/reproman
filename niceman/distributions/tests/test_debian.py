@@ -49,8 +49,8 @@ def test_dpkg_manager_identify_packages():
     for o in distribution.apt_sources:
         if o.site:
             # Loop over mandatory attributes
-            for a in ["name", "component", "archive", "codename",
-                      "origin", "label", "site", "archive_uri"]:
+            for a in ["name", "component", "archive", "origin",
+                      "label", "site", "archive_uri"]:
                 assert getattr(o, a), "A non-local origin needs a " + a
             # Note: date and architecture are not mandatory (and not found on
             # travis)
