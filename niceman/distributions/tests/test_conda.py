@@ -148,7 +148,7 @@ def test_format_pip_package():
 
 def test_create_conda_export():
     env = CondaEnvironment(
-        name="conda_env-1",
+        name="mytest",
         path="/home/butch/.cache/niceman/conda_test/miniconda/envs/mytest",
         packages=[{
             "name": "xz",
