@@ -175,6 +175,24 @@ class Exec(Interface):
                     "Not copying %s from remote session since already exists locally",
                     local_trace_dir)
 
+            from reprozip.tracer.trace import write_configuration
+            from rpaths import Path
+            # we rely on hardcoded paths in reprozip
+            write_configuration(
+                directory=Path(local_trace_dir),
+                sort_packages=False,
+                find_inputs_outputs=True)
+
+            from niceman.api import retrace
+            niceman_spec_path = op.join(local_trace_dir, "niceman.yml")
+            retrace(
+                spec=op.join(local_trace_dir, "config.yml"),
+                output_file=niceman_spec_path,
+                resource=session
+            )
+            lgr.info("NICEMAN trace %s", niceman_spec_path)
+
+
         ResourceManager.set_inventory(inventory)
 
         lgr.info("Executed the %s command in the environment %s", command,
