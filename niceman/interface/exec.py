@@ -159,7 +159,7 @@ class Exec(Interface):
                 raise NotImplementedError("No --trace for --internal commands")
             session.niceman_exec(command, args)
         else:
-            session.execute_command(cmd_prefix + [command] + args, env=remote_env)
+            session.execute_command(cmd_prefix + [command] + args)  # , env=remote_env)
 
         if trace:
             # Copy all the tracing artifacts here if not present already (e.g.
