@@ -431,7 +431,9 @@ class POSIXSession(Session):
     
     """
 
-    _GET_ENVIRON_CMD = ['python', '-c', 'import os,json,sys; sys.stdout.write(json.dumps(dict(os.environ)))']
+    # -0 is not provided by busybox's env command.  So if we decide to make it
+    # even more portable - something to be done
+    _GET_ENVIRON_CMD = ['env', '-0']
 
     @borrowdoc(Session)
     def query_envvars(self):
@@ -453,7 +455,18 @@ class POSIXSession(Session):
         object
             Decoded representation of the JSON string
         """
-        return json.loads(to_unicode(out))
+        output = to_unicode(out)
+        out = {}
+        for line in output.split(b'\0'):
+            if not line:
+                continue
+            split = line.split('=', 1)
+            if len(split) != 2:
+                lgr.warning(
+                    "Failed to split envvar definition into key=value. Got %s", line)
+                continue
+            out[split[0]] = split[1]
+        return out
 
     @borrowdoc(Session)
     def source_script(self, command, permanent=False, diff=True, shell=None):

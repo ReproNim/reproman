@@ -134,14 +134,20 @@ class Exec(Interface):
             mng_ses.mkdir(remote_trace_dir, parents=True)
 
             # TODO: deposit the tracer if not there yet
-            # mng_ses.put(tracer, remote_tracer_path)
             # TODO: augment "entry point" somehow in a generic way?
             #    For interactive sessions with bash, we could overload ~/.bashrc
             #    to do our wrapping of actual call to bashrc under the "tracer"
             remote_tracer = op.join(remote_tracer_dir, "niceman_trace")
             if not session.exists(remote_tracer):
-                session.put("/bin/echo", remote_tracer)
-            cmd_prefix = [remote_tracer]
+                session.put(
+                    "/home/yoh/proj/repronim/reprozip/reprozip/native/rztracer",
+                    remote_tracer)
+            cmd_prefix = [
+                remote_tracer,
+                "--logfile", op.join(remote_trace_dir, "tracer.log"),
+                "--dbfile", op.join(remote_trace_dir, "trace.sqlite3"),
+                "--"
+            ]
             # TODO: might want to add also a "marker" so within the trace
             #       we could avoid retracing session establishing bits themselves
             pass
