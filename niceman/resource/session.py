@@ -32,6 +32,9 @@ lgr = logging.getLogger('niceman.session')
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
 
+    INTERNAL_COMMANDS = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
+
+
     def __attrs_post_init__(self):
         """
         Maintain both current and future session environments.
@@ -244,8 +247,8 @@ class Session(object):
         CommandError
             Exception if an invalid command argument is passed in.
         """
-        authorized_commands = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
-        if command not in authorized_commands:
+
+        if command not in self.INTERNAL_COMMANDS:
             raise CommandError(cmd=command, msg="Invalid command")
 
         pargs = [] # positional args to pass to session command
