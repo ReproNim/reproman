@@ -168,6 +168,8 @@ class Exec(Interface):
                 op.expanduser('~/.cache/niceman'), 'traces', exec_id)
             if not op.exists(local_trace_dir):
                 session.get(remote_trace_dir, local_trace_dir)
+                lgr.info(
+                    "Copied tracing artifacts under %s", local_trace_dir)
             else:
                 lgr.debug(
                     "Not copying %s from remote session since already exists locally",
