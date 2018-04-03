@@ -403,12 +403,11 @@ class GitRepoShim(GitSVNRepoShim):
     def branch(self):
         if self._branch is None:
             try:
-                branch = self._run_git('rev-parse --abbrev-ref HEAD')
+                branch = self._run_git('symbolic-ref --short HEAD')
             except CommandError:
-                # could yet happen there is no commit here, so branch is not defined?
+                # We're in a detached state.
                 return None
-            if branch != 'HEAD':
-                self._branch = branch
+            self._branch = branch
         return self._branch
 
 
