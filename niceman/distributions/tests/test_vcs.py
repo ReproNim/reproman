@@ -6,11 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-from collections import namedtuple
 import os
 
 import attr
-import pytest
 
 from niceman.cmd import Runner
 from niceman.distributions.vcs import VCSTracer
