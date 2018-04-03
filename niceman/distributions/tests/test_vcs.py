@@ -211,7 +211,7 @@ def test_svn(svn_repo):
     uuid = open(uuid_file).readlines()[0].strip()
     tracer = VCSTracer()
     assert_distributions(
-        tracer.identify_distributions([svn_file]), 
+        tracer.identify_distributions([svn_file]),
         expected_length=1,
         expected_subset={'name': 'svn'})
     svn_repo = list(tracer.identify_distributions([svn_file]))[0][0].packages[0]
@@ -220,6 +220,7 @@ def test_svn(svn_repo):
     assert svn_repo.revision == 1
     assert svn_repo.identifier == svn_repo.uuid
     assert svn_repo.commit == svn_repo.revision
+
 
 def test_empty_svn(svn_repo_empty):
     (svn_repo_root, checked_out_dir) = svn_repo_empty

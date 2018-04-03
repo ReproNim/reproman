@@ -83,7 +83,7 @@ class VCSRepo(SpecObject):
         try:
             return getattr(self, self._identifier_attribute)
         except AttributeError:
-            # raised if _identifier_attribute is not defined, but this means 
+            # raised if _identifier_attribute is not defined, but this means
             # (to the caller) that identifier is not defined
             msg = "%s instance has no attribute 'identifier'" % self.__class__
             raise AttributeError(msg)
@@ -150,11 +150,11 @@ SVNRepo._distribution = SVNDistribution
 # We use unified VCSTracer but it needs per-VCS specific handling/
 # VCS objects are not created to worry/carry the session information
 # so we have per-VCS shim objects which would be tracer helpers
-# 
+#
 class GitSVNRepoShim(object):
     _ls_files_command = None  # just need to define in subclass
     _ls_files_filter = None
-    
+
     _vcs_class = None  # associated VCS class
 
     def __init__(self, path, session):
@@ -215,10 +215,10 @@ class GitSVNRepoShim(object):
 # Name must be   TYPERepo since used later in the code
 # As an overkill might want some metaclass to look after that ;-)
 class SVNRepoShim(GitSVNRepoShim):
-    
+
     _vcs_class = SVNRepo
     _vcs_distribution_class = SVNDistribution
-    
+
     @property
     def _ls_files_command(self):
         # tricky -- we need to locate wc.db somewhere upstairs, and filter out paths
@@ -290,8 +290,8 @@ class SVNRepoShim(GitSVNRepoShim):
 
     @property
     def revision(self):
-        # svn info doesn't give the current revision 
-        # (see http://svnbook.red-bean.com/en/1.7/svn.tour.history.html) 
+        # svn info doesn't give the current revision
+        # (see http://svnbook.red-bean.com/en/1.7/svn.tour.history.html)
         # so we need to run svn log
         if not hasattr(self, '_revision'):
             runner = Runner()
@@ -375,7 +375,7 @@ class GitRepoShim(GitSVNRepoShim):
         except CommandError:
             # might still be the first yet to be committed state in the branch
             return None
-        
+
     @property
     def root_hexsha(self):
         try:
@@ -384,7 +384,7 @@ class GitRepoShim(GitSVNRepoShim):
         except CommandError:
             # might still be the first yet to be committed state in the branch
             return None
-        
+
     @property
     def describe(self):
         """Let's use git describe"""
@@ -488,7 +488,7 @@ class VCSTracer(DistributionTracer):
         # dictionary to contain per each inspected/known directory a VCS
         # instance it belongs to
         self._known_repos = {}
-        
+
     def identify_distributions(self, files):
         repos, remaining_files = self.identify_packages_from_files(files)
         pkgs_per_distr = defaultdict(list)
