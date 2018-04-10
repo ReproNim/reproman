@@ -57,7 +57,7 @@ before_install:
   - travis_retry sudo apt-get update -qq
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
-  - apt-get install -y singularity-container
+  - sudo apt-get install -y singularity-container
 
 install:
   # - tools/ci/build_install_apt  # Removed dependency on python-apt!
