@@ -452,6 +452,34 @@ def skip_if_no_docker_engine(func):
             func.__name__))
     return func
 
+
+def skip_if_no_singularity(func):
+    """Test decorator that will skip a test if the singularity executable is
+    not found.
+    
+    Returns
+    -------
+    func
+        Decorator function
+    
+    Raises
+    ------
+    SkipTest
+    """
+    # Make sure singularity is installed
+    try:
+        stdout, _ = Runner().run(['singularity', '--version'])
+    except Exception:
+        msg = "Singularity not installed, skipping test {}"
+        raise SkipTest(msg.format(func.__name__))
+
+    if stdout.startswith('2.2') or stdout.startswith('2.3'):
+        # Running singularity instances and managing them didn't happen
+        # until version 2.4. See: https://singularity.lbl.gov/archive/
+        msg = "Singularity version >= 2.4 required, skipping test {}"
+        raise SkipTest(msg.format(func.__name__))
+    return func
+
 @optional_args
 def assert_cwd_unchanged(func, ok_to_chdir=False):
     """Decorator to test whether the current working directory remains unchanged

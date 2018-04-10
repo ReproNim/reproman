@@ -15,10 +15,12 @@ import pytest
 import tempfile
 import uuid
 
-from ..session import get_updated_env, Session, POSIXSession
+from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
 from ..shell import ShellSession
+from ..singularity import Singularity, SingularitySession, \
+    PTYSingularitySession
 from ..ssh import SSHSession, PTYSSHSession
 from ...tests.utils import skip_ssh
 from ...tests.fixtures import get_docker_fixture
@@ -191,6 +193,8 @@ def test_session_class():
     DockerSession,
     PTYDockerSession,
     ShellSession,
+    SingularitySession,
+    PTYSingularitySession,
     SSHSession,
     PTYSSHSession
 ])
@@ -232,7 +236,15 @@ def resource_session(request):
         )
         return request.param(ssh)
 
-    return request.param() 
+    # Initialize Singularity test container.
+    if request.param in [SingularitySession, PTYSingularitySession]:
+        name = str(uuid.uuid4().hex)[:11]
+        resource = Singularity(name=name, image='docker://python:2.7')
+        resource.connect()
+        resource.create()
+        return request.param(name)
+
+    return request.param()
 
 
 def test_session_abstract_methods(testing_container, resource_session,
