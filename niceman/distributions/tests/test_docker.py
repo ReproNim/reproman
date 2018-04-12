@@ -33,8 +33,7 @@ def test_docker_trace():
         '325fe8a0d1b0ba0bbff2609befa2dda'
     assert dist.images[0].architecture == 'amd64'
     assert dist.images[0].operating_system == 'linux'
-    assert dist.images[0].repo_digests[0] == 'alpine@sha256:f625bd3ff910a' + \
-        'd2c68a405ccc5e294d2714fc8cfe7b5d80a8331c72ad5cc7630'
+    assert dist.images[0].repo_digests[0].startswith('alpine@sha256')
     assert dist.images[0].repo_tags[0] == 'alpine:3.6'
     assert dist.images[0].created == '2018-01-09T21:10:38.538173323Z'
     assert 'non-existant-image' in remaining_files
@@ -100,8 +99,6 @@ def test_docker_distribution():
     alpine_3_6 = client.inspect_image(dist.images[1].id)
     assert alpine_3_6['Id'] == 'sha256:77144d8c6bdce9b97b6d5a900f1ab85da3' + \
         '25fe8a0d1b0ba0bbff2609befa2dda'
-    assert 'alpine@sha256:f625bd3ff910ad2c68a405ccc5e294d2714fc8cfe7b5d80' + \
-        'a8331c72ad5cc7630' in alpine_3_6['RepoDigests']
     assert 'alpine:3.6' in alpine_3_6['RepoTags']
 
     # Clean up docker engine
