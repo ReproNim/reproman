@@ -158,7 +158,7 @@ class CondaDistribution(Distribution):
         ValueError
             Unexpected conda platform or python version
         CommandError
-            If unexpected error in install commands occur
+            If unexpected error in install commands occurs
         """
 
         if not self.path:  # Permit empty conda config entry
