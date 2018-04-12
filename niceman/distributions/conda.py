@@ -17,6 +17,7 @@ from niceman.resource.session import get_local_session
 
 from niceman.distributions import Distribution, piputils
 from niceman.dochelpers import exc_str
+from niceman.support.exceptions import CommandError
 from niceman.utils import make_tempfile, PathRoot, is_subpath
 
 from .base import SpecObject
@@ -182,10 +183,10 @@ class CondaDistribution(Distribution):
                 session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
                                         (tmp_dir, self.path))
             # TODO: conda info doesn't return a version of python we can use!
-            ## Update root versions of python and conda
-            # session.execute_command(
-            #    "%s/bin/conda install -y conda=%s python=%s" %
-            #    (self.path, self.conda_version, self.python_version))
+            ## Update root version of conda
+            session.execute_command(
+               "%s/bin/conda install -y conda=%s" %
+               (self.path, self.conda_version))
 
             # Loop through non-root packages, creating the conda-env config
             for env in self.environments:
@@ -194,13 +195,19 @@ class CondaDistribution(Distribution):
                     remote_config = os.path.join(tmp_dir, env.name)
                     session.put(local_config, remote_config)
                     if not session.isdir(env.path):
-                        session.execute_command(
-                            "%s/bin/conda-env create -p %s -f %s " %
-                            (self.path, env.path, remote_config))
+                        try:
+                            session.execute_command(
+                                "%s/bin/conda-env create -p %s -f %s " %
+                                (self.path, env.path, remote_config))
+                        except CommandError:
+                            # Some conda versions seg fault so try to update
+                            session.execute_command(
+                                "%s/bin/conda-env update -p %s -f %s " %
+                                (self.path, env.path, remote_config))
                     else:
                         session.execute_command(
                             "%s/bin/conda-env update -p %s -f %s " %
-                            (self.path, env.path, remote_config ))
+                            (self.path, env.path, remote_config))
 
         finally:
             if tmp_dir:
