@@ -182,11 +182,11 @@ class CondaDistribution(Distribution):
                 # NOTE: miniconda.sh makes parent directories automatically
                 session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
                                         (tmp_dir, self.path))
-            # TODO: conda info doesn't return a version of python we can use!
             ## Update root version of conda
             session.execute_command(
-               "%s/bin/conda install -y conda=%s" %
-               (self.path, self.conda_version))
+               "%s/bin/conda install -y conda=%s python=%s" %
+               (self.path, self.conda_version,
+                self.get_simple_python_version(self.python_version)))
 
             # Loop through non-root packages, creating the conda-env config
             for env in self.environments:
@@ -215,6 +215,13 @@ class CondaDistribution(Distribution):
                 session.execute_command(["rm", "-R", tmp_dir])
 
         return
+
+    @staticmethod
+    def get_simple_python_version(python_version):
+        # Get the simple python version from the conda info string
+        # Specifically, pull "major.minor.micro" from the full string
+        # "major.minor.micro.releaselevel.serial"
+        return ".".join(python_version.split(".", 3)[:3])
 
     @staticmethod
     def format_conda_package(name, version=None, build=None, **_):

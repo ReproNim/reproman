@@ -45,6 +45,13 @@ def test_get_miniconda_url():
            "https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
 
 
+def test_get_simple_python_version():
+    assert CondaDistribution.get_simple_python_version("2.7.12.final.0") == \
+           "2.7.12"
+    assert CondaDistribution.get_simple_python_version("3.5.1") == \
+           "3.5.1"
+
+
 def test_format_conda_package():
     assert "p" == CondaDistribution.format_conda_package("p")
     assert "p=v" == CondaDistribution.format_conda_package("p", "v")
@@ -113,6 +120,16 @@ def test_conda_init_install_and_detect():
                 name="root",
                 path=test_dir,
                 packages=[{
+                    "name": "conda",
+                    "installer": None,
+                    "version": "4.3.31",
+                    "build": None,
+                    "channel_name": None,
+                    "md5": None,
+                    "size": None,
+                    "url": None,
+                    "files": None,
+                },{
                     "name": "pip",
                     "installer": None,
                     "version": "9.0.1",
