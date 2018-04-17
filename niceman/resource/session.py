@@ -457,7 +457,7 @@ class POSIXSession(Session):
         """
         output = to_unicode(out)
         out = {}
-        for line in output.split(b'\0'):
+        for line in output.split('\0'):
             if not line:
                 continue
             split = line.split('=', 1)
