@@ -80,12 +80,18 @@ class Exec(Interface):
                 " NICEMAN command available within sessions.  Known are: %s"
                 % ', '.join(Session.INTERNAL_COMMANDS)
         ),
+        tracer=Parameter(
+            args=("--tracer",),
+            metavar="PATH",
+            doc="""Path to rztracer binary.  NOTE: This is a temporary argument
+            until we deposit the binary somewhere.""",
+        ),
         trace=trace_opt,
     )
 
     @staticmethod
     def __call__(command, args, name=None, resource_id=None, config=None,
-                 internal=False, trace=False):
+                 internal=False, trace=False, tracer=None):
         from niceman.ui import ui
         if not name and not resource_id:
             name = ui.question(
@@ -119,6 +125,8 @@ class Exec(Interface):
             str(uuid.uuid4())[:2])
 
         if trace:
+            if tracer is None:
+                raise ValueError("Need to specify --tracer")
             # Establish a "management" session first
             mng_ses = env_resource.get_session(pty=False)
             remote_env_full = mng_ses.query_envvars()
@@ -139,9 +147,7 @@ class Exec(Interface):
             #    to do our wrapping of actual call to bashrc under the "tracer"
             remote_tracer = op.join(remote_tracer_dir, "niceman_trace")
             if not session.exists(remote_tracer):
-                session.put(
-                    "/home/yoh/proj/repronim/reprozip/reprozip/native/rztracer",
-                    remote_tracer)
+                session.put(tracer, remote_tracer)
             cmd_prefix = [
                 remote_tracer,
                 "--logfile", op.join(remote_trace_dir, "tracer.log"),
