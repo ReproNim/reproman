@@ -455,9 +455,8 @@ class POSIXSession(Session):
         object
             Decoded representation of the JSON string
         """
-        output = to_unicode(out)
-        out = {}
-        for line in output.split('\0'):
+        output = {}
+        for line in to_unicode(out).split('\0'):
             if not line:
                 continue
             split = line.split('=', 1)
@@ -465,8 +464,8 @@ class POSIXSession(Session):
                 lgr.warning(
                     "Failed to split envvar definition into key=value. Got %s", line)
                 continue
-            out[split[0]] = split[1]
-        return out
+            output[split[0]] = split[1]
+        return output
 
     @borrowdoc(Session)
     def source_script(self, command, permanent=False, diff=True, shell=None):
