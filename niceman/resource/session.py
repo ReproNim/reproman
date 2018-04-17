@@ -609,7 +609,7 @@ class POSIXSession(Session):
             Runner().run(command)
             
 
-def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False):
+def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
     """A shortcut to get a local session"""
     # TODO: support arbitrary session as obtained from a resource
     # TODO:  Shell needs a name -- should we request from manager

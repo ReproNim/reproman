@@ -84,7 +84,7 @@ def test_get_updated_env():
 
 
 def test_get_local_session():
-    # get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False)
+    # get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None)
     return
 
 
