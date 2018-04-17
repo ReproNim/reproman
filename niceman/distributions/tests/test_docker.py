@@ -99,7 +99,6 @@ def test_docker_distribution():
     assert alpine_3_6['Id'] == 'sha256:77144d8c6bdce9b97b6d5a900f1ab85da3' + \
         '25fe8a0d1b0ba0bbff2609befa2dda'
     assert alpine_3_6['RepoDigests'][0].startswith('alpine@sha256:')
-    assert 'alpine:3.6' in alpine_3_6['RepoTags']
 
     # Clean up docker engine
     client.remove_image(dist.images[0].id)
