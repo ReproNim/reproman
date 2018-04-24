@@ -211,11 +211,12 @@ def test_conda_init_install_and_detect():
     pymod_dir = os.path.join(test_dir, "minimal_pymodule")
     if not os.path.exists(pymod_dir):
         create_pymodule(pymod_dir)
+        call([os.path.join(test_dir, "envs/mytest/bin/pip"),
+              "install", "-e", pymod_dir])
 
     # Now pick some files we know are in the conda install and detect them
     files = [os.path.join(test_dir, "bin/pip"),
              os.path.join(test_dir, "envs/mytest/bin/xz"),
-             os.path.join(test_dir, "minimal_pymodule"),
              os.path.join(test_dir, "envs/empty/conda-meta/history"),
              ]
     tracer = CondaTracer()
@@ -234,14 +235,18 @@ def test_conda_init_install_and_detect():
     assert len(distributions.environments) == 3, \
         "Three conda environments are expected."
 
-    assert os.path.join(test_dir, "minimal_pymodule") in unknown_files, \
-        "Custom python module expected to not be detected in conda."
-
     out = {'environments': [{'name': 'root',
                              'packages': [{'name': 'pip'}]},
                             {'name': 'mytest',
                              'packages': [{'name': 'xz'},
-                                          {'name': 'pip'}, ]
+                                          {'name': 'pip'},
+                                          {'name': 'rpaths',
+                                           'installer': 'pip',
+                                           'editable': False},
+                                          {'name': 'nmtest',
+                                           'files': [],
+                                           'installer': 'pip',
+                                           'editable': True}]
                              }
                             ]
            }
