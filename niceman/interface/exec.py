@@ -12,11 +12,13 @@
 __docformat__ = 'restructuredtext'
 
 import os.path as op
+import sys
 import time
 import uuid
 
 from .base import Interface
-import niceman.interface.base # Needed for test patching
+from ..support.exceptions import CommandError
+import niceman.interface.base  # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from ..resource import ResourceManager
@@ -160,12 +162,17 @@ class Exec(Interface):
 
         # TODO: collect logs into an exec_id directory
 
-        if internal:
-            if trace:
-                raise NotImplementedError("No --trace for --internal commands")
-            session.niceman_exec(command, args)
-        else:
-            session.execute_command(cmd_prefix + [command] + args)  # , env=remote_env)
+        try:
+            error = None
+            out, err = None, None
+            if internal:
+                if trace:
+                    raise NotImplementedError("No --trace for --internal commands")
+                session.niceman_exec(command, args)
+            else:
+                out, err = session.execute_command(cmd_prefix + [command] + args)  # , env=remote_env)
+        except CommandError as error:
+            out, err = error.stdout, error.stderr
 
         if trace:
             # Copy all the tracing artifacts here if not present already (e.g.
@@ -203,3 +210,14 @@ class Exec(Interface):
 
         lgr.info("Executed the %s command in the environment %s", command,
                  name)
+
+        if out:
+            sys.stdout.write(out)
+        if err:
+            sys.stderr.write(err)
+        if error:
+            lgr.error(
+                "Command %s failed to run in %s",
+                command, env_resource
+            )
+            raise SystemExit(error.code)
