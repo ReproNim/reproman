@@ -68,7 +68,7 @@ class Diff(Interface):
             pkgs_only_2 = pkgs_2_s - pkgs_1_s
     
             if pkgs_only_1 or pkgs_only_2:
-                print(pkg_type + ':')
+                print(pkg_type + 's:')
             if pkgs_only_1:
                 for cmp_key in sorted(pkgs_only_1):
                     package = pkgs_1[cmp_key]
@@ -84,7 +84,7 @@ class Diff(Interface):
                 package_1 = pkgs_1[cmp_key]
                 package_2 = pkgs_2[cmp_key]
                 if package_1.version != package_2.version:
-                    print(' %s %s:' % (pkg_type, " ".join(cmp_key)))
+                    print('%s %s:' % (pkg_type, " ".join(cmp_key)))
                     print('< %s' % package_1.version)
                     print('---')
                     print('> %s' % package_2.version)
