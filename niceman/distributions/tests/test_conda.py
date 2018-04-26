@@ -26,7 +26,8 @@ from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
 import json
 
-from niceman.distributions.conda import CondaTracer
+from niceman.distributions.conda import CondaTracer, \
+    get_conda_platform_from_python
 
 
 @pytest.fixture(scope="session")
@@ -53,6 +54,7 @@ def get_conda_test_dir():
          "curl -O https://repo.continuum.io/miniconda/" + miniconda_sh + "; "
          "bash -b " + miniconda_sh + " -b -p ./miniconda; "
          "./miniconda/bin/conda create -y -n mytest python=2.7; "
+         "./miniconda/bin/conda create -y -n empty; "
          "./miniconda/bin/conda install -y xz -n mytest; "
          "./miniconda/envs/mytest/bin/pip install rpaths; "
          "./miniconda/envs/mytest/bin/pip install -e " + pymod_dir + ";",
@@ -60,10 +62,15 @@ def get_conda_test_dir():
     return test_dir
 
 
+def test_get_conda_platform_from_python():
+    assert get_conda_platform_from_python("linux2") == "linux"
+    assert get_conda_platform_from_python("darwin") == "osx"
+
 def test_conda_manager_identify_distributions(get_conda_test_dir):
     # Skip if network is not available (skip_if_no_network fails with fixtures)
     test_dir = get_conda_test_dir
     files = [os.path.join(test_dir, "miniconda/bin/sqlite3"),
+             os.path.join(test_dir, "miniconda/envs/empty/conda-meta/history"),
              os.path.join(test_dir, "miniconda/envs/mytest/bin/xz"),
              os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/pip/index.py"),
              os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/rpaths.py"),
@@ -79,9 +86,14 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
 
     assert unknown_files == {
         "/sbin/iptables",
-        os.path.join(test_dir, "minimal_pymodule")}
+        os.path.join(test_dir, "minimal_pymodule"),
+        os.path.join(test_dir, "miniconda/envs/empty/conda-meta/history")}
 
-    assert len(distributions.environments) == 2, \
+    assert distributions.platform.startswith(
+        get_conda_platform_from_python(sys.platform)), \
+        "A conda platform is expected."
+
+    assert len(distributions.environments) == 3, \
         "Two conda environments are expected."
 
     out = {'environments': [{'name': 'root',

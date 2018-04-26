@@ -163,7 +163,8 @@ def git_repo_fixture(kind="default", scope="function"):
 
             if kind == "pair":
                 localdir = os.path.realpath(os.path.join(tmpdir, "repo1"))
-                runner.run(["git", "clone", repodir, localdir])
+                runner.run(["git", "clone", repodir, localdir],
+                           expect_stderr=True)
                 with chpwd(localdir):
                     setup_user()
                 retval = localdir, repodir
