@@ -131,7 +131,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         # XDG user config
         home_cfg_base_path = self.dirs.user_config_dir
         if os.path.isabs(home_cfg_base_path):
-            cfg_file_candidates.append(opj(home_cfg_base_path, 'niceman.cfg'))
+            cfg_file_candidates.append(opj(home_cfg_base_path, 'config'))
 
         # current dir config
         cfg_file_candidates.append(opj('.niceman', 'config'))
