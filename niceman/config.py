@@ -20,7 +20,7 @@ from os.path import join as opj
 
 from .support.configparserinc import SafeConfigParserWithIncludes
 
-locations_doc = """
+LOCATIONS_DOC = """
     1. '/etc/niceman/niceman.cfg'
     2. 'niceman/config' in all directories defined by $XDG_CONFIG_DIRS
        (by default: /etc/xdg/)
@@ -43,7 +43,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
     called later on.  Files are read and parsed in the following
     order:
 
-    {locations_doc}
+    {LOCATIONS_DOC}
 
     Moreover, the constructor takes an optional argument with a list
     of additional file names to parse afterwards.

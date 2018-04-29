@@ -20,7 +20,7 @@ from os.path import join as opj
 from glob import glob
 import os.path
 
-from ..config import ConfigManager, locations_doc
+from ..config import ConfigManager, LOCATIONS_DOC
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
@@ -216,7 +216,7 @@ class ResourceManager(object):
                 "You must specify it using --config "
                 "or place it in any of the following locations:\n\n"
                 "{}\n\n".format(config_path or config,
-                                dedent_docstring(locations_doc)))
+                                dedent_docstring(LOCATIONS_DOC)))
 
         return cm
 
