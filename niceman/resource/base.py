@@ -211,7 +211,7 @@ class ResourceManager(object):
             cm = get_cm(config_path=config)
         if len(cm._sections) == 1:
             raise MissingConfigFileError(
-                "Unable to locate config file: {}".format(config_path))
+                "Unable to locate config file: {}".format(config_path or config))
 
         return cm
 
