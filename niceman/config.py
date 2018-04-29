@@ -40,10 +40,8 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
 
     Configuration files (INI syntax) in multiple location are parsed
     when a class instance is created or whenever `Config.reload()` is
-    called later on.  Files are read and parsed in the following
-    order:
-
-    {LOCATIONS_DOC}
+    called later on.  Files are read and parsed in the order described by
+    `LOCATIONS_DOC`.
 
     Moreover, the constructor takes an optional argument with a list
     of additional file names to parse afterwards.
@@ -244,7 +242,3 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
             raise ValueError(
                 "Failed to obtain value from configuration for %s.%s. "
                 "Original exception was: %s" % (section, option, e))
-
-
-if ConfigManager.__doc__ is not None:  # None with python -OO
-    ConfigManager.__doc__ = ConfigManager.__doc__.format(**locals())
