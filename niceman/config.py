@@ -20,6 +20,14 @@ from os.path import join as opj
 
 from .support.configparserinc import SafeConfigParserWithIncludes
 
+locations_doc = """
+    1. '/etc/niceman/niceman.cfg'
+    2. 'niceman/config' in all directories defined by $XDG_CONFIG_DIRS
+       (by default: /etc/xdg/)
+    3. 'niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
+    4. 'niceman.cfg' in the current directory""".lstrip()
+
+
 class ConfigManager(SafeConfigParserWithIncludes, object):
     """Central configuration registry for niceman.
 
@@ -34,11 +42,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
     called later on.  Files are read and parsed in the following
     order:
 
-    1. '/etc/niceman/niceman.cfg'
-    2. 'niceman/config' in all directories defined by $XDG_CONFIG_DIRS
-       (by default: /etc/xdg/)
-    3. 'niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
-    4. 'niceman.cfg' in the current directory
+    {locations_doc}
 
     Moreover, the constructor takes an optional argument with a list
     of additional file names to parse afterwards.
@@ -239,3 +243,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
             raise ValueError(
                 "Failed to obtain value from configuration for %s.%s. "
                 "Original exception was: %s" % (section, option, e))
+
+
+if ConfigManager.__doc__ is not None:  # None with python -OO
+    ConfigManager.__doc__ = ConfigManager.__doc__.format(**locals())
