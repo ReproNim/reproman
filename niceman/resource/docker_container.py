@@ -42,7 +42,7 @@ class DockerContainer(Resource):
         doc="Docker base image ID from which to create the running instance")
     engine_url = attrib(default='unix:///var/run/docker.sock',
         doc="Docker server URL where engine is listening for connections")
-    seccomp = attrib(default='on',
+    seccomp_unconfined = attrib(default=False,
         doc="Disable kernel secure computing mode when creating the container")
 
     status = attr.ib(default=None)
@@ -116,7 +116,7 @@ class DockerContainer(Resource):
         # necessary to suspend the kernel's security facility when creating
         # the container. Since it is a security issue, the default is to
         # *not* turn it off.
-        if self.seccomp == 'off':
+        if self.seccomp_unconfined:
             args['host_config'] = {
                 'SecurityOpt': ['seccomp:unconfined']
             }
