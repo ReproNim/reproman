@@ -34,3 +34,8 @@ def test_write():
     # and we could do the full round trip while retaining the same "value"
     assert env == env_reparsed
     print(out)
+
+
+def test_debian_spec():
+   spec = NicemanProvenance('/tmp/datalad-conda.spec').get_distributions()
+   print(spec)
