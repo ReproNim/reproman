@@ -11,8 +11,6 @@ from __future__ import absolute_import
 
 import io
 
-from pprint import pprint
-
 from niceman.formats.niceman import NicemanProvenance
 
 from .constants import NICEMAN_SPEC1_YML_FILENAME
