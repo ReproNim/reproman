@@ -22,10 +22,10 @@ from .support.configparserinc import SafeConfigParserWithIncludes
 
 LOCATIONS_DOC = """
     1. '/etc/niceman/niceman.cfg'
-    2. 'niceman/config' in all directories defined by $XDG_CONFIG_DIRS
+    2. 'niceman/niceman.cfg' in all directories defined by $XDG_CONFIG_DIRS
        (by default: /etc/xdg/)
-    3. 'niceman/config' in $XDG_CONFIG_HOME (by default: ~/.config/)
-    4. '.niceman/config', relative to the current directory
+    3. 'niceman/niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
+    4. '.niceman/niceman.cfg', relative to the current directory
     5. 'niceman.cfg' in the current directory""".lstrip()
 
 
@@ -124,15 +124,16 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
             # system config
             '/etc/niceman/niceman.cfg']
         # XDG system config
-        cfg_file_candidates.append(opj(self.dirs.site_config_dir, 'config'))
+        cfg_file_candidates.append(opj(self.dirs.site_config_dir,
+                                       'niceman.cfg'))
 
         # XDG user config
         home_cfg_base_path = self.dirs.user_config_dir
         if os.path.isabs(home_cfg_base_path):
-            cfg_file_candidates.append(opj(home_cfg_base_path, 'config'))
+            cfg_file_candidates.append(opj(home_cfg_base_path, 'niceman.cfg'))
 
         # current dir config
-        cfg_file_candidates.append(opj('.niceman', 'config'))
+        cfg_file_candidates.append(opj('.niceman', 'niceman.cfg'))
         return cfg_file_candidates
 
     def _get_file_candidates(self):
