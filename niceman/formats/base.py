@@ -148,7 +148,7 @@ class Provenance(object):
         return None
 
     # @abc.abstractmethod
-    def get_distributions(self):
+    def get_distributions(self, in_value):
         """
         Retrieve the information for all the distributions recorded in the
         provenance file.
