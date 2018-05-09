@@ -20,6 +20,15 @@ from os.path import join as opj
 
 from .support.configparserinc import SafeConfigParserWithIncludes
 
+LOCATIONS_DOC = """
+    1. '/etc/niceman/niceman.cfg'
+    2. 'niceman/niceman.cfg' in all directories defined by $XDG_CONFIG_DIRS
+       (by default: /etc/xdg/)
+    3. 'niceman/niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
+    4. '.niceman/niceman.cfg', relative to the current directory
+    5. 'niceman.cfg' in the current directory""".lstrip()
+
+
 class ConfigManager(SafeConfigParserWithIncludes, object):
     """Central configuration registry for niceman.
 
@@ -31,14 +40,8 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
 
     Configuration files (INI syntax) in multiple location are parsed
     when a class instance is created or whenever `Config.reload()` is
-    called later on.  Files are read and parsed in the following
-    order:
-
-    1. '/etc/niceman/niceman.cfg'
-    2. 'niceman/config' in all directories defined by $XDG_CONFIG_DIRS
-       (by default: /etc/xdg/)
-    3. 'niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
-    4. 'niceman.cfg' in the current directory
+    called later on.  Files are read and parsed in the order described by
+    `LOCATIONS_DOC`.
 
     Moreover, the constructor takes an optional argument with a list
     of additional file names to parse afterwards.
@@ -121,7 +124,8 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
             # system config
             '/etc/niceman/niceman.cfg']
         # XDG system config
-        cfg_file_candidates.append(opj(self.dirs.site_config_dir, 'config'))
+        cfg_file_candidates.append(opj(self.dirs.site_config_dir,
+                                       'niceman.cfg'))
 
         # XDG user config
         home_cfg_base_path = self.dirs.user_config_dir
@@ -129,7 +133,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
             cfg_file_candidates.append(opj(home_cfg_base_path, 'niceman.cfg'))
 
         # current dir config
-        cfg_file_candidates.append(opj('.niceman', 'config'))
+        cfg_file_candidates.append(opj('.niceman', 'niceman.cfg'))
         return cfg_file_candidates
 
     def _get_file_candidates(self):

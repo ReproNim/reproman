@@ -20,7 +20,7 @@ from os.path import join as opj
 from glob import glob
 import os.path
 
-from ..config import ConfigManager
+from ..config import ConfigManager, LOCATIONS_DOC
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
@@ -210,8 +210,13 @@ class ResourceManager(object):
             config = ui.question("Enter a config file", default="niceman.cfg")
             cm = get_cm(config_path=config)
         if len(cm._sections) == 1:
+            from ..interface.base import dedent_docstring
             raise MissingConfigFileError(
-                "Unable to locate config file: {}".format(config_path))
+                "Unable to locate config file: {}\n"
+                "You must specify it using --config "
+                "or place it in any of the following locations:\n\n"
+                "{}\n\n".format(config_path or config,
+                                dedent_docstring(LOCATIONS_DOC)))
 
         return cm
 
