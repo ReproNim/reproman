@@ -123,11 +123,10 @@ class DockerTracer(DistributionTracer):
                 image = json.loads(self._session.execute_command(['docker',
                     'image', 'inspect', file])[0])[0]
 
-                # Fail if the Docker image has not been pushed to a repository.
-                # If the image is not in a repository, then it can't be
-                # expected to be reasonably discovered by others to reproduce.
+                # Warn user if the image does not have any RepoDigest entries.
                 if not image['RepoDigests']:
-                    raise CommandError(msg='No Docker repos found')
+                    lgr.warning("The Docker image '%s' does not have any \
+repository IDs associated with it", file)
 
                 images.append(DockerImage(
                     id=image['Id'],
@@ -142,12 +141,9 @@ class DockerTracer(DistributionTracer):
                 if exc.stderr.startswith('Cannot connect to the Docker daemon'):
                     lgr.debug("Did not detect Docker engine: %s", exc)
                     return
-                if exc.msg == 'No Docker repos found':
-                    raise CommandError(cmd="docker image inspect {}".format(
-                        file),
-                        msg="The Docker image '{}' has not been saved to a \
-repository. Please push to a repository before running the trace.".format(
-                        file))
+                remaining_files.add(file)
+            except Exception as exc:
+                lgr.debug(exc)
                 remaining_files.add(file)
 
         if not images:

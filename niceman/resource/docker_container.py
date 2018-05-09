@@ -42,6 +42,8 @@ class DockerContainer(Resource):
         doc="Docker base image ID from which to create the running instance")
     engine_url = attrib(default='unix:///var/run/docker.sock',
         doc="Docker server URL where engine is listening for connections")
+    seccomp_unconfined = attrib(default=False,
+        doc="Disable kernel secure computing mode when creating the container")
 
     status = attr.ib(default=None)
 
@@ -103,13 +105,22 @@ class DockerContainer(Resource):
             if 'progress' in status:
                 output += ' ' + status['progress']
             lgr.info(output)
-        self._container = self._client.create_container(
-            name=self.name,
-            image=self.image,
-            stdin_open=True,
-            tty=True,
-            command='/bin/bash',
-        )
+        args = {
+            'name': self.name,
+            'image': self.image,
+            'stdin_open': True,
+            'tty': True,
+            'command': '/bin/bash'
+        }
+        # When running the rztracer binary in a Docker container, it is
+        # necessary to suspend the kernel's security facility when creating
+        # the container. Since it is a security issue, the default is to
+        # *not* turn it off.
+        if self.seccomp_unconfined:
+            args['host_config'] = {
+                'SecurityOpt': ['seccomp:unconfined']
+            }
+        self._container = self._client.create_container(**args)
         self.id = self._container.get('Id')
         self._client.start(container=self.id)
         self.status = 'running'
