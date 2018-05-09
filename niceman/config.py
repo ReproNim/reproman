@@ -24,7 +24,7 @@ LOCATIONS_DOC = """
     1. '/etc/niceman/niceman.cfg'
     2. 'niceman/config' in all directories defined by $XDG_CONFIG_DIRS
        (by default: /etc/xdg/)
-    3. 'niceman/niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
+    3. 'niceman/config' in $XDG_CONFIG_HOME (by default: ~/.config/)
     4. '.niceman/config', relative to the current directory
     5. 'niceman.cfg' in the current directory""".lstrip()
 
