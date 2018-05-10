@@ -18,6 +18,7 @@ from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
 from niceman.formats.niceman import NicemanProvenance
 from ..distributions.debian import DebianDistribution
+from ..distributions.conda import CondaDistribution
 
 __docformat__ = 'restructuredtext'
 
@@ -59,7 +60,7 @@ class Diff(Interface):
 
         env_1 = NicemanProvenance(prov1).get_environment()
         env_2 = NicemanProvenance(prov2).get_environment()
-        
+
         for pkgs_1, pkgs_2, pkg_type in get_packages(env_1, env_2):
             pkgs_1_s = set(pkgs_1)
             pkgs_2_s = set(pkgs_2)
@@ -89,20 +90,20 @@ class Diff(Interface):
                     print('---')
                     print('> %s' % package_2.version)
     
-            files1 = set(env_1.files)
-            files2 = set(env_2.files)
+        files1 = set(env_1.files)
+        files2 = set(env_2.files)
     
-            files_1_only = files1 - files2
-            files_2_only = files2 - files1
+        files_1_only = files1 - files2
+        files_2_only = files2 - files1
     
-            if files_1_only or files_2_only:
-                print('Files:')
-                for fname in files_1_only:
-                    print('< %s' % fname)
-                if files_1_only and files_2_only:
-                    print('---')
-                for fname in files_2_only:
-                    print('> %s' % fname)
+        if files_1_only or files_2_only:
+            print('Files:')
+            for fname in files_1_only:
+                print('< %s' % fname)
+            if files_1_only and files_2_only:
+                print('---')
+            for fname in files_2_only:
+                print('> %s' % fname)
 
         return
 
@@ -138,6 +139,22 @@ def get_debian_distribution(env):
     return deb_dist
 
 
+def get_conda_distribution(env):
+    """get_conda_distribution(environment) -> distribution
+
+    Returns the Conda distribution in the given environment.  Returns
+    None if there are no Conda distributions.  Raises ValueError if there 
+    is more than one Conda distribution.
+    """
+    conda_dist = None
+    for dist in env.distributions:
+        if isinstance(dist, CondaDistribution):
+            if conda_dist:
+                raise ValueError('multiple Conda distributions found')
+            conda_dist = dist
+    return conda_dist
+
+
 def get_debian_packages(env):
     """get_debian_packages(environment) -> dictionary
 
@@ -152,5 +169,24 @@ def get_debian_packages(env):
     return {p._cmp_id: p for p in deb_dist.packages}
 
 
+def get_conda_packages(env):
+    """get_conda_packages(environment) -> dictionary
+
+    Returns the Conda packages as a dictionary of cmp_key -> package.  
+    Returns an empty dictionary if there are no Conda distributions or 
+    environments.  Propagates ValueError from get_conda_distribution() 
+    if there is more than one Conda distribution.
+    """
+    conda_dist = get_conda_distribution(env)
+    if not conda_dist:
+        return {}
+    rv = {}
+    for env in conda_dist.environments:
+        for p in env.packages:
+            rv[p._cmp_id] = p
+    return rv
+
+
 def get_packages(env1, env2):
     yield get_debian_packages(env1), get_debian_packages(env2), "Debian package"
+    yield get_conda_packages(env1), get_conda_packages(env2), "Conda package"

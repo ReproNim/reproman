@@ -33,12 +33,14 @@ def test_multi_debian_files():
             main(args)
         assert_in_in('multiple Debian distributions found', log.lines)
 
+
 def test_same():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_1_yaml]
         main(args)
         assert_equal(outputs.out, '')
         assert_equal(outputs.err, '')
+
 
 def test_diff_files():
     with swallow_outputs() as outputs:
@@ -51,7 +53,8 @@ def test_diff_files():
         assert_not_in('< /etc/b', outputs.out)
         assert_not_in('> /etc/b', outputs.out)
 
-def test_diff_packages():
+
+def test_diff_debian_packages():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_2_yaml]
         main(args)
@@ -65,3 +68,22 @@ def test_diff_packages():
         assert_in('< 2.4.6', outputs.out)
         assert_in('> 2.4.7', outputs.out)
         assert_not_in('libsame', outputs.out)
+
+
+def test_diff_conda_packages():
+    with swallow_outputs() as outputs:
+        args = ['diff', diff_1_yaml, diff_2_yaml]
+        main(args)
+        assert_equal(outputs.err, '')
+        assert_in('Conda packages:', outputs.out)
+        assert_in('< c_lib1only py36_0 2:1.6.4-3', outputs.out)
+        assert_in('> c_lib2only py36_0 2:1.6.4-3', outputs.out)
+        assert_in('< c_libbuilddiff py36_0 2.4.6', outputs.out)
+        assert_in('> c_libbuilddiff hdf63c60_3 2.4.6', outputs.out)
+        # TO DO: ensure the version strings (second and third lines below) 
+        # come from the conda report -- these could just match the debian 
+        # output checked in test_diff_debian_packages()
+        assert_in('Conda package c_libversdiff py36_0:', outputs.out)
+        assert_in('< 2.4.6', outputs.out)
+        assert_in('> 2.4.7', outputs.out)
+        assert_not_in('c_libsame', outputs.out)
