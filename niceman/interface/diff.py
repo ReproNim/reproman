@@ -108,21 +108,6 @@ class Diff(Interface):
         return
 
 
-def dictify_distributions(dist_list):
-    """Make a dictionary of distributions from a list of distributions.
-
-    Raises MultipleDistributionsError if more than one of a given type of 
-    distribution is specified.
-    """
-    dist_dict = {}
-    for dist in dist_list:
-        dist_type = str(dist.__class__.__name__)
-        if dist_type in dist_dict:
-            raise MultipleDistributionsError(dist_type)
-        dist_dict[dist_type] = dist
-    return dist_dict
-
-
 def get_debian_distribution(env):
     """get_debian_distribution(environment) -> distribution
 
