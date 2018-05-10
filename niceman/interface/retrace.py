@@ -160,11 +160,11 @@ def identify_distributions(files, session=None, tracer_classes=None):
                 % max_niter)
             break
 
-        # Identify directories from the files_to_consider
-        dirs = set(filter(session.isdir, files_to_trace))
-
         for Tracer in tracer_classes:
             lgr.debug("Tracing using %s", Tracer.__name__)
+            # TODO: memoize across all loops
+            # Identify directories from the files_to_consider
+            dirs = set(filter(session.isdir, files_to_trace))
 
             # Pull out directories if the tracer can't handle them
             if Tracer.HANDLES_DIRS:

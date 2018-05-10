@@ -61,13 +61,13 @@ def get_conda_platform_from_python(py_platform):
 @attr.s
 class CondaPackage(Package):
     name = attr.ib()
-    installer = attr.ib()  # ask Bucc, probably conda vs pip
-    version = attr.ib()
-    build = attr.ib()
-    channel_name = attr.ib()
-    size = attr.ib()
-    md5 = attr.ib()
-    url = attr.ib()
+    installer = attr.ib(default=None)
+    version = attr.ib(default=None)
+    build = attr.ib(default=None)
+    channel_name = attr.ib(default=None)
+    size = attr.ib(default=None)
+    md5 = attr.ib(default=None)
+    url = attr.ib(default=None)
     location = attr.ib(default=None)
     editable = attr.ib(default=False)
     files = attr.ib(default=attr.Factory(list))
