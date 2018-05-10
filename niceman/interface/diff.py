@@ -108,36 +108,20 @@ class Diff(Interface):
         return
 
 
-def get_debian_distribution(env):
-    """get_debian_distribution(environment) -> distribution
+def get_distribution(env, dtype):
+    """get_distribution(environment, dtype) -> distribution
 
-    Returns the Debian distribution in the given environment.  Returns
-    None if there are no Debian distributions.  Raises ValueError if there 
-    is more than one Debian distribution.
+    Returns the distribution of the specified type in the given environment.  
+    Returns None if there are no matching distributions.  Raises ValueError 
+    if there is more than one matching distribution.
     """
-    deb_dist = None
-    for dist in env.distributions:
-        if isinstance(dist, DebianDistribution):
-            if deb_dist:
-                raise ValueError('multiple Debian distributions found')
-            deb_dist = dist
-    return deb_dist
-
-
-def get_conda_distribution(env):
-    """get_conda_distribution(environment) -> distribution
-
-    Returns the Conda distribution in the given environment.  Returns
-    None if there are no Conda distributions.  Raises ValueError if there 
-    is more than one Conda distribution.
-    """
-    conda_dist = None
-    for dist in env.distributions:
-        if isinstance(dist, CondaDistribution):
-            if conda_dist:
-                raise ValueError('multiple Conda distributions found')
-            conda_dist = dist
-    return conda_dist
+    dist = None
+    for d in env.distributions:
+        if isinstance(d, dtype):
+            if dist:
+                raise ValueError('multiple %s found' % str(dtype))
+            dist = d
+    return dist
 
 
 def get_debian_packages(env):
@@ -148,7 +132,7 @@ def get_debian_packages(env):
     Propagates ValueError from get_debian_distribution() if there is more 
     than one Debian distribution.
     """
-    deb_dist = get_debian_distribution(env)
+    deb_dist = get_distribution(env, DebianDistribution)
     if not deb_dist:
         return {}
     return {p._cmp_id: p for p in deb_dist.packages}
@@ -162,7 +146,7 @@ def get_conda_packages(env):
     environments.  Propagates ValueError from get_conda_distribution() 
     if there is more than one Conda distribution.
     """
-    conda_dist = get_conda_distribution(env)
+    conda_dist = get_distribution(env, CondaDistribution)
     if not conda_dist:
         return {}
     rv = {}
