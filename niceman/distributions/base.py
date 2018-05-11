@@ -93,8 +93,15 @@ class Distribution(SpecObject):
         distribution : object
             Distribution class or its instance (when provenance is not None)
         """
-        class_name = distribution_type.capitalize() + 'Distribution'
-        module = import_module('niceman.distributions.' + distribution_type.lower())
+        # Handle distributions that don't follow the assumed naming structure.
+        special_dists = {"svn": "SVNDistribution"}
+        special_modules = {"git": "vcs", "svn": "vcs"}
+
+        dlower = distribution_type.lower()
+        class_name = special_dists.get(dlower,
+                                       dlower.capitalize() + 'Distribution')
+        module = import_module('niceman.distributions.' +
+                               special_modules.get(dlower, dlower))
         class_ = getattr(module, class_name)
         return class_ if provenance is None else class_(**provenance)
 
