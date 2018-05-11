@@ -137,6 +137,22 @@ class EnvironmentSpec(SpecObject):
     #        those would also be useful for tracing for presence of distributions
     #        e.g. depending on what is in the PATH
 
+
+    def get_distribution(self, dtype):
+        """get_distribution(dtype) -> distribution
+
+        Returns the distribution of the specified type in the given 
+        environment.  Returns None if there are no matching distributions.  
+        Raises ValueError if there is more than one matching distribution.
+        """
+        dist = None
+        for d in self.distributions:
+            if isinstance(d, dtype):
+                if dist:
+                    raise ValueError('multiple %s found' % str(dtype))
+                dist = d
+        return dist
+
 _register_with_representer(EnvironmentSpec)
 
 

@@ -108,22 +108,6 @@ class Diff(Interface):
         return
 
 
-def get_distribution(env, dtype):
-    """get_distribution(environment, dtype) -> distribution
-
-    Returns the distribution of the specified type in the given environment.  
-    Returns None if there are no matching distributions.  Raises ValueError 
-    if there is more than one matching distribution.
-    """
-    dist = None
-    for d in env.distributions:
-        if isinstance(d, dtype):
-            if dist:
-                raise ValueError('multiple %s found' % str(dtype))
-            dist = d
-    return dist
-
-
 def get_debian_packages(env):
     """get_debian_packages(environment) -> dictionary
 
@@ -132,7 +116,7 @@ def get_debian_packages(env):
     Propagates ValueError from get_debian_distribution() if there is more 
     than one Debian distribution.
     """
-    deb_dist = get_distribution(env, DebianDistribution)
+    deb_dist = env.get_distribution(DebianDistribution)
     if not deb_dist:
         return {}
     return {p._cmp_id: p for p in deb_dist.packages}
@@ -146,7 +130,7 @@ def get_conda_packages(env):
     environments.  Propagates ValueError from get_conda_distribution() 
     if there is more than one Conda distribution.
     """
-    conda_dist = get_distribution(env, CondaDistribution)
+    conda_dist = env.get_distribution(CondaDistribution)
     if not conda_dist:
         return {}
     rv = {}

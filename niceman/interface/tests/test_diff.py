@@ -26,12 +26,12 @@ def test_multi_debian_files():
         args = ['diff', multi_debian_yaml, diff_1_yaml]
         with raises(SystemExit):
             main(args)
-        assert_in_in('multiple Debian distributions found', log.lines)
+        assert_in_in("multiple <class 'niceman.distributions.debian.DebianDistribution'> found", log.lines)
     with swallow_logs() as log:
         args = ['diff', diff_1_yaml, multi_debian_yaml]
         with raises(SystemExit):
             main(args)
-        assert_in_in('multiple Debian distributions found', log.lines)
+        assert_in_in("multiple <class 'niceman.distributions.debian.DebianDistribution'> found", log.lines)
 
 
 def test_same():
