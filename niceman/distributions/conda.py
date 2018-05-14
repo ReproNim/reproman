@@ -133,6 +133,10 @@ class CondaDistribution(Distribution):
         #                            package['name']])
         return
 
+    @property
+    def packages(self):
+        return [ p for env in self.environments for p in env.packages ]
+
 
 class CondaTracer(DistributionTracer):
     """conda distributions tracer

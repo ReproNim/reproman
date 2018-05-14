@@ -27,7 +27,8 @@ from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 import json
 
 from niceman.distributions.conda import CondaTracer, \
-    get_conda_platform_from_python
+    get_conda_platform_from_python, \
+    CondaDistribution
 
 
 @pytest.fixture(scope="session")
@@ -153,3 +154,11 @@ def test_get_conda_env_export_exceptions():
         mock.patch.object(lgr, "warning", log_warning):
         tracer._get_conda_env_export("", "/conda")
         assert "unknown" in log_warning.val
+
+conda_yaml = os.path.join(os.path.dirname(__file__), 'files', 'conda.yaml')
+
+def test_conda_packages():
+    env = NicemanProvenance(conda_yaml).get_environment()
+    conda_dist = env.get_distribution(CondaDistribution)
+    assert isinstance(conda_dist.packages, list)
+    assert len(conda_dist.packages) == 4
