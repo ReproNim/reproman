@@ -19,6 +19,10 @@ from niceman.distributions.conda import CondaPackage
 from niceman.distributions.debian import APTSource
 from niceman.distributions.debian import DEBPackage
 from niceman.distributions.debian import DebianDistribution
+from niceman.distributions.vcs import GitDistribution
+from niceman.distributions.vcs import GitRepo
+from niceman.distributions.vcs import SVNDistribution
+from niceman.distributions.vcs import SVNRepo
 from niceman.distributions.venv import VenvDistribution
 from niceman.distributions.venv import VenvEnvironment
 from niceman.distributions.venv import VenvPackage
@@ -111,6 +115,12 @@ def test_spec_round_trip():
                         path="/path/to/miniconda3",
                         packages=[
                             CondaPackage(name="condapkg2")])]),
+            GitDistribution(
+                name="git",
+                packages=[GitRepo(path="/path/to/repo")]),
+            SVNDistribution(
+                name="svn",
+                packages=[SVNRepo(path="/path/to/repo")]),
             VenvDistribution(
                 name="venv0",
                 path="/usr/bin/virtualenv",
