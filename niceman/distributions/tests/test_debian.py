@@ -24,7 +24,6 @@ import pytest
 
 import mock
 
-from niceman.support.exceptions import CommandError
 from niceman.utils import swallow_logs
 from niceman.tests.utils import skip_if_no_apt_cache
 
