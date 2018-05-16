@@ -353,13 +353,17 @@ def test_get_apt_release_file_names():
 
 
 def test_parse_dpkgquery_line():
-    assert parse_dpkgquery_line('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8') == \
-        {'name': 'zlib1g', 'architecture': 'i386', 'path': '/lib/i386-linux-gnu/libz.so.1.2.8'}
-
-    assert parse_dpkgquery_line('fail2ban: /usr/bin/fail2ban-client') == \
-           {'name': 'fail2ban', 'path': '/usr/bin/fail2ban-client'}
-
-    assert parse_dpkgquery_line('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0') == \
-           {'name': 'fsl-5.0-eddy-nonfree', 'path': '/usr/lib/fsl/5.0'}
-
-    assert parse_dpkgquery_line('diversion by dash from: /bin/sh') is None
+    for line, expected in [
+            ('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8',
+             {'name': 'zlib1g',
+              'architecture': 'i386',
+              'path': '/lib/i386-linux-gnu/libz.so.1.2.8'}),
+            ('fail2ban: /usr/bin/fail2ban-client',
+             {'name': 'fail2ban',
+              'path': '/usr/bin/fail2ban-client'}),
+            ('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0',
+             {'name': 'fsl-5.0-eddy-nonfree',
+              'path': '/usr/lib/fsl/5.0'}),
+            ('diversion by dash from: /bin/sh', None)
+    ]:
+        assert parse_dpkgquery_line(line) == expected
