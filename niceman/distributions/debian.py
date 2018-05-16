@@ -365,7 +365,7 @@ class DebTracer(DistributionTracer):
             for outline in out.splitlines():
                 # Parse package name (architecture) and path
                 # TODO: Handle query of /bin/sh better
-                outdict = parse_dpkgquery_line(outline)
+                outdict = self._parse_dpkgquery_line(outline)
                 if not outdict:
                     lgr.debug("Skipping line %s", outline)
                     continue
@@ -611,3 +611,11 @@ class DebTracer(DistributionTracer):
                 # specific attempts.
                 pass
         return date
+
+    def _parse_dpkgquery_line(self, line):
+        res = parse_dpkgquery_line(line)
+        if ',' in line:
+            if self._session.isdir(res["path"]):
+                return None
+            lgr.warning("dpkg-query line has multiple packages (%s)", line)
+        return res

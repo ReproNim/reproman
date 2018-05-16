@@ -241,8 +241,7 @@ def parse_dpkgquery_line(line):
     )
     if line.startswith('diversion '):
         return None  # we are ignoring diversion details ATM  TODO
-    if ',' in line:
-        lgr.warning("dpkg-query line has multiple packages (%s)" % line)
+
     res = result_re.match(line)
     if res:
         res = res.groupdict()

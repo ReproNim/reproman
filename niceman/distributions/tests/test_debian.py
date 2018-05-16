@@ -12,6 +12,7 @@ from os.path import islink
 from os.path import join, isfile
 
 from pprint import pprint
+import logging
 
 import attr
 
@@ -24,6 +25,7 @@ import pytest
 import mock
 
 from niceman.support.exceptions import CommandError
+from niceman.utils import swallow_logs
 from niceman.tests.utils import skip_if_no_apt_cache
 
 
@@ -163,6 +165,32 @@ fail2ban: /usr/bin/fail2ban-server
         '/usr/lib/afni/bin/afni': {'name': u'afni'},
         '/bin/sh': {'name': u'dash'}
     }
+
+
+def test_parse_dpkgquery_line():
+    parse = DebTracer()._parse_dpkgquery_line
+
+    mock_values = {
+        "line": {"name": "pkg",
+                 "path": "/path/to/file"},
+        "comma,line,dir": {"name": "pkg",
+                           "path": os.getcwd()},
+        "comma,line,file": {"name": "pkg",
+                            "path": __file__}
+    }
+
+    with mock.patch("niceman.distributions.debian.parse_dpkgquery_line",
+                    mock_values.get):
+        assert parse("line") == {"name": "pkg",
+                                 "path": "/path/to/file"}
+        with swallow_logs(new_level=logging.WARNING) as log:
+            assert parse("comma,line,dir") is None
+            assert not any("multiple packages " in ln for ln in log.lines)
+
+            assert parse("comma,line,file") == {"name": "pkg",
+                                                "path": __file__}
+            assert any("multiple packages " in ln for ln in log.lines)
+
 
 @pytest.fixture
 def setup_packages():
