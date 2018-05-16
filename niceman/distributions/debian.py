@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Debian(-based) distribution(s)."""
 import os
+import re
 
 import itertools
 from datetime import datetime
@@ -30,17 +31,11 @@ import requests
 from niceman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
     parse_apt_cache_policy_source_info, get_apt_release_file_names, \
-    get_spec_from_release_file
+    get_spec_from_release_file, parse_dpkgquery_line
 
 # Pick a conservative max command-line
 from niceman.utils import get_cmd_batch_len, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
-
-# To parse output of dpkg-query
-import re
-_DPKG_QUERY_PARSER = re.compile(
-    "(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(,.*)?: (?P<path>.*)$"
-)
 
 from niceman.distributions.base import DistributionTracer
 
@@ -370,7 +365,7 @@ class DebTracer(DistributionTracer):
             for outline in out.splitlines():
                 # Parse package name (architecture) and path
                 # TODO: Handle query of /bin/sh better
-                outdict = self._parse_dpkgquery_line(outline)
+                outdict = parse_dpkgquery_line(outline)
                 if not outdict:
                     lgr.debug("Skipping line %s", outline)
                     continue
@@ -616,16 +611,3 @@ class DebTracer(DistributionTracer):
                 # specific attempts.
                 pass
         return date
-
-    @staticmethod
-    def _parse_dpkgquery_line(line):
-        if line.startswith('diversion '):
-            return None  # we are ignoring diversion details ATM  TODO
-        if ',' in line:
-            lgr.warning("dpkg-query line has multiple packages (%s)" % line)
-        res = _DPKG_QUERY_PARSER.match(line)
-        if res:
-            res = res.groupdict()
-            if res['architecture'] is None:
-                res.pop('architecture')
-        return res

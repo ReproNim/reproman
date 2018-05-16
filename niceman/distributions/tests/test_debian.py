@@ -128,20 +128,6 @@ def test_utf8_file():
         assert True
 
 
-def test_parse_dpkgquery_line():
-    parse = DebTracer._parse_dpkgquery_line
-    assert parse('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8') == \
-        {'name': 'zlib1g', 'architecture': 'i386', 'path': '/lib/i386-linux-gnu/libz.so.1.2.8'}
-
-    assert parse('fail2ban: /usr/bin/fail2ban-client') == \
-           {'name': 'fail2ban', 'path': '/usr/bin/fail2ban-client'}
-
-    assert parse('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0') == \
-           {'name': 'fsl-5.0-eddy-nonfree', 'path': '/usr/lib/fsl/5.0'}
-
-    assert parse('diversion by dash from: /bin/sh') is None
-
-
 def test_get_packagefields_for_files():
     manager = DebTracer()
     # TODO: mock! and bring back afni and fail2ban

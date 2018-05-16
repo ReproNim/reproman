@@ -233,3 +233,19 @@ def get_apt_release_file_names(url, url_suite):
         filename = url
     return ["/var/lib/apt/lists/" + filename + "_Release",
             "/var/lib/apt/lists/" + filename + "_InRelease"]
+
+
+def parse_dpkgquery_line(line):
+    result_re = re.compile(
+        "(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(,.*)?: (?P<path>.*)$"
+    )
+    if line.startswith('diversion '):
+        return None  # we are ignoring diversion details ATM  TODO
+    if ',' in line:
+        lgr.warning("dpkg-query line has multiple packages (%s)" % line)
+    res = result_re.match(line)
+    if res:
+        res = res.groupdict()
+        if res['architecture'] is None:
+            res.pop('architecture')
+    return res
