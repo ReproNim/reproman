@@ -357,13 +357,20 @@ def test_parse_dpkgquery_line():
             ('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8',
              {'name': 'zlib1g',
               'architecture': 'i386',
-              'path': '/lib/i386-linux-gnu/libz.so.1.2.8'}),
+              'path': '/lib/i386-linux-gnu/libz.so.1.2.8',
+              'pkgs_rest': None}),
             ('fail2ban: /usr/bin/fail2ban-client',
              {'name': 'fail2ban',
-              'path': '/usr/bin/fail2ban-client'}),
+              'path': '/usr/bin/fail2ban-client',
+              'pkgs_rest': None}),
             ('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0',
              {'name': 'fsl-5.0-eddy-nonfree',
-              'path': '/usr/lib/fsl/5.0'}),
+              'path': '/usr/lib/fsl/5.0',
+              'pkgs_rest': ', fsl-5.0-core'}),
+            ('pkg: path,with,commas',
+             {'name': 'pkg',
+              'path': 'path,with,commas',
+              'pkgs_rest': None}),
             ('diversion by dash from: /bin/sh', None)
     ]:
         assert parse_dpkgquery_line(line) == expected

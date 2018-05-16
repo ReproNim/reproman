@@ -237,7 +237,8 @@ def get_apt_release_file_names(url, url_suite):
 
 def parse_dpkgquery_line(line):
     result_re = re.compile(
-        "(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(,.*)?: (?P<path>.*)$"
+        "(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(?P<pkgs_rest>,.*)?:"
+        " (?P<path>.*)$"
     )
     if line.startswith('diversion '):
         return None  # we are ignoring diversion details ATM  TODO

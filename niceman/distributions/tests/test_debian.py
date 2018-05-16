@@ -171,24 +171,25 @@ def test_parse_dpkgquery_line():
     parse = DebTracer()._parse_dpkgquery_line
 
     mock_values = {
-        "line": {"name": "pkg",
-                 "path": "/path/to/file"},
-        "comma,line,dir": {"name": "pkg",
-                           "path": os.getcwd()},
-        "comma,line,file": {"name": "pkg",
-                            "path": __file__}
+        "unique": {"name": "pkg",
+                   "path": "/path/to/file",
+                   "pkgs_rest": None},
+        "multi_dir": {"name": "pkg",
+                      "path": os.getcwd(),
+                      "pkgs_rest": ", more, packages"},
+        "multi_file": {"name": "pkg",
+                       "path": __file__,
+                       "pkgs_rest": ", more, packages"}
     }
 
     with mock.patch("niceman.distributions.debian.parse_dpkgquery_line",
                     mock_values.get):
-        assert parse("line") == {"name": "pkg",
-                                 "path": "/path/to/file"}
+        assert parse("unique") == {"name": "pkg",
+                                   "path": "/path/to/file"}
+        assert parse("multi_dir") is None
         with swallow_logs(new_level=logging.WARNING) as log:
-            assert parse("comma,line,dir") is None
-            assert not any("multiple packages " in ln for ln in log.lines)
-
-            assert parse("comma,line,file") == {"name": "pkg",
-                                                "path": __file__}
+            assert parse("multi_file") == {"name": "pkg",
+                                           "path": __file__}
             assert any("multiple packages " in ln for ln in log.lines)
 
 

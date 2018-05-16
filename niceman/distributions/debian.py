@@ -614,7 +614,7 @@ class DebTracer(DistributionTracer):
 
     def _parse_dpkgquery_line(self, line):
         res = parse_dpkgquery_line(line)
-        if ',' in line:
+        if res and res.pop("pkgs_rest"):
             if self._session.isdir(res["path"]):
                 return None
             lgr.warning("dpkg-query line has multiple packages (%s)", line)
