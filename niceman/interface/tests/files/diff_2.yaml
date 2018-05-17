@@ -1,20 +1,6 @@
 # NICEMAN Environment Configuration File
 version: 0.0.1
 distributions:
-- name: debian
-  packages:
-  - name: lib2only
-    architecture: x86
-    version: 2:1.6.4-3
-  - name: libsame
-    architecture: x86
-    version: 2.4.6
-  - name: libarchdiff
-    architecture: amd64
-    version: 2.4.6
-  - name: libversdiff
-    architecture: x86
-    version: 2.4.7
 - name: conda
   path: /home/kyle/miniconda3
   conda_version: 4.4.10
@@ -27,13 +13,27 @@ distributions:
     - name: c_lib2only
       build: py36_0
       version: 2:1.6.4-3
+    - name: c_libversdiff
+      build: py36_0
+      version: 2.4.7
     - name: c_libsame
       build: py36_0
       version: 2.4.6
     - name: c_libbuilddiff
       build: hdf63c60_3
       version: 2.4.6
-    - name: c_libversdiff
-      build: py36_0
-      version: 2.4.7
-files: [/etc/b, /etc/c]
+- name: debian
+  packages:
+  - name: libsame
+    architecture: x86
+    version: 2.4.6
+  - name: libarchdiff
+    architecture: amd64
+    version: 2.4.6
+  - name: libversdiff
+    architecture: x86
+    version: 2.4.7
+  - name: lib2only
+    architecture: x86
+    version: 2:1.6.4-3
+files: [/etc/c, /etc/b]
