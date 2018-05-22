@@ -18,6 +18,7 @@ from pytest import raises
 
 diff_1_yaml = opj(dirname(__file__), 'files', 'diff_1.yaml')
 diff_2_yaml = opj(dirname(__file__), 'files', 'diff_2.yaml')
+empty_yaml = opj(dirname(__file__), 'files', 'empty.yaml')
 
 multi_debian_yaml = opj(dirname(__file__), 'files', 'multi_debian.yaml')
 
@@ -87,3 +88,23 @@ def test_diff_conda_packages():
         assert_in('< 2.4.6', outputs.out)
         assert_in('> 2.4.7', outputs.out)
         assert_not_in('c_libsame', outputs.out)
+
+
+def test_diff_no_distributions():
+    with swallow_outputs() as outputs:
+        args = ['diff', diff_1_yaml, empty_yaml]
+        main(args)
+        assert_equal(outputs.err, '')
+        assert_in('Debian packages:', outputs.out)
+        assert_in('< lib1only x86 2:1.6.4-3', outputs.out)
+        assert_in('< libsame x86 2.4.6', outputs.out)
+        assert_in('< libarchdiff x86 2.4.6', outputs.out)
+        assert_in('< libversdiff x86 2.4.6', outputs.out)
+        assert_in('Conda packages:', outputs.out)
+        assert_in('< c_lib1only py36_0 2:1.6.4-3', outputs.out)
+        assert_in('< c_libsame py36_0 2.4.6', outputs.out)
+        assert_in('< c_libbuilddiff py36_0 2.4.6', outputs.out)
+        assert_in('< c_libversdiff py36_0 2.4.6', outputs.out)
+        assert_in('Files:', outputs.out)
+        assert_in('< /etc/a', outputs.out)
+        assert_in('< /etc/b', outputs.out)

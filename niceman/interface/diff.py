@@ -65,9 +65,15 @@ class Diff(Interface):
                                       (CondaDistribution, "Conda package")):
 
             dist_1 = env_1.get_distribution(dist_type)
-            pkgs_1 = { p._cmp_id: p for p in dist_1.packages }
+            if dist_1:
+                pkgs_1 = { p._cmp_id: p for p in dist_1.packages }
+            else:
+                pkgs_1 = {}
             dist_2 = env_2.get_distribution(dist_type)
-            pkgs_2 = { p._cmp_id: p for p in dist_2.packages }
+            if dist_2:
+                pkgs_2 = { p._cmp_id: p for p in dist_2.packages }
+            else:
+                pkgs_2 = {}
 
             pkgs_1_s = set(pkgs_1)
             pkgs_2_s = set(pkgs_2)
