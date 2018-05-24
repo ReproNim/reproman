@@ -21,8 +21,10 @@ from ...tests.utils import skip_if_no_network, skip_if_no_docker_engine
 from ...utils import swallow_logs
 
 
+@skip_if_no_docker_engine
 @pytest.fixture(scope='function')
 def docker_container():
+    skip_if_no_network()
     name = str(uuid.uuid4())  # Generate a random name for the container.
     Runner().run(['docker', 'run', '-t', '-d', '--rm', '--name',
         name, 'centos:7'])

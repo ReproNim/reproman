@@ -24,7 +24,7 @@ from niceman.tests.fixtures import get_docker_fixture
 # Note: due to skip_ssh right here, it would skip the entire module with
 # all the tests here if no ssh testing is requested
 setup_ssh = skip_ssh(get_docker_fixture)(
-    'rastasheep/ubuntu-sshd:14.04',
+    'rastasheep/ubuntu-sshd@sha256:918aae46c217701b5516776e0ccc9ebb93abce5ebf3efa4bfd75a842cffc4e04',
     portmaps={
         49000: 22
     },
