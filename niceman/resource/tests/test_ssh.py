@@ -64,6 +64,8 @@ def test_ssh_class(setup_ssh, resource_test_dir):
 
         # Test running commands in a resource.
         resource.connect()
+        command = ['apt-get', 'update']
+        resource.add_command(command)
         command = ['apt-get', 'install', 'bc']
         resource.add_command(command)
         command = ['ls', '/']
