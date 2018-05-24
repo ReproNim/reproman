@@ -97,6 +97,12 @@ def test_git_repo(git_repo):
                                            "branch": "master"}]})
 
         assert dists[0][0].packages[0].hexsha
+        assert dists[0][0].packages[0].root_hexsha
+
+        runner = Runner()
+        hexshas, _ = runner(["git", "rev-list", "master"], cwd=git_repo)
+        root_hexsha = hexshas.strip('\n').split('\n')[-1]
+        assert dists[0][0].packages[0].root_hexsha == root_hexsha
 
         # Above we identify a subdirectory file, but we should not
         # identify the subdirectory itself because in principle Git is

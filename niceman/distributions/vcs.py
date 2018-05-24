@@ -81,6 +81,7 @@ class VCSRepo(SpecObject):
 @attr.s
 class GitRepo(VCSRepo):
 
+    root_hexsha = attr.ib(default=None)
     branch = attr.ib(default=None)
     hexsha = attr.ib(default=None)
     describe = attr.ib(default=None)
@@ -331,6 +332,15 @@ class GitRepoShim(GitSVNRepoShim):
     def hexsha(self):
         try:
             return self._run_git('rev-parse HEAD')
+        except CommandError:
+            # might still be the first yet to be committed state in the branch
+            return None
+        
+    @property
+    def root_hexsha(self):
+        try:
+            rev_list = self._run_git('rev-list master').split('\n')
+            return rev_list[-1]
         except CommandError:
             # might still be the first yet to be committed state in the branch
             return None
