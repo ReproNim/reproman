@@ -115,6 +115,10 @@ class DockerTracer(DistributionTracer):
         if not files:
             return
 
+        # Punt if Docker daemon to found
+        if self._session.execute_command('ps -e')[0].find('dockerd') == -1:
+            return
+
         images = []
         remaining_files = set()
 

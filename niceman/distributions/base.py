@@ -84,7 +84,7 @@ class Distribution(SpecObject):
         ----------
         distribution_type : string
             Type of distribution subclass to create. Current options are:
-            'conda', 'debian', 'neurodebian', 'pypi'
+            'conda', 'debian', 'neurodebian', 'pypi', 'redhat'
         provenance : dict
             Keyword args to be passed to initialize class instance 
 

@@ -3,14 +3,14 @@ services:
   niceman:
     build:
       context: $PWD
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-redhat
       args:
-        - IMAGE=debian:jessie
+        - IMAGE=centos:7
         - UNAME=$USER
-        - UID=1000
-        - GID=1000
-    image: niceman:latest
-    container_name: niceman
+        # - UID=1000
+        # - GID=1000
+    image: niceman:centos
+    container_name: niceman-centos
     volumes:
       - $PWD:/home/$USER/niceman
       - /var/run/docker.sock:/var/run/docker.sock

@@ -214,9 +214,11 @@ def get_tracer_classes():
     """
     # TODO: automate discovery of available tracers
     from niceman.distributions.debian import DebTracer
+    from niceman.distributions.redhat import RPMTracer
     from niceman.distributions.conda import CondaTracer
     from niceman.distributions.venv import VenvTracer
     from niceman.distributions.vcs import VCSTracer
     from niceman.distributions.docker import DockerTracer
-    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer, DockerTracer]
+    Tracers = [DebTracer, RPMTracer, CondaTracer, VenvTracer, VCSTracer,
+        DockerTracer]
     return Tracers
