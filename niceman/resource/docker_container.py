@@ -36,7 +36,7 @@ class DockerContainer(Resource):
     name = attr.ib()
 
     # Container properties
-    id = attr.ib(default=None)
+    id = attrib()
     type = attr.ib(default='docker-container')
 
     image = attrib(default='ubuntu:latest',
@@ -46,11 +46,11 @@ class DockerContainer(Resource):
     seccomp_unconfined = attrib(default=False,
         doc="Disable kernel secure computing mode when creating the container")
 
-    status = attr.ib(default=None)
+    status = attrib()
 
     # Docker client and container objects.
-    _client = attr.ib(default=None)
-    _container = attr.ib(default=None)
+    _client = attrib()
+    _container = attrib()
 
     def connect(self):
         """

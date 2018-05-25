@@ -54,17 +54,17 @@ class AwsEc2(Resource):
 
     # Interesting one -- should we allow for it to be specified or should
     # it just become a property?  may be base class could
-    id = attr.ib(default=None)  # EC2 instance ID
+    id = attrib()  # EC2 instance ID
 
     # TODO: shouldn't be hardcoded???
     type = attr.ib(default='aws-ec2')  # Resource type
 
     # Current instance properties, to be set by us, not augmented by user
-    status = attr.ib(default=None)
+    status = attrib()
 
     # Resource and AWS instance objects
-    _ec2_resource = attr.ib(default=None)
-    _ec2_instance = attr.ib(default=None)
+    _ec2_resource = attrib()
+    _ec2_instance = attrib()
 
     def connect(self):
         """

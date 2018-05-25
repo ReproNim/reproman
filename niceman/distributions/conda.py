@@ -16,7 +16,7 @@ import yaml
 
 from niceman.distributions import Distribution, piputils
 from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot, is_subpath
+from niceman.utils import attrib, PathRoot, is_subpath
 
 from .base import SpecObject
 from .base import DistributionTracer
@@ -61,14 +61,14 @@ def get_conda_platform_from_python(py_platform):
 @attr.s
 class CondaPackage(Package):
     name = attr.ib()
-    installer = attr.ib(default=None)
-    version = attr.ib(default=None)
-    build = attr.ib(default=None)
-    channel_name = attr.ib(default=None)
-    size = attr.ib(default=None)
-    md5 = attr.ib(default=None)
-    url = attr.ib(default=None)
-    location = attr.ib(default=None)
+    installer = attrib()
+    version = attrib()
+    build = attrib()
+    channel_name = attrib()
+    size = attrib()
+    md5 = attrib()
+    url = attrib()
+    location = attrib()
     editable = attr.ib(default=False)
     files = attr.ib(default=attr.Factory(list))
 
@@ -76,13 +76,13 @@ class CondaPackage(Package):
 @attr.s
 class CondaChannel(SpecObject):
     name = attr.ib()
-    url = attr.ib(default=None)
+    url = attrib()
 
 
 @attr.s
 class CondaEnvironment(SpecObject):
     name = attr.ib()
-    path = attr.ib(default=None)
+    path = attrib()
     packages = TypedList(CondaPackage)
     channels = TypedList(CondaChannel)
 
@@ -95,10 +95,10 @@ class CondaDistribution(Distribution):
     """
     Class to provide Conda package management.
     """
-    path = attr.ib(default=None)
-    conda_version = attr.ib(default=None)
-    python_version = attr.ib(default=None)
-    platform = attr.ib(default=None)
+    path = attrib()
+    conda_version = attrib()
+    python_version = attrib()
+    platform = attrib()
     environments = TypedList(CondaEnvironment)
 
     def initiate(self, environment):

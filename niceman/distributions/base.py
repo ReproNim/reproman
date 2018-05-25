@@ -17,6 +17,7 @@ import yaml
 from importlib import import_module
 from six import viewvalues
 
+from niceman.utils import attrib
 from niceman.resource.session import get_local_session
 
 import logging
@@ -134,7 +135,7 @@ class Distribution(SpecObject):
 # TODO: move up! and strip Spec suffix
 @attr.s
 class EnvironmentSpec(SpecObject):
-    base = attr.ib(default=None)  # ???  to define specifics of the system, possibly a docker base
+    base = attrib()  # ???  to define specifics of the system, possibly a docker base
     distributions = TypedList(Distribution)  # list of distributions
     files = attr.ib(default=Factory(list))  # list of other files
     # runs?  whenever we get to provisioning executions

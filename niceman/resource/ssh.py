@@ -49,13 +49,13 @@ class SSH(Resource):
     password = attrib(
         doc="Password to use to log into remote environment")
 
-    id = attr.ib(default=None)  # EC2 instance ID
+    id = attrib()  # EC2 instance ID
 
     type = attr.ib(default='ssh')  # Resource type
 
     # Current instance properties, to be set by us, not augmented by user
-    status = attr.ib(default=None)
-    _ssh = attr.ib(default=None)
+    status = attrib()
+    _ssh = attrib()
 
     def connect(self):
         """Open a connection to the environment resource.
