@@ -30,7 +30,7 @@ from .ssh import SSHSession, PTYSSHSession
 class AwsEc2(Resource):
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     # Configurable options for each "instance"
     access_key_id = attrib(

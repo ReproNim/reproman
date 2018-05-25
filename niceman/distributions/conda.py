@@ -60,7 +60,7 @@ def get_conda_platform_from_python(py_platform):
 
 @attr.s
 class CondaPackage(Package):
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     installer = attrib()
     version = attrib()
     build = attrib()
@@ -75,13 +75,13 @@ class CondaPackage(Package):
 
 @attr.s
 class CondaChannel(SpecObject):
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     url = attrib()
 
 
 @attr.s
 class CondaEnvironment(SpecObject):
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     path = attrib()
     packages = TypedList(CondaPackage)
     channels = TypedList(CondaChannel)

@@ -30,9 +30,9 @@ lgr = logging.getLogger("niceman.distributions.venv")
 
 @attr.s
 class VenvPackage(Package):
-    name = attr.ib()
-    version = attr.ib()
-    local = attr.ib()
+    name = attrib(default=attr.NOTHING)
+    version = attrib(default=attr.NOTHING)
+    local = attrib(default=attr.NOTHING)
     location = attrib()
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))

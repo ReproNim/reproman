@@ -27,7 +27,7 @@ from ..utils import attrib
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DockerImage(Package):
     """Docker image information"""
-    id = attr.ib()
+    id = attrib(default=attr.NOTHING)
     # Optional
     architecture = attrib()
     operating_system = attrib()

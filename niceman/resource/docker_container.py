@@ -33,7 +33,7 @@ class DockerContainer(Resource):
     """
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     # Container properties
     id = attrib()
@@ -168,8 +168,8 @@ class DockerContainer(Resource):
 
 @attr.s
 class DockerSession(POSIXSession):
-    client = attr.ib()
-    container = attr.ib()
+    client = attrib(default=attr.NOTHING)
+    container = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):

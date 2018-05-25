@@ -36,7 +36,7 @@ from ..support import exceptions as exception  # to minimize diff for adopted co
 class SSH(Resource):
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     # Configurable options for each "instance"
     host = attrib(doc="DNS or IP address of server")
@@ -121,7 +121,7 @@ from niceman.resource.session import POSIXSession
 
 @attr.s
 class SSHSession(POSIXSession):
-    ssh = attr.ib()
+    ssh = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):

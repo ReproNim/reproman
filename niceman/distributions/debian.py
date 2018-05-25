@@ -64,7 +64,7 @@ from ..support.exceptions import CommandError
 class APTSource(SpecObject):
     """APT origin information
     """
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     component = attrib()
     archive = attrib()
     architecture = attrib()
@@ -80,7 +80,7 @@ _register_with_representer(APTSource)
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DEBPackage(Package):
     """Debian package information"""
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     # Optional
     upstream_name = attrib()
     version = attrib()

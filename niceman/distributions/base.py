@@ -73,7 +73,7 @@ class Distribution(SpecObject):
 
     # Actually might want/need to go away since somewhat duplicates the class
     # name and looks awkward
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     @staticmethod
     def factory(distribution_type, provenance=None):

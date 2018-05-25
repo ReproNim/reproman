@@ -75,7 +75,7 @@ class VCSDistribution(Distribution):
 class VCSRepo(SpecObject):
     """Base VCS repo class"""
 
-    path = attr.ib()
+    path = attrib(default=attr.NOTHING)
     files = attrib(default=attr.Factory(list))
 
 

@@ -101,7 +101,7 @@ class ShellSession(POSIXSession):
 class Shell(Resource):
 
     # Container properties
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     id = attrib()
     type = attrib(default='shell')
 
