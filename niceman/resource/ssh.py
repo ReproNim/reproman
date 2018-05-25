@@ -22,7 +22,8 @@ import os
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
 
-from .base import Resource, attrib
+from .base import Resource
+from ..utils import attrib
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
 from niceman import utils

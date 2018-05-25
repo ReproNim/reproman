@@ -19,7 +19,8 @@ from niceman import utils
 from ..support.exceptions import CommandError, ResourceError
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import POSIXSession, Session
-from .base import Resource, attrib
+from .base import Resource
+from ..utils import attrib
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')

@@ -19,9 +19,9 @@ from botocore.exceptions import ClientError
 import logging
 lgr = logging.getLogger('niceman.resource.aws_ec2')
 
-from .base import Resource, attrib
+from .base import Resource
 from ..ui import ui
-from ..utils import assure_dir
+from ..utils import assure_dir, attrib
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from .ssh import SSHSession, PTYSSHSession
