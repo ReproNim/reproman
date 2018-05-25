@@ -1148,6 +1148,9 @@ def attrib(*args, **kwargs):
     ATM we support additional keyword args which are then stored within
     `metadata`:
     - `doc` for documentation to describe the attribute (e.g. in --help)
+
+    Also, when the `default` argument of attr.ib is unspecified, set it to
+    None.
     """
     doc = kwargs.pop('doc', None)
     metadata = kwargs.get('metadata', {})
@@ -1155,7 +1158,7 @@ def attrib(*args, **kwargs):
         metadata['doc'] = doc
     if metadata:
         kwargs['metadata'] = metadata
-    return attr.ib(*args, **kwargs)
+    return attr.ib(*args, default=kwargs.pop('default', None), **kwargs)
 
 
 class PathRoot(object):
