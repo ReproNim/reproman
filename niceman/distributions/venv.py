@@ -34,8 +34,8 @@ class VenvPackage(Package):
     version = attr.ib()
     local = attr.ib()
     location = attrib()
-    editable = attr.ib(default=False)
-    files = attr.ib(default=attr.Factory(list))
+    editable = attrib(default=False)
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s

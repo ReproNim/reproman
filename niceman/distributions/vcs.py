@@ -76,7 +76,7 @@ class VCSRepo(SpecObject):
     """Base VCS repo class"""
 
     path = attr.ib()
-    files = attr.ib(default=attr.Factory(list))
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s
@@ -86,7 +86,7 @@ class GitRepo(VCSRepo):
     hexsha = attrib()
     describe = attrib()
     tracked_remote = attrib()
-    remotes = attr.ib(default=attr.Factory(dict))
+    remotes = attrib(default=attr.Factory(dict))
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')

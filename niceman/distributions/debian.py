@@ -93,7 +93,7 @@ class DEBPackage(Package):
     sha256 = attrib(hash=False)
     versions = attrib(hash=False)  # Hash ver_str -> [Array of source names]
     install_date = attrib(hash=False)
-    files = attr.ib(default=attr.Factory(list), hash=False)
+    files = attrib(default=attr.Factory(list), hash=False)
 
     def satisfies(self, other):
         """return True if this package (self) satisfies the requirements of 

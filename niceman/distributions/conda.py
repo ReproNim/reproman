@@ -69,8 +69,8 @@ class CondaPackage(Package):
     md5 = attrib()
     url = attrib()
     location = attrib()
-    editable = attr.ib(default=False)
-    files = attr.ib(default=attr.Factory(list))
+    editable = attrib(default=False)
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s

@@ -103,7 +103,7 @@ class Shell(Resource):
     # Container properties
     name = attr.ib()
     id = attrib()
-    type = attr.ib(default='shell')
+    type = attrib(default='shell')
 
     status = attrib()
 

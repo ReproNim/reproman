@@ -31,7 +31,7 @@ def TypedList(type_):
     """A helper to generate an attribute which would be with list factory 
     but also defining a type in its metadata
     """
-    return attr.ib(default=Factory(list), metadata={'type': type_})
+    return attrib(default=Factory(list), metadata={'type': type_})
 
 
 #
@@ -137,7 +137,7 @@ class Distribution(SpecObject):
 class EnvironmentSpec(SpecObject):
     base = attrib()  # ???  to define specifics of the system, possibly a docker base
     distributions = TypedList(Distribution)  # list of distributions
-    files = attr.ib(default=Factory(list))  # list of other files
+    files = attrib(default=Factory(list))  # list of other files
     # runs?  whenever we get to provisioning executions
     #        those would also be useful for tracing for presence of distributions
     #        e.g. depending on what is in the PATH

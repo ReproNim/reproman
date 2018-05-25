@@ -57,7 +57,7 @@ class AwsEc2(Resource):
     id = attrib()  # EC2 instance ID
 
     # TODO: shouldn't be hardcoded???
-    type = attr.ib(default='aws-ec2')  # Resource type
+    type = attrib(default='aws-ec2')  # Resource type
 
     # Current instance properties, to be set by us, not augmented by user
     status = attrib()

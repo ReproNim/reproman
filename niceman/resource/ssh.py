@@ -51,7 +51,7 @@ class SSH(Resource):
 
     id = attrib()  # EC2 instance ID
 
-    type = attr.ib(default='ssh')  # Resource type
+    type = attrib(default='ssh')  # Resource type
 
     # Current instance properties, to be set by us, not augmented by user
     status = attrib()

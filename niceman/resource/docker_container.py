@@ -37,7 +37,7 @@ class DockerContainer(Resource):
 
     # Container properties
     id = attrib()
-    type = attr.ib(default='docker-container')
+    type = attrib(default='docker-container')
 
     image = attrib(default='ubuntu:latest',
         doc="Docker base image ID from which to create the running instance")
