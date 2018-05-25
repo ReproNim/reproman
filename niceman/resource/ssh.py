@@ -39,14 +39,14 @@ class SSH(Resource):
     name = attr.ib()
 
     # Configurable options for each "instance"
-    host = attrib(default=None, doc="DNS or IP address of server")
+    host = attrib(doc="DNS or IP address of server")
     port = attrib(default=22,
         doc="Port to connect to on remote host")
-    key_filename = attrib(default=None,
+    key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter")
-    user = attrib(default=None,
+    user = attrib(
         doc="Username to use to log into remote environment")
-    password = attrib(default=None,
+    password = attrib(
         doc="Password to use to log into remote environment")
 
     id = attr.ib(default=None)  # EC2 instance ID

@@ -33,9 +33,9 @@ class AwsEc2(Resource):
     name = attr.ib()
 
     # Configurable options for each "instance"
-    access_key_id = attrib(default=None,
+    access_key_id = attrib(
         doc="AWS access key for remote access to your Amazon subscription.")
-    secret_access_key = attrib(default=None,
+    secret_access_key = attrib(
         doc="AWS secret access key for remote access to your Amazon subscription")
     instance_type = attrib(default='t2.micro',
         doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)")  # EC2 instance type
@@ -43,9 +43,9 @@ class AwsEc2(Resource):
         doc="AWS security group to assign to the EC2 instance.")  # AWS security group
     region_name = attrib(default='us-east-1',
         doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)")  # AWS region
-    key_name = attrib(default=None,
+    key_name = attrib(
         doc="AWS subscription name of SSH key-pair registered.")  # Name of SSH key registered on AWS.
-    key_filename = attrib(default=None,
+    key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
     image = attrib(default='ami-c8580bdf',
         doc="AWS image ID from which to create the running instance")  # Ubuntu 14.04 LTS
