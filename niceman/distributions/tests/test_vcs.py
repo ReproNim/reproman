@@ -6,11 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-from collections import namedtuple
 import os
 
 import attr
-import pytest
 
 from niceman.cmd import Runner
 from niceman.distributions.vcs import VCSTracer
@@ -70,6 +68,7 @@ def test_git_repo_empty(git_repo_empty):
         expected_unknown=set(),
         expected_subset={"name": "git",
                          "packages": [{"path": git_repo_empty,
+                                       "branch": "master",
                                        # We do not include repo path itself.
                                        "files": []}]})
 

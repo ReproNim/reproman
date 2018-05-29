@@ -18,7 +18,7 @@ from niceman.resource.session import get_local_session
 from niceman.distributions import Distribution, piputils
 from niceman.dochelpers import exc_str
 from niceman.support.exceptions import CommandError
-from niceman.utils import make_tempfile, PathRoot, is_subpath
+from niceman.utils import attrib, PathRoot, is_subpath, make_tempfile
 
 from .base import SpecObject
 from .base import DistributionTracer
@@ -91,29 +91,29 @@ def get_miniconda_url(conda_platform, python_version):
 
 @attr.s
 class CondaPackage(Package):
-    name = attr.ib()
-    installer = attr.ib()
-    version = attr.ib()
-    build = attr.ib()
-    channel_name = attr.ib()
-    size = attr.ib()
-    md5 = attr.ib()
-    url = attr.ib()
-    location = attr.ib(default=None)
-    editable = attr.ib(default=False)
-    files = attr.ib(default=attr.Factory(list))
+    name = attrib(default=attr.NOTHING)
+    installer = attrib()
+    version = attrib()
+    build = attrib()
+    channel_name = attrib()
+    size = attrib()
+    md5 = attrib()
+    url = attrib()
+    location = attrib()
+    editable = attrib(default=False)
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s
 class CondaChannel(SpecObject):
-    name = attr.ib()
-    url = attr.ib(default=None)
+    name = attrib(default=attr.NOTHING)
+    url = attrib()
 
 
 @attr.s
 class CondaEnvironment(SpecObject):
-    name = attr.ib()
-    path = attr.ib(default=None)
+    name = attrib(default=attr.NOTHING)
+    path = attrib()
     packages = TypedList(CondaPackage)
     channels = TypedList(CondaChannel)
 
@@ -126,10 +126,10 @@ class CondaDistribution(Distribution):
     """
     Class to provide Conda package management.
     """
-    path = attr.ib(default=None)
-    conda_version = attr.ib(default=None)
-    python_version = attr.ib(default=None)
-    platform = attr.ib(default=None)
+    path = attrib()
+    conda_version = attrib()
+    python_version = attrib()
+    platform = attrib()
     environments = TypedList(CondaEnvironment)
 
     def initiate(self, environment):

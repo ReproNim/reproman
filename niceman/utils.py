@@ -28,6 +28,7 @@ import platform
 import gc
 import glob
 
+import attr
 from functools import wraps
 from time import sleep
 from inspect import getargspec
@@ -1113,18 +1114,21 @@ def items_to_dict(l, attrs='name', ordered=False):
 # TODO: just absorb into SpecObject __init__ but would require more handling
 # to allow *args as well
 
-def instantiate_attr_object(item_type, kws):
-    """Instantiate item_type given keyword args kws 
-    
+def instantiate_attr_object(item_type, items):
+    """Instantiate item_type given items (for a list or dict)
+
     Provides a more informative exception message in case if some arguments
     are incorrect
     """
     try:
-        return item_type(**kws)
+        if issubclass(item_type, list):
+            return item_type(items)
+        else:
+            return item_type(**items)
     except TypeError as exc:
         if "unexpected keyword" in str(exc):
             known_kws = [i.name for i in item_type.__attrs_attrs__]
-            incorrect_kws = set(kws.keys()).difference(known_kws)
+            incorrect_kws = set(items.keys()).difference(known_kws)
             if incorrect_kws:
                 # Provide a more informative message
                 raise TypeError(
@@ -1132,10 +1136,29 @@ def instantiate_attr_object(item_type, kws):
                     "Known but not yet provided are: %s"
                     % (item_type.__name__,
                        ', '.join(incorrect_kws),
-                       ', '.join(sorted(set(known_kws).difference(kws))))
+                       ', '.join(sorted(set(known_kws).difference(items))))
                 )
         # if couldn't figure it out -- just raise original
         raise
+
+
+def attrib(*args, **kwargs):
+    """Extend the attr.ib to include our metadata elements.
+
+    ATM we support additional keyword args which are then stored within
+    `metadata`:
+    - `doc` for documentation to describe the attribute (e.g. in --help)
+
+    Also, when the `default` argument of attr.ib is unspecified, set it to
+    None.
+    """
+    doc = kwargs.pop('doc', None)
+    metadata = kwargs.get('metadata', {})
+    if doc:
+        metadata['doc'] = doc
+    if metadata:
+        kwargs['metadata'] = metadata
+    return attr.ib(*args, default=kwargs.pop('default', None), **kwargs)
 
 
 class PathRoot(object):

@@ -18,7 +18,7 @@ from niceman.cmd import Runner
 from niceman.tests.utils import skip_if_no_network
 from niceman.utils import chpwd
 
-# Substitutes in for user's ~/.config/niceman.cfg file
+# Substitutes in for user's ~/.config/niceman/config file
 CONFIGURATION = [
     NICEMAN_CFG_PATH
 ]
@@ -163,7 +163,8 @@ def git_repo_fixture(kind="default", scope="function"):
 
             if kind == "pair":
                 localdir = os.path.realpath(os.path.join(tmpdir, "repo1"))
-                runner.run(["git", "clone", repodir, localdir])
+                runner.run(["git", "clone", repodir, localdir],
+                           expect_stderr=True)
                 with chpwd(localdir):
                     setup_user()
                 retval = localdir, repodir

@@ -16,6 +16,7 @@ from niceman.cmd import Runner
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
 from niceman.support.exceptions import CommandError
+from niceman.utils import attrib
 
 import logging
 lgr = logging.getLogger('niceman.resource.shell')
@@ -99,11 +100,11 @@ class ShellSession(POSIXSession):
 class Shell(Resource):
 
     # Container properties
-    name = attr.ib()
-    id = attr.ib(default=None)
-    type = attr.ib(default='shell')
+    name = attrib(default=attr.NOTHING)
+    id = attrib()
+    type = attrib(default='shell')
 
-    status = attr.ib(default=None)
+    status = attrib()
 
     def create(self):
         """

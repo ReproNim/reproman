@@ -20,6 +20,7 @@ from six.moves import map
 import pytz
 
 from niceman import utils
+from niceman.utils import attrib
 
 from email.utils import mktime_tz, parsedate_tz
 
@@ -63,36 +64,36 @@ from ..support.exceptions import CommandError
 class APTSource(SpecObject):
     """APT origin information
     """
-    name = attr.ib()
-    component = attr.ib(default=None)
-    archive = attr.ib(default=None)
-    architecture = attr.ib(default=None)
-    codename = attr.ib(default=None)
-    origin = attr.ib(default=None)
-    label = attr.ib(default=None)
-    site = attr.ib(default=None)
-    archive_uri = attr.ib(default=None)
-    date = attr.ib(default=None)
+    name = attrib(default=attr.NOTHING)
+    component = attrib()
+    archive = attrib()
+    architecture = attrib()
+    codename = attrib()
+    origin = attrib()
+    label = attrib()
+    site = attrib()
+    archive_uri = attrib()
+    date = attrib()
 _register_with_representer(APTSource)
 
 
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DEBPackage(Package):
     """Debian package information"""
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     # Optional
-    upstream_name = attr.ib(default=None)
-    version = attr.ib(default=None)
-    architecture = attr.ib(default=None)
-    source_name = attr.ib(default=None, hash=False)
-    source_version = attr.ib(default=None, hash=False)
-    size = attr.ib(default=None, hash=False)
-    md5 = attr.ib(default=None, hash=False)
-    sha1 = attr.ib(default=None, hash=False)
-    sha256 = attr.ib(default=None, hash=False)
-    versions = attr.ib(default=None, hash=False)  # Hash ver_str -> [Array of source names]
-    install_date = attr.ib(default=None, hash=False)
-    files = attr.ib(default=attr.Factory(list), hash=False)
+    upstream_name = attrib()
+    version = attrib()
+    architecture = attrib()
+    source_name = attrib(hash=False)
+    source_version = attrib(hash=False)
+    size = attrib(hash=False)
+    md5 = attrib(hash=False)
+    sha1 = attrib(hash=False)
+    sha256 = attrib(hash=False)
+    versions = attrib(hash=False)  # Hash ver_str -> [Array of source names]
+    install_date = attrib(hash=False)
+    files = attrib(default=attr.Factory(list), hash=False)
 
     def satisfies(self, other):
         """return True if this package (self) satisfies the requirements of 
@@ -120,7 +121,7 @@ class DebianDistribution(Distribution):
 
     apt_sources = TypedList(APTSource)
     packages = TypedList(DEBPackage)
-    version = attr.ib(default=None)  # version as depicted by /etc/debian_version
+    version = attrib()  # version as depicted by /etc/debian_version
 
     def initiate(self, session):
         """

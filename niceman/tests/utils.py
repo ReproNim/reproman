@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Miscellaneous utilities to assist with testing"""
 
+import docker
 import glob
 import inspect
 import shutil
@@ -19,6 +20,7 @@ import platform
 import multiprocessing
 import logging
 import random
+import requests
 import socket
 from six import PY2, text_type, iteritems
 from six import binary_type
@@ -428,6 +430,27 @@ def skip_if_no_docker_container(container_name='testing-container'):
                 {}".format(container_name, func.__name__))
         return func
     return decorator
+
+
+def skip_if_no_docker_engine(func):
+    """Test decorator that will skip a test if a Docker engine can't be found.
+    
+    Returns
+    -------
+    func
+        Decorator function
+    
+    Raises
+    ------
+    SkipTest
+    """
+    session = docker.Client()
+    try:
+        session.info()
+    except requests.exceptions.ConnectionError:
+        raise SkipTest("Docker not found, skipping test {}".format(
+            func.__name__))
+    return func
 
 @optional_args
 def assert_cwd_unchanged(func, ok_to_chdir=False):

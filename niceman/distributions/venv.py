@@ -18,7 +18,7 @@ from six import iteritems
 from niceman.distributions import Distribution
 from niceman.distributions import piputils
 from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot, is_subpath
+from niceman.utils import attrib, PathRoot, is_subpath
 
 from .base import DistributionTracer
 from .base import Package
@@ -30,18 +30,18 @@ lgr = logging.getLogger("niceman.distributions.venv")
 
 @attr.s
 class VenvPackage(Package):
-    name = attr.ib()
-    version = attr.ib()
-    local = attr.ib()
-    location = attr.ib(default=None)
-    editable = attr.ib(default=False)
-    files = attr.ib(default=attr.Factory(list))
+    name = attrib(default=attr.NOTHING)
+    version = attrib(default=attr.NOTHING)
+    local = attrib(default=attr.NOTHING)
+    location = attrib()
+    editable = attrib(default=False)
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s
 class VenvEnvironment(SpecObject):
-    path = attr.ib(default=None)
-    python_version = attr.ib(default=None)
+    path = attrib()
+    python_version = attrib()
     packages = TypedList(VenvPackage)
 
 
@@ -49,8 +49,8 @@ class VenvEnvironment(SpecObject):
 class VenvDistribution(Distribution):
     """Class to provide virtualenv-based "distributions".
     """
-    path = attr.ib(default=None)
-    venv_version = attr.ib(default=None)
+    path = attrib()
+    venv_version = attrib()
     environments = TypedList(VenvEnvironment)
 
     def initiate(self, _):

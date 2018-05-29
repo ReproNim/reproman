@@ -22,6 +22,7 @@ from os.path import join as opj
 from logging import getLogger
 
 from niceman.dochelpers import exc_str
+from niceman.utils import attrib
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
 
@@ -74,18 +75,18 @@ class VCSDistribution(Distribution):
 class VCSRepo(SpecObject):
     """Base VCS repo class"""
 
-    path = attr.ib()
-    files = attr.ib(default=attr.Factory(list))
+    path = attrib(default=attr.NOTHING)
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s
 class GitRepo(VCSRepo):
 
-    branch = attr.ib(default=None)
-    hexsha = attr.ib(default=None)
-    describe = attr.ib(default=None)
-    tracked_remote = attr.ib(default=None)
-    remotes = attr.ib(default=attr.Factory(dict))
+    branch = attrib()
+    hexsha = attrib()
+    describe = attrib()
+    tracked_remote = attrib()
+    remotes = attrib(default=attr.Factory(dict))
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -102,10 +103,10 @@ GitRepo._distribution = GitDistribution
 @attr.s
 class SVNRepo(VCSRepo):
 
-    revision = attr.ib(default=None)
-    url = attr.ib(default=None)
-    root_url = attr.ib(default=None)
-    relative_url = attr.ib(default=None)
+    revision = attrib()
+    url = attrib()
+    root_url = attrib()
+    relative_url = attrib()
 
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s
@@ -403,12 +404,11 @@ class GitRepoShim(GitSVNRepoShim):
     def branch(self):
         if self._branch is None:
             try:
-                branch = self._run_git('rev-parse --abbrev-ref HEAD')
+                branch = self._run_git('symbolic-ref --short HEAD')
             except CommandError:
-                # could yet happen there is no commit here, so branch is not defined?
+                # We're in a detached state.
                 return None
-            if branch != 'HEAD':
-                self._branch = branch
+            self._branch = branch
         return self._branch
 
 
