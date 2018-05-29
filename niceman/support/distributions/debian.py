@@ -18,6 +18,8 @@ import string
 
 import attr
 
+from niceman.utils import attrib
+
 lgr = logging.getLogger('niceman.distributions.debian')
 
 __docformat__ = 'restructuredtext'
@@ -38,14 +40,14 @@ class DebianReleaseSpec(object):
     """
 
     # Those could be different in overlays or other derived distributions
-    origin = attr.ib()   # Debian
-    label = attr.ib()    # Debian
-    codename = attr.ib()
-    suite = attr.ib()
-    version = attr.ib()
-    date = attr.ib()
-    components = attr.ib()
-    architectures = attr.ib()
+    origin = attrib(default=attr.NOTHING)   # Debian
+    label = attrib(default=attr.NOTHING)    # Debian
+    codename = attrib(default=attr.NOTHING)
+    suite = attrib(default=attr.NOTHING)
+    version = attrib(default=attr.NOTHING)
+    date = attrib(default=attr.NOTHING)
+    components = attrib(default=attr.NOTHING)
+    architectures = attrib(default=attr.NOTHING)
 
 
 def get_spec_from_release_file(content):
