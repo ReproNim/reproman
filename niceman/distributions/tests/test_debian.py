@@ -49,8 +49,8 @@ def test_dpkg_manager_identify_packages():
     for o in distribution.apt_sources:
         if o.site:
             # Loop over mandatory attributes
-            for a in ["name", "component", "archive", "codename",
-                      "origin", "label", "site", "archive_uri"]:
+            for a in ["name", "component", "origin",
+                      "label", "site", "archive_uri"]:
                 assert getattr(o, a), "A non-local origin needs a " + a
             # Note: date and architecture are not mandatory (and not found on
             # travis)
@@ -59,7 +59,7 @@ def test_dpkg_manager_identify_packages():
         assert False, "A non-local origin must be found"
 
 
-@pytest.mark.slow
+@pytest.mark.integration
 @skip_if_no_apt_cache
 def test_check_bin_packages():
     # Gather files in /usr/bin and /usr/lib
@@ -73,11 +73,12 @@ def test_check_bin_packages():
     assert len(non_local_origins) > 0, "A non-local origin must be found"
     for o in non_local_origins:
         # Loop over mandatory attributes
-        for a in ["name", "component", "archive", "codename",
-                  "origin", "label", "site", "archive_uri"]:
+        for a in ["name", "component", "origin",
+                  "label", "site", "archive_uri"]:
             assert getattr(o, a), "A non-local origin needs a " + a
-    assert len(unknown_files) == 0, "Files not found in packages: " + \
-                                    str(unknown_files)
+# Allow bin files to be not associated with a specific package
+#    assert len(unknown_files) == 0, "Files not found in packages: " + \
+#                                    str(unknown_files)
 
 
 def list_all_files(dir):

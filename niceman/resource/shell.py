@@ -96,7 +96,6 @@ class ShellSession(POSIXSession):
         # put is the same as get for the shell resource
         self.get(src_path, dest_path, uid, gid)
 
-
 @attr.s
 class Shell(Resource):
 
