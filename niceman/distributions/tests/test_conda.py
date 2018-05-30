@@ -72,7 +72,7 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
     files = [os.path.join(test_dir, "miniconda/bin/sqlite3"),
              os.path.join(test_dir, "miniconda/envs/empty/conda-meta/history"),
              os.path.join(test_dir, "miniconda/envs/mytest/bin/xz"),
-             os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/pip/index.py"),
+             os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/pip/__main__.py"),
              os.path.join(test_dir, "miniconda/envs/mytest/lib/python2.7/site-packages/rpaths.py"),
              "/sbin/iptables"]
     tracer = CondaTracer()
@@ -102,7 +102,7 @@ def test_conda_manager_identify_distributions(get_conda_test_dir):
                             {'name': 'mytest',
                              'packages': [{'files': ['bin/xz'],
                                            'name': 'xz'},
-                                          {'files': ['lib/python2.7/site-packages/pip/index.py'],
+                                          {'files': ['lib/python2.7/site-packages/pip/__main__.py'],
                                            'name': 'pip'},
                                           {'files': ['lib/python2.7/site-packages/rpaths.py'],
                                            'installer': 'pip',

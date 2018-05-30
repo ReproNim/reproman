@@ -40,9 +40,6 @@ class Singularity(Resource):
 
     status = attr.ib(default=None)
     _runner = attr.ib(default=None)
-    # A temp image file is needed to get around singularity bug #1185:
-    # https://github.com/singularityware/singularity/issues/1185
-    image_file = attr.ib(default=None)
 
     def connect(self):
         """
@@ -85,26 +82,16 @@ class Singularity(Resource):
         if self.get_instance_info():
             lgr.info('Resource {} already exists.'.format(self.name))
         else:
-            self.image_file = "{}.simg".format(str(uuid.uuid4().hex)[:16])
-            if self.image.startswith('shub://') or \
-                    self.image.startswith('docker://'):
-
-                self._runner.run(['singularity', 'pull', '--name',
-                    self.image_file, self.image])
-            else:
-                shutil.copyfile(self.image, self.image_file)
-
             # Start the container instance.
             self._runner.run(['singularity', 'instance.start',
-                self.image_file, self.name])
+                self.image, self.name])
 
         # Update status
         self.id = self.name
         self.status = 'running'
         return {
             'id': self.id,
-            'status': self.status,
-            'image_file': self.image_file
+            'status': self.status
         }
 
     def delete(self):
@@ -121,9 +108,6 @@ class Singularity(Resource):
         # Update status
         self.id = None
         self.status = None
-
-        # Remove temporary image file
-        os.remove(self.image_file)
 
     def start(self):
         """

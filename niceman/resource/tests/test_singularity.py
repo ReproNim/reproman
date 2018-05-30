@@ -36,7 +36,6 @@ def test_singularity_resource_class():
         resource.create()
         assert resource.id == 'foo'
         assert resource.status == 'running'
-        assert resource.image_file.endswith('.simg')
 
         # Test trying to create an already running instance.
         resource_duplicate = Singularity(name='foo',
@@ -66,11 +65,9 @@ def test_singularity_resource_class():
         assert isinstance(session, SingularitySession)
 
         # Test deleting an instance.
-        assert os.path.exists(resource.image_file)
         resource.delete()
         assert resource.id is None
         assert resource.status is None
-        assert not os.path.exists(resource.image_file)
 
         # Test retrieving info from a non-existent instance.
         info = resource.get_instance_info()
