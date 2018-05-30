@@ -12,6 +12,7 @@
 
 from ..debian import DebianReleaseSpec
 from ..debian import get_spec_from_release_file
+from ..debian import parse_dpkgquery_line
 
 from niceman.tests.utils import eq_, assert_is_subset_recur
 
@@ -350,3 +351,26 @@ def test_get_apt_release_file_names():
     assert "/var/lib/apt/lists/_my_repo2_ubuntu_InRelease" in fn
     assert "/var/lib/apt/lists/_my_repo2_ubuntu_Release" in fn
 
+
+def test_parse_dpkgquery_line():
+    for line, expected in [
+            ('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8',
+             {'name': 'zlib1g',
+              'architecture': 'i386',
+              'path': '/lib/i386-linux-gnu/libz.so.1.2.8',
+              'pkgs_rest': None}),
+            ('fail2ban: /usr/bin/fail2ban-client',
+             {'name': 'fail2ban',
+              'path': '/usr/bin/fail2ban-client',
+              'pkgs_rest': None}),
+            ('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0',
+             {'name': 'fsl-5.0-eddy-nonfree',
+              'path': '/usr/lib/fsl/5.0',
+              'pkgs_rest': ', fsl-5.0-core'}),
+            ('pkg: path,with,commas',
+             {'name': 'pkg',
+              'path': 'path,with,commas',
+              'pkgs_rest': None}),
+            ('diversion by dash from: /bin/sh', None)
+    ]:
+        assert parse_dpkgquery_line(line) == expected

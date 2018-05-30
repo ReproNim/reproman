@@ -12,6 +12,7 @@ from os.path import islink
 from os.path import join, isfile
 
 from pprint import pprint
+import logging
 
 import attr
 
@@ -23,7 +24,7 @@ import pytest
 
 import mock
 
-from niceman.support.exceptions import CommandError
+from niceman.utils import swallow_logs
 from niceman.tests.utils import skip_if_no_apt_cache
 
 
@@ -129,20 +130,6 @@ def test_utf8_file():
         assert True
 
 
-def test_parse_dpkgquery_line():
-    parse = DebTracer._parse_dpkgquery_line
-    assert parse('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8') == \
-        {'name': 'zlib1g', 'architecture': 'i386', 'path': '/lib/i386-linux-gnu/libz.so.1.2.8'}
-
-    assert parse('fail2ban: /usr/bin/fail2ban-client') == \
-           {'name': 'fail2ban', 'path': '/usr/bin/fail2ban-client'}
-
-    assert parse('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0') == \
-           {'name': 'fsl-5.0-eddy-nonfree', 'path': '/usr/lib/fsl/5.0'}
-
-    assert parse('diversion by dash from: /bin/sh') is None
-
-
 def test_get_packagefields_for_files():
     manager = DebTracer()
     # TODO: mock! and bring back afni and fail2ban
@@ -178,6 +165,33 @@ fail2ban: /usr/bin/fail2ban-server
         '/usr/lib/afni/bin/afni': {'name': u'afni'},
         '/bin/sh': {'name': u'dash'}
     }
+
+
+def test_parse_dpkgquery_line():
+    parse = DebTracer()._parse_dpkgquery_line
+
+    mock_values = {
+        "unique": {"name": "pkg",
+                   "path": "/path/to/file",
+                   "pkgs_rest": None},
+        "multi_dir": {"name": "pkg",
+                      "path": os.getcwd(),
+                      "pkgs_rest": ", more, packages"},
+        "multi_file": {"name": "pkg",
+                       "path": __file__,
+                       "pkgs_rest": ", more, packages"}
+    }
+
+    with mock.patch("niceman.distributions.debian.parse_dpkgquery_line",
+                    mock_values.get):
+        assert parse("unique") == {"name": "pkg",
+                                   "path": "/path/to/file"}
+        assert parse("multi_dir") is None
+        with swallow_logs(new_level=logging.WARNING) as log:
+            assert parse("multi_file") == {"name": "pkg",
+                                           "path": __file__}
+            assert any("multiple packages " in ln for ln in log.lines)
+
 
 @pytest.fixture
 def setup_packages():
