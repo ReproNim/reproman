@@ -46,8 +46,9 @@ def test_docker_trace():
     client.remove_container(container)
     tracer = DockerTracer()
     files = [new_image['Id']]
-    with pytest.raises(CommandError):
-        dist, _ = next(tracer.identify_distributions(files))
+    dist, _ = next(tracer.identify_distributions(files))
+    assert dist.name == 'docker'
+    assert dist.images[0].repo_tags[0] == 'test-container:001'
 
     # Clean up docker engine
     client.remove_image(new_image['Id'])

@@ -367,6 +367,16 @@ class Session(object):
         """
         raise NotImplementedError
 
+    def mktmpdir(self):
+        """Create a temporary directory and return the path
+
+        Returns
+        -------
+        path : String
+            Path to the created temporary directory
+        """
+        raise NotImplementedError
+
     def isdir(self, path):
         """Return True if path is pointing to a directory
         
@@ -562,6 +572,10 @@ class POSIXSession(Session):
 
         if not self.isdir(path):
             raise CommandError(cmd='mkdir', msg="Failed to create directory")
+
+    def mktmpdir(self):
+        path, _ = self.execute_command(["mktemp", "-d"])
+        return path.rstrip()  # Remove newline
 
     def isdir(self, path):
         try:

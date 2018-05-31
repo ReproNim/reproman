@@ -181,6 +181,8 @@ def test_session_class():
         with pytest.raises(NotImplementedError):
             session.mkdir('path')
         with pytest.raises(NotImplementedError):
+            session.mktmpdir()
+        with pytest.raises(NotImplementedError):
             session.isdir('path')
         with pytest.raises(NotImplementedError):
             session.chmod('path', 'mode')
@@ -347,6 +349,7 @@ def test_session_abstract_methods(testing_container, resource_session,
     session.mkdir(test_dir)
     result = session.isdir(test_dir)
     assert result
+
     # Check making parent dirs without setting flag
     test_dir = '/tmp/failed/{}'.format(resource_test_dir, uuid.uuid4().hex)
     with pytest.raises(CommandError):
@@ -358,6 +361,11 @@ def test_session_abstract_methods(testing_container, resource_session,
     session.mkdir(test_dir, parents=True)
     result = session.isdir(test_dir)
     assert result
+
+    # Check mktmpdir() method
+    test_dir = session.mktmpdir()
+    result = session.isdir(test_dir)
+    assert result, "The path %s is not a directory" % test_dir
 
     # TODO: How to test chmod and chown? Need to be able to read remote file attributes
     # session.chmod(self, path, mode, recursive=False):

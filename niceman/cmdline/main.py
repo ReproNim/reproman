@@ -248,19 +248,6 @@ def main(args=None):
             sys.exit(1)
         except MissingConfigFileError as exc:
             # TODO: ConfigManager is not finding files in the default locations.
-            message = """
-    ERROR: Unable to locate the niceman.cfg file.
-
-    You may either specify one using the --config parameter or place one in the
-    one of following locations:
-
-    1. '/etc/niceman/niceman.cfg'
-    2. 'niceman/config' in all directories defined by $XDG_CONFIG_DIRS
-        (by default: /etc/xdg/)
-    3. 'niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
-    4. 'niceman.cfg' in the current directory
-"""
-            # print(message)
             lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             sys.exit(1)
         except Exception as exc:

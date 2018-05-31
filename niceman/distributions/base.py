@@ -17,6 +17,7 @@ import yaml
 from importlib import import_module
 from six import viewvalues
 
+from niceman.utils import attrib
 from niceman.resource.session import get_local_session
 
 import logging
@@ -30,7 +31,7 @@ def TypedList(type_):
     """A helper to generate an attribute which would be with list factory 
     but also defining a type in its metadata
     """
-    return attr.ib(default=Factory(list), metadata={'type': type_})
+    return attrib(default=Factory(list), metadata={'type': type_})
 
 
 #
@@ -72,7 +73,7 @@ class Distribution(SpecObject):
 
     # Actually might want/need to go away since somewhat duplicates the class
     # name and looks awkward
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     @staticmethod
     def factory(distribution_type, provenance=None):
@@ -93,8 +94,15 @@ class Distribution(SpecObject):
         distribution : object
             Distribution class or its instance (when provenance is not None)
         """
-        class_name = distribution_type.capitalize() + 'Distribution'
-        module = import_module('niceman.distributions.' + distribution_type.lower())
+        # Handle distributions that don't follow the assumed naming structure.
+        special_dists = {"svn": "SVNDistribution"}
+        special_modules = {"git": "vcs", "svn": "vcs"}
+
+        dlower = distribution_type.lower()
+        class_name = special_dists.get(dlower,
+                                       dlower.capitalize() + 'Distribution')
+        module = import_module('niceman.distributions.' +
+                               special_modules.get(dlower, dlower))
         class_ = getattr(module, class_name)
         return class_ if provenance is None else class_(**provenance)
 
@@ -127,9 +135,9 @@ class Distribution(SpecObject):
 # TODO: move up! and strip Spec suffix
 @attr.s
 class EnvironmentSpec(SpecObject):
-    base = attr.ib(default=None)  # ???  to define specifics of the system, possibly a docker base
+    base = attrib()  # ???  to define specifics of the system, possibly a docker base
     distributions = TypedList(Distribution)  # list of distributions
-    files = attr.ib(default=Factory(list))  # list of other files
+    files = attrib(default=Factory(list))  # list of other files
     # runs?  whenever we get to provisioning executions
     #        those would also be useful for tracing for presence of distributions
     #        e.g. depending on what is in the PATH

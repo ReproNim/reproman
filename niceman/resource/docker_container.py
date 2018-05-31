@@ -19,7 +19,8 @@ from niceman import utils
 from ..support.exceptions import CommandError, ResourceError
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import POSIXSession, Session
-from .base import Resource, attrib
+from .base import Resource
+from ..utils import attrib
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')
@@ -32,22 +33,24 @@ class DockerContainer(Resource):
     """
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     # Container properties
-    id = attr.ib(default=None)
-    type = attr.ib(default='docker-container')
+    id = attrib()
+    type = attrib(default='docker-container')
 
     image = attrib(default='ubuntu:latest',
         doc="Docker base image ID from which to create the running instance")
     engine_url = attrib(default='unix:///var/run/docker.sock',
         doc="Docker server URL where engine is listening for connections")
+    seccomp_unconfined = attrib(default=False,
+        doc="Disable kernel secure computing mode when creating the container")
 
-    status = attr.ib(default=None)
+    status = attrib()
 
     # Docker client and container objects.
-    _client = attr.ib(default=None)
-    _container = attr.ib(default=None)
+    _client = attrib()
+    _container = attrib()
 
     def connect(self):
         """
@@ -103,13 +106,22 @@ class DockerContainer(Resource):
             if 'progress' in status:
                 output += ' ' + status['progress']
             lgr.info(output)
-        self._container = self._client.create_container(
-            name=self.name,
-            image=self.image,
-            stdin_open=True,
-            tty=True,
-            command='/bin/bash',
-        )
+        args = {
+            'name': self.name,
+            'image': self.image,
+            'stdin_open': True,
+            'tty': True,
+            'command': '/bin/bash'
+        }
+        # When running the rztracer binary in a Docker container, it is
+        # necessary to suspend the kernel's security facility when creating
+        # the container. Since it is a security issue, the default is to
+        # *not* turn it off.
+        if self.seccomp_unconfined:
+            args['host_config'] = {
+                'SecurityOpt': ['seccomp:unconfined']
+            }
+        self._container = self._client.create_container(**args)
         self.id = self._container.get('Id')
         self._client.start(container=self.id)
         self.status = 'running'
@@ -156,8 +168,8 @@ class DockerContainer(Resource):
 
 @attr.s
 class DockerSession(POSIXSession):
-    client = attr.ib()
-    container = attr.ib()
+    client = attrib(default=attr.NOTHING)
+    container = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):

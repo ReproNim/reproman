@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Debian(-based) distribution(s)."""
 import os
+import re
 
 import itertools
 from datetime import datetime
@@ -20,6 +21,7 @@ from six.moves import map
 import pytz
 
 from niceman import utils
+from niceman.utils import attrib
 
 from email.utils import mktime_tz, parsedate_tz
 
@@ -30,17 +32,11 @@ import requests
 from niceman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
     parse_apt_cache_policy_source_info, get_apt_release_file_names, \
-    get_spec_from_release_file
+    get_spec_from_release_file, parse_dpkgquery_line
 
 # Pick a conservative max command-line
 from niceman.utils import get_cmd_batch_len, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
-
-# To parse output of dpkg-query
-import re
-_DPKG_QUERY_PARSER = re.compile(
-    "(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(,.*)?: (?P<path>.*)$"
-)
 
 from niceman.distributions.base import DistributionTracer
 
@@ -63,36 +59,36 @@ from ..support.exceptions import CommandError
 class APTSource(SpecObject):
     """APT origin information
     """
-    name = attr.ib()
-    component = attr.ib(default=None)
-    archive = attr.ib(default=None)
-    architecture = attr.ib(default=None)
-    codename = attr.ib(default=None)
-    origin = attr.ib(default=None)
-    label = attr.ib(default=None)
-    site = attr.ib(default=None)
-    archive_uri = attr.ib(default=None)
-    date = attr.ib(default=None)
+    name = attrib(default=attr.NOTHING)
+    component = attrib()
+    archive = attrib()
+    architecture = attrib()
+    codename = attrib()
+    origin = attrib()
+    label = attrib()
+    site = attrib()
+    archive_uri = attrib()
+    date = attrib()
 _register_with_representer(APTSource)
 
 
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DEBPackage(Package):
     """Debian package information"""
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     # Optional
-    upstream_name = attr.ib(default=None)
-    version = attr.ib(default=None)
-    architecture = attr.ib(default=None)
-    source_name = attr.ib(default=None, hash=False)
-    source_version = attr.ib(default=None, hash=False)
-    size = attr.ib(default=None, hash=False)
-    md5 = attr.ib(default=None, hash=False)
-    sha1 = attr.ib(default=None, hash=False)
-    sha256 = attr.ib(default=None, hash=False)
-    versions = attr.ib(default=None, hash=False)  # Hash ver_str -> [Array of source names]
-    install_date = attr.ib(default=None, hash=False)
-    files = attr.ib(default=attr.Factory(list), hash=False)
+    upstream_name = attrib()
+    version = attrib()
+    architecture = attrib()
+    source_name = attrib(hash=False)
+    source_version = attrib(hash=False)
+    size = attrib(hash=False)
+    md5 = attrib(hash=False)
+    sha1 = attrib(hash=False)
+    sha256 = attrib(hash=False)
+    versions = attrib(hash=False)  # Hash ver_str -> [Array of source names]
+    install_date = attrib(hash=False)
+    files = attrib(default=attr.Factory(list), hash=False)
 
     def satisfies(self, other):
         """return True if this package (self) satisfies the requirements of 
@@ -120,7 +116,7 @@ class DebianDistribution(Distribution):
 
     apt_sources = TypedList(APTSource)
     packages = TypedList(DEBPackage)
-    version = attr.ib(default=None)  # version as depicted by /etc/debian_version
+    version = attrib()  # version as depicted by /etc/debian_version
 
     def initiate(self, session):
         """
@@ -617,15 +613,10 @@ class DebTracer(DistributionTracer):
                 pass
         return date
 
-    @staticmethod
-    def _parse_dpkgquery_line(line):
-        if line.startswith('diversion '):
-            return None  # we are ignoring diversion details ATM  TODO
-        if ',' in line:
-            lgr.warning("dpkg-query line has multiple packages (%s)" % line)
-        res = _DPKG_QUERY_PARSER.match(line)
-        if res:
-            res = res.groupdict()
-            if res['architecture'] is None:
-                res.pop('architecture')
+    def _parse_dpkgquery_line(self, line):
+        res = parse_dpkgquery_line(line)
+        if res and res.pop("pkgs_rest"):
+            if self._session.isdir(res["path"]):
+                return None
+            lgr.warning("dpkg-query line has multiple packages (%s)", line)
         return res
