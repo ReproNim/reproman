@@ -18,7 +18,7 @@ from niceman.cmd import Runner
 from niceman.tests.utils import skip_if_no_network
 from niceman.utils import chpwd
 
-# Substitutes in for user's ~/.config/niceman.cfg file
+# Substitutes in for user's ~/.config/niceman/config file
 CONFIGURATION = [
     NICEMAN_CFG_PATH
 ]

@@ -20,7 +20,7 @@ from os.path import join as opj
 from glob import glob
 import os.path
 
-from ..config import ConfigManager
+from ..config import ConfigManager, LOCATIONS_DOC
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from ..support.exceptions import MissingConfigError, MissingConfigFileError
@@ -29,22 +29,6 @@ from ..ui import ui
 
 import logging
 lgr = logging.getLogger('niceman.resource.base')
-
-
-def attrib(*args, **kwargs):
-    """Extend the attr.ib to include our metadata elements.
-    
-    ATM we support additional keyword args which are then stored within
-    `metadata`:
-    - `doc` for documentation to describe the attribute (e.g. in --help)
-    """
-    doc = kwargs.pop('doc', None)
-    metadata = kwargs.get('metadata', {})
-    if doc:
-        metadata['doc'] = doc
-    if metadata:
-        kwargs['metadata'] = metadata
-    return attr.ib(*args, **kwargs)
 
 
 class ResourceManager(object):
@@ -210,8 +194,13 @@ class ResourceManager(object):
             config = ui.question("Enter a config file", default="niceman.cfg")
             cm = get_cm(config_path=config)
         if len(cm._sections) == 1:
+            from ..interface.base import dedent_docstring
             raise MissingConfigFileError(
-                "Unable to locate config file: {}".format(config_path))
+                "Unable to locate config file: {}\n"
+                "You must specify it using --config "
+                "or place it in any of the following locations:\n\n"
+                "{}\n\n".format(config_path or config,
+                                dedent_docstring(LOCATIONS_DOC)))
 
         return cm
 

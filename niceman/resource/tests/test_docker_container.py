@@ -90,7 +90,8 @@ def test_dockercontainer_class():
         config = {
             'name': 'existing-test-resource',
             'type': 'docker-container',
-            'engine_url': 'tcp://127.0.0.1:2375'
+            'engine_url': 'tcp://127.0.0.1:2375',
+            'seccomp_unconfined': True
         }
         resource = ResourceManager.factory(config)
         resource.connect()
