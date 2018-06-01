@@ -25,7 +25,7 @@ from niceman.dochelpers import exc_str
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
 
-from niceman.cmd import CommandError
+from niceman.cmd import CommandError, Runner
 
 lgr = getLogger('niceman.distributions.vcs')
 
@@ -107,6 +107,14 @@ class SVNRepo(VCSRepo):
     url = attr.ib(default=None)
     root_url = attr.ib(default=None)
     relative_url = attr.ib(default=None)
+    uuid = attr.ib(default=None)
+
+    @property
+    def uuid(self):
+        runner = Runner()
+        cmd = ['svn', 'info', '--show-item', 'repos-uuid']
+        return runner.run(cmd, cwd=self.path)[0].strip()
+
 
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s

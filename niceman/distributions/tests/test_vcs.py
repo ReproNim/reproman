@@ -11,10 +11,10 @@ import os
 import attr
 
 from niceman.cmd import Runner
-from niceman.distributions.vcs import VCSTracer
+from niceman.distributions.vcs import VCSTracer, SVNRepo
 from niceman.utils import chpwd
 from niceman.tests.utils import assert_is_subset_recur
-from niceman.tests.fixtures import git_repo_fixture
+from niceman.tests.fixtures import git_repo_fixture, svn_repo_fixture
 
 
 git_repo_empty = git_repo_fixture(kind="empty")
@@ -196,3 +196,12 @@ def test_git_repo_remotes(git_repo_pair):
     paths = [os.path.join(repo_remote, "foo")]
     dists_remote = list(tracer.identify_distributions(paths))
     assert not dists_remote[0][0].packages[0].remotes.values()
+
+
+def test_svn_uuid(svn_repo_fixture):
+    (root_dir, checked_out_dir) = svn_repo_fixture
+    uuid_file = os.path.join(root_dir, 'db', 'uuid')
+    uuid = open(uuid_file).readlines()[0].strip()
+    repo = SVNRepo(checked_out_dir)
+    assert repo.uuid == uuid
+    return
