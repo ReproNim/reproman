@@ -13,10 +13,12 @@ from collections import defaultdict
 
 import attr
 import yaml
+from niceman.resource.session import get_local_session
 
 from niceman.distributions import Distribution, piputils
 from niceman.dochelpers import exc_str
-from niceman.utils import PathRoot, is_subpath
+from niceman.support.exceptions import CommandError
+from niceman.utils import attrib, PathRoot, is_subpath, make_tempfile
 
 from .base import SpecObject
 from .base import DistributionTracer
@@ -58,31 +60,60 @@ def get_conda_platform_from_python(py_platform):
             return python_to_conda_platform_map[k]
     return None
 
+
+def get_miniconda_url(conda_platform, python_version):
+    """
+    Gets the Miniconda install URL given the conda platform and python version
+
+    Parameters
+    ----------
+    conda_platform : str
+        The conda platform (e.g. "linux-64")
+
+    python_version : str
+        The python version (e.g. "2.7.1")
+
+    Returns
+    -------
+    str
+        The Miniconda insaller URL
+    """
+    if conda_platform.startswith("linux"):
+        platform = "Linux"
+    elif conda_platform.startswith("osx"):
+        platform = "MacOSX"
+    else:
+        raise ValueError("Unsupported platform %s for conda installation" %
+                         conda_platform)
+    platform += "-x86_64" if ("64" in conda_platform) else "-x86"
+    return "https://repo.continuum.io/miniconda/Miniconda%s-latest-%s.sh" \
+                    % (python_version[0], platform)
+
 @attr.s
 class CondaPackage(Package):
-    name = attr.ib()
-    installer = attr.ib(default=None)
-    version = attr.ib(default=None)
-    build = attr.ib(default=None)
-    channel_name = attr.ib(default=None)
-    size = attr.ib(default=None)
-    md5 = attr.ib(default=None)
-    url = attr.ib(default=None)
-    location = attr.ib(default=None)
-    editable = attr.ib(default=False)
-    files = attr.ib(default=attr.Factory(list))
+    name = attrib(default=attr.NOTHING)
+    installer = attrib()
+    version = attrib()
+    build = attrib()
+    channel_name = attrib()
+    size = attrib()
+    md5 = attrib()
+    url = attrib()
+    location = attrib()
+    editable = attrib(default=False)
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s
 class CondaChannel(SpecObject):
-    name = attr.ib()
-    url = attr.ib(default=None)
+    name = attrib(default=attr.NOTHING)
+    url = attrib()
 
 
 @attr.s
 class CondaEnvironment(SpecObject):
-    name = attr.ib()
-    path = attr.ib(default=None)
+    name = attrib(default=attr.NOTHING)
+    path = attrib()
     packages = TypedList(CondaPackage)
     channels = TypedList(CondaChannel)
 
@@ -95,10 +126,10 @@ class CondaDistribution(Distribution):
     """
     Class to provide Conda package management.
     """
-    path = attr.ib(default=None)
-    conda_version = attr.ib(default=None)
-    python_version = attr.ib(default=None)
-    platform = attr.ib(default=None)
+    path = attrib()
+    conda_version = attrib()
+    python_version = attrib()
+    platform = attrib()
     environments = TypedList(CondaEnvironment)
 
     def initiate(self, environment):
@@ -110,6 +141,7 @@ class CondaDistribution(Distribution):
         environment : object
             The Environment sub-class object.
         """
+        # TODO Move conda installation here (environment is actually session)
         return
 
     def install_packages(self, session=None):
@@ -121,14 +153,113 @@ class CondaDistribution(Distribution):
         ----------
         session : object
             Environment sub-class instance.
+
+        Raises
+        ------
+        ValueError
+            Unexpected conda platform or python version
+        CommandError
+            If unexpected error in install commands occurs
         """
 
-        # TODO: Need to figure out a graceful way to install conda before we can install packages here.
-        # for package in self.provenance['packages']:
-        #     session.add_command(['conda',
-        #                            'install',
-        #                            package['name']])
+        if not self.path:  # Permit empty conda config entry
+            return
+
+        if not session:
+            session = get_local_session()
+
+        # Use the session to make a temporary directory for our install files
+        tmp_dir = session.mktmpdir()
+        try:
+            # Install Conda
+            # See if Conda root path exists and if not, install Conda
+            if not session.isdir(self.path):
+                # TODO: Determine if we can detect miniconda vs anaconad
+                miniconda_url = get_miniconda_url(self.platform,
+                                                  self.python_version)
+                session.execute_command("curl %s -o %s/miniconda.sh" %
+                                        (miniconda_url, tmp_dir))
+                # NOTE: miniconda.sh makes parent directories automatically
+                session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
+                                        (tmp_dir, self.path))
+            ## Update root version of conda
+            session.execute_command(
+               "%s/bin/conda install -y conda=%s python=%s" %
+               (self.path, self.conda_version,
+                self.get_simple_python_version(self.python_version)))
+
+            # Loop through non-root packages, creating the conda-env config
+            for env in self.environments:
+                export_contents = self.create_conda_export(env)
+                with make_tempfile(export_contents) as local_config:
+                    remote_config = os.path.join(tmp_dir, env.name)
+                    session.put(local_config, remote_config)
+                    if not session.isdir(env.path):
+                        try:
+                            session.execute_command(
+                                "%s/bin/conda-env create -p %s -f %s " %
+                                (self.path, env.path, remote_config))
+                        except CommandError:
+                            # Some conda versions seg fault so try to update
+                            session.execute_command(
+                                "%s/bin/conda-env update -p %s -f %s " %
+                                (self.path, env.path, remote_config))
+                    else:
+                        session.execute_command(
+                            "%s/bin/conda-env update -p %s -f %s " %
+                            (self.path, env.path, remote_config))
+
+        finally:
+            if tmp_dir:
+                # Remove the tmp dir
+                session.execute_command(["rm", "-R", tmp_dir])
+
         return
+
+    @staticmethod
+    def get_simple_python_version(python_version):
+        # Get the simple python version from the conda info string
+        # Specifically, pull "major.minor.micro" from the full string
+        # "major.minor.micro.releaselevel.serial"
+        return ".".join(python_version.split(".", 3)[:3])
+
+    @staticmethod
+    def format_conda_package(name, version=None, build=None, **_):
+        # Note: Conda does not accept a build without a version
+        return ("%s=%s=%s" % (name, version, build) if version and build
+                 else ("%s=%s" % (name, version) if version
+                       else "%s" % name))
+
+    @staticmethod
+    def format_pip_package(name, version=None, **_):
+        return ("%s==%s" % (name, version) if version
+                       else "%s" % name)
+
+    @staticmethod
+    def create_conda_export(env):
+        # Collect the environment into a dictionary in the same manner as
+        # https://github.com/conda/conda/blob/master/conda_env/env.py
+        d = {}
+        # TODO: The environment name should be discovered on retrace
+        name = os.path.basename(os.path.normpath(env.path))
+        d["name"] = name
+        # Collect channels
+        d["channels"] = [c["name"] for c in env.channels]
+        # Collect packages (dependencies) with no installer
+        d["dependencies"] = [CondaDistribution.format_conda_package(**p)
+                             for p in env.packages
+                             if p.get("installer") is None]
+        #            p.get("name"), p.get("version"), p.get("build"))
+        # Collect pip-installed dependencies
+        pip_deps = [CondaDistribution.format_pip_package(**p)
+                    for p in env.packages
+                    if p.get("installer") is "pip"]
+        if (pip_deps):
+            d["dependencies"].append({"pip": pip_deps})
+        # Add the prefix
+        d["prefix"] = env.path
+        # Now dump the export as a yaml file
+        return yaml.safe_dump(d, default_flow_style=False)
 
 
 class CondaTracer(DistributionTracer):

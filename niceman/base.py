@@ -9,6 +9,7 @@
 """Base classes"""
 
 import attr
+from .utils import attrib
 
 
 @attr.s
@@ -29,7 +30,7 @@ class Package(BaseSpec):
     Unit comes with files which were traced to be relevant/important for a given
     computation
     """
-    files = attr.ib(default=[])
+    files = attrib(default=[])
 
 
 @attr.s

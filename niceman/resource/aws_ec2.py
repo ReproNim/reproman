@@ -19,9 +19,9 @@ from botocore.exceptions import ClientError
 import logging
 lgr = logging.getLogger('niceman.resource.aws_ec2')
 
-from .base import Resource, attrib
+from .base import Resource
 from ..ui import ui
-from ..utils import assure_dir
+from ..utils import assure_dir, attrib
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from .ssh import SSHSession, PTYSSHSession
@@ -30,12 +30,12 @@ from .ssh import SSHSession, PTYSSHSession
 class AwsEc2(Resource):
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     # Configurable options for each "instance"
-    access_key_id = attrib(default=None,
+    access_key_id = attrib(
         doc="AWS access key for remote access to your Amazon subscription.")
-    secret_access_key = attrib(default=None,
+    secret_access_key = attrib(
         doc="AWS secret access key for remote access to your Amazon subscription")
     instance_type = attrib(default='t2.micro',
         doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)")  # EC2 instance type
@@ -43,9 +43,9 @@ class AwsEc2(Resource):
         doc="AWS security group to assign to the EC2 instance.")  # AWS security group
     region_name = attrib(default='us-east-1',
         doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)")  # AWS region
-    key_name = attrib(default=None,
+    key_name = attrib(
         doc="AWS subscription name of SSH key-pair registered.")  # Name of SSH key registered on AWS.
-    key_filename = attrib(default=None,
+    key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
     image = attrib(default='ami-c8580bdf',
         doc="AWS image ID from which to create the running instance")  # Ubuntu 14.04 LTS
@@ -54,17 +54,17 @@ class AwsEc2(Resource):
 
     # Interesting one -- should we allow for it to be specified or should
     # it just become a property?  may be base class could
-    id = attr.ib(default=None)  # EC2 instance ID
+    id = attrib()  # EC2 instance ID
 
     # TODO: shouldn't be hardcoded???
-    type = attr.ib(default='aws-ec2')  # Resource type
+    type = attrib(default='aws-ec2')  # Resource type
 
     # Current instance properties, to be set by us, not augmented by user
-    status = attr.ib(default=None)
+    status = attrib()
 
     # Resource and AWS instance objects
-    _ec2_resource = attr.ib(default=None)
-    _ec2_instance = attr.ib(default=None)
+    _ec2_resource = attrib()
+    _ec2_instance = attrib()
 
     def connect(self):
         """
