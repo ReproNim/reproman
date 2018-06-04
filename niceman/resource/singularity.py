@@ -10,14 +10,13 @@
 
 import attr
 import os
-import shutil
 import six
-import uuid
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
 from ..support.exceptions import CommandError
 from .session import POSIXSession, Session
-from .base import Resource, attrib
+from .base import Resource
+from ..utils import attrib
 
 import logging
 lgr = logging.getLogger('niceman.resource.singularity')
@@ -30,16 +29,15 @@ class Singularity(Resource):
     """
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib()
 
     # Container properties
-    id = attr.ib(default=None)
-    image = attrib(default=None,
-        doc="Singularity image file from which to create the running instance")
-    type = attr.ib(default='singularity')
+    id = attrib()
+    image = attrib(doc="Base image filename or url")
+    type = attrib(default='singularity')
 
-    status = attr.ib(default=None)
-    _runner = attr.ib(default=None)
+    status = attrib()
+    _runner = attrib()
 
     def connect(self):
         """
@@ -83,8 +81,8 @@ class Singularity(Resource):
             lgr.info('Resource {} already exists.'.format(self.name))
         else:
             # Start the container instance.
-            self._runner.run(['singularity', 'instance.start',
-                self.image, self.name])
+            self._runner.run(['singularity', 'instance.start', self.image,
+                self.name])
 
         # Update status
         self.id = self.name

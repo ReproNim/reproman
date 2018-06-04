@@ -12,7 +12,6 @@
 # are tested in test_session.test_session_abstract_methods()
 
 import logging
-import os
 import re
 from ..singularity import Singularity, SingularitySession
 from ...tests.utils import skip_if_no_singularity, skip_if_no_network, \
