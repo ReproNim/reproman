@@ -130,8 +130,8 @@ class DockerTracer(DistributionTracer):
 
                 # Warn user if the image does not have any RepoDigest entries.
                 if not image['RepoDigests']:
-                    lgr.warning("The Docker image '%s' does not have any \
-repository IDs associated with it", file)
+                    lgr.warning("The Docker image '%s' does not have any "
+                        "repository IDs associated with it", file)
 
                 images.append(DockerImage(
                     id=image['Id'],

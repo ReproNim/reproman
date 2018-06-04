@@ -23,22 +23,23 @@ from .base import Distribution
 from .base import TypedList
 from .base import _register_with_representer
 from ..support.exceptions import CommandError
+from ..utils import attrib
 
 
 @attr.s(cmp=True)
 class RPMSource(SpecObject):
     """RPM origin information"""
-    id = attr.ib()
-    name = attr.ib(default=None)
-    revision = attr.ib(default=None)
-    updated = attr.ib(default=None)
-    pkgs = attr.ib(default=None)
-    size = attr.ib(default=None)
-    mirrors = attr.ib(default=None)
-    metalink = attr.ib(default=None)
-    baseurl = attr.ib(default=None)
-    expire = attr.ib(default=None)
-    filename = attr.ib(default=None)
+    id = attrib(default=attr.NOTHING)
+    name = attrib()
+    revision = attrib()
+    updated = attrib()
+    pkgs = attrib()
+    size = attrib()
+    mirrors = attrib()
+    metalink = attrib()
+    baseurl = attrib()
+    expire = attrib()
+    filename = attrib()
 
 _register_with_representer(RPMSource)
 
@@ -46,23 +47,23 @@ _register_with_representer(RPMSource)
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class RPMPackage(Package):
     """Redhat package information"""
-    name = attr.ib()
-    pkgid = attr.ib(default=None)
-    version = attr.ib(default=None)
-    release = attr.ib(default=None)
-    architecture = attr.ib(default=None)
-    install_date = attr.ib(default=None)
-    group = attr.ib(default=None)
-    size = attr.ib(default=None)
-    license = attr.ib(default=None)
-    signature = attr.ib(default=None)
-    source_rpm = attr.ib(default=None)
-    build_date = attr.ib(default=None)
-    build_host = attr.ib(default=None)
-    packager = attr.ib(default=None)
-    vendor = attr.ib(default=None)
-    url = attr.ib(default=None)
-    files = attr.ib(default=attr.Factory(list), hash=False)
+    name = attrib(default=attr.NOTHING)
+    pkgid = attrib()
+    version = attrib()
+    release = attrib()
+    architecture = attrib()
+    install_date = attrib()
+    group = attrib()
+    size = attrib()
+    license = attrib()
+    signature = attrib()
+    source_rpm = attrib()
+    build_date = attrib()
+    build_host = attrib()
+    packager = attrib()
+    vendor = attrib()
+    url = attrib()
+    files = attrib(default=attr.Factory(list), hash=False)
 
     def satisfies(self, other):
         """return True if this package (self) satisfies the requirements of 
@@ -91,7 +92,7 @@ class RedhatDistribution(Distribution):
 
     sources = TypedList(RPMSource)
     packages = TypedList(RPMPackage)
-    version = attr.ib(default=None)  # version as depicted by /etc/redhat_version
+    version = attrib()  # version as depicted by /etc/redhat_version
 
     def initiate(self, session):
         """
@@ -139,8 +140,8 @@ class RedhatDistribution(Distribution):
                     session.execute_command(['yum', 'install', '-y',
                         third_party_repos[source.id]])
                 else:
-                    lgr.error("Unable to install source repo \"%s\" found in \
-spec but not in resource environment.", source.id)
+                    lgr.error("Unable to install source repo \"%s\" found in "
+                        "spec but not in resource environment.", source.id)
 
     def install_packages(self, session, use_version=True):
         """
@@ -152,13 +153,14 @@ spec but not in resource environment.", source.id)
         session : object
         use_version : bool, optional
           Use version information if provided.
-          TODO: support outside or deprecate
-            
         """
         package_specs = []
 
         for package in self.packages:
-            package_spec = package.pkgid
+            if use_version:
+                package_spec = package.pkgid
+            else:
+                package_spec = package.name
             package_specs.append(package_spec)
 
         # Doing in one shot to fail early if any of the versioned specs

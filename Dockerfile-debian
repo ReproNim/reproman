@@ -1,22 +1,23 @@
 # Container holding a niceman development environment.
 #
 # To build:
-#	docker build -t niceman:latest \
+#	docker build -t niceman:debian \
+#       -f Dockerfile-debian \
 #		--build-arg IMAGE=debian:jessie \
 #		--build-arg UNAME=$USER \
 #		--build-arg UID=$(id -u) \
 #		--build-arg GID=$(id -g) \
 #		.
 #
-#	or docker-compose build (be sure to update IMAGE, UID, and GID in docker-compose.yml)
+#	or docker-compose build debian(be sure to update IMAGE, UID, and GID in docker-compose.yml)
 #
 # To run:
-#	docker run -it --name niceman \
+#	docker run -it --name niceman-debian \
 #		-v $PWD:/home/$USER/niceman \
 #		-v /var/run/docker.sock:/var/run/docker.sock \
-#		niceman:latest
+#		niceman:debian
 #
-#	or docker-compose run niceman
+#	or docker-compose run debian
 
 ARG IMAGE=ubuntu:xenial
 FROM $IMAGE
