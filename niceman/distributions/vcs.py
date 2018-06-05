@@ -347,7 +347,7 @@ class GitRepoShim(GitSVNRepoShim):
     @property
     def root_hexsha(self):
         try:
-            rev_list = self._run_git('rev-list master').split('\n')
+            rev_list = self._run_git('rev-list --max-parents=0 HEAD').split('\n')
             return rev_list[-1]
         except CommandError:
             # might still be the first yet to be committed state in the branch
