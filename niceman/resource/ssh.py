@@ -22,7 +22,8 @@ import os
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
 
-from .base import Resource, attrib
+from .base import Resource
+from ..utils import attrib
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
 from niceman import utils
@@ -35,26 +36,26 @@ from ..support import exceptions as exception  # to minimize diff for adopted co
 class SSH(Resource):
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     # Configurable options for each "instance"
-    host = attrib(default=None, doc="DNS or IP address of server")
+    host = attrib(doc="DNS or IP address of server")
     port = attrib(default=22,
         doc="Port to connect to on remote host")
-    key_filename = attrib(default=None,
+    key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter")
-    user = attrib(default=None,
+    user = attrib(
         doc="Username to use to log into remote environment")
-    password = attrib(default=None,
+    password = attrib(
         doc="Password to use to log into remote environment")
 
-    id = attr.ib(default=None)  # EC2 instance ID
+    id = attrib()  # EC2 instance ID
 
-    type = attr.ib(default='ssh')  # Resource type
+    type = attrib(default='ssh')  # Resource type
 
     # Current instance properties, to be set by us, not augmented by user
-    status = attr.ib(default=None)
-    _ssh = attr.ib(default=None)
+    status = attrib()
+    _ssh = attrib()
 
     def connect(self):
         """Open a connection to the environment resource.
@@ -120,7 +121,7 @@ from niceman.resource.session import POSIXSession
 
 @attr.s
 class SSHSession(POSIXSession):
-    ssh = attr.ib()
+    ssh = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):

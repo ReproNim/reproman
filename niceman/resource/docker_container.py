@@ -19,7 +19,8 @@ from niceman import utils
 from ..support.exceptions import CommandError, ResourceError
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import POSIXSession, Session
-from .base import Resource, attrib
+from .base import Resource
+from ..utils import attrib
 
 import logging
 lgr = logging.getLogger('niceman.resource.docker_container')
@@ -32,11 +33,11 @@ class DockerContainer(Resource):
     """
 
     # Generic properties of any Resource
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
 
     # Container properties
-    id = attr.ib(default=None)
-    type = attr.ib(default='docker-container')
+    id = attrib()
+    type = attrib(default='docker-container')
 
     image = attrib(default='ubuntu:latest',
         doc="Docker base image ID from which to create the running instance")
@@ -45,11 +46,11 @@ class DockerContainer(Resource):
     seccomp_unconfined = attrib(default=False,
         doc="Disable kernel secure computing mode when creating the container")
 
-    status = attr.ib(default=None)
+    status = attrib()
 
     # Docker client and container objects.
-    _client = attr.ib(default=None)
-    _container = attr.ib(default=None)
+    _client = attrib()
+    _container = attrib()
 
     def connect(self):
         """
@@ -167,8 +168,8 @@ class DockerContainer(Resource):
 
 @attr.s
 class DockerSession(POSIXSession):
-    client = attr.ib()
-    container = attr.ib()
+    client = attrib(default=attr.NOTHING)
+    container = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):

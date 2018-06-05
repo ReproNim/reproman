@@ -21,19 +21,20 @@ from .base import TypedList
 from .base import _register_with_representer
 from ..dochelpers import borrowdoc
 from ..support.exceptions import CommandError
+from ..utils import attrib
 
 
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
 class DockerImage(Package):
     """Docker image information"""
-    id = attr.ib()
+    id = attrib(default=attr.NOTHING)
     # Optional
-    architecture = attr.ib(default=None)
-    operating_system = attr.ib(default=None)
-    docker_version = attr.ib(default=None)
-    repo_digests = attr.ib(default=None)
-    repo_tags = attr.ib(default=None)
-    created = attr.ib(default=None)
+    architecture = attrib()
+    operating_system = attrib()
+    docker_version = attrib()
+    repo_digests = attrib()
+    repo_tags = attrib()
+    created = attrib()
 
 _register_with_representer(DockerImage)
 
