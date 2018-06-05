@@ -11,6 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
+import os
 import os.path as op
 import sys
 import time
@@ -82,18 +83,12 @@ class Exec(Interface):
                 " NICEMAN command available within sessions.  Known are: %s"
                 % ', '.join(Session.INTERNAL_COMMANDS)
         ),
-        tracer=Parameter(
-            args=("--tracer",),
-            metavar="PATH",
-            doc="""Path to rztracer binary.  NOTE: This is a temporary argument
-            until we deposit the binary somewhere.""",
-        ),
         trace=trace_opt,
     )
 
     @staticmethod
     def __call__(command, args, name=None, resource_id=None, config=None,
-                 internal=False, trace=False, tracer=None):
+                 internal=False, trace=False):
         from niceman.ui import ui
         if not name and not resource_id:
             name = ui.question(
@@ -127,15 +122,36 @@ class Exec(Interface):
             str(uuid.uuid4())[:2])
 
         if trace:
-            if tracer is None:
-                raise ValueError("Need to specify --tracer")
+            local_cache_dir = op.expanduser('~/.cache/niceman')
+            tracer_md5sum = "d8561c1bc528592b21c0e28d6f32c0a4"
+            local_tracer_dir = op.join(local_cache_dir, "tracers",
+                                       tracer_md5sum)
+            local_tracer_gz = op.join(local_tracer_dir, "niceman_trace.gz")
+
+            if not op.exists(local_tracer_gz):
+                import hashlib
+                import requests
+
+                os.makedirs(local_tracer_dir, exist_ok=True)
+                resp = requests.get("https://github.com/ReproNim/reprozip/blob"
+                                    "/0497b229575c67219c5925360b6e63bf8d4d5eb9"
+                                    "/reprozip/native/rztracer.gz?raw=true",
+                                    allow_redirects=True)
+
+                with open(local_tracer_gz, "wb") as stream:
+                    if tracer_md5sum != hashlib.md5(resp.content).hexdigest():
+                        raise RuntimeError("md5sum for downloaded tracer "
+                                           "does not match the expected one")
+                    stream.write(resp.content)
+
             # Establish a "management" session first
             mng_ses = env_resource.get_session(pty=False)
             remote_env_full = mng_ses.query_envvars()
             remote_niceman_dir = \
                 '{HOME}/.cache/niceman'.format(**remote_env_full)
             remote_traces_dir = op.join(remote_niceman_dir, 'traces')
-            remote_tracer_dir = op.join(remote_niceman_dir, 'tracer')
+            remote_tracer_dir = op.join(remote_niceman_dir, "tracers",
+                                        tracer_md5sum)
 
             mng_ses.mkdir(remote_tracer_dir, parents=True)
             remote_env['NICEMAN_TRACE_DIR'] = \
@@ -143,13 +159,17 @@ class Exec(Interface):
                 op.join(remote_traces_dir, exec_id)
             mng_ses.mkdir(remote_trace_dir, parents=True)
 
-            # TODO: deposit the tracer if not there yet
             # TODO: augment "entry point" somehow in a generic way?
             #    For interactive sessions with bash, we could overload ~/.bashrc
             #    to do our wrapping of actual call to bashrc under the "tracer"
             remote_tracer = op.join(remote_tracer_dir, "niceman_trace")
             if not session.exists(remote_tracer):
-                session.put(tracer, remote_tracer)
+                remote_tracer_gz = remote_tracer + ".gz"
+                # The gz file might already exist (e.g., a localshell session).
+                if not session.exists(remote_tracer_gz):
+                    session.put(local_tracer_gz, remote_tracer_gz)
+                session.execute_command(["gunzip", "--keep", remote_tracer_gz])
+                session.chmod(remote_tracer, "755")
             cmd_prefix = [
                 remote_tracer,
                 "--logfile", op.join(remote_trace_dir, "tracer.log"),
@@ -178,8 +198,7 @@ class Exec(Interface):
         if trace and error is None:
             # Copy all the tracing artifacts here if not present already (e.g.
             # if session was a local shell)
-            local_trace_dir = op.join(
-                op.expanduser('~/.cache/niceman'), 'traces', exec_id)
+            local_trace_dir = op.join(local_cache_dir, 'traces', exec_id)
             if not op.exists(local_trace_dir):
                 for fname in ["tracer.log", "trace.sqlite3"]:
                     session.get(op.join(remote_trace_dir, fname),
