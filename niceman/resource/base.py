@@ -31,22 +31,6 @@ import logging
 lgr = logging.getLogger('niceman.resource.base')
 
 
-def attrib(*args, **kwargs):
-    """Extend the attr.ib to include our metadata elements.
-    
-    ATM we support additional keyword args which are then stored within
-    `metadata`:
-    - `doc` for documentation to describe the attribute (e.g. in --help)
-    """
-    doc = kwargs.pop('doc', None)
-    metadata = kwargs.get('metadata', {})
-    if doc:
-        metadata['doc'] = doc
-    if metadata:
-        kwargs['metadata'] = metadata
-    return attr.ib(*args, **kwargs)
-
-
 class ResourceManager(object):
     """
     Class to help manage resources.

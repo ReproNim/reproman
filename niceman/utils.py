@@ -28,6 +28,7 @@ import platform
 import gc
 import glob
 
+import attr
 from functools import wraps
 from time import sleep
 from inspect import getargspec
@@ -1139,6 +1140,25 @@ def instantiate_attr_object(item_type, items):
                 )
         # if couldn't figure it out -- just raise original
         raise
+
+
+def attrib(*args, **kwargs):
+    """Extend the attr.ib to include our metadata elements.
+
+    ATM we support additional keyword args which are then stored within
+    `metadata`:
+    - `doc` for documentation to describe the attribute (e.g. in --help)
+
+    Also, when the `default` argument of attr.ib is unspecified, set it to
+    None.
+    """
+    doc = kwargs.pop('doc', None)
+    metadata = kwargs.get('metadata', {})
+    if doc:
+        metadata['doc'] = doc
+    if metadata:
+        kwargs['metadata'] = metadata
+    return attr.ib(*args, default=kwargs.pop('default', None), **kwargs)
 
 
 class PathRoot(object):

@@ -22,6 +22,7 @@ from os.path import join as opj
 from logging import getLogger
 
 from niceman.dochelpers import exc_str
+from niceman.utils import attrib
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
 
@@ -74,19 +75,19 @@ class VCSDistribution(Distribution):
 class VCSRepo(SpecObject):
     """Base VCS repo class"""
 
-    path = attr.ib()
-    files = attr.ib(default=attr.Factory(list))
+    path = attrib(default=attr.NOTHING)
+    files = attrib(default=attr.Factory(list))
 
 
 @attr.s
 class GitRepo(VCSRepo):
 
-    root_hexsha = attr.ib(default=None)
-    branch = attr.ib(default=None)
-    hexsha = attr.ib(default=None)
-    describe = attr.ib(default=None)
-    tracked_remote = attr.ib(default=None)
-    remotes = attr.ib(default=attr.Factory(dict))
+    root_hexsha = attrib()
+    branch = attrib()
+    hexsha = attrib()
+    describe = attrib()
+    tracked_remote = attrib()
+    remotes = attrib(default=attr.Factory(dict))
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -103,18 +104,17 @@ GitRepo._distribution = GitDistribution
 @attr.s
 class SVNRepo(VCSRepo):
 
-    revision = attr.ib(default=None)
-    url = attr.ib(default=None)
-    root_url = attr.ib(default=None)
-    relative_url = attr.ib(default=None)
-    uuid = attr.ib(default=None)
+    revision = attrib()
+    url = attrib()
+    root_url = attrib()
+    relative_url = attrib()
+    uuid = attrib()
 
     @property
     def uuid(self):
         runner = Runner()
         cmd = ['svn', 'info', '--show-item', 'repos-uuid']
         return runner.run(cmd, cwd=self.path)[0].strip()
-
 
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s
@@ -379,10 +379,9 @@ class GitRepoShim(GitSVNRepoShim):
             return {}
 
         remote_branches = self._run_git(
-            ["for-each-ref", "--contains", hexsha,
-             # refs/remotes/<remote>/<name> => <remote>/<name>
-             "--format=%(refname:strip=2)",
-             "refs/remotes"]).splitlines()
+            ["branch", "-r", "--contains", hexsha]).splitlines()
+                                               # e.g. "origin/HEAD -> origin/master"
+        remote_branches = [b.strip() for b in remote_branches if " -> " not in b]
 
         if not remote_branches:
             return {}
