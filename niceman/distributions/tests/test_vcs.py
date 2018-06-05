@@ -103,6 +103,7 @@ def test_git_repo(git_repo):
         hexshas, _ = runner(["git", "rev-list", "master"], cwd=git_repo)
         root_hexsha = hexshas.strip('\n').split('\n')[-1]
         assert dists[0][0].packages[0].root_hexsha == root_hexsha
+        assert dists[0][0].packages[0].identifier == root_hexsha
 
         # Above we identify a subdirectory file, but we should not
         # identify the subdirectory itself because in principle Git is
@@ -204,4 +205,5 @@ def test_svn_uuid(svn_repo_fixture):
     uuid = open(uuid_file).readlines()[0].strip()
     repo = SVNRepo(checked_out_dir)
     assert repo.uuid == uuid
+    assert repo.identifier == repo.uuid
     return

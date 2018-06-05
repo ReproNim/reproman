@@ -78,6 +78,16 @@ class VCSRepo(SpecObject):
     path = attrib(default=attr.NOTHING)
     files = attrib(default=attr.Factory(list))
 
+    @property
+    def identifier(self):
+        try:
+            print self._identifier_attribute
+            return getattr(self, self._identifier_attribute)
+        except AttibuteError:
+            # raised if _identifier_attribute is not defined, but this means 
+            # (to the caller) that identifier is not defined
+            msg = "%s instance has no attribute 'identifier'" % self.__class__
+            raise AttributeError(msg)
 
 @attr.s
 class GitRepo(VCSRepo):
@@ -88,6 +98,8 @@ class GitRepo(VCSRepo):
     describe = attrib()
     tracked_remote = attrib()
     remotes = attrib(default=attr.Factory(dict))
+
+    _identifier_attribute = 'root_hexsha'
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -109,6 +121,8 @@ class SVNRepo(VCSRepo):
     root_url = attrib()
     relative_url = attrib()
     uuid = attrib()
+
+    _identifier_attribute = 'uuid'
 
     @property
     def uuid(self):
