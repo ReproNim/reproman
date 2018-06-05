@@ -362,10 +362,9 @@ class GitRepoShim(GitSVNRepoShim):
             return {}
 
         remote_branches = self._run_git(
-            ["for-each-ref", "--contains", hexsha,
-             # refs/remotes/<remote>/<name> => <remote>/<name>
-             "--format=%(refname:strip=2)",
-             "refs/remotes"]).splitlines()
+            ["branch", "-r", "--contains", hexsha]).splitlines()
+                                               # e.g. "origin/HEAD -> origin/master"
+        remote_branches = [b.strip() for b in remote_branches if " -> " not in b]
 
         if not remote_branches:
             return {}
