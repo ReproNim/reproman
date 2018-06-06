@@ -213,7 +213,7 @@ class SVNRepoShim(GitSVNRepoShim):
     def _ls_files_command(self):
         # tricky -- we need to locate wc.db somewhere upstairs, and filter out paths
         root_path = self._info['Working Copy Root Path']
-        return 'sqlite3 -batch %s/.svn/wc.db ".headers off" ' \
+        return 'sqlite3 -noheader "%s/.svn/wc.db" ' \
             '"select local_relpath from nodes_base"' \
                     % root_path
 
