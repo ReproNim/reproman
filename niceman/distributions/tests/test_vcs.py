@@ -11,7 +11,7 @@ import os
 import attr
 
 from niceman.cmd import Runner
-from niceman.distributions.vcs import VCSTracer, SVNRepo
+from niceman.distributions.vcs import VCSTracer
 from niceman.utils import chpwd
 from niceman.tests.utils import assert_is_subset_recur
 from niceman.tests.fixtures import git_repo_fixture, svn_repo_fixture
