@@ -180,7 +180,9 @@ class Exec(Interface):
             local_trace_dir = op.join(
                 op.expanduser('~/.cache/niceman'), 'traces', exec_id)
             if not op.exists(local_trace_dir):
-                session.get(remote_trace_dir, local_trace_dir)
+                for fname in ["tracer.log", "trace.sqlite3"]:
+                    session.get(op.join(remote_trace_dir, fname),
+                                op.join(local_trace_dir, fname))
                 lgr.info(
                     "Copied tracing artifacts under %s", local_trace_dir)
             else:
