@@ -171,8 +171,9 @@ class Exec(Interface):
                 session.niceman_exec(command, args)
             else:
                 out, err = session.execute_command(cmd_prefix + [command] + args)  # , env=remote_env)
-        except CommandError as error:
-            out, err = error.stdout, error.stderr
+        except CommandError as exc:
+            error = exc
+            out, err = exc.stdout, exc.stderr
 
         if trace:
             # Copy all the tracing artifacts here if not present already (e.g.
