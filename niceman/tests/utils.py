@@ -378,8 +378,8 @@ def skip_if_no_svn():
         # will raise OSError(errno=2) if the command is not found
         runner.run(['svnadmin', '--help'])
         runner.run(['svn', '--help'])
-    except OSError, data:
-        if data.errno == 2:
+    except OSError as exc:
+        if exc.errno == 2:
             raise SkipTest('subversion is not installed')
     return
 
