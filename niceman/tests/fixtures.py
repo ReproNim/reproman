@@ -185,6 +185,8 @@ def svn_repo_fixture():
     runner.run(['svnadmin', 'create', root_dir])
     runner.run(['svn', 'checkout', 'file://' + root_dir], cwd=subdir)
     checked_out_dir = os.path.join(subdir, repo_name)
+    runner.run(['touch', 'foo'], cwd=checked_out_dir)
+    runner.run(['svn', 'add', 'foo'], cwd=checked_out_dir)
+    runner.run(['svn', 'commit', '-m', 'bar'], cwd=checked_out_dir)
     yield (root_dir, checked_out_dir)
     shutil.rmtree(tmpdir)
-    return

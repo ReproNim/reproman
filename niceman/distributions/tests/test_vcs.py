@@ -199,11 +199,17 @@ def test_git_repo_remotes(git_repo_pair):
     assert not dists_remote[0][0].packages[0].remotes.values()
 
 
-def test_svn_uuid(svn_repo_fixture):
-    (root_dir, checked_out_dir) = svn_repo_fixture
-    uuid_file = os.path.join(root_dir, 'db', 'uuid')
+def test_svn(svn_repo_fixture):
+    (svn_repo_root, checked_out_dir) = svn_repo_fixture
+    svn_file = os.path.join(checked_out_dir, 'foo')
+    uuid_file = os.path.join(svn_repo_root, 'db', 'uuid')
     uuid = open(uuid_file).readlines()[0].strip()
-    repo = SVNRepo(checked_out_dir)
-    assert repo.uuid == uuid
-    assert repo.identifier == repo.uuid
-    return
+    tracer = VCSTracer()
+    assert_distributions(
+        tracer.identify_distributions([svn_file]), 
+        expected_length=1,
+        expected_subset={'name': 'svn'})
+    svn_repo = list(tracer.identify_distributions([svn_file]))[0][0].packages[0]
+    assert svn_repo.uuid == uuid
+    assert svn_repo.root_url == 'file://' + svn_repo_root
+    assert svn_repo.identifier == uuid

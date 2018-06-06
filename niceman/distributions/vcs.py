@@ -124,12 +124,6 @@ class SVNRepo(VCSRepo):
 
     _identifier_attribute = 'uuid'
 
-    @property
-    def uuid(self):
-        runner = Runner()
-        cmd = ['svn', 'info', '--show-item', 'repos-uuid']
-        return runner.run(cmd, cwd=self.path)[0].strip()
-
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s
 class SVNDistribution(VCSDistribution):
