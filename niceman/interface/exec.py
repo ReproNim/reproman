@@ -175,7 +175,7 @@ class Exec(Interface):
             error = exc
             out, err = exc.stdout, exc.stderr
 
-        if trace:
+        if trace and error is None:
             # Copy all the tracing artifacts here if not present already (e.g.
             # if session was a local shell)
             local_trace_dir = op.join(
