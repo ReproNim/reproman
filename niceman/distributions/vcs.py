@@ -81,7 +81,6 @@ class VCSRepo(SpecObject):
     @property
     def identifier(self):
         try:
-            print self._identifier_attribute
             return getattr(self, self._identifier_attribute)
         except AttibuteError:
             # raised if _identifier_attribute is not defined, but this means 
