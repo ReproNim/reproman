@@ -67,6 +67,8 @@ install:
   - pip install -r requirements-devel.txt
   # So we could test under sudo -E with PATH pointing to installed location
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
+  # for SVN tests (SVNRepoShim._ls_files_command())
+  - sudo apt-get install sqlite3
 
 script:
   # Verify that setup.py build doesn't puke
