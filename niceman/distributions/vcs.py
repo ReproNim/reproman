@@ -279,8 +279,22 @@ class SVNRepoShim(GitSVNRepoShim):
 
     @property
     def revision(self):
-        r = self._info['Revision']
-        return int(r) if ((r is not None) and r.isdigit()) else r
+        # svn info doesn't give the current revision 
+        # (see http://svnbook.red-bean.com/en/1.7/svn.tour.history.html) 
+        # so we need to run svn log
+        if not hasattr(self, '_revision'):
+            runner = Runner()
+            log = runner(['svn', 'log', '^/', '-l', '1'], cwd=self.path)[0]
+            lines = log.strip().split('\n')
+            if len(lines) == 1:
+                self._revision = None
+            else:
+                revision = lines[1].split()[0]
+                if revision.startswith('r') and revision[1:].isdigit():
+                    self._revision = int(revision[1:])
+                else:
+                    self._revision = revision[1:]
+        return self._revision
 
     @property
     def url(self):

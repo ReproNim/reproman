@@ -21,6 +21,9 @@ git_repo_empty = git_repo_fixture(kind="empty")
 git_repo = git_repo_fixture()
 git_repo_pair = git_repo_fixture(kind="pair")
 
+svn_repo_empty = svn_repo_fixture(kind='empty')
+svn_repo = svn_repo_fixture()
+
 
 # TODO: Move to niceman.test.utils and use in other tracer tests.
 def assert_distributions(result, expected_length=None, which=0,
@@ -199,8 +202,8 @@ def test_git_repo_remotes(git_repo_pair):
     assert not dists_remote[0][0].packages[0].remotes.values()
 
 
-def test_svn(svn_repo_fixture):
-    (svn_repo_root, checked_out_dir) = svn_repo_fixture
+def test_svn(svn_repo):
+    (svn_repo_root, checked_out_dir) = svn_repo
     svn_file = os.path.join(checked_out_dir, 'foo')
     uuid_file = os.path.join(svn_repo_root, 'db', 'uuid')
     uuid = open(uuid_file).readlines()[0].strip()
@@ -213,3 +216,11 @@ def test_svn(svn_repo_fixture):
     assert svn_repo.uuid == uuid
     assert svn_repo.root_url == 'file://' + svn_repo_root
     assert svn_repo.identifier == uuid
+    assert svn_repo.revision == 1
+
+def test_empty_svn(svn_repo_empty):
+    (svn_repo_root, checked_out_dir) = svn_repo_empty
+    tracer = VCSTracer()
+    distributions = list(tracer.identify_distributions([checked_out_dir]))
+    svn_repo = distributions[0][0].packages[0]
+    assert svn_repo.revision is None

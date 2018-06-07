@@ -173,20 +173,40 @@ def git_repo_fixture(kind="default", scope="function"):
     return fixture
 
 
-@pytest.fixture(scope='function')
-def svn_repo_fixture():
-    skip_if_no_svn()
-    repo_name = 'svnrepo'
-    tmpdir = os.path.realpath(tempfile.mkdtemp(prefix='niceman-tests-'))
-    root_dir = os.path.join(tmpdir, repo_name)
-    subdir = os.path.join(tmpdir, 'subdir')
-    os.mkdir(subdir)
-    runner = Runner()
-    runner.run(['svnadmin', 'create', root_dir])
-    runner.run(['svn', 'checkout', 'file://' + root_dir], cwd=subdir)
-    checked_out_dir = os.path.join(subdir, repo_name)
-    runner.run(['touch', 'foo'], cwd=checked_out_dir)
-    runner.run(['svn', 'add', 'foo'], cwd=checked_out_dir)
-    runner.run(['svn', 'commit', '-m', 'bar'], cwd=checked_out_dir)
-    yield (root_dir, checked_out_dir)
-    shutil.rmtree(tmpdir)
+def svn_repo_fixture(kind='default', scope='function'):
+    """Create a SVN repository fixture.
+
+    Parameters
+    ----------
+    kind : {"empty", "default"}
+
+        - empty: a repository with no commits.
+
+        - default: a repository with one commit of file "foo".
+
+    scope : {"function", "class", "module", "session"}, optional
+        A `pytest.fixture` scope argument.
+
+    Returns
+    -------
+    A fixture function.
+    """
+    @pytest.fixture(scope=scope)
+    def fixture():
+        skip_if_no_svn()
+        repo_name = 'svnrepo'
+        tmpdir = os.path.realpath(tempfile.mkdtemp(prefix='niceman-tests-'))
+        root_dir = os.path.join(tmpdir, repo_name)
+        subdir = os.path.join(tmpdir, 'subdir')
+        os.mkdir(subdir)
+        runner = Runner()
+        runner.run(['svnadmin', 'create', root_dir])
+        runner.run(['svn', 'checkout', 'file://' + root_dir], cwd=subdir)
+        checked_out_dir = os.path.join(subdir, repo_name)
+        if kind != 'empty':
+            runner.run(['touch', 'foo'], cwd=checked_out_dir)
+            runner.run(['svn', 'add', 'foo'], cwd=checked_out_dir)
+            runner.run(['svn', 'commit', '-m', 'bar'], cwd=checked_out_dir)
+        yield (root_dir, checked_out_dir)
+        shutil.rmtree(tmpdir)
+    return fixture
