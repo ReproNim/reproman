@@ -105,8 +105,10 @@ def test_git_repo(git_repo):
         runner = Runner()
         hexshas, _ = runner(["git", "rev-list", "master"], cwd=git_repo)
         root_hexsha = hexshas.strip('\n').split('\n')[-1]
-        assert dists[0][0].packages[0].root_hexsha == root_hexsha
-        assert dists[0][0].packages[0].identifier == root_hexsha
+        repo = dists[0][0].packages[0]
+        assert repo.root_hexsha == root_hexsha
+        assert repo.identifier == repo.root_hexsha
+        assert repo.commit == repo.hexsha
 
         # Above we identify a subdirectory file, but we should not
         # identify the subdirectory itself because in principle Git is
@@ -215,8 +217,9 @@ def test_svn(svn_repo):
     svn_repo = list(tracer.identify_distributions([svn_file]))[0][0].packages[0]
     assert svn_repo.uuid == uuid
     assert svn_repo.root_url == 'file://' + svn_repo_root
-    assert svn_repo.identifier == uuid
     assert svn_repo.revision == 1
+    assert svn_repo.identifier == svn_repo.uuid
+    assert svn_repo.commit == svn_repo.revision
 
 def test_empty_svn(svn_repo_empty):
     (svn_repo_root, checked_out_dir) = svn_repo_empty

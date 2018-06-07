@@ -82,10 +82,19 @@ class VCSRepo(SpecObject):
     def identifier(self):
         try:
             return getattr(self, self._identifier_attribute)
-        except AttibuteError:
+        except AttributeError:
             # raised if _identifier_attribute is not defined, but this means 
             # (to the caller) that identifier is not defined
             msg = "%s instance has no attribute 'identifier'" % self.__class__
+            raise AttributeError(msg)
+
+    @property
+    def commit(self):
+        try:
+            return getattr(self, self._commit_attribute)
+        except AttributeError:
+            # as for .identifer above, reraise with a more appropriate message
+            msg = "%s instance has no attribute 'commit'" % self.__class__
             raise AttributeError(msg)
 
 @attr.s
@@ -99,6 +108,7 @@ class GitRepo(VCSRepo):
     remotes = attrib(default=attr.Factory(dict))
 
     _identifier_attribute = 'root_hexsha'
+    _commit_attribute = 'hexsha'
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -122,6 +132,7 @@ class SVNRepo(VCSRepo):
     uuid = attrib()
 
     _identifier_attribute = 'uuid'
+    _commit_attribute = 'revision'
 
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s
