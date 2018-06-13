@@ -116,12 +116,27 @@ def test_diff_git():
         main(args)
         assert_equal(outputs.err, '')
         assert_in('Git repositories:', outputs.out)
-        assert_in('< 43e8e6577c7bf493ddb01ea7d49bef7dc7a6643b (/path/to/repo/1/only)', outputs.out)
-        assert_in('> 64b1865267891fdd1a45251ca6f32df213dc546e (/path/to/repo/2/only)', outputs.out)
+        assert_in('< 43e8e6577c7bf493ddb01ea7d49bef7dc7a6643b (/path/to/git/repo/1/only)', outputs.out)
+        assert_in('> 64b1865267891fdd1a45251ca6f32df213dc546e (/path/to/git/repo/2/only)', outputs.out)
         assert_in('Git repository 5b8267181f6cae8dc37aeef21ea54171bd932522', outputs.out)
-        assert_in('< 3e3aaa73a9c0ca061c7679af5fa7318e70f528ac (/path/1/to/different/commit)', outputs.out)
-        assert_in('> 9d199f7fa7e6f691719e0860c5cf81193e815ad5 (/path/2/to/different/commit)', outputs.out)
-        assert_not_in('/path/1/to/common/repo', outputs.out)
-        assert_not_in('/path/2/to/common/repo', outputs.out)
+        assert_in('< 3e3aaa73a9c0ca061c7679af5fa7318e70f528ac (/path/1/to/different/git/commit)', outputs.out)
+        assert_in('> 9d199f7fa7e6f691719e0860c5cf81193e815ad5 (/path/2/to/different/git/commit)', outputs.out)
+        assert_not_in('/path/1/to/common/git/repo', outputs.out)
+        assert_not_in('/path/2/to/common/git/repo', outputs.out)
         assert_not_in('99ac7f69a070077038a9eb9eca61c028db97181d', outputs.out)
         assert_not_in('d057b128759d80a47500adba0c4d3e95092bb87f', outputs.out)
+
+
+def test_diff_svn():
+    with swallow_outputs() as outputs:
+        args = ['diff', diff_1_yaml, diff_2_yaml]
+        main(args)
+        assert_equal(outputs.err, '')
+        assert_in('SVN repositories:', outputs.out)
+        assert_in('< c8ed47ab-45c9-818d-5d62-549dcc6d97d4 (/path/to/svn/repo/1/only)', outputs.out)
+        assert_in('> d7192e3a-60de-5caa-ccdc9525dea75aabf (/path/to/svn/repo/2/only)', outputs.out)
+        assert_in('SVN repository 95e4b738-84c7-154c-f082-34d40e21fdd4', outputs.out)
+        assert_in('< 12 (/path/1/to/different/svn/commit)', outputs.out)
+        assert_in('> 14 (/path/2/to/different/svn/commit)', outputs.out)
+        assert_not_in('/path/1/to/common/svn/repo', outputs.out)
+        assert_not_in('/path/2/to/common/svn/repo', outputs.out)
