@@ -19,6 +19,7 @@ from ..support.param import Parameter
 from niceman.formats.niceman import NicemanProvenance
 from ..distributions.debian import DebianDistribution
 from ..distributions.conda import CondaDistribution
+from ..distributions.vcs import GitDistribution
 
 __docformat__ = 'restructuredtext'
 
@@ -102,7 +103,47 @@ class Diff(Interface):
                     print('< %s' % package_1.version)
                     print('---')
                     print('> %s' % package_2.version)
-    
+
+        dist_1 = env_1.get_distribution(GitDistribution)
+        if dist_1:
+            repos_1 = { p.identifier: p for p in dist_1.packages }
+        else:
+            repos_1 = {}
+        dist_2 = env_2.get_distribution(GitDistribution)
+        if dist_2:
+            repos_2 = { p.identifier: p for p in dist_2.packages }
+        else:
+            repos_2 = {}
+
+        repos_1_s = set(repos_1)
+        repos_2_s = set(repos_2)
+
+        repos_1_only = repos_1_s - repos_2_s
+        repos_2_only = repos_2_s - repos_1_s
+
+        if repos_1_only or repos_2_only:
+            print('Git repositories:')
+        if repos_1_only:
+            for repo_id in repos_1_only:
+                repo = repos_1[repo_id]
+                print('< %s (%s)' % (repo.identifier, repo.path))
+        if repos_1_only and repos_2_only:
+            print('---')
+        if repos_2_only:
+            for repo_id in repos_2_only:
+                repo = repos_2[repo_id]
+                print('> %s (%s)' % (repo.identifier, repo.path))
+
+        for repo_id in repos_1_s.intersection(repos_2_s):
+            repo_1 = repos_1[repo_id]
+            repo_2 = repos_2[repo_id]
+            if repo_1.commit == repo_2.commit:
+                continue
+            print('Git repository %s:' % repo_id)
+            print('< %s (%s)' % (repo_1.commit, repo_1.path))
+            print('---')
+            print('> %s (%s)' % (repo_2.commit, repo_2.path))
+
         files1 = set(env_1.files)
         files2 = set(env_2.files)
     

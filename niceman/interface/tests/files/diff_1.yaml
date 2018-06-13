@@ -36,4 +36,15 @@ distributions:
     - name: c_libversdiff
       build: py36_0
       version: 2.4.6
+- name: git
+  packages:
+  - path: /path/1/to/common/repo
+    root_hexsha: 99ac7f69a070077038a9eb9eca61c028db97181d
+    hexsha: d057b128759d80a47500adba0c4d3e95092bb87f
+  - path: /path/to/repo/1/only
+    root_hexsha: 43e8e6577c7bf493ddb01ea7d49bef7dc7a6643b
+    hexsha: 8763e04f8bde1ae7fc7c22fad0b6df633e480864
+  - path: /path/1/to/different/commit
+    root_hexsha: 5b8267181f6cae8dc37aeef21ea54171bd932522
+    hexsha: 3e3aaa73a9c0ca061c7679af5fa7318e70f528ac
 files: [/etc/a, /etc/b]
