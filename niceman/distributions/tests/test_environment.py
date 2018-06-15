@@ -7,13 +7,13 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from os.path import join as opj, dirname
+from os.path import join as opj, dirname, pardir
 from pytest import raises
 from niceman.formats.niceman import NicemanProvenance
 from niceman.distributions.debian import DebianDistribution
 from niceman.distributions.conda import CondaDistribution
 
-yaml_dir = opj(dirname(__file__), '..', '..', 'interface', 'tests', 'files')
+yaml_dir = opj(dirname(__file__), pardir, pardir, 'interface', 'tests', 'files')
 multi_debian_yaml = opj(yaml_dir, 'multi_debian.yaml')
 diff_1_yaml = opj(yaml_dir, 'diff_1.yaml')
 
