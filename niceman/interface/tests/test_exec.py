@@ -14,11 +14,12 @@ import logging
 from mock import patch, call, MagicMock
 from pytest import raises
 
-from niceman.utils import swallow_logs
+from niceman.utils import swallow_logs, swallow_outputs
 from ...resource.base import ResourceManager
 from ...support.exceptions import CommandError
 from ...tests.utils import skip_ssh
 from ...tests.utils import assert_in
+from ...tests.utils import assert_raises
 from ...tests.fixtures import get_docker_fixture
 
 
@@ -32,7 +33,7 @@ def test_exec_interface(niceman_cfg_path, docker_container):
 
     with patch('niceman.resource.ResourceManager.set_inventory'), \
         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
-        swallow_logs(new_level=logging.DEBUG) as log:
+        swallow_logs(new_level=logging.DEBUG) as cml:
 
         config = {
             "status": "running",
@@ -47,14 +48,17 @@ def test_exec_interface(niceman_cfg_path, docker_container):
             "testing-container": config
         }
 
-        main([
-            'exec',
-            'mkdir',
-            path,
-            '--name', 'testing-container',
-            '--config', niceman_cfg_path
-        ])
+        cmd = ['exec', 'mkdir', path, '--name', 'testing-container',
+                 '--config', niceman_cfg_path]
+        main(cmd)
 
         session = ResourceManager.factory(config).get_session()
 
         assert session.exists(path)
+
+        # on 2nd run mkdir should fail since already exists
+        with swallow_outputs() as cmo:
+            with assert_raises(SystemExit) as cme:
+                main(cmd)
+            assert cme.exception.code == 1
+            assert "File exists" in cmo.err

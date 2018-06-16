@@ -175,6 +175,8 @@ class LoggerHelper(object):
         self.name = name
         self.logtarget = logtarget
         self.lgr = logging.getLogger(logtarget if logtarget is not None else name)
+        # Prevent double logging (reprozip logs at the root level).
+        self.lgr.propagate = False
 
     def _get_environ(self, var, default=None):
         return os.environ.get(self.name.upper() + '_%s' % var.upper(), default)
