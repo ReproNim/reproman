@@ -132,7 +132,8 @@ class Exec(Interface):
                 import hashlib
                 import requests
 
-                os.makedirs(local_tracer_dir, exist_ok=True)
+                if not op.exists(local_tracer_dir):
+                    os.makedirs(local_tracer_dir)
                 resp = requests.get("https://github.com/ReproNim/reprozip/blob"
                                     "/0497b229575c67219c5925360b6e63bf8d4d5eb9"
                                     "/reprozip/native/rztracer.gz?raw=true",
