@@ -372,6 +372,18 @@ def skip_if_no_apt_cache(func=None):
         check_and_raise()
 
 
+def skip_if_no_svn():
+    runner = Runner()
+    try:
+        # will raise OSError(errno=2) if the command is not found
+        runner.run(['svnadmin', '--help'])
+        runner.run(['svn', '--help'])
+    except OSError as exc:
+        if exc.errno == 2:
+            raise SkipTest('subversion is not installed')
+    return
+
+
 @optional_args
 def skip_if(func, cond=True, msg=None):
     """Skip test for specific condition

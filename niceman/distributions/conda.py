@@ -268,7 +268,6 @@ class CondaTracer(DistributionTracer):
 
     def _init(self):
         self._get_conda_env_path = PathRoot(self._is_conda_env_path)
-        self._get_conda_root_path = PathRoot(self._is_conda_root_path)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -408,7 +407,10 @@ class CondaTracer(DistributionTracer):
             found_channel_names = set()
 
             # Find the root path for the environment
-            root_path = self._get_conda_root_path(conda_path)
+            # TODO: cache/memoize for those paths which have been considered
+            # since will be asked again below
+            conda_info = self._get_conda_info(conda_path)
+            root_path = conda_info.get('root_prefix')
             if not root_path:
                 lgr.warning("Could not find root path for conda environment %s"
                             % conda_path)

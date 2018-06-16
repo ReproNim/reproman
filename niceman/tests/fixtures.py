@@ -15,7 +15,7 @@ import pytest
 import tempfile
 from .constants import NICEMAN_CFG_PATH
 from niceman.cmd import Runner
-from niceman.tests.utils import skip_if_no_network
+from niceman.tests.utils import skip_if_no_network, skip_if_no_svn
 from niceman.utils import chpwd
 
 # Substitutes in for user's ~/.config/niceman/config file
@@ -169,5 +169,44 @@ def git_repo_fixture(kind="default", scope="function"):
                     setup_user()
                 retval = localdir, repodir
         yield retval
+        shutil.rmtree(tmpdir)
+    return fixture
+
+
+def svn_repo_fixture(kind='default', scope='function'):
+    """Create a SVN repository fixture.
+
+    Parameters
+    ----------
+    kind : {"empty", "default"}
+
+        - empty: a repository with no commits.
+
+        - default: a repository with one commit of file "foo".
+
+    scope : {"function", "class", "module", "session"}, optional
+        A `pytest.fixture` scope argument.
+
+    Returns
+    -------
+    A fixture function.
+    """
+    @pytest.fixture(scope=scope)
+    def fixture():
+        skip_if_no_svn()
+        repo_name = 'svnrepo'
+        tmpdir = os.path.realpath(tempfile.mkdtemp(prefix='niceman-tests-'))
+        root_dir = os.path.join(tmpdir, repo_name)
+        subdir = os.path.join(tmpdir, 'subdir')
+        os.mkdir(subdir)
+        runner = Runner()
+        runner.run(['svnadmin', 'create', root_dir])
+        runner.run(['svn', 'checkout', 'file://' + root_dir], cwd=subdir)
+        checked_out_dir = os.path.join(subdir, repo_name)
+        if kind != 'empty':
+            runner.run(['touch', 'foo'], cwd=checked_out_dir)
+            runner.run(['svn', 'add', 'foo'], cwd=checked_out_dir)
+            runner.run(['svn', 'commit', '-m', 'bar'], cwd=checked_out_dir)
+        yield (root_dir, checked_out_dir)
         shutil.rmtree(tmpdir)
     return fixture

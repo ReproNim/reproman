@@ -95,7 +95,7 @@ def parse_pip_list(out):
                         r"(?:, (?P<location>.*))?\)$",
                         re.MULTILINE)
     for pkg, version, location in pkg_re.findall(out):
-        yield pkg, version, location or None
+        yield pkg.lower(), version, location or None
 
 
 def pip_list(session, which_pip, local_only=False):
