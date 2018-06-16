@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# emacs: -*- mode: python; py-indent-offset: 8; tab-width: 6; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -103,6 +103,7 @@ class CondaPackage(Package):
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))
 
+    _cmp_fields = ('name', 'build')
 
 @attr.s
 class CondaChannel(SpecObject):
@@ -131,6 +132,8 @@ class CondaDistribution(Distribution):
     python_version = attrib()
     platform = attrib()
     environments = TypedList(CondaEnvironment)
+
+    _cmp_field = ('path',)
 
     def initiate(self, environment):
         """
@@ -215,6 +218,10 @@ class CondaDistribution(Distribution):
                 session.execute_command(["rm", "-R", tmp_dir])
 
         return
+
+    @property
+    def packages(self):
+        return [ p for env in self.environments for p in env.packages ]
 
     @staticmethod
     def get_simple_python_version(python_version):
