@@ -251,12 +251,14 @@ def backend_help(resource_type=None):
         try:
             module = import_module('niceman.resource.{}'.format(module_name))
         except ImportError as exc:
-            raise ResourceError(
+            #raise ResourceError
+            lgr.debug(
                 "Failed to import resource {}: {}.  Known ones are: {}".format(
                     module_name,
                     exc_str(exc),
                     ', '.join(ResourceManager._discover_types()))
             )
+            continue
         cls = getattr(module, class_name)
         if not issubclass(cls, Resource):
             lgr.debug(
