@@ -35,9 +35,7 @@ def _test_consistent_order_of_args(intf, spec_posargs):
     args, varargs, varkw, defaults = getargspec(f)
     # now verify that those spec_posargs are first among args
     if not spec_posargs:
-        raise SkipTest("no positional args") # print intf, "skipped"
-#    else:
-#        print intf, spec_posargs
+        raise SkipTest("no positional args")
     eq_(set(args[:len(spec_posargs)]), spec_posargs)
 
 
