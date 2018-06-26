@@ -108,9 +108,6 @@ def create_tree(path, tree, archives_leading_dir=True):
 # Addition "checkers"
 #
 
-from ..utils import chpwd, getpwd
-
-
 #
 # Helpers to test symlinks
 #

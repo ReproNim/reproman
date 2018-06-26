@@ -304,7 +304,6 @@ def test_find_files():
     for f in files3:
         ok_startswith(basename(f), 'test_')
 
-from .utils import with_tree
 @with_tree(tree={
     '.git': {
         '1': '2'
