@@ -54,7 +54,6 @@ from .utils import ok_generator
 from .utils import assert_not_in
 from .utils import assert_raises
 from .utils import ok_startswith
-from .utils import skip_if_no_module
 
 
 @with_tempfile(mkdir=True)
@@ -488,7 +487,7 @@ def test_is_subpath(tmpdir):
 
 
 def test_line_profile():
-    skip_if_no_module('line_profiler')
+    pytest.importorskip("line_profiler")
 
     @line_profile
     def f(j):

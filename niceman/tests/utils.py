@@ -33,7 +33,7 @@ from nose import SkipTest
 
 from ..cmd import Runner
 from ..utils import *
-from ..dochelpers import exc_str, borrowkwargs
+from ..dochelpers import borrowkwargs
 
 # temp paths used by clones
 _TEMP_PATHS_CLONES = set()
@@ -94,13 +94,6 @@ neq_ = assert_not_equal
 ok_ = assert_true
 nok_ = assert_false
 in_ = assert_in
-
-
-def skip_if_no_module(module):
-    try:
-        imp = __import__(module)
-    except Exception as exc:
-        raise SkipTest("Module %s fails to load: %s" % (module, exc_str(exc)))
 
 
 # def create_tree_archive(path, name, load, overwrite=False, archives_leading_dir=True):
