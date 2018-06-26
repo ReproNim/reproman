@@ -72,26 +72,19 @@ def test_nested_with_tempfile_basic(f1=None, f2=None):
     ok_(not os.path.exists(f2))
 
 
-# And the most obscure case to test.  Generator for the test is
-# used as well to verify that every one of those functions adds new argument
-# to the end of incoming arguments.
+# And the most obscure case to test.
+
 @with_tempfile(prefix="TEST", suffix='big')
 @with_tree((('f1.txt', 'load'),))
 @with_tempfile(suffix='.cfg')
 @with_tempfile(suffix='.cfg.old')
-def check_nested_with_tempfile_parametrized_surrounded(
-        param, f0, tree, f1, f2):
-    eq_(param, "param1")
+def test_nested_with_tempfile_surrounded(f0=None, tree=None, f1=None, f2=None):
     ok_(f0.endswith('big'), msg="got %s" % f0)
     ok_(os.path.basename(f0).startswith('TEST'), msg="got %s" % f0)
     ok_(os.path.exists(os.path.join(tree, 'f1.txt')))
     ok_(f1 != f2)
     ok_(f1.endswith('.cfg'), msg="got %s" % f1)
     ok_(f2.endswith('.cfg.old'), msg="got %s" % f2)
-
-
-def test_nested_with_tempfile_parametrized_surrounded():
-    yield check_nested_with_tempfile_parametrized_surrounded, "param1"
 
 
 @with_tempfile(content="testtest")
@@ -243,7 +236,9 @@ def test_ok_generator():
     assert_raises(AssertionError, ok_generator, func(1))
 
 
-def _test_assert_Xwd_unchanged(func):
+@pytest.mark.parametrize("func", [os.chdir, chpwd],
+                         ids=["chdir", "chpwd"])
+def test_assert_Xwd_unchanged(func):
     orig_cwd = os.getcwd()
     orig_pwd = getpwd()
 
@@ -259,12 +254,10 @@ def _test_assert_Xwd_unchanged(func):
     eq_(orig_pwd, getpwd(),
         "assert_cwd_unchanged didn't return us back to pwd %s" % orig_pwd)
 
-def test_assert_Xwd_unchanged():
-    yield _test_assert_Xwd_unchanged, os.chdir
-    yield _test_assert_Xwd_unchanged, chpwd
 
-
-def _test_assert_Xwd_unchanged_ok_chdir(func):
+@pytest.mark.parametrize("func", [os.chdir, chpwd],
+                         ids=["chdir", "chpwd"])
+def test_assert_Xwd_unchanged_ok_chdir(func):
     # Test that we are not masking out other "more important" exceptions
 
     orig_cwd = os.getcwd()
@@ -282,9 +275,6 @@ def _test_assert_Xwd_unchanged_ok_chdir(func):
             "assert_cwd_unchanged didn't return us back to cwd %s" % orig_pwd)
         assert_not_in("Mitigating and changing back", cml.out)
 
-def test_assert_Xwd_unchanged_ok_chdir():
-    yield _test_assert_Xwd_unchanged_ok_chdir, os.chdir
-    yield _test_assert_Xwd_unchanged_ok_chdir, chpwd
 
 def test_assert_cwd_unchanged_not_masking_exceptions():
     # Test that we are not masking out other "more important" exceptions
@@ -322,9 +312,25 @@ def test_assert_cwd_unchanged_not_masking_exceptions():
         assert_not_in("Mitigating and changing back", cml.out)
 
 
-@with_tempfile(mkdir=True)
-def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
+def _test_fpaths():
+    for test_fpath in ['test1.txt',
+                       'test_dir/test2.txt',
+                       'test_dir/d2/d3/test3.txt',
+                       'file with space test4',
+                       u'Джэйсон',
+                       get_most_obscure_supported_name(),
+                      ]:
 
+        yield test_fpath
+
+    # just with the last one check that we did remove proxy setting
+    with patch.dict('os.environ', {'http_proxy': 'http://127.0.0.1:9/'}):
+        yield test_fpath
+
+
+@pytest.mark.parametrize("test_fpath", list(_test_fpaths()))
+def test_serve_path_via_http(test_fpath, tmpdir): # pragma: no cover
+    tmpdir = str(tmpdir)  # Downstream code fails with a py.path.local object.
     # First verify that filesystem layer can encode this filename
     # verify first that we could encode file name in this environment
     try:
@@ -336,7 +342,7 @@ def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
         pytest.skip("Can't convert back/forth using %s encoding"
                     % filesysencoding)
 
-    test_fpath_full = text_type(os.path.join(tmp_dir, test_fpath))
+    test_fpath_full = text_type(os.path.join(tmpdir, test_fpath))
     test_fpath_dir = text_type(os.path.dirname(test_fpath_full))
 
     if not os.path.exists(test_fpath_dir):
@@ -346,7 +352,7 @@ def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
         test_txt = 'some txt and a randint {}'.format(random.randint(1, 10)) 
         f.write(test_txt)
 
-    @serve_path_via_http(tmp_dir)
+    @serve_path_via_http(tmpdir)
     def test_path_and_url(path, url):
 
         # @serve_ should remove http_proxy from the os.environ if was present
@@ -368,22 +374,6 @@ def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
     if bs4 is None:
         pytest.skip("bs4 is absent")
     test_path_and_url()
-
-
-def test_serve_path_via_http():
-    for test_fpath in ['test1.txt',
-                       'test_dir/test2.txt',
-                       'test_dir/d2/d3/test3.txt',
-                       'file with space test4',
-                       u'Джэйсон',
-                       get_most_obscure_supported_name(),
-                      ]:
-
-        yield _test_serve_path_via_http, test_fpath
-
-    # just with the last one check that we did remove proxy setting
-    with patch.dict('os.environ', {'http_proxy': 'http://127.0.0.1:9/'}):
-        yield _test_serve_path_via_http, test_fpath
 
 
 def test_without_http_proxy():

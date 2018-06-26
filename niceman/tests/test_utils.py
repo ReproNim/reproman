@@ -106,7 +106,8 @@ def test_swallow_logs():
         eq_(cm.out, 'debug1\ninfo\n')  # not even visible at level 9
 
 
-def _check_setup_exceptionhook(interactive=None):
+@pytest.mark.parametrize("interactive", [True, False])
+def test_setup_exceptionhook(interactive):
     old_exceptionhook = sys.excepthook
 
     post_mortem_tb = []
@@ -134,7 +135,7 @@ def _check_setup_exceptionhook(interactive=None):
                 # what it is about but --dbg does work with python3 so lettting it skip for now
                 pytest.skip("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
             assert_in('Traceback (most recent call last)', cmo.err)
-            assert_in('in _check_setup_exceptionhook', cmo.err)
+            assert_in('in test_setup_exceptionhook', cmo.err)
             if interactive:
                 assert_equal(post_mortem_tb[0], tb_)
             else:
@@ -142,11 +143,6 @@ def _check_setup_exceptionhook(interactive=None):
                 # assert_in('We cannot setup exception hook', cml.out)
 
     eq_(old_exceptionhook, sys.excepthook)
-
-
-def test_setup_exceptionhook():
-    for tval in [True, False]:
-        yield _check_setup_exceptionhook, tval
 
 
 def test_md5sum():
