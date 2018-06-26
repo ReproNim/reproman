@@ -45,7 +45,6 @@ from .utils import ok_generator
 from .utils import assert_re_in
 from .utils import skip_if_no_network
 from .utils import run_under_dir
-from .utils import skip_if
 from .utils import ok_file_has_content
 from .utils import without_http_proxy
 
@@ -450,20 +449,6 @@ def test_skip_if_no_network():
             assert_raises(SkipTest, skip_if_no_network)
         with patch.dict('os.environ', {}):
             eq_(skip_if_no_network(), None)
-
-
-def test_skip_if():
-
-    with pytest.raises(SkipTest):
-        @skip_if(True)
-        def f():
-            raise AssertionError("must have not been ran")
-        f()
-
-    @skip_if(False)
-    def f():
-        return "magical"
-    eq_(f(), 'magical')
 
 
 @assert_cwd_unchanged

@@ -415,18 +415,6 @@ def skip_if_no_svn():
     return
 
 
-@optional_args
-def skip_if(func, cond=True, msg=None):
-    """Skip test for specific condition
-    """
-    @wraps(func)
-    def newfunc(*args, **kwargs):
-        if cond:
-            raise SkipTest(msg if msg else "condition was True")
-        return func(*args, **kwargs)
-    return newfunc
-
-
 def skip_ssh(func=None):
     """Skips SSH tests if on windows or if environment variable
     NICEMAN_TESTS_SSH was not set
