@@ -132,7 +132,7 @@ and additionally, for development we suggest to use tox and new
 versions of dependencies from pypi:
 
 ```sh
-eatmydata apt-get install -y -q python-{nose,pip,vcr,virtualenv,tox}
+eatmydata apt-get install -y -q python-{pip,vcr,virtualenv,tox}
 ```
 
 some of which you could also install from PyPi using pip

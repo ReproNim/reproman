@@ -82,8 +82,6 @@ requires = {
     'tests': [
         'mock',
         'pytest',
-        # some of the tests still use nose.tools
-        'nose>=1.3.4',
     ]
 }
 

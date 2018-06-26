@@ -38,7 +38,7 @@ from .version import __version__
 
 
 def test(package='niceman', **kwargs):
-    """A helper to run niceman's tests.  Requires numpy and nose
+    """A helper to run niceman's tests.  Requires numpy and pytest
 
     See numpy.testing.Tester -- **kwargs are passed into the
     Tester().test call
