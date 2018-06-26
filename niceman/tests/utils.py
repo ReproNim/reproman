@@ -31,7 +31,7 @@ from os.path import exists, realpath, join as opj
 from nose.tools import \
     assert_equal, assert_not_equal, assert_raises, assert_greater, assert_true, assert_false, \
     assert_in, assert_not_in, assert_in as in_, assert_is, \
-    raises, ok_, eq_
+    ok_, eq_
 
 from nose import SkipTest
 
