@@ -29,11 +29,6 @@ from six import reraise
 from functools import wraps
 from os.path import exists, realpath, join as opj
 
-from nose.tools import \
-    assert_equal, assert_not_equal, assert_greater, assert_true, assert_false, \
-    assert_in, assert_not_in, assert_in as in_, assert_is, \
-    ok_, eq_
-
 from nose import SkipTest
 
 from ..cmd import Runner
@@ -44,10 +39,61 @@ from ..dochelpers import exc_str, borrowkwargs
 _TEMP_PATHS_CLONES = set()
 
 
+# pytest variants for nose.tools commands.  These exist to avoid unnecessary
+# churn in tests that already use these names.  New code should use plain
+# asserts to take advantage of pytest's assertion introspection.
+
+
+def assert_equal(a, b, msg=None):
+    assert a == b, msg or "{!r} != {!r}".format(a, b)
+
+
+def assert_not_equal(a, b, msg=None):
+    assert a != b, msg or "{!r} == {!r}".format(a, b)
+
+
+def assert_greater(a, b, msg=None):
+    assert a > b, msg or "{!r} > {!r}".format(a, b)
+
+
+def assert_greater_equal(a, b, msg=None):
+    assert a >= b, msg or "{!r} >= {!r}".format(a, b)
+
+
+def assert_true(x, msg=None):
+    assert x, msg or "{!r} is not true".format(x)
+
+
+def assert_false(x, msg=None):
+    assert not x, msg or "{!r} is not false".format(x)
+
+
+def assert_in(x, collection, msg=None):
+    assert x in collection, \
+        msg or "{!r} not found in {!r}".format(x, collection)
+
+
+def assert_not_in(x, collection, msg=None):
+    assert x not in collection, \
+        msg or "{!r} unexpectedly found in {!r}".format(x, collection)
+
+
+def assert_is(a, b, msg=None):
+    assert a is b, msg or "{!r} is not {!r}".format(a, b)
+
+
+def assert_is_instance(a, b, msg=None):
+    assert isinstance(a, b), \
+        msg or "{!r} is not an instance of {!r}".format(a, b)
+
+
 # additional shortcuts
 assert_raises = pytest.raises
+eq_ = assert_equal
 neq_ = assert_not_equal
+ok_ = assert_true
 nok_ = assert_false
+in_ = assert_in
 
 
 def skip_if_no_module(module):
