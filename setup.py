@@ -81,7 +81,7 @@ requires = {
     ],
     'tests': [
         'mock',
-        'pytest',
+        'pytest>=3.3.0',
     ]
 }
 
