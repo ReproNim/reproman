@@ -21,9 +21,9 @@ except ImportError:
     bs4 = None
 
 from glob import glob
-from os.path import exists, join as opj, basename
+from os.path import exists, basename
 
-from six import PY2, PY3
+from six import PY2
 from six import text_type
 from six.moves.urllib.request import urlopen
 
@@ -36,9 +36,9 @@ from ..utils import getpwd, chpwd
 from .utils import eq_, ok_, assert_false, ok_startswith, nok_startswith, \
     with_tempfile, with_tree, \
     rmtemp, OBSCURE_FILENAMES, get_most_obscure_supported_name, \
-    swallow_outputs, swallow_logs, \
+    swallow_logs, \
     on_windows, assert_raises, assert_cwd_unchanged, serve_path_via_http, \
-    ok_symlink, assert_true, ok_good_symlink, ok_broken_symlink, \
+    ok_symlink, ok_good_symlink, ok_broken_symlink, \
     assert_is_subset_recur
 
 from .utils import ok_generator

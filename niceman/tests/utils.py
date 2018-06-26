@@ -9,33 +9,24 @@
 """Miscellaneous utilities to assist with testing"""
 
 import docker
-import glob
 import inspect
-import shutil
-import stat
 import os
 import re
 import tempfile
 import platform
 import multiprocessing
 import logging
-import random
 import requests
-import socket
-from six import PY2, text_type, iteritems
-from six import binary_type
-from fnmatch import fnmatch
-import time
+from six import PY2, text_type
 from mock import patch
 
 from niceman.support.external_versions import external_versions
 from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
 from six.moves.BaseHTTPServer import HTTPServer
 from six import reraise
-from six.moves import map
 
 from functools import wraps
-from os.path import exists, realpath, join as opj, pardir, split as pathsplit, curdir
+from os.path import exists, realpath, join as opj
 
 from nose.tools import \
     assert_equal, assert_not_equal, assert_raises, assert_greater, assert_true, assert_false, \
@@ -46,10 +37,7 @@ from nose import SkipTest
 
 from ..cmd import Runner
 from ..utils import *
-from ..support.exceptions import CommandNotAvailableError
 from ..dochelpers import exc_str, borrowkwargs
-from ..cmdline.helpers import get_repo_instance
-from . import _TEMP_PATHS_GENERATED
 
 # temp paths used by clones
 _TEMP_PATHS_CLONES = set()
@@ -120,8 +108,6 @@ def create_tree(path, tree, archives_leading_dir=True):
 # Addition "checkers"
 #
 
-import os
-from os.path import exists, join
 from ..utils import chpwd, getpwd
 
 

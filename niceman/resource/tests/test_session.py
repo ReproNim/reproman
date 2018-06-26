@@ -16,7 +16,7 @@ import pytest
 import tempfile
 import uuid
 
-from ..session import get_updated_env, Session, POSIXSession
+from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
 from ...utils import swallow_logs

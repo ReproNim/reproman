@@ -21,7 +21,7 @@ except ImportError:  # pragma: no cover
         raise SkipTest
 
 from niceman.cmdline.main import setup_parser
-from .utils import assert_equal, ok_, assert_raises, assert_in, ok_startswith
+from .utils import ok_, assert_in, ok_startswith
 
 demo_example = """
 #!/bin/sh

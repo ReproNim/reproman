@@ -11,14 +11,11 @@ from niceman.cmdline.main import main
 
 import uuid
 import logging
-from mock import patch, call, MagicMock
-from pytest import raises
+from mock import patch
 
 from niceman.utils import swallow_logs, swallow_outputs
 from ...resource.base import ResourceManager
-from ...support.exceptions import CommandError
 from ...tests.utils import skip_ssh
-from ...tests.utils import assert_in
 from ...tests.utils import assert_raises
 from ...tests.fixtures import get_docker_fixture
 

@@ -15,7 +15,8 @@ from mock import patch
 
 import niceman
 from ..cmdline.main import main
-from .utils import assert_equal, ok_, assert_raises, in_, ok_startswith
+from .utils import assert_equal, assert_raises, in_, ok_startswith
+
 
 def run_main(args, exit_code=0, expect_stderr=False):
     """Run main() of the niceman, do basic checks and provide outputs

@@ -11,7 +11,6 @@ import logging
 import os
 import re
 import tempfile
-import uuid
 from pytest import raises
 from mock import patch, call
 

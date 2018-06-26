@@ -17,14 +17,12 @@ import sys
 import logging
 from mock import patch
 from six import PY3
-import six.moves.builtins as __builtin__
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename
 from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
-from ..dochelpers import exc_str
 from ..utils import updated, HashableDict, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
 from os.path import join as opj, abspath, exists
@@ -38,7 +36,6 @@ from ..utils import file_basename
 from ..utils import expandpath, is_explicit_path
 from ..utils import any_re_search
 from ..utils import unique
-from ..utils import get_func_kwargs_doc
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_

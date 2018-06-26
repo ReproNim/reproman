@@ -15,8 +15,6 @@ from nose.tools import assert_true, assert_false
 from nose import SkipTest
 from nose.tools import eq_
 
-from niceman.tests.utils import assert_in
-
 
 def test_basic_setup():
     # the import alone will verify that all default values match their

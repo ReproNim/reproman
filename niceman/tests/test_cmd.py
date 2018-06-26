@@ -11,13 +11,12 @@
 
 from mock import patch
 import os
-from os.path import dirname, join as opj
 import sys
 import logging
 import shlex
 
 from .utils import ok_, eq_, assert_is, assert_equal, assert_false, \
-    assert_true, assert_greater, assert_raises, assert_in, SkipTest
+    assert_true, assert_raises, assert_in
 
 from ..cmd import Runner, link_file_load
 from ..support.exceptions import CommandError
@@ -25,8 +24,6 @@ from ..support.protocol import DryRunProtocol
 from .utils import with_tempfile, assert_cwd_unchanged, \
     ignore_nose_capturing_stdout, swallow_outputs, swallow_logs, \
     on_linux, on_osx, on_windows
-from .utils import lgr
-
 
 
 @ignore_nose_capturing_stdout

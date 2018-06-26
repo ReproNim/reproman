@@ -7,14 +7,9 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from os.path import join as opj, pardir, dirname
-from os.path import lexists
 from pprint import pprint
 
 from ..retrace import identify_distributions
-
-from niceman.tests.utils import skip_if
-from niceman.tests.utils import with_tempfile
 
 
 # TODO: mock it up or run only when under Debian
