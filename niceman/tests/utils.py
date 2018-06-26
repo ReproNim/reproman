@@ -19,6 +19,7 @@ import logging
 import requests
 from six import PY2, text_type
 from mock import patch
+import pytest
 
 from niceman.support.external_versions import external_versions
 from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
@@ -29,7 +30,7 @@ from functools import wraps
 from os.path import exists, realpath, join as opj
 
 from nose.tools import \
-    assert_equal, assert_not_equal, assert_raises, assert_greater, assert_true, assert_false, \
+    assert_equal, assert_not_equal, assert_greater, assert_true, assert_false, \
     assert_in, assert_not_in, assert_in as in_, assert_is, \
     ok_, eq_
 
@@ -44,6 +45,7 @@ _TEMP_PATHS_CLONES = set()
 
 
 # additional shortcuts
+assert_raises = pytest.raises
 neq_ = assert_not_equal
 nok_ = assert_false
 
