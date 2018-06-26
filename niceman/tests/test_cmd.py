@@ -22,11 +22,10 @@ from ..cmd import Runner, link_file_load
 from ..support.exceptions import CommandError
 from ..support.protocol import DryRunProtocol
 from .utils import with_tempfile, assert_cwd_unchanged, \
-    ignore_nose_capturing_stdout, swallow_outputs, swallow_logs, \
+    swallow_outputs, swallow_logs, \
     on_linux, on_osx, on_windows
 
 
-@ignore_nose_capturing_stdout
 @assert_cwd_unchanged
 @with_tempfile
 def test_runner_dry(tempfile=None):
@@ -52,7 +51,6 @@ def test_runner_dry(tempfile=None):
     assert_equal("args=('foo', 'bar')", dry[1]['command'][1])
 
 
-@ignore_nose_capturing_stdout
 @assert_cwd_unchanged
 @with_tempfile
 def test_runner(tempfile=None):
@@ -71,7 +69,6 @@ def test_runner(tempfile=None):
                  "Call of: os.path.join, 'foo', 'bar' returned %s" % output)
 
 
-@ignore_nose_capturing_stdout
 def test_runner_instance_callable_dry():
 
     cmd_ = ['echo', 'Testing', '__call__', 'with', 'string']
@@ -96,7 +93,6 @@ def test_runner_instance_callable_dry():
                  "Buffer: %s" % dry)
 
 
-@ignore_nose_capturing_stdout
 def test_runner_instance_callable_wet():
 
     runner = Runner()
@@ -110,7 +106,6 @@ def test_runner_instance_callable_wet():
     eq_(ret, os.path.join('foo', 'bar'))
 
 
-@ignore_nose_capturing_stdout
 def test_runner_log_stderr():
     # TODO: no idea of how to check correct logging via any kind of
     # assertion yet.
@@ -127,7 +122,6 @@ def test_runner_log_stderr():
             eq_(cml.out, "")
 
 
-@ignore_nose_capturing_stdout
 def test_runner_log_stdout():
     # TODO: no idea of how to check correct logging via any kind of
     # assertion yet.

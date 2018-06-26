@@ -31,7 +31,7 @@ from os.path import exists, realpath, join as opj
 from nose.tools import \
     assert_equal, assert_not_equal, assert_raises, assert_greater, assert_true, assert_false, \
     assert_in, assert_not_in, assert_in as in_, assert_is, \
-    raises, ok_, eq_, make_decorator
+    raises, ok_, eq_
 
 from nose import SkipTest
 
@@ -536,29 +536,6 @@ def assert_re_in(regex, c, flags=0):
         if re.match(regex, e, flags=flags):
             return
     raise AssertionError("Not a single entry matched %r in %r" % (regex, c))
-
-
-def ignore_nose_capturing_stdout(func):
-    """Decorator workaround for nose's behaviour with redirecting sys.stdout
-
-    Needed for tests involving the runner and nose redirecting stdout.
-    Counter-intuitively, that means it needed for nosetests without '-s'.
-    See issue reported here:
-    https://code.google.com/p/python-nose/issues/detail?id=243&can=1&sort=-id&colspec=ID%20Type%20Status%20Priority%20Stars%20Milestone%20Owner%20Summary
-    """
-
-    @make_decorator(func)
-    def newfunc(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except AttributeError as e:
-            # Use args instead of .message which is PY2 specific
-            message = e.args[0] if e.args else ""
-            if message.find('StringIO') > -1 and message.find('fileno') > -1:
-                pass
-            else:
-                raise
-    return newfunc
 
 
 # List of most obscure filenames which might or not be supported by different

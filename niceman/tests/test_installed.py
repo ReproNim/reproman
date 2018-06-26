@@ -11,7 +11,7 @@
 
 from mock import patch
 from .utils import ok_startswith, eq_, \
-    ignore_nose_capturing_stdout, assert_cwd_unchanged
+    assert_cwd_unchanged
 
 from niceman.cmd import Runner
 from niceman.support.exceptions import CommandError
@@ -27,7 +27,7 @@ def check_run_and_get_output(cmd):
                              "Exited with %d and output %s" % (e.code, (e.stdout, e.stderr)))
     return output
 
-@ignore_nose_capturing_stdout
+
 @assert_cwd_unchanged
 def test_run_niceman_help():
     out, err = check_run_and_get_output("niceman --help")
