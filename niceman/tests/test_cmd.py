@@ -14,9 +14,10 @@ import os
 import sys
 import logging
 import shlex
+import pytest
 
 from .utils import ok_, eq_, assert_is, assert_equal, assert_false, \
-    assert_true, assert_raises, assert_in
+    assert_true, assert_in
 
 from ..cmd import Runner, link_file_load
 from ..support.exceptions import CommandError
@@ -211,7 +212,7 @@ def test_runner_failure(dir_=None):
     failing_cmd = ['sh', '-c', 'exit 2']
 
     with swallow_logs() as cml:
-        with assert_raises(CommandError) as cme:
+        with pytest.raises(CommandError) as cme:
             runner.run(failing_cmd, cwd=dir_)
         assert_in('Failed to run', cml.out)
-        assert_equal(2, cme.exception.code)
+        assert_equal(2, cme.value.code)

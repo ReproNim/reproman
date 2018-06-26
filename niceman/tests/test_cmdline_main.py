@@ -12,10 +12,11 @@ import re
 import sys
 from six.moves import StringIO
 from mock import patch
+import pytest
 
 import niceman
 from ..cmdline.main import main
-from .utils import assert_equal, assert_raises, in_, ok_startswith
+from .utils import assert_equal, in_, ok_startswith
 
 
 def run_main(args, exit_code=0, expect_stderr=False):
@@ -37,9 +38,9 @@ def run_main(args, exit_code=0, expect_stderr=False):
     """
     with patch('sys.stderr', new_callable=StringIO) as cmerr:
         with patch('sys.stdout', new_callable=StringIO) as cmout:
-            with assert_raises(SystemExit) as cm:
+            with pytest.raises(SystemExit) as cm:
                 main(args)
-            assert_equal(cm.exception.code, exit_code)  # exit code must be 0
+            assert_equal(cm.value.code, exit_code)  # exit code must be 0
             stdout = cmout.getvalue()
             stderr = cmerr.getvalue()
             if expect_stderr == False:

@@ -222,7 +222,7 @@ def test_getpwd_symlink(tdir=None):
     eq_(getpwd(), pwd_orig)
 
     assert_false(exists(s2dir))
-    with assert_raises(OSError):
+    with pytest.raises(OSError):
         with chpwd(s2dir):
             pass
     with chpwd(s2dir, mkdir=True):
@@ -366,7 +366,7 @@ def test_is_explicit_path():
 
 def test_make_tempfile():
     # check if mkdir, content conflict caught
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         with make_tempfile(content="blah", mkdir=True):  # pragma: no cover
             pass
 

@@ -11,7 +11,6 @@ import platform
 import sys
 import os
 import random
-import traceback
 import logging
 
 try:
@@ -30,6 +29,7 @@ from six.moves.urllib.request import urlopen
 from mock import patch
 from nose.tools import assert_in, assert_not_in, assert_true
 from nose import SkipTest
+import pytest
 
 from ..utils import getpwd, chpwd
 
@@ -107,7 +107,7 @@ def test_with_tempfile_content_raises_on_mkdir():
     def t():  # pragma: no cover
         raise AssertionError("must not be run")
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         # after this commit, it will check when invoking, not when decorating
         t()
 
@@ -253,7 +253,7 @@ def _test_assert_Xwd_unchanged(func):
     def do_chdir():
         func(os.pardir)
 
-    with assert_raises(AssertionError) as cm:
+    with pytest.raises(AssertionError) as cm:
         do_chdir()
 
     eq_(orig_cwd, os.getcwd(),
@@ -299,14 +299,13 @@ def test_assert_cwd_unchanged_not_masking_exceptions():
         raise ValueError("error exception")
 
     with swallow_logs(new_level=logging.WARN) as cml:
-        with assert_raises(ValueError) as cm:
+        with pytest.raises(ValueError) as cm:
             do_chdir_value_error()
         # retrospect exception
         if PY2:
             # could not figure out how to make it legit for PY3
             # but on manual try -- works, and exception traceback is not masked out
-            exc_info = sys.exc_info()
-            assert_in('raise ValueError("error exception")', traceback.format_exception(*exc_info)[-2])
+            cm.match('error exception')
 
         eq_(orig_cwd, os.getcwd(),
             "assert_cwd_unchanged didn't return us back to %s" % orig_cwd)
@@ -402,7 +401,7 @@ def test_without_http_proxy():
     with patch.dict('os.environ', {'http_proxy': 'http://127.0.0.1:9/'}):
         check(1)
         check(1, "custom")
-        with assert_raises(AssertionError):
+        with pytest.raises(AssertionError):
             check(1, "wrong")
 
     with patch.dict('os.environ', {'https_proxy': 'http://127.0.0.1:9/'}):
@@ -455,7 +454,7 @@ def test_skip_if_no_network():
 
 def test_skip_if():
 
-    with assert_raises(SkipTest):
+    with pytest.raises(SkipTest):
         @skip_if(True)
         def f():
             raise AssertionError("must have not been ran")

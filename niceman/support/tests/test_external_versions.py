@@ -14,8 +14,8 @@ from ..external_versions import ExternalVersions, StrictVersion
 
 from nose.tools import assert_true, assert_false
 from nose.tools import assert_equal, assert_greater_equal, assert_greater
-from nose.tools import assert_raises
 from nose import SkipTest
+import pytest
 from six import PY3
 
 if PY3:
@@ -54,8 +54,8 @@ def test_external_versions_basic():
     # And that thing is "True", i.e. present
     assert(ev['os'])
     # but not comparable with anything besides itself (was above)
-    assert_raises(TypeError, cmp, ev['os'], '0')
-    assert_raises(TypeError, assert_greater, ev['os'], '0')
+    pytest.raises(TypeError, cmp, ev['os'], '0')
+    pytest.raises(TypeError, assert_greater, ev['os'], '0')
 
     return
     # Code below is from original duecredit, and we don't care about
