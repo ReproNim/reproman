@@ -210,8 +210,8 @@ def test_runner_failure(dir_=None):
     runner = Runner()
     failing_cmd = ['sh', '-c', 'exit 2']
 
-    with assert_raises(CommandError) as cme, \
-         swallow_logs() as cml:
-        runner.run(failing_cmd, cwd=dir_)
-        assert_in('notexistent.dat not found', cml.out)
-    assert_equal(2, cme.exception.code)
+    with swallow_logs() as cml:
+        with assert_raises(CommandError) as cme:
+            runner.run(failing_cmd, cwd=dir_)
+        assert_in('Failed to run', cml.out)
+        assert_equal(2, cme.exception.code)
