@@ -11,7 +11,7 @@
 
 import re
 import pytest
-from nose.tools import assert_is, assert_equal, assert_raises, assert_true
+from .utils import assert_is, assert_equal, assert_raises, assert_true
 
 from ..support.param import Parameter
 from ..support import constraints as cnstr

@@ -13,7 +13,7 @@ import sys
 from six import string_types, PY2
 
 from ..support import constraints as ct
-from nose.tools import assert_equal, assert_raises
+from .utils import assert_equal, assert_raises
 
 
 def test_int():

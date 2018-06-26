@@ -11,9 +11,9 @@ from os import linesep
 
 from ...version import __version__
 from ..external_versions import ExternalVersions, StrictVersion
+from ...tests.utils import assert_true, assert_false
+from ...tests.utils import assert_equal, assert_greater_equal, assert_greater
 
-from nose.tools import assert_true, assert_false
-from nose.tools import assert_equal, assert_greater_equal, assert_greater
 from nose import SkipTest
 import pytest
 from six import PY3

@@ -11,9 +11,8 @@
 import re
 from inspect import getargspec
 
-from nose.tools import assert_true, assert_false
+from .utils import assert_true, assert_false, eq_
 from nose import SkipTest
-from nose.tools import eq_
 
 
 def test_basic_setup():

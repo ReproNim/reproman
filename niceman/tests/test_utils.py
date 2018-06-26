@@ -43,7 +43,7 @@ from ..utils import to_unicode
 from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
 
-from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
+from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
 from .utils import with_tempfile, assert_in, with_tree, to_binarystring, \
     is_unicode, is_binarystring, CommandError
