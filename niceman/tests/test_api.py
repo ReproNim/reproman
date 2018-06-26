@@ -38,11 +38,6 @@ def _test_consistent_order_of_args(intf, spec_posargs):
         raise SkipTest("no positional args") # print intf, "skipped"
 #    else:
 #        print intf, spec_posargs
-    if intf.__name__ == 'Save':
-        # it makes sense there to have most command argument first
-        # -- the message. But we don't enforce it on cmdline so it is
-        # optional
-        spec_posargs.add('message')
     eq_(set(args[:len(spec_posargs)]), spec_posargs)
 
 
