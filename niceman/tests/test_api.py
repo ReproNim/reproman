@@ -10,9 +10,9 @@
 
 import re
 from inspect import getargspec
+import pytest
 
 from .utils import assert_true, assert_false, eq_
-from nose import SkipTest
 
 
 def test_basic_setup():
@@ -32,7 +32,7 @@ def _test_consistent_order_of_args(intf, spec_posargs):
     args, varargs, varkw, defaults = getargspec(f)
     # now verify that those spec_posargs are first among args
     if not spec_posargs:
-        raise SkipTest("no positional args")
+        pytest.skip("no positional args")
     eq_(set(args[:len(spec_posargs)]), spec_posargs)
 
 

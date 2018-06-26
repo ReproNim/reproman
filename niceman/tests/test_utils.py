@@ -47,7 +47,6 @@ from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
 from .utils import with_tempfile, assert_in, with_tree, to_binarystring, \
     is_unicode, is_binarystring, CommandError
-from .utils import SkipTest
 from .utils import assert_cwd_unchanged, skip_if_on_windows
 from .utils import assure_dict_from_str, assure_list_from_str
 from .utils import ok_generator
@@ -133,7 +132,7 @@ def _check_setup_exceptionhook(interactive=None):
             if PY3:
                 # Happens under tox environment but not in manually crafted ones -- not yet sure
                 # what it is about but --dbg does work with python3 so lettting it skip for now
-                raise SkipTest("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
+                pytest.skip("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
             assert_in('Traceback (most recent call last)', cmo.err)
             assert_in('in _check_setup_exceptionhook', cmo.err)
             if interactive:
@@ -178,7 +177,8 @@ def test_updated():
 
 
 def test_get_local_file_url_windows():
-    raise SkipTest("TODO")
+    pytest.skip("TODO")
+
 
 @assert_cwd_unchanged
 def test_getpwd_basic():

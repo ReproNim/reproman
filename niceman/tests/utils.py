@@ -29,8 +29,6 @@ from six import reraise
 from functools import wraps
 from os.path import exists, realpath, join as opj
 
-from nose import SkipTest
-
 from ..cmd import Runner
 from ..utils import *
 from ..dochelpers import borrowkwargs
@@ -357,7 +355,8 @@ def skip_if_no_network(func=None):
 
     def check_and_raise():
         if os.environ.get('NICEMAN_TESTS_NONETWORK'):
-            raise SkipTest("Skipping since no network settings")
+            pytest.skip("Skipping since no network settings",
+                        allow_module_level=True)
 
     if func:
         @wraps(func)
@@ -378,7 +377,7 @@ def skip_if_on_windows(func):
     @wraps(func)
     def newfunc(*args, **kwargs):
         if on_windows:
-            raise SkipTest("Skipping on Windows")
+            pytest.skip("Skipping on Windows", allow_module_level=True)
         return func(*args, **kwargs)
     return newfunc
 
@@ -391,7 +390,8 @@ def skip_if_no_apt_cache(func=None):
 
     def check_and_raise():
         if not external_versions["cmd:apt-cache"]:
-            raise SkipTest("Skipping since apt-cache is not available")
+            pytest.skip("Skipping since apt-cache is not available",
+                        allow_module_level=True)
 
     if func:
         @wraps(func)
@@ -411,7 +411,8 @@ def skip_if_no_svn():
         runner.run(['svn', '--help'])
     except OSError as exc:
         if exc.errno == 2:
-            raise SkipTest('subversion is not installed')
+            pytest.skip('subversion is not installed',
+                        allow_module_level=True)
     return
 
 
@@ -422,13 +423,15 @@ def skip_ssh(func=None):
 
     def check_and_raise():
         if not os.environ.get('NICEMAN_TESTS_SSH'):
-            raise SkipTest("Run this test by setting NICEMAN_TESTS_SSH")
+            pytest.skip("Run this test by setting NICEMAN_TESTS_SSH",
+                        allow_module_level=True)
 
     if func:
         @wraps(func)
         def newfunc(*args, **kwargs):
             if on_windows:
-                raise SkipTest("SSH currently not available on windows.")
+                pytest.skip("SSH currently not available on windows.",
+                            allow_module_level=True)
             check_and_raise()
             return func(*args, **kwargs)
         return newfunc
@@ -457,8 +460,9 @@ def skip_if_no_docker_container(container_name='testing-container'):
     def decorator(func):
         stdout, _ = Runner().run(['docker', 'ps'])
         if container_name not in stdout:
-            raise SkipTest("Docker container '{}' not running, skipping test \
-                {}".format(container_name, func.__name__))
+            pytest.skip("Docker container '{}' not running, "
+                        "skipping test  {}".format(container_name, func.__name__),
+                        allow_module_level=True)
         return func
     return decorator
 
@@ -479,8 +483,8 @@ def skip_if_no_docker_engine(func):
     try:
         session.info()
     except requests.exceptions.ConnectionError:
-        raise SkipTest("Docker not found, skipping test {}".format(
-            func.__name__))
+        pytest.skip("Docker not found, skipping test {}".format(func.__name__),
+                    allow_module_level=True)
     return func
 
 @optional_args

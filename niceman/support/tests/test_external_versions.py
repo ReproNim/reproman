@@ -14,7 +14,6 @@ from ..external_versions import ExternalVersions, StrictVersion
 from ...tests.utils import assert_true, assert_false
 from ...tests.utils import assert_equal, assert_greater_equal, assert_greater
 
-from nose import SkipTest
 import pytest
 from six import PY3
 
@@ -79,9 +78,9 @@ def _test_external(ev, modname):
     try:
         exec ("import %s" % modname, globals(), locals())
     except ImportError:
-        raise SkipTest("External %s not present" % modname)
+        pytest.skip("External %s not present" % modname)
     except Exception as e:
-        raise SkipTest("External %s fails to import: %s" % (modname, e))
+        pytest.skip("External %s fails to import: %s" % (modname, e))
     assert (ev[modname] is not ev.UNKNOWN)
     assert_greater(ev[modname], '0.0.1')
     assert_greater('1000000.0', ev[modname])  # unlikely in our lifetimes

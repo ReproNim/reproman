@@ -28,7 +28,6 @@ from six.moves.urllib.request import urlopen
 
 from mock import patch
 from .utils import assert_in, assert_not_in, assert_true
-from nose import SkipTest
 import pytest
 
 from ..utils import getpwd, chpwd
@@ -160,7 +159,7 @@ def test_get_most_obscure_supported_name():
 def test_keeptemp_via_env_variable():
 
     if os.environ.get('NICEMAN_TESTS_KEEPTEMP'):
-        raise SkipTest("We have env variable set to preserve tempfiles")
+        pytest.skip("We have env variable set to preserve tempfiles")
 
     files = []
 
@@ -186,7 +185,7 @@ def test_keeptemp_via_env_variable():
 def test_ok_symlink_helpers(tmpfile=None):
 
     if on_windows:
-        raise SkipTest("no sylmlinks on windows")
+        pytest.skip("no sylmlinks on windows")
 
     assert_raises(AssertionError, ok_symlink, tmpfile)
     assert_raises(AssertionError, ok_good_symlink, tmpfile)
@@ -332,10 +331,10 @@ def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
         filesysencoding = sys.getfilesystemencoding()
         test_fpath_encoded = test_fpath.encode(filesysencoding)
     except UnicodeEncodeError:
-        raise SkipTest("Environment doesn't support unicode filenames")
+        pytest.skip("Environment doesn't support unicode filenames")
     if test_fpath_encoded.decode(filesysencoding) != test_fpath:
-        raise SkipTest("Can't convert back/forth using %s encoding"
-                       % filesysencoding)
+        pytest.skip("Can't convert back/forth using %s encoding"
+                    % filesysencoding)
 
     test_fpath_full = text_type(os.path.join(tmp_dir, test_fpath))
     test_fpath_dir = text_type(os.path.dirname(test_fpath_full))
@@ -367,7 +366,7 @@ def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
         assert(test_txt == html)
 
     if bs4 is None:
-        raise SkipTest("bs4 is absent")
+        pytest.skip("bs4 is absent")
     test_path_and_url()
 
 
@@ -441,12 +440,12 @@ def test_skip_if_no_network():
             return a1
         eq_(somefunc.tags, ['network'])
         with patch.dict('os.environ', {'NICEMAN_TESTS_NONETWORK': '1'}):
-            assert_raises(SkipTest, somefunc, 1)
+            assert_raises(pytest.skip.Exception, somefunc, 1)
         with patch.dict('os.environ', {}):
             eq_(somefunc(1), 1)
         # and now if used as a function, not a decorator
         with patch.dict('os.environ', {'NICEMAN_TESTS_NONETWORK': '1'}):
-            assert_raises(SkipTest, skip_if_no_network)
+            assert_raises(pytest.skip.Exception, skip_if_no_network)
         with patch.dict('os.environ', {}):
             eq_(skip_if_no_network(), None)
 
@@ -514,8 +513,8 @@ def test_skip_ssh():
 
         with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': "1"}):
             assert func(2) == 4
-    except SkipTest:
+    except pytest.skip.Exception:
         raise AssertionError("must have not skipped")
 
     with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': ""}):
-        assert_raises(SkipTest, func, 2)
+        assert_raises(pytest.skip.Exception, func, 2)
