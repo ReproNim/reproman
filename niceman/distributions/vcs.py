@@ -25,6 +25,7 @@ from niceman.dochelpers import exc_str
 from niceman.utils import attrib
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
+from niceman.resource.session import get_local_session
 
 from niceman.cmd import CommandError, Runner
 
@@ -117,8 +118,151 @@ class GitDistribution(VCSDistribution):
     _cmd = "git"
     packages = TypedList(GitRepo)
 
-    def install_packages(self, session, use_version=True):
-        raise NotImplementedError
+    def initiate(self, session=None):
+        pass
+
+    def install_packages(self, session=None, use_version=True):
+        session = session or get_local_session()
+        for repo in self.packages:
+            self._install_repo(session, repo)
+
+    def _install_repo(self, session, repo):
+        sources = {k: v for k, v in repo.remotes.items() if v["contains"]}
+        if not sources:
+            lgr.warning("No remote known for '%s'; skipping", repo.path)
+            return
+
+        if repo.tracked_remote in sources:
+            remote = repo.tracked_remote
+        elif "origin" in sources:
+            remote = "origin"
+        else:
+            # Just grab any remote at this point.  It doesn't really matter as
+            # long as we get the target commit.
+            remote = next(iter(sources.keys()))
+
+        if session.exists(repo.path):
+            cloned = False
+            shim = self._get_matching_shim(session, repo)
+            if shim is None:
+                return
+            if not shim.has_revision(repo.hexsha):
+                shim._run_git(["fetch", remote])
+        else:
+            cloned = True
+            clone_url = sources[remote]["url"]
+
+            lgr.info("Cloning %s from %s (%s)", repo.path, clone_url, remote)
+            session.execute_command(
+                ["git", "clone", "-o", remote, clone_url, repo.path])
+            shim = GitRepoShim.get_at_dirpath(session, repo.path)
+
+        if repo.remotes:
+            lgr.info("Adding remotes to %s", repo.path)
+            current_remotes = set(shim._run_git(["remote"]).splitlines())
+            for remote, remote_info in repo.remotes.items():
+                if remote not in current_remotes:
+                    shim._run_git(
+                        ["remote", "add", "-f", remote, remote_info["url"]])
+
+        if not shim.has_revision(repo.hexsha):
+            lgr.warning("Set up '%s', but the expected hexsha wasn't found",
+                        repo.path)
+            return
+
+        # Be less aggressive about restoring the revision/branch state if we
+        # didn't clone the repo.
+        self._checkout(shim, repo, force=cloned)
+
+    @staticmethod
+    def _get_matching_shim(session, repo):
+        """Return a shim for the repository at `repo.path`.
+
+        Parameters
+        ----------
+        session : Session object
+        repo : GitRepo object
+
+        Returns
+        -------
+        A GitRepoShim object for the repository at `repo.path`.  If `repo.path`
+        is incompatible with some detail of `repo` (e.g., it is not a Git
+        repository), a warning is issued and no value is returned.
+        """
+        if not session.isdir(repo.path):
+            lgr.warning("'%s' is not a directory; skipping",
+                        repo.path)
+            return
+
+        shim = GitRepoShim.get_at_dirpath(session, repo.path)
+        if shim is None:
+            # TODO: We could proceed if the directory is empty.
+            lgr.warning("Directory '%s' exists, "
+                        "but is not a Git repository; skipping",
+                        repo.path)
+            return
+        if shim.root_hexsha != repo.root_hexsha:
+            lgr.warning("Root hexsha in '%s' doesn't match "
+                        "expected hexsha; skipping",
+                        repo.path)
+            return
+        return shim
+
+    @staticmethod
+    def _checkout(shim, repo, force=False):
+        """Try to checkout the recorded revision and branch.
+
+        Parameters
+        ----------
+        shim : GitRepoShim object
+            The new repository being set up.
+        repo : GitRepo
+            The recorded information being used to set up the new repository.
+        force : bool
+            Reset the branch in `shim` to `repo.hexsha` even if this branch
+            already exists in the new repository.
+        """
+
+        if shim._run_git(["status", "--porcelain"]).strip():
+            lgr.warning("Not setting HEAD to %s because repository is dirty",
+                        repo.hexsha)
+            return
+
+        set_tracking = False
+        if not repo.branch:
+            checkout_args = [repo.hexsha]
+        elif repo.branch == shim.branch and shim.hexsha == repo.hexsha:
+            checkout_args = None
+        elif force:
+            checkout_args = ["-B", repo.branch, repo.hexsha]
+            set_tracking = True
+        elif repo.branch == shim.branch:
+            checkout_args = [repo.hexsha]
+        else:
+            heads = dict(
+                name_hexsha.split("\0") for name_hexsha in
+                shim._run_git(["for-each-ref", "--format",
+                               "%(refname:short)%00%(objectname)",
+                               "refs/heads"]).splitlines())
+            if repo.branch in heads and heads[repo.branch] == repo.hexsha:
+                checkout_args = [repo.branch]
+                set_tracking = True
+            else:
+                checkout_args = [repo.hexsha]
+
+        if checkout_args is not None:
+            shim._run_git(["checkout"] + checkout_args)
+            if set_tracking and repo.tracked_remote:
+                for var, value in [("remote", repo.tracked_remote),
+                                   # Note: We're assuming that the traced
+                                   # branch has the same name.  GitRepo doesn't
+                                   # actually store this information.
+                                   ("merge", "refs/heads/" + repo.branch)]:
+                    shim._run_git(["config",
+                                   ".".join(["branch", repo.branch, var]),
+                                   value])
+
+
 GitRepo._distribution = GitDistribution
 
 
@@ -458,6 +602,14 @@ class GitRepoShim(GitSVNRepoShim):
                 return None
             self._branch = branch
         return self._branch
+
+    def has_revision(self, revision):
+        """Does the repository have `revision`?
+        """
+        out = self._run_git(
+            ["rev-parse", "--quiet", "--verify", revision + "^{commit}"],
+            expect_fail=True)
+        return out is not None
 
 
 class VCSTracer(DistributionTracer):
