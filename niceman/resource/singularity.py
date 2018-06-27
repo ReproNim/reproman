@@ -81,8 +81,10 @@ class Singularity(Resource):
             lgr.info('Resource {} already exists.'.format(self.name))
         else:
             # Start the container instance.
+            # NOTE: Logging stdout and stderr hangs the run call, so we
+            # disable the logging in the run call below.
             self._runner.run(['singularity', 'instance.start', self.image,
-                self.name])
+                self.name], log_stdout=False, log_stderr=False)
 
         # Update status
         self.id = self.name
