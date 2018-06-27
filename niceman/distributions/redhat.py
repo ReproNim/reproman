@@ -12,6 +12,7 @@ import attr
 from six.moves import map
 
 import logging
+import re
 
 from niceman.distributions.base import DistributionTracer
 
@@ -233,9 +234,6 @@ class RPMTracer(DistributionTracer):
 
         try:
             redhat_version = self._session.read('/etc/redhat-release').strip()
-            self._session.exists('/etc/os-release')
-            _, _ = self._session.execute_command(
-                ['grep', '-i', '^ID.*="rhel fedora"', '/etc/os-release'])
             _, _ = self._session.execute_command('ls -ld /etc/yum')
         except CommandError as exc:
             lgr.debug("Did not detect Redhat (or derivative): %s", exc)
@@ -297,11 +295,15 @@ class RPMTracer(DistributionTracer):
                 # to the attr fields in the RPMPacakge class.
                 pkg = {'pkgid': pkgid}
                 for line in package_info.splitlines():
-                    parts = line.split(':', 1)
-                    if len(parts) == 2:
-                        key = parts[0].strip().lower().replace(' ', '_')
-                        if key in package_fields:
-                            pkg[key] = parts[1].strip()
+                    matches = re.match(r'(.*?):(.*)\s{2,}(.*):(.*)', line)
+                    if not matches:
+                        matches = re.match(r'(.*?):(.*)', line)
+                    if matches:
+                        for i in range(1, len(matches.groups()), 2):
+                            key = matches.group(i).strip().lower().replace(' ',
+                                '_')
+                            if key in package_fields:
+                                pkg[key] = matches.group(i+1).strip()
                 lgr.debug("Identified file %r to belong to package %s",
                           pkgid, pkg)
                 file_to_package_dict[file] = pkg
@@ -328,14 +330,12 @@ class RPMTracer(DistributionTracer):
                 key, value = line.split(':', 1)
                 key = key.strip()
                 value = value.strip()
-            else:
-                continue
-            if key == ('Repo-id'):
-                values = {'id': value}
-            else:
-                # Map the field labels returned by the sytem to the attr
-                # fields in the RPMSource class.
-                values[key.split('-')[1]] = value
-            if key == 'Repo-filename':
+                if key == ('Repo-id'):
+                    values = {'id': value}
+                else:
+                    # Map the field labels returned by the sytem to the attr
+                    # fields in the RPMSource class.
+                    values[key.split('-')[1]] = value
+            if len(line) == 0:
                 sources.append(RPMSource(**values))
         return sources
