@@ -10,7 +10,7 @@ import os
 
 import attr
 
-from niceman.cmd import Runner
+from niceman.cmd import GitRunner
 from niceman.distributions.vcs import VCSTracer
 from niceman.utils import chpwd
 from niceman.tests.utils import assert_is_subset_recur
@@ -102,7 +102,7 @@ def test_git_repo(git_repo):
         assert dists[0][0].packages[0].hexsha
         assert dists[0][0].packages[0].root_hexsha
 
-        runner = Runner()
+        runner = GitRunner()
         hexshas, _ = runner(["git", "rev-list", "master"], cwd=git_repo)
         root_hexsha = hexshas.strip('\n').split('\n')[-1]
         repo = dists[0][0].packages[0]
@@ -118,7 +118,7 @@ def test_git_repo(git_repo):
 
 
 def test_git_repo_detached(git_repo):
-    runner = Runner()
+    runner = GitRunner()
     # If we are in a detached state, we still don't identify the
     # repository itself.
     runner(["git", "checkout", "master^{}", "--"],
@@ -141,19 +141,19 @@ def test_git_repo_detached(git_repo):
 
 def test_git_repo_remotes(git_repo_pair):
     repo_local, repo_remote = git_repo_pair
-    runner = Runner()
+    runner = GitRunner()
     tracer = VCSTracer()
 
     # Set remote.pushdefault to a value we know doesn't exist.
     # Otherwise, the test machine may have remote.pushdefault globally
     # configured to point to "origin".
-    runner.run(["git", "config", "remote.pushdefault", "notexisting"],
-               cwd=repo_local)
+    runner(["git", "config", "remote.pushdefault", "notexisting"],
+           cwd=repo_local)
     # Add another remote that doesn't contain the current commit (in
     # fact doesn't actually exist), so that we test the "listed as
     # remote but doesn't contain" case.
-    runner.run(["git", "remote", "add", "fakeremote", "fakepath"],
-               cwd=repo_local)
+    runner(["git", "remote", "add", "fakeremote", "fakepath"],
+           cwd=repo_local)
 
     paths = [os.path.join(repo_local, "foo")]
 
@@ -183,8 +183,8 @@ def test_git_repo_remotes(git_repo_pair):
     assert "pushurl" not in list(pkg_nopush.remotes.values())
 
     # If we set the pushurl and retrace, it is included.
-    runner.run(["git", "config", "remote.origin.pushurl", repo_remote],
-               cwd=repo_local)
+    runner(["git", "config", "remote.origin.pushurl", repo_remote],
+           cwd=repo_local)
     dists_push = list(tracer.identify_distributions(paths))
     pkg_push = dists_push[0][0].packages[0]
     assert pkg_push.remotes["origin"]["pushurl"] == repo_remote
