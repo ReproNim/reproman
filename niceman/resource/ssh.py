@@ -11,11 +11,6 @@
 import attr
 import uuid
 from pipes import quote
-import socket
-import termios
-import tty
-import sys
-import select
 import paramiko
 import os
 
@@ -27,9 +22,7 @@ from ..utils import attrib
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
 from niceman import utils
-from ..support.exceptions import CommandError, SSHError, SSHConnectionError, \
-    SSHAuthException
-from ..support import exceptions as exception  # to minimize diff for adopted code
+from ..support.exceptions import CommandError
 
 
 @attr.s
@@ -61,6 +54,7 @@ class SSH(Resource):
         """Open a connection to the environment resource.
         """
         self._ssh = paramiko.SSHClient()
+        self._ssh.load_system_host_keys()
         self._ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self._ssh.connect(
             self.host,
@@ -107,17 +101,19 @@ class SSH(Resource):
         if not self._ssh:
             self.connect()
 
+        self._ssh.resource = self
         return (PTYSSHSession if pty else SSHSession)(
             ssh=self._ssh
         )
+
 
 # Alias SSH class so that it can be discovered by the ResourceManager.
 @attr.s
 class Ssh(SSH):
     pass
 
-
 from niceman.resource.session import POSIXSession
+
 
 @attr.s
 class SSHSession(POSIXSession):
@@ -185,13 +181,6 @@ class PTYSSHSession(SSHSession):
     def open(self):
         lgr.debug("Opening TTY connection via SSH.")
         assert self.ssh, "We should create or connect to remote server first"
-
-        # TODO: Can we make these values dynamic based on the user's screen size?
-        self.term = 'screen'
-        self.cols = 80
-        self.lines = 24
-        self.timeout = 30
-
         self.interactive_shell()
 
     @borrowdoc(Session)
@@ -201,81 +190,10 @@ class PTYSSHSession(SSHSession):
 
     def interactive_shell(self):
         """Open an interactive TTY shell.
-        
-        The code in this method was generously provided by our friends at
-        StarCluster (http://star.mit.edu/cluster/)
         """
-
-        try:
-            addrinfo = socket.getaddrinfo(self.ssh._host, self.ssh._port,
-                socket.AF_UNSPEC, socket.SOCK_STREAM)
-            for (family, socktype, proto, canonname, sockaddr) in addrinfo:
-                if socktype == socket.SOCK_STREAM:
-                    af = family
-                    break
-                else:
-                    raise exception.SSHError(
-                        'No suitable address family for %s' % self.ssh._host)
-            sock = socket.socket(af, socket.SOCK_STREAM)
-            sock.settimeout(self.timeout)
-            sock.connect((self.ssh._host, self.ssh._port))
-            transport = paramiko.Transport(sock)
-            transport.banner_timeout = self.timeout
-        except socket.error:
-            raise exception.SSHConnectionError(self.ssh._host, self.ssh._port)
-        try:
-            transport.connect(username=self.ssh._username, pkey=self.ssh._pkey,
-                password=self.ssh._password)
-        except paramiko.AuthenticationException:
-            raise exception.SSHAuthException(self.ssh._username,
-                self.ssh._host)
-        except paramiko.SSHException as e:
-            msg = e.args[0]
-            raise exception.SSHError(msg)
-        except socket.error:
-            raise exception.SSHConnectionError(self.ssh._host, self.ssh._port)
-        except EOFError:
-            raise exception.SSHConnectionError(self.ssh._host, self.ssh._port)
-        except Exception as e:
-            raise exception.SSHError(str(e))
-        try:
-            sftp = paramiko.SFTPClient.from_transport(transport)
-            assert sftp is not None
-            sftp.close()
-        except paramiko.SFTPError as e:
-            if 'Garbage packet received' in str(e):
-                lgr.debug("Garbage packet received", exc_info=True)
-                raise exception.SSHAccessDeniedViaAuthKeys(self.ssh._username)
-            raise
-
-        chan = transport.open_session()
-        chan.get_pty(self.term, self.cols, self.lines)
-        chan.invoke_shell()
-
-        oldtty = termios.tcgetattr(sys.stdin)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            tty.setcbreak(sys.stdin.fileno())
-            chan.settimeout(0.0)
-
-            while True:
-                r, w, e = select.select([chan, sys.stdin], [], [])
-                if chan in r:
-                    try:
-                        x = chan.recv(1024)
-                        if len(x) == 0:
-                            break
-                        sys.stdout.write(x.decode('utf-8'))
-                        sys.stdout.flush()
-                    except socket.timeout:
-                        pass
-                if sys.stdin in r:
-                    # Fixes up arrow problem
-                    x = os.read(sys.stdin.fileno(), 1)
-                    if len(x) == 0:
-                        break
-                    chan.send(x)
-        finally:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
-
-        chan.close()
+        ssh_cmdline = ["ssh",
+                       "-i", self.ssh.resource.key_filename,
+                       "-p", "{0:d}".format(self.ssh.resource.port),
+                       '%s@%s' % (self.ssh.resource.user,
+                            self.ssh.resource.host)]
+        os.execlp("ssh", *ssh_cmdline)
