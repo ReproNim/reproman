@@ -62,7 +62,10 @@ class Package(SpecObject):
     # https://github.com/python-attrs/attrs/issues/38
     # So for now will be defined specifically per each subclass
     # files = attr.ib(default=attr.Factory(list))
-    pass
+
+    @property
+    def _cmp_id(self):
+        return tuple(getattr(self, a) for a in self._cmp_fields)
 
 
 @attr.s
@@ -141,6 +144,22 @@ class EnvironmentSpec(SpecObject):
     # runs?  whenever we get to provisioning executions
     #        those would also be useful for tracing for presence of distributions
     #        e.g. depending on what is in the PATH
+
+
+    def get_distribution(self, dtype):
+        """get_distribution(dtype) -> distribution
+
+        Returns the distribution of the specified type in the given 
+        environment.  Returns None if there are no matching distributions.  
+        Raises ValueError if there is more than one matching distribution.
+        """
+        dist = None
+        for d in self.distributions:
+            if isinstance(d, dtype):
+                if dist:
+                    raise ValueError('multiple %s found' % str(dtype))
+                dist = d
+        return dist
 
 _register_with_representer(EnvironmentSpec)
 

@@ -68,6 +68,8 @@ install:
   - pip install -r requirements-devel.txt
   # So we could test under sudo -E with PATH pointing to installed location
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
+  # for SVN tests (SVNRepoShim._ls_files_command())
+  - sudo apt-get install sqlite3
 
 script:
   # Verify that setup.py build doesn't puke
@@ -78,6 +80,11 @@ script:
   - if [ ! -z "$NICEMAN_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # Generate documentation and run doctests
   - PYTHONPATH=$PWD make -C docs html doctest
+
+branches:
+  except:
+  - 3rd-repronimed
+  - 3rd
 
 after_success:
   - codecov

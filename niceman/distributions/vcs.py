@@ -26,7 +26,7 @@ from niceman.utils import attrib
 from niceman.utils import only_with_values
 from niceman.utils import instantiate_attr_object
 
-from niceman.cmd import CommandError
+from niceman.cmd import CommandError, Runner
 
 lgr = getLogger('niceman.distributions.vcs')
 
@@ -78,15 +78,37 @@ class VCSRepo(SpecObject):
     path = attrib(default=attr.NOTHING)
     files = attrib(default=attr.Factory(list))
 
+    @property
+    def identifier(self):
+        try:
+            return getattr(self, self._identifier_attribute)
+        except AttributeError:
+            # raised if _identifier_attribute is not defined, but this means 
+            # (to the caller) that identifier is not defined
+            msg = "%s instance has no attribute 'identifier'" % self.__class__
+            raise AttributeError(msg)
+
+    @property
+    def commit(self):
+        try:
+            return getattr(self, self._commit_attribute)
+        except AttributeError:
+            # as for .identifer above, reraise with a more appropriate message
+            msg = "%s instance has no attribute 'commit'" % self.__class__
+            raise AttributeError(msg)
 
 @attr.s
 class GitRepo(VCSRepo):
 
+    root_hexsha = attrib()
     branch = attrib()
     hexsha = attrib()
     describe = attrib()
     tracked_remote = attrib()
     remotes = attrib(default=attr.Factory(dict))
+
+    _identifier_attribute = 'root_hexsha'
+    _commit_attribute = 'hexsha'
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -107,6 +129,10 @@ class SVNRepo(VCSRepo):
     url = attrib()
     root_url = attrib()
     relative_url = attrib()
+    uuid = attrib()
+
+    _identifier_attribute = 'uuid'
+    _commit_attribute = 'revision'
 
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s
@@ -197,7 +223,7 @@ class SVNRepoShim(GitSVNRepoShim):
     def _ls_files_command(self):
         # tricky -- we need to locate wc.db somewhere upstairs, and filter out paths
         root_path = self._info['Working Copy Root Path']
-        return 'sqlite3 -batch %s/.svn/wc.db ".headers off" ' \
+        return 'sqlite3 -noheader "%s/.svn/wc.db" ' \
             '"select local_relpath from nodes_base"' \
                     % root_path
 
@@ -264,8 +290,22 @@ class SVNRepoShim(GitSVNRepoShim):
 
     @property
     def revision(self):
-        r = self._info['Revision']
-        return int(r) if ((r is not None) and r.isdigit()) else r
+        # svn info doesn't give the current revision 
+        # (see http://svnbook.red-bean.com/en/1.7/svn.tour.history.html) 
+        # so we need to run svn log
+        if not hasattr(self, '_revision'):
+            runner = Runner()
+            log = runner(['svn', 'log', '^/', '-l', '1'], cwd=self.path)[0]
+            lines = log.strip().split('\n')
+            if len(lines) == 1:
+                self._revision = None
+            else:
+                revision = lines[1].split()[0]
+                if revision.startswith('r') and revision[1:].isdigit():
+                    self._revision = int(revision[1:])
+                else:
+                    self._revision = revision[1:]
+        return self._revision
 
     @property
     def url(self):
@@ -337,6 +377,15 @@ class GitRepoShim(GitSVNRepoShim):
             return None
         
     @property
+    def root_hexsha(self):
+        try:
+            rev_list = self._run_git('rev-list --max-parents=0 HEAD').split('\n')
+            return rev_list[-1]
+        except CommandError:
+            # might still be the first yet to be committed state in the branch
+            return None
+        
+    @property
     def describe(self):
         """Let's use git describe"""
         try:
@@ -362,10 +411,9 @@ class GitRepoShim(GitSVNRepoShim):
             return {}
 
         remote_branches = self._run_git(
-            ["for-each-ref", "--contains", hexsha,
-             # refs/remotes/<remote>/<name> => <remote>/<name>
-             "--format=%(refname:strip=2)",
-             "refs/remotes"]).splitlines()
+            ["branch", "-r", "--contains", hexsha]).splitlines()
+                                               # e.g. "origin/HEAD -> origin/master"
+        remote_branches = [b.strip() for b in remote_branches if " -> " not in b]
 
         if not remote_branches:
             return {}

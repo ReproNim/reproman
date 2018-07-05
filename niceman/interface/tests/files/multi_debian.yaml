@@ -1,0 +1,5 @@
+# NICEMAN Environment Configuration File
+version: 0.0.1
+distributions:
+- name: debian
+- name: debian

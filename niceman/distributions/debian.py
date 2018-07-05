@@ -90,6 +90,8 @@ class DEBPackage(Package):
     install_date = attrib(hash=False)
     files = attrib(default=attr.Factory(list), hash=False)
 
+    _cmp_fields = ('name', 'architecture')
+
     def satisfies(self, other):
         """return True if this package (self) satisfies the requirements of 
         the passed package (other)"""
@@ -117,6 +119,8 @@ class DebianDistribution(Distribution):
     apt_sources = TypedList(APTSource)
     packages = TypedList(DEBPackage)
     version = attrib()  # version as depicted by /etc/debian_version
+
+    _cmp_fields = tuple()
 
     def initiate(self, session):
         """

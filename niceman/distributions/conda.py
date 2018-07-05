@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# emacs: -*- mode: python; py-indent-offset: 8; tab-width: 6; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -103,6 +103,7 @@ class CondaPackage(Package):
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))
 
+    _cmp_fields = ('name', 'build')
 
 @attr.s
 class CondaChannel(SpecObject):
@@ -131,6 +132,8 @@ class CondaDistribution(Distribution):
     python_version = attrib()
     platform = attrib()
     environments = TypedList(CondaEnvironment)
+
+    _cmp_field = ('path',)
 
     def initiate(self, environment):
         """
@@ -216,6 +219,10 @@ class CondaDistribution(Distribution):
 
         return
 
+    @property
+    def packages(self):
+        return [ p for env in self.environments for p in env.packages ]
+
     @staticmethod
     def get_simple_python_version(python_version):
         # Get the simple python version from the conda info string
@@ -268,7 +275,6 @@ class CondaTracer(DistributionTracer):
 
     def _init(self):
         self._get_conda_env_path = PathRoot(self._is_conda_env_path)
-        self._get_conda_root_path = PathRoot(self._is_conda_root_path)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -408,7 +414,10 @@ class CondaTracer(DistributionTracer):
             found_channel_names = set()
 
             # Find the root path for the environment
-            root_path = self._get_conda_root_path(conda_path)
+            # TODO: cache/memoize for those paths which have been considered
+            # since will be asked again below
+            conda_info = self._get_conda_info(conda_path)
+            root_path = conda_info.get('root_prefix')
             if not root_path:
                 lgr.warning("Could not find root path for conda environment %s"
                             % conda_path)

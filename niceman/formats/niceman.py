@@ -218,7 +218,7 @@ class NicemanProvenance(Provenance):
                     value_out = self._load_spec(value_in, spec_attr)
                 else:
                     # ATM only files could have a list of untyped entries
-                    assert spec_attr.name in ('files',)
+                    assert spec_attr.name in ('files', 'remotes')
                     value_out = instantiate_attr_object(spec_attr.default.factory, value_in)
             else:
                 value_out = value_in

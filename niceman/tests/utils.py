@@ -178,6 +178,13 @@ def ok_file_has_content(path, content):
         assert_equal(f.read(), content)
 
 
+def assert_in_in(substr, lst):
+    """Verify that a substring is in an element of a list"""
+    for s in lst:
+        if substr in s:
+            return
+    assert False, '"%s" is not in "%s"' % (substr, str(lst))
+
 #
 # Decorators
 #
@@ -370,6 +377,18 @@ def skip_if_no_apt_cache(func=None):
         return newfunc
     else:
         check_and_raise()
+
+
+def skip_if_no_svn():
+    runner = Runner()
+    try:
+        # will raise OSError(errno=2) if the command is not found
+        runner.run(['svnadmin', '--help'])
+        runner.run(['svn', '--help'])
+    except OSError as exc:
+        if exc.errno == 2:
+            raise SkipTest('subversion is not installed')
+    return
 
 
 @optional_args
