@@ -266,6 +266,9 @@ def traced_repo(git_repo_pair_module):
     """
     repo_local, repo_remote = git_repo_pair_module
 
+    runner = GitRunner(cwd=repo_local)
+    runner(["git", "remote", "add", "dummy-remote", "nowhere"])
+
     tracer = VCSTracer()
     dists = list(tracer.identify_distributions([op.join(repo_local, "foo")]))
     git_dist = dists[0][0]

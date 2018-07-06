@@ -162,8 +162,12 @@ class GitDistribution(VCSDistribution):
             current_remotes = set(shim._run_git(["remote"]).splitlines())
             for remote, remote_info in repo.remotes.items():
                 if remote not in current_remotes:
-                    shim._run_git(
-                        ["remote", "add", "-f", remote, remote_info["url"]])
+                    try:
+                        shim._run_git(["remote", "add", "-f",
+                                       remote, remote_info["url"]])
+                    except CommandError:
+                        lgr.warning("Failed to fetch remote %s at %s",
+                                    remote, remote_info["url"])
 
         if not shim.has_revision(repo.hexsha):
             lgr.warning("Set up '%s', but the expected hexsha wasn't found",
