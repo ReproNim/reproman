@@ -127,7 +127,7 @@ class GitDistribution(VCSDistribution):
             self._install_repo(session, repo)
 
     def _install_repo(self, session, repo):
-        sources = {k: v for k, v in repo.remotes.items() if v["contains"]}
+        sources = {k: v for k, v in repo.remotes.items() if v.get("contains")}
         if not sources:
             lgr.warning("No remote known for '%s'; skipping", repo.path)
             return

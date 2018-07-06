@@ -429,7 +429,7 @@ def test_git_install_add_remotes(traced_repo_copy, tmpdir):
     git_pkg.path = install_dir
     git_pkg.tracked_remote = "foo"
     url = git_pkg.remotes.popitem()[1]["url"]
-    git_pkg.remotes = {"foo": {"contains": False, "url": url},
+    git_pkg.remotes = {"foo": {"url": url},
                        "bar": {"contains": True, "url": url}}
     install(git_dist, install_dir)
     installed_remotes = runner(["git", "remote"],
