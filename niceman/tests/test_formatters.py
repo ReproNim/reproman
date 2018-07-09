@@ -10,7 +10,8 @@
 
 from six.moves import StringIO as SIO
 from os.path import exists
-from nose import SkipTest
+import pytest
+
 try:
     import formatters as fmt
 except ImportError:  # pragma: no cover
@@ -18,10 +19,10 @@ except ImportError:  # pragma: no cover
     # These tests can be ran only with formatters, which is outside of the
     # niceman module space in the root of the sourcebase
     if not exists('formatters.py'):
-        raise SkipTest
+        pytestmark = pytest.mark.skip("can't locate formatters")
 
 from niceman.cmdline.main import setup_parser
-from .utils import assert_equal, ok_, assert_raises, assert_in, ok_startswith
+from .utils import ok_, assert_in, ok_startswith
 
 demo_example = """
 #!/bin/sh

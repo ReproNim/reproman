@@ -9,13 +9,12 @@
 """Tests for dochelpers (largely copied from PyMVPA, the same copyright)
 """
 
-import os
 from mock import patch
 
 from ..dochelpers import single_or_plural, borrowdoc, borrowkwargs
 from ..dochelpers import exc_str
 
-from .utils import assert_equal, assert_true, assert_raises
+from .utils import assert_equal, assert_true
 from .utils import assert_re_in
 
 

@@ -11,15 +11,12 @@ from niceman.cmdline.main import main
 
 import uuid
 import logging
-from mock import patch, call, MagicMock
-from pytest import raises
+from mock import patch
+import pytest
 
 from niceman.utils import swallow_logs, swallow_outputs
 from ...resource.base import ResourceManager
-from ...support.exceptions import CommandError
 from ...tests.utils import skip_ssh
-from ...tests.utils import assert_in
-from ...tests.utils import assert_raises
 from ...tests.fixtures import get_docker_fixture
 
 
@@ -58,7 +55,7 @@ def test_exec_interface(niceman_cfg_path, docker_container):
 
         # on 2nd run mkdir should fail since already exists
         with swallow_outputs() as cmo:
-            with assert_raises(SystemExit) as cme:
+            with pytest.raises(SystemExit) as cme:
                 main(cmd)
-            assert cme.exception.code == 1
+            assert cme.value.code == 1
             assert "File exists" in cmo.err

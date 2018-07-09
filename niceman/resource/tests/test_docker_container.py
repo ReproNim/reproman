@@ -9,8 +9,6 @@
 
 import logging
 from mock import patch, MagicMock, call
-import os
-import uuid
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in

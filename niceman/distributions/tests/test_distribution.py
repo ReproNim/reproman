@@ -10,13 +10,11 @@
 from ...formats import Provenance
 
 import logging
-from mock import MagicMock, call, patch
+from mock import MagicMock, patch
 
 from niceman.utils import swallow_logs
 from niceman.utils import items_to_dict
 from niceman.tests.utils import assert_in
-
-import niceman.tests.fixtures
 
 
 def test_distributions(demo1_spec):

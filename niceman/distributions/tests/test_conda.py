@@ -6,17 +6,12 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-import collections
-import io
-import logging
 import os
 import pytest
 
 import sys
-from appdirs import AppDirs
 from mock import mock
 from subprocess import call
-from unittest import SkipTest
 
 import yaml
 import attr
@@ -24,8 +19,6 @@ import attr
 from niceman.formats.niceman import NicemanProvenance
 from niceman.tests.utils import create_pymodule
 from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
-
-import json
 
 from niceman.distributions.conda import CondaTracer, CondaDistribution, \
     CondaEnvironment, CondaPackage, CondaChannel, \

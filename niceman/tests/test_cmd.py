@@ -11,25 +11,22 @@
 
 from mock import patch
 import os
-from os.path import dirname, join as opj
 import sys
 import logging
 import shlex
+import pytest
 
 from .utils import ok_, eq_, assert_is, assert_equal, assert_false, \
-    assert_true, assert_greater, assert_raises, assert_in, SkipTest
+    assert_true, assert_in
 
 from ..cmd import Runner, link_file_load
 from ..support.exceptions import CommandError
 from ..support.protocol import DryRunProtocol
 from .utils import with_tempfile, assert_cwd_unchanged, \
-    ignore_nose_capturing_stdout, swallow_outputs, swallow_logs, \
+    swallow_outputs, swallow_logs, \
     on_linux, on_osx, on_windows
-from .utils import lgr
 
 
-
-@ignore_nose_capturing_stdout
 @assert_cwd_unchanged
 @with_tempfile
 def test_runner_dry(tempfile=None):
@@ -55,7 +52,6 @@ def test_runner_dry(tempfile=None):
     assert_equal("args=('foo', 'bar')", dry[1]['command'][1])
 
 
-@ignore_nose_capturing_stdout
 @assert_cwd_unchanged
 @with_tempfile
 def test_runner(tempfile=None):
@@ -74,7 +70,6 @@ def test_runner(tempfile=None):
                  "Call of: os.path.join, 'foo', 'bar' returned %s" % output)
 
 
-@ignore_nose_capturing_stdout
 def test_runner_instance_callable_dry():
 
     cmd_ = ['echo', 'Testing', '__call__', 'with', 'string']
@@ -99,7 +94,6 @@ def test_runner_instance_callable_dry():
                  "Buffer: %s" % dry)
 
 
-@ignore_nose_capturing_stdout
 def test_runner_instance_callable_wet():
 
     runner = Runner()
@@ -113,7 +107,6 @@ def test_runner_instance_callable_wet():
     eq_(ret, os.path.join('foo', 'bar'))
 
 
-@ignore_nose_capturing_stdout
 def test_runner_log_stderr():
     # TODO: no idea of how to check correct logging via any kind of
     # assertion yet.
@@ -130,7 +123,6 @@ def test_runner_log_stderr():
             eq_(cml.out, "")
 
 
-@ignore_nose_capturing_stdout
 def test_runner_log_stdout():
     # TODO: no idea of how to check correct logging via any kind of
     # assertion yet.
@@ -219,8 +211,8 @@ def test_runner_failure(dir_=None):
     runner = Runner()
     failing_cmd = ['sh', '-c', 'exit 2']
 
-    with assert_raises(CommandError) as cme, \
-         swallow_logs() as cml:
-        runner.run(failing_cmd, cwd=dir_)
-        assert_in('notexistent.dat not found', cml.out)
-    assert_equal(2, cme.exception.code)
+    with swallow_logs() as cml:
+        with pytest.raises(CommandError) as cme:
+            runner.run(failing_cmd, cwd=dir_)
+        assert_in('Failed to run', cml.out)
+        assert_equal(2, cme.value.code)
