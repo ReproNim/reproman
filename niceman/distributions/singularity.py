@@ -19,7 +19,7 @@ from .base import Distribution
 from .base import DistributionTracer
 from .base import TypedList
 from .base import _register_with_representer
-from ..dochelpers import borrowdoc
+from ..dochelpers import borrowdoc, exc_str
 from ..utils import attrib, md5sum
 
 
@@ -36,6 +36,7 @@ class SingularityImage(Package):
     build_size = attrib()
     singularity_version = attrib()
     base_image = attrib()
+    mirror_url = attrib()
 
 _register_with_representer(SingularityImage)
 
@@ -50,8 +51,7 @@ class SingularityDistribution(Distribution):
 
     def initiate(self, session):
         """
-        Perform any initialization commands needed in the environment
-        environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
@@ -96,26 +96,33 @@ class SingularityTracer(DistributionTracer):
         images = []
         remaining_files = set()
 
-        for file in files:
+        for file_path in files:
             try:
-                # import pdb; pdb.set_trace()
                 image = json.loads(self._session.execute_command(['singularity',
-                    'inspect', file])[0])
+                    'inspect', file_path])[0])
 
                 images.append(SingularityImage(
-                    md5=md5sum(file),
-                    bootstrap=image['org.label-schema.usage.singularity.deffile.bootstrap'],
-                    maintainer=image['MAINTAINER'],
-                    deffile=image['org.label-schema.usage.singularity.deffile'],
-                    schema_version=image['org.label-schema.schema-version'],
-                    build_date=image['org.label-schema.build-date'],
-                    build_size=image['org.label-schema.build-size'],
-                    singularity_version=image['org.label-schema.usage.singularity.version'],
-                    base_image=image['org.label-schema.usage.singularity.deffile.from']
+                    md5=md5sum(file_path),
+                    bootstrap=image.get(
+                        'org.label-schema.usage.singularity.deffile.bootstrap'),
+                    maintainer=image.get('MAINTAINER'),
+                    deffile=image.get(
+                        'org.label-schema.usage.singularity.deffile'),
+                    schema_version=image.get('org.label-schema.schema-version'),
+                    build_date=image.get('org.label-schema.build-date'),
+                    build_size=image.get('org.label-schema.build-size'),
+                    singularity_version=image.get(
+                        'org.label-schema.usage.singularity.version'),
+                    base_image=image.get(
+                        'org.label-schema.usage.singularity.deffile.from'),
+                    mirror_url=image.get(
+                        'org.label-schema.usage.singularity.deffile.mirrorurl')
                 ))
             except Exception as exc:
+                lgr.debug("Probably %s is not a Singularity image: %s",
+                    file_path, exc_str(exc))
                 lgr.debug(exc)
-                remaining_files.add(file)
+                remaining_files.add(file_path)
 
         if not images:
             return

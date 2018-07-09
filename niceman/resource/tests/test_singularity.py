@@ -11,6 +11,9 @@
 # NOTE: The singularity classes SingularitySession and PTYSingularitySession
 # are tested in test_session.test_session_abstract_methods()
 
+import os
+import tempfile
+
 import logging
 import re
 from ..singularity import Singularity, SingularitySession
@@ -23,6 +26,11 @@ from ...tests.utils import skip_if_no_singularity, skip_if_no_network, \
 def test_singularity_resource_class():
 
     with swallow_logs(new_level=logging.DEBUG) as log:
+
+        # Set working directory to a scratch directory since we will be creating
+        # Singularity image files during testing.
+        tempdir = tempfile.mkdtemp()
+        os.chdir(tempdir)
 
         # Test creating a new singularity container instance.
         resource = Singularity(name='foo',
