@@ -38,6 +38,13 @@ def test_docker_trace():
     assert dist.images[0].created == '2018-01-09T21:10:38.538173323Z'
     assert 'non-existent-image' in remaining_files
 
+
+@skip_if_no_network
+@skip_if_no_docker_engine
+def test_docker_trace_local_image():
+    client = docker.Client()
+    client.pull('alpine:3.6')
+    tracer = DockerTracer()
     # Test tracing a local image not saved in a repository
     container = client.create_container(image='alpine:3.6',
         command='echo foo > test.txt')
