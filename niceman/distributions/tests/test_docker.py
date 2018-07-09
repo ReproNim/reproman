@@ -26,7 +26,7 @@ def test_docker_trace():
 
     tracer = DockerTracer()
 
-    files = ['alpine:3.6', 'non-existant-image']
+    files = ['alpine:3.6', 'non-existent-image']
     dist, remaining_files = next(tracer.identify_distributions(files))
     assert dist.name == 'docker'
     assert dist.images[0].id == 'sha256:77144d8c6bdce9b97b6d5a900f1ab85da' + \
@@ -36,7 +36,7 @@ def test_docker_trace():
     assert dist.images[0].repo_digests[0].startswith('alpine@sha256')
     assert dist.images[0].repo_tags[0] == 'alpine:3.6'
     assert dist.images[0].created == '2018-01-09T21:10:38.538173323Z'
-    assert 'non-existant-image' in remaining_files
+    assert 'non-existent-image' in remaining_files
 
     # Test tracing a local image not saved in a repository
     container = client.create_container(image='alpine:3.6',
@@ -106,7 +106,7 @@ def test_docker_distribution():
     client.remove_image(dist.images[0].id)
     client.remove_image(dist.images[1].id)
 
-    # Test installing a non-existant image
+    # Test installing a non-existent image
     dist.images = [
         DockerImage(
             'sha256:000000000000000000000000000000000000000000000000000000',
