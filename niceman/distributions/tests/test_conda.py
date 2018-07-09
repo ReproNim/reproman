@@ -6,17 +6,12 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-import collections
-import io
-import logging
 import os
 import pytest
 
 import sys
-from appdirs import AppDirs
 from mock import mock
 from subprocess import call
-from unittest import SkipTest
 
 import yaml
 import attr
@@ -25,10 +20,9 @@ from niceman.formats.niceman import NicemanProvenance
 from niceman.tests.utils import create_pymodule
 from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
-import json
-
 from niceman.distributions.conda import CondaTracer, CondaDistribution, \
-    CondaEnvironment, get_conda_platform_from_python, get_miniconda_url
+    CondaEnvironment, CondaPackage, CondaChannel, \
+    get_conda_platform_from_python, get_miniconda_url
 
 
 def test_get_conda_platform_from_python():
@@ -68,32 +62,31 @@ def test_create_conda_export():
     env = CondaEnvironment(
         name="mytest",
         path="/home/butch/.cache/niceman/conda_test/miniconda/envs/mytest",
-        packages=[{
-            "name": "xz",
-            "installer": None,
-            "version": "5.2.3",
-            "build": "0",
-            "channel_name": "conda-forge",
-            "md5": "f4e0d30b3caf631be7973cba1cf6f601",
-            "size": "874292",
-            "url": "https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
-            "files": ["bin/xz", ],
-        }, {
-            "name": "rpaths",
-            "installer": "pip",
-            "version": "0.13",
-            "build": None,
-            "channel_name": None,
-            "md5": None,
-            "size": None,
-            "url": None,
-            "files": ["lib/python2.7/site-packages/rpaths.py", ],
-        }, ],
-        channels=[{
-            "name": "conda-forge",
-            "url": "https://conda.anaconda.org/conda-forge/linux-64",
-        }, ],
-    )
+        packages=[
+            CondaPackage(
+                name="xz",
+                installer=None,
+                version="5.2.3",
+                build="0",
+                channel_name="conda-forge",
+                md5="f4e0d30b3caf631be7973cba1cf6f601",
+                size="874292",
+                url="https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
+                files=["bin/xz"]),
+            CondaPackage(
+                name="rpaths",
+                installer="pip",
+                version="0.13",
+                build=None,
+                channel_name=None,
+                md5=None,
+                size=None,
+                url=None,
+                files=["lib/python2.7/site-packages/rpaths.py"])],
+        channels=[
+            CondaChannel(
+                name="conda-forge",
+                url="https://conda.anaconda.org/conda-forge/linux-64")])
     out = {"name": "mytest",
            "channels": ["conda-forge"],
            "dependencies": ["xz=5.2.3=0",
@@ -119,85 +112,82 @@ def test_conda_init_install_and_detect():
             CondaEnvironment(
                 name="root",
                 path=test_dir,
-                packages=[{
-                    "name": "conda",
-                    "installer": None,
-                    "version": "4.3.31",
-                    "build": None,
-                    "channel_name": None,
-                    "md5": None,
-                    "size": None,
-                    "url": None,
-                    "files": None,
-                },{
-                    "name": "pip",
-                    "installer": None,
-                    "version": "9.0.1",
-                    "build": None,
-                    "channel_name": None,
-                    "md5": None,
-                    "size": None,
-                    "url": None,
-                    "files": None,
-                }, {
-                    "name": "pytest",
-                    "installer": "pip",
-                    "version": "3.4.0",
-                    "build": None,
-                    "channel_name": None,
-                    "md5": None,
-                    "size": None,
-                    "url": None,
-                    "files": None,
-                }, ],
-                channels=[{
-                    "name": "conda-forge",
-                    "url": "https://conda.anaconda.org/conda-forge/linux-64",
-                }, {
-                    "name": "defaults",
-                    "url": "https://repo.continuum.io/pkgs/main/linux-64",
-                }, ],
-            ),
+                packages=[
+                    CondaPackage(
+                        name="conda",
+                        installer=None,
+                        version="4.3.31",
+                        build=None,
+                        channel_name=None,
+                        md5=None,
+                        size=None,
+                        url=None,
+                        files=None),
+                    CondaPackage(
+                        name="pip",
+                        installer=None,
+                        version="9.0.1",
+                        build=None,
+                        channel_name=None,
+                        md5=None,
+                        size=None,
+                        url=None,
+                        files=None),
+                    CondaPackage(
+                        name="pytest",
+                        installer="pip",
+                        version="3.4.0",
+                        build=None,
+                        channel_name=None,
+                        md5=None,
+                        size=None,
+                        url=None,
+                        files=None)],
+                channels=[
+                    CondaChannel(
+                        name="conda-forge",
+                        url="https://conda.anaconda.org/conda-forge/linux-64"),
+                    CondaChannel(
+                        name="defaults",
+                        url="https://repo.continuum.io/pkgs/main/linux-64")]),
             CondaEnvironment(
                 name="mytest",
                 path=os.path.join(test_dir, "envs/mytest"),
-                packages=[{
-                    "name": "pip",
-                    "installer": None,
-                    "version": "9.0.1",
-                    "build": None,
-                    "channel_name": None,
-                    "md5": None,
-                    "size": None,
-                    "url": None,
-                    "files": None,
-                }, {
-                    "name": "xz",
-                    "installer": None,
-                    "version": "5.2.3",
-                    "build": "0",
-                    "channel_name": "conda-forge",
-                    "md5": "f4e0d30b3caf631be7973cba1cf6f601",
-                    "size": "874292",
-                    "url": "https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
-                    "files": ["bin/xz", ],
-                }, {
-                    "name": "rpaths",
-                    "installer": "pip",
-                    "version": "0.13",
-                    "build": None,
-                    "channel_name": None,
-                    "md5": None,
-                    "size": None,
-                    "url": None,
-                    "files": ["lib/python2.7/site-packages/rpaths.py", ],
-                }, ],
-                channels=[{
-                    "name": "conda-forge",
-                    "url": "https://conda.anaconda.org/conda-forge/linux-64",
-                }, ],
-            ),
-        ])
+                packages=[
+                    CondaPackage(
+                        name="pip",
+                        installer=None,
+                        version="9.0.1",
+                        build=None,
+                        channel_name=None,
+                        md5=None,
+                        size=None,
+                        url=None,
+                        files=None),
+                    CondaPackage(
+                        name="xz",
+                        installer=None,
+                        version="5.2.3",
+                        build="0",
+                        channel_name="conda-forge",
+                        md5="f4e0d30b3caf631be7973cba1cf6f601",
+                        size="874292",
+                        url="https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
+                        files=["bin/xz", ]),
+                    CondaPackage(
+                        name="rpaths",
+                        installer="pip",
+                        version="0.13",
+                        build=None,
+                        channel_name=None,
+                        md5=None,
+                        size=None,
+                        url=None,
+                        files=["lib/python2.7/site-packages/rpaths.py"])],
+                channels=[
+                    CondaChannel(
+                        name="conda-forge",
+                        url="https://conda.anaconda.org/conda-forge/linux-64")])])
     # First install the environment in /tmp/niceman_conda/miniconda
     dist.initiate(None)
     dist.install_packages()
@@ -257,6 +247,11 @@ def test_conda_init_install_and_detect():
         for pkg in envs.packages:
             if pkg.name == "pip":
                 assert pkg.installer is None
+
+    # Smoke test to make sure install_packages doesn't choke on the format that
+    # is actually returned by the tracer.
+    distributions.initiate(None)
+    distributions.install_packages()
 
 
 def test_get_conda_env_export_exceptions():

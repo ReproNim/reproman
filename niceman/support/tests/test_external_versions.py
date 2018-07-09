@@ -11,11 +11,10 @@ from os import linesep
 
 from ...version import __version__
 from ..external_versions import ExternalVersions, StrictVersion
+from ...tests.utils import assert_true, assert_false
+from ...tests.utils import assert_equal, assert_greater_equal, assert_greater
 
-from nose.tools import assert_true, assert_false
-from nose.tools import assert_equal, assert_greater_equal, assert_greater
-from nose.tools import assert_raises
-from nose import SkipTest
+import pytest
 from six import PY3
 
 if PY3:
@@ -54,8 +53,8 @@ def test_external_versions_basic():
     # And that thing is "True", i.e. present
     assert(ev['os'])
     # but not comparable with anything besides itself (was above)
-    assert_raises(TypeError, cmp, ev['os'], '0')
-    assert_raises(TypeError, assert_greater, ev['os'], '0')
+    pytest.raises(TypeError, cmp, ev['os'], '0')
+    pytest.raises(TypeError, assert_greater, ev['os'], '0')
 
     return
     # Code below is from original duecredit, and we don't care about
@@ -75,28 +74,26 @@ def test_external_versions_unknown():
     assert_equal(str(ExternalVersions.UNKNOWN), 'UNKNOWN')
 
 
-def _test_external(ev, modname):
+def test_external_versions_smoke():
+    ev = ExternalVersions()
+    assert_false(linesep in ev.dumps())
+    assert_true(ev.dumps(indent=True).endswith(linesep))
+
+
+@pytest.mark.parametrize("modname",
+                         ['scipy', 'numpy', 'mvpa2', 'sklearn', 'statsmodels',
+                          'pandas', 'matplotlib', 'psychopy'])
+def test_external_versions_popular_packages(modname):
+    ev = ExternalVersions()
     try:
-        exec ("import %s" % modname, globals(), locals())
+        exec("import %s" % modname, globals(), locals())
     except ImportError:
-        raise SkipTest("External %s not present" % modname)
+        pytest.skip("External %s not present" % modname)
     except Exception as e:
-        raise SkipTest("External %s fails to import: %s" % (modname, e))
+        pytest.skip("External %s fails to import: %s" % (modname, e))
     assert (ev[modname] is not ev.UNKNOWN)
     assert_greater(ev[modname], '0.0.1')
     assert_greater('1000000.0', ev[modname])  # unlikely in our lifetimes
-
-
-def test_external_versions_popular_packages():
-    ev = ExternalVersions()
-
-    for modname in ('scipy', 'numpy', 'mvpa2', 'sklearn', 'statsmodels', 'pandas',
-                    'matplotlib', 'psychopy'):
-        yield _test_external, ev, modname
-
-    # more of a smoke test
-    assert_false(linesep in ev.dumps())
-    assert_true(ev.dumps(indent=True).endswith(linesep))
 
 
 def test_custom_versions():

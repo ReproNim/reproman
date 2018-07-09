@@ -12,7 +12,6 @@ import shutil
 import tempfile
 
 import pytest
-import tempfile
 from .constants import NICEMAN_CFG_PATH
 from niceman.cmd import Runner
 from niceman.tests.utils import skip_if_no_network, skip_if_no_svn

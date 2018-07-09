@@ -12,8 +12,6 @@ import logging
 from niceman.utils import swallow_logs
 from niceman.formats import Provenance
 
-import niceman.tests.fixtures
-
 
 def test_get_distributions(demo1_spec):
 

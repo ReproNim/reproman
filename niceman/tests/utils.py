@@ -9,62 +9,89 @@
 """Miscellaneous utilities to assist with testing"""
 
 import docker
-import glob
 import inspect
-import shutil
-import stat
 import os
 import re
 import tempfile
 import platform
 import multiprocessing
 import logging
-import random
 import requests
-import socket
-from six import PY2, text_type, iteritems
-from six import binary_type
-from fnmatch import fnmatch
-import time
+from six import PY2, text_type
 from mock import patch
+import pytest
 
 from niceman.support.external_versions import external_versions
 from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
 from six.moves.BaseHTTPServer import HTTPServer
 from six import reraise
-from six.moves import map
 
 from functools import wraps
-from os.path import exists, realpath, join as opj, pardir, split as pathsplit, curdir
-
-from nose.tools import \
-    assert_equal, assert_not_equal, assert_raises, assert_greater, assert_true, assert_false, \
-    assert_in, assert_not_in, assert_in as in_, assert_is, \
-    raises, ok_, eq_, make_decorator
-
-from nose import SkipTest
+from os.path import exists, realpath, join as opj
 
 from ..cmd import Runner
 from ..utils import *
-from ..support.exceptions import CommandNotAvailableError
-from ..dochelpers import exc_str, borrowkwargs
-from ..cmdline.helpers import get_repo_instance
-from . import _TEMP_PATHS_GENERATED
+from ..dochelpers import borrowkwargs
 
 # temp paths used by clones
 _TEMP_PATHS_CLONES = set()
 
 
+# pytest variants for nose.tools commands.  These exist to avoid unnecessary
+# churn in tests that already use these names.  New code should use plain
+# asserts to take advantage of pytest's assertion introspection.
+
+
+def assert_equal(a, b, msg=None):
+    assert a == b, msg or "{!r} != {!r}".format(a, b)
+
+
+def assert_not_equal(a, b, msg=None):
+    assert a != b, msg or "{!r} == {!r}".format(a, b)
+
+
+def assert_greater(a, b, msg=None):
+    assert a > b, msg or "{!r} > {!r}".format(a, b)
+
+
+def assert_greater_equal(a, b, msg=None):
+    assert a >= b, msg or "{!r} >= {!r}".format(a, b)
+
+
+def assert_true(x, msg=None):
+    assert x, msg or "{!r} is not true".format(x)
+
+
+def assert_false(x, msg=None):
+    assert not x, msg or "{!r} is not false".format(x)
+
+
+def assert_in(x, collection, msg=None):
+    assert x in collection, \
+        msg or "{!r} not found in {!r}".format(x, collection)
+
+
+def assert_not_in(x, collection, msg=None):
+    assert x not in collection, \
+        msg or "{!r} unexpectedly found in {!r}".format(x, collection)
+
+
+def assert_is(a, b, msg=None):
+    assert a is b, msg or "{!r} is not {!r}".format(a, b)
+
+
+def assert_is_instance(a, b, msg=None):
+    assert isinstance(a, b), \
+        msg or "{!r} is not an instance of {!r}".format(a, b)
+
+
 # additional shortcuts
+assert_raises = pytest.raises
+eq_ = assert_equal
 neq_ = assert_not_equal
+ok_ = assert_true
 nok_ = assert_false
-
-
-def skip_if_no_module(module):
-    try:
-        imp = __import__(module)
-    except Exception as exc:
-        raise SkipTest("Module %s fails to load: %s" % (module, exc_str(exc)))
+in_ = assert_in
 
 
 # def create_tree_archive(path, name, load, overwrite=False, archives_leading_dir=True):
@@ -119,11 +146,6 @@ def create_tree(path, tree, archives_leading_dir=True):
 #
 # Addition "checkers"
 #
-
-import os
-from os.path import exists, join
-from ..utils import chpwd, getpwd
-
 
 #
 # Helpers to test symlinks
@@ -333,7 +355,8 @@ def skip_if_no_network(func=None):
 
     def check_and_raise():
         if os.environ.get('NICEMAN_TESTS_NONETWORK'):
-            raise SkipTest("Skipping since no network settings")
+            pytest.skip("Skipping since no network settings",
+                        allow_module_level=True)
 
     if func:
         @wraps(func)
@@ -354,7 +377,7 @@ def skip_if_on_windows(func):
     @wraps(func)
     def newfunc(*args, **kwargs):
         if on_windows:
-            raise SkipTest("Skipping on Windows")
+            pytest.skip("Skipping on Windows", allow_module_level=True)
         return func(*args, **kwargs)
     return newfunc
 
@@ -367,7 +390,8 @@ def skip_if_no_apt_cache(func=None):
 
     def check_and_raise():
         if not external_versions["cmd:apt-cache"]:
-            raise SkipTest("Skipping since apt-cache is not available")
+            pytest.skip("Skipping since apt-cache is not available",
+                        allow_module_level=True)
 
     if func:
         @wraps(func)
@@ -387,20 +411,9 @@ def skip_if_no_svn():
         runner.run(['svn', '--help'])
     except OSError as exc:
         if exc.errno == 2:
-            raise SkipTest('subversion is not installed')
+            pytest.skip('subversion is not installed',
+                        allow_module_level=True)
     return
-
-
-@optional_args
-def skip_if(func, cond=True, msg=None):
-    """Skip test for specific condition
-    """
-    @wraps(func)
-    def newfunc(*args, **kwargs):
-        if cond:
-            raise SkipTest(msg if msg else "condition was True")
-        return func(*args, **kwargs)
-    return newfunc
 
 
 def skip_ssh(func=None):
@@ -410,13 +423,15 @@ def skip_ssh(func=None):
 
     def check_and_raise():
         if not os.environ.get('NICEMAN_TESTS_SSH'):
-            raise SkipTest("Run this test by setting NICEMAN_TESTS_SSH")
+            pytest.skip("Run this test by setting NICEMAN_TESTS_SSH",
+                        allow_module_level=True)
 
     if func:
         @wraps(func)
         def newfunc(*args, **kwargs):
             if on_windows:
-                raise SkipTest("SSH currently not available on windows.")
+                pytest.skip("SSH currently not available on windows.",
+                            allow_module_level=True)
             check_and_raise()
             return func(*args, **kwargs)
         return newfunc
@@ -445,8 +460,9 @@ def skip_if_no_docker_container(container_name='testing-container'):
     def decorator(func):
         stdout, _ = Runner().run(['docker', 'ps'])
         if container_name not in stdout:
-            raise SkipTest("Docker container '{}' not running, skipping test \
-                {}".format(container_name, func.__name__))
+            pytest.skip("Docker container '{}' not running, "
+                        "skipping test  {}".format(container_name, func.__name__),
+                        allow_module_level=True)
         return func
     return decorator
 
@@ -467,8 +483,8 @@ def skip_if_no_docker_engine(func):
     try:
         session.info()
     except requests.exceptions.ConnectionError:
-        raise SkipTest("Docker not found, skipping test {}".format(
-            func.__name__))
+        pytest.skip("Docker not found, skipping test {}".format(func.__name__),
+                    allow_module_level=True)
     return func
 
 
@@ -480,23 +496,19 @@ def skip_if_no_singularity(func):
     -------
     func
         Decorator function
-    
-    Raises
-    ------
-    SkipTest
     """
     # Make sure singularity is installed
     try:
         stdout, _ = Runner().run(['singularity', '--version'])
     except Exception:
         msg = "Singularity not installed, skipping test {}"
-        raise SkipTest(msg.format(func.__name__))
+        pytest.skip(msg.format(func.__name__), allow_module_level=True)
 
     if stdout.startswith('2.2') or stdout.startswith('2.3'):
         # Running singularity instances and managing them didn't happen
         # until version 2.4. See: https://singularity.lbl.gov/archive/
         msg = "Singularity version >= 2.4 required, skipping test {}"
-        raise SkipTest(msg.format(func.__name__))
+        pytest.skip(msg.format(func.__name__), allow_module_level=True)
     return func
 
 @optional_args
@@ -581,29 +593,6 @@ def assert_re_in(regex, c, flags=0):
         if re.match(regex, e, flags=flags):
             return
     raise AssertionError("Not a single entry matched %r in %r" % (regex, c))
-
-
-def ignore_nose_capturing_stdout(func):
-    """Decorator workaround for nose's behaviour with redirecting sys.stdout
-
-    Needed for tests involving the runner and nose redirecting stdout.
-    Counter-intuitively, that means it needed for nosetests without '-s'.
-    See issue reported here:
-    https://code.google.com/p/python-nose/issues/detail?id=243&can=1&sort=-id&colspec=ID%20Type%20Status%20Priority%20Stars%20Milestone%20Owner%20Summary
-    """
-
-    @make_decorator(func)
-    def newfunc(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except AttributeError as e:
-            # Use args instead of .message which is PY2 specific
-            message = e.args[0] if e.args else ""
-            if message.find('StringIO') > -1 and message.find('fileno') > -1:
-                pass
-            else:
-                raise
-    return newfunc
 
 
 # List of most obscure filenames which might or not be supported by different

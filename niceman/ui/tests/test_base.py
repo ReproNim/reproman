@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-wstrth: 4; indent-tabs-mode: nil -*-
+# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -9,6 +9,8 @@
 """tests for UI switcher"""
 
 __docformat__ = 'restructuredtext'
+
+import pytest
 
 from .. import _UI_Switcher
 from ..dialog import DialogUI, ConsoleLog
@@ -28,7 +30,7 @@ def test_ui_switcher():
     assert(isinstance(ui.ui, ConsoleLog))
     assert_equal(str(ui.message), str(ui._ui.message))
     assert_not_equal(message_str, str(ui._ui.message))
-    with assert_raises(AttributeError):
+    with pytest.raises(AttributeError):
         ui.yesno
 
     ui.set_backend('annex')
@@ -47,7 +49,7 @@ def test_tests_ui():
 
     # should raise exception if not all responses were
     # used
-    with assert_raises(AssertionError):
+    with pytest.raises(AssertionError):
         with ui.add_responses(['a', 'bb']):
             assert_equal(ui.question("text"), 'a')
 

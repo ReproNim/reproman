@@ -17,14 +17,12 @@ import sys
 import logging
 from mock import patch
 from six import PY3
-import six.moves.builtins as __builtin__
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename
 from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
-from ..dochelpers import exc_str
 from ..utils import updated, HashableDict, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
 from os.path import join as opj, abspath, exists
@@ -38,7 +36,6 @@ from ..utils import file_basename
 from ..utils import expandpath, is_explicit_path
 from ..utils import any_re_search
 from ..utils import unique
-from ..utils import get_func_kwargs_doc
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
@@ -46,18 +43,16 @@ from ..utils import to_unicode
 from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
 
-from nose.tools import ok_, eq_, assert_false, assert_equal, assert_true
+from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
 from .utils import with_tempfile, assert_in, with_tree, to_binarystring, \
     is_unicode, is_binarystring, CommandError
-from .utils import SkipTest
 from .utils import assert_cwd_unchanged, skip_if_on_windows
 from .utils import assure_dict_from_str, assure_list_from_str
 from .utils import ok_generator
 from .utils import assert_not_in
 from .utils import assert_raises
 from .utils import ok_startswith
-from .utils import skip_if_no_module
 
 
 @with_tempfile(mkdir=True)
@@ -111,7 +106,8 @@ def test_swallow_logs():
         eq_(cm.out, 'debug1\ninfo\n')  # not even visible at level 9
 
 
-def _check_setup_exceptionhook(interactive=None):
+@pytest.mark.parametrize("interactive", [True, False])
+def test_setup_exceptionhook(interactive):
     old_exceptionhook = sys.excepthook
 
     post_mortem_tb = []
@@ -137,9 +133,9 @@ def _check_setup_exceptionhook(interactive=None):
             if PY3:
                 # Happens under tox environment but not in manually crafted ones -- not yet sure
                 # what it is about but --dbg does work with python3 so lettting it skip for now
-                raise SkipTest("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
+                pytest.skip("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
             assert_in('Traceback (most recent call last)', cmo.err)
-            assert_in('in _check_setup_exceptionhook', cmo.err)
+            assert_in('in test_setup_exceptionhook', cmo.err)
             if interactive:
                 assert_equal(post_mortem_tb[0], tb_)
             else:
@@ -147,11 +143,6 @@ def _check_setup_exceptionhook(interactive=None):
                 # assert_in('We cannot setup exception hook', cml.out)
 
     eq_(old_exceptionhook, sys.excepthook)
-
-
-def test_setup_exceptionhook():
-    for tval in [True, False]:
-        yield _check_setup_exceptionhook, tval
 
 
 def test_md5sum():
@@ -182,7 +173,8 @@ def test_updated():
 
 
 def test_get_local_file_url_windows():
-    raise SkipTest("TODO")
+    pytest.skip("TODO")
+
 
 @assert_cwd_unchanged
 def test_getpwd_basic():
@@ -225,7 +217,7 @@ def test_getpwd_symlink(tdir=None):
     eq_(getpwd(), pwd_orig)
 
     assert_false(exists(s2dir))
-    with assert_raises(OSError):
+    with pytest.raises(OSError):
         with chpwd(s2dir):
             pass
     with chpwd(s2dir, mkdir=True):
@@ -307,7 +299,6 @@ def test_find_files():
     for f in files3:
         ok_startswith(basename(f), 'test_')
 
-from .utils import with_tree
 @with_tree(tree={
     '.git': {
         '1': '2'
@@ -370,7 +361,7 @@ def test_is_explicit_path():
 
 def test_make_tempfile():
     # check if mkdir, content conflict caught
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         with make_tempfile(content="blah", mkdir=True):  # pragma: no cover
             pass
 
@@ -492,7 +483,7 @@ def test_is_subpath(tmpdir):
 
 
 def test_line_profile():
-    skip_if_no_module('line_profiler')
+    pytest.importorskip("line_profiler")
 
     @line_profile
     def f(j):

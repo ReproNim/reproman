@@ -6,7 +6,6 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-import os
 
 from ..reprozip import ReprozipProvenance
 from .constants import REPROZIP_SPEC2_YML_FILENAME

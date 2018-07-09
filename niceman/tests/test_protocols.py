@@ -14,8 +14,8 @@ Note: DryRunProtocol and NullProtocol are already (kind of) tested within
 
 import os
 from os.path import normpath
-from nose.tools import ok_, eq_, assert_is, assert_equal, assert_greater, \
-    assert_raises, assert_in, assert_is_instance, assert_true, assert_false
+from .utils import ok_, assert_is, assert_equal, \
+    assert_in, assert_is_instance, assert_true, assert_false
 
 from ..support.protocol import DryRunProtocol, DryRunExternalsProtocol, \
     NullProtocol, ExecutionTimeProtocol, ExecutionTimeExternalsProtocol, \
@@ -41,8 +41,7 @@ def test_protocol_commons(protocol_file=None):
         assert_equal(len(protocol), 2 if protocol_class != NullProtocol else 0)
 
         # test iterable:
-        assert_raises(AssertionError, assert_raises, TypeError, iter,
-                      protocol)
+        iter(protocol)
         for section in protocol:
             assert_in('command', section)
         for item in range(len(protocol)):
@@ -162,7 +161,7 @@ def test_DryRunProtocol(path=None):
     # path doesn't exist, so an actual run would raise Exception,
     # but a dry run wouldn't:
     with swallow_logs() as cml:
-        assert_raises(AssertionError, assert_raises, Exception, runner.run, cmd)
+        runner.run(cmd)
     assert_equal(len(protocol), 1)
 
     return  # TODO without GitRepo
@@ -182,7 +181,7 @@ def test_DryRunExternalsProtocol(path=None):
 
     # path doesn't exist, so an actual run would raise Exception,
     # but a dry run wouldn't:
-    assert_raises(AssertionError, assert_raises, Exception, runner.run, cmd)
+    runner.run(cmd)
     assert_equal(len(protocol), 1)
 
     return  # TODO without GitRepo

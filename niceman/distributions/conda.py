@@ -251,16 +251,17 @@ class CondaDistribution(Distribution):
         name = os.path.basename(os.path.normpath(env.path))
         d["name"] = name
         # Collect channels
-        d["channels"] = [c["name"] for c in env.channels]
+        d["channels"] = [c.name for c in env.channels]
         # Collect packages (dependencies) with no installer
-        d["dependencies"] = [CondaDistribution.format_conda_package(**p)
-                             for p in env.packages
-                             if p.get("installer") is None]
+        d["dependencies"] = [
+            CondaDistribution.format_conda_package(p.name, p.version, p.build)
+            for p in env.packages
+            if p.installer is None]
         #            p.get("name"), p.get("version"), p.get("build"))
         # Collect pip-installed dependencies
-        pip_deps = [CondaDistribution.format_pip_package(**p)
+        pip_deps = [CondaDistribution.format_pip_package(p.name, p.version)
                     for p in env.packages
-                    if p.get("installer") is "pip"]
+                    if p.installer is "pip"]
         if (pip_deps):
             d["dependencies"].append({"pip": pip_deps})
         # Add the prefix
@@ -385,10 +386,6 @@ class CondaTracer(DistributionTracer):
 
     def _is_conda_env_path(self, path):
         return self._session.exists('%s/conda-meta' % path)
-
-    def _is_conda_root_path(self, path):
-        return all(map(self._session.exists, ('%s/%s' % (path, d) for d in
-                                              ('bin', 'envs', 'conda-meta'))))
 
     def identify_distributions(self, paths):
         conda_paths = set()
