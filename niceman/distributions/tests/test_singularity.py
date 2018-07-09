@@ -19,7 +19,7 @@ from ...tests.utils import skip_if_no_singularity, skip_if_no_network
 
 @skip_if_no_network
 @skip_if_no_singularity
-def test_docker_trace():
+def test_singularity_trace():
 
     # Download and set up singularity image file
     runner = Runner()
