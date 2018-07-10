@@ -32,7 +32,7 @@ lgr = logging.getLogger("niceman.distributions.venv")
 class VenvPackage(Package):
     name = attrib(default=attr.NOTHING)
     version = attrib(default=attr.NOTHING)
-    local = attrib(default=attr.NOTHING)
+    local = attrib(default=False)
     location = attrib()
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))
@@ -100,7 +100,6 @@ class VenvTracer(DistributionTracer):
     def identify_distributions(self, files):
         unknown_files = set(files)
         found_package_count = 0
-        total_file_count = len(unknown_files)
 
         venv_paths = map(self._get_venv_path, files)
         venv_paths = set(filter(None, venv_paths))

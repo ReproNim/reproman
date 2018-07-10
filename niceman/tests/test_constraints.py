@@ -10,12 +10,10 @@
 
 
 import sys
-import os
-from os.path import isabs, abspath, join as opj, normpath
 from six import string_types, PY2
 
 from ..support import constraints as ct
-from nose.tools import assert_equal, assert_raises, eq_, ok_
+from .utils import assert_equal, assert_raises
 
 
 def test_int():

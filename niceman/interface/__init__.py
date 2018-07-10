@@ -38,5 +38,6 @@ _group_misc = (
         # ('niceman.interface.trace', 'Trace'),
         # ('niceman.interface.shell', 'Shell'),
         ('niceman.interface.retrace', 'Retrace'),
+        ('niceman.interface.diff', 'Diff'),
         ('niceman.interface.test', 'Test'),
     ])

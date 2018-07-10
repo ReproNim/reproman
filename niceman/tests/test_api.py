@@ -10,12 +10,9 @@
 
 import re
 from inspect import getargspec
+import pytest
 
-from nose.tools import assert_true, assert_false
-from nose import SkipTest
-from nose.tools import eq_
-
-from niceman.tests.utils import assert_in
+from .utils import assert_true, assert_false, eq_
 
 
 def test_basic_setup():
@@ -30,26 +27,9 @@ def test_basic_setup():
     assert_false(list(filter(lambda s: s.startswith('_') and not re.match('__.*__', s), dir(api))))
 
 
-def _test_consistent_order_of_args(intf, spec_posargs):
-    f = getattr(intf, '__call__')
-    args, varargs, varkw, defaults = getargspec(f)
-    # now verify that those spec_posargs are first among args
-    if not spec_posargs:
-        raise SkipTest("no positional args") # print intf, "skipped"
-#    else:
-#        print intf, spec_posargs
-    if intf.__name__ == 'Save':
-        # it makes sense there to have most command argument first
-        # -- the message. But we don't enforce it on cmdline so it is
-        # optional
-        spec_posargs.add('message')
-    eq_(set(args[:len(spec_posargs)]), spec_posargs)
-
-
-def test_consistent_order_of_args():
-    from niceman.interface.base import get_interface_groups
-
+def get_interface_specs():
     from importlib import import_module
+    from niceman.interface.base import get_interface_groups
 
     for grp_name, grp_descr, interfaces in get_interface_groups():
         for intfspec in interfaces:
@@ -65,4 +45,18 @@ def test_consistent_order_of_args():
                 if param.cmd_args and not param.cmd_args[0].startswith('-')
             }
             # we have information about positional args
-            yield _test_consistent_order_of_args, intf, spec_posargs
+            yield intf, spec_posargs
+
+
+interface_specs = list(get_interface_specs())
+
+
+@pytest.mark.parametrize("intf,spec_posargs", interface_specs,
+                         ids=[x[0].__name__ for x in interface_specs])
+def test_consistent_order_of_args(intf, spec_posargs):
+    f = getattr(intf, '__call__')
+    args, varargs, varkw, defaults = getargspec(f)
+    # now verify that those spec_posargs are first among args
+    if not spec_posargs:
+        pytest.skip("no positional args")
+    eq_(set(args[:len(spec_posargs)]), spec_posargs)

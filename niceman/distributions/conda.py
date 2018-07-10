@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# emacs: -*- mode: python; py-indent-offset: 8; tab-width: 6; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -103,6 +103,7 @@ class CondaPackage(Package):
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))
 
+    _cmp_fields = ('name', 'build')
 
 @attr.s
 class CondaChannel(SpecObject):
@@ -131,6 +132,8 @@ class CondaDistribution(Distribution):
     python_version = attrib()
     platform = attrib()
     environments = TypedList(CondaEnvironment)
+
+    _cmp_field = ('path',)
 
     def initiate(self, environment):
         """
@@ -216,6 +219,10 @@ class CondaDistribution(Distribution):
 
         return
 
+    @property
+    def packages(self):
+        return [ p for env in self.environments for p in env.packages ]
+
     @staticmethod
     def get_simple_python_version(python_version):
         # Get the simple python version from the conda info string
@@ -244,16 +251,17 @@ class CondaDistribution(Distribution):
         name = os.path.basename(os.path.normpath(env.path))
         d["name"] = name
         # Collect channels
-        d["channels"] = [c["name"] for c in env.channels]
+        d["channels"] = [c.name for c in env.channels]
         # Collect packages (dependencies) with no installer
-        d["dependencies"] = [CondaDistribution.format_conda_package(**p)
-                             for p in env.packages
-                             if p.get("installer") is None]
+        d["dependencies"] = [
+            CondaDistribution.format_conda_package(p.name, p.version, p.build)
+            for p in env.packages
+            if p.installer is None]
         #            p.get("name"), p.get("version"), p.get("build"))
         # Collect pip-installed dependencies
-        pip_deps = [CondaDistribution.format_pip_package(**p)
+        pip_deps = [CondaDistribution.format_pip_package(p.name, p.version)
                     for p in env.packages
-                    if p.get("installer") is "pip"]
+                    if p.installer is "pip"]
         if (pip_deps):
             d["dependencies"].append({"pip": pip_deps})
         # Add the prefix
@@ -378,10 +386,6 @@ class CondaTracer(DistributionTracer):
 
     def _is_conda_env_path(self, path):
         return self._session.exists('%s/conda-meta' % path)
-
-    def _is_conda_root_path(self, path):
-        return all(map(self._session.exists, ('%s/%s' % (path, d) for d in
-                                              ('bin', 'envs', 'conda-meta'))))
 
     def identify_distributions(self, paths):
         conda_paths = set()

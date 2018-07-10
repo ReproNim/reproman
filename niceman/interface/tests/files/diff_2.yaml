@@ -1,0 +1,61 @@
+# NICEMAN Environment Configuration File
+version: 0.0.1
+distributions:
+- name: conda
+  path: /home/kyle/miniconda3
+  conda_version: 4.4.10
+  python_version: 3.6.3.final.0
+  platform: linux-64
+  environments:
+  - name: bar
+    path: /home/kyle/miniconda3/envs/bar
+    packages:
+    - name: c_lib2only
+      build: py36_0
+      version: 2:1.6.4-3
+    - name: c_libversdiff
+      build: py36_0
+      version: 2.4.7
+    - name: c_libsame
+      build: py36_0
+      version: 2.4.6
+    - name: c_libbuilddiff
+      build: hdf63c60_3
+      version: 2.4.6
+- name: debian
+  packages:
+  - name: libsame
+    architecture: x86
+    version: 2.4.6
+  - name: libarchdiff
+    architecture: amd64
+    version: 2.4.6
+  - name: libversdiff
+    architecture: x86
+    version: 2.4.7
+  - name: lib2only
+    architecture: x86
+    version: 2:1.6.4-3
+- name: git
+  packages:
+  - path: /path/2/to/common/git/repo
+    root_hexsha: 99ac7f69a070077038a9eb9eca61c028db97181d
+    hexsha: d057b128759d80a47500adba0c4d3e95092bb87f
+  - path: /path/to/git/repo/2/only
+    root_hexsha: 64b1865267891fdd1a45251ca6f32df213dc546e
+    hexsha: 3ad020f75a51d7a40f13407d5b114f4b048a27ec
+  - path: /path/2/to/different/git/commit
+    root_hexsha: 5b8267181f6cae8dc37aeef21ea54171bd932522
+    hexsha: 9d199f7fa7e6f691719e0860c5cf81193e815ad5
+- name: svn
+  packages:
+  - path: /path/2/to/common/svn/repo
+    revision: 2
+    uuid: 6bf8eec7-191d-4897-a690-59dca252fbc5
+  - path: /path/to/svn/repo/2/only
+    revision: 6
+    uuid: d7192e3a-60de-5caa-ccdc9525dea75aabf
+  - path: /path/2/to/different/svn/commit
+    revision: 14
+    uuid: 95e4b738-84c7-154c-f082-34d40e21fdd4
+files: [/etc/c, /etc/b]

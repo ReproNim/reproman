@@ -178,7 +178,10 @@ class DockerSession(POSIXSession):
             raise NotImplementedError("passing env variables to docker session execution")
 
         if cwd:
-            raise NotImplementedError("handle cwd for docker")
+            # TODO: implement
+            # raise NotImplementedError("handle cwd for docker")
+            lgr.warning("cwd is not handled in docker yet")
+            pass
         # if command_env:
             # TODO: might not work - not tested it
             # command = ['export %s=%s' % k for k in command_env.items()] + command

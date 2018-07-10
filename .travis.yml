@@ -80,6 +80,11 @@ script:
   # Generate documentation and run doctests
   - PYTHONPATH=$PWD make -C docs html doctest
 
+branches:
+  except:
+  - 3rd-repronimed
+  - 3rd
+
 after_success:
   - codecov
 

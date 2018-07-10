@@ -61,12 +61,17 @@ class Retrace(Interface):
             metavar='output_file',
             constraints=EnsureStr() | EnsureNone(),
         ),
+        # TODO: make a common arg
+        resource=Parameter(
+            args=("--resource",),
+            doc="TODO"
+        )
     )
 
     # TODO: add a session/resource so we could trace within
     # arbitrary sessions
     @staticmethod
-    def __call__(path=None, spec=None, output_file=None):
+    def __call__(path=None, spec=None, output_file=None, resource=None):
         # heavy import -- should be delayed until actually used
 
         if not (spec or path):
@@ -87,7 +92,11 @@ class Retrace(Interface):
         # The tracers assume normalized paths.
         paths = list(map(normpath, paths))
 
-        session = get_local_session()
+        if resource:
+            # TODO: if not a session already, request a session from the resource
+            session = resource
+        else:
+            session = get_local_session()
 
         # TODO: at the moment assumes just a single distribution etc.
         #       Generalize

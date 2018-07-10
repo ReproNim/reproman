@@ -32,6 +32,9 @@ lgr = logging.getLogger('niceman.session')
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
 
+    INTERNAL_COMMANDS = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
+
+
     def __attrs_post_init__(self):
         """
         Maintain both current and future session environments.
@@ -244,8 +247,8 @@ class Session(object):
         CommandError
             Exception if an invalid command argument is passed in.
         """
-        authorized_commands = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
-        if command not in authorized_commands:
+
+        if command not in self.INTERNAL_COMMANDS:
             raise CommandError(cmd=command, msg="Invalid command")
 
         pargs = [] # positional args to pass to session command
@@ -438,7 +441,9 @@ class POSIXSession(Session):
     
     """
 
-    _GET_ENVIRON_CMD = ['python', '-c', 'import os,json,sys; sys.stdout.write(json.dumps(dict(os.environ)))']
+    # -0 is not provided by busybox's env command.  So if we decide to make it
+    # even more portable - something to be done
+    _GET_ENVIRON_CMD = ['env', '-0']
 
     @borrowdoc(Session)
     def query_envvars(self):
@@ -460,7 +465,17 @@ class POSIXSession(Session):
         object
             Decoded representation of the JSON string
         """
-        return json.loads(to_unicode(out))
+        output = {}
+        for line in to_unicode(out).split('\0'):
+            if not line:
+                continue
+            split = line.split('=', 1)
+            if len(split) != 2:
+                lgr.warning(
+                    "Failed to split envvar definition into key=value. Got %s", line)
+                continue
+            output[split[0]] = split[1]
+        return output
 
     @borrowdoc(Session)
     def source_script(self, command, permanent=False, diff=True, shell=None):

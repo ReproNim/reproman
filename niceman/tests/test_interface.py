@@ -10,7 +10,8 @@
 """
 
 import re
-from nose.tools import assert_is, assert_equal, assert_raises, assert_true
+import pytest
+from .utils import assert_is, assert_equal, assert_raises, assert_true
 
 from ..support.param import Parameter
 from ..support import constraints as cnstr
@@ -68,10 +69,10 @@ def test_param():
     assert_true('must be a string' in autodoc)
     assert_true('int or str' in autodoc)
 
-    with assert_raises(ValueError) as cmr:
+    with pytest.raises(ValueError) as cmr:
         Parameter(unknown_arg=123)
     assert_in('Detected unknown argument(s) for the Parameter: unknown_arg',
-              str(cmr.exception))
+              str(cmr))
 
 
 def test_interface():

@@ -15,6 +15,8 @@ from six.moves import StringIO
 import six.moves.builtins as __builtin__
 
 from mock import patch
+import pytest
+
 from ...tests.utils import eq_
 from ...tests.utils import assert_raises
 from ...tests.utils import assert_re_in
@@ -70,9 +72,12 @@ def test_question_choices():
     assert_re_in(".*ERROR: .incorrect. is not among choices.*", out.getvalue())
 
 
-def _test_progress_bar(backend, len, increment):
+@pytest.mark.parametrize("backend", progressbars)
+@pytest.mark.parametrize("l", [0, 4, 10, 1000])
+@pytest.mark.parametrize("increment", [True, False])
+def test_progress_bar(backend, l, increment):
     out = StringIO()
-    fill_str = ('123456890' * (len//10))[:len]
+    fill_str = ('123456890' * (l//10))[:l]
     pb = DialogUI(out).get_progressbar('label', fill_str, maxval=10, backend=backend)
     pb.start()
     # we can't increment 11 times
@@ -88,11 +93,3 @@ def _test_progress_bar(backend, len, increment):
             assert_in('ETA', pstr)
     pb.finish()
     ok_endswith(out.getvalue(), '\n')
-
-
-def test_progress_bar():
-    # More of smoke testing given various lengths of fill_text
-    for backend in progressbars:
-        for l in 0, 4, 10, 1000:
-            for increment in True, False:
-                yield _test_progress_bar, backend, l, increment

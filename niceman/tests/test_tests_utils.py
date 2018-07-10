@@ -11,7 +11,6 @@ import platform
 import sys
 import os
 import random
-import traceback
 import logging
 
 try:
@@ -21,31 +20,30 @@ except ImportError:
     bs4 = None
 
 from glob import glob
-from os.path import exists, join as opj, basename
+from os.path import exists, basename
 
-from six import PY2, PY3
+from six import PY2
 from six import text_type
 from six.moves.urllib.request import urlopen
 
 from mock import patch
-from nose.tools import assert_in, assert_not_in, assert_true
-from nose import SkipTest
+from .utils import assert_in, assert_not_in, assert_true
+import pytest
 
 from ..utils import getpwd, chpwd
 
 from .utils import eq_, ok_, assert_false, ok_startswith, nok_startswith, \
     with_tempfile, with_tree, \
     rmtemp, OBSCURE_FILENAMES, get_most_obscure_supported_name, \
-    swallow_outputs, swallow_logs, \
+    swallow_logs, \
     on_windows, assert_raises, assert_cwd_unchanged, serve_path_via_http, \
-    ok_symlink, assert_true, ok_good_symlink, ok_broken_symlink, \
+    ok_symlink, ok_good_symlink, ok_broken_symlink, \
     assert_is_subset_recur
 
 from .utils import ok_generator
 from .utils import assert_re_in
 from .utils import skip_if_no_network
 from .utils import run_under_dir
-from .utils import skip_if
 from .utils import ok_file_has_content
 from .utils import without_http_proxy
 
@@ -74,26 +72,19 @@ def test_nested_with_tempfile_basic(f1=None, f2=None):
     ok_(not os.path.exists(f2))
 
 
-# And the most obscure case to test.  Generator for the test is
-# used as well to verify that every one of those functions adds new argument
-# to the end of incoming arguments.
+# And the most obscure case to test.
+
 @with_tempfile(prefix="TEST", suffix='big')
 @with_tree((('f1.txt', 'load'),))
 @with_tempfile(suffix='.cfg')
 @with_tempfile(suffix='.cfg.old')
-def check_nested_with_tempfile_parametrized_surrounded(
-        param, f0, tree, f1, f2):
-    eq_(param, "param1")
+def test_nested_with_tempfile_surrounded(f0=None, tree=None, f1=None, f2=None):
     ok_(f0.endswith('big'), msg="got %s" % f0)
     ok_(os.path.basename(f0).startswith('TEST'), msg="got %s" % f0)
     ok_(os.path.exists(os.path.join(tree, 'f1.txt')))
     ok_(f1 != f2)
     ok_(f1.endswith('.cfg'), msg="got %s" % f1)
     ok_(f2.endswith('.cfg.old'), msg="got %s" % f2)
-
-
-def test_nested_with_tempfile_parametrized_surrounded():
-    yield check_nested_with_tempfile_parametrized_surrounded, "param1"
 
 
 @with_tempfile(content="testtest")
@@ -107,7 +98,7 @@ def test_with_tempfile_content_raises_on_mkdir():
     def t():  # pragma: no cover
         raise AssertionError("must not be run")
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         # after this commit, it will check when invoking, not when decorating
         t()
 
@@ -161,7 +152,7 @@ def test_get_most_obscure_supported_name():
 def test_keeptemp_via_env_variable():
 
     if os.environ.get('NICEMAN_TESTS_KEEPTEMP'):
-        raise SkipTest("We have env variable set to preserve tempfiles")
+        pytest.skip("We have env variable set to preserve tempfiles")
 
     files = []
 
@@ -187,7 +178,7 @@ def test_keeptemp_via_env_variable():
 def test_ok_symlink_helpers(tmpfile=None):
 
     if on_windows:
-        raise SkipTest("no sylmlinks on windows")
+        pytest.skip("no sylmlinks on windows")
 
     assert_raises(AssertionError, ok_symlink, tmpfile)
     assert_raises(AssertionError, ok_good_symlink, tmpfile)
@@ -245,7 +236,9 @@ def test_ok_generator():
     assert_raises(AssertionError, ok_generator, func(1))
 
 
-def _test_assert_Xwd_unchanged(func):
+@pytest.mark.parametrize("func", [os.chdir, chpwd],
+                         ids=["chdir", "chpwd"])
+def test_assert_Xwd_unchanged(func):
     orig_cwd = os.getcwd()
     orig_pwd = getpwd()
 
@@ -253,7 +246,7 @@ def _test_assert_Xwd_unchanged(func):
     def do_chdir():
         func(os.pardir)
 
-    with assert_raises(AssertionError) as cm:
+    with pytest.raises(AssertionError) as cm:
         do_chdir()
 
     eq_(orig_cwd, os.getcwd(),
@@ -261,12 +254,10 @@ def _test_assert_Xwd_unchanged(func):
     eq_(orig_pwd, getpwd(),
         "assert_cwd_unchanged didn't return us back to pwd %s" % orig_pwd)
 
-def test_assert_Xwd_unchanged():
-    yield _test_assert_Xwd_unchanged, os.chdir
-    yield _test_assert_Xwd_unchanged, chpwd
 
-
-def _test_assert_Xwd_unchanged_ok_chdir(func):
+@pytest.mark.parametrize("func", [os.chdir, chpwd],
+                         ids=["chdir", "chpwd"])
+def test_assert_Xwd_unchanged_ok_chdir(func):
     # Test that we are not masking out other "more important" exceptions
 
     orig_cwd = os.getcwd()
@@ -284,9 +275,6 @@ def _test_assert_Xwd_unchanged_ok_chdir(func):
             "assert_cwd_unchanged didn't return us back to cwd %s" % orig_pwd)
         assert_not_in("Mitigating and changing back", cml.out)
 
-def test_assert_Xwd_unchanged_ok_chdir():
-    yield _test_assert_Xwd_unchanged_ok_chdir, os.chdir
-    yield _test_assert_Xwd_unchanged_ok_chdir, chpwd
 
 def test_assert_cwd_unchanged_not_masking_exceptions():
     # Test that we are not masking out other "more important" exceptions
@@ -299,14 +287,13 @@ def test_assert_cwd_unchanged_not_masking_exceptions():
         raise ValueError("error exception")
 
     with swallow_logs(new_level=logging.WARN) as cml:
-        with assert_raises(ValueError) as cm:
+        with pytest.raises(ValueError) as cm:
             do_chdir_value_error()
         # retrospect exception
         if PY2:
             # could not figure out how to make it legit for PY3
             # but on manual try -- works, and exception traceback is not masked out
-            exc_info = sys.exc_info()
-            assert_in('raise ValueError("error exception")', traceback.format_exception(*exc_info)[-2])
+            cm.match('error exception')
 
         eq_(orig_cwd, os.getcwd(),
             "assert_cwd_unchanged didn't return us back to %s" % orig_cwd)
@@ -325,21 +312,37 @@ def test_assert_cwd_unchanged_not_masking_exceptions():
         assert_not_in("Mitigating and changing back", cml.out)
 
 
-@with_tempfile(mkdir=True)
-def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
+def _test_fpaths():
+    for test_fpath in ['test1.txt',
+                       'test_dir/test2.txt',
+                       'test_dir/d2/d3/test3.txt',
+                       'file with space test4',
+                       u'Джэйсон',
+                       get_most_obscure_supported_name(),
+                      ]:
 
+        yield test_fpath
+
+    # just with the last one check that we did remove proxy setting
+    with patch.dict('os.environ', {'http_proxy': 'http://127.0.0.1:9/'}):
+        yield test_fpath
+
+
+@pytest.mark.parametrize("test_fpath", list(_test_fpaths()))
+def test_serve_path_via_http(test_fpath, tmpdir): # pragma: no cover
+    tmpdir = str(tmpdir)  # Downstream code fails with a py.path.local object.
     # First verify that filesystem layer can encode this filename
     # verify first that we could encode file name in this environment
     try:
         filesysencoding = sys.getfilesystemencoding()
         test_fpath_encoded = test_fpath.encode(filesysencoding)
     except UnicodeEncodeError:
-        raise SkipTest("Environment doesn't support unicode filenames")
+        pytest.skip("Environment doesn't support unicode filenames")
     if test_fpath_encoded.decode(filesysencoding) != test_fpath:
-        raise SkipTest("Can't convert back/forth using %s encoding"
-                       % filesysencoding)
+        pytest.skip("Can't convert back/forth using %s encoding"
+                    % filesysencoding)
 
-    test_fpath_full = text_type(os.path.join(tmp_dir, test_fpath))
+    test_fpath_full = text_type(os.path.join(tmpdir, test_fpath))
     test_fpath_dir = text_type(os.path.dirname(test_fpath_full))
 
     if not os.path.exists(test_fpath_dir):
@@ -349,7 +352,7 @@ def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
         test_txt = 'some txt and a randint {}'.format(random.randint(1, 10)) 
         f.write(test_txt)
 
-    @serve_path_via_http(tmp_dir)
+    @serve_path_via_http(tmpdir)
     def test_path_and_url(path, url):
 
         # @serve_ should remove http_proxy from the os.environ if was present
@@ -369,24 +372,8 @@ def _test_serve_path_via_http(test_fpath, tmp_dir): # pragma: no cover
         assert(test_txt == html)
 
     if bs4 is None:
-        raise SkipTest("bs4 is absent")
+        pytest.skip("bs4 is absent")
     test_path_and_url()
-
-
-def test_serve_path_via_http():
-    for test_fpath in ['test1.txt',
-                       'test_dir/test2.txt',
-                       'test_dir/d2/d3/test3.txt',
-                       'file with space test4',
-                       u'Джэйсон',
-                       get_most_obscure_supported_name(),
-                      ]:
-
-        yield _test_serve_path_via_http, test_fpath
-
-    # just with the last one check that we did remove proxy setting
-    with patch.dict('os.environ', {'http_proxy': 'http://127.0.0.1:9/'}):
-        yield _test_serve_path_via_http, test_fpath
 
 
 def test_without_http_proxy():
@@ -402,7 +389,7 @@ def test_without_http_proxy():
     with patch.dict('os.environ', {'http_proxy': 'http://127.0.0.1:9/'}):
         check(1)
         check(1, "custom")
-        with assert_raises(AssertionError):
+        with pytest.raises(AssertionError):
             check(1, "wrong")
 
     with patch.dict('os.environ', {'https_proxy': 'http://127.0.0.1:9/'}):
@@ -443,28 +430,14 @@ def test_skip_if_no_network():
             return a1
         eq_(somefunc.tags, ['network'])
         with patch.dict('os.environ', {'NICEMAN_TESTS_NONETWORK': '1'}):
-            assert_raises(SkipTest, somefunc, 1)
+            assert_raises(pytest.skip.Exception, somefunc, 1)
         with patch.dict('os.environ', {}):
             eq_(somefunc(1), 1)
         # and now if used as a function, not a decorator
         with patch.dict('os.environ', {'NICEMAN_TESTS_NONETWORK': '1'}):
-            assert_raises(SkipTest, skip_if_no_network)
+            assert_raises(pytest.skip.Exception, skip_if_no_network)
         with patch.dict('os.environ', {}):
             eq_(skip_if_no_network(), None)
-
-
-def test_skip_if():
-
-    with assert_raises(SkipTest):
-        @skip_if(True)
-        def f():
-            raise AssertionError("must have not been ran")
-        f()
-
-    @skip_if(False)
-    def f():
-        return "magical"
-    eq_(f(), 'magical')
 
 
 @assert_cwd_unchanged
@@ -530,8 +503,8 @@ def test_skip_ssh():
 
         with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': "1"}):
             assert func(2) == 4
-    except SkipTest:
+    except pytest.skip.Exception:
         raise AssertionError("must have not skipped")
 
     with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': ""}):
-        assert_raises(SkipTest, func, 2)
+        assert_raises(pytest.skip.Exception, func, 2)

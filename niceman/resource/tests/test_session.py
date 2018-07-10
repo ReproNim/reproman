@@ -9,15 +9,17 @@
 
 import datetime
 import docker
+import logging
 import os
 import paramiko
 import pytest
 import tempfile
 import uuid
 
-from ..session import get_updated_env, Session, POSIXSession
+from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
+from ...utils import swallow_logs
 from ..shell import ShellSession
 from ..ssh import SSHSession, PTYSSHSession
 from ...tests.utils import skip_ssh
@@ -270,7 +272,11 @@ def test_session_abstract_methods(testing_container, resource_session,
 
     # Check _execute_command with cwd set
     # TODO: Implement cwd parameter for _execute_command()
-    if session.__class__.__name__ != 'ShellSession':
+    if 'DockerSession' in session.__class__.__name__:
+        with swallow_logs(new_level=logging.WARN) as log:
+            session._execute_command(['cat', '/etc/hosts'], cwd='/tmp')
+            assert "cwd is not handled in docker yet" in log.out
+    elif session.__class__.__name__ != 'ShellSession':
         with pytest.raises(NotImplementedError):
             out, err = session._execute_command(['cat', '/etc/hosts'],
                 cwd='/tmp')

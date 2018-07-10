@@ -57,6 +57,8 @@ requires = {
         'pycrypto',
         'pyOpenSSL==16.2.0',
         'requests',
+        'reprozip',
+        'rpaths',
     ],
     'debian': [
         'python-debian',
@@ -79,9 +81,7 @@ requires = {
     ],
     'tests': [
         'mock',
-        'pytest',
-        # some of the tests still use nose.tools
-        'nose>=1.3.4',
+        'pytest>=3.3.0',
     ]
 }
 

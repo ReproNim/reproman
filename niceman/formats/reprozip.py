@@ -75,12 +75,11 @@ class ReprozipProvenance(Provenance):
 
         src_yaml = self._src
         if limit in {'all', 'packaged'}:
-            if 'packages' in src_yaml:
-                for package in src_yaml['packages']:
-                    if 'files' in package:
-                        files.update(package['files'])
+            for package in src_yaml.get('packages', []) or []:
+                if 'files' in package:
+                    files.update(package.get('files', []))
 
         if limit in {'all', 'loose'} and 'other_files' in src_yaml:
-            files.update(src_yaml["other_files"])
+            files.update(src_yaml.get("other_files", []))
 
         return files
