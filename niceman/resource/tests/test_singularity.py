@@ -25,12 +25,13 @@ from ...tests.utils import skip_if_no_singularity, skip_if_no_network, \
 @skip_if_no_singularity
 def test_singularity_resource_class():
 
-    with swallow_logs(new_level=logging.DEBUG) as log:
+    # Set working directory to a scratch directory since we will be creating
+    # Singularity image files during testing.
+    orig_cwd = os.getcwd()
+    tempdir = tempfile.mkdtemp()
+    os.chdir(tempdir)
 
-        # Set working directory to a scratch directory since we will be creating
-        # Singularity image files during testing.
-        tempdir = tempfile.mkdtemp()
-        os.chdir(tempdir)
+    with swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test creating a new singularity container instance.
         resource = Singularity(name='foo',
@@ -79,3 +80,6 @@ def test_singularity_resource_class():
         # Test retrieving info from a non-existent instance.
         info = resource.get_instance_info()
         assert info is None
+
+    # Return to original working directory
+    os.chdir(orig_cwd)
