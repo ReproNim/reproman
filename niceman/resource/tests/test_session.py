@@ -24,12 +24,13 @@ from ..shell import ShellSession
 from ..ssh import SSHSession, PTYSSHSession
 from ...tests.utils import skip_ssh
 from ...tests.fixtures import get_docker_fixture
+from ...consts import TEST_SSH_DOCKER_DIGEST
 
 
 # Note: due to skip_ssh right here, it would skip the entire module with
 # all the tests here if no ssh testing is requested
 testing_container = skip_ssh(get_docker_fixture)(
-    'rastasheep/ubuntu-sshd:14.04',
+    TEST_SSH_DOCKER_DIGEST,
     name='testing-container',
     portmaps={
         49000: 22
