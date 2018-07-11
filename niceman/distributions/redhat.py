@@ -11,6 +11,7 @@ import attr
 
 from six.moves import map
 
+import datetime
 import logging
 import re
 
@@ -330,8 +331,19 @@ class RPMTracer(DistributionTracer):
                 key, value = line.split(':', 1)
                 key = key.strip()
                 value = value.strip()
+                if key in ['Repo-pkgs', 'Repo-size']:
+                    continue
                 if key == ('Repo-id'):
                     values = {'id': value}
+                elif key in ['Repo-pkgs', 'Repo-size']:
+                    continue
+                elif key == 'Repo-expire':
+                    delta, last = re.match(r'(\d+) second\(s\) \(last: (.*)\)',
+                        value).groups()
+                    values['expire'] = (datetime.datetime.strptime(last, "%c")
+                        + datetime.timedelta(0, int(delta))).strftime("%c")
+                elif key == 'Repo-baseurl':
+                    values['baseurl'] = re.match(r'(\S+)', value).groups()[0]
                 else:
                     # Map the field labels returned by the sytem to the attr
                     # fields in the RPMSource class.

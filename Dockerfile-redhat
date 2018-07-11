@@ -25,7 +25,7 @@ FROM $IMAGE
 RUN yum install -y epel-release \
     && yum groupinstall -y 'Development Tools' \
     && yum install -y python-devel.x86_64 python-crypto tar \
-    python-argparse.noarch python-pip vim wget \
+    python-argparse.noarch python-pip vim wget sqlite-devel \
     && pip install --upgrade pip setuptools chardet
 
 # Create a container user account that matches a system user account.

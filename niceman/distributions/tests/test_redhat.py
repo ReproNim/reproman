@@ -46,8 +46,6 @@ distributions:
     name: CentOS-7 - Base
     revision: '1525378614'
     updated: Thu May  3 20:17:37 2018
-    pkgs: '9911'
-    size: 8.2 G
     mirrors: http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=os&infra=container
     baseurl: http://mirror.wdc1.us.leaseweb.net/centos/7.5.1804/os/x86_64/ (9
     expire: '21600 second(s) (last: Wed May 23 22:02:41 2018)'
@@ -56,8 +54,6 @@ distributions:
     name: Extra Packages for Enterprise Linux 7 - x86_64
     revision: '1527088265'
     updated: Wed May 23 15:25:37 2018
-    pkgs: '12561'
-    size: 13 G
     metalink: https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=x86_64
     baseurl: http://mirror.math.princeton.edu/pub/epel/7/x86_64/ (35 more)
     expire: '21600 second(s) (last: Wed May 23 22:02:43 2018)'
@@ -66,8 +62,6 @@ distributions:
     name: CentOS-7 - Extras
     revision: '1526808850'
     updated: Sun May 20 09:36:03 2018
-    pkgs: '291'
-    size: 540 M
     mirrors: http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=extras&infra=container
     baseurl: http://www.gtlib.gatech.edu/pub/centos/7.5.1804/extras/x86_64/ (9
     expire: '21600 second(s) (last: Wed May 23 22:02:43 2018)'
@@ -76,8 +70,6 @@ distributions:
     name: CentOS-7 - Updates
     revision: '1527083651'
     updated: Wed May 23 13:58:10 2018
-    pkgs: '626'
-    size: 2.1 G
     mirrors: http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=updates&infra=container
     baseurl: http://mirror.math.princeton.edu/pub/centos/7.5.1804/updates/x86_64/
     expire: '21600 second(s) (last: Wed May 23 22:02:43 2018)'
