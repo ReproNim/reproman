@@ -242,9 +242,6 @@ class DistributionTracer(object):
             if f not in file_to_package_dict:
                 unknown_files.add(f)
             else:
-                # TODO: pkgname should become  pkgid
-                # where for packages from distributions would be name,
-                # for VCS -- their path
                 pkgfields = file_to_package_dict[f]
                 if pkgfields is None:
                     unknown_files.add(f)
