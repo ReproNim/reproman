@@ -31,7 +31,7 @@ def test_docker_trace_tag():
     assert dist.name == 'docker'
     assert dist.images[0].architecture == 'amd64'
     assert dist.images[0].operating_system == 'linux'
-    assert dist.images[0].repo_digests[0].startswith('alpine@sha256')
+    assert dist.images[0].repo_digests[0].startswith('alpine@sha256:')
     assert dist.images[0].repo_tags[0] == 'alpine:3.6'
     assert 'non-existent-image' in remaining_files
 
