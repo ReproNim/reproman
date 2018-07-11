@@ -20,11 +20,12 @@ from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_ssh
 from ..base import ResourceManager
 from niceman.tests.fixtures import get_docker_fixture
+from ...consts import TEST_SSH_DOCKER_DIGEST
 
 # Note: due to skip_ssh right here, it would skip the entire module with
 # all the tests here if no ssh testing is requested
 setup_ssh = skip_ssh(get_docker_fixture)(
-    'rastasheep/ubuntu-sshd@sha256:918aae46c217701b5516776e0ccc9ebb93abce5ebf3efa4bfd75a842cffc4e04',
+    TEST_SSH_DOCKER_DIGEST,
     portmaps={
         49000: 22
     },
