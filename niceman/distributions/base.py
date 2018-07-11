@@ -9,6 +9,7 @@
 """Orchestrators helping with management of target environments (remote or local)"""
 
 import os
+import os.path as op
 import abc
 import attr
 import collections
@@ -210,7 +211,7 @@ class DistributionTracer(object):
     #  In principle could be RFed to be more scalable, where there is a "Package
     #  manager", which provides similar "assign file to a package" functionality
     #  and identifying packages as already known to the manager.
-    def identify_packages_from_files(self, files):
+    def identify_packages_from_files(self, files, root_key=None):
         """Identifies "packages" for a given collection of files
 
         From an iterative collection of files, we identify the packages
@@ -220,6 +221,10 @@ class DistributionTracer(object):
         ----------
         files : iterable
             Container (e.g. list or set) of file paths
+        root_key : string, optional
+            When adding a matched file to the returned package dict, represent
+            that path as relative to the value of this package field rather a
+            full path.
 
         Return
         ------
@@ -246,9 +251,13 @@ class DistributionTracer(object):
                 if pkgfields is None:
                     unknown_files.add(f)
                 else:
+                    if root_key:
+                        f_pkg = op.relpath(f, pkgfields[root_key])
+                    else:
+                        f_pkg = f
                     pkgfields_hashable = tuple(x for x in pkgfields.items())
                     if pkgfields_hashable in found_packages:
-                        found_packages[pkgfields_hashable].files.append(f)
+                        found_packages[pkgfields_hashable].files.append(f_pkg)
                         nb_pkg_files += 1
                     else:
                         pkg = self._create_package(**pkgfields)
@@ -256,7 +265,7 @@ class DistributionTracer(object):
                             found_packages[pkgfields_hashable] = pkg
                             # we store only non-directories within 'files'
                             if not self._session.isdir(f):
-                                pkg.files.append(f)
+                                pkg.files.append(f_pkg)
                             nb_pkg_files += 1
                         else:
                             unknown_files.add(f)
