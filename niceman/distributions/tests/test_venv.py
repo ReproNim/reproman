@@ -46,7 +46,6 @@ def venv_test_dir():
 
 
 def test_venv_identify_distributions(venv_test_dir):
-    pydir = "python{v.major}.{v.minor}".format(v=sys.version_info)
     paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
              "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
 
