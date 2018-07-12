@@ -162,7 +162,7 @@ class VenvTracer(DistributionTracer):
             out, err = self._session.execute_command(
                 [venv_path + "/bin/python", "--version"])
             # Python 2 sends its version to stderr, while Python 3
-            # sends it to stdout.  Version has format "Python
+            # sends it to stdout.
             pyver = out if "Python" in out else err
             return pyver.strip().split()[1]
         except Exception as exc:
