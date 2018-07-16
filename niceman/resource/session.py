@@ -542,8 +542,7 @@ class POSIXSession(Session):
     def exists(self, path):
         """Return if file exists"""
         try:
-            command = ['test', '-e', path, '&&', 'echo', 'Found']
-            out, err = self.execute_command(['bash', '-c', ' '.join(command)])
+            out, err = self.execute_command(self.exists_command(path))
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for file presence failed: %s", exc_str(exc))
             return False
@@ -554,6 +553,11 @@ class POSIXSession(Session):
                       "test for file presence has failed", err)
             return False
 
+    def exists_command(self, path):
+        """Return the command to run for the exists method."""
+        command = ['test', '-e', path, '&&', 'echo', 'Found']
+        return ['bash', '-c', ' '.join(command)]
+
     # def lexists(self, path):
     #     """Return if file (or just a broken symlink) exists"""
     #     return os.path.lexists(path)
@@ -562,10 +566,13 @@ class POSIXSession(Session):
     #  may be we could assume presence of e.g. python so we could use std library?
     def get_mtime(self, path):
         # TODO:  too common of a pattern -- we need a helper to wrap such calls
-        out, err = self.execute_command(
-            ['python', '-c', "import os, sys; print(os.path.getmtime(sys.argv[1]))", path]
-        )
+        out, err = self.execute_command(self.get_mtime_command(path))
         return out.strip()
+
+    def get_mtime_command(self, path):
+        """Return the command to run for the get_mtime method."""
+        command = "import os, sys; print(os.path.getmtime(sys.argv[1]))"
+        return ['python', '-c', command, path]
 
     #
     # Somewhat optional since could be implemented with native "POSIX" commands
@@ -594,8 +601,7 @@ class POSIXSession(Session):
 
     def isdir(self, path):
         try:
-            command = ['test', '-d', path, '&&', 'echo', 'Found']
-            out, err = self.execute_command(['bash', '-c', ' '.join(command)])
+            out, err = self.execute_command(self.isdir_command(path))
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for directory failed: %s", exc_str(exc))
             return False
@@ -605,6 +611,11 @@ class POSIXSession(Session):
             lgr.debug("Standard error was not empty (%r), thus assuming that "
                       "test for direcory has failed", err)
             return False
+
+    def isdir_command(self, path):
+        """Return the command to run for the exists method."""
+        command = ['test', '-d', path, '&&', 'echo', 'Found']
+        return ['bash', '-c', ' '.join(command)]
 
     def chmod(self, path, mode, recursive=False):
         """Set the mode of a remote path

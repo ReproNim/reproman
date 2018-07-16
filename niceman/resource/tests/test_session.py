@@ -13,6 +13,7 @@ import logging
 import os
 import paramiko
 import pytest
+import socket
 import tempfile
 import uuid
 
@@ -37,7 +38,6 @@ testing_container = skip_ssh(get_docker_fixture)(
     custom_params={
         'host': 'localhost',
         'user': 'root',
-        'password': 'root',
         'port': 49000,
     },
     scope='module'
@@ -226,15 +226,12 @@ def resource_session(request):
 
     # Initialize SSH connection to testing Docker container.
     if request.param in [SSHSession, PTYSSHSession]:
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(
-            'localhost',
-            port=49000,
-            username='root',
-            password='root'
-        )
-        return request.param(ssh)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('localhost', 49000))
+        transport = paramiko.Transport(sock)
+        transport.start_client()
+        transport.auth_password('root', 'root')
+        return request.param(transport)
 
     return request.param() 
 
