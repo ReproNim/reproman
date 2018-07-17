@@ -46,3 +46,16 @@ def test_singularity_trace():
 
     # Clean up test files
     os.remove(image_file)
+
+    # Run tracer against a Singularity Hub url
+    files = ['shub:/GodloveD/lolcow']
+    dist, remaining_files = next(tracer.identify_distributions(files))
+    assert dist.images[0].md5 == 'ee4aae1ea378ad7c0299b308c703187a'
+    assert dist.images[0].bootstrap == 'docker'
+    assert dist.images[0].deffile == 'Singularity'
+    assert dist.images[0].schema_version == '1.0'
+    assert dist.images[0].build_date == '2017-10-17T19:23:53+00:00'
+    assert dist.images[0].build_size == '336MB'
+    assert dist.images[0].singularity_version == '2.4-feature-squashbuild-secbuild.g217367c'
+    assert dist.images[0].base_image == 'ubuntu:16.04'
+    assert dist.images[0].url == 'shub://GodloveD/lolcow'

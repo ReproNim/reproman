@@ -11,6 +11,8 @@
 import attr
 import json
 import logging
+import os
+import uuid
 
 lgr = logging.getLogger('niceman.distributions.singularity')
 
@@ -37,6 +39,7 @@ class SingularityImage(Package):
     singularity_version = attrib()
     base_image = attrib()
     mirror_url = attrib()
+    url = attrib()
 
 _register_with_representer(SingularityImage)
 
@@ -95,14 +98,28 @@ class SingularityTracer(DistributionTracer):
 
         images = []
         remaining_files = set()
+        url = None
 
         for file_path in files:
             try:
-                image = json.loads(self._session.execute_command(['singularity',
-                    'inspect', file_path])[0])
+                if file_path.startswith('shub:/'):
+                    # Correct file path for path normalization in retrace.py
+                    file_path = file_path.replace('shub:/', 'shub://')
+                    temp_path = "{}.simg".format(uuid.uuid4())
+                    self._session.execute_command(['singularity', 'pull',
+                        '--name', temp_path, file_path])
+                    image = json.loads(self._session.execute_command(
+                        ['singularity', 'inspect', temp_path])[0])
+                    url = file_path
+                    md5 = md5sum(temp_path)
+                    os.remove(temp_path)
+                else:
+                    image = json.loads(self._session.execute_command(
+                        ['singularity', 'inspect', file_path])[0])
+                    md5 = md5sum(file_path)
 
                 images.append(SingularityImage(
-                    md5=md5sum(file_path),
+                    md5=md5,
                     bootstrap=image.get(
                         'org.label-schema.usage.singularity.deffile.bootstrap'),
                     maintainer=image.get('MAINTAINER'),
@@ -116,7 +133,8 @@ class SingularityTracer(DistributionTracer):
                     base_image=image.get(
                         'org.label-schema.usage.singularity.deffile.from'),
                     mirror_url=image.get(
-                        'org.label-schema.usage.singularity.deffile.mirrorurl')
+                        'org.label-schema.usage.singularity.deffile.mirrorurl'),
+                    url=url
                 ))
             except Exception as exc:
                 lgr.debug("Probably %s is not a Singularity image: %s",
