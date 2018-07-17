@@ -646,7 +646,8 @@ class VCSTracer(DistributionTracer):
         self._known_repos = {}
 
     def identify_distributions(self, files):
-        repos, remaining_files = self.identify_packages_from_files(files)
+        repos, remaining_files = self.identify_packages_from_files(
+            files, root_key="path")
         pkgs_per_distr = defaultdict(list)
         for repo in repos:
             pkgs_per_distr[repo._distribution].append(repo)

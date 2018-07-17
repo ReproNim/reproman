@@ -18,10 +18,11 @@ from niceman.utils import swallow_logs, swallow_outputs
 from ...resource.base import ResourceManager
 from ...tests.utils import skip_ssh
 from ...tests.fixtures import get_docker_fixture
+from ...consts import TEST_SSH_DOCKER_DIGEST
 
 
 docker_container = skip_ssh(get_docker_fixture)(
-    'rastasheep/ubuntu-sshd:14.04',
+    TEST_SSH_DOCKER_DIGEST,
     name='testing-container',
     scope='module'
 )

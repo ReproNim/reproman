@@ -22,15 +22,18 @@ from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
 from ...utils import swallow_logs
 from ..shell import ShellSession
+from ..singularity import Singularity, SingularitySession, \
+    PTYSingularitySession
 from ..ssh import SSHSession, PTYSSHSession
 from ...tests.utils import skip_ssh
 from ...tests.fixtures import get_docker_fixture
+from ...consts import TEST_SSH_DOCKER_DIGEST
 
 
 # Note: due to skip_ssh right here, it would skip the entire module with
 # all the tests here if no ssh testing is requested
 testing_container = skip_ssh(get_docker_fixture)(
-    'rastasheep/ubuntu-sshd:14.04',
+    TEST_SSH_DOCKER_DIGEST,
     name='testing-container',
     portmaps={
         49000: 22
@@ -84,7 +87,7 @@ def test_get_updated_env():
 
 
 def test_get_local_session():
-    # get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=False)
+    # get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None)
     return
 
 
@@ -195,6 +198,8 @@ def test_session_class():
     DockerSession,
     PTYDockerSession,
     ShellSession,
+    SingularitySession,
+    PTYSingularitySession,
     SSHSession,
     PTYSSHSession
 ])
@@ -233,7 +238,15 @@ def resource_session(request):
         transport.auth_password('root', 'root')
         return request.param(transport)
 
-    return request.param() 
+    # Initialize Singularity test container.
+    if request.param in [SingularitySession, PTYSingularitySession]:
+        name = str(uuid.uuid4().hex)[:11]
+        resource = Singularity(name=name, image='docker://python:2.7')
+        resource.connect()
+        resource.create()
+        return request.param(name)
+
+    return request.param()
 
 
 def test_session_abstract_methods(testing_container, resource_session,
