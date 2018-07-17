@@ -286,12 +286,15 @@ class SSHSession(POSIXSession):
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, remote=False)
 
+    @borrowdoc(POSIXSession)
     def exists_command(self, path):
         return ['bash', '-c', '"test', '-e', path, '&&', 'echo', 'Found"']
 
+    @borrowdoc(POSIXSession)
     def isdir_command(self, path):
         return ['bash', '-c', '"test', '-d', path, '&&', 'echo', 'Found"']
 
+    @borrowdoc(POSIXSession)
     def get_mtime_command(self, path):
         return ['python', '-c', \
             '"import os, sys; print(os.path.getmtime(sys.argv[1]))"', \
