@@ -71,7 +71,7 @@ class SSH(Resource):
             a parameter to this method.
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.host, self.port))
+        sock.connect((self.host, int(self.port)))
 
         self._transport = paramiko.Transport(sock)
         self._transport.start_client()
