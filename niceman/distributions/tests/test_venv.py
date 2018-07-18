@@ -45,6 +45,7 @@ def venv_test_dir():
     return test_dir
 
 
+@pytest.mark.integration
 def test_venv_identify_distributions(venv_test_dir):
     paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
              "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
