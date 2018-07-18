@@ -42,6 +42,7 @@ from ..utils import _path_
 from ..utils import to_unicode
 from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
+from ..utils import parse_semantic_version
 
 from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -480,6 +481,19 @@ def test_is_subpath(tmpdir):
     assert is_subpath("/tmp", "/tmp")
     # Trailing slashes don't matter.
     assert is_subpath("/tmp/", "/tmp")
+
+
+def test_parse_semantic_version():
+    for version, expected in [("1.2.3", ("1", "2", "3", "")),
+                              ("12.2.33", ("12", "2", "33", "")),
+                              ("1.2.3.rc1", ("1", "2", "3", ".rc1")),
+                              ("1.2.3-blah", ("1", "2", "3", "-blah"))]:
+        assert parse_semantic_version(version) == expected
+
+    with pytest.raises(ValueError):
+        parse_semantic_version("X.Y.Z")
+    with pytest.raises(ValueError):
+        parse_semantic_version("1.2")
 
 
 def test_line_profile():
