@@ -12,7 +12,9 @@ import attr
 import json
 import logging
 import os
+import tempfile
 import uuid
+
 
 lgr = logging.getLogger('niceman.distributions.singularity')
 
@@ -22,7 +24,7 @@ from .base import DistributionTracer
 from .base import TypedList
 from .base import _register_with_representer
 from ..dochelpers import borrowdoc, exc_str
-from ..utils import attrib, md5sum
+from ..utils import attrib, md5sum, chpwd
 
 
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
@@ -104,15 +106,17 @@ class SingularityTracer(DistributionTracer):
             try:
                 if file_path.startswith('shub:/'):
                     # Correct file path for path normalization in retrace.py
-                    file_path = file_path.replace('shub:/', 'shub://')
+                    if not file_path.startswith('shub://'):
+                        file_path = file_path.replace('shub:/', 'shub://')
                     temp_path = "{}.simg".format(uuid.uuid4())
-                    self._session.execute_command(['singularity', 'pull',
-                        '--name', temp_path, file_path])
-                    image = json.loads(self._session.execute_command(
-                        ['singularity', 'inspect', temp_path])[0])
-                    url = file_path
-                    md5 = md5sum(temp_path)
-                    os.remove(temp_path)
+                    with chpwd(tempfile.gettempdir()):
+                        self._session.execute_command(['singularity', 'pull',
+                            '--name', temp_path, file_path])
+                        image = json.loads(self._session.execute_command(
+                            ['singularity', 'inspect', temp_path])[0])
+                        url = file_path
+                        md5 = md5sum(temp_path)
+                        os.remove(temp_path)
                 else:
                     image = json.loads(self._session.execute_command(
                         ['singularity', 'inspect', file_path])[0])
