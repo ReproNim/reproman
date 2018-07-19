@@ -10,15 +10,10 @@
 
 import attr
 import uuid
-from pipes import quote
 import socket
-import tty
-import sys
 import paramiko
 import os
 import getpass
-import socket
-import time
 from binascii import hexlify
 from paramiko.py3compat import input
 
@@ -27,12 +22,10 @@ lgr = logging.getLogger('niceman.resource.ssh')
 
 from .base import Resource
 from ..utils import attrib
-from niceman.dochelpers import borrowdoc, exc_str
+from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
 from niceman import utils
-from ..support.exceptions import CommandError, SSHError, SSHConnectionError, \
-    SSHAuthException
-from ..support import exceptions as exception  # to minimize diff for adopted code
+from ..support.exceptions import CommandError, SSHError
 from ..support import paramiko_interactive
 
 
@@ -95,7 +88,7 @@ class SSH(Resource):
         elif key.get_name() not in keys[self.host]:
             lgr.debug("Unknown host key!")
         elif keys[self.host][key.get_name()] != key:
-            raise SSHConnectionError("Host key has changed!!!")
+            raise SSHError("Host key has changed!!!")
         else:
             lgr.debug("Host key valid.")
 
@@ -120,7 +113,7 @@ class SSH(Resource):
             self._manual_auth()
         if not self._transport.is_authenticated():
             self._transport.close()
-            raise SSHConnectionError("Authentication failed")
+            raise SSHError("Authentication failed")
 
     def _agent_auth(self):
         """
@@ -218,8 +211,9 @@ class SSH(Resource):
             self.connect()
 
         return (PTYSSHSession if pty else SSHSession)(
-            transport = self._transport
+            transport=self._transport
         )
+
 
 # Alias SSH class so that it can be discovered by the ResourceManager.
 @attr.s
@@ -296,8 +290,8 @@ class SSHSession(POSIXSession):
 
     @borrowdoc(POSIXSession)
     def get_mtime_command(self, path):
-        return ['python', '-c', \
-            '"import os, sys; print(os.path.getmtime(sys.argv[1]))"', \
+        return ['python', '-c',
+            '"import os, sys; print(os.path.getmtime(sys.argv[1]))"',
             path]
 
 
