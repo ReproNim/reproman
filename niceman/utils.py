@@ -1226,4 +1226,31 @@ def is_subpath(path, directory):
     return not os.path.relpath(path, directory).startswith(os.path.pardir)
 
 
+SemanticVersion = collections.namedtuple("SemanticVersion",
+                                         ["major", "minor", "patch", "tag"])
+
+
+def parse_semantic_version(version):
+    """Split version into major, minor, patch, and tag components.
+
+    Parameters
+    ----------
+    version : str
+        A version string X.Y.Z.  X, Y, and Z must be digits.  Any remaining
+        text is treated as a tag (e.g., "-rc1").
+
+    Returns
+    -------
+    A namedtuple with the form (major, minor, patch, tag).
+    """
+    m = re.match(r"(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)"
+                 r"(?P<tag>.*)",
+                 version)
+    if m:
+        return SemanticVersion(*m.groups())
+    else:
+        raise ValueError(
+            "{} does not appear to follow semantic versioning".format(version))
+
+
 lgr.log(5, "Done importing niceman.utils")

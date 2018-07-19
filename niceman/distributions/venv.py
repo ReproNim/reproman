@@ -17,8 +17,12 @@ import attr
 from six import iteritems
 from niceman.distributions import Distribution
 from niceman.distributions import piputils
+from niceman.dochelpers import borrowdoc
 from niceman.dochelpers import exc_str
 from niceman.utils import attrib, PathRoot, is_subpath
+from niceman.utils import execute_command_batch
+from niceman.utils import parse_semantic_version
+from niceman.resource.session import get_local_session
 
 from .base import DistributionTracer
 from .base import Package
@@ -56,8 +60,37 @@ class VenvDistribution(Distribution):
     def initiate(self, _):
         return
 
+    @borrowdoc(Distribution)
     def install_packages(self, session=None):
-        raise NotImplementedError
+        session = session or get_local_session()
+        for env in self.environments:
+            # TODO: Deal with system and editable packages.
+            to_install = ["{p.name}=={p.version}".format(p=p)
+                          for p in env.packages
+                          if p.local and not p.editable]
+            if not to_install:
+                lgr.info("No local, non-editable packages found")
+                continue
+
+            # TODO: Right now we just use the python to invoke "virtualenv
+            # --python=..." when the directory doesn't exist, but we should
+            # eventually use the yet-to-exist "satisfies" functionality to
+            # check whether an existing virtual environment has the right
+            # python (and maybe other things).
+            pyver = "{v.major}.{v.minor}".format(
+                v=parse_semantic_version(env.python_version))
+
+            if not session.exists(env.path):
+                # The location and version of virtualenv are recorded at the
+                # time of tracing, but should we use these values?  For now,
+                # use a plain "virtualenv" below on the basis that we just use
+                # "apt-get" and "git" elsewhere.
+                session.execute_command(["virtualenv",
+                                         "--python=python{}".format(pyver),
+                                         env.path])
+            list(execute_command_batch(session,
+                                       [env.path + "/bin/pip", "install"],
+                                       to_install))
 
 
 class VenvTracer(DistributionTracer):
@@ -162,7 +195,7 @@ class VenvTracer(DistributionTracer):
             out, err = self._session.execute_command(
                 [venv_path + "/bin/python", "--version"])
             # Python 2 sends its version to stderr, while Python 3
-            # sends it to stdout.  Version has format "Python
+            # sends it to stdout.
             pyver = out if "Python" in out else err
             return pyver.strip().split()[1]
         except Exception as exc:
