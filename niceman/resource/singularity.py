@@ -161,7 +161,7 @@ class Singularity(Resource):
 
 @attr.s
 class SingularitySession(POSIXSession):
-    name = attr.ib()
+    name = attrib(default=attr.NOTHING)
     _runner = Runner()
 
     @borrowdoc(Session)
