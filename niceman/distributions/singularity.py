@@ -43,6 +43,7 @@ class SingularityImage(Package):
     mirror_url = attrib()
     url = attrib()
 
+
 _register_with_representer(SingularityImage)
 
 
@@ -81,6 +82,7 @@ class SingularityDistribution(Distribution):
 
         # TODO: Currently we have no way to locate the image given the metadata
 
+
 _register_with_representer(SingularityDistribution)
 
 
@@ -110,6 +112,8 @@ class SingularityTracer(DistributionTracer):
                         file_path = file_path.replace('shub:/', 'shub://')
                     temp_path = "{}.simg".format(uuid.uuid4())
                     with chpwd(tempfile.gettempdir()):
+                        msg = "Downloading Singularity image {} for tracing"
+                        lgr.info(msg.format(file_path))
                         self._session.execute_command(['singularity', 'pull',
                             '--name', temp_path, file_path])
                         image = json.loads(self._session.execute_command(
