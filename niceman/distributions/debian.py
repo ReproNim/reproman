@@ -352,7 +352,7 @@ class DebTracer(DistributionTracer):
             apt_sources=list(self._apt_sources.values())
         )  # the one and only!
         dist.normalize()
-        #   similar to DBs should take care about identifying/groupping etc
+        #   similar to DBs should take care about identifying/grouping etc
         #   of origins etc
         yield dist, remaining_files
 
