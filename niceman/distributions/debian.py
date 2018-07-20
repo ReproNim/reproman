@@ -124,12 +124,12 @@ class DebianDistribution(Distribution):
 
     def initiate(self, session):
         """
-        Perform any initialization commands needed in the environment environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
-        environment : object
-            The Environment sub-class object.
+        session : Session object
+            The session to work in.
         """
         lgr.debug("Adding Debian update to environment command list.")
         self._init_apt_sources(session)

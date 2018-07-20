@@ -113,7 +113,7 @@ class Distribution(SpecObject):
     @abc.abstractmethod
     def initiate(self, session):
         """
-        Perform any initialization commands needed in the environment environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
