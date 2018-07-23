@@ -98,7 +98,7 @@ def parse_pip_list(out):
         yield pkg.lower(), version, location or None
 
 
-def pip_list(session, which_pip, local_only=False):
+def pip_list(session, which_pip, args=None):
     """Return output of `pip list --format=legacy`.
 
     Parameters
@@ -107,11 +107,8 @@ def pip_list(session, which_pip, local_only=False):
         Session in which to execute the command.
     which_pip : str
         Name of the pip executable.
-    local_only : boolean, optional
-        Do not include globally installed packages.  Otherwise, global
-        packages will be included if pip has global access (e.g.,
-        "--system-site-packages" was used when creating the virtualenv
-        directory).
+    args : list, optional
+        Other arguments passed to `pip list`.
 
     Returns
     -------
@@ -130,13 +127,13 @@ def pip_list(session, which_pip, local_only=False):
     # editable packages (though it is supported in a developmental
     # version).
     cmd = [which_pip, "list", "--format=legacy"]
-    if local_only:
-        cmd.append("--local")
+    if args:
+        cmd.extend(args)
     out, _ = session.execute_command(cmd)
     return parse_pip_list(out)
 
 
-def get_pip_packages(session, which_pip, local_only=False):
+def get_pip_packages(session, which_pip, restriction=None):
     """Return a list of pip packages.
 
     Parameters
@@ -145,17 +142,17 @@ def get_pip_packages(session, which_pip, local_only=False):
         Session in which to execute the command.
     which_pip : str
         Name of the pip executable.
-    local_only : boolean, optional
-        Do not include globally installed packages.  Otherwise, global
-        packages will be included if pip has global access (e.g.,
-        "--system-site-packages" was used when creating the virtualenv
+    restriction : {None, 'local'}, optional
+        If 'local', excluded globally installed packages (which pip has access
+        to if "--system-site-packages" was used when creating the virtualenv
         directory).
 
     Returns
     -------
     A generator that yields package names.
     """
-    return (pkg for pkg, _, _ in pip_list(session, which_pip, local_only))
+    args = ["--local"] if restriction == "local" else []
+    return (pkg for pkg, _, _ in pip_list(session, which_pip, args))
 
 
 def get_package_details(session, which_pip, packages=None):
