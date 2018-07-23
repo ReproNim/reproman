@@ -88,34 +88,6 @@ def pip_show(session, which_pip, pkgs):
     return packages, file_to_pkg
 
 
-def pip_list(session, which_pip, args=None):
-    """Return output of `pip list`.
-
-    Parameters
-    ----------
-    session : Session instance
-        Session in which to execute the command.
-    which_pip : str
-        Name of the pip executable.
-    args : list, optional
-        Other arguments passed to `pip list`.
-
-    Returns
-    -------
-    A generator that yields (name, version) for each package.
-    """
-    # We could use either 'pip list' or 'pip freeze' to get a list
-    # of packages.  The choice to use 'list' rather than 'freeze'
-    # is based on how they show editable packages.  'list' outputs
-    # a source directory of the package, whereas 'freeze' outputs
-    # a URL like "-e git+https://github.com/[...]".
-    cmd = [which_pip, "list", "--format=json"]
-    if args:
-        cmd.extend(args)
-    out, _ = session.execute_command(cmd)
-    return ((p["name"], p["version"]) for p in json.loads(out))
-
-
 def get_pip_packages(session, which_pip, restriction=None):
     """Return a list of pip packages.
 
@@ -134,11 +106,16 @@ def get_pip_packages(session, which_pip, restriction=None):
     -------
     A generator that yields package names.
     """
+    # We could use either 'pip list' or 'pip freeze' to get a list
+    # of packages.  The choice to use 'list' rather than 'freeze'
+    # is based on how they show editable packages.  'list' outputs
+    # a source directory of the package, whereas 'freeze' outputs
+    # a URL like "-e git+https://github.com/[...]".
+    cmd = [which_pip, "list", "--format=json"]
     if restriction in ["local", "editable"]:
-        args = ["--{}".format(restriction)]
-    else:
-        args = None
-    return (pkg for pkg, _ in pip_list(session, which_pip, args))
+        cmd.append("--{}".format(restriction))
+    out, _ = session.execute_command(cmd)
+    return (p["name"] for p in json.loads(out))
 
 
 def get_package_details(session, which_pip, packages=None):
