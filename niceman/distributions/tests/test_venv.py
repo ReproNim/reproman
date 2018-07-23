@@ -48,6 +48,8 @@ def venv_test_dir():
         runner.run(["./venv0/bin/pip", "install", "pyyaml"])
         runner.run(["./venv0/bin/pip", "install", "-e", pymod_dir])
         runner.run(["./venv1/bin/pip", "install", "attrs"])
+        # Make sure we're compatible with older pips.
+        runner.run(["./venv1/bin/pip", "install", "pip==9.0.3"])
     return test_dir
 
 

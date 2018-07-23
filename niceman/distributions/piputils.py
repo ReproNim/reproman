@@ -9,6 +9,7 @@
 """Utilities for working with pip.
 """
 import itertools
+import json
 import os
 import re
 
@@ -87,19 +88,8 @@ def pip_show(session, which_pip, pkgs):
     return packages, file_to_pkg
 
 
-def parse_pip_list(out):
-    """Parse the output of `pip list --format=legacy`.
-    """
-    pkg_re = re.compile(r"^(?P<package>[^(]+) "
-                        r"\((?P<version>.*?)"
-                        r"(?:, (?P<location>.*))?\)$",
-                        re.MULTILINE)
-    for pkg, version, location in pkg_re.findall(out):
-        yield pkg.lower(), version, location or None
-
-
 def pip_list(session, which_pip, args=None):
-    """Return output of `pip list --format=legacy`.
+    """Return output of `pip list`.
 
     Parameters
     ----------
@@ -112,25 +102,18 @@ def pip_list(session, which_pip, args=None):
 
     Returns
     -------
-    A generator that yields (name, version, location) for each
-    package.  Location will be None unless the package is editable.
+    A generator that yields (name, version) for each package.
     """
     # We could use either 'pip list' or 'pip freeze' to get a list
     # of packages.  The choice to use 'list' rather than 'freeze'
     # is based on how they show editable packages.  'list' outputs
     # a source directory of the package, whereas 'freeze' outputs
     # a URL like "-e git+https://github.com/[...]".
-    #
-    # It would be nice to use 'pip list --format=json' rather than
-    # the legacy format.  However, currently (pip 9.0.1, 2018/01),
-    # the json format does not include location information for
-    # editable packages (though it is supported in a developmental
-    # version).
-    cmd = [which_pip, "list", "--format=legacy"]
+    cmd = [which_pip, "list", "--format=json"]
     if args:
         cmd.extend(args)
     out, _ = session.execute_command(cmd)
-    return parse_pip_list(out)
+    return ((p["name"], p["version"]) for p in json.loads(out))
 
 
 def get_pip_packages(session, which_pip, restriction=None):
@@ -155,7 +138,7 @@ def get_pip_packages(session, which_pip, restriction=None):
         args = ["--{}".format(restriction)]
     else:
         args = None
-    return (pkg for pkg, _, _ in pip_list(session, which_pip, args))
+    return (pkg for pkg, _ in pip_list(session, which_pip, args))
 
 
 def get_package_details(session, which_pip, packages=None):
@@ -179,13 +162,12 @@ def get_package_details(session, which_pip, packages=None):
     A tuple of two dicts, where the first maps a package name to its
     details and the second maps package files to the package name.
     """
-    pkgs, _, editlocs = zip(*pip_list(session, which_pip))
-
     if packages is None:
-        packages = pkgs
-
-    pkg_to_editloc = dict(zip(pkgs, editlocs))
+        packages = list(get_pip_packages(session, which_pip))
+    editable_packages = set(
+        get_pip_packages(session, which_pip, restriction="editable"))
     details, file_to_pkg = pip_show(session, which_pip, packages)
+
     for pkg in details:
-        details[pkg]["editable"] = pkg_to_editloc[pkg] is not None
+        details[pkg]["editable"] = pkg in editable_packages
     return details, file_to_pkg
