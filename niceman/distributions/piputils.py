@@ -142,16 +142,19 @@ def get_pip_packages(session, which_pip, restriction=None):
         Session in which to execute the command.
     which_pip : str
         Name of the pip executable.
-    restriction : {None, 'local'}, optional
+    restriction : {None, 'local', 'editable'}, optional
         If 'local', excluded globally installed packages (which pip has access
         to if "--system-site-packages" was used when creating the virtualenv
-        directory).
+        directory). If 'editable', only include editable packages.
 
     Returns
     -------
     A generator that yields package names.
     """
-    args = ["--local"] if restriction == "local" else []
+    if restriction in ["local", "editable"]:
+        args = ["--{}".format(restriction)]
+    else:
+        args = None
     return (pkg for pkg, _, _ in pip_list(session, which_pip, args))
 
 
