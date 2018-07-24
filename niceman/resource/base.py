@@ -73,7 +73,7 @@ class ResourceManager(object):
     @staticmethod
     def _discover_types():
         """Discover resource types by inspecting the resource directory files.
-        
+
         Returns
         -------
         string list
@@ -301,7 +301,7 @@ class Resource(object):
     def execute_command_buffer(self, session=None):
         """Send all the commands in the command buffer to the environment for
         execution.
-        
+
         Parameters
         ----------
         session : Sesson object, optional
@@ -358,7 +358,7 @@ class Resource(object):
     @classmethod
     def _generate_id(cls):
         """Utility class method to generate a UUID.
-        
+
         Returns
         -------
         string
@@ -372,18 +372,17 @@ class Resource(object):
     @abc.abstractmethod
     def get_session(self, pty=False, shared=None):
         """Returns the Session object for this resource.
-        
+
         Parameters
         ----------
         pty : bool, optional
             Terminal session (the default is False)
         shared : string, optional
             Shared session identifier (the default is None)
-        
+
         Raises
         ------
         NotImplementedError
             [description]
         """
         raise NotImplementedError
-
