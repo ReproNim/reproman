@@ -36,12 +36,6 @@ class Ls(Interface):
     """
 
     _params_ = dict(
-        names=Parameter(
-            doc="name of the specific environment(s) to be listed",
-            metavar='NAME(s)',
-            nargs="*",
-            constraints=EnsureStr() | EnsureNone(),
-        ),
         verbose=Parameter(
             args=("-v", "--verbose"),
             action="store_true",
@@ -58,7 +52,7 @@ class Ls(Interface):
     )
 
     @staticmethod
-    def __call__(names, verbose=False, refresh=False):
+    def __call__(verbose=False, refresh=False):
 
         # TODO?: we might want to embed get_resource_inventory()
         #       within ConfigManager (even though it would make it NICEMAN specific)
