@@ -14,11 +14,9 @@ import abc
 from six.moves.configparser import NoSectionError
 
 import yaml
-from os.path import basename
-from os.path import dirname
-from os.path import join as opj
 from glob import glob
-import os.path
+import os
+import os.path as op
 
 from ..config import ConfigManager, LOCATIONS_DOC
 from ..dochelpers import exc_str
@@ -80,8 +78,8 @@ class ResourceManager(object):
             List of resource identifiers extracted from file names.
         """
         l = []
-        for f in glob(opj(dirname(__file__), '*.py')):
-            f_ = basename(f)
+        for f in glob(op.join(op.dirname(__file__), '*.py')):
+            f_ = op.basename(f)
             if f_ in ('base.py',) or f_.startswith('_'):
                 continue
             l.append(f_[:-3])
@@ -187,7 +185,7 @@ class ResourceManager(object):
             return cm
 
         # Look for a niceman.cfg file in the local directory if none given.
-        if not config_path and os.path.isfile('niceman.cfg'):
+        if not config_path and op.isfile('niceman.cfg'):
             config_path = 'niceman.cfg'
         cm = get_cm(config_path=config_path)
         if not config_path and len(cm._sections) == 1:
@@ -224,7 +222,7 @@ class ResourceManager(object):
                 "No resource inventory file declared in niceman.cfg")
 
         # Create inventory file if it does not exist.
-        if not os.path.isfile(inventory_path):
+        if not op.isfile(inventory_path):
             lgr.info("Creating resources inventory file %s", inventory_path)
             # initiate empty inventory
             ResourceManager.set_inventory({'_path': inventory_path})
@@ -265,8 +263,8 @@ class ResourceManager(object):
                 if secret_key in inventory_item:
                     del inventory_item[secret_key]
 
-        if not exists(dirname(inventory_path)):
-            os.makedirs(dirname(inventory_path))
+        if not op.exists(op.dirname(inventory_path)):
+            os.makedirs(op.dirname(inventory_path))
 
         with open(inventory_path, 'w') as fp:
             yaml.safe_dump(inventory, fp, default_flow_style=False)
