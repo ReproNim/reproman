@@ -27,7 +27,7 @@ docker_container = skip_ssh(get_docker_fixture)(
     scope='module'
 )
 
-def test_exec_interface(niceman_cfg_path, docker_container):
+def test_exec_interface(docker_container):
 
     with patch('niceman.resource.ResourceManager.set_inventory'), \
         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
@@ -46,8 +46,7 @@ def test_exec_interface(niceman_cfg_path, docker_container):
             "testing-container": config
         }
 
-        cmd = ['exec', 'mkdir', path, '--name', 'testing-container',
-                 '--config', niceman_cfg_path]
+        cmd = ['exec', 'mkdir', path, '--name', 'testing-container']
         main(cmd)
 
         session = ResourceManager.factory(config).get_session()

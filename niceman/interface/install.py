@@ -47,16 +47,10 @@ class Install(Interface):
         ),
         name=resource_name_opt,
         resource_id=resource_id_opt,
-        config=Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            constraints=EnsureStr(),
-        ),
     )
 
     @staticmethod
-    def __call__(spec, name, resource_id, config):
+    def __call__(spec, name, resource_id):
 
         from niceman.ui import ui
         if not spec:
@@ -78,7 +72,7 @@ class Install(Interface):
         #    resource to use
 
         # Get configuration and environment inventory
-        config, inventory = ResourceManager.get_resource_info(config, name, resource_id)
+        config, inventory = ResourceManager.get_resource_info(name, resource_id)
 
         env_resource = ResourceManager.factory(config)
         env_resource.connect()

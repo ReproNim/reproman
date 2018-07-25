@@ -55,12 +55,6 @@ class Create(Interface):
             doc="""Resource type to create""",
             constraints=EnsureStr(),
         ),
-        config = Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            constraints=EnsureStr(),
-        ),
         resource_id=resource_id_opt,
         clone=Parameter(
             args=("--clone",),
@@ -86,7 +80,7 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(name, resource_type, config, resource_id, clone, only_env,
+    def __call__(name, resource_type, resource_id, clone, only_env,
                  backend, existing='fail '):
 
         # Load, while possible merging/augmenting sequentially
@@ -126,13 +120,13 @@ class Create(Interface):
 
         # Get configuration and environment inventory
         if clone:
-            config, inventory = ResourceManager.get_resource_info(config,
+            config, inventory = ResourceManager.get_resource_info(
                 clone, resource_id, resource_type)
             config['name'] = name
             del config['id']
             del config['status']
         else:
-            config, inventory = ResourceManager.get_resource_info(config, name,
+            config, inventory = ResourceManager.get_resource_info(name,
                 resource_id, resource_type)
 
         # Create resource environment

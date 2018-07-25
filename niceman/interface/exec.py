@@ -38,7 +38,7 @@ class Exec(Interface):
     Examples
     --------
 
-      $ niceman exec mkdir /home/blah/data --config=niceman.cfg
+      $ niceman exec mkdir /home/blah/data
 
     """
 
@@ -63,12 +63,6 @@ class Exec(Interface):
         # ),
         resource_id=resource_id_opt,
         # TODO: should be moved into generic API
-        config=Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            # constraints=EnsureStr(),
-        ),
         internal=Parameter(
             args=("--internal",),
             action="store_true",
@@ -80,7 +74,7 @@ class Exec(Interface):
     )
 
     @staticmethod
-    def __call__(command, args, name=None, resource_id=None, config=None,
+    def __call__(command, args, name=None, resource_id=None,
                  internal=False, trace=False):
         from niceman.ui import ui
         if not name and not resource_id:
@@ -92,7 +86,7 @@ class Exec(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(config,
+        resource_info, inventory = ResourceManager.get_resource_info(
             name, resource_id)
 
         # Delete resource environment

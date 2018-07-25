@@ -16,7 +16,7 @@ from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
 
 
-def test_login_interface(niceman_cfg_path):
+def test_login_interface():
     """
     Test logging into an environment
     """
@@ -48,7 +48,6 @@ def test_login_interface(niceman_cfg_path):
 
         args = ['login',
                 '--name', 'my-test-resource',
-                '--config', niceman_cfg_path
         ]
         main(args)
 

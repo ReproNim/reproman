@@ -48,12 +48,6 @@ class Ls(Interface):
             #constraints=EnsureBool() | EnsureNone(),
             doc="provide more verbose listing",
         ),
-        config=Parameter(
-            args=("--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            constraints=EnsureStr(),
-        ),
         refresh=Parameter(
             args=("--refresh",),
             action="store_true",
@@ -64,12 +58,12 @@ class Ls(Interface):
     )
 
     @staticmethod
-    def __call__(names, config, verbose=False, refresh=False):
+    def __call__(names, verbose=False, refresh=False):
 
         # TODO?: we might want to embed get_resource_inventory()
         #       within ConfigManager (even though it would make it NICEMAN specific)
         #       This would allow to make more sensible error messages etc
-        cm = ResourceManager.get_config_manager(config)
+        cm = ResourceManager.get_config_manager()
         inventory_path = cm.getpath('general', 'inventory_file')
         inventory = ResourceManager.get_inventory(inventory_path)
 

@@ -88,7 +88,7 @@ class ResourceManager(object):
         return sorted(l)
 
     @staticmethod
-    def get_resource_info(config_path, name, id_=None, type_=None):
+    def get_resource_info(name, id_=None, type_=None, config_path=None):
         """Sort through the parameters supplied by the user at the command line and then
         request the ones that are missing that are needed to find the config and
         inventory files and then build the config dictionary needed to connect
@@ -197,8 +197,7 @@ class ResourceManager(object):
             from ..interface.base import dedent_docstring
             raise MissingConfigFileError(
                 "Unable to locate config file: {}\n"
-                "You must specify it using --config "
-                "or place it in any of the following locations:\n\n"
+                "You must place it in any of the following locations:\n\n"
                 "{}\n\n".format(config_path or config,
                                 dedent_docstring(LOCATIONS_DOC)))
 

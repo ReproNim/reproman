@@ -31,7 +31,7 @@ class Stop(Interface):
     Examples
     --------
 
-      $ niceman stop --name=my-resource --config=niceman.cfg
+      $ niceman stop --name=my-resource
 
     """
 
@@ -44,17 +44,10 @@ class Stop(Interface):
         #     constraints=EnsureStr(),
         # ),
         resource_id=resource_id_opt,
-        # TODO: should be moved into generic API
-        config=Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            # constraints=EnsureStr(),
-        ),
     )
 
     @staticmethod
-    def __call__(name, resource_id=None, config=None):
+    def __call__(name, resource_id=None):
         from niceman.ui import ui
         if not name and not resource_id:
             name = ui.question(
@@ -65,7 +58,7 @@ class Stop(Interface):
         # Get configuration and environment inventory
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(config, name, resource_id)
+        resource_info, inventory = ResourceManager.get_resource_info(name, resource_id)
 
         # Delete resource environment
         env_resource = ResourceManager.factory(resource_info)

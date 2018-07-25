@@ -31,7 +31,7 @@ class Login(Interface):
     Examples
     --------
 
-      $ niceman login --name=my-resource --config=niceman.cfg
+      $ niceman login --name=my-resource
 
     """
 
@@ -44,13 +44,6 @@ class Login(Interface):
         #     constraints=EnsureStr(),
         # ),
         resource_id=resource_id_opt,
-        # TODO: should be moved into generic API
-        config=Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            # constraints=EnsureStr(),
-        ),
         backend=Parameter(
             args=("-b", "--backend"),
             nargs="+",
@@ -59,7 +52,7 @@ class Login(Interface):
     )
 
     @staticmethod
-    def __call__(name, backend, resource_id=None, config=None):
+    def __call__(name, backend, resource_id=None):
         from niceman.ui import ui
         if not name and not resource_id:
             name = ui.question(
@@ -71,7 +64,7 @@ class Login(Interface):
         # TODO: this one would ask for resource type whenever it is not found
         #       why should we???
         # TODO:  config too bad of a name here -- revert back to resource_info?
-        config, inventory = ResourceManager.get_resource_info(config, name, resource_id)
+        config, inventory = ResourceManager.get_resource_info(name, resource_id)
 
         # Connect to resource environment
         env_resource = ResourceManager.factory(config)

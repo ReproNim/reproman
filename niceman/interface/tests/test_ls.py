@@ -16,7 +16,7 @@ from ...tests.utils import assert_in
 import logging
 
 
-def test_ls_interface(niceman_cfg_path):
+def test_ls_interface():
     """
     Test listing the resources.
     """
@@ -80,7 +80,6 @@ def test_ls_interface(niceman_cfg_path):
 
         args = [
             'ls',
-            '--config', niceman_cfg_path,
         ]
         main(args)
 

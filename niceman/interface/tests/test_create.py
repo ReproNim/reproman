@@ -20,7 +20,7 @@ from niceman.support.exceptions import ResourceError
 from ..create import backend_help
 
 
-def test_create_interface(niceman_cfg_path):
+def test_create_interface():
     """
     Test creating an environment
     """
@@ -54,7 +54,6 @@ def test_create_interface(niceman_cfg_path):
         args = ['create',
                 '--name', 'my-test-resource',
                 '--resource-type', 'docker-container',
-                '--config', niceman_cfg_path,
                 '--backend', 'engine_url=tcp://127.0.0.1:2376'
         ]
         main(args)

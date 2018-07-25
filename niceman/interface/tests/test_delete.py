@@ -16,7 +16,7 @@ from niceman.utils import swallow_logs
 from niceman.tests.utils import assert_in
 
 
-def test_delete_interface(niceman_cfg_path):
+def test_delete_interface():
     """
     Test deleting a resource.
     """
@@ -49,7 +49,6 @@ def test_delete_interface(niceman_cfg_path):
         args = [
             'delete',
             '--name', 'my-resource',
-            '--config', niceman_cfg_path,
             '--skip-confirmation'
         ]
         main(args)
