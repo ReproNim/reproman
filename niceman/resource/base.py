@@ -58,7 +58,9 @@ class ResourceManager(object):
         class_name = ''.join([token.capitalize() for token in type_.split('-')])
         try:
             module = import_module('niceman.resource.{}'.format(module_name))
-        except ImportError as exc:
+        except Exception as exc:
+            # Typically it should be an ImportError, but let's catch and recast
+            # anything just in case.
             raise ResourceError(
                 "Failed to import resource: {}.  Known ones are: {}".format(
                     exc_str(exc),
