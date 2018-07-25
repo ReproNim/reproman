@@ -265,6 +265,9 @@ class ResourceManager(object):
                 if secret_key in inventory_item:
                     del inventory_item[secret_key]
 
+        if not exists(dirname(inventory_path)):
+            os.makedirs(dirname(inventory_path))
+
         with open(inventory_path, 'w') as fp:
             yaml.safe_dump(inventory, fp, default_flow_style=False)
 
