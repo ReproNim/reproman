@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface
 from .common_opts import resource_id_opt
+from .common_opts import resource_name_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..formats import Provenance
@@ -44,12 +45,7 @@ class Install(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
-        name=Parameter(
-            args=("-n", "--name",),
-            doc="name of target resource to install spec on",
-            metavar='NAME',
-            constraints=EnsureStr(),
-        ),
+        name=resource_name_opt,
         resource_id=resource_id_opt,
         config=Parameter(
             args=("-c", "--config",),

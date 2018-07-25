@@ -26,6 +26,7 @@ from ..resource import ResourceManager
 from ..resource.session import Session
 from .common_opts import trace_opt
 from .common_opts import resource_id_opt
+from .common_opts import resource_name_opt
 
 from logging import getLogger
 lgr = getLogger('niceman.api.exec')
@@ -53,12 +54,7 @@ class Exec(Interface):
             nargs="*",
             constraints=EnsureStr(),
         ),
-        name=Parameter(
-            args=("-n", "--name"),
-            doc="""Name of the resource to consider. To see
-            available resource, run the command 'niceman ls'""",
-            # constraints=EnsureStr(),
-        ),
+        name=resource_name_opt,
         # XXX reenable when we support working with multiple instances at once
         # resource_type=Parameter(
         #     args=("-t", "--resource-type"),

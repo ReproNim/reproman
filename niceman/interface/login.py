@@ -16,6 +16,7 @@ import re
 from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
 from .common_opts import resource_id_opt
+from .common_opts import resource_name_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..resource import ResourceManager
@@ -35,12 +36,7 @@ class Login(Interface):
     """
 
     _params_ = dict(
-        name=Parameter(
-            args=("-n", "--name"),
-            doc="""Name of the resource to consider. To see
-            available resources, run the command 'niceman ls'""",
-            constraints=EnsureStr(),
-        ),
+        name=resource_name_opt,
         # XXX reenable when we support working with multiple instances at once
         # resource_type=Parameter(
         #     args=("-t", "--resource-type"),
