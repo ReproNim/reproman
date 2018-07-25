@@ -19,3 +19,8 @@ trace_opt = Parameter(
     args=("--trace",),
     action="store_true",
     doc="""if set, trace execution within the environment""")
+
+resource_id_opt = Parameter(
+    args=("-id", "--resource-id",),
+    doc="ID of the environment container",
+    constraints=EnsureStr() | EnsureNone())

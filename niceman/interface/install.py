@@ -12,6 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
+from .common_opts import resource_id_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..formats import Provenance
@@ -49,11 +50,7 @@ class Install(Interface):
             metavar='NAME',
             constraints=EnsureStr(),
         ),
-        resource_id=Parameter(
-            args=("-id", "--resource-id",),
-            doc="ID of environment to install resource on",
-            constraints=EnsureStr(),
-        ),
+        resource_id=resource_id_opt,
         config=Parameter(
             args=("-c", "--config",),
             doc="path to niceman configuration file",

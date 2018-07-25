@@ -25,6 +25,7 @@ from ..support.constraints import EnsureStr, EnsureNone
 from ..resource import ResourceManager
 from ..resource.session import Session
 from .common_opts import trace_opt
+from .common_opts import resource_id_opt
 
 from logging import getLogger
 lgr = getLogger('niceman.api.exec')
@@ -64,11 +65,7 @@ class Exec(Interface):
         #     doc="""Resource type to work on""",
         #     constraints=EnsureStr(),
         # ),
-        resource_id=Parameter(
-            args=("-id", "--resource-id",),
-            doc="ID of the environment container",
-            # constraints=EnsureStr(),
-        ),
+        resource_id=resource_id_opt,
         # TODO: should be moved into generic API
         config=Parameter(
             args=("-c", "--config",),

@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
+from .common_opts import resource_id_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
@@ -64,11 +65,7 @@ class Create(Interface):
             metavar='CONFIG',
             constraints=EnsureStr(),
         ),
-        resource_id=Parameter(
-            args=("-id", "--resource-id",),
-            doc="ID of environment container",
-            constraints=EnsureStr(),
-        ),
+        resource_id=resource_id_opt,
         clone=Parameter(
             args=("--clone",),
             doc="Name or ID of the resource to clone to another new resource",

@@ -15,6 +15,7 @@ import re
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
+from .common_opts import resource_id_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..resource import ResourceManager
@@ -46,11 +47,7 @@ class Stop(Interface):
         #     doc="""Resource type to work on""",
         #     constraints=EnsureStr(),
         # ),
-        resource_id=Parameter(
-            args=("-id", "--resource-id",),
-            doc="ID of the environment container",
-            # constraints=EnsureStr(),
-        ),
+        resource_id=resource_id_opt,
         # TODO: should be moved into generic API
         config=Parameter(
             args=("-c", "--config",),
