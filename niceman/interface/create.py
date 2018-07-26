@@ -27,13 +27,7 @@ lgr = getLogger('niceman.api.create')
 
 
 class Create(Interface):
-    """Create a computation environment out from provided specification(s)
-
-    Examples
-    --------
-
-      $ niceman create --spec recipe_for_failure.yml --name never_again
-
+    """Create a computation environment
     """
 
     _params_ = dict(
