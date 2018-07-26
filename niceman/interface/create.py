@@ -50,11 +50,6 @@ class Create(Interface):
             constraints=EnsureStr(),
         ),
         resource_id=resource_id_opt,
-        clone=Parameter(
-            args=("--clone",),
-            doc="Name or ID of the resource to clone to another new resource",
-            constraints=EnsureStr(),
-        ),
         only_env=Parameter(
             args=("--only-env",),
             doc="only env spec",
@@ -74,7 +69,7 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(name, resource_type, resource_id, clone, only_env,
+    def __call__(name, resource_type, resource_id, only_env,
                  backend, existing='fail '):
 
         # Load, while possible merging/augmenting sequentially
@@ -112,16 +107,11 @@ class Create(Interface):
         # if only_env:
         #     raise NotImplementedError
 
+        # TODO: Add ability to clone a resource.
+
         # Get configuration and environment inventory
-        if clone:
-            config, inventory = ResourceManager.get_resource_info(
-                clone, resource_id, resource_type)
-            config['name'] = name
-            del config['id']
-            del config['status']
-        else:
-            config, inventory = ResourceManager.get_resource_info(name,
-                resource_id, resource_type)
+        config, inventory = ResourceManager.get_resource_info(
+            name, resource_id, resource_type)
 
         # Create resource environment
         env_resource = ResourceManager.factory(config)
