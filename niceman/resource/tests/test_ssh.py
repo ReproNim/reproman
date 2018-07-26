@@ -32,7 +32,6 @@ setup_ssh = skip_ssh(get_docker_fixture)(
     custom_params={
             'host': 'localhost',
             'user': 'root',
-            'password': 'root',
             'port': 49000,
     },
     scope='module'
@@ -64,7 +63,7 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         assert resource.status == 'N/A'
 
         # Test running commands in a resource.
-        resource.connect()
+        resource.connect(password='root')
         command = ['apt-get', 'install', 'bc']
         resource.add_command(command)
         command = ['ls', '/']
@@ -105,10 +104,10 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         session.mkdir(path, parents=True)
         assert session.isdir(path)
 
-        assert session.isdir('not-a-dir') == False
-        assert session.isdir('/etc/hosts') == False
+        assert not session.isdir('not-a-dir')
+        assert not session.isdir('/etc/hosts')
 
-        with raises(NotImplementedError) as err:
+        with raises(NotImplementedError):
             session._execute_command('non-existent-command', cwd='/path')
 
 
@@ -119,11 +118,10 @@ def test_ssh_resource(setup_ssh):
         'type': 'ssh',
         'host': 'localhost',
         'user': 'root',
-        'password': 'root',
-        'port': '49000'
+        'port': 49000
     }
     resource = ResourceManager.factory(config)
-    resource.connect()
+    resource.connect(password='root')
 
     assert resource.start() is None
     assert resource.stop() is None
@@ -132,4 +130,4 @@ def test_ssh_resource(setup_ssh):
     assert resource._ssh is None
 
     resource.get_session()
-    assert type(resource._ssh) == paramiko.SSHClient
+    assert type(resource._transport) == paramiko.Transport
