@@ -14,6 +14,7 @@ from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
+from ...consts import TEST_SSH_DOCKER_DIGEST
 
 from niceman.tests.fixtures import get_docker_fixture
 
@@ -21,7 +22,7 @@ from pytest import raises
 
 
 setup_ubuntu = get_docker_fixture(
-    'rastasheep/ubuntu-sshd:14.04',
+    TEST_SSH_DOCKER_DIGEST,
     scope='module'
 )
 

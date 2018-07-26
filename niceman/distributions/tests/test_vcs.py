@@ -104,10 +104,11 @@ def test_git_repo(git_repo):
             dists,
             expected_length=1,
             expected_unknown={"/sbin/iptables"},
-            expected_subset={"name": "git",
-                             "packages": [{"files": paths,
-                                           "path": git_repo,
-                                           "branch": "master"}]})
+            expected_subset={
+                "name": "git",
+                "packages": [{"files": [op.relpath(p) for p in paths],
+                              "path": git_repo,
+                              "branch": "master"}]})
 
         assert dists[0][0].packages[0].hexsha
         assert dists[0][0].packages[0].root_hexsha
@@ -171,16 +172,18 @@ def test_git_repo_remotes(git_repo_pair):
     assert_distributions(
         dists_nopush,
         expected_length=1,
-        expected_subset={"name": "git",
-                         "packages": [{"files": paths,
-                                       "path": repo_local,
-                                       "branch": "master",
-                                       "tracked_remote": "origin",
-                                       "remotes": {"origin":
-                                                   {"url": repo_remote,
-                                                    "contains": True},
-                                                   "fakeremote":
-                                                   {"url": "fakepath"}}}]})
+        expected_subset={
+            "name": "git",
+            "packages": [
+                {"files": [op.relpath(p, repo_local) for p in paths],
+                 "path": repo_local,
+                 "branch": "master",
+                 "tracked_remote": "origin",
+                 "remotes": {"origin":
+                             {"url": repo_remote,
+                              "contains": True},
+                             "fakeremote":
+                             {"url": "fakepath"}}}]})
     pkg_nopush = dists_nopush[0][0].packages[0]
     assert set(pkg_nopush.remotes.keys()) == {"origin", "fakeremote"}
 
@@ -451,6 +454,7 @@ def test_svn(svn_repo):
         expected_length=1,
         expected_subset={'name': 'svn'})
     svn_repo = list(tracer.identify_distributions([svn_file]))[0][0].packages[0]
+    assert svn_repo.files == ['foo']
     assert svn_repo.uuid == uuid
     assert svn_repo.root_url == 'file://' + svn_repo_root
     assert svn_repo.revision == 1

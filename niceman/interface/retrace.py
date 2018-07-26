@@ -228,6 +228,7 @@ def get_tracer_classes():
     from niceman.distributions.venv import VenvTracer
     from niceman.distributions.vcs import VCSTracer
     from niceman.distributions.docker import DockerTracer
+    from niceman.distributions.singularity import SingularityTracer
     Tracers = [DebTracer, RPMTracer, CondaTracer, VenvTracer, VCSTracer,
-        DockerTracer]
+        DockerTracer, SingularityTracer]
     return Tracers

@@ -150,7 +150,7 @@ class CondaDistribution(Distribution):
     def install_packages(self, session=None):
         """
         Install the packages associated to this distribution by the provenance
-        into the environment environment.
+        into the environment.
 
         Parameters
         ----------

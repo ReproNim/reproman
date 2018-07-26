@@ -69,6 +69,7 @@ install:
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
   # for SVN tests (SVNRepoShim._ls_files_command())
   - sudo apt-get install sqlite3
+  - travis_retry sudo eatmydata apt-get install singularity-container
 
 script:
   # Verify that setup.py build doesn't puke
