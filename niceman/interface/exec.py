@@ -89,7 +89,6 @@ class Exec(Interface):
         resource_info, inventory = ResourceManager.get_resource_info(
             name, resource_id)
 
-        # Delete resource environment
         env_resource = ResourceManager.factory(resource_info)
         env_resource.connect()
 
