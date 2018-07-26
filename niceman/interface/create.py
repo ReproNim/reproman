@@ -13,7 +13,6 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
-from .common_opts import resource_id_opt
 from .common_opts import resource_name_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -49,7 +48,6 @@ class Create(Interface):
             doc="""Resource type to create""",
             constraints=EnsureStr(),
         ),
-        resource_id=resource_id_opt,
         # TODO: Implement --only-env and --existing.
         # only_env=Parameter(
         #     args=("--only-env",),
@@ -70,7 +68,7 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(name, resource_type, resource_id, backend):
+    def __call__(name, resource_type, backend):
         # Load, while possible merging/augmenting sequentially
         # provenance = Provenance.factory(specs)
         #
@@ -95,13 +93,11 @@ class Create(Interface):
 
         from niceman.ui import ui
 
-        if not name and not resource_id:
+        if not name:
             name = ui.question(
                 "Enter a resource name",
                 error_message="Missing resource name"
             )
-        if not name:
-            name = resource_id
 
         # if only_env:
         #     raise NotImplementedError
@@ -110,7 +106,7 @@ class Create(Interface):
 
         # Get configuration and environment inventory
         config, inventory = ResourceManager.get_resource_info(
-            name, resource_id, resource_type)
+            name, type_=resource_type)
 
         # Create resource environment
         env_resource = ResourceManager.factory(config)
