@@ -196,14 +196,15 @@ def test_parse_dpkgquery_line():
 @pytest.fixture
 def setup_packages():
     """set up the package comparison tests"""
-    a = DEBPackage(name='p1')
-    b = DEBPackage(name='p1', version='1.0')
-    c = DEBPackage(name='p1', version='1.1')
-    d = DEBPackage(name='p1', architecture='i386')
-    e = DEBPackage(name='p1', architecture='alpha')
-    f = DEBPackage(name='p1', version='1.1', architecture='i386')
-    g = DEBPackage(name='p2')
-    return (a, b, c, d, e, f, g)
+    p1 = DEBPackage(name='p1')
+    p1v10 = DEBPackage(name='p1', version='1.0')
+    p1v11 = DEBPackage(name='p1', version='1.1')
+    p1ai = DEBPackage(name='p1', architecture='i386')
+    p1aa = DEBPackage(name='p1', architecture='alpha')
+    p1v11ai = DEBPackage(name='p1', version='1.1', architecture='i386')
+    p2 = DEBPackage(name='p2')
+    return (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2)
+
 
 def test_package_satisfies(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
@@ -222,6 +223,7 @@ def test_package_satisfies(setup_packages):
     assert not p1v11.satisfies(p1v11ai)
     assert p1v11ai.satisfies(p1v11)
 
+
 @pytest.fixture
 def setup_distributions():
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
@@ -230,6 +232,7 @@ def setup_distributions():
     d2 = DebianDistribution(name='debian 2')
     d2.packages = [p1v11]
     return (d1, d2)
+
 
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
     (d1, d2) = setup_distributions
@@ -240,10 +243,12 @@ def test_distribution_satisfies_package(setup_distributions, setup_packages):
     assert not d2.satisfies_package(p1v10)
     assert d2.satisfies_package(p1v11)
 
+
 def test_distribution_statisfies(setup_distributions):
     (d1, d2) = setup_distributions
     assert not d1.satisfies(d2)
     assert d2.satisfies(d1)
+
 
 def test_distribution_sub():
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
