@@ -13,7 +13,6 @@ __docformat__ = 'restructuredtext'
 
 from .base import Interface, backend_help, backend_set_config
 import niceman.interface.base # Needed for test patching
-from .common_opts import resource_name_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
@@ -42,7 +41,12 @@ class Create(Interface):
         #     # provide options, like --no-exec, etc  per each spec
         #     # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         # ),
-        name=resource_name_opt,
+        name=Parameter(
+            args=("name",),
+            metavar="NAME",
+            doc="""Name of the resource to create""",
+            constraints=EnsureStr(),
+        ),
         resource_type=Parameter(
             args=("-t", "--resource-type"),
             doc="""Resource type to create""",
