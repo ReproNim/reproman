@@ -124,12 +124,12 @@ class DebianDistribution(Distribution):
 
     def initiate(self, session):
         """
-        Perform any initialization commands needed in the environment environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
-        environment : object
-            The Environment sub-class object.
+        session : Session object
+            The session to work in.
         """
         lgr.debug("Adding Debian update to environment command list.")
         self._init_apt_sources(session)
@@ -352,7 +352,7 @@ class DebTracer(DistributionTracer):
             apt_sources=list(self._apt_sources.values())
         )  # the one and only!
         dist.normalize()
-        #   similar to DBs should take care about identifying/groupping etc
+        #   similar to DBs should take care about identifying/grouping etc
         #   of origins etc
         yield dist, remaining_files
 

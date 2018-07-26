@@ -72,7 +72,7 @@ class ResourceManager(object):
     # TODO: Following methods might better be in their own class
     @staticmethod
     def _discover_types():
-        """Discover resource types by instpecting the resource directory files.
+        """Discover resource types by inspecting the resource directory files.
         
         Returns
         -------

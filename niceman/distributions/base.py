@@ -113,7 +113,7 @@ class Distribution(SpecObject):
     @abc.abstractmethod
     def initiate(self, session):
         """
-        Perform any initialization commands needed in the environment environment.
+        Perform any initialization commands needed in the environment.
 
         Parameters
         ----------
@@ -205,7 +205,7 @@ class DistributionTracer(object):
     #       provides a generic implementation which is based on stages:
     #       1. for each file identifying package fields uniquely describing the
     #          package (method `_get_packagefields_for_files`)
-    #       2. groupping fields based on the packagefields
+    #       2. grouping fields based on the packagefields
     #       3. creating an actual `Package` using those fields for each group
     #          of files.
     #  In principle could be RFed to be more scalable, where there is a "Package
@@ -283,7 +283,7 @@ class DistributionTracer(object):
     def _get_packagefields_for_files(self, files):
         """Given a list of files, should return a dict mapping files to a
         dictionary of fields which would be later passed into _create_package
-        to actually create packages while groupping into packages 
+        to actually create packages while grouping into packages
         (having identical returned packagefield values)
         """
         raise NotImplementedError

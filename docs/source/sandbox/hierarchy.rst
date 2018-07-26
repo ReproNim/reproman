@@ -385,7 +385,7 @@ packages:
 DISTRIBUTUONS
 -------------
 
-I think we can't escape those.  They would allow for nicer groupping and avoid
+I think we can't escape those.  They would allow for nicer grouping and avoid
 pulling terms by the ears... e.g.
 
 # for now just inheriting ideas from reprozip but we might RF it to expand to
