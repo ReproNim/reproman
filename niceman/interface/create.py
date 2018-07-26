@@ -50,17 +50,18 @@ class Create(Interface):
             constraints=EnsureStr(),
         ),
         resource_id=resource_id_opt,
-        only_env=Parameter(
-            args=("--only-env",),
-            doc="only env spec",
-            nargs="+",
-            #action="store_true",
-        ),
-        existing=Parameter(
-            args=("-e", "--existing"),
-            choices=("fail", "redefine"),
-            doc="Action to take if name is already known"
-        ),
+        # TODO: Implement --only-env and --existing.
+        # only_env=Parameter(
+        #     args=("--only-env",),
+        #     doc="only env spec",
+        #     nargs="+",
+        #     #action="store_true",
+        # ),
+        # existing=Parameter(
+        #     args=("-e", "--existing"),
+        #     choices=("fail", "redefine"),
+        #     doc="Action to take if name is already known"
+        # ),
         backend=Parameter(
             args=("-b", "--backend"),
             nargs="+",
@@ -69,9 +70,7 @@ class Create(Interface):
     )
 
     @staticmethod
-    def __call__(name, resource_type, resource_id, only_env,
-                 backend, existing='fail '):
-
+    def __call__(name, resource_type, resource_id, backend):
         # Load, while possible merging/augmenting sequentially
         # provenance = Provenance.factory(specs)
         #
