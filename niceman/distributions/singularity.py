@@ -42,6 +42,7 @@ class SingularityImage(Package):
     base_image = attrib()
     mirror_url = attrib()
     url = attrib()
+    path = attrib()
 
 
 _register_with_representer(SingularityImage)
@@ -103,6 +104,7 @@ class SingularityTracer(DistributionTracer):
         images = []
         remaining_files = set()
         url = None
+        path = None
 
         for file_path in files:
             try:
@@ -122,6 +124,7 @@ class SingularityTracer(DistributionTracer):
                         md5 = md5sum(temp_path)
                         os.remove(temp_path)
                 else:
+                    path = os.path.abspath(file_path)
                     image = json.loads(self._session.execute_command(
                         ['singularity', 'inspect', file_path])[0])
                     md5 = md5sum(file_path)
@@ -142,7 +145,8 @@ class SingularityTracer(DistributionTracer):
                         'org.label-schema.usage.singularity.deffile.from'),
                     mirror_url=image.get(
                         'org.label-schema.usage.singularity.deffile.mirrorurl'),
-                    url=url
+                    url=url,
+                    path=path
                 ))
             except Exception as exc:
                 lgr.debug("Probably %s is not a Singularity image: %s",
