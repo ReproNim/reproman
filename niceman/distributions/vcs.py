@@ -79,22 +79,24 @@ class VCSRepo(SpecObject):
     path = attrib(default=attr.NOTHING)
     files = attrib(default=attr.Factory(list))
 
-    @property
-    def identifier(self):
-        try:
-            return getattr(self, self._identifier_attribute)
-        except AttributeError:
-            # raised if _identifier_attribute is not defined, but this means
-            # (to the caller) that identifier is not defined
-            msg = "%s instance has no attribute 'identifier'" % self.__class__
-            raise AttributeError(msg)
+    _diff_fields = ('path',)
 
+    # @property
+    # def identifier(self):
+    #     try:
+    #         return getattr(self, self._identifier_attribute)
+    #     except AttributeError:
+    #         # raised if _identifier_attribute is not defined, but this means
+    #         # (to the caller) that identifier is not defined
+    #         msg = "%s instance has no attribute 'identifier'" % self.__class__
+    #         raise AttributeError(msg)
+    #
     @property
     def commit(self):
         try:
             return getattr(self, self._commit_attribute)
         except AttributeError:
-            # as for .identifer above, reraise with a more appropriate message
+            # as for .identifier above, reraise with a more appropriate message
             msg = "%s instance has no attribute 'commit'" % self.__class__
             raise AttributeError(msg)
 
@@ -108,8 +110,8 @@ class GitRepo(VCSRepo):
     tracked_remote = attrib()
     remotes = attrib(default=attr.Factory(dict))
 
-    _identifier_attribute = 'root_hexsha'
-    _commit_attribute = 'hexsha'
+    _cmp_fields = ('root_hexsha',)
+    _diff_fields = VCSRepo._diff_fields + ('hexsha', 'branch')
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -279,8 +281,8 @@ class SVNRepo(VCSRepo):
     relative_url = attrib()
     uuid = attrib()
 
-    _identifier_attribute = 'uuid'
-    _commit_attribute = 'revision'
+    _cmp_fields = ('uuid',)
+    _diff_fields = ('revision',)
 
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s

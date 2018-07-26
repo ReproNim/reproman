@@ -89,6 +89,7 @@ def get_miniconda_url(conda_platform, python_version):
     return "https://repo.continuum.io/miniconda/Miniconda%s-latest-%s.sh" \
                     % (python_version[0], platform)
 
+
 @attr.s
 class CondaPackage(Package):
     name = attrib(default=attr.NOTHING)
@@ -104,6 +105,8 @@ class CondaPackage(Package):
     files = attrib(default=attr.Factory(list))
 
     _cmp_fields = ('name', 'build')
+    _diff_fields = ('version', 'installer')
+
 
 @attr.s
 class CondaChannel(SpecObject):

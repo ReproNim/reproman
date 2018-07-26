@@ -91,22 +91,13 @@ class DEBPackage(Package):
     files = attrib(default=attr.Factory(list), hash=False)
 
     _cmp_fields = ('name', 'architecture')
+    _diff_fields = ('version',)
 
+    # TODO: unify   is_satisfied_by   and   satisfies  naming/API
     def satisfies(self, other):
         """return True if this package (self) satisfies the requirements of 
         the passed package (other)"""
-        if not isinstance(other, Package):
-            raise TypeError('satisfies() requires a package argument')
-        if not isinstance(other, DEBPackage):
-            return False
-        if self.name != other.name:
-            return False
-        if other.version is not None and self.version != other.version:
-            return False
-        if other.architecture is not None \
-                and self.architecture != other.architecture:
-            return False
-        return True
+        return other.is_satisfied_by(self)
 
 _register_with_representer(DEBPackage)
 
@@ -119,8 +110,6 @@ class DebianDistribution(Distribution):
     apt_sources = TypedList(APTSource)
     packages = TypedList(DEBPackage)
     version = attrib()  # version as depicted by /etc/debian_version
-
-    _cmp_fields = tuple()
 
     def initiate(self, session):
         """
@@ -272,7 +261,7 @@ class DebianDistribution(Distribution):
             raise TypeError('satisfies_package() requires a package argument')
         if not isinstance(package, DEBPackage):
             return False
-        return any([ p.satisfies(package) for p in self.packages ])
+        return any(p.satisfies(package) for p in self.packages)
 
     def satisfies(self, other):
         """return True if this distribution (self) satisfies the requirements 

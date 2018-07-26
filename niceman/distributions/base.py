@@ -40,6 +40,108 @@ def TypedList(type_):
 #
 
 class SpecObject(object):
+
+    # Empty tuple would signal that all attribs will be used while establishing
+    # the "identity" of the specobject
+    _cmp_fields = tuple()
+    # Fields of the primary interest when showing diff
+    _diff_fields = tuple()
+
+    @property
+    def _cmp_id(self):
+        if not self._cmp_fields:
+            # Might need to be gone or some custom exception
+            raise RuntimeError(
+                "Cannot establish identity of %r since _cmp_fields "
+                "are not defined", self)
+        fields = self._cmp_fields \
+            if self._cmp_fields \
+            else self._attr_names
+        return tuple(getattr(self, a) for a in fields)
+
+    # TODO: make it "lazy" or may be there is already a helper in attrs?
+    @property
+    def _attr_names(self):
+        return tuple(f.name for f in self.__attrs_attrs__)
+
+    # TODO: code here is too generic and could be used for "is_identical_to"
+    #   kind of check, just logic could be adjusted
+    def is_satisfied_by(self, other):
+        """does the other spec object satisfies the requirements of the current one
+        """
+        # TODO(OPT): might explicitly set to no op function if lgr level is too high
+        log_cmp = lambda *args: lgr.log(5, *args)
+        log_cmp("Comparing (satisfy) self=%r to other=%r", self, other)
+        if not isinstance(other, self.__class__):
+            log_cmp("is not a subclass")
+            return False
+
+        # ??? probably not appropriate for 'satisfy' since e.g. pkg could be
+        #     missing arch spec and thus be satisfied
+        # if self._cmp_id != other._cmp_id:
+        #     log_cmp("%r is different from %r since cmd_id differ",
+        #             self._cmp_id, other._cmp_id)
+        #     return False
+
+        # TODO: any benefit from using ordered set may be to fail earlier etc?
+        # recently added OrderedSet to nibabel -- borrow from there
+        self_attrs = set(self._attr_names)
+        other_attrs = set(other._attr_names)
+        all_attrs = self_attrs.union(other_attrs)
+
+        # if `other` has some field set which is not set in `self` - that is Ok
+        # although (TODO) think about files!? (probably we would need custom
+        # satisfaction check for some fields like `files`)
+        # if `self` has some field set which is not set in `other` we cannot
+        # say that it satisfies
+        # if field set in both but different, cannot be satisfied
+        for f in all_attrs:
+            def differ(msg, *args):
+                log_cmp("Difference %s.%s: " + msg, self, f, *args)
+                return False
+            if f not in self_attrs:
+                # other has something "unique" to it, let it be
+                continue
+            if f not in other_attrs:
+                # other is missing a field self has
+                if getattr(self, f, None) is not None:
+                    # and we have it set!
+                    return differ(
+                        "other does not have a field when we have it set to %r",
+                        getattr(self, f))
+                else:
+                    # if not set, and not present in other, should be ok
+                    continue
+
+            # TODO: could getattr be avoided if we just use actual attrs?
+            self_v = getattr(self, f)
+            other_v = getattr(other, f)
+            if self_v is None:
+                # we do not have it set at all, so other is ok regardless
+                continue
+
+            # TODO: may be some fields could be allowed to be not
+            # set (e.g. checksums etc) and should not trigger 'dis-satisfaction'
+            # if they are not defined!?  think/add
+            if other_v is None:
+                return differ("other has no value defined when self has %r",
+                              self_v)
+
+            # TODO: custom "satisfies" for field if present (of self).
+            #  Will actually be needed for anything non trivial, e.g. a list
+            #  of packages/repositories/whatnot!  So could be applicable even
+            #  if a value is a SpecObject
+            if isinstance(self_v, SpecObject):
+                if not self_v.is_satisfied_by(other_v):
+                    return differ("the other does not satisfy self")
+            else:
+                # For now (and otherwise) - just a simple identity check
+                if self_v != other_v:
+                    return differ("values differ %r != %r", self_v, other_v)
+
+        return True
+
+
     @staticmethod
     def yaml_representer(dumper, data):
 
@@ -63,10 +165,7 @@ class Package(SpecObject):
     # https://github.com/python-attrs/attrs/issues/38
     # So for now will be defined specifically per each subclass
     # files = attr.ib(default=attr.Factory(list))
-
-    @property
-    def _cmp_id(self):
-        return tuple(getattr(self, a) for a in self._cmp_fields)
+    pass
 
 
 @attr.s
