@@ -43,6 +43,7 @@ class RPMSource(SpecObject):
     expire = attrib()
     filename = attrib()
 
+
 _register_with_representer(RPMSource)
 
 
@@ -82,6 +83,7 @@ class RPMPackage(Package):
                 and self.architecture != other.architecture:
             return False
         return True
+
 
 _register_with_representer(RPMPackage)
 
@@ -199,6 +201,7 @@ class RedhatDistribution(Distribution):
         #     or what is in d1 that isn't satisfied by d2
         return [p for p in self.packages if not other.satisfies_package(p)]
 
+
 _register_with_representer(RedhatDistribution)
 
 
@@ -285,7 +288,11 @@ class RPMTracer(DistributionTracer):
             if err:
                 continue
 
-            pkgid = pkgid.strip()
+            pkgids = pkgid.splitlines()
+            if len(pkgids) > 1:
+                msg = "Multiple packages found for file {}: {}. Selecting {}"
+                lgr.info(msg.format(file, ', '.join(pkgids), pkgids[0]))
+            pkgid = pkgids[0].strip()
 
             # Get the package information from the system.
             package_info, _ = self._session.execute_command(['rpm', '-qi',
