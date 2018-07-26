@@ -34,6 +34,13 @@ class MultipleDistributionsError(Exception):
         self.cls = cls
 
 
+def _make_plural(s):
+    """Poor man 'plural' version for now"""
+    if s.endswith('repository'):
+        return s.replace('repository', 'repositories')
+    else:
+        return s + 's'
+
 class Diff(Interface):
     """Report if a specification satisfies the requirements in another 
     specification
@@ -62,17 +69,22 @@ class Diff(Interface):
         env_1 = NicemanProvenance(prov1).get_environment()
         env_2 = NicemanProvenance(prov2).get_environment()
 
-        for (dist_type, pkg_type) in ((DebianDistribution, "Debian package"), 
-                                      (CondaDistribution, "Conda package")):
+        # pkg here could be a package or a repository
+        for (dist_type, pkg_type) in (
+                (DebianDistribution, "Debian package"),
+                (CondaDistribution, "Conda package"),
+                (GitDistribution, 'Git repository'),
+                (SVNDistribution, 'SVN repository')
+        ):
 
             dist_1 = env_1.get_distribution(dist_type)
             if dist_1:
-                pkgs_1 = { p._cmp_id: p for p in dist_1.packages }
+                pkgs_1 = {p._cmp_id: p for p in dist_1.packages}
             else:
                 pkgs_1 = {}
             dist_2 = env_2.get_distribution(dist_type)
             if dist_2:
-                pkgs_2 = { p._cmp_id: p for p in dist_2.packages }
+                pkgs_2 = {p._cmp_id: p for p in dist_2.packages}
             else:
                 pkgs_2 = {}
 
@@ -81,9 +93,10 @@ class Diff(Interface):
     
             pkgs_only_1 = pkgs_1_s - pkgs_2_s
             pkgs_only_2 = pkgs_2_s - pkgs_1_s
-    
+
             if pkgs_only_1 or pkgs_only_2:
-                print(pkg_type + 's:')
+                print(_make_plural(pkg_type) + ':')
+
             if pkgs_only_1:
                 for cmp_key in sorted(pkgs_only_1):
                     package = pkgs_1[cmp_key]
@@ -104,48 +117,48 @@ class Diff(Interface):
                     print('---')
                     print('> %s' % package_2.version)
 
-        for (dist_type, repo_type) in ((GitDistribution, 'Git'), 
-                                       (SVNDistribution, 'SVN')):
-
-            dist_1 = env_1.get_distribution(dist_type)
-            if dist_1:
-                repos_1 = { p.identifier: p for p in dist_1.packages }
-            else:
-                repos_1 = {}
-            dist_2 = env_2.get_distribution(dist_type)
-            if dist_2:
-                repos_2 = { p.identifier: p for p in dist_2.packages }
-            else:
-                repos_2 = {}
-
-            repos_1_s = set(repos_1)
-            repos_2_s = set(repos_2)
-
-            repos_1_only = repos_1_s - repos_2_s
-            repos_2_only = repos_2_s - repos_1_s
-
-            if repos_1_only or repos_2_only:
-                print('%s repositories:' % repo_type)
-            if repos_1_only:
-                for repo_id in repos_1_only:
-                    repo = repos_1[repo_id]
-                    print('< %s (%s)' % (repo.identifier, repo.path))
-            if repos_1_only and repos_2_only:
-                print('---')
-            if repos_2_only:
-                for repo_id in repos_2_only:
-                    repo = repos_2[repo_id]
-                    print('> %s (%s)' % (repo.identifier, repo.path))
-
-            for repo_id in repos_1_s.intersection(repos_2_s):
-                repo_1 = repos_1[repo_id]
-                repo_2 = repos_2[repo_id]
-                if repo_1.commit == repo_2.commit:
-                    continue
-                print('%s repository %s:' % (repo_type, repo_id))
-                print('< %s (%s)' % (repo_1.commit, repo_1.path))
-                print('---')
-                print('> %s (%s)' % (repo_2.commit, repo_2.path))
+        # for (dist_type, repo_type) in ((GitDistribution, 'Git repository'),
+        #                                (SVNDistribution, 'SVN repository')):
+        #
+        #     dist_1 = env_1.get_distribution(dist_type)
+        #     if dist_1:
+        #         pkgs_1 = { p._cmp_id: p for p in dist_1.packages }
+        #     else:
+        #         pkgs_1 = {}
+        #     dist_2 = env_2.get_distribution(dist_type)
+        #     if dist_2:
+        #         pkgs_2 = { p._cmp_id: p for p in dist_2.packages }
+        #     else:
+        #         pkgs_2 = {}
+        #
+        #     pkgs_1_s = set(pkgs_1)
+        #     pkgs_2_s = set(pkgs_2)
+        #
+        #     pkgs_only_1 = pkgs_1_s - pkgs_2_s
+        #     pkgs_only_2 = pkgs_2_s - pkgs_1_s
+        #
+        #     if pkgs_only_1 or pkgs_only_2:
+        #         print('%s pkgsitories:' % repo_type)
+        #     if pkgs_only_1:
+        #         for repo_id in pkgs_only_1:
+        #             repo = pkgs_1[repo_id]
+        #             print('< %s (%s)' % (repo.identifier, repo.path))
+        #     if pkgs_only_1 and pkgs_only_2:
+        #         print('---')
+        #     if pkgs_only_2:
+        #         for repo_id in pkgs_only_2:
+        #             repo = pkgs_2[repo_id]
+        #             print('> %s (%s)' % (repo.identifier, repo.path))
+        #
+        #     for repo_id in pkgs_1_s.intersection(pkgs_2_s):
+        #         repo_1 = pkgs_1[repo_id]
+        #         repo_2 = pkgs_2[repo_id]
+        #         if repo_1.commit == repo_2.commit:
+        #             continue
+        #         print('%s pkgsitory %s:' % (repo_type, repo_id))
+        #         print('< %s (%s)' % (repo_1.commit, repo_1.path))
+        #         print('---')
+        #         print('> %s (%s)' % (repo_2.commit, repo_2.path))
 
         files1 = set(env_1.files)
         files2 = set(env_2.files)
