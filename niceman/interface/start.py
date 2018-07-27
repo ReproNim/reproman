@@ -15,11 +15,11 @@ import re
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
-from .common_opts import resource_id_opt
-from .common_opts import resource_name_opt
+from .common_opts import resref_arg
+from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..resource import ResourceManager
+from ..resource import manager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.start')
@@ -31,43 +31,18 @@ class Start(Interface):
     Examples
     --------
 
-      $ niceman start --name=my-resource
+      $ niceman start my-resource
 
     """
 
     _params_ = dict(
-        name=resource_name_opt,
-        # XXX reenable when we support working with multiple instances at once
-        # resource_type=Parameter(
-        #     args=("-t", "--resource-type"),
-        #     doc="""Resource type to work on""",
-        #     constraints=EnsureStr(),
-        # ),
-
-        resource_id=resource_id_opt,
+        resref=resref_arg,
+        resref_type=resref_type_opt,
     )
 
     @staticmethod
-    def __call__(name, resource_id=None):
-        from niceman.ui import ui
-        if not name and not resource_id:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
-            )
-
-        # Get configuration and environment inventory
-        # TODO: this one would ask for resource type whenever it is not found
-        #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(name, resource_id)
-
-        # Delete resource environment
-        env_resource = ResourceManager.factory(resource_info)
-        env_resource.connect()
-
-        if not env_resource.id:
-            raise ValueError("No resource found given the info %s" % str(resource_info))
-
-        env_resource.start()
-
-        lgr.info("Started the environment %s", name)
+    def __call__(resref, resref_type="auto"):
+        resource = manager.get_resource(resref, resref_type)
+        resource.start()
+        resource.connect()
+        lgr.info("Started the environment %s (%s)", resource.name, resource.id)

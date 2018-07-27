@@ -12,6 +12,7 @@ from niceman.cmdline.main import main
 import logging
 from mock import patch, call, MagicMock
 
+from ...resource.base import ResourceManager
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 
@@ -20,7 +21,6 @@ def test_install_interface(demo1_spec):
 
     with patch('docker.Client') as client, \
         patch('niceman.distributions.debian.DebianDistribution.install_packages'), \
-        patch('niceman.resource.ResourceManager.set_inventory'), \
         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
         patch('requests.get') as requests, \
         swallow_logs(new_level=logging.DEBUG) as log:
@@ -49,12 +49,12 @@ def test_install_interface(demo1_spec):
         requests.return_value = type("TestObject", (object,), {})()
         requests.return_value.text = '<a href="/archive/debian/20171208T032012Z/dists/sid/">next change</a>'
 
-        args = [
-            'install',
-            '--spec', demo1_spec,
-            '--name', 'my-resource',
+        args = ['install',
+                '--spec', demo1_spec,
+                '--resource', 'my-resource',
         ]
-        main(args)
+        with patch("niceman.interface.install.manager", ResourceManager()):
+            main(args)
 
         def container_call(cmd):
             return call().exec_create(

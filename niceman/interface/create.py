@@ -11,13 +11,12 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, backend_help, backend_set_config
+from .base import Interface, backend_help
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
-from ..resource import ResourceManager
-from ..resource import Resource
+from ..resource import manager
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -103,30 +102,17 @@ class Create(Interface):
                 error_message="Missing resource name"
             )
 
+        if not resource_type:
+            resource_type = ui.question(
+                "Enter a resource type",
+                default="docker-container"
+            )
         # if only_env:
         #     raise NotImplementedError
 
         # TODO: Add ability to clone a resource.
 
-        # Get configuration and environment inventory
-        config, inventory = ResourceManager.get_resource_info(
-            name, type_=resource_type)
-
-        # Create resource environment
-        env_resource = ResourceManager.factory(config)
-
-        # Set resource properties to any backend specific command line arguments.
-        if backend:
-            backend_set_config(backend, env_resource, config)
-
-        env_resource.connect()
-        resource_attrs = env_resource.create()
-
-        # Save the updated configuration for this resource.
-        config.update(resource_attrs)
-        inventory[name] = config
-        ResourceManager.set_inventory(inventory)
-
+        manager.create(name, resource_type, backend)
         lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env

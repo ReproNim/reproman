@@ -13,19 +13,39 @@
 __docformat__ = 'restructuredtext'
 
 from niceman.support.param import Parameter
+from niceman.support.constraints import EnsureChoice
 from niceman.support.constraints import EnsureInt, EnsureNone, EnsureStr
+
 
 trace_opt = Parameter(
     args=("--trace",),
     action="store_true",
     doc="""if set, trace execution within the environment""")
 
-resource_name_opt = Parameter(
-    args=("-n", "--name",),
-    doc="Name of the environment container",
+
+#
+# Resource specifications
+#
+
+resref_arg = Parameter(
+    args=("resref",),
+    metavar="RESOURCE",
+    doc="""Name or ID of the resource to operate on. To see available resources, run
+    'niceman ls'""",
     constraints=EnsureStr() | EnsureNone())
 
-resource_id_opt = Parameter(
-    args=("-id", "--resource-id",),
-    doc="ID of the environment container",
+resref_opt = Parameter(
+    args=("-r", "--resource",),
+    dest="resref",
+    metavar="RESOURCE",
+    doc="""Name or ID of the resource to operate on. To see available resources, run
+    'niceman ls'""",
     constraints=EnsureStr() | EnsureNone())
+
+resref_type_opt = Parameter(
+    args=("--resref-type",),
+    metavar="TYPE",
+    doc="""A resource can be referenced by its name or ID.  In the unlikely
+    case that a name collides with an ID, explicitly specify 'name' or 'id' to
+    disambiguate.""",
+    constraints=EnsureChoice("auto", "name", "id"))

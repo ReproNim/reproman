@@ -29,9 +29,7 @@ docker_container = skip_ssh(get_docker_fixture)(
 
 def test_exec_interface(docker_container):
 
-    with patch('niceman.resource.ResourceManager.set_inventory'), \
-         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory:
-
+    with patch('niceman.resource.ResourceManager.get_inventory') as get_inventory:
         config = {
             "status": "running",
             "engine_url": "unix:///var/run/docker.sock",
@@ -45,16 +43,17 @@ def test_exec_interface(docker_container):
             "testing-container": config
         }
 
-        cmd = ['exec', 'mkdir', path, '--name', 'testing-container']
-        main(cmd)
+        cmd = ['exec', 'mkdir', path, '--resource', 'testing-container']
+        manager = ResourceManager()
+        with patch("niceman.interface.exec.manager", manager):
+            main(cmd)
 
-        session = ResourceManager.factory(config).get_session()
+            session = manager.get_resource("testing-container").get_session()
+            assert session.exists(path)
 
-        assert session.exists(path)
-
-        # on 2nd run mkdir should fail since already exists
-        with swallow_outputs() as cmo:
-            with pytest.raises(SystemExit) as cme:
-                main(cmd)
-            assert cme.value.code == 1
-            assert "File exists" in cmo.err
+            # on 2nd run mkdir should fail since already exists
+            with swallow_outputs() as cmo:
+                with pytest.raises(SystemExit) as cme:
+                    main(cmd)
+                assert cme.value.code == 1
+                assert "File exists" in cmo.err

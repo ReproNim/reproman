@@ -13,6 +13,7 @@ import logging
 from mock import patch, call, MagicMock
 
 from niceman.utils import swallow_logs
+from niceman.resource.base import ResourceManager
 from niceman.tests.utils import assert_in
 
 
@@ -48,10 +49,12 @@ def test_delete_interface():
 
         args = [
             'delete',
-            '--name', 'my-resource',
-            '--skip-confirmation'
+            '--skip-confirmation',
+            'my-resource'
+
         ]
-        main(args)
+        with patch("niceman.interface.delete.manager", ResourceManager()):
+            main(args)
 
         calls = [
             call(base_url='tcp://127.0.0.1:2375'),

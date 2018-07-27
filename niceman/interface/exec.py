@@ -22,11 +22,11 @@ from ..support.exceptions import CommandError
 import niceman.interface.base  # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
-from ..resource import ResourceManager
+from ..resource import manager
 from ..resource.session import Session
 from .common_opts import trace_opt
-from .common_opts import resource_id_opt
-from .common_opts import resource_name_opt
+from .common_opts import resref_opt
+from .common_opts import resref_type_opt
 
 from logging import getLogger
 lgr = getLogger('niceman.api.exec')
@@ -54,14 +54,14 @@ class Exec(Interface):
             nargs="*",
             constraints=EnsureStr(),
         ),
-        name=resource_name_opt,
+        resref=resref_opt,
         # XXX reenable when we support working with multiple instances at once
         # resource_type=Parameter(
         #     args=("-t", "--resource-type"),
         #     doc="""Resource type to work on""",
         #     constraints=EnsureStr(),
         # ),
-        resource_id=resource_id_opt,
+        resref_type=resref_type_opt,
         # TODO: should be moved into generic API
         internal=Parameter(
             args=("--internal",),
@@ -74,27 +74,17 @@ class Exec(Interface):
     )
 
     @staticmethod
-    def __call__(command, args, name=None, resource_id=None,
+    def __call__(command, args, resref=None, resref_type="auto",
                  internal=False, trace=False):
         from niceman.ui import ui
-        if not name and not resource_id:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
+        if not resref:
+            resref = ui.question(
+                "Enter a resource name or ID",
+                error_message="Missing resource name or ID"
             )
 
-        # Get configuration and environment inventory
-        # TODO: this one would ask for resource type whenever it is not found
-        #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(
-            name, resource_id)
-
-        env_resource = ResourceManager.factory(resource_info)
+        env_resource = manager.get_resource(resref, resref_type)
         env_resource.connect()
-
-        if not env_resource.id:
-            raise ValueError("No resource found given the info %s" % str(resource_info))
-
         session = env_resource.get_session()
 
         remote_env = {}
@@ -215,10 +205,8 @@ class Exec(Interface):
             lgr.info("NICEMAN trace %s", niceman_spec_path)
 
 
-        ResourceManager.set_inventory(inventory)
-
         lgr.info("Executed the %s command in the environment %s", command,
-                 name)
+                 env_resource.name)
 
         if out:
             sys.stdout.write(out)

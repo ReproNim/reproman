@@ -13,3 +13,5 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Resource, ResourceManager
+
+manager = ResourceManager()

@@ -15,11 +15,11 @@ import re
 
 from .base import Interface
 import niceman.interface.base # Needed for test patching
-from .common_opts import resource_id_opt
-from .common_opts import resource_name_opt
+from .common_opts import resref_arg
+from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..resource import ResourceManager
+from ..resource import manager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.delete')
@@ -31,19 +31,19 @@ class Delete(Interface):
     Examples
     --------
 
-      $ niceman delete --name=my-resource
+      $ niceman delete my-resource
 
     """
 
     _params_ = dict(
-        name=resource_name_opt,
+        resref=resref_arg,
         # XXX reenable when we support working with multiple instances at once
         # resource_type=Parameter(
         #     args=("-t", "--resource-type"),
         #     doc="""Resource type to work on""",
         #     constraints=EnsureStr(),
         # ),
-        resource_id=resource_id_opt,
+        resref_type=resref_type_opt,
         skip_confirmation=Parameter(
             args=("--skip-confirmation",),
             action="store_true",
@@ -52,42 +52,21 @@ class Delete(Interface):
     )
 
     @staticmethod
-    def __call__(name, resource_id=None, skip_confirmation=False):
+    def __call__(resref, resref_type="auto", skip_confirmation=False):
         from niceman.ui import ui
-        if not name and not resource_id:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
-            )
 
-        # Get configuration and environment inventory
-        # TODO: this one would ask for resource type whenever it is not found
-        #       why should we???
-        resource_info, inventory = ResourceManager.get_resource_info(name, resource_id)
-
-        # Delete resource environment
-        env_resource = ResourceManager.factory(resource_info)
-        env_resource.connect()
-
-        if not env_resource.id:
-            raise ValueError("No resource found given the info %s" % str(resource_info))
+        resource = manager.get_resource(resref, resref_type)
 
         if skip_confirmation:
             response = True
         else:
             response = ui.yesno(
                 "Delete the resource '{}'? (ID: {})".format(
-                    env_resource.name, env_resource.id[:20]),
+                    resource.name, resource.id[:20]),
                 default="no"
             )
 
         if response:
-            env_resource.delete()
-
-            # Save the updated configuration for this resource.
-            if name in inventory:
-                del inventory[name]
-
-            ResourceManager.set_inventory(inventory)
-
-            lgr.info("Deleted the environment %s", name)
+            resource.connect()
+            manager.delete(resource)
+            lgr.info("Deleted the environment %s", resource.name)

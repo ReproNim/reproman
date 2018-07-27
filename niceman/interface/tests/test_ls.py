@@ -11,6 +11,7 @@ from mock import patch, MagicMock
 
 from ...cmdline.main import main
 from ...utils import swallow_logs
+from ...resource.base import ResourceManager
 from ...tests.utils import assert_in
 
 import logging
@@ -23,7 +24,6 @@ def test_ls_interface():
 
     with patch('docker.Client') as docker_client, \
         patch('boto3.resource') as aws_client, \
-        patch('niceman.resource.ResourceManager.set_inventory'), \
         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
@@ -81,7 +81,8 @@ def test_ls_interface():
         args = [
             'ls',
         ]
-        main(args)
+        with patch("niceman.interface.ls.manager", ResourceManager()):
+            main(args)
 
         assert_in(
             'list result: docker-resource-1, docker-container, 326b0fdfbf838, running',

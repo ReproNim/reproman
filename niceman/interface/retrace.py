@@ -16,6 +16,8 @@ import sys
 import time
 
 from niceman.resource.session import get_local_session
+from .common_opts import resref_opt
+from .common_opts import resref_type_opt
 from .base import Interface
 from ..support.constraints import EnsureNone
 from ..support.constraints import EnsureStr
@@ -23,6 +25,7 @@ from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
 from ..utils import assure_list
 from ..utils import to_unicode
+from ..resource import manager
 
 __docformat__ = 'restructuredtext'
 
@@ -61,17 +64,15 @@ class Retrace(Interface):
             metavar='output_file',
             constraints=EnsureStr() | EnsureNone(),
         ),
-        # TODO: make a common arg
-        resource=Parameter(
-            args=("--resource",),
-            doc="TODO"
-        )
+        resref=resref_opt,
+        resref_type=resref_type_opt,
     )
 
     # TODO: add a session/resource so we could trace within
     # arbitrary sessions
     @staticmethod
-    def __call__(path=None, spec=None, output_file=None, resource=None):
+    def __call__(path=None, spec=None, output_file=None,
+                 resref=None, resref_type="auto"):
         # heavy import -- should be delayed until actually used
 
         if not (spec or path):
@@ -92,9 +93,9 @@ class Retrace(Interface):
         # The tracers assume normalized paths.
         paths = list(map(normpath, paths))
 
-        if resource:
-            # TODO: if not a session already, request a session from the resource
-            session = resource
+        if resref:
+            resource = manager.get_resource(resref, resref_type)
+            session = resource.get_session()
         else:
             session = get_local_session()
 

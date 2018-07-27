@@ -14,6 +14,7 @@ from mock import patch, call, MagicMock
 
 from niceman.cmdline.main import main
 from niceman.utils import swallow_logs
+from niceman.resource.base import ResourceManager
 from niceman.tests.utils import assert_in
 from niceman.support.exceptions import ResourceError
 
@@ -27,7 +28,7 @@ def test_create_interface():
 
     with patch('docker.Client') as client, \
         patch('niceman.resource.ResourceManager.set_inventory'), \
-        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager.get_inventory'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
@@ -41,22 +42,14 @@ def test_create_interface():
             }
         )
 
-        get_inventory.return_value = {
-            "my-test-resource": {
-                "status": "running",
-                "engine_url": "tcp://127.0.0.1:2375",
-                "type": "docker-container",
-                "name": "my-test-resource",
-                "id": "18b31b30e3a5"
-            }
-        }
-
         args = ['create',
-                '--name', 'my-test-resource',
                 '--resource-type', 'docker-container',
-                '--backend', 'engine_url=tcp://127.0.0.1:2376'
+                '--backend', 'engine_url=tcp://127.0.0.1:2376',
+                '--',
+                'my-test-resource'
         ]
-        main(args)
+        with patch("niceman.interface.create.manager", ResourceManager()):
+            main(args)
 
         calls = [
             call(base_url='tcp://127.0.0.1:2376'),

@@ -13,10 +13,11 @@ __docformat__ = 'restructuredtext'
 
 import re
 
-from .base import Interface, backend_help, backend_set_config
+from .base import Interface, backend_help
 import niceman.interface.base # Needed for test patching
-from .common_opts import resource_id_opt
-from .common_opts import resource_name_opt
+from niceman.resource import manager
+from .common_opts import resref_arg
+from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..resource import ResourceManager
@@ -31,52 +32,27 @@ class Login(Interface):
     Examples
     --------
 
-      $ niceman login --name=my-resource
+      $ niceman login my-resource
 
     """
 
     _params_ = dict(
-        name=resource_name_opt,
-        # XXX reenable when we support working with multiple instances at once
-        # resource_type=Parameter(
-        #     args=("-t", "--resource-type"),
-        #     doc="""Resource type to work on""",
-        #     constraints=EnsureStr(),
-        # ),
-        resource_id=resource_id_opt,
         backend=Parameter(
             args=("-b", "--backend"),
             nargs="+",
             doc=backend_help()
         ),
+        resref=resref_arg,
+        resref_type=resref_type_opt,
     )
 
     @staticmethod
-    def __call__(name, backend, resource_id=None):
-        from niceman.ui import ui
-        if not name and not resource_id:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
-            )
-
-        # Get configuration and environment inventory
-        # TODO: this one would ask for resource type whenever it is not found
-        #       why should we???
-        # TODO:  config too bad of a name here -- revert back to resource_info?
-        config, inventory = ResourceManager.get_resource_info(name, resource_id)
+    def __call__(resref, resref_type="auto", backend=None):
+        # Get a corresponding known resource
+        env_resource = manager.get_resource(resref, resref_type)
 
         # Connect to resource environment
-        env_resource = ResourceManager.factory(config)
-
-        # Set resource properties to any backend specific command line arguments.
-        if backend:
-            backend_set_config(backend, env_resource, config)
-
         env_resource.connect()
-
-        if not env_resource.id:
-            raise ValueError("No resource found given the info %s" % str(config))
-
         with env_resource.get_session(pty=True):
             pass
+        # env_resource.login()

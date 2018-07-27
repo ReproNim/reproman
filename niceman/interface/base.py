@@ -274,27 +274,6 @@ def backend_help(resource_type=None):
     return help_message + ", ".join(help_args)
 
 
-def backend_set_config(params, env_resource, config):
-    """Set backend parameters in resource instance and config.
-
-    Parameters
-    ----------
-    params : list of str
-        A list of backend parameters, where key value pairs are separated by
-        '='.
-    env_resource : Resource object
-    config : dict
-        Configuration parameters for the resource.
-    """
-    for backend_arg in params:
-        key, value = backend_arg.split("=")
-        if hasattr(env_resource, key):
-            config[key] = value
-            setattr(env_resource, key, value)
-        else:
-            raise NotImplementedError("Bad --backend parameter '{}'".format(key))
-
-
 class Interface(object):
     """Base class for interface implementations"""
 

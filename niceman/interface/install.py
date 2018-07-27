@@ -12,12 +12,12 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
-from .common_opts import resource_id_opt
-from .common_opts import resource_name_opt
+from .common_opts import resref_opt
+from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..formats import Provenance
-from ..resource import ResourceManager
+from ..resource import manager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.install')
@@ -45,21 +45,21 @@ class Install(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
-        name=resource_name_opt,
-        resource_id=resource_id_opt,
+        resref=resref_opt,
+        resref_type=resref_type_opt,
     )
 
     @staticmethod
-    def __call__(spec, name, resource_id):
+    def __call__(spec, resref=None, resref_type="auto"):
 
         from niceman.ui import ui
         if not spec:
             spec = [ui.question("Enter a spec filename", default="spec.yml")]
 
-        if not name and not resource_id:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
+        if not resref:
+            resref = ui.question(
+                "Enter a resource name or ID",
+                error_message="Missing resource name or ID"
             )
 
         # Load, while possible merging/augmenting sequentially
@@ -71,10 +71,7 @@ class Install(Interface):
         #  - provenance might contain a 'base' which would instruct which
         #    resource to use
 
-        # Get configuration and environment inventory
-        config, inventory = ResourceManager.get_resource_info(name, resource_id)
-
-        env_resource = ResourceManager.factory(config)
+        env_resource = manager.get_resource(resref, resref_type)
         env_resource.connect()
 
         #  TODOs:

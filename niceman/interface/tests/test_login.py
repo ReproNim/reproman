@@ -13,6 +13,7 @@ import logging
 from mock import patch, call, MagicMock
 
 from niceman.utils import swallow_logs
+from niceman.resource.base import ResourceManager
 from niceman.tests.utils import assert_in
 
 
@@ -47,9 +48,11 @@ def test_login_interface():
         }
 
         args = ['login',
-                '--name', 'my-test-resource',
+                'my-test-resource'
         ]
-        main(args)
+
+        with patch("niceman.interface.login.manager", ResourceManager()):
+            main(args)
 
         assert client.call_count == 1
 
