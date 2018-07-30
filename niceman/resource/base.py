@@ -221,14 +221,13 @@ class ResourceManager(object):
 
         return inventory
 
-    def set_inventory(self):
+    def _save(self):
         """Save the resource inventory.
         """
         # Operate on a copy so there is no side-effect of modifying original
         # inventory.
         #
-        # The attribute may not exist yet because get_inventory calls
-        # _set_inventory.
+        # The attribute may not exist yet because get_inventory calls _save.
         inventory = self.inventory.copy() if hasattr(self, "inventory") else {}
 
         for key in list(inventory):  # go through a copy of all keys since we modify
@@ -274,7 +273,7 @@ class ResourceManager(object):
         resource_attrs = resource.create()
         config.update(resource_attrs)
         self.inventory[name] = config
-        self.set_inventory()
+        self._save()
 
     def delete(self, resource):
         """Delete `resource` from the inventory.
@@ -285,7 +284,7 @@ class ResourceManager(object):
         """
         resource.delete()
         del self.inventory[resource.name]
-        self.set_inventory()
+        self._save()
 
 
 class Resource(object):
