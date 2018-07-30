@@ -286,7 +286,6 @@ def backend_set_config(backend, env_resource, config):
             setattr(env_resource, key, value)
         else:
             raise NotImplementedError("Bad --backend parameter '{}'".format(key))
-    return config
 
 
 class Interface(object):

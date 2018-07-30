@@ -117,7 +117,7 @@ class Create(Interface):
 
         # Set resource properties to any backend specific command line arguments.
         if backend:
-            config = backend_set_config(backend, env_resource, config)
+            backend_set_config(backend, env_resource, config)
 
         env_resource.connect()
         resource_attrs = env_resource.create()
