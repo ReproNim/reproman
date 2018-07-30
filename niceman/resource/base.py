@@ -30,8 +30,7 @@ lgr = logging.getLogger('niceman.resource.base')
 
 
 class ResourceManager(object):
-    """
-    Class to help manage resources.
+    """Class to help manage resources.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -273,8 +272,7 @@ class ResourceManager(object):
 
 
 class Resource(object):
-    """
-    Base class for creating and managing compute resources.
+    """Base class for creating and managing compute resources.
     """
 
     __metaclass__ = abc.ABCMeta
