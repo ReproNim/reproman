@@ -275,9 +275,16 @@ def backend_help(resource_type=None):
 
 
 def backend_set_config(params, env_resource, config):
-    """
-    Set config settings based and env_resource properties based on
-    backend parameters passed through command line.
+    """Set backend parameters in resource instance and config.
+
+    Parameters
+    ----------
+    params : list of str
+        A list of backend parameters, where key value pairs are separated by
+        '='.
+    env_resource : Resource object
+    config : dict
+        Configuration parameters for the resource.
     """
     for backend_arg in params:
         key, value = backend_arg.split("=")
