@@ -219,14 +219,11 @@ class ResourceManager(object):
             raise MissingConfigError(
                 "No resource inventory file declared in niceman.cfg")
 
-        # Create inventory file if it does not exist.
         if not op.isfile(inventory_path):
-            lgr.info("Creating resources inventory file %s", inventory_path)
-            # initiate empty inventory
-            ResourceManager.set_inventory({'_path': inventory_path})
-
-        with open(inventory_path, 'r') as fp:
-            inventory = yaml.safe_load(fp)
+            inventory = {}
+        else:
+            with open(inventory_path, 'r') as fp:
+                inventory = yaml.safe_load(fp)
 
         inventory['_path'] = inventory_path
         return inventory
