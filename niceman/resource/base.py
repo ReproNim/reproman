@@ -185,9 +185,6 @@ class ResourceManager(object):
                 cm = ConfigManager()
             return cm
 
-        # Look for a niceman.cfg file in the local directory if none given.
-        if not config_path and op.isfile('niceman.cfg'):
-            config_path = 'niceman.cfg'
         cm = get_cm(config_path=config_path)
         if not config_path and len(cm._sections) == 1:
             config = ui.question("Enter a config file", default="niceman.cfg")
