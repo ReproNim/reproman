@@ -30,8 +30,7 @@ docker_container = skip_ssh(get_docker_fixture)(
 def test_exec_interface(docker_container):
 
     with patch('niceman.resource.ResourceManager.set_inventory'), \
-        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
-        swallow_logs(new_level=logging.DEBUG) as cml:
+         patch('niceman.resource.ResourceManager.get_inventory') as get_inventory:
 
         config = {
             "status": "running",
