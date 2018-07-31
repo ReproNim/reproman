@@ -21,7 +21,7 @@ def test_install_interface(demo1_spec):
 
     with patch('docker.Client') as client, \
         patch('niceman.distributions.debian.DebianDistribution.install_packages'), \
-        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager._get_inventory') as get_inventory, \
         patch('requests.get') as requests, \
         swallow_logs(new_level=logging.DEBUG) as log:
 

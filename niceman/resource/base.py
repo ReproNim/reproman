@@ -75,7 +75,7 @@ class ResourceManager(object):
         else:
             self._inventory_path = inventory_path
 
-        self.inventory = self.get_inventory()
+        self.inventory = self._get_inventory()
 
     def __iter__(self):
         for r in self.inventory:
@@ -193,7 +193,7 @@ class ResourceManager(object):
         """
         return self.factory(self._get_resource_config(resref, resref_type))
 
-    def get_inventory(self):
+    def _get_inventory(self):
         """Return a dict with the config information for all resources.
 
         Parameters
@@ -227,7 +227,7 @@ class ResourceManager(object):
         # Operate on a copy so there is no side-effect of modifying original
         # inventory.
         #
-        # The attribute may not exist yet because get_inventory calls _save.
+        # The attribute may not exist yet because _get_inventory calls _save.
         inventory = self.inventory.copy() if hasattr(self, "inventory") else {}
 
         for key in list(inventory):  # go through a copy of all keys since we modify

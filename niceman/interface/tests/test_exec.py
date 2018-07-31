@@ -29,7 +29,7 @@ docker_container = skip_ssh(get_docker_fixture)(
 
 def test_exec_interface(docker_container):
 
-    with patch('niceman.resource.ResourceManager.get_inventory') as get_inventory:
+    with patch('niceman.resource.ResourceManager._get_inventory') as get_inventory:
         config = {
             "status": "running",
             "engine_url": "unix:///var/run/docker.sock",
