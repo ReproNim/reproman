@@ -19,7 +19,7 @@ from .common_opts import resref_arg
 from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..resource import manager
+from ..resource import get_manager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.delete')
@@ -55,6 +55,7 @@ class Delete(Interface):
     def __call__(resref, resref_type="auto", skip_confirmation=False):
         from niceman.ui import ui
 
+        manager = get_manager()
         resource = manager.get_resource(resref, resref_type)
 
         if skip_confirmation:

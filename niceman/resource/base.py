@@ -18,7 +18,6 @@ from glob import glob
 import os
 import os.path as op
 
-from .. import cfg
 from ..dochelpers import exc_str
 from ..support.exceptions import InsufficientArgumentsError
 from ..support.exceptions import ResourceError
@@ -67,6 +66,9 @@ class ResourceManager(object):
     SECRET_KEYS = ('access_key_id', 'secret_access_key')
 
     def __init__(self, inventory_path=None):
+        # Import here rather than the module-level to allow more flexibility in
+        # overriding the configuration.
+        from .. import cfg
         self.config_manager = cfg
         if inventory_path is None:
             self._inventory_path = self.config_manager.getpath(

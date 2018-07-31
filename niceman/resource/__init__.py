@@ -14,4 +14,17 @@ __docformat__ = 'restructuredtext'
 
 from .base import Resource, ResourceManager
 
-manager = ResourceManager()
+_MANAGER = None
+
+
+def get_manager():
+    """Return a ResourceManager instance.
+
+    A new instance is not created if one already exists.  This getter function
+    is used rather than a module-level instance to support delaying instance
+    creation.
+    """
+    global _MANAGER
+    if _MANAGER is None:
+        _MANAGER = ResourceManager()
+    return _MANAGER

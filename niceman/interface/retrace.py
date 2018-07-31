@@ -25,7 +25,7 @@ from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
 from ..utils import assure_list
 from ..utils import to_unicode
-from ..resource import manager
+from ..resource import get_manager
 
 __docformat__ = 'restructuredtext'
 
@@ -94,7 +94,7 @@ class Retrace(Interface):
         paths = list(map(normpath, paths))
 
         if resref:
-            resource = manager.get_resource(resref, resref_type)
+            resource = get_manager().get_resource(resref, resref_type)
             session = resource.get_session()
         else:
             session = get_local_session()

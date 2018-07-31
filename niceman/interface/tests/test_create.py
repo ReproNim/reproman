@@ -48,7 +48,8 @@ def test_create_interface():
                 '--',
                 'my-test-resource'
         ]
-        with patch("niceman.interface.create.manager", ResourceManager()):
+        with patch("niceman.interface.create.get_manager",
+                   return_value=ResourceManager()):
             main(args)
 
         calls = [

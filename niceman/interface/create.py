@@ -16,7 +16,7 @@ import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
-from ..resource import manager
+from ..resource import get_manager
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -112,7 +112,7 @@ class Create(Interface):
 
         # TODO: Add ability to clone a resource.
 
-        manager.create(name, resource_type, backend)
+        get_manager().create(name, resource_type, backend)
         lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env

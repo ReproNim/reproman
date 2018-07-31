@@ -19,7 +19,7 @@ from .common_opts import resref_arg
 from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..resource import manager
+from ..resource import get_manager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.start')
@@ -42,7 +42,7 @@ class Start(Interface):
 
     @staticmethod
     def __call__(resref, resref_type="auto"):
-        resource = manager.get_resource(resref, resref_type)
+        resource = get_manager().get_resource(resref, resref_type)
         resource.start()
         resource.connect()
         lgr.info("Started the environment %s (%s)", resource.name, resource.id)

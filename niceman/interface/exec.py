@@ -22,7 +22,7 @@ from ..support.exceptions import CommandError
 import niceman.interface.base  # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
-from ..resource import manager
+from ..resource import get_manager
 from ..resource.session import Session
 from .common_opts import trace_opt
 from .common_opts import resref_opt
@@ -83,7 +83,7 @@ class Exec(Interface):
                 error_message="Missing resource name or ID"
             )
 
-        env_resource = manager.get_resource(resref, resref_type)
+        env_resource = get_manager().get_resource(resref, resref_type)
         env_resource.connect()
         session = env_resource.get_session()
 

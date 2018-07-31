@@ -51,7 +51,8 @@ def test_login_interface():
                 'my-test-resource'
         ]
 
-        with patch("niceman.interface.login.manager", ResourceManager()):
+        with patch("niceman.interface.login.get_manager",
+                   return_value=ResourceManager()):
             main(args)
 
         assert client.call_count == 1

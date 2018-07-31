@@ -17,7 +17,7 @@ from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
-from  ..resource import manager
+from  ..resource import get_manager
 from ..ui import ui
 from ..support.exceptions import ResourceError
 from ..support.exceptions import ResourceNotFoundError
@@ -59,6 +59,7 @@ class Ls(Interface):
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 
+        manager = get_manager()
         for name in sorted(manager):
             if name.startswith('_'):
                 continue

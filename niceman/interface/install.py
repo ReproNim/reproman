@@ -17,7 +17,7 @@ from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..formats import Provenance
-from ..resource import manager
+from ..resource import get_manager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.install')
@@ -71,7 +71,7 @@ class Install(Interface):
         #  - provenance might contain a 'base' which would instruct which
         #    resource to use
 
-        env_resource = manager.get_resource(resref, resref_type)
+        env_resource = get_manager().get_resource(resref, resref_type)
         env_resource.connect()
 
         #  TODOs:

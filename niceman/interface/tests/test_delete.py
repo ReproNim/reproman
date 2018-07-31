@@ -53,7 +53,8 @@ def test_delete_interface():
             'my-resource'
 
         ]
-        with patch("niceman.interface.delete.manager", ResourceManager()):
+        with patch("niceman.interface.delete.get_manager",
+                   return_value=ResourceManager()):
             main(args)
 
         calls = [

@@ -15,12 +15,11 @@ import re
 
 from .base import Interface, backend_help
 import niceman.interface.base # Needed for test patching
-from niceman.resource import manager
+from niceman.resource import get_manager
 from .common_opts import resref_arg
 from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..resource import ResourceManager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.login')
@@ -48,8 +47,7 @@ class Login(Interface):
 
     @staticmethod
     def __call__(resref, resref_type="auto", backend=None):
-        # Get a corresponding known resource
-        env_resource = manager.get_resource(resref, resref_type)
+        env_resource = get_manager().get_resource(resref, resref_type)
 
         # Connect to resource environment
         env_resource.connect()

@@ -53,7 +53,8 @@ def test_install_interface(demo1_spec):
                 '--spec', demo1_spec,
                 '--resource', 'my-resource',
         ]
-        with patch("niceman.interface.install.manager", ResourceManager()):
+        with patch("niceman.interface.install.get_manager",
+                   return_value=ResourceManager()):
             main(args)
 
         def container_call(cmd):

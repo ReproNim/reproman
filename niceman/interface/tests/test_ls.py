@@ -81,7 +81,8 @@ def test_ls_interface():
         args = [
             'ls',
         ]
-        with patch("niceman.interface.ls.manager", ResourceManager()):
+        with patch("niceman.interface.login.get_manager",
+                   return_value=ResourceManager()):
             main(args)
 
         assert_in(
