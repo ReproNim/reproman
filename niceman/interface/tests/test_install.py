@@ -50,8 +50,9 @@ def test_install_interface(demo1_spec):
         requests.return_value.text = '<a href="/archive/debian/20171208T032012Z/dists/sid/">next change</a>'
 
         args = ['install',
-                '--spec', demo1_spec,
-                '--resource', 'my-resource',
+                'my-resource',
+                demo1_spec,
+
         ]
         with patch("niceman.interface.install.get_manager",
                    return_value=ResourceManager()):

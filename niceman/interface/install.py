@@ -12,7 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
-from .common_opts import resref_opt
+from .common_opts import resref_arg
 from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -29,13 +29,15 @@ class Install(Interface):
     Examples
     --------
 
-      $ niceman install --spec recipe_for_failure.yml --resource docker
+      $ niceman install docker recipe_for_failure.yml
 
     """
 
     _params_ = dict(
+        resref=resref_arg,
+        resref_type=resref_type_opt,
         spec=Parameter(
-            args=("-s", "--spec",),
+            args=("spec",),
             doc="file with specifications (in supported formats) of"
                 " packages used in executed environment",
             metavar='SPEC',
@@ -45,23 +47,10 @@ class Install(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
-        resref=resref_opt,
-        resref_type=resref_type_opt,
     )
 
     @staticmethod
-    def __call__(spec, resref=None, resref_type="auto"):
-
-        from niceman.ui import ui
-        if not spec:
-            spec = [ui.question("Enter a spec filename", default="spec.yml")]
-
-        if not resref:
-            resref = ui.question(
-                "Enter a resource name or ID",
-                error_message="Missing resource name or ID"
-            )
-
+    def __call__(resref, spec, resref_type="auto"):
         # Load, while possible merging/augmenting sequentially
         assert len(spec) == 1, "For now supporting having only a single spec"
         filename = spec[0]
