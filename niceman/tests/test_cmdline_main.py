@@ -79,7 +79,7 @@ def test_help_np():
     # see https://travis-ci.org/niceman/niceman/jobs/80519004
     # thus testing sets
     assert_equal(set(sections),
-                 {'Commands for computation environments manipulation',
+                 {'Commands for manipulating computation environments',
                   'Miscellaneous commands',
                   'General information',
                   'Global options'})
