@@ -96,12 +96,6 @@ class Create(Interface):
 
         from niceman.ui import ui
 
-        if not name:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
-            )
-
         if not resource_type:
             resource_type = ui.question(
                 "Enter a resource type",
