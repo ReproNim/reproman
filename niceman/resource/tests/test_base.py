@@ -70,6 +70,18 @@ def test_resource_manager_save(tmpdir):
     assert "SECRET" not in content
     assert "null-id" not in content
 
+    # Reload that inventory, add another item, and save again.
+    manager_reborn = ResourceManager(inventory)
+    manager_reborn.inventory["added"] = {"name": "added",
+                                         "type": "added-type",
+                                         "id": "added-id"}
+    manager_reborn._save()
+    with open(inventory) as fh:
+        content_reread = fh.read()
+    for line in content:
+        assert line in content_reread
+    assert "added" in content_reread
+
 
 def test_get_resources():
     manager = ResourceManager()
