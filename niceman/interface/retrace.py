@@ -31,7 +31,7 @@ lgr = getLogger('niceman.api.retrace')
 
 
 class Retrace(Interface):
-    """Analyze a known (e.g. ReproZip) trace files or just paths to gather detailed package information
+    """Gather detailed package information from paths or a ReproZip trace file.
 
     Examples
     --------

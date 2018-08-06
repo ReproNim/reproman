@@ -92,7 +92,7 @@ def setup_parser(
             help="enter IPython debugger when uncaught exception happens")
     parser.add_argument(
         '-C', action='append', dest='change_path', metavar='PATH',
-        help="""run as if niceman was started in <path> instead
+        help="""run as if niceman were started in <path> instead
         of the current working directory.  When multiple -C options are given,
         each subsequent non-absolute -C <path> is interpreted relative to the
         preceding -C <path>.  This option affects the interpretations of the
