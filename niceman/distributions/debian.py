@@ -399,6 +399,9 @@ class DebTracer(DistributionTracer):
         return name
 
     def get_details_for_packages(self, packages):
+        if not packages:
+            return []
+
         # Find apt sources if not defined
         if not self._all_apt_sources:
             self._find_all_sources()
