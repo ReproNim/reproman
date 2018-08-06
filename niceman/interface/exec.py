@@ -211,8 +211,13 @@ class Exec(Interface):
                     "Not copying %s from remote session since already exists locally",
                     local_trace_dir)
 
-            from reprozip.tracer.trace import write_configuration
+            try:
+                from reprozip.tracer.trace import write_configuration
+            except ImportError:
+                raise RuntimeError("Using --trace requires ReproZip, "
+                                   "a Linux-specific dependency")
             from rpaths import Path
+
             # we rely on hardcoded paths in reprozip
             write_configuration(
                 directory=Path(local_trace_dir),
