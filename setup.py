@@ -57,7 +57,7 @@ requires = {
         'pycrypto',
         'pyOpenSSL==16.2.0',
         'requests',
-        'reprozip',
+        'reprozip; sys_platform=="linux" or sys_platform=="linux2"',
         'rpaths',
     ],
     'debian': [
