@@ -8,7 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Miscellaneous utilities to assist with testing"""
 
-import docker
 import inspect
 import os
 import re
@@ -16,7 +15,6 @@ import tempfile
 import platform
 import multiprocessing
 import logging
-import requests
 from six import PY2, text_type
 from mock import patch
 import pytest
@@ -32,6 +30,7 @@ from os.path import exists, realpath, join as opj
 from ..cmd import Runner
 from ..utils import *
 from ..dochelpers import borrowkwargs
+from ..resource.docker_container import DockerContainer
 
 # temp paths used by clones
 _TEMP_PATHS_CLONES = set()
@@ -458,11 +457,7 @@ def skip_if_no_docker_container(container_name='testing-container'):
     SkipTest
     """
     def decorator(func):
-        stdout, _ = Runner().run(['docker', 'ps'])
-        # Search the names of running containers in last column of stdout
-        matches = [line for line in stdout.splitlines()
-            if line.split()[-1] == container_name]
-        if len(matches) != 1:
+        if not DockerContainer.is_container_running(container_name):
             pytest.skip("Docker container '{}' not running, "
                         "skipping test  {}".format(container_name, func.__name__),
                         allow_module_level=True)
@@ -472,20 +467,17 @@ def skip_if_no_docker_container(container_name='testing-container'):
 
 def skip_if_no_docker_engine(func):
     """Test decorator that will skip a test if a Docker engine can't be found.
-    
+
     Returns
     -------
     func
         Decorator function
-    
+
     Raises
     ------
     SkipTest
     """
-    session = docker.Client()
-    try:
-        session.info()
-    except requests.exceptions.ConnectionError:
+    if not DockerContainer.is_engine_running():
         pytest.skip("Docker not found, skipping test {}".format(func.__name__),
                     allow_module_level=True)
     return func
