@@ -14,8 +14,10 @@ import dockerpty
 import io
 import json
 import os
+import requests
 import tarfile
 from niceman import utils
+from ..cmd import Runner
 from ..support.exceptions import CommandError, ResourceError
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import POSIXSession, Session
@@ -51,6 +53,45 @@ class DockerContainer(Resource):
     # Docker client and container objects.
     _client = attrib()
     _container = attrib()
+
+    @staticmethod
+    def is_engine_running(base_url=None):
+        """Check the local environment to see if the Docker engine is running.
+
+        Parameters
+        ----------
+        base_url : str
+            URL or socket where Docker engine is listening
+
+        Returns
+        -------
+        boolean
+        """
+        try:
+            session = docker.Client(base_url=base_url)
+            session.info()
+        except (requests.exceptions.ConnectionError,
+                docker.errors.DockerException):
+            return False
+        return True
+
+    @staticmethod
+    def is_container_running(container_name):
+        """Ping the local environment to see if given container is running.
+
+        Parameters
+        ----------
+        container_name : string
+
+        Returns
+        -------
+        boolean
+        """
+        stdout, _ = Runner().run(['docker', 'ps', '--quiet', '--filter',
+            'name=^/{}$'.format(container_name)])
+        if stdout.strip():
+            return True
+        return False
 
     def connect(self):
         """
