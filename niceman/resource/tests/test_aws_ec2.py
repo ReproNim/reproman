@@ -13,11 +13,13 @@ from mock import patch, call, MagicMock
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ..base import ResourceManager
+from ..ssh import SSH
 
 
 def test_awsec2_class():
 
     with patch('boto3.resource') as client, \
+            patch.object(SSH, 'get_session', return_value='started_session'), \
             swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test connecting when a resource doesn't exist.
@@ -143,3 +145,6 @@ def test_awsec2_class():
             call.terminate()
         ]
         resource._ec2_instance.assert_has_calls(calls, any_order=True)
+
+        session = resource.get_session()
+        assert session == 'started_session'
