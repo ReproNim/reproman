@@ -4,6 +4,8 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Test sequences of interface commands.
+"""
 
 import logging
 import os
