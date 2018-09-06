@@ -99,6 +99,12 @@ def setup_parser(
         path names in that they are made relative to the working directory
         caused by the -C option""")
 
+    parser.add_argument(
+        "-c", "--config", metavar="CONFIG", action="append",
+        help="""path to NICEMAN configuration file.  This option can be given
+        multiple times, in which case values in the later files override
+        previous ones.""")
+
     # yoh: atm we only dump to console.  Might adopt the same separation later on
     #      and for consistency will call it --verbose-level as well for now
     # log-level is set via common_opts ATM
@@ -226,6 +232,13 @@ def main(args=None):
     if not cmdlineargs.change_path is None:
         for path in cmdlineargs.change_path:
             chpwd(path)
+
+    if cmdlineargs.config is not None:
+        # In this case, we're unnecessarily instantiating ConfigManager twice,
+        # at import and now, but it might not be worth the effort to
+        # restructure things to delay the import.
+        from niceman.config import ConfigManager
+        niceman.cfg = ConfigManager(cmdlineargs.config, load_default=False)
 
     if not hasattr(cmdlineargs, 'func'):
         lgr.info("No command given, returning")

@@ -274,21 +274,6 @@ def backend_help(resource_type=None):
     return help_message + ", ".join(help_args)
 
 
-def backend_set_config(backend, env_resource, config):
-    """
-    Set config settings based and env_resource properties based on
-    backend parameters passed through command line.
-    """
-    for backend_arg in backend:
-        key, value = backend_arg.split("=")
-        if hasattr(env_resource, key):
-            config[key] = value
-            setattr(env_resource, key, value)
-        else:
-            raise NotImplementedError("Bad --backend parameter '{}'".format(key))
-    return config
-
-
 class Interface(object):
     """Base class for interface implementations"""
 

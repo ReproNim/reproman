@@ -13,16 +13,17 @@ import logging
 from mock import patch, call, MagicMock
 
 from niceman.utils import swallow_logs
+from niceman.resource.base import ResourceManager
 from niceman.tests.utils import assert_in
 
 
-def test_login_interface(niceman_cfg_path):
+def test_login_interface():
     """
     Test logging into an environment
     """
 
     with patch('docker.Client') as client, \
-        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager._get_inventory') as get_inventory, \
         patch('dockerpty.start'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 
@@ -47,10 +48,12 @@ def test_login_interface(niceman_cfg_path):
         }
 
         args = ['login',
-                '--name', 'my-test-resource',
-                '--config', niceman_cfg_path
+                'my-test-resource'
         ]
-        main(args)
+
+        with patch("niceman.interface.login.get_manager",
+                   return_value=ResourceManager()):
+            main(args)
 
         assert client.call_count == 1
 

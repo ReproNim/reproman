@@ -17,15 +17,6 @@ from niceman.cmd import Runner
 from niceman.tests.utils import skip_if_no_network, skip_if_no_svn
 from niceman.utils import chpwd
 
-# Substitutes in for user's ~/.config/niceman/config file
-CONFIGURATION = [
-    NICEMAN_CFG_PATH
-]
-
-@pytest.fixture(params=CONFIGURATION)
-def niceman_cfg_path(request):
-    yield request.param
-
 
 def get_docker_fixture(image, portmaps={}, name=None,
                        custom_params={}, scope='function'):
