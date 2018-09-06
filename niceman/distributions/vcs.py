@@ -79,7 +79,13 @@ class VCSRepo(SpecObject):
     path = attrib(default=attr.NOTHING)
     files = attrib(default=attr.Factory(list))
 
-    _diff_fields = ('path',)
+    @property
+    def identity_string(self):
+        return super(VCSRepo, self).identity_string + ' (%s)' % self.path
+
+    @property
+    def subidentity_string(self):
+        return super(VCSRepo, self).subidentity_string + ' (%s)' % self.path
 
     # @property
     # def identifier(self):
@@ -111,7 +117,14 @@ class GitRepo(VCSRepo):
     remotes = attrib(default=attr.Factory(dict))
 
     _cmp_fields = ('root_hexsha',)
-    _diff_fields = VCSRepo._diff_fields + ('hexsha', 'branch')
+    _diff_fields = ('hexsha', 'branch')
+    _commit_attribute = 'hexsha'
+
+    @property
+    def subidentity_string(self):
+        return 'branch %s, commit %s (%s)' % (self.branch, 
+                                              self.hexsha, 
+                                              self.path)
 
 # Probably generation wouldn't be flexible enough
 #GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
@@ -283,6 +296,7 @@ class SVNRepo(VCSRepo):
 
     _cmp_fields = ('uuid',)
     _diff_fields = ('revision',)
+    _commit_attribute = 'revision'
 
 #SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s

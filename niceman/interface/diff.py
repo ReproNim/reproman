@@ -100,22 +100,22 @@ class Diff(Interface):
             if pkgs_only_1:
                 for cmp_key in sorted(pkgs_only_1):
                     package = pkgs_1[cmp_key]
-                    print('< %s %s' % (" ".join(cmp_key), package.version))
+                    print('< %s' % package.identity_string)
             if pkgs_only_2 and pkgs_only_2:
                 print('---')
             if pkgs_only_2:
                 for cmp_key in sorted(pkgs_only_2):
                     package = pkgs_2[cmp_key]
-                    print('> %s %s' % (" ".join(cmp_key), package.version))
+                    print('> %s' % package.identity_string)
     
             for cmp_key in pkgs_1_s.intersection(pkgs_2_s):
                 package_1 = pkgs_1[cmp_key]
                 package_2 = pkgs_2[cmp_key]
-                if package_1.version != package_2.version:
+                if package_1._diff_vals != package_2._diff_vals:
                     print('%s %s:' % (pkg_type, " ".join(cmp_key)))
-                    print('< %s' % package_1.version)
+                    print('< %s' % package_1.subidentity_string)
                     print('---')
-                    print('> %s' % package_2.version)
+                    print('> %s' % package_2.subidentity_string)
 
         # for (dist_type, repo_type) in ((GitDistribution, 'Git repository'),
         #                                (SVNDistribution, 'SVN repository')):

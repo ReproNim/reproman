@@ -105,7 +105,7 @@ class CondaPackage(Package):
     files = attrib(default=attr.Factory(list))
 
     _cmp_fields = ('name', 'build')
-    _diff_fields = ('version', 'installer')
+    _diff_fields = ('version', )
 
 
 @attr.s

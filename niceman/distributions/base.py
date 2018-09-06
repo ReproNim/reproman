@@ -59,6 +59,31 @@ class SpecObject(object):
             else self._attr_names
         return tuple(getattr(self, a) for a in fields)
 
+    @property
+    def _diff_vals(self):
+        """gives the values of the attributes defined by _diff_fields (like 
+        _cmp_id for _cmp_fields)
+        """
+        return tuple(str(getattr(self, a)) for a in self._diff_fields)
+
+    @property
+    def identity_string(self):
+        """a string describing the identity of the object
+
+        this can be overridden if there's a nicer way of expressing the 
+        identity than just stringing the identity keys togeter (e.g. for 
+        a VCS repository identified by an opaque string, we can include 
+        the path of the repository)
+        """
+        return " ".join(str(el) for el in self._cmp_id)
+
+    @property
+    def subidentity_string(self):
+        """like identity_string, but to distinguish objects that have 
+        matching _cmp_fields
+        """
+        return " ".join(str(el) for el in self._diff_vals)
+
     # TODO: make it "lazy" or may be there is already a helper in attrs?
     @property
     def _attr_names(self):
