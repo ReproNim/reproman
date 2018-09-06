@@ -257,8 +257,8 @@ class ResourceManager(object):
         results_name, results_id = self._find_resources(name, "auto")
         if results_name or results_id:
             raise ResourceAlreadyExistsError(
-                "Resource with {} {} already exists",
-                "name" if results_name else "ID", name)
+                "Resource with {} {} already exists"
+                .format("name" if results_name else "ID", name))
 
         try:
             config = dict(
