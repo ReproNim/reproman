@@ -979,6 +979,8 @@ def get_cmd_batch_len(arg_list, cmd_len):
     number
       The maximum number in a single batch
     """
+    if not arg_list:
+        raise ValueError("Cannot batch an empty argument list")
     # Pick a conservative max command-line length
     try:
         _MAX_LEN_CMDLINE = os.sysconf(str("SC_ARG_MAX")) // 2

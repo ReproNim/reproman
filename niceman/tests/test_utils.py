@@ -23,7 +23,8 @@ from os.path import dirname, normpath, pardir, basename
 from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
-from ..utils import updated, HashableDict, execute_command_batch, \
+from ..utils import updated, HashableDict, \
+    get_cmd_batch_len, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
@@ -428,6 +429,13 @@ def test_join_sequence_of_dicts():
            {"a": 1, "b": 2, "c": 3, "d": 4}
     with pytest.raises(RuntimeError):
         join_sequence_of_dicts(({"a": 1, "b": 2}, {"b": 3}, {"d": 4}))
+
+
+def test_get_cmd_batch_len_empty():
+    with pytest.raises(ValueError) as cm:
+        get_cmd_batch_len([], 10)
+    cm.match("Cannot batch")
+
 
 def test_execute_command_batch():
     # Create a dummy session that can possibly raise a ValueError
