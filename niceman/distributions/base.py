@@ -41,8 +41,7 @@ def TypedList(type_):
 
 class SpecObject(object):
 
-    # Empty tuple would signal that all attribs will be used while establishing
-    # the "identity" of the specobject
+    # Fields used to establish the "identity" of the specobject
     _cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
