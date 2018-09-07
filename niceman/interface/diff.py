@@ -117,49 +117,6 @@ class Diff(Interface):
                     print('---')
                     print('> %s' % package_2.subidentity_string)
 
-        # for (dist_type, repo_type) in ((GitDistribution, 'Git repository'),
-        #                                (SVNDistribution, 'SVN repository')):
-        #
-        #     dist_1 = env_1.get_distribution(dist_type)
-        #     if dist_1:
-        #         pkgs_1 = { p._cmp_id: p for p in dist_1.packages }
-        #     else:
-        #         pkgs_1 = {}
-        #     dist_2 = env_2.get_distribution(dist_type)
-        #     if dist_2:
-        #         pkgs_2 = { p._cmp_id: p for p in dist_2.packages }
-        #     else:
-        #         pkgs_2 = {}
-        #
-        #     pkgs_1_s = set(pkgs_1)
-        #     pkgs_2_s = set(pkgs_2)
-        #
-        #     pkgs_only_1 = pkgs_1_s - pkgs_2_s
-        #     pkgs_only_2 = pkgs_2_s - pkgs_1_s
-        #
-        #     if pkgs_only_1 or pkgs_only_2:
-        #         print('%s pkgsitories:' % repo_type)
-        #     if pkgs_only_1:
-        #         for repo_id in pkgs_only_1:
-        #             repo = pkgs_1[repo_id]
-        #             print('< %s (%s)' % (repo.identifier, repo.path))
-        #     if pkgs_only_1 and pkgs_only_2:
-        #         print('---')
-        #     if pkgs_only_2:
-        #         for repo_id in pkgs_only_2:
-        #             repo = pkgs_2[repo_id]
-        #             print('> %s (%s)' % (repo.identifier, repo.path))
-        #
-        #     for repo_id in pkgs_1_s.intersection(pkgs_2_s):
-        #         repo_1 = pkgs_1[repo_id]
-        #         repo_2 = pkgs_2[repo_id]
-        #         if repo_1.commit == repo_2.commit:
-        #             continue
-        #         print('%s pkgsitory %s:' % (repo_type, repo_id))
-        #         print('< %s (%s)' % (repo_1.commit, repo_1.path))
-        #         print('---')
-        #         print('> %s (%s)' % (repo_2.commit, repo_2.path))
-
         files1 = set(env_1.files)
         files2 = set(env_2.files)
     
