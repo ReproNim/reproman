@@ -163,7 +163,7 @@ class SpecObject(object):
             else:
                 # For now (and otherwise) - just a simple identity check
                 if self_v != other_v:
-                    return differ("values differ %r != %r", self_v, other_v)
+                    return differ("%r != %r", self_v, other_v)
 
         return True
 
