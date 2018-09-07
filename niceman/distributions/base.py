@@ -92,7 +92,8 @@ class SpecObject(object):
     # TODO: code here is too generic and could be used for "is_identical_to"
     #   kind of check, just logic could be adjusted
     def is_satisfied_by(self, other):
-        """does the other spec object satisfies the requirements of the current one
+        """Determine if the other spec object satisfies the requirements 
+        of the current one.
         """
         # TODO(OPT): might explicitly set to no op function if lgr level is too high
         log_cmp = lambda *args: lgr.log(5, *args)
