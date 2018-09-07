@@ -121,27 +121,27 @@ class SpecObject(object):
         # if `self` has some field set which is not set in `other` we cannot
         # say that it satisfies
         # if field set in both but different, cannot be satisfied
-        for f in all_attrs:
+        for attr in all_attrs:
             def differ(msg, *args):
-                log_cmp("Difference %s.%s: " + msg, self, f, *args)
+                log_cmp("Difference %s.%s: " + msg, self, attr, *args)
                 return False
-            if f not in self_attrs:
+            if attr not in self_attrs:
                 # other has something "unique" to it, let it be
                 continue
-            if f not in other_attrs:
+            if attr not in other_attrs:
                 # other is missing a field self has
-                if getattr(self, f, None) is not None:
+                if getattr(self, attr, None) is not None:
                     # and we have it set!
                     return differ(
                         "other does not have a field when we have it set to %r",
-                        getattr(self, f))
+                        getattr(self, attr))
                 else:
                     # if not set, and not present in other, should be ok
                     continue
 
             # TODO: could getattr be avoided if we just use actual attrs?
-            self_v = getattr(self, f)
-            other_v = getattr(other, f)
+            self_v = getattr(self, attr)
+            other_v = getattr(other, attr)
             if self_v is None:
                 # we do not have it set at all, so other is ok regardless
                 continue
