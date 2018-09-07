@@ -87,22 +87,14 @@ class VCSRepo(SpecObject):
     def subidentity_string(self):
         return super(VCSRepo, self).subidentity_string + ' (%s)' % self.path
 
-    # @property
-    # def identifier(self):
-    #     try:
-    #         return getattr(self, self._identifier_attribute)
-    #     except AttributeError:
-    #         # raised if _identifier_attribute is not defined, but this means
-    #         # (to the caller) that identifier is not defined
-    #         msg = "%s instance has no attribute 'identifier'" % self.__class__
-    #         raise AttributeError(msg)
-    #
     @property
     def commit(self):
         try:
             return getattr(self, self._commit_attribute)
         except AttributeError:
-            # as for .identifier above, reraise with a more appropriate message
+            # raised if _commit_attribute is not defined, but this means 
+            # (to the caller) that commit is not defined, so we give the 
+            # caller a more appropriate error message
             msg = "%s instance has no attribute 'commit'" % self.__class__
             raise AttributeError(msg)
 
