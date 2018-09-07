@@ -4,15 +4,54 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Test sequences of interface commands.
+"""
 
 import logging
 import os
 import os.path as op
 import pytest
 
+from mock import patch
+import yaml
+
+from niceman.cmdline.main import main
 from niceman.cmd import Runner
+from niceman.resource.base import ResourceManager
 from niceman.support.exceptions import CommandError
 from niceman.tests.utils import swallow_logs
+
+
+def test_create_start_stop(tmpdir):
+    tmpdir = str(tmpdir)
+    inventory_file = op.join(tmpdir, "inventory.yml")
+    rm = ResourceManager(inventory_file)
+
+    # Simple smoke test.  We can't easily test the effects of start/stop with
+    # shell because those the start and stop methods are noops.
+    with patch("niceman.interface.create.get_manager",
+               return_value=rm):
+        main(["create", "-t", "shell", "testshell"])
+
+    with open(inventory_file) as ifh:
+        inventory = yaml.safe_load(ifh)
+    assert inventory["testshell"]["status"] == "N/A"
+
+    with patch("niceman.interface.start.get_manager",
+               return_value=rm):
+        main(["start", "testshell"])
+
+    with patch("niceman.interface.stop.get_manager",
+               return_value=rm):
+        main(["stop", "testshell"])
+
+    with patch("niceman.interface.delete.get_manager",
+               return_value=rm):
+        main(["delete", "--skip-confirmation", "testshell"])
+
+    with open(inventory_file) as ifh:
+        inventory = yaml.safe_load(ifh)
+    assert "testshell" not in inventory
 
 
 @pytest.mark.integration
