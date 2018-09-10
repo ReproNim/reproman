@@ -33,7 +33,7 @@ lgr = getLogger('niceman.api.exec')
 
 
 class Exec(Interface):
-    """Make a directory in a computation environment
+    """Execute a command in a computation environment
 
     Examples
     --------
