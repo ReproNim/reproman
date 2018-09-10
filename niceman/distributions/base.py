@@ -53,10 +53,7 @@ class SpecObject(object):
             raise RuntimeError(
                 "Cannot establish identity of %r since _cmp_fields "
                 "are not defined", self)
-        fields = self._cmp_fields \
-            if self._cmp_fields \
-            else self._attr_names
-        return tuple(getattr(self, a) for a in fields)
+        return tuple(getattr(self, a) for a in self._cmp_fields)
 
     @property
     def _diff_vals(self):
