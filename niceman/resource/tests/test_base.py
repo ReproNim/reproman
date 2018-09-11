@@ -5,11 +5,9 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mock
 import os.path as op
 import pytest
 
-from niceman.resource.base import Resource
 from niceman.resource.base import ResourceManager
 from niceman.resource.base import backend_set_config
 from niceman.resource.shell import Shell
