@@ -57,7 +57,16 @@ def backend_set_config(params, env_resource, config):
             config[key] = value
             setattr(env_resource, key, value)
         else:
-            raise ResourceError("Bad --backend parameter '{}'".format(key))
+            known = get_resource_backends(env_resource.__class__)
+            if known:
+                help_msg = "\n  Known backend parameters:\n{}\n".format(
+                    "\n".join(["    {} ({})".format(bname, bdoc)
+                               for bname, bdoc in sorted(known.items())]))
+                msg = "Bad --backend parameter '{}'{}".format(key, help_msg)
+            else:
+                msg = "Resource type {!r} has no known parameters".format(
+                    env_resource.type)
+            raise ResourceError(msg)
 
 
 class ResourceManager(object):
