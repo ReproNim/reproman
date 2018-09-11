@@ -50,7 +50,7 @@ def backend_set_config(params, env_resource, config):
             config[key] = value
             setattr(env_resource, key, value)
         else:
-            raise NotImplementedError("Bad --backend parameter '{}'".format(key))
+            raise ResourceError("Bad --backend parameter '{}'".format(key))
 
 
 class ResourceManager(object):

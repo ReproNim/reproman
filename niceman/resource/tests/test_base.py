@@ -28,7 +28,7 @@ def test_resource_manager_factory_unkown():
 
 
 def test_backend_set_config():
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ResourceError):
         backend_set_config(["unknown_key=value"],
                            Shell(name="test-shell"),
                            {"type": "shell", "name": "test-shell"})
