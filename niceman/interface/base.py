@@ -22,6 +22,7 @@ from ..ui import ui
 from ..dochelpers import exc_str
 from ..resource import ResourceManager
 from ..resource import Resource
+from ..resource.base import get_resource_backends
 from ..support.exceptions import ResourceError
 from logging import getLogger
 lgr = getLogger('niceman.interface')
@@ -266,11 +267,9 @@ def backend_help(resource_type=None):
                 module, class_name
             )
             continue
-        args = attr.fields(cls)
-        for arg in args:
-            if 'doc' in arg.metadata:
-                help_args.append('"{}" ({})'.format(arg.name, arg.metadata['doc']))
-
+        help_args.extend(
+            ['"{}" ({})'.format(bname, bdoc)
+             for bname, bdoc in sorted(get_resource_backends(cls).items())])
     return help_message + ", ".join(help_args)
 
 

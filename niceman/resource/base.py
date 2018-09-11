@@ -32,6 +32,13 @@ import logging
 lgr = logging.getLogger('niceman.resource.base')
 
 
+def get_resource_backends(cls):
+    """Return name to documentation mapping of `cls`s backends.
+    """
+    return {b.name: b.metadata["doc"] for b in attr.fields(cls)
+            if "doc" in b.metadata}
+
+
 def backend_set_config(params, env_resource, config):
     """Set backend parameters in resource instance and config.
 
@@ -50,7 +57,27 @@ def backend_set_config(params, env_resource, config):
             config[key] = value
             setattr(env_resource, key, value)
         else:
-            raise NotImplementedError("Bad --backend parameter '{}'".format(key))
+            known = get_resource_backends(env_resource.__class__)
+            if known:
+                import difflib
+
+                suggestions = {s: known[s]
+                               for s in difflib.get_close_matches(key, known)}
+                if suggestions:
+                    title = "Did you mean?"
+                    params = suggestions
+                else:
+                    title = "Known backend parameters:"
+                    params = known
+                help_msg = "\n  {}\n{}\n".format(
+                    title,
+                    "\n".join(["    {} ({})".format(bname, bdoc)
+                               for bname, bdoc in sorted(params.items())]))
+                msg = "Bad --backend parameter '{}'{}".format(key, help_msg)
+            else:
+                msg = "Resource type {!r} has no known parameters".format(
+                    env_resource.type)
+            raise ResourceError(msg)
 
 
 class ResourceManager(object):

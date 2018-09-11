@@ -5,14 +5,13 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mock
 import os.path as op
 import pytest
 
-from niceman.resource.base import Resource
 from niceman.resource.base import ResourceManager
 from niceman.resource.base import backend_set_config
 from niceman.resource.shell import Shell
+from niceman.resource.docker_container import DockerContainer
 from niceman.support.exceptions import MissingConfigError
 from niceman.support.exceptions import MultipleResourceMatches
 from niceman.support.exceptions import ResourceAlreadyExistsError
@@ -29,11 +28,28 @@ def test_resource_manager_factory_unkown():
         ResourceManager.factory({"type": "not really a type"})
 
 
-def test_backend_set_config():
-    with pytest.raises(NotImplementedError):
+def test_backend_set_config_no_known():
+    with pytest.raises(ResourceError) as exc:
         backend_set_config(["unknown_key=value"],
                            Shell(name="test-shell"),
-                           {"type": "shell", "name": "test-shell"})
+                           {})
+    assert "no known parameters" in str(exc.value)
+
+
+def test_backend_set_config_nowhere_close():
+    with pytest.raises(ResourceError) as exc:
+        backend_set_config(["unknown_key=value"],
+                           DockerContainer(name="foo"),
+                           {})
+    assert "Known backend parameters" in str(exc.value)
+
+
+def test_backend_set_config_close_match():
+    with pytest.raises(ResourceError) as exc:
+        backend_set_config(["imagee=value"],
+                           DockerContainer(name="foo"),
+                           {})
+    assert "Did you mean?" in str(exc.value)
 
 
 def test_resource_manager_empty_init(tmpdir):

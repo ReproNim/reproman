@@ -11,15 +11,11 @@
 
 __docformat__ = 'restructuredtext'
 
-import re
-
-from .base import Interface, backend_help
+from .base import Interface
 import niceman.interface.base # Needed for test patching
 from niceman.resource import get_manager
 from .common_opts import resref_arg
 from .common_opts import resref_type_opt
-from ..support.param import Parameter
-from ..support.constraints import EnsureStr
 
 from logging import getLogger
 lgr = getLogger('niceman.api.login')
@@ -36,17 +32,12 @@ class Login(Interface):
     """
 
     _params_ = dict(
-        backend=Parameter(
-            args=("-b", "--backend"),
-            nargs="+",
-            doc=backend_help()
-        ),
         resref=resref_arg,
         resref_type=resref_type_opt,
     )
 
     @staticmethod
-    def __call__(resref, resref_type="auto", backend=None):
+    def __call__(resref, resref_type="auto"):
         env_resource = get_manager().get_resource(resref, resref_type)
 
         # Connect to resource environment
