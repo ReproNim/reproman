@@ -32,6 +32,13 @@ import logging
 lgr = logging.getLogger('niceman.resource.base')
 
 
+def get_resource_backends(cls):
+    """Return name to documentation mapping of `cls`s backends.
+    """
+    return {b.name: b.metadata["doc"] for b in attr.fields(cls)
+            if "doc" in b.metadata}
+
+
 def backend_set_config(params, env_resource, config):
     """Set backend parameters in resource instance and config.
 
