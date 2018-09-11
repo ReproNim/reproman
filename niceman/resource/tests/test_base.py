@@ -44,6 +44,14 @@ def test_backend_set_config_nowhere_close():
     assert "Known backend parameters" in str(exc.value)
 
 
+def test_backend_set_config_close_match():
+    with pytest.raises(ResourceError) as exc:
+        backend_set_config(["imagee=value"],
+                           DockerContainer(name="foo"),
+                           {})
+    assert "Did you mean?" in str(exc.value)
+
+
 def test_resource_manager_empty_init(tmpdir):
     inventory = op.join(str(tmpdir), "inventory.yml")
     manager = ResourceManager(inventory)
