@@ -87,7 +87,7 @@ class SpecObject(object):
 
     # TODO: code here is too generic and could be used for "is_identical_to"
     #   kind of check, just logic could be adjusted
-    def is_satisfied_by(self, other):
+    def satisfied_by(self, other):
         """Determine if the other spec object satisfies the requirements 
         of the current one.
         """
@@ -154,7 +154,7 @@ class SpecObject(object):
             #  of packages/repositories/whatnot!  So could be applicable even
             #  if a value is a SpecObject
             if isinstance(self_v, SpecObject):
-                if not self_v.is_satisfied_by(other_v):
+                if not self_v.satisfied_by(other_v):
                     return differ("the other does not satisfy self")
             else:
                 # For now (and otherwise) - just a simple identity check
