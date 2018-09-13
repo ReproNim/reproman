@@ -50,7 +50,7 @@ requires = {
         'pyyaml',
         'six>=1.9',
         'tqdm',
-        'paramiko',
+        'fabric',
         'cryptography>=1.5',
         'pytz',
         'scp',

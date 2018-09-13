@@ -11,9 +11,8 @@ import datetime
 import docker
 import logging
 import os
-import paramiko
+from fabric import Connection
 import pytest
-import socket
 import tempfile
 import uuid
 
@@ -138,21 +137,21 @@ def test_session_class():
         envvars = session.get_envvars()
         assert envvars['VAR'] == 'FORMATTED VAR_VALUE' 
         assert envvars['NEW_VAR'] == 'NEW_VAR_VALUE'
-        
+
         # At this time, setting permanent env vars is not supported
         with pytest.raises(NotImplementedError):
             session.set_envvar('NEW_VAR', value='NEW_VAR_VALUE',
                 permanent=True)
-        
+
         # Check we raise an exception if user tries to set an env value while
         # passing a dict
         with pytest.raises(AssertionError):
             session.set_envvar({'WILL': 'FAIL'}, value='!')
-        
+
         # Check query_envvars() method not implemented
         with pytest.raises(NotImplementedError):
             session.query_envvars()
-        
+
         # Check source_script() method not implemented
         with pytest.raises(NotImplementedError):
             session.source_script(['ls'])
@@ -206,14 +205,14 @@ def test_session_class():
 def resource_session(request):
     """Pytest fixture that provides instantiated session objects for each
     of the classes that inherit the Session or POSIXSession classes.
-    
+
     The fixture will run the test method once for each session object provided.
-    
+
     Parameters
     ----------
     request : object
         Pytest request object that contains the class to test against
-    
+
     Returns
     -------
     session object
@@ -231,12 +230,16 @@ def resource_session(request):
 
     # Initialize SSH connection to testing Docker container.
     if request.param in [SSHSession, PTYSSHSession]:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(('localhost', 49000))
-        transport = paramiko.Transport(sock)
-        transport.start_client()
-        transport.auth_password('root', 'root')
-        return request.param(transport)
+        connection = Connection(
+            'localhost',
+            user='root',
+            port=49000,
+            connect_kwargs={
+                'password': 'root'
+            }
+        )
+        connection.open()
+        return request.param(connection)
 
     # Initialize Singularity test container.
     if request.param in [SingularitySession, PTYSingularitySession]:
@@ -250,7 +253,7 @@ def resource_session(request):
 
 
 def test_session_abstract_methods(testing_container, resource_session,
-    resource_test_dir):
+        resource_test_dir):
 
     session = resource_session
 
@@ -302,7 +305,7 @@ def test_session_abstract_methods(testing_container, resource_session,
     # Check isdir() method
     result = session.isdir('/etc')
     assert result
-    result = session.isdir('/etc/hosts') # A file, not a dir
+    result = session.isdir('/etc/hosts')  # A file, not a dir
     assert not result
     result = session.isdir('/no/such/dir')
     assert not result
@@ -355,7 +358,7 @@ def test_session_abstract_methods(testing_container, resource_session,
     assert result
 
     # Check making parent dirs without setting flag
-    test_dir = '/tmp/failed/{}'.format(resource_test_dir, uuid.uuid4().hex)
+    test_dir = '{}/tmp/failed/{}'.format(resource_test_dir, uuid.uuid4().hex)
     with pytest.raises(CommandError):
         session.mkdir(test_dir, parents=False)
     result = session.isdir(test_dir)
