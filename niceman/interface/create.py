@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, backend_help
+from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -71,7 +71,9 @@ class Create(Interface):
             metavar="PARAM",
             args=("-b", "--backend-parameters"),
             nargs="+",
-            doc=backend_help()
+            doc="""One or more backend parameters in the form KEY=VALUE. Use
+            the command `niceman backend-parameters` to see the list of
+            available backend parameters."""
         ),
     )
 

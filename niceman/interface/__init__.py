@@ -35,6 +35,7 @@ _group_misc = (
     'Miscellaneous commands',
     [
         ('niceman.interface.ls', 'Ls'),
+        ('niceman.interface.backend_parameters', 'BackendParameters'),
         # ('niceman.interface.trace', 'Trace'),
         # ('niceman.interface.shell', 'Shell'),
         ('niceman.interface.retrace', 'Retrace'),

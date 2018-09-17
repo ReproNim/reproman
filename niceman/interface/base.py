@@ -13,17 +13,11 @@
 __docformat__ = 'restructuredtext'
 
 import attr
-from importlib import import_module
 import sys
 import re
 import textwrap
 
 from ..ui import ui
-from ..dochelpers import exc_str
-from ..resource import ResourceManager
-from ..resource import Resource
-from ..resource.base import get_resource_backends
-from ..support.exceptions import ResourceError
 from logging import getLogger
 lgr = getLogger('niceman.interface')
 
@@ -227,50 +221,6 @@ def update_docstring_with_parameters(func, params, prefix=None, suffix=None):
     # assign the amended docs
     func.__doc__ = doc
     return func
-
-
-def backend_help(resource_type=None):
-    """
-    Helper function for displaying backend help listing for interface commands.
-
-    To use, add this to the interface argparse parameters:
-
-        backend=Parameter(
-            args=("-b", "--backend"),
-            nargs="+",
-            doc=backend_help()
-        )
-
-    """
-    types = ResourceManager._discover_types() if not resource_type else [resource_type]
-
-    help_message = "One or more backend parameters in the form KEY=VALUE. Options are: "
-    help_args = []
-
-    for module_name in types:
-        class_name = ''.join([token.capitalize() for token in module_name.split('_')])
-        try:
-            module = import_module('niceman.resource.{}'.format(module_name))
-        except ImportError as exc:
-            msg = "Failed to import resource {}: {}.  Known ones are: {}".format(
-                module_name, exc_str(exc),
-                ', '.join(ResourceManager._discover_types()))
-            if resource_type:
-                # it was an explicitly requested resource for which we found no module
-                raise ResourceError(msg)
-            lgr.debug(msg)
-            continue
-        cls = getattr(module, class_name)
-        if not issubclass(cls, Resource):
-            lgr.debug(
-                "Skipping %s.%s since not a Resource. Consider moving away",
-                module, class_name
-            )
-            continue
-        help_args.extend(
-            ['"{}" ({})'.format(bname, bdoc)
-             for bname, bdoc in sorted(get_resource_backends(cls).items())])
-    return help_message + ", ".join(help_args)
 
 
 class Interface(object):
