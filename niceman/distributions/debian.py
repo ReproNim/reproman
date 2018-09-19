@@ -92,12 +92,7 @@ class DEBPackage(Package):
 
     _cmp_fields = ('name', 'architecture')
     _diff_fields = ('version',)
-
-    # TODO: unify   satisfied_by   and   satisfies  naming/API
-    def satisfies(self, other):
-        """return True if this package (self) satisfies the requirements of 
-        the passed package (other)"""
-        return other.satisfied_by(self)
+    _satisfies_fields = ('name', 'architecture', 'version')
 
 _register_with_representer(DEBPackage)
 

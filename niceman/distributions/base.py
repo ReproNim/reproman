@@ -41,10 +41,15 @@ def TypedList(type_):
 
 class SpecObject(object):
 
+    # TODO: make sure these can't stay empty in subclasses where they are 
+    # needed (or make sure the trivial case is handled)
+
     # Fields used to establish the "identity" of the specobject
     _cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
+    # Fields used in determination of satisfaction
+    _satisfies_fields = tuple()
 
     @property
     def _cmp_id(self):
@@ -85,84 +90,6 @@ class SpecObject(object):
     def _attr_names(self):
         return tuple(f.name for f in self.__attrs_attrs__)
 
-    # TODO: code here is too generic and could be used for "is_identical_to"
-    #   kind of check, just logic could be adjusted
-    def satisfied_by(self, other):
-        """Determine if the other spec object satisfies the requirements 
-        of the current one.
-        """
-        # TODO(OPT): might explicitly set to no op function if lgr level is too high
-        log_cmp = lambda *args: lgr.log(5, *args)
-        log_cmp("Comparing (satisfy) self=%r to other=%r", self, other)
-        if not isinstance(other, self.__class__):
-            log_cmp("is not a subclass")
-            return False
-
-        # ??? probably not appropriate for 'satisfy' since e.g. pkg could be
-        #     missing arch spec and thus be satisfied
-        # if self._cmp_id != other._cmp_id:
-        #     log_cmp("%r is different from %r since cmd_id differ",
-        #             self._cmp_id, other._cmp_id)
-        #     return False
-
-        # TODO: any benefit from using ordered set may be to fail earlier etc?
-        # recently added OrderedSet to nibabel -- borrow from there
-        self_attrs = set(self._attr_names)
-        other_attrs = set(other._attr_names)
-        all_attrs = self_attrs.union(other_attrs)
-
-        # if `other` has some field set which is not set in `self` - that is Ok
-        # although (TODO) think about files!? (probably we would need custom
-        # satisfaction check for some fields like `files`)
-        # if `self` has some field set which is not set in `other` we cannot
-        # say that it satisfies
-        # if field set in both but different, cannot be satisfied
-        for attr in all_attrs:
-            def differ(msg, *args):
-                log_cmp("Difference %s.%s: " + msg, self, attr, *args)
-                return False
-            if attr not in self_attrs:
-                # other has something "unique" to it, let it be
-                continue
-            if attr not in other_attrs:
-                # other is missing a field self has
-                if getattr(self, attr, None) is not None:
-                    # and we have it set!
-                    return differ(
-                        "other does not have a field when we have it set to %r",
-                        getattr(self, attr))
-                else:
-                    # if not set, and not present in other, should be ok
-                    continue
-
-            # TODO: could getattr be avoided if we just use actual attrs?
-            self_v = getattr(self, attr)
-            other_v = getattr(other, attr)
-            if self_v is None:
-                # we do not have it set at all, so other is ok regardless
-                continue
-
-            # TODO: may be some fields could be allowed to be not
-            # set (e.g. checksums etc) and should not trigger 'dis-satisfaction'
-            # if they are not defined!?  think/add
-            if other_v is None:
-                return differ("other has no value defined when self has %r",
-                              self_v)
-
-            # TODO: custom "satisfies" for field if present (of self).
-            #  Will actually be needed for anything non trivial, e.g. a list
-            #  of packages/repositories/whatnot!  So could be applicable even
-            #  if a value is a SpecObject
-            if isinstance(self_v, SpecObject):
-                if not self_v.satisfied_by(other_v):
-                    return differ("the other does not satisfy self")
-            else:
-                # For now (and otherwise) - just a simple identity check
-                if self_v != other_v:
-                    return differ("%r != %r", self_v, other_v)
-
-        return True
-
 
     @staticmethod
     def yaml_representer(dumper, data):
@@ -172,6 +99,38 @@ class SpecObject(object):
             attr.asdict(
                 data, dict_factory=collections.OrderedDict).items())
         return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
+
+
+    def satisfied_by(self, other):
+        """Determine if the other spec object satisfies the requirements 
+        of the current one.
+
+        We require that the values of the attributes given by 
+        _satisfies_fields are the same.  A specobject with a value of None 
+        for one of these attributes is less specific than one with 
+        a specific value; the former cannot satisfy the latter, 
+        but the latter can satisfy the former.
+
+        TODO: Ensure we don't encounter the case where self is completely 
+        unspecified (all values are None).  Perhaps this is done by making 
+        sure that at least one of the _satisfies_fields cannot be None?
+        """
+        if not isinstance(other, self.__class__):
+            raise TypeError('incompatible specobject types')
+        for attr_name in self._satisfies_fields:
+            self_value = getattr(self, attr_name)
+            other_value = getattr(other, attr_name)
+            if self_value is None:
+                continue
+            if self_value != other_value:
+                return False
+        return True
+
+
+    def satisfies(self, other):
+        """return True if this package (self) satisfies the requirements of 
+        the passed package (other)"""
+        return other.satisfied_by(self)
 
 
 def _register_with_representer(cls):
