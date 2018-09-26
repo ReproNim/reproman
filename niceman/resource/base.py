@@ -44,15 +44,13 @@ def backend_set_config(params, env_resource, config):
 
     Parameters
     ----------
-    params : list of str
-        A list of backend parameters, where key value pairs are separated by
-        '='.
+    params : dict
+        Backend parameters.
     env_resource : Resource object
     config : dict
         Configuration parameters for the resource.
     """
-    for backend_arg in params:
-        key, value = backend_arg.split("=")
+    for key, value in params.items():
         if hasattr(env_resource, key):
             config[key] = value
             setattr(env_resource, key, value)

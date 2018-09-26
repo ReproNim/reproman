@@ -30,7 +30,7 @@ def test_resource_manager_factory_unkown():
 
 def test_backend_set_config_no_known():
     with pytest.raises(ResourceError) as exc:
-        backend_set_config(["unknown_key=value"],
+        backend_set_config({"unknown_key": "value"},
                            Shell(name="test-shell"),
                            {})
     assert "no known parameters" in str(exc.value)
@@ -38,7 +38,7 @@ def test_backend_set_config_no_known():
 
 def test_backend_set_config_nowhere_close():
     with pytest.raises(ResourceError) as exc:
-        backend_set_config(["unknown_key=value"],
+        backend_set_config({"unknown_key": "value"},
                            DockerContainer(name="foo"),
                            {})
     assert "Known backend parameters" in str(exc.value)
@@ -46,7 +46,7 @@ def test_backend_set_config_nowhere_close():
 
 def test_backend_set_config_close_match():
     with pytest.raises(ResourceError) as exc:
-        backend_set_config(["imagee=value"],
+        backend_set_config({"imagee": "value"},
                            DockerContainer(name="foo"),
                            {})
     assert "Did you mean?" in str(exc.value)

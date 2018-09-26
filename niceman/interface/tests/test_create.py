@@ -19,6 +19,7 @@ from niceman.tests.utils import assert_in
 from niceman.support.exceptions import ResourceError
 
 from ..create import backend_help
+from ..create import parse_backend_parameters
 
 
 def test_create_interface():
@@ -67,3 +68,10 @@ def test_backend_help_wrong_backend():
     with pytest.raises(ResourceError) as exc:
         backend_help("unknown_backend")
     assert 'Known ones are: aws' in str(exc)
+
+
+def test_parse_backend_parameters():
+    for value, expected in [(["a=b"], {"a": "b"}),
+                            (["a="], {"a": ""}),
+                            (["a-b=c d"], {"a-b": "c d"})]:
+        assert parse_backend_parameters(value) == expected

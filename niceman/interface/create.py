@@ -23,6 +23,10 @@ from logging import getLogger
 lgr = getLogger('niceman.api.create')
 
 
+def parse_backend_parameters(params):
+    return dict(p.split("=") for p in params)
+
+
 class Create(Interface):
     """Create a computation environment
     """
@@ -106,7 +110,8 @@ class Create(Interface):
 
         # TODO: Add ability to clone a resource.
 
-        get_manager().create(name, resource_type, backend)
+        get_manager().create(name, resource_type,
+                             parse_backend_parameters(backend or []))
         lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env
