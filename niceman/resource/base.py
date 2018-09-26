@@ -285,14 +285,7 @@ class ResourceManager(object):
                 "Resource with {} {} already exists"
                 .format("name" if results_name else "ID", name))
 
-        try:
-            config = dict(
-                self.config_manager.items(resource_type.split('-')[0]))
-        except NoSectionError:
-            config = {}
-
-        config['name'] = name
-        config['type'] = resource_type
+        config = {'name': name, 'type': resource_type}
         resource = self.factory(config)
         if backend_params:
             backend_set_config(backend_params, resource, config)
