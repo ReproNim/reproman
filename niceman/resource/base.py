@@ -116,7 +116,7 @@ class ResourceManager(object):
 
         Parameters
         ----------
-        resource_config : dict
+        config : dict
             Configuration parameters for the resource.
 
         Returns
