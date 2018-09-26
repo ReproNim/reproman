@@ -12,6 +12,7 @@ import logging
 import pytest
 from mock import patch, call, MagicMock
 
+from niceman.api import create
 from niceman.cmdline.main import main
 from niceman.utils import swallow_logs
 from niceman.resource.base import ResourceManager
@@ -62,6 +63,15 @@ def test_create_interface():
         assert_in("status 1 progress 1", log.lines)
         assert_in("status 2 progress 2", log.lines)
         assert_in("Created the environment my-test-resource", log.lines)
+
+
+def test_create_missing_required():
+    with pytest.raises(ResourceError) as exc:
+        # SSH requires host.
+        with patch("niceman.interface.create.get_manager",
+                   return_value=ResourceManager()):
+            create("somessh", "ssh", [])
+    assert "host" in str(exc.value)
 
 
 def test_backend_help_wrong_backend():
