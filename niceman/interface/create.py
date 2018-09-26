@@ -24,7 +24,7 @@ lgr = getLogger('niceman.api.create')
 
 
 def parse_backend_parameters(params):
-    return dict(p.split("=") for p in params)
+    return dict(p.split("=", 1) for p in params)
 
 
 class Create(Interface):

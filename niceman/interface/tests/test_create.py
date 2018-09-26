@@ -73,5 +73,6 @@ def test_backend_help_wrong_backend():
 def test_parse_backend_parameters():
     for value, expected in [(["a=b"], {"a": "b"}),
                             (["a="], {"a": ""}),
+                            (["a=c=d"], {"a": "c=d"}),
                             (["a-b=c d"], {"a-b": "c d"})]:
         assert parse_backend_parameters(value) == expected
