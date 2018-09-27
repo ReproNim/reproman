@@ -367,6 +367,13 @@ def test_session_abstract_methods(testing_container, resource_session,
         # We can get() without a leading directory.
         session.get(remote_path, "just-base")
         assert os.path.exists("just-base")
+        remote_basename = os.path.basename(remote_path)
+        # We can get() without specifying a target.
+        session.get(remote_path)
+        assert os.path.exists(remote_basename)
+        # Or by specifying just the directory.
+        session.get(remote_path, "subdir" + os.path.sep)
+        assert os.path.exists(os.path.join("subdir", remote_basename))
 
     # Check mkdir() method
     test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)

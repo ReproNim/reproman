@@ -282,17 +282,25 @@ class Session(object):
         """
         raise NotImplementedError
 
-    def _prepare_dest_path(self, dest_path, local=True, absolute_only=False):
+    def _prepare_dest_path(self, src_path, dest_path,
+                           local=True, absolute_only=False):
         """Do common handling for the destination target of `get` and `put`.
 
         Parameters
         ----------
+        src_path : str
+            Path to source file.
         dest_path : str
-            Path to target file.
+            Path to target file.  If `dest_path` is None, the basename is taken
+            from `src_path`.
         local : bool, optional
             Whether the destination is on the local machine.
         absolute_only : bool, optional
             Whether `dest_path` is required to be absolute.
+
+        Returns
+        -------
+        The path to the destination, possibly adjusted to add the basename.
         """
         if local:
             exists = op.exists
@@ -304,9 +312,16 @@ class Session(object):
         if absolute_only and not op.isabs(dest_path):
             raise ValueError("Destination path must be absolute")
 
-        dest_dir = op.dirname(dest_path)
-        if dest_dir and not exists(dest_dir):
-            mkdir(dest_dir)
+        dest_dir = dest_base = None
+        if dest_path:
+            dest_dir, dest_base = op.split(dest_path)
+            if dest_dir and not exists(dest_dir):
+                mkdir(dest_dir)
+
+        if not dest_base:
+            dest_base = op.basename(src_path)
+            dest_path = op.join(dest_dir, dest_base) if dest_dir else dest_base
+        return dest_path
 
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         """Take file on the local file system and copy over into the resource
@@ -319,7 +334,9 @@ class Session(object):
         src_path : string
             Path to file to push to resource environment
         dest_path : string
-            Path of resource directory to put local file in
+            Path of resource directory to put local file in.  If this contains
+            a trailing separator, it is considered directory and the base name
+            is taken from `src_path`.
         uid : int, optional
             System user ID to assign ownership of file on resource  (the
             default is -1, which will preserve the user owner of the local file)
@@ -329,18 +346,19 @@ class Session(object):
         """
         raise NotImplementedError
 
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
         """Take file on the resource and copy over into the local system
 
-        The src_path and dest_path must include the name of the file being
-        transferred.
+        The src_path must include the name of the file being transferred.
 
         Parameters
         ----------
         src_path : string
             Path to file to pull from resource environment
-        dest_path : string
-            Path in local file system to put local file in
+        dest_path : string, optional
+            Path in local file system to put local file in.  If unspecified,
+            the destination path defaults the base name of `src_path` within
+            the current directory.
         uid : int, optional
             System user ID to assign ownership of file on resource  (the
             default is -1, which will preserve the user owner of the local file)

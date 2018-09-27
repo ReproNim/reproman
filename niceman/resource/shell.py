@@ -83,8 +83,8 @@ class ShellSession(POSIXSession):
                         msg="Failed to make directory {}".format(path))
 
     @borrowdoc(Session)
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
-        self._prepare_dest_path(dest_path)
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+        dest_path = self._prepare_dest_path(src_path, dest_path)
         shutil.copy(src_path, dest_path)
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, recursive=True)

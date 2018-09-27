@@ -156,15 +156,15 @@ class SSHSession(POSIXSession):
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        self._prepare_dest_path(dest_path, local=False)
+        dest_path = self._prepare_dest_path(src_path, dest_path, local=False)
         self.connection.put(src_path, dest_path)
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid)
 
     @borrowdoc(Session)
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
-        self._prepare_dest_path(dest_path)
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+        dest_path = self._prepare_dest_path(src_path, dest_path)
         self.connection.get(src_path, dest_path)
 
         if uid > -1 or gid > -1:
