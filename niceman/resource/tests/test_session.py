@@ -19,7 +19,7 @@ import uuid
 from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
-from ...utils import swallow_logs
+from ...utils import chpwd, swallow_logs
 from ..shell import ShellSession
 from ..singularity import Singularity, SingularitySession, \
     PTYSingularitySession
@@ -350,6 +350,11 @@ def test_session_abstract_methods(testing_container, resource_session,
         assert content[0] == 'NICEMAN test content'
     os.remove(local_path)
     os.rmdir(os.path.dirname(local_path))
+
+    with chpwd(resource_test_dir):
+        # We can get() without a leading directory.
+        session.get(remote_path, "just-base")
+        assert os.path.exists("just-base")
 
     # Check mkdir() method
     test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)

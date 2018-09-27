@@ -300,7 +300,7 @@ class Session(object):
             mkdir = partial(self.mkdir, parents=True)
 
         dest_dir = op.dirname(dest_path)
-        if not exists(dest_dir):
+        if dest_dir and not exists(dest_dir):
             mkdir(dest_dir)
 
     def put(self, src_path, dest_path, uid=-1, gid=-1):
