@@ -13,8 +13,10 @@ import logging
 lgr = logging.getLogger('niceman.resource.session')
 
 import attr
+from functools import partial
 import json
 import os
+import os.path as op
 import re
 
 from niceman.support.exceptions import SessionRuntimeError
@@ -279,6 +281,27 @@ class Session(object):
             True if path exists
         """
         raise NotImplementedError
+
+    def _prepare_dest_path(self, dest_path, local=True):
+        """Do common handling for the destination target of `get` and `put`.
+
+        Parameters
+        ----------
+        dest_path : str
+            Path to target file.
+        local : bool, optional
+            Whether the destination is on the local machine.
+        """
+        if local:
+            exists = op.exists
+            mkdir = os.makedirs
+        else:
+            exists = self.exists
+            mkdir = partial(self.mkdir, parents=True)
+
+        dest_dir, dest_basename = op.split(dest_path)
+        if not exists(dest_dir):
+            mkdir(dest_dir)
 
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         """Take file on the local file system and copy over into the resource

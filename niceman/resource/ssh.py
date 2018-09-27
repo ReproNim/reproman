@@ -156,9 +156,7 @@ class SSHSession(POSIXSession):
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, _ = os.path.split(dest_path)
-        if not self.exists(dest_dir):
-            self.mkdir(dest_dir, parents=True)
+        self._prepare_dest_path(dest_path, local=False)
         self.connection.put(src_path, dest_path)
 
         if uid > -1 or gid > -1:
@@ -166,9 +164,7 @@ class SSHSession(POSIXSession):
 
     @borrowdoc(Session)
     def get(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, _ = os.path.split(dest_path)
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
+        self._prepare_dest_path(dest_path)
         self.connection.get(src_path, dest_path)
 
         if uid > -1 or gid > -1:
