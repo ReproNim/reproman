@@ -275,9 +275,9 @@ class DockerSession(POSIXSession):
 
     @borrowdoc(Session)
     def get(self, src_path, dest_path, uid=-1, gid=-1):
-        src_dir, src_basename = os.path.split(src_path)
+        src_basename = os.path.basename(src_path)
         self._prepare_dest_path(dest_path)
-        dest_dir, dest_basename = os.path.split(dest_path)
+        dest_dir = os.path.dirname(dest_path)
         stream, stat = self.client.get_archive(self.container, src_path)
         tarball = tarfile.open(fileobj=io.BytesIO(stream.read()))
         tarball.extractall(path=dest_dir)

@@ -299,7 +299,7 @@ class Session(object):
             exists = self.exists
             mkdir = partial(self.mkdir, parents=True)
 
-        dest_dir, dest_basename = op.split(dest_path)
+        dest_dir = op.dirname(dest_path)
         if not exists(dest_dir):
             mkdir(dest_dir)
 
