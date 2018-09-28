@@ -38,7 +38,7 @@ class Session(object):
     def __attrs_post_init__(self):
         """
         Maintain both current and future session environments.
-        
+
         For persistent resources, we will save the environment information
         to make it available for sessions beyond the current one.
         """
@@ -75,10 +75,10 @@ class Session(object):
 
     def set_envvar(self, variable, value=None, permanent=False, format=False):
         """Set environment variable(s) to be used within the session
-        
+
         All of them would be exported (TODO: should we allow for non-exported
         ones for some reason?  we aren't really scripting to care about non-exported)
-        
+
         Parameters
         ----------
         variable: str or dict
@@ -116,14 +116,14 @@ class Session(object):
 
     def get_envvars(self, permanent=False):
         """Get stored session environment variables
-        
+
         Parameters
         ----------
         permanent : {bool}, optional
             Indicate that the environment variables that persist across
             sessions should be returned (the default is False, which will
             return the environment variables specific to the current session.)
-        
+
         Returns
         -------
         dict
@@ -146,7 +146,7 @@ class Session(object):
         Parameters
         ----------
         command : str or list
-          Name of the script or composite command (if a list, such as 
+          Name of the script or composite command (if a list, such as
           ["activate", "envname"] in conda) to be "sourced"
         permanent : bool, optional
         diff : bool, optional
@@ -177,7 +177,7 @@ class Session(object):
             environment to execute.
         env : dict, optional
             Additional environment variables which are applied
-            only to the current call.  If value is None -- variable will be 
+            only to the current call.  If value is None -- variable will be
             removed
         cwd : string, optional
             Path of directory in which to run the command
@@ -209,7 +209,7 @@ class Session(object):
             environment to execute.
         env : dict, optional
             Additional environment variables which are applied
-            only to the current call.  If value is None -- variable will be 
+            only to the current call.  If value is None -- variable will be
             removed
         cwd : string, optional
             Path of directory in which to run the command
@@ -234,14 +234,14 @@ class Session(object):
 
     def niceman_exec(self, command, args):
         """Run a niceman utility "exec" command in the environment
-        
+
         Parameters
         ----------
         command : string
             The session method name to run. (e.g. mkdir, chown, etc.)
         args : list of strings
             Arguments passed in from the command line for the command
-        
+
         Raises
         ------
         CommandError
@@ -267,12 +267,12 @@ class Session(object):
 
     def exists(self, path):
         """Determine if a path exists in the resource.
-        
+
         Parameters
         ----------
         path : string
             Path to check for existence in the resource environment.
-        
+
         Returns
         -------
         bool
@@ -285,7 +285,7 @@ class Session(object):
 
         The src_path and dest_path must include the name of the file being
         transferred.
-        
+
         Parameters
         ----------
         src_path : string
@@ -306,7 +306,7 @@ class Session(object):
 
         The src_path and dest_path must include the name of the file being
         transferred.
-        
+
         Parameters
         ----------
         src_path : string
@@ -324,12 +324,12 @@ class Session(object):
 
     def get_mtime(self, path):
         """Returns the modification time for a file in the resource
-        
+
         Parameters
         ----------
         path : string
             Path to file on resource
-        
+
         Returns
         -------
         string
@@ -343,14 +343,14 @@ class Session(object):
     #
     def read(self, path, mode='r'):
         """Return content of a file
-        
+
         Parameters
         ----------
         path : string
             Filesystem path to file to be read
         mode : string, optional
             Access mode when reading file (the default is 'r', which is read-only)
-        
+
         Returns
         -------
         list of strings
@@ -360,7 +360,7 @@ class Session(object):
 
     def mkdir(self, path, parents=False):
         """Create a directory
-        
+
         Parameters
         ----------
         path : string
@@ -382,12 +382,12 @@ class Session(object):
 
     def isdir(self, path):
         """Return True if path is pointing to a directory
-        
+
         Parameters
         ----------
         path : string
             Path to test in the resource
-        
+
         Returns
         -------
         bool
@@ -397,7 +397,7 @@ class Session(object):
 
     def chmod(self, path, mode, recursive=False):
         """Set the mode of the indicated path
-        
+
         Parameters
         ----------
         path : string
@@ -412,7 +412,7 @@ class Session(object):
 
     def chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
         """Set the owner and group ownership of a file or directory.
-        
+
         Parameters
         ----------
         path : string
@@ -438,7 +438,7 @@ class Session(object):
 @attr.s
 class POSIXSession(Session):
     """A Session which relies on commands present in any POSIX-compliant env
-    
+
     """
 
     # -0 is not provided by busybox's env command.  So if we decide to make it
@@ -454,12 +454,12 @@ class POSIXSession(Session):
 
     def _parse_envvars_output(self, out):
         """Decode a JSON string into an object
-        
+
         Parameters
         ----------
         out : string
             JSON string to decode.
-        
+
         Returns
         -------
         object
@@ -647,7 +647,7 @@ class POSIXSession(Session):
         else:
             # Run on the local file system
             Runner().run(command)
-            
+
 
 def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
     """A shortcut to get a local session"""
@@ -663,7 +663,7 @@ def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
 
 def get_updated_env(env, update):
     """Given an environment and set of updates, return updated one
-    
+
     Special handling -- keys with None for the value, will be removed
     """
     env_ = updated(env, update)
