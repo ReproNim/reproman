@@ -226,10 +226,9 @@ def resource_session(request):
             c for c in client.containers()
             if '/testing-container' in c['Names']
         ][0]
-        return request.param(client, container)
-
-    # Initialize SSH connection to testing Docker container.
-    if request.param in [SSHSession, PTYSSHSession]:
+        yield request.param(client, container)
+    elif request.param in [SSHSession, PTYSSHSession]:
+        # Initialize SSH connection to testing Docker container.
         connection = Connection(
             'localhost',
             user='root',
@@ -239,17 +238,17 @@ def resource_session(request):
             }
         )
         connection.open()
-        return request.param(connection)
-
-    # Initialize Singularity test container.
-    if request.param in [SingularitySession, PTYSingularitySession]:
+        yield request.param(connection)
+    elif request.param in [SingularitySession, PTYSingularitySession]:
+        # Initialize Singularity test container.
         name = str(uuid.uuid4().hex)[:11]
         resource = Singularity(name=name, image='docker://python:2.7')
         resource.connect()
         resource.create()
-        return request.param(name)
+        yield request.param(name)
+    else:
+        yield request.param()
 
-    return request.param()
 
 
 def test_session_abstract_methods(testing_container, resource_session,
