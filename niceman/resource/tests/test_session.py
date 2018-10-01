@@ -246,6 +246,7 @@ def resource_session(request):
         resource.connect()
         resource.create()
         yield request.param(name)
+        resource.delete()
     else:
         yield request.param()
 
