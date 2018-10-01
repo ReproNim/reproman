@@ -174,8 +174,9 @@ class SingularitySession(POSIXSession):
         # If command is a string, convert it to a list
         if isinstance(command, six.string_types):
             command = command.split()
-        stdout, stderr = self._runner.run(['singularity', 'exec',
-            'instance://' + self.name] + command)
+        stdout, stderr = self._runner.run(
+            ['singularity', 'exec', 'instance://' + self.name] + command,
+            expect_fail=True)
 
         return (stdout, stderr)
 
