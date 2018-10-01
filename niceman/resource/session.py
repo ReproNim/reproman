@@ -282,7 +282,7 @@ class Session(object):
         """
         raise NotImplementedError
 
-    def _prepare_dest_path(self, dest_path, local=True):
+    def _prepare_dest_path(self, dest_path, local=True, absolute_only=False):
         """Do common handling for the destination target of `get` and `put`.
 
         Parameters
@@ -291,6 +291,8 @@ class Session(object):
             Path to target file.
         local : bool, optional
             Whether the destination is on the local machine.
+        absolute_only : bool, optional
+            Whether `dest_path` is required to be absolute.
         """
         if local:
             exists = op.exists
@@ -298,6 +300,9 @@ class Session(object):
         else:
             exists = self.exists
             mkdir = partial(self.mkdir, parents=True)
+
+        if absolute_only and not op.isabs(dest_path):
+            raise ValueError("Destination path must be absolute")
 
         dest_dir = op.dirname(dest_path)
         if dest_dir and not exists(dest_dir):

@@ -182,7 +182,7 @@ class SingularitySession(POSIXSession):
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        self._prepare_dest_path(dest_path, local=False)
+        self._prepare_dest_path(dest_path, local=False, absolute_only=True)
         cmd = 'cat {} | singularity exec instance://{} tee {} > /dev/null'
         self._runner.run(cmd.format(src_path, self.name, dest_path))
 

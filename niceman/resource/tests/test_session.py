@@ -327,6 +327,18 @@ def test_session_abstract_methods(testing_container, resource_session,
         assert result
         # TODO: Check uid and gid of remote file
 
+        # We can use a relative name for the target
+        basename_put_dir = os.path.join(resource_test_dir, "basename-put")
+        if not os.path.exists(basename_put_dir):
+            os.mkdir(basename_put_dir)
+        # Change directory to avoid polluting test directory for local shell.
+        with chpwd(basename_put_dir):
+            try:
+                session.put(local_path, os.path.basename(remote_path))
+            except ValueError:
+                # Docker and Singularity don't accept non-absolute paths.
+                assert isinstance(session, (DockerSession, SingularitySession))
+
     # Check get_mtime() method by checking new file has today's date
     result = int(session.get_mtime(remote_path).split('.')[0])
     assert datetime.datetime.fromtimestamp(result).month == \

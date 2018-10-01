@@ -260,7 +260,7 @@ class DockerSession(POSIXSession):
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         # To copy one or more files to the container, the API recommends
         # to do so with a tar archive. http://docker-py.readthedocs.io/en/1.5.0/api/#copy
-        self._prepare_dest_path(dest_path, local=False)
+        self._prepare_dest_path(dest_path, local=False, absolute_only=True)
         dest_dir, dest_basename = os.path.split(dest_path)
         tar_stream = io.BytesIO()
         tar_file = tarfile.TarFile(fileobj=tar_stream, mode='w')
