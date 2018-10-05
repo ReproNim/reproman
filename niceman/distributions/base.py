@@ -101,9 +101,9 @@ class SpecObject(object):
         return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
 
 
-    def satisfied_by(self, other):
-        """Determine if the other spec object satisfies the requirements 
-        of the current one.
+    def satisfies(self, other):
+        """Determine if the object satisfies the requirements of the 
+        other spec object.
 
         We require that the values of the attributes given by 
         _satisfies_fields are the same.  A specobject with a value of None 
@@ -120,17 +120,17 @@ class SpecObject(object):
         for attr_name in self._satisfies_fields:
             self_value = getattr(self, attr_name)
             other_value = getattr(other, attr_name)
-            if self_value is None:
+            if other_value is None:
                 continue
             if self_value != other_value:
                 return False
         return True
 
 
-    def satisfies(self, other):
-        """return True if this package (self) satisfies the requirements of 
-        the passed package (other)"""
-        return other.satisfied_by(self)
+    def satisfied_by(self, other):
+        """Determine if the other spec object satisfies the requirements of 
+        this spec object."""
+        return other.satisfies(self)
 
 
 def _register_with_representer(cls):
