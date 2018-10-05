@@ -106,6 +106,10 @@ class DebianDistribution(Distribution):
     packages = TypedList(DEBPackage)
     version = attrib()  # version as depicted by /etc/debian_version
 
+    _collection_attribute = 'packages'
+    _collection_type = DEBPackage
+
+
     def initiate(self, session):
         """
         Perform any initialization commands needed in the environment.
@@ -249,30 +253,13 @@ class DebianDistribution(Distribution):
         #   would make us require supporting flexible typing -- string or a list
         pass
 
-    def satisfies_package(self, package):
-        """return True if this distribution (self) satisfies the requirements 
-        of the passed package"""
-        if not isinstance(package, Package):
-            raise TypeError('satisfies_package() requires a package argument')
-        if not isinstance(package, DEBPackage):
-            return False
-        return any(p.satisfies(package) for p in self.packages)
-
-    def satisfies(self, other):
-        """return True if this distribution (self) satisfies the requirements 
-        of the other distribution (other)"""
-        if not isinstance(other, Distribution):
-            raise TypeError('satisfies() requires a distribution argument')
-        if not isinstance(other, DebianDistribution):
-            return False
-        return all(map(self.satisfies_package, other.packages))
 
     def __sub__(self, other):
         # the semantics of distribution subtraction are, for d1 - d2:
         #     what is specified in d1 that is not specified in d2
         #     or how does d2 fall short of d1
         #     or what is in d1 that isn't satisfied by d2
-        return [ p for p in self.packages if not other.satisfies_package(p) ]
+        return [ p for p in self.packages if not other.satisfies(p) ]
 
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)

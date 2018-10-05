@@ -237,11 +237,11 @@ def setup_distributions():
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
     (d1, d2) = setup_distributions
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert d1.satisfies_package(p1)
-    assert not d1.satisfies_package(p1v10)
-    assert d2.satisfies_package(p1)
-    assert not d2.satisfies_package(p1v10)
-    assert d2.satisfies_package(p1v11)
+    assert d1.satisfies(p1)
+    assert not d1.satisfies(p1v10)
+    assert d2.satisfies(p1)
+    assert not d2.satisfies(p1v10)
+    assert d2.satisfies(p1v11)
 
 
 def test_distribution_statisfies(setup_distributions):

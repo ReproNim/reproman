@@ -149,8 +149,39 @@ class Package(SpecObject):
     pass
 
 
+class CollectionSpecObject(SpecObject):
+
+    """A SpecObject that acts as a container for other SpecObjects that
+    provide the functionality (e.g. a DebianDistribution that contains
+    DEBPackages).
+
+    _collection is the attribute that acts as the sequence holding the
+    contained SpecObjects.  _collection_type is the type of SpecObject in the
+    collection.
+
+    TODO: derive _collection_type from _collection.  This isn't possible at
+    the moment because DebianDistribution.packages appears to be completely
+    overwritten at some point and emerges here (in staisfies()) as a list.
+    """
+
+
+    @property
+    def collection(self):
+        return getattr(self, self._collection_attribute)
+
+
+    def satisfies(self, other):
+        """return True if this collection (self) satisfies the requirements 
+        of the other collection or specobject (other)"""
+        if isinstance(other, self.__class__):
+            return all(map(self.satisfies, other.collection))
+        if isinstance(other, self._collection_type):
+            return any(p.satisfies(other) for p in self.collection)
+        raise TypeError('satisfies() requires a %s or %s argument' % (str(self.__class__), str(self._collection_type)))
+
+
 @attr.s
-class Distribution(SpecObject):
+class Distribution(CollectionSpecObject):
     """Base class for distributions"""
 
     __metaclass__ = abc.ABCMeta
