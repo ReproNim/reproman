@@ -159,9 +159,11 @@ class CollectionSpecObject(SpecObject):
     contained SpecObjects.  _collection_type is the type of SpecObject in the
     collection.
 
-    TODO: derive _collection_type from _collection.  This isn't possible at
-    the moment because DebianDistribution.packages appears to be completely
+    TODO: derive _collection_type directly from _collection.  This isn't 
+    possible at the moment because DebianDistribution.packages is 
     overwritten at some point and emerges here (in staisfies()) as a list.
+    We have to go back to the definition of packages in the DebianDistribution 
+    class (not an object) to find the type.
     """
 
 
@@ -173,11 +175,12 @@ class CollectionSpecObject(SpecObject):
     def satisfies(self, other):
         """return True if this collection (self) satisfies the requirements 
         of the other collection or specobject (other)"""
+        collection_type = getattr(self.__class__.__attrs_attrs__, self._collection_attribute).metadata['type']
         if isinstance(other, self.__class__):
             return all(map(self.satisfies, other.collection))
-        if isinstance(other, self._collection_type):
+        if isinstance(other, collection_type):
             return any(p.satisfies(other) for p in self.collection)
-        raise TypeError('satisfies() requires a %s or %s argument' % (str(self.__class__), str(self._collection_type)))
+        raise TypeError('satisfies() requires a %s or %s argument' % (str(self.__class__), str(collection_type)))
 
 
 @attr.s

@@ -107,7 +107,6 @@ class DebianDistribution(Distribution):
     version = attrib()  # version as depicted by /etc/debian_version
 
     _collection_attribute = 'packages'
-    _collection_type = DEBPackage
 
 
     def initiate(self, session):
