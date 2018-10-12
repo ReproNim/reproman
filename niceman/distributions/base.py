@@ -101,9 +101,9 @@ class SpecObject(object):
         return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
 
 
-    def satisfies(self, other):
-        """Determine if the object satisfies the requirements of the 
-        other spec object.
+    def satisfied_by(self, other):
+        """Determine if the other object satisfies the requirements of this 
+        spec object.
 
         We require that the values of the attributes given by 
         _satisfies_fields are the same.  A specobject with a value of None 
@@ -112,25 +112,39 @@ class SpecObject(object):
         but the latter can satisfy the former.
 
         TODO: Ensure we don't encounter the case where self is completely 
-        unspecified (all values are None).  Perhaps this is done by making 
-        sure that at least one of the _satisfies_fields cannot be None?
+        unspecified (all values are None), in which case satisfied_by() 
+        returns True by default.  Perhaps this is done by making 
+        sure that at least one of the _satisfies_fields cannot be None.
+
+        TODO: derive _collection_type directly from _collection.  This isn't 
+        possible at the moment because DebianDistribution.packages is 
+        overwritten at some point and emerges here (in staisfies()) as a 
+        list.  We have to go back to the definition of packages in the 
+        DebianDistribution class (not an object) to find the type.
         """
+        if isinstance(other, CollectionSpecObject):
+            if isinstance(self, CollectionSpecObject):
+                return all(obj.satisfied_by(other) for obj in self.collection)
+            other_collection_type = getattr(other.__class__.__attrs_attrs__, other._collection_attribute).metadata['type']
+            if isinstance(self, other_collection_type):
+                return any(self.satisfied_by(obj) for obj in other.collection)
+            raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
         for attr_name in self._satisfies_fields:
             self_value = getattr(self, attr_name)
             other_value = getattr(other, attr_name)
-            if other_value is None:
+            if self_value is None:
                 continue
             if self_value != other_value:
                 return False
         return True
 
 
-    def satisfied_by(self, other):
-        """Determine if the other spec object satisfies the requirements of 
-        this spec object."""
-        return other.satisfies(self)
+    def satisfies(self, other):
+        """Determine if this spec object satisfies the requirements of 
+        the other spec object."""
+        return other.satisfied_by(self)
 
 
 def _register_with_representer(cls):
@@ -158,29 +172,12 @@ class CollectionSpecObject(SpecObject):
     _collection is the attribute that acts as the sequence holding the
     contained SpecObjects.  _collection_type is the type of SpecObject in the
     collection.
-
-    TODO: derive _collection_type directly from _collection.  This isn't 
-    possible at the moment because DebianDistribution.packages is 
-    overwritten at some point and emerges here (in staisfies()) as a list.
-    We have to go back to the definition of packages in the DebianDistribution 
-    class (not an object) to find the type.
     """
 
 
     @property
     def collection(self):
         return getattr(self, self._collection_attribute)
-
-
-    def satisfies(self, other):
-        """return True if this collection (self) satisfies the requirements 
-        of the other collection or specobject (other)"""
-        collection_type = getattr(self.__class__.__attrs_attrs__, self._collection_attribute).metadata['type']
-        if isinstance(other, self.__class__):
-            return all(map(self.satisfies, other.collection))
-        if isinstance(other, collection_type):
-            return any(p.satisfies(other) for p in self.collection)
-        raise TypeError('satisfies() requires a %s or %s argument' % (str(self.__class__), str(collection_type)))
 
 
 @attr.s
