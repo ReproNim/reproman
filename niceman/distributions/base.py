@@ -91,6 +91,15 @@ class SpecObject(object):
         return tuple(f.name for f in self.__attrs_attrs__)
 
 
+    # For SpecObjects that act as containers for other SpecObjects that
+    # provide the functionality (e.g. DebianDistributions that contains
+    # DEBPackages), _collection is the attribute that acts as the sequence 
+    # holding the contained SpecObjects.
+    @property
+    def collection(self):
+        return getattr(self, self._collection_attribute)
+
+
     @staticmethod
     def yaml_representer(dumper, data):
 
@@ -122,8 +131,8 @@ class SpecObject(object):
         list.  We have to go back to the definition of packages in the 
         DebianDistribution class (not an object) to find the type.
         """
-        if isinstance(other, CollectionSpecObject):
-            if isinstance(self, CollectionSpecObject):
+        if hasattr(other, 'collection'):
+            if hasattr(self, 'collection'):
                 return all(obj.satisfied_by(other) for obj in self.collection)
             other_collection_type = getattr(other.__class__.__attrs_attrs__, other._collection_attribute).metadata['type']
             if isinstance(self, other_collection_type):
@@ -163,25 +172,8 @@ class Package(SpecObject):
     pass
 
 
-class CollectionSpecObject(SpecObject):
-
-    """A SpecObject that acts as a container for other SpecObjects that
-    provide the functionality (e.g. a DebianDistribution that contains
-    DEBPackages).
-
-    _collection is the attribute that acts as the sequence holding the
-    contained SpecObjects.  _collection_type is the type of SpecObject in the
-    collection.
-    """
-
-
-    @property
-    def collection(self):
-        return getattr(self, self._collection_attribute)
-
-
 @attr.s
-class Distribution(CollectionSpecObject):
+class Distribution(SpecObject):
     """Base class for distributions"""
 
     __metaclass__ = abc.ABCMeta
