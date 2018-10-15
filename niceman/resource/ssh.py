@@ -9,13 +9,10 @@
 """Resource sub-class to provide management of a SSH connection."""
 
 import attr
+import invoke
 import uuid
-import socket
-import paramiko
+from fabric import Connection
 import os
-import getpass
-from binascii import hexlify
-from paramiko.py3compat import input
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
@@ -24,9 +21,7 @@ from .base import Resource
 from ..utils import attrib
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
-from niceman import utils
-from ..support.exceptions import CommandError, SSHError
-from ..support import paramiko_interactive
+from ..support.exceptions import CommandError
 
 
 @attr.s
@@ -36,8 +31,10 @@ class SSH(Resource):
     name = attrib(default=attr.NOTHING)
 
     # Configurable options for each "instance"
-    host = attrib(doc="DNS or IP address of server")
-    port = attrib(default=22,
+    host = attrib(
+        # TODO:  default=attr.NOTHING,
+        doc="DNS or IP address of server")
+    port = attrib(
         doc="Port to connect to on remote host")
     key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter")
@@ -50,8 +47,7 @@ class SSH(Resource):
 
     # Current instance properties, to be set by us, not augmented by user
     status = attrib()
-    _transport = attrib()
-    _channel = attrib()
+    _connection = attrib()
 
     def connect(self, password=None):
         """Open a connection to the environment resource.
@@ -63,115 +59,16 @@ class SSH(Resource):
             but do allow tests to authenticate by passing a password as
             a parameter to this method.
         """
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.host, int(self.port)))
-
-        self._transport = paramiko.Transport(sock)
-        self._transport.start_client()
-
-        try:
-            keys = paramiko.util.load_host_keys(
-                os.path.expanduser("~/.ssh/known_hosts")
-            )
-        except IOError:
-            try:
-                keys = paramiko.util.load_host_keys(
-                    os.path.expanduser("~/ssh/known_hosts")
-                )
-            except IOError:
-                lgr.debug("Unable to open host keys file")
-                keys = {}
-
-        key = self._transport.get_remote_server_key()
-        if self.host not in keys:
-            lgr.debug("Unknown host key!")
-        elif key.get_name() not in keys[self.host]:
-            lgr.debug("Unknown host key!")
-        elif keys[self.host][key.get_name()] != key:
-            raise SSHError("Host key has changed!!!")
-        else:
-            lgr.debug("Host key valid.")
-
-        if self.user == "":
-            default_username = getpass.getuser()
-            username = input("Username [%s]: " % default_username)
-            if len(username) == 0:
-                self.user = default_username
-
-        self._agent_auth()
-        if not self._transport.is_authenticated() and self.key_filename:
-            try:
-                key = paramiko.RSAKey.from_private_key_file(self.key_filename)
-            except paramiko.PasswordRequiredException:
-                rsa_password = getpass.getpass("RSA key password: ")
-                key = paramiko.RSAKey.from_private_key_file(self.key_filename,
-                    rsa_password)
-            self._transport.auth_publickey(self.user, key)
-        if not self._transport.is_authenticated() and password:
-            self._transport.auth_password(self.user, password)
-        if not self._transport.is_authenticated():
-            self._manual_auth()
-        if not self._transport.is_authenticated():
-            self._transport.close()
-            raise SSHError("Authentication failed")
-
-    def _agent_auth(self):
-        """
-        Attempt to authenticate to the given transport using any of the private
-        keys available from an SSH agent.
-        """
-        agent = paramiko.Agent()
-        agent_keys = agent.get_keys()
-        if len(agent_keys) == 0:
-            return
-
-        for key in agent_keys:
-            lgr.debug("Trying ssh-agent key %s" % hexlify(key.get_fingerprint()))
-            try:
-                self._transport.auth_publickey(self.user, key)
-                lgr.debug("ssh-agent key %s succeeded!"
-                    % hexlify(key.get_fingerprint()))
-                return
-            except paramiko.SSHException:
-                lgr.debug("ssh-agent key %s failed!"
-                    % hexlify(key.get_fingerprint()))
-
-    def _manual_auth(self):
-        """
-        Prompt user for authorization method and information.
-        """
-        default_auth = "p"
-        auth = input(
-            "Auth by (p)assword, (r)sa key, or (d)ss key? [%s] " % default_auth
+        self._connection = Connection(
+            self.host,
+            user=self.user,
+            port=self.port,
+            connect_kwargs={
+                'key_filename': self.key_filename,
+                'password': password
+            }
         )
-        if len(auth) == 0:
-            auth = default_auth
-
-        if auth == "r":
-            default_path = os.path.join(os.environ["HOME"], ".ssh", "id_rsa")
-            path = input("RSA key [%s]: " % default_path)
-            if len(path) == 0:
-                path = default_path
-            try:
-                key = paramiko.RSAKey.from_private_key_file(path)
-            except paramiko.PasswordRequiredException:
-                password = getpass.getpass("RSA key password: ")
-                key = paramiko.RSAKey.from_private_key_file(path, password)
-            self._transport.auth_publickey(self.user, key)
-        elif auth == "d":
-            default_path = os.path.join(os.environ["HOME"], ".ssh", "id_dsa")
-            path = input("DSS key [%s]: " % default_path)
-            if len(path) == 0:
-                path = default_path
-            try:
-                key = paramiko.DSSKey.from_private_key_file(path)
-            except paramiko.PasswordRequiredException:
-                password = getpass.getpass("DSS key password: ")
-                key = paramiko.DSSKey.from_private_key_file(path, password)
-            self._transport.auth_publickey(self.user, key)
-        else:
-            password = getpass.getpass("Password for %s@%s: " % (self.user, self.host))
-            self._transport.auth_password(self.user, password)
+        self._connection.open()
 
     def create(self):
         """
@@ -194,7 +91,7 @@ class SSH(Resource):
         }
 
     def delete(self):
-        self._ssh = None
+        self._connection = None
         return
 
     def start(self):
@@ -207,11 +104,11 @@ class SSH(Resource):
         """
         Log into remote environment and get the command line
         """
-        if not self._transport:
+        if not self._connection:
             self.connect()
 
         return (PTYSSHSession if pty else SSHSession)(
-            transport=self._transport
+            connection=self._connection
         )
 
 
@@ -223,9 +120,10 @@ class Ssh(SSH):
 
 from niceman.resource.session import POSIXSession
 
+
 @attr.s
 class SSHSession(POSIXSession):
-    transport = attrib(default=attr.NOTHING)
+    connection = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
@@ -240,42 +138,38 @@ class SSHSession(POSIXSession):
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
-        channel = self.transport.open_session()
-        channel.exec_command(' '.join(command))
-        exit_code = channel.recv_exit_status()
-        stdout = utils.to_unicode(channel.makefile("rb").read(), "utf-8")
-        stderr = utils.to_unicode(channel.makefile_stderr("rb").read(), "utf-8")
+        try:
+            result = self.connection.run(' '.join(command), hide=True)
+        except invoke.exceptions.UnexpectedExit as e:
+            result = e.result
 
-        if exit_code not in [0, None]:
+        if result.return_code not in [0, None]:
             msg = "Failed to run %r. Exit code=%d. out=%s err=%s" \
-                % (command, exit_code, stdout, stderr)
-            raise CommandError(str(command), msg, exit_code, stdout, stderr)
+                % (command, result.return_code, result.stdout, result.stderr)
+            raise CommandError(str(command), msg, result.return_code,
+                result.stdout, result.stderr)
         else:
             lgr.log(8, "Finished running %r with status %s", command,
-                exit_code)
+                result.return_code)
 
-        return (stdout, stderr)
+        return (result.stdout, result.stderr)
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, dest_basename = os.path.split(dest_path)
+        dest_dir, _ = os.path.split(dest_path)
         if not self.exists(dest_dir):
             self.mkdir(dest_dir, parents=True)
-        sftp = paramiko.SFTPClient.from_transport(self.transport)
-        sftp.put(src_path, dest_path)
-        sftp.close()
+        self.connection.put(src_path, dest_path)
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid)
 
     @borrowdoc(Session)
     def get(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, dest_basename = os.path.split(dest_path)
+        dest_dir, _ = os.path.split(dest_path)
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
-        sftp = paramiko.SFTPClient.from_transport(self.transport)
-        sftp.get(src_path, dest_path)
-        sftp.close()
+        self.connection.get(src_path, dest_path)
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, remote=False)
@@ -302,14 +196,6 @@ class PTYSSHSession(SSHSession):
     @borrowdoc(Session)
     def open(self):
         lgr.debug("Opening TTY connection via SSH.")
-        assert self.transport, "We should create or connect to remote server first"
-
-        # TODO: Can we make these values dynamic based on the user's screen size?
-        self.term = 'screen'
-        self.cols = 80
-        self.lines = 24
-        self.timeout = 30
-
         self.interactive_shell()
 
     @borrowdoc(Session)
@@ -320,9 +206,5 @@ class PTYSSHSession(SSHSession):
     def interactive_shell(self):
         """Open an interactive TTY shell.
         """
-        channel = self.transport.open_session()
-        channel.get_pty()
-        channel.invoke_shell()
-        paramiko_interactive.interactive_shell(channel)
-        channel.close()
-        self.transport.close()
+        self.connection.run('/bin/bash', pty=True)
+        print('Exited terminal session.')

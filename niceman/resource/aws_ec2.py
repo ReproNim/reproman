@@ -145,6 +145,11 @@ class AwsEc2(Resource):
                     raise
                 self.create_key_pair(self.key_name)
                 instances = self._ec2_resource.create_instances(**create_kwargs)
+            if re.search(
+                "parameter groupId is invalid", str(exc)
+            ):
+                raise ValueError("Invalid AWS Security Group: '{}'".format(
+                    self.security_group))
             else:
                 raise  # re-raise
 
