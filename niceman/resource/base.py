@@ -134,10 +134,12 @@ class ResourceManager(object):
         except Exception as exc:
             # Typically it should be an ImportError, but let's catch and recast
             # anything just in case.
+            msg = exc_str(exc)
+            known = ResourceManager._discover_types()
+            if module_name not in known:
+                msg += ". Known ones are: {}".format(", ".join(known))
             raise ResourceError(
-                "Failed to import resource: {}.  Known ones are: {}".format(
-                    exc_str(exc),
-                    ', '.join(ResourceManager._discover_types()))
+                "Failed to import resource: {}".format(msg)
             )
         instance = getattr(module, class_name)(**config)
         return instance
