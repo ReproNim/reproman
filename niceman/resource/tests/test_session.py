@@ -342,14 +342,21 @@ def test_session_abstract_methods(testing_container, resource_session,
     # Check get() method
     local_path = '{}/download/{}'.format(resource_test_dir,
         uuid.uuid4().hex)
-    session.get(remote_path, local_path)
-    # TODO: In some cases, updating uid and gid does not work if not root
-    assert os.path.isfile(local_path)
-    with open(local_path, 'r') as f:
-        content = f.read().split('\n')
-        assert content[0] == 'NICEMAN test content'
-    os.remove(local_path)
-    os.rmdir(os.path.dirname(local_path))
+    test_run_params = [
+        [remote_path, local_path],
+        [remote_path]
+    ]
+    for params in test_run_params:
+        if len(params) == 1:
+            local_path = remote_path
+        session.get(*params)
+        # TODO: In some cases, updating uid and gid does not work if not root
+        assert os.path.isfile(local_path)
+        with open(local_path, 'r') as f:
+            content = f.read().split('\n')
+            assert content[0] == 'NICEMAN test content'
+        os.remove(local_path)
+        os.rmdir(os.path.dirname(local_path))
 
     # Check mkdir() method
     test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)

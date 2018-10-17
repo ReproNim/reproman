@@ -165,7 +165,9 @@ class SSHSession(POSIXSession):
             self.chown(dest_path, uid, gid)
 
     @borrowdoc(Session)
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+        if not dest_path:
+            dest_path = src_path
         dest_dir, _ = os.path.split(dest_path)
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
