@@ -83,7 +83,11 @@ class ShellSession(POSIXSession):
                         msg="Failed to make directory {}".format(path))
 
     @borrowdoc(Session)
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+        if not dest_path:
+            dest_path = src_path
+            if os.path.exists(dest_path):
+                return
         dest_dir, dest_basename = os.path.split(dest_path)
         if not self.exists(dest_dir):
             self.mkdir(dest_dir, parents=True)

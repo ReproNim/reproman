@@ -301,7 +301,7 @@ class Session(object):
         """
         raise NotImplementedError
 
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
         """Take file on the resource and copy over into the local system
 
         The src_path and dest_path must include the name of the file being
@@ -311,8 +311,9 @@ class Session(object):
         ----------
         src_path : string
             Path to file to pull from resource environment
-        dest_path : string
-            Path in local file system to put local file in
+        dest_path : string, optional
+            Path in local file system to put local file in. If dest_path is
+            None, the src_path is used as dest_path
         uid : int, optional
             System user ID to assign ownership of file on resource  (the
             default is -1, which will preserve the user owner of the local file)
