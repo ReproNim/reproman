@@ -19,7 +19,6 @@ from niceman.resource.base import ResourceManager
 from niceman.tests.utils import assert_in
 from niceman.support.exceptions import ResourceError
 
-from ..create import backend_help
 from ..create import parse_backend_parameters
 
 
@@ -72,12 +71,6 @@ def test_create_missing_required():
                    return_value=ResourceManager()):
             create("somessh", "ssh", [])
     assert "host" in str(exc.value)
-
-
-def test_backend_help_wrong_backend():
-    with pytest.raises(ResourceError) as exc:
-        backend_help("unknown_backend")
-    assert 'Known ones are: aws' in str(exc)
 
 
 def test_parse_backend_parameters():

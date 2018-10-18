@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, backend_help
+from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
@@ -67,15 +67,18 @@ class Create(Interface):
         #     choices=("fail", "redefine"),
         #     doc="Action to take if name is already known"
         # ),
-        backend=Parameter(
-            args=("-b", "--backend"),
+        backend_parameters=Parameter(
+            metavar="PARAM",
+            args=("-b", "--backend-parameters"),
             nargs="+",
-            doc=backend_help()
+            doc="""One or more backend parameters in the form KEY=VALUE. Use
+            the command `niceman backend-parameters` to see the list of
+            available backend parameters."""
         ),
     )
 
     @staticmethod
-    def __call__(name, resource_type, backend):
+    def __call__(name, resource_type, backend_parameters):
         # Load, while possible merging/augmenting sequentially
         # provenance = Provenance.factory(specs)
         #
@@ -111,7 +114,7 @@ class Create(Interface):
         # TODO: Add ability to clone a resource.
 
         get_manager().create(name, resource_type,
-                             parse_backend_parameters(backend or []))
+                             parse_backend_parameters(backend_parameters or []))
         lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env
