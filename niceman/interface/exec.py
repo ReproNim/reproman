@@ -219,7 +219,7 @@ class Exec(Interface):
             sys.stderr.write(err)
         if error:
             lgr.error(
-                "Command %s failed to run in %s",
-                command, env_resource
+                "Command %s failed to run in %s: %s",
+                command, env_resource.name, error.msg
             )
             raise SystemExit(error.code)
