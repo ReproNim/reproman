@@ -310,7 +310,8 @@ class Session(object):
             mkdir = partial(self.mkdir, parents=True)
 
         if absolute_only and not op.isabs(dest_path):
-            raise ValueError("Destination path must be absolute")
+            raise ValueError(
+                "Destination path must be absolute, got {}".format(dest_path))
 
         dest_dir = dest_base = None
         if dest_path:
