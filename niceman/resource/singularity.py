@@ -182,8 +182,8 @@ class SingularitySession(POSIXSession):
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, _ = os.path.split(dest_path)
-        self.mkdir(dest_dir, parents=True)
+        dest_path = self._prepare_dest_path(src_path, dest_path,
+                                            local=False, absolute_only=True)
         cmd = 'cat {} | singularity exec instance://{} tee {} > /dev/null'
         self._runner.run(cmd.format(src_path, self.name, dest_path))
 
@@ -191,10 +191,8 @@ class SingularitySession(POSIXSession):
             self.chown(dest_path, uid, gid)
 
     @borrowdoc(Session)
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, _ = os.path.split(dest_path)
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+        dest_path = self._prepare_dest_path(src_path, dest_path)
         cmd = 'singularity exec instance://{} cat {} > {}'
         self._runner.run(cmd.format(self.name, src_path, dest_path))
 

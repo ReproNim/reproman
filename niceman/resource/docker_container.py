@@ -260,9 +260,9 @@ class DockerSession(POSIXSession):
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         # To copy one or more files to the container, the API recommends
         # to do so with a tar archive. http://docker-py.readthedocs.io/en/1.5.0/api/#copy
+        dest_path = self._prepare_dest_path(src_path, dest_path,
+                                            local=False, absolute_only=True)
         dest_dir, dest_basename = os.path.split(dest_path)
-        if not self.exists(dest_dir):
-            self.mkdir(dest_dir, parents=True)
         tar_stream = io.BytesIO()
         tar_file = tarfile.TarFile(fileobj=tar_stream, mode='w')
         tar_file.add(src_path, arcname=dest_basename)
@@ -275,11 +275,10 @@ class DockerSession(POSIXSession):
             self.chown(dest_path, uid, gid)
 
     @borrowdoc(Session)
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
         src_dir, src_basename = os.path.split(src_path)
-        dest_dir, dest_basename = os.path.split(dest_path)
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
+        dest_path = self._prepare_dest_path(src_path, dest_path)
+        dest_dir = os.path.dirname(dest_path)
         stream, stat = self.client.get_archive(self.container, src_path)
         tarball = tarfile.open(fileobj=io.BytesIO(stream.read()))
         tarball.extractall(path=dest_dir)

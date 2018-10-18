@@ -19,7 +19,7 @@ import uuid
 from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
-from ...utils import swallow_logs
+from ...utils import chpwd, swallow_logs
 from ..shell import ShellSession
 from ..singularity import Singularity, SingularitySession, \
     PTYSingularitySession
@@ -327,6 +327,18 @@ def test_session_abstract_methods(testing_container, resource_session,
         assert result
         # TODO: Check uid and gid of remote file
 
+        # We can use a relative name for the target
+        basename_put_dir = os.path.join(resource_test_dir, "basename-put")
+        if not os.path.exists(basename_put_dir):
+            os.mkdir(basename_put_dir)
+        # Change directory to avoid polluting test directory for local shell.
+        with chpwd(basename_put_dir):
+            try:
+                session.put(local_path, os.path.basename(remote_path))
+            except ValueError:
+                # Docker and Singularity don't accept non-absolute paths.
+                assert isinstance(session, (DockerSession, SingularitySession))
+
     # Check get_mtime() method by checking new file has today's date
     result = int(session.get_mtime(remote_path).split('.')[0])
     assert datetime.datetime.fromtimestamp(result).month == \
@@ -350,6 +362,18 @@ def test_session_abstract_methods(testing_container, resource_session,
         assert content[0] == 'NICEMAN test content'
     os.remove(local_path)
     os.rmdir(os.path.dirname(local_path))
+
+    with chpwd(resource_test_dir):
+        # We can get() without a leading directory.
+        session.get(remote_path, "just-base")
+        assert os.path.exists("just-base")
+        remote_basename = os.path.basename(remote_path)
+        # We can get() without specifying a target.
+        session.get(remote_path)
+        assert os.path.exists(remote_basename)
+        # Or by specifying just the directory.
+        session.get(remote_path, "subdir" + os.path.sep)
+        assert os.path.exists(os.path.join("subdir", remote_basename))
 
     # Check mkdir() method
     test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)
