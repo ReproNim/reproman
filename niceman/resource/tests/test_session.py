@@ -213,7 +213,7 @@ def resource_session(request):
     request : object
         Pytest request object that contains the class to test against
 
-    Returns
+    Yields
     -------
     session object
         Instantiated object based on a class that extends the Session or
