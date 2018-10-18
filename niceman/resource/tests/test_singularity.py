@@ -42,14 +42,14 @@ def test_singularity_resource_class():
         assert resource.id is None
         assert resource.status is None
         resource.create()
-        assert resource.id == 'foo'
+        assert resource.id.startswith('foo-')
         assert resource.status == 'running'
 
         # Test trying to create an already running instance.
         resource_duplicate = Singularity(name='foo',
             image='shub://truatpasteurdotfr/singularity-alpine')
         resource_duplicate.connect()
-        assert resource_duplicate.id == 'foo'
+        assert resource_duplicate.id.startswith('foo-')
         assert resource_duplicate.status == 'running'
         resource_duplicate.create()
         assert_in('Resource foo already exists.', log.lines)

@@ -58,10 +58,7 @@ class Singularity(Resource):
             if not self.name:
                 self.name = info['name']
             if not self.id:
-                # Daemon names for a singularity instance are unique so they
-                # can do double duty as the ID. While not a global ID, it
-                # will do the trick locally.
-                self.id = info['name']
+                self.id = "{name}-{pid}".format(**info)
             self.image = info['image']
             self.status = 'running'
         else:
@@ -77,7 +74,8 @@ class Singularity(Resource):
         dict : config parameters to capture in the inventory file
         """
         # Check to see if the container is already running.
-        if self.get_instance_info():
+        info = self.get_instance_info()
+        if info:
             lgr.info('Resource {} already exists.'.format(self.name))
         else:
             # Start the container instance.
@@ -85,9 +83,10 @@ class Singularity(Resource):
             # disable the logging in the run call below.
             self._runner.run(['singularity', 'instance.start', self.image,
                 self.name], log_stdout=False, log_stderr=False)
+            info = self.get_instance_info()
 
         # Update status
-        self.id = self.name
+        self.id = "{name}-{pid}".format(**info)
         self.status = 'running'
         return {
             'id': self.id,
@@ -141,7 +140,8 @@ class Singularity(Resource):
         dict : instance info
         """
         try:
-            stdout, _ = self._runner.run(['singularity', 'instance.list'])
+            stdout, _ = self._runner.run(['singularity', 'instance.list'],
+                expect_fail=True)
         except CommandError:
             return None
 
@@ -151,7 +151,7 @@ class Singularity(Resource):
         # Daemon names are unique on each server.
         for row in stdout.splitlines()[1:]:
             items = row.split()
-            if self.name == items[0] or self.id == items[0]:
+            if self.name == items[0] or self.id == "{0}-{1}".format(*items):
                 return {
                     'name': items[0],  # daemon name
                     'pid': items[1],   # daemon process id
