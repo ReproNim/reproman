@@ -9,7 +9,7 @@ import os.path as op
 import pytest
 
 from niceman.resource.base import ResourceManager
-from niceman.resource.base import backend_set_config
+from niceman.resource.base import backend_check_parameters
 from niceman.resource.shell import Shell
 from niceman.resource.docker_container import DockerContainer
 from niceman.support.exceptions import MissingConfigError
@@ -28,28 +28,34 @@ def test_resource_manager_factory_unkown():
         ResourceManager.factory({"type": "not really a type"})
 
 
-def test_backend_set_config_no_known():
+def test_backend_check_parameters_no_known():
     with pytest.raises(ResourceError) as exc:
-        backend_set_config(["unknown_key=value"],
-                           Shell(name="test-shell"),
-                           {})
+        backend_check_parameters(Shell,
+                                 {"name": "name",
+                                  "unknown_key": "value"})
     assert "no known parameters" in str(exc.value)
 
 
-def test_backend_set_config_nowhere_close():
+def test_backend_check_parameters_nowhere_close():
     with pytest.raises(ResourceError) as exc:
-        backend_set_config(["unknown_key=value"],
-                           DockerContainer(name="foo"),
-                           {})
+        backend_check_parameters(DockerContainer,
+                                 {"name": "name",
+                                  "unknown_key": "value"})
     assert "Known backend parameters" in str(exc.value)
 
 
-def test_backend_set_config_close_match():
+def test_backend_check_parameters_close_match():
     with pytest.raises(ResourceError) as exc:
-        backend_set_config(["imagee=value"],
-                           DockerContainer(name="foo"),
-                           {})
+        backend_check_parameters(DockerContainer,
+                                 {"name": "name",
+                                  "imagee": "value"})
     assert "Did you mean?" in str(exc.value)
+
+
+def test_backend_check_parameters_missing_required():
+    with pytest.raises(ResourceError) as exc:
+        backend_check_parameters(DockerContainer, {"imagee": "value"})
+    assert "Missing required" in str(exc.value)
 
 
 def test_resource_manager_empty_init(tmpdir):

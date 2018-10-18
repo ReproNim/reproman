@@ -32,6 +32,12 @@ import logging
 lgr = logging.getLogger('niceman.resource.base')
 
 
+def get_required_fields(cls):
+    """Return the mandatory fields for a resource class.
+    """
+    return {f.name for f in attr.fields(cls) if f.default is attr.NOTHING}
+
+
 def get_resource_backends(cls):
     """Return name to documentation mapping of `cls`s backends.
     """
@@ -39,25 +45,27 @@ def get_resource_backends(cls):
             if "doc" in b.metadata}
 
 
-def backend_set_config(params, env_resource, config):
-    """Set backend parameters in resource instance and config.
+def backend_check_parameters(cls, keys):
+    """Check whether any backend parameter keys are unknown.
 
     Parameters
     ----------
-    params : list of str
-        A list of backend parameters, where key value pairs are separated by
-        '='.
-    env_resource : Resource object
-    config : dict
-        Configuration parameters for the resource.
+    cls : Resource object
+    keys : iterable
+        Backend parameter keys to check.
+
+    Raises
+    ------
+    ResourceError on the first unknown key encountered.
     """
-    for backend_arg in params:
-        key, value = backend_arg.split("=")
-        if hasattr(env_resource, key):
-            config[key] = value
-            setattr(env_resource, key, value)
-        else:
-            known = get_resource_backends(env_resource.__class__)
+    required_params = get_required_fields(cls)
+    for req_param in required_params:
+        if req_param not in keys:
+            raise ResourceError(
+                "Missing required backend parameter: " + req_param)
+    known = get_resource_backends(cls)
+    for key in keys:
+        if key not in known and key not in required_params:
             if known:
                 import difflib
 
@@ -75,8 +83,7 @@ def backend_set_config(params, env_resource, config):
                                for bname, bdoc in sorted(params.items())]))
                 msg = "Bad --backend parameter '{}'{}".format(key, help_msg)
             else:
-                msg = "Resource type {!r} has no known parameters".format(
-                    env_resource.type)
+                msg = "Resource {} has no known parameters".format(cls)
             raise ResourceError(msg)
 
 
@@ -116,7 +123,7 @@ class ResourceManager(object):
 
         Parameters
         ----------
-        resource_config : dict
+        config : dict
             Configuration parameters for the resource.
 
         Returns
@@ -139,7 +146,14 @@ class ResourceManager(object):
                     exc_str(exc),
                     ', '.join(ResourceManager._discover_types()))
             )
-        instance = getattr(module, class_name)(**config)
+        cls = getattr(module, class_name)
+        try:
+            instance = cls(**config)
+        except TypeError:
+            backend_check_parameters(cls, config)
+            # The check didn't raise an exception, so this wasn't related to an
+            # unknown backend parameter.
+            raise
         return instance
 
     # TODO: Following methods might better be in their own class
@@ -287,17 +301,10 @@ class ResourceManager(object):
                 "Resource with {} {} already exists"
                 .format("name" if results_name else "ID", name))
 
-        try:
-            config = dict(
-                self.config_manager.items(resource_type.split('-')[0]))
-        except NoSectionError:
-            config = {}
-
-        config['name'] = name
-        config['type'] = resource_type
-        resource = self.factory(config)
+        config = {'name': name, 'type': resource_type}
         if backend_params:
-            backend_set_config(backend_params, resource, config)
+            config.update(backend_params)
+        resource = self.factory(config)
         resource.connect()
         resource_attrs = resource.create()
         config.update(resource_attrs)

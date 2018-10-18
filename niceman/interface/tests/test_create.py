@@ -12,6 +12,7 @@ import logging
 import pytest
 from mock import patch, call, MagicMock
 
+from niceman.api import create
 from niceman.cmdline.main import main
 from niceman.utils import swallow_logs
 from niceman.resource.base import ResourceManager
@@ -19,6 +20,7 @@ from niceman.tests.utils import assert_in
 from niceman.support.exceptions import ResourceError
 
 from ..create import backend_help
+from ..create import parse_backend_parameters
 
 
 def test_create_interface():
@@ -63,7 +65,24 @@ def test_create_interface():
         assert_in("Created the environment my-test-resource", log.lines)
 
 
+def test_create_missing_required():
+    with pytest.raises(ResourceError) as exc:
+        # SSH requires host.
+        with patch("niceman.interface.create.get_manager",
+                   return_value=ResourceManager()):
+            create("somessh", "ssh", [])
+    assert "host" in str(exc.value)
+
+
 def test_backend_help_wrong_backend():
     with pytest.raises(ResourceError) as exc:
         backend_help("unknown_backend")
     assert 'Known ones are: aws' in str(exc)
+
+
+def test_parse_backend_parameters():
+    for value, expected in [(["a=b"], {"a": "b"}),
+                            (["a="], {"a": ""}),
+                            (["a=c=d"], {"a": "c=d"}),
+                            (["a-b=c d"], {"a-b": "c d"})]:
+        assert parse_backend_parameters(value) == expected
