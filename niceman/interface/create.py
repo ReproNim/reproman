@@ -24,6 +24,17 @@ lgr = getLogger('niceman.api.create')
 
 
 def parse_backend_parameters(params):
+    """Parse a list of backend parameters.
+
+    Parameters
+    ----------
+    params : sequence of str
+        Each item should have the form "<key>=<value".
+
+    Returns
+    -------
+    A dict that maps from backend key to value.
+    """
     if params:
         res = dict(p.split("=", 1) for p in params)
     else:
