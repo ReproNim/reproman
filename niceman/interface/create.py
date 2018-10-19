@@ -11,6 +11,8 @@
 
 __docformat__ = 'restructuredtext'
 
+from collections import Mapping
+
 from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
@@ -28,14 +30,17 @@ def parse_backend_parameters(params):
 
     Parameters
     ----------
-    params : sequence of str
-        Each item should have the form "<key>=<value".
+    params : sequence of str or mapping
+        For a sequence, each item should have the form "<key>=<value".  If
+        `params` is a mapping, it will be returned as is.
 
     Returns
     -------
-    A dict that maps from backend key to value.
+    A mapping from backend key to value.
     """
-    if params:
+    if isinstance(params, Mapping):
+        res = params
+    elif params:
         res = dict(p.split("=", 1) for p in params)
     else:
         res = {}

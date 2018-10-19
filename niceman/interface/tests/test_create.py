@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 
+from collections import OrderedDict
 import logging
 import pytest
 from mock import patch, call, MagicMock
@@ -77,5 +78,11 @@ def test_parse_backend_parameters():
     for value, expected in [(["a=b"], {"a": "b"}),
                             (["a="], {"a": ""}),
                             (["a=c=d"], {"a": "c=d"}),
-                            (["a-b=c d"], {"a-b": "c d"})]:
+                            (["a-b=c d"], {"a-b": "c d"}),
+                            ({"a": "c=d"}, {"a": "c=d"})]:
         assert parse_backend_parameters(value) == expected
+
+    # We leave any mapping be, including not converting an empty mapping to an
+    # empty dict.
+    assert isinstance(parse_backend_parameters(OrderedDict({})),
+                      OrderedDict)
