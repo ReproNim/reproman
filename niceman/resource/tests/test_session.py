@@ -316,7 +316,7 @@ def test_session_abstract_methods(testing_container, resource_session,
         f.write('NICEMAN test content\nline 2\nline 3'.encode('utf8'))
         f.flush()
         local_path = temp_file.name
-        remote_path = '{}/niceman-upload/{}'.format(resource_test_dir,
+        remote_path = '{}/niceman upload/{}'.format(resource_test_dir,
             uuid.uuid4().hex)
 
         # Check put() method
@@ -365,8 +365,8 @@ def test_session_abstract_methods(testing_container, resource_session,
 
     with chpwd(resource_test_dir):
         # We can get() without a leading directory.
-        session.get(remote_path, "just-base")
-        assert os.path.exists("just-base")
+        session.get(remote_path, "just base")
+        assert os.path.exists("just base")
         remote_basename = os.path.basename(remote_path)
         # We can get() without specifying a target.
         session.get(remote_path)
@@ -382,13 +382,13 @@ def test_session_abstract_methods(testing_container, resource_session,
     assert result
 
     # Check making parent dirs without setting flag
-    test_dir = '{}/tmp/failed/{}'.format(resource_test_dir, uuid.uuid4().hex)
+    test_dir = '{}/tmp/i fail/{}'.format(resource_test_dir, uuid.uuid4().hex)
     with pytest.raises(CommandError):
         session.mkdir(test_dir, parents=False)
     result = session.isdir(test_dir)
     assert not result
     # Check making parent dirs when parents flag set
-    test_dir = '{}/success/{}'.format(resource_test_dir, uuid.uuid4().hex)
+    test_dir = '{}/i succeed/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir, parents=True)
     result = session.isdir(test_dir)
     assert result
