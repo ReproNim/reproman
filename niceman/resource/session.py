@@ -174,7 +174,7 @@ class Session(object):
 
         Parameters
         ----------
-        command : list
+        command : list or str
             Shell command string or list of command tokens to send to the
             environment to execute.
         env : dict, optional
@@ -206,7 +206,7 @@ class Session(object):
 
         Parameters
         ----------
-        command : list
+        command : list or str
             Shell command string or list of command tokens to send to the
             environment to execute.
         env : dict, optional
