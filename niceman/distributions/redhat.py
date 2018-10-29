@@ -328,6 +328,7 @@ class RPMTracer(DistributionTracer):
         -------
         sources : list(RPMSource)
         """
+        attr_fields = {f.name for f in attr.fields(RPMSource)}
         sources = []
         # Get all repo info from the system and store information for each
         # enabled repo in a RPMSource object.
@@ -354,7 +355,11 @@ class RPMTracer(DistributionTracer):
                 else:
                     # Map the field labels returned by the sytem to the attr
                     # fields in the RPMSource class.
-                    values[key.split('-')[1]] = value
+                    field = key.split('-')[1]
+                    if field in attr_fields:
+                        values[field] = value
+                    else:
+                        lgr.warning("Ignoring RPM line: %s", line)
             if len(line) == 0:
                 sources.append(RPMSource(**values))
         return sources
