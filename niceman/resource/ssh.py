@@ -12,7 +12,6 @@ import attr
 import invoke
 import uuid
 from fabric import Connection
-import os
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
