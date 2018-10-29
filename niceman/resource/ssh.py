@@ -135,8 +135,11 @@ class SSHSession(POSIXSession):
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
+        if isinstance(command, list):
+            command = ' '.join(command)
+
         try:
-            result = self.connection.run(' '.join(command), hide=True)
+            result = self.connection.run(command, hide=True)
         except invoke.exceptions.UnexpectedExit as e:
             result = e.result
 
