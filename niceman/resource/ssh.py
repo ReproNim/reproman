@@ -18,6 +18,7 @@ lgr = logging.getLogger('niceman.resource.ssh')
 
 from .base import Resource
 from ..utils import attrib
+from ..utils import command_as_string
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
 from ..support.exceptions import CommandError
@@ -135,9 +136,7 @@ class SSHSession(POSIXSession):
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
-        if isinstance(command, list):
-            command = ' '.join(command)
-
+        command = command_as_string(command)
         try:
             result = self.connection.run(command, hide=True)
         except invoke.exceptions.UnexpectedExit as e:
