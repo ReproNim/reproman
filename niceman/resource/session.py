@@ -17,6 +17,7 @@ from functools import partial
 import os
 import os.path as op
 import re
+from six.moves import shlex_quote
 
 from niceman.support.exceptions import SessionRuntimeError
 from niceman.cmd import Runner
@@ -601,7 +602,7 @@ class POSIXSession(Session):
 
     def exists_command(self, path):
         """Return the command to run for the exists method."""
-        command = ['test', '-e', path, '&&', 'echo', 'Found']
+        command = ['test', '-e', shlex_quote(path), '&&', 'echo', 'Found']
         return ['bash', '-c', ' '.join(command)]
 
     # def lexists(self, path):
@@ -660,7 +661,7 @@ class POSIXSession(Session):
 
     def isdir_command(self, path):
         """Return the command to run for the exists method."""
-        command = ['test', '-d', path, '&&', 'echo', 'Found']
+        command = ['test', '-d', shlex_quote(path), '&&', 'echo', 'Found']
         return ['bash', '-c', ' '.join(command)]
 
     def chmod(self, path, mode, recursive=False):
