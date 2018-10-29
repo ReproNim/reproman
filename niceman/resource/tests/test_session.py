@@ -398,6 +398,19 @@ def test_session_abstract_methods(testing_container, resource_session,
     result = session.isdir(test_dir)
     assert result, "The path %s is not a directory" % test_dir
 
+    # All sessions will take the command in string form...
+    output_string = "{}/stringtest {}".format(
+        resource_test_dir, session.__class__.__name__)
+    assert not session.exists(output_string)
+    session.execute_command("touch '{}'".format(output_string))
+    assert session.exists(output_string)
+    # and the list form.
+    output_list = "{}/listtest {}".format(
+        resource_test_dir, session.__class__.__name__)
+    assert not session.exists(output_list)
+    session.execute_command(["touch", output_list])
+    assert session.exists(output_list)
+
     # TODO: How to test chmod and chown? Need to be able to read remote file attributes
     # session.chmod(self, path, mode, recursive=False):
     # session.chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
