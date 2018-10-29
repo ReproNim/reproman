@@ -14,7 +14,6 @@ lgr = logging.getLogger('niceman.resource.session')
 
 import attr
 from functools import partial
-import json
 import os
 import os.path as op
 import re
