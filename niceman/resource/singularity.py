@@ -10,13 +10,13 @@
 
 import attr
 import os
-import six
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
 from ..support.exceptions import CommandError
 from .session import POSIXSession, Session
 from .base import Resource
 from ..utils import attrib
+from ..utils import command_as_string
 
 import logging
 lgr = logging.getLogger('niceman.resource.singularity')
@@ -171,11 +171,9 @@ class SingularitySession(POSIXSession):
         if cwd:
             raise NotImplementedError("handle cwd for singularity")
         lgr.debug('Running command %r', command)
-        # If command is a string, convert it to a list
-        if isinstance(command, six.string_types):
-            command = command.split()
         stdout, stderr = self._runner.run(
-            ['singularity', 'exec', 'instance://' + self.name] + command,
+            "singularity exec instance://{} {}".format(
+                self.name, command_as_string(command)),
             expect_fail=True)
 
         return (stdout, stderr)
