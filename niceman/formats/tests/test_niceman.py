@@ -46,7 +46,6 @@ def test_write():
     env_reparsed = NicemanProvenance(out).get_environment()
     # and we could do the full round trip while retaining the same "value"
     assert env == env_reparsed
-    print(out)
 
 
 def test_spec_round_trip():

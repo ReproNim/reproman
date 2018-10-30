@@ -161,7 +161,6 @@ def test_dockercontainer_class():
 
 
 def test_setup_ubuntu(setup_ubuntu):
-    print(setup_ubuntu)
     assert setup_ubuntu['container_id']
 
 

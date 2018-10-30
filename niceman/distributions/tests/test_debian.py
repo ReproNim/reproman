@@ -11,7 +11,6 @@ import os
 from os.path import islink
 from os.path import join, isfile
 
-from pprint import pprint
 import logging
 
 import attr
@@ -44,7 +43,6 @@ def test_dpkg_manager_identify_packages():
     distributions = list(tracer.identify_distributions(files))
     assert len(distributions) == 1
     distribution, unknown_files = distributions[0]
-    print(json.dumps(attr.asdict(distribution), indent=4))
     assert distribution.apt_sources
     # Make sure both a non-local origin was found
     for o in distribution.apt_sources:
@@ -69,7 +67,6 @@ def test_check_bin_packages():
     distributions = list(tracer.identify_distributions(files))
     assert len(distributions) == 1
     distribution, unknown_files = distributions[0]
-    print(json.dumps(attr.asdict(distribution), indent=4))
     non_local_origins = [o for o in distribution.apt_sources if o.site]
     assert len(non_local_origins) > 0, "A non-local origin must be found"
     for o in non_local_origins:
@@ -130,9 +127,6 @@ def test_utf8_file():
     (packages, unknown_files) = \
         manager.identify_packages_from_files(files)
     packages = manager.get_details_for_packages(packages)
-    # Print for manual debugging
-    pprint(unknown_files)
-    pprint(packages)
     # If the file exists, it should be in ca-certificates
     if os.path.isfile(files[0]):
         assert packages[0].name == "ca-certificates"
