@@ -121,9 +121,6 @@ NON_EXPORTED_VAR=2         # but may be those should be handled??
                                          shell="/bin/bash")
         assert new_env_diff == {}
 
-        # just for "fun"
-        #print ses.source_script([os.path.expanduser('~/anaconda2/bin/activate'), 'datalad'])
-
 
 def test_session_passing_envvars():
     check_session_passing_envvars(ShellSession())
@@ -138,7 +135,6 @@ def test_shell_resource():
     resource = ResourceManager.factory(config)
 
     status = resource.create()
-    print("====================", status)
     assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
 
     assert type(resource.connect()) == Shell
