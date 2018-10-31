@@ -205,7 +205,7 @@ class Execute(Interface):
             retrace(
                 spec=op.join(local_trace_dir, "config.yml"),
                 output_file=niceman_spec_path,
-                resource=session
+                resref=session
             )
             lgr.info("NICEMAN trace %s", niceman_spec_path)
 

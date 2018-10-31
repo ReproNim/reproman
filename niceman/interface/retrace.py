@@ -16,6 +16,7 @@ import sys
 import time
 
 from niceman.resource.session import get_local_session
+from niceman.resource.session import Session
 from .common_opts import resref_opt
 from .common_opts import resref_type_opt
 from .base import Interface
@@ -64,7 +65,14 @@ class Retrace(Interface):
             metavar='output_file',
             constraints=EnsureStr() | EnsureNone(),
         ),
-        resref=resref_opt,
+        resref=Parameter(
+            args=("-r", "--resource",),
+            dest="resref",
+            metavar="RESOURCE",
+            doc="""Name or ID of the resource to operate on. To see available
+            resources, run 'niceman ls'.[PY: Note: As a special case, a session
+            instance can be passed as the value for `resref`.  PY]""",
+            constraints=EnsureStr() | EnsureNone()),
         resref_type=resref_type_opt,
     )
 
@@ -93,7 +101,11 @@ class Retrace(Interface):
         # The tracers assume normalized paths.
         paths = list(map(normpath, paths))
 
-        if resref:
+        if isinstance(resref, Session):
+            # TODO: Special case for Python callers.  Is this something we want
+            # to handle more generally at the interface level?
+            session = resref
+        elif resref:
             resource = get_manager().get_resource(resref, resref_type)
             session = resource.get_session()
         else:
