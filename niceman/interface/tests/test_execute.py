@@ -46,7 +46,7 @@ def test_execute_interface(docker_container):
         cmd = ['execute', 'mkdir', path, '--resource', 'testing-container']
         manager = ResourceManager()
         with patch("niceman.interface.execute.get_manager",
-                   return_value=ResourceManager()):
+                   return_value=manager):
             main(cmd)
 
             session = manager.get_resource("testing-container").get_session()
