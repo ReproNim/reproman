@@ -21,7 +21,7 @@ from .base import Interface
 from ..support.exceptions import CommandError
 import niceman.interface.base  # Needed for test patching
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr, EnsureNone
+from ..support.constraints import EnsureStr
 from ..resource import get_manager
 from ..resource.session import Session
 from .common_opts import trace_opt
