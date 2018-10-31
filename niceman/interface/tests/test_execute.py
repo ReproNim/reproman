@@ -9,13 +9,23 @@
 
 from niceman.cmdline.main import main
 
+import functools
 import uuid
 from mock import patch
+import os
+import os.path as op
 import pytest
 
+import attr
+
 from niceman.api import execute
+from niceman.formats.niceman import NicemanProvenance
 from niceman.utils import swallow_outputs
+from niceman.interface.execute import TracedCommand
 from ...resource.base import ResourceManager
+from ...tests.utils import assert_is_subset_recur
+from ...tests.utils import skip_if_no_apt_cache
+from ...tests.utils import skip_if_no_network
 from ...tests.utils import skip_ssh
 from ...tests.fixtures import get_docker_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
@@ -68,3 +78,67 @@ def test_execute_interface(docker_container):
 def test_invalid_trace_internal():
     with pytest.raises(RuntimeError):
         execute("doesn't matter", [], internal=True, trace=True)
+
+
+@pytest.fixture(scope="function")
+def trace_info(tmpdir_factory):
+    """Return a TracedCommand that uses temporary directories.
+    """
+    remote_dir = str(tmpdir_factory.mktemp("remote"))
+    local_dir = str(tmpdir_factory.mktemp("local"))
+    cls = functools.partial(TracedCommand,
+                            remote_dir=remote_dir, local_dir=local_dir)
+    return {"remote": remote_dir,
+            "local": local_dir,
+            "class": cls}
+
+
+def test_trace_docker(docker_container, trace_info):
+    with patch("niceman.resource.ResourceManager._get_inventory") as get_inv:
+        config = {"status": "running",
+                  "engine_url": "unix:///var/run/docker.sock",
+                  "type": "docker-container",
+                  "name": "testing-container"}
+        get_inv.return_value = {"testing-container": config}
+        with patch("niceman.interface.execute.get_manager",
+                   return_value=ResourceManager()):
+            with patch("niceman.interface.execute.CMD_CLASSES",
+                       {"trace": trace_info["class"]}):
+                # Expected Docker failure:
+                #   CRITICAL: couldn't use ptrace: Operation not permitted
+                #
+                #   This could be caused by a security policy or isolation
+                #   mechanism (such as Docker), see http://bit.ly/2bZd8Fa
+                with pytest.raises(SystemExit):
+                    execute("ls", ["-l"],
+                            trace=True, resref="testing-container")
+
+
+@pytest.mark.integration
+@skip_if_no_network
+@skip_if_no_apt_cache
+def test_trace_local(trace_info):
+    with patch("niceman.resource.ResourceManager._get_inventory") as get_inv:
+        config = {"status": "running",
+                  "type": "shell",
+                  "name": "testing-local"}
+        get_inv.return_value = {"testing-local": config}
+        with patch("niceman.interface.execute.get_manager",
+                   return_value=ResourceManager()):
+            with patch("niceman.interface.execute.CMD_CLASSES",
+                       {"trace": trace_info["class"]}):
+                execute("ls", ["-l"], trace=True, resref="testing-local")
+
+    local_dir = trace_info["local"]
+    assert set(os.listdir(local_dir)) == {"traces", "tracers"}
+    trace_dirs = os.listdir(op.join(local_dir, "traces"))
+    assert len(trace_dirs) == 1
+
+    prov = NicemanProvenance(op.join(local_dir, "traces",
+                                     trace_dirs[0], "niceman.yml"))
+    deb_dists = [dist for dist in prov.get_distributions()
+                 if dist.name == "debian"]
+    assert len(deb_dists) == 1
+
+    expect = {"packages": [{"files": ["/bin/ls"], "name": "coreutils"}]}
+    assert_is_subset_recur(expect, attr.asdict(deb_dists[0]), [dict, list])
