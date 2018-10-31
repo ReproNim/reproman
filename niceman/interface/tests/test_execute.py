@@ -13,6 +13,7 @@ import uuid
 from mock import patch
 import pytest
 
+from niceman.api import execute
 from niceman.utils import swallow_outputs
 from ...resource.base import ResourceManager
 from ...tests.utils import skip_ssh
@@ -58,3 +59,8 @@ def test_execute_interface(docker_container):
                     main(cmd)
                 assert cme.value.code == 1
                 assert "File exists" in cmo.err
+
+
+def test_invalid_trace_internal():
+    with pytest.raises(RuntimeError):
+        execute("doesn't matter", [], internal=True, trace=True)

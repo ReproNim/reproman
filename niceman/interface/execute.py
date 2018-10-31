@@ -77,6 +77,10 @@ class Execute(Interface):
     def __call__(command, args, resref=None, resref_type="auto",
                  internal=False, trace=False):
         from niceman.ui import ui
+
+        if internal and trace:
+            raise NotImplementedError("No --trace for --internal commands")
+
         if not resref:
             resref = ui.question(
                 "Enter a resource name or ID",
@@ -163,8 +167,6 @@ class Execute(Interface):
             error = None
             out, err = None, None
             if internal:
-                if trace:
-                    raise NotImplementedError("No --trace for --internal commands")
                 session.niceman_exec(command, args)
             else:
                 out, err = session.execute_command(cmd_prefix + [command] + args)  # , env=remote_env)
