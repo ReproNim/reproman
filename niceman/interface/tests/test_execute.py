@@ -38,28 +38,31 @@ def test_execute_interface(docker_container):
             "name": "testing-container",
         }
 
-        path = '/tmp/{}'.format(str(uuid.uuid4()))
-
         get_inventory.return_value = {
             "testing-container": config
         }
 
-        cmd = ['execute', '--resource', 'testing-container',
-               'mkdir', path]
-        manager = ResourceManager()
-        with patch("niceman.interface.execute.get_manager",
-                   return_value=manager):
-            main(cmd)
+        for internal in [False, True]:
+            path = '/tmp/{}'.format(str(uuid.uuid4()))
+            cmd = ['execute', '--resource', 'testing-container']
+            if internal:
+                cmd.append('--internal')
+            cmd.extend(['mkdir', path])
 
-            session = manager.get_resource("testing-container").get_session()
-            assert session.exists(path)
+            manager = ResourceManager()
+            with patch("niceman.interface.execute.get_manager",
+                       return_value=manager):
+                main(cmd)
 
-            # on 2nd run mkdir should fail since already exists
-            with swallow_outputs() as cmo:
-                with pytest.raises(SystemExit) as cme:
-                    main(cmd)
-                assert cme.value.code == 1
-                assert "File exists" in cmo.err
+                session = manager.get_resource("testing-container").get_session()
+                assert session.exists(path)
+
+                # on 2nd run mkdir should fail since already exists
+                with swallow_outputs() as cmo:
+                    with pytest.raises(SystemExit) as cme:
+                        main(cmd)
+                    assert cme.value.code == 1
+                    assert "File exists" in cmo.err
 
 
 def test_invalid_trace_internal():
