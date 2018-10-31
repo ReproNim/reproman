@@ -19,9 +19,11 @@ import uuid
 
 from .base import Interface
 from ..support.exceptions import CommandError
+from ..support.exceptions import MissingExternalDependency
 import niceman.interface.base  # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
+from ..support.external_versions import external_versions
 from ..resource import get_manager
 from ..resource.session import Session
 from .common_opts import trace_opt
@@ -109,6 +111,10 @@ class TracedCommand(CommandAdapter):
     def __init__(self, resource, command, cmd_args,
                  remote_dir=None, local_dir=None):
         super(TracedCommand, self).__init__(resource, command, cmd_args)
+
+        if not external_versions["reprozip"]:
+            raise MissingExternalDependency("Using --trace requires ReproZip, "
+                                            "a Linux-specific dependency")
 
         self.tracer_md5sum = "d8561c1bc528592b21c0e28d6f32c0a4"
         # adding two random characters to avoid collisions etc
@@ -210,11 +216,7 @@ class TracedCommand(CommandAdapter):
                 "since already exists locally",
                 self.local_trace_dir)
 
-        try:
-            from reprozip.tracer.trace import write_configuration
-        except ImportError:
-            raise RuntimeError("Using --trace requires ReproZip, "
-                               "a Linux-specific dependency")
+        from reprozip.tracer.trace import write_configuration
         from rpaths import Path
 
         # we rely on hardcoded paths in reprozip
