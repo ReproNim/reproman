@@ -44,7 +44,8 @@ def test_execute_interface(docker_container):
             "testing-container": config
         }
 
-        cmd = ['execute', 'mkdir', path, '--resource', 'testing-container']
+        cmd = ['execute', '--resource', 'testing-container',
+               'mkdir', path]
         manager = ResourceManager()
         with patch("niceman.interface.execute.get_manager",
                    return_value=manager):
