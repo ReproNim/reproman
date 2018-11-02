@@ -145,6 +145,8 @@ class TracedCommand(CommandAdapter):
 
             if not op.exists(self.local_tracer_dir):
                 os.makedirs(self.local_tracer_dir)
+
+            lgr.info("Downloading tracer...")
             resp = requests.get("https://github.com/ReproNim/reprozip/blob"
                                 "/0497b229575c67219c5925360b6e63bf8d4d5eb9"
                                 "/reprozip/native/rztracer.gz?raw=true",
@@ -155,6 +157,7 @@ class TracedCommand(CommandAdapter):
                     raise RuntimeError("md5sum for downloaded tracer "
                                        "does not match the expected one")
                 stream.write(resp.content)
+            lgr.info("Tracer downloaded to %s", self.local_tracer_gz)
 
     def _prepare_remote(self):
         # Establish a "management" session
