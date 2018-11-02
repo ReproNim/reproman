@@ -29,16 +29,16 @@ from .common_opts import resref_opt
 from .common_opts import resref_type_opt
 
 from logging import getLogger
-lgr = getLogger('niceman.api.exec')
+lgr = getLogger('niceman.api.execute')
 
 
-class Exec(Interface):
+class Execute(Interface):
     """Execute a command in a computation environment
 
     Examples
     --------
 
-      $ niceman exec mkdir /home/blah/data
+      $ niceman execute mkdir /home/blah/data
 
     """
 

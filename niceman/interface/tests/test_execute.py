@@ -27,7 +27,8 @@ docker_container = skip_ssh(get_docker_fixture)(
     scope='module'
 )
 
-def test_exec_interface(docker_container):
+
+def test_execute_interface(docker_container):
 
     with patch('niceman.resource.ResourceManager._get_inventory') as get_inventory:
         config = {
@@ -43,9 +44,9 @@ def test_exec_interface(docker_container):
             "testing-container": config
         }
 
-        cmd = ['exec', 'mkdir', path, '--resource', 'testing-container']
+        cmd = ['execute', 'mkdir', path, '--resource', 'testing-container']
         manager = ResourceManager()
-        with patch("niceman.interface.exec.get_manager",
+        with patch("niceman.interface.execute.get_manager",
                    return_value=ResourceManager()):
             main(cmd)
 
