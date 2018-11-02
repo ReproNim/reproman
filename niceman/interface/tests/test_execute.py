@@ -22,6 +22,7 @@ from niceman.api import execute
 from niceman.formats.niceman import NicemanProvenance
 from niceman.utils import swallow_outputs
 from niceman.interface.execute import TracedCommand
+from niceman.support.external_versions import external_versions
 from ...resource.base import ResourceManager
 from ...tests.utils import assert_is_subset_recur
 from ...tests.utils import skip_if_no_apt_cache
@@ -117,8 +118,12 @@ def test_trace_docker(docker_container, trace_info):
 
 
 @pytest.mark.integration
-@skip_if_no_network
-@skip_if_no_apt_cache
+# Avoiding skip_if_no_network and skip_if_no_apt_cache because it leads to a
+# TypeError under Python 2.
+@pytest.mark.skipif(os.environ.get('NICEMAN_TESTS_NONETWORK'),
+                    reason="No network")
+@pytest.mark.skipif("cmd:apt-cache" in external_versions,
+                    reason="Not apt-cache")
 def test_trace_local(trace_info):
     with patch("niceman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",
