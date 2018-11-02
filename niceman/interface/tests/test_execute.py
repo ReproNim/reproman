@@ -34,7 +34,8 @@ from ...consts import TEST_SSH_DOCKER_DIGEST
 docker_container = skip_ssh(get_docker_fixture)(
     TEST_SSH_DOCKER_DIGEST,
     name='testing-container',
-    scope='module'
+    scope='module',
+    seccomp_unconfined=True
 )
 
 
@@ -100,18 +101,19 @@ def test_trace_docker(docker_container, trace_info):
                   "type": "docker-container",
                   "name": "testing-container"}
         get_inv.return_value = {"testing-container": config}
+        manager = ResourceManager()
         with patch("niceman.interface.execute.get_manager",
                    return_value=ResourceManager()):
             with patch("niceman.interface.execute.CMD_CLASSES",
                        {"trace": trace_info["class"]}):
-                # Expected Docker failure:
-                #   CRITICAL: couldn't use ptrace: Operation not permitted
-                #
-                #   This could be caused by a security policy or isolation
-                #   mechanism (such as Docker), see http://bit.ly/2bZd8Fa
-                with pytest.raises(SystemExit):
-                    execute("ls", ["-l"],
-                            trace=True, resref="testing-container")
+                execute("ls", ["-l"],
+                        trace=True, resref="testing-container")
+            # Barely more than a smoke test.  The test_trace_docker will look
+            # at the generated spec.
+            session = manager.get_resource("testing-container").get_session()
+            assert session.exists(trace_info["remote"])
+            # The tracer didn't doing anything with the local test directory:
+            assert not os.listdir(trace_info["remote"])
 
 
 @pytest.mark.integration
