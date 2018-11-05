@@ -301,6 +301,8 @@ def test_session_abstract_methods(testing_container, resource_session,
     assert result
     result = session.exists('/no/such/file')
     assert not result
+    # exists() doesn't get confused by an empty string.
+    assert not session.exists('')
 
     # Check isdir() method
     result = session.isdir('/etc')
