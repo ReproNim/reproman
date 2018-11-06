@@ -182,11 +182,11 @@ class ResourceManager(object):
     def _find_resources(self, resref, resref_type):
         def from_name(x):
             return [(name, config) for name, config in self.inventory.items()
-                    if x == name]
+                    if name.startswith(x)]
 
         def from_id(x):
-            return [(name, config) for name, config in self.inventory.items()
-                    if x == config.get("id")]
+            return [(config.get("id", ''), config) for _, config in self.inventory.items()
+                    if config.get("id", '').startswith(x)]
 
         results_name = None
         results_id = None
@@ -208,12 +208,40 @@ class ResourceManager(object):
         elif not (results_name or results_id):
             raise ResourceNotFoundError(
                 "Resource matching {} not found".format(resref))
-        elif results_id and len(results_id) > 1:
-            raise MultipleResourceMatches(
-                "ID {} matches multiple resources. "
-                "Try specifying with the name instead".format(resref))
+        else:
+            # although we should have only one or another, this is to unify
+            # logic.  yoh thought that ID is unique, but previous code suggested
+            # that name is unique and IDs might collide... clarify in the PR
+            for results_type, alt_results_type, results in [
+                ('ID', 'name', results_id),
+                ('name', 'ID', results_name)]:
+                # Error message to be used to report and to suggest alternative
+                # solution.  Could change if we see that there is an exact match
+                errmsg = "start with"
+                alt_errmsg = "the {} or full {} instead".format(
+                    alt_results_type, results_type)
+                if results and len(results) > 1:
+                    # if there is an exact match - leave only that one, but
+                    # even that one could be "multiple".
+                    hits = [r for r, _ in results]
+                    if resref in hits:
+                        errmsg = "match"
+                        alt_errmsg = "the {}".format(alt_results_type)
+                        for r, _ in results[:]:
+                            # inplace modification to leave only matching value
+                            if r != resref:
+                                results.pop(0)
+                if results and len(results) > 1:
+                    raise MultipleResourceMatches(
+                        "Multiple resource {}s {} {}: {}. "
+                        "Try specifying {} instead".format(
+                            results_type,
+                            errmsg,
+                            resref,
+                            ', '.join(r[0] for r in results),
+                            alt_errmsg))
 
-        name, inventory_config = (results_name or results_id)[0]
+        _, inventory_config = (results_name or results_id)[0]
         type_ = inventory_config['type']
         try:
             config = dict(self.config_manager.items(type_.split('-')[0]))
