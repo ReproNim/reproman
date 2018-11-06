@@ -78,8 +78,10 @@ class Ls(Interface):
                     # continue  # A missing ID indicates a deleted resource.
                     resource.id = 'DELETED'
                     resource.status = 'N/A'
-            except ResourceError as exc:
-                ui.error("%s resource query error: %s" % (name, exc_str(exc)))
+                report_status = resource.status
+            except Exception as exc:
+                lgr.error("%s resource query error: %s", name, exc_str(exc))
+                report_status = "N/A (QUERY-ERROR)"
                 for f in 'id', 'status':
                     if not getattr(resource, f):
                         setattr(resource, f, "?")
@@ -87,7 +89,7 @@ class Ls(Interface):
                 name,
                 resource.type,
                 resource.id[:id_length] if resource.id else '',
-                resource.status,
+                report_status,
             )
             ui.message(template.format(*msgargs))
             lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
