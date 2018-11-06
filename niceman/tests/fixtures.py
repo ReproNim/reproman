@@ -19,7 +19,8 @@ from niceman.utils import chpwd
 
 
 def get_docker_fixture(image, portmaps={}, name=None,
-                       custom_params={}, scope='function'):
+                       custom_params={}, scope='function',
+                       seccomp_unconfined=False):
     """Produce a fixture which starts/stops a docker container
 
     It should be called to produce and assign within the scope under some name,
@@ -49,6 +50,8 @@ def get_docker_fixture(image, portmaps={}, name=None,
       What to return in a fixture information in the field 'custom'
     scope: {'function', 'class', 'module', 'session'}, optional
       A scope for the fixture according to `pytest.fixture` docs
+    seccomp_unconfined : bool, optional
+      Disable kernel secure computing mode when creating the container
     """
 
     @pytest.fixture(scope=scope)
@@ -70,6 +73,8 @@ def get_docker_fixture(image, portmaps={}, name=None,
                 '-d',
                 '--rm',
                 ]
+        if seccomp_unconfined:
+            args.extend(['--security-opt', 'seccomp=unconfined'])
         params = {}
         if name:
             args += ['--name', name]
