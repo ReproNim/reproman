@@ -78,7 +78,7 @@ class Ls(Interface):
                     # continue  # A missing ID indicates a deleted resource.
                     resource.id = 'DELETED'
                     resource.status = 'N/A'
-            except ResourceError as exc:
+            except Exception as exc:
                 ui.error("%s resource query error: %s" % (name, exc_str(exc)))
                 for f in 'id', 'status':
                     if not getattr(resource, f):
