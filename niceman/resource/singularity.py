@@ -10,13 +10,15 @@
 
 import attr
 import os
-import six
+from six.moves import shlex_quote
+
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
 from ..support.exceptions import CommandError
 from .session import POSIXSession, Session
 from .base import Resource
 from ..utils import attrib
+from ..utils import command_as_string
 
 import logging
 lgr = logging.getLogger('niceman.resource.singularity')
@@ -171,11 +173,9 @@ class SingularitySession(POSIXSession):
         if cwd:
             raise NotImplementedError("handle cwd for singularity")
         lgr.debug('Running command %r', command)
-        # If command is a string, convert it to a list
-        if isinstance(command, six.string_types):
-            command = command.split()
         stdout, stderr = self._runner.run(
-            ['singularity', 'exec', 'instance://' + self.name] + command,
+            "singularity exec instance://{} {}".format(
+                self.name, command_as_string(command)),
             expect_fail=True)
 
         return (stdout, stderr)
@@ -185,7 +185,9 @@ class SingularitySession(POSIXSession):
         dest_path = self._prepare_dest_path(src_path, dest_path,
                                             local=False, absolute_only=True)
         cmd = 'cat {} | singularity exec instance://{} tee {} > /dev/null'
-        self._runner.run(cmd.format(src_path, self.name, dest_path))
+        self._runner.run(cmd.format(shlex_quote(src_path),
+                                    self.name,
+                                    shlex_quote(dest_path)))
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid)
@@ -194,7 +196,9 @@ class SingularitySession(POSIXSession):
     def get(self, src_path, dest_path=None, uid=-1, gid=-1):
         dest_path = self._prepare_dest_path(src_path, dest_path)
         cmd = 'singularity exec instance://{} cat {} > {}'
-        self._runner.run(cmd.format(self.name, src_path, dest_path))
+        self._runner.run(cmd.format(self.name,
+                                    shlex_quote(src_path),
+                                    shlex_quote(dest_path)))
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, remote=False)

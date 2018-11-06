@@ -12,6 +12,7 @@ import re
 import six
 
 import six.moves.builtins as __builtin__
+from six.moves import shlex_quote
 import time
 
 from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
@@ -1253,6 +1254,20 @@ def parse_semantic_version(version):
     else:
         raise ValueError(
             "{} does not appear to follow semantic versioning".format(version))
+
+
+def command_as_string(command):
+    """Convert `command` to the string representation.
+
+    Parameters
+    ----------
+    command : list or str
+        If it is a list, convert it to a string, quoting each element as
+        needed.  If it is a string, it is returned as is.
+    """
+    if isinstance(command, list):
+        command = " ".join(map(shlex_quote, command))
+    return command
 
 
 lgr.log(5, "Done importing niceman.utils")

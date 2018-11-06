@@ -12,13 +12,13 @@ import attr
 import invoke
 import uuid
 from fabric import Connection
-import os
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
 
 from .base import Resource
 from ..utils import attrib
+from ..utils import command_as_string
 from niceman.dochelpers import borrowdoc
 from niceman.resource.session import Session
 from ..support.exceptions import CommandError
@@ -136,8 +136,9 @@ class SSHSession(POSIXSession):
             # TODO: might not work - not tested it
             # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
+        command = command_as_string(command)
         try:
-            result = self.connection.run(' '.join(command), hide=True)
+            result = self.connection.run(command, hide=True)
         except invoke.exceptions.UnexpectedExit as e:
             result = e.result
 
@@ -167,20 +168,6 @@ class SSHSession(POSIXSession):
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, remote=False)
-
-    @borrowdoc(POSIXSession)
-    def exists_command(self, path):
-        return ['bash', '-c', '"test', '-e', path, '&&', 'echo', 'Found"']
-
-    @borrowdoc(POSIXSession)
-    def isdir_command(self, path):
-        return ['bash', '-c', '"test', '-d', path, '&&', 'echo', 'Found"']
-
-    @borrowdoc(POSIXSession)
-    def get_mtime_command(self, path):
-        return ['python', '-c',
-            '"import os, sys; print(os.path.getmtime(sys.argv[1]))"',
-            path]
 
 
 @attr.s
