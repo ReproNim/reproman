@@ -8,26 +8,29 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 
+from collections import OrderedDict
 import logging
 import pytest
 from mock import patch, call, MagicMock
 
+from niceman.api import create
 from niceman.cmdline.main import main
 from niceman.utils import swallow_logs
+from niceman.resource.base import ResourceManager
 from niceman.tests.utils import assert_in
 from niceman.support.exceptions import ResourceError
 
-from ..create import backend_help
+from ..create import parse_backend_parameters
 
 
-def test_create_interface(niceman_cfg_path):
+def test_create_interface():
     """
     Test creating an environment
     """
 
     with patch('docker.Client') as client, \
-        patch('niceman.resource.ResourceManager.set_inventory'), \
-        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager._save'), \
+        patch('niceman.resource.ResourceManager._get_inventory'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
@@ -41,23 +44,15 @@ def test_create_interface(niceman_cfg_path):
             }
         )
 
-        get_inventory.return_value = {
-            "my-test-resource": {
-                "status": "running",
-                "engine_url": "tcp://127.0.0.1:2375",
-                "type": "docker-container",
-                "name": "my-test-resource",
-                "id": "18b31b30e3a5"
-            }
-        }
-
         args = ['create',
-                '--name', 'my-test-resource',
                 '--resource-type', 'docker-container',
-                '--config', niceman_cfg_path,
-                '--backend', 'engine_url=tcp://127.0.0.1:2376'
+                '--backend', 'engine_url=tcp://127.0.0.1:2376',
+                '--',
+                'my-test-resource'
         ]
-        main(args)
+        with patch("niceman.interface.create.get_manager",
+                   return_value=ResourceManager()):
+            main(args)
 
         calls = [
             call(base_url='tcp://127.0.0.1:2376'),
@@ -70,7 +65,24 @@ def test_create_interface(niceman_cfg_path):
         assert_in("Created the environment my-test-resource", log.lines)
 
 
-def test_backend_help_wrong_backend():
+def test_create_missing_required():
     with pytest.raises(ResourceError) as exc:
-        backend_help("unknown_backend")
-    assert 'Known ones are: aws' in str(exc)
+        # SSH requires host.
+        with patch("niceman.interface.create.get_manager",
+                   return_value=ResourceManager()):
+            create("somessh", "ssh", [])
+    assert "host" in str(exc.value)
+
+
+def test_parse_backend_parameters():
+    for value, expected in [(["a=b"], {"a": "b"}),
+                            (["a="], {"a": ""}),
+                            (["a=c=d"], {"a": "c=d"}),
+                            (["a-b=c d"], {"a-b": "c d"}),
+                            ({"a": "c=d"}, {"a": "c=d"})]:
+        assert parse_backend_parameters(value) == expected
+
+    # We leave any mapping be, including not converting an empty mapping to an
+    # empty dict.
+    assert isinstance(parse_backend_parameters(OrderedDict({})),
+                      OrderedDict)

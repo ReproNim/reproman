@@ -24,7 +24,7 @@ from ..ui import ui
 from ..utils import assure_dir, attrib
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
-from .ssh import SSHSession, PTYSSHSession
+from .ssh import SSH
 
 @attr.s
 class AwsEc2(Resource):
@@ -145,6 +145,11 @@ class AwsEc2(Resource):
                     raise
                 self.create_key_pair(self.key_name)
                 instances = self._ec2_resource.create_instances(**create_kwargs)
+            if re.search(
+                "parameter groupId is invalid", str(exc)
+            ):
+                raise ValueError("Invalid AWS Security Group: '{}'".format(
+                    self.security_group))
             else:
                 raise  # re-raise
 
@@ -269,12 +274,11 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         if not self._ec2_instance:
             self.connect()
 
-        ssh = SSHClient(
-            self._ec2_instance.public_ip_address,
-            username=self.user,
-            private_key=self.key_filename,
+        ssh = SSH(
+            self.name,
+            host=self._ec2_instance.public_ip_address,
+            user=self.user,
+            key_filename=self.key_filename
         )
 
-        return (PTYSSHSession if pty else SSHSession)(
-            ssh=ssh
-        )
+        return ssh.get_session(pty=pty, shared=shared)

@@ -1,16 +1,30 @@
 version: '3'
 services:
-  niceman:
+  redhat:
     build:
       context: $PWD
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-redhat
+      args:
+        - IMAGE=centos:7
+        - UNAME=$USER
+        # - UID=1000
+        # - GID=1000
+    image: niceman:redhat
+    container_name: niceman-redhat
+    volumes:
+      - $PWD:/home/$USER/niceman
+      - /var/run/docker.sock:/var/run/docker.sock
+  debian:
+    build:
+      context: $PWD
+      dockerfile: Dockerfile-debian
       args:
         - IMAGE=debian:jessie
         - UNAME=$USER
-        - UID=1000
-        - GID=1000
-    image: niceman:latest
-    container_name: niceman
+        # - UID=1000
+        # - GID=1000
+    image: niceman:debian
+    container_name: niceman-debian
     volumes:
       - $PWD:/home/$USER/niceman
       - /var/run/docker.sock:/var/run/docker.sock

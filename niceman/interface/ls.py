@@ -17,9 +17,10 @@ from .base import Interface
 import niceman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
-from  ..resource import ResourceManager
+from  ..resource import get_manager
 from ..ui import ui
 from ..support.exceptions import ResourceError
+from ..support.exceptions import ResourceNotFoundError
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -36,23 +37,11 @@ class Ls(Interface):
     """
 
     _params_ = dict(
-        names=Parameter(
-            doc="name of the specific environment(s) to be listed",
-            metavar='NAME(s)',
-            nargs="*",
-            constraints=EnsureStr() | EnsureNone(),
-        ),
         verbose=Parameter(
             args=("-v", "--verbose"),
             action="store_true",
             #constraints=EnsureBool() | EnsureNone(),
             doc="provide more verbose listing",
-        ),
-        config=Parameter(
-            args=("--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            constraints=EnsureStr(),
         ),
         refresh=Parameter(
             args=("--refresh",),
@@ -64,51 +53,43 @@ class Ls(Interface):
     )
 
     @staticmethod
-    def __call__(names, config, verbose=False, refresh=False):
-
-        # TODO?: we might want to embed get_resource_inventory()
-        #       within ConfigManager (even though it would make it NICEMAN specific)
-        #       This would allow to make more sensible error messages etc
-        cm = ResourceManager.get_config_manager(config)
-        inventory_path = cm.getpath('general', 'inventory_file')
-        inventory = ResourceManager.get_inventory(inventory_path)
-
+    def __call__(verbose=False, refresh=False):
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 
-        for name in sorted(inventory):
+        manager = get_manager()
+        for name in sorted(manager):
             if name.startswith('_'):
                 continue
 
             # if refresh:
-            inventory_resource = inventory[name]
             try:
-                config = dict(cm.items(inventory_resource['type'].split('-')[0]))
-            except NoSectionError:
-                config = {}
-            config.update(inventory_resource)
-            env_resource = ResourceManager.factory(config)
+                resource = manager.get_resource(name, resref_type="name")
+            except ResourceNotFoundError:
+                lgr.warning("Manager did not return a resource for %r", name)
+                continue
+
             try:
                 if refresh:
-                    env_resource.connect()
-                # TODO: handle the actual refreshing in the inventory
-                inventory_resource['id'] = env_resource.id
-                inventory_resource['status'] = env_resource.status
-                if not env_resource.id:
+                    resource.connect()
+                if not resource.id:
                     # continue  # A missing ID indicates a deleted resource.
-                    inventory_resource['id'] = 'DELETED'
-                    inventory_resource['status'] = 'N/A'
-            except ResourceError as exc:
-                ui.error("%s resource query error: %s" % (name, exc_str(exc)))
+                    resource.id = 'DELETED'
+                    resource.status = 'N/A'
+                report_status = resource.status
+            except Exception as exc:
+                lgr.error("%s resource query error: %s", name, exc_str(exc))
+                report_status = "N/A (QUERY-ERROR)"
                 for f in 'id', 'status':
-                    inventory_resource[f] = inventory_resource.get(f, "?")
+                    if not getattr(resource, f):
+                        setattr(resource, f, "?")
             msgargs = (
                 name,
-                inventory_resource['type'],
-                inventory_resource['id'][:id_length],
-                inventory_resource['status']
+                resource.type,
+                resource.id[:id_length] if resource.id else '',
+                report_status,
             )
             ui.message(template.format(*msgargs))
             lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))

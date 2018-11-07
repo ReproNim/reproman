@@ -16,6 +16,9 @@ import sys
 import time
 
 from niceman.resource.session import get_local_session
+from niceman.resource.session import Session
+from .common_opts import resref_opt
+from .common_opts import resref_type_opt
 from .base import Interface
 from ..support.constraints import EnsureNone
 from ..support.constraints import EnsureStr
@@ -23,6 +26,7 @@ from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
 from ..utils import assure_list
 from ..utils import to_unicode
+from ..resource import get_manager
 
 __docformat__ = 'restructuredtext'
 
@@ -31,7 +35,7 @@ lgr = getLogger('niceman.api.retrace')
 
 
 class Retrace(Interface):
-    """Analyze a known (e.g. ReproZip) trace files or just paths to gather detailed package information
+    """Gather detailed package information from paths or a ReproZip trace file.
 
     Examples
     --------
@@ -61,17 +65,22 @@ class Retrace(Interface):
             metavar='output_file',
             constraints=EnsureStr() | EnsureNone(),
         ),
-        # TODO: make a common arg
-        resource=Parameter(
-            args=("--resource",),
-            doc="TODO"
-        )
+        resref=Parameter(
+            args=("-r", "--resource",),
+            dest="resref",
+            metavar="RESOURCE",
+            doc="""Name or ID of the resource to operate on. To see available
+            resources, run 'niceman ls'.[PY: Note: As a special case, a session
+            instance can be passed as the value for `resref`.  PY]""",
+            constraints=EnsureStr() | EnsureNone()),
+        resref_type=resref_type_opt,
     )
 
     # TODO: add a session/resource so we could trace within
     # arbitrary sessions
     @staticmethod
-    def __call__(path=None, spec=None, output_file=None, resource=None):
+    def __call__(path=None, spec=None, output_file=None,
+                 resref=None, resref_type="auto"):
         # heavy import -- should be delayed until actually used
 
         if not (spec or path):
@@ -92,9 +101,13 @@ class Retrace(Interface):
         # The tracers assume normalized paths.
         paths = list(map(normpath, paths))
 
-        if resource:
-            # TODO: if not a session already, request a session from the resource
-            session = resource
+        if isinstance(resref, Session):
+            # TODO: Special case for Python callers.  Is this something we want
+            # to handle more generally at the interface level?
+            session = resref
+        elif resref:
+            resource = get_manager().get_resource(resref, resref_type)
+            session = resource.get_session()
         else:
             session = get_local_session()
 
@@ -223,11 +236,12 @@ def get_tracer_classes():
     """
     # TODO: automate discovery of available tracers
     from niceman.distributions.debian import DebTracer
+    from niceman.distributions.redhat import RPMTracer
     from niceman.distributions.conda import CondaTracer
     from niceman.distributions.venv import VenvTracer
     from niceman.distributions.vcs import VCSTracer
     from niceman.distributions.docker import DockerTracer
     from niceman.distributions.singularity import SingularityTracer
-    Tracers = [DebTracer, CondaTracer, VenvTracer, VCSTracer, DockerTracer,
-        SingularityTracer]
+    Tracers = [DebTracer, RPMTracer, CondaTracer, VenvTracer, VCSTracer,
+        DockerTracer, SingularityTracer]
     return Tracers

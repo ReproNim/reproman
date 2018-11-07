@@ -25,8 +25,7 @@ LOCATIONS_DOC = """
     2. 'niceman/niceman.cfg' in all directories defined by $XDG_CONFIG_DIRS
        (by default: /etc/xdg/)
     3. 'niceman/niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
-    4. '.niceman/niceman.cfg', relative to the current directory
-    5. 'niceman.cfg' in the current directory""".lstrip()
+    4. '.niceman/niceman.cfg', relative to the current directory""".lstrip()
 
 
 class ConfigManager(SafeConfigParserWithIncludes, object):

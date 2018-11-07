@@ -11,7 +11,7 @@ import datetime
 import docker
 import logging
 import os
-import paramiko
+from fabric import Connection
 import pytest
 import tempfile
 import uuid
@@ -19,7 +19,7 @@ import uuid
 from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ..docker_container import DockerSession, PTYDockerSession
-from ...utils import swallow_logs
+from ...utils import chpwd, swallow_logs
 from ..shell import ShellSession
 from ..singularity import Singularity, SingularitySession, \
     PTYSingularitySession
@@ -40,7 +40,6 @@ testing_container = skip_ssh(get_docker_fixture)(
     custom_params={
         'host': 'localhost',
         'user': 'root',
-        'password': 'root',
         'port': 49000,
     },
     scope='module'
@@ -138,21 +137,21 @@ def test_session_class():
         envvars = session.get_envvars()
         assert envvars['VAR'] == 'FORMATTED VAR_VALUE' 
         assert envvars['NEW_VAR'] == 'NEW_VAR_VALUE'
-        
+
         # At this time, setting permanent env vars is not supported
         with pytest.raises(NotImplementedError):
             session.set_envvar('NEW_VAR', value='NEW_VAR_VALUE',
                 permanent=True)
-        
+
         # Check we raise an exception if user tries to set an env value while
         # passing a dict
         with pytest.raises(AssertionError):
             session.set_envvar({'WILL': 'FAIL'}, value='!')
-        
+
         # Check query_envvars() method not implemented
         with pytest.raises(NotImplementedError):
             session.query_envvars()
-        
+
         # Check source_script() method not implemented
         with pytest.raises(NotImplementedError):
             session.source_script(['ls'])
@@ -206,15 +205,15 @@ def test_session_class():
 def resource_session(request):
     """Pytest fixture that provides instantiated session objects for each
     of the classes that inherit the Session or POSIXSession classes.
-    
+
     The fixture will run the test method once for each session object provided.
-    
+
     Parameters
     ----------
     request : object
         Pytest request object that contains the class to test against
-    
-    Returns
+
+    Yields
     -------
     session object
         Instantiated object based on a class that extends the Session or
@@ -227,33 +226,34 @@ def resource_session(request):
             c for c in client.containers()
             if '/testing-container' in c['Names']
         ][0]
-        return request.param(client, container)
-
-    # Initialize SSH connection to testing Docker container.
-    if request.param in [SSHSession, PTYSSHSession]:
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(
+        yield request.param(client, container)
+    elif request.param in [SSHSession, PTYSSHSession]:
+        # Initialize SSH connection to testing Docker container.
+        connection = Connection(
             'localhost',
+            user='root',
             port=49000,
-            username='root',
-            password='root'
+            connect_kwargs={
+                'password': 'root'
+            }
         )
-        return request.param(ssh)
-
-    # Initialize Singularity test container.
-    if request.param in [SingularitySession, PTYSingularitySession]:
+        connection.open()
+        yield request.param(connection)
+    elif request.param in [SingularitySession, PTYSingularitySession]:
+        # Initialize Singularity test container.
         name = str(uuid.uuid4().hex)[:11]
         resource = Singularity(name=name, image='docker://python:2.7')
         resource.connect()
         resource.create()
-        return request.param(name)
+        yield request.param(name)
+        resource.delete()
+    else:
+        yield request.param()
 
-    return request.param()
 
 
 def test_session_abstract_methods(testing_container, resource_session,
-    resource_test_dir):
+        resource_test_dir):
 
     session = resource_session
 
@@ -301,11 +301,13 @@ def test_session_abstract_methods(testing_container, resource_session,
     assert result
     result = session.exists('/no/such/file')
     assert not result
+    # exists() doesn't get confused by an empty string.
+    assert not session.exists('')
 
     # Check isdir() method
     result = session.isdir('/etc')
     assert result
-    result = session.isdir('/etc/hosts') # A file, not a dir
+    result = session.isdir('/etc/hosts')  # A file, not a dir
     assert not result
     result = session.isdir('/no/such/dir')
     assert not result
@@ -316,7 +318,7 @@ def test_session_abstract_methods(testing_container, resource_session,
         f.write('NICEMAN test content\nline 2\nline 3'.encode('utf8'))
         f.flush()
         local_path = temp_file.name
-        remote_path = '{}/niceman-upload/{}'.format(resource_test_dir,
+        remote_path = '{}/niceman upload/{}'.format(resource_test_dir,
             uuid.uuid4().hex)
 
         # Check put() method
@@ -326,6 +328,18 @@ def test_session_abstract_methods(testing_container, resource_session,
         result = session.exists(remote_path)
         assert result
         # TODO: Check uid and gid of remote file
+
+        # We can use a relative name for the target
+        basename_put_dir = os.path.join(resource_test_dir, "basename-put")
+        if not os.path.exists(basename_put_dir):
+            os.mkdir(basename_put_dir)
+        # Change directory to avoid polluting test directory for local shell.
+        with chpwd(basename_put_dir):
+            try:
+                session.put(local_path, os.path.basename(remote_path))
+            except ValueError:
+                # Docker and Singularity don't accept non-absolute paths.
+                assert isinstance(session, (DockerSession, SingularitySession))
 
     # Check get_mtime() method by checking new file has today's date
     result = int(session.get_mtime(remote_path).split('.')[0])
@@ -351,6 +365,18 @@ def test_session_abstract_methods(testing_container, resource_session,
     os.remove(local_path)
     os.rmdir(os.path.dirname(local_path))
 
+    with chpwd(resource_test_dir):
+        # We can get() without a leading directory.
+        session.get(remote_path, "just base")
+        assert os.path.exists("just base")
+        remote_basename = os.path.basename(remote_path)
+        # We can get() without specifying a target.
+        session.get(remote_path)
+        assert os.path.exists(remote_basename)
+        # Or by specifying just the directory.
+        session.get(remote_path, "subdir" + os.path.sep)
+        assert os.path.exists(os.path.join("subdir", remote_basename))
+
     # Check mkdir() method
     test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir)
@@ -358,13 +384,13 @@ def test_session_abstract_methods(testing_container, resource_session,
     assert result
 
     # Check making parent dirs without setting flag
-    test_dir = '/tmp/failed/{}'.format(resource_test_dir, uuid.uuid4().hex)
+    test_dir = '{}/tmp/i fail/{}'.format(resource_test_dir, uuid.uuid4().hex)
     with pytest.raises(CommandError):
         session.mkdir(test_dir, parents=False)
     result = session.isdir(test_dir)
     assert not result
     # Check making parent dirs when parents flag set
-    test_dir = '{}/success/{}'.format(resource_test_dir, uuid.uuid4().hex)
+    test_dir = '{}/i succeed/{}'.format(resource_test_dir, uuid.uuid4().hex)
     session.mkdir(test_dir, parents=True)
     result = session.isdir(test_dir)
     assert result
@@ -373,6 +399,19 @@ def test_session_abstract_methods(testing_container, resource_session,
     test_dir = session.mktmpdir()
     result = session.isdir(test_dir)
     assert result, "The path %s is not a directory" % test_dir
+
+    # All sessions will take the command in string form...
+    output_string = "{}/stringtest {}".format(
+        resource_test_dir, session.__class__.__name__)
+    assert not session.exists(output_string)
+    session.execute_command("touch '{}'".format(output_string))
+    assert session.exists(output_string)
+    # and the list form.
+    output_list = "{}/listtest {}".format(
+        resource_test_dir, session.__class__.__name__)
+    assert not session.exists(output_list)
+    session.execute_command(["touch", output_list])
+    assert session.exists(output_list)
 
     # TODO: How to test chmod and chown? Need to be able to read remote file attributes
     # session.chmod(self, path, mode, recursive=False):

@@ -11,6 +11,10 @@
 import attr
 import json
 import logging
+import os
+import tempfile
+import uuid
+
 
 lgr = logging.getLogger('niceman.distributions.singularity')
 
@@ -20,7 +24,7 @@ from .base import DistributionTracer
 from .base import TypedList
 from .base import _register_with_representer
 from ..dochelpers import borrowdoc, exc_str
-from ..utils import attrib, md5sum
+from ..utils import attrib, md5sum, chpwd
 
 
 @attr.s(slots=True, frozen=True, cmp=False, hash=True)
@@ -37,6 +41,9 @@ class SingularityImage(Package):
     singularity_version = attrib()
     base_image = attrib()
     mirror_url = attrib()
+    url = attrib()
+    path = attrib()
+
 
 _register_with_representer(SingularityImage)
 
@@ -76,6 +83,7 @@ class SingularityDistribution(Distribution):
 
         # TODO: Currently we have no way to locate the image given the metadata
 
+
 _register_with_representer(SingularityDistribution)
 
 
@@ -95,14 +103,34 @@ class SingularityTracer(DistributionTracer):
 
         images = []
         remaining_files = set()
+        url = None
+        path = None
 
         for file_path in files:
             try:
-                image = json.loads(self._session.execute_command(['singularity',
-                    'inspect', file_path])[0])
+                if file_path.startswith('shub:/'):
+                    # Correct file path for path normalization in retrace.py
+                    if not file_path.startswith('shub://'):
+                        file_path = file_path.replace('shub:/', 'shub://')
+                    temp_path = "{}.simg".format(uuid.uuid4())
+                    with chpwd(tempfile.gettempdir()):
+                        msg = "Downloading Singularity image {} for tracing"
+                        lgr.info(msg.format(file_path))
+                        self._session.execute_command(['singularity', 'pull',
+                            '--name', temp_path, file_path])
+                        image = json.loads(self._session.execute_command(
+                            ['singularity', 'inspect', temp_path])[0])
+                        url = file_path
+                        md5 = md5sum(temp_path)
+                        os.remove(temp_path)
+                else:
+                    path = os.path.abspath(file_path)
+                    image = json.loads(self._session.execute_command(
+                        ['singularity', 'inspect', file_path])[0])
+                    md5 = md5sum(file_path)
 
                 images.append(SingularityImage(
-                    md5=md5sum(file_path),
+                    md5=md5,
                     bootstrap=image.get(
                         'org.label-schema.usage.singularity.deffile.bootstrap'),
                     maintainer=image.get('MAINTAINER'),
@@ -116,7 +144,9 @@ class SingularityTracer(DistributionTracer):
                     base_image=image.get(
                         'org.label-schema.usage.singularity.deffile.from'),
                     mirror_url=image.get(
-                        'org.label-schema.usage.singularity.deffile.mirrorurl')
+                        'org.label-schema.usage.singularity.deffile.mirrorurl'),
+                    url=url,
+                    path=path
                 ))
             except Exception as exc:
                 lgr.debug("Probably %s is not a Singularity image: %s",

@@ -13,17 +13,18 @@ import logging
 from mock import patch, call, MagicMock
 
 from niceman.utils import swallow_logs
+from niceman.resource.base import ResourceManager
 from niceman.tests.utils import assert_in
 
 
-def test_delete_interface(niceman_cfg_path):
+def test_delete_interface():
     """
     Test deleting a resource.
     """
 
     with patch('docker.Client') as client, \
-        patch('niceman.resource.ResourceManager.set_inventory'), \
-        patch('niceman.resource.ResourceManager.get_inventory') as get_inventory, \
+        patch('niceman.resource.ResourceManager._save'), \
+        patch('niceman.resource.ResourceManager._get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
@@ -48,11 +49,13 @@ def test_delete_interface(niceman_cfg_path):
 
         args = [
             'delete',
-            '--name', 'my-resource',
-            '--config', niceman_cfg_path,
-            '--skip-confirmation'
+            '--skip-confirmation',
+            'my-resource'
+
         ]
-        main(args)
+        with patch("niceman.interface.delete.get_manager",
+                   return_value=ResourceManager()):
+            main(args)
 
         calls = [
             call(base_url='tcp://127.0.0.1:2375'),

@@ -13,9 +13,11 @@ import logging
 lgr = logging.getLogger('niceman.resource.session')
 
 import attr
-import json
+from functools import partial
 import os
+import os.path as op
 import re
+from six.moves import shlex_quote
 
 from niceman.support.exceptions import SessionRuntimeError
 from niceman.cmd import Runner
@@ -38,7 +40,7 @@ class Session(object):
     def __attrs_post_init__(self):
         """
         Maintain both current and future session environments.
-        
+
         For persistent resources, we will save the environment information
         to make it available for sessions beyond the current one.
         """
@@ -75,10 +77,10 @@ class Session(object):
 
     def set_envvar(self, variable, value=None, permanent=False, format=False):
         """Set environment variable(s) to be used within the session
-        
+
         All of them would be exported (TODO: should we allow for non-exported
         ones for some reason?  we aren't really scripting to care about non-exported)
-        
+
         Parameters
         ----------
         variable: str or dict
@@ -116,14 +118,14 @@ class Session(object):
 
     def get_envvars(self, permanent=False):
         """Get stored session environment variables
-        
+
         Parameters
         ----------
         permanent : {bool}, optional
             Indicate that the environment variables that persist across
             sessions should be returned (the default is False, which will
             return the environment variables specific to the current session.)
-        
+
         Returns
         -------
         dict
@@ -146,7 +148,7 @@ class Session(object):
         Parameters
         ----------
         command : str or list
-          Name of the script or composite command (if a list, such as 
+          Name of the script or composite command (if a list, such as
           ["activate", "envname"] in conda) to be "sourced"
         permanent : bool, optional
         diff : bool, optional
@@ -172,12 +174,12 @@ class Session(object):
 
         Parameters
         ----------
-        command : list
+        command : list or str
             Shell command string or list of command tokens to send to the
             environment to execute.
         env : dict, optional
             Additional environment variables which are applied
-            only to the current call.  If value is None -- variable will be 
+            only to the current call.  If value is None -- variable will be
             removed
         cwd : string, optional
             Path of directory in which to run the command
@@ -204,12 +206,12 @@ class Session(object):
 
         Parameters
         ----------
-        command : list
+        command : list or str
             Shell command string or list of command tokens to send to the
             environment to execute.
         env : dict, optional
             Additional environment variables which are applied
-            only to the current call.  If value is None -- variable will be 
+            only to the current call.  If value is None -- variable will be
             removed
         cwd : string, optional
             Path of directory in which to run the command
@@ -234,14 +236,14 @@ class Session(object):
 
     def niceman_exec(self, command, args):
         """Run a niceman utility "exec" command in the environment
-        
+
         Parameters
         ----------
         command : string
             The session method name to run. (e.g. mkdir, chown, etc.)
         args : list of strings
             Arguments passed in from the command line for the command
-        
+
         Raises
         ------
         CommandError
@@ -267,12 +269,12 @@ class Session(object):
 
     def exists(self, path):
         """Determine if a path exists in the resource.
-        
+
         Parameters
         ----------
         path : string
             Path to check for existence in the resource environment.
-        
+
         Returns
         -------
         bool
@@ -280,18 +282,62 @@ class Session(object):
         """
         raise NotImplementedError
 
+    def _prepare_dest_path(self, src_path, dest_path,
+                           local=True, absolute_only=False):
+        """Do common handling for the destination target of `get` and `put`.
+
+        Parameters
+        ----------
+        src_path : str
+            Path to source file.
+        dest_path : str
+            Path to target file.  If `dest_path` is None, the basename is taken
+            from `src_path`.
+        local : bool, optional
+            Whether the destination is on the local machine.
+        absolute_only : bool, optional
+            Whether `dest_path` is required to be absolute.
+
+        Returns
+        -------
+        The path to the destination, possibly adjusted to add the basename.
+        """
+        if local:
+            exists = op.exists
+            mkdir = os.makedirs
+        else:
+            exists = self.exists
+            mkdir = partial(self.mkdir, parents=True)
+
+        if absolute_only and not op.isabs(dest_path):
+            raise ValueError(
+                "Destination path must be absolute, got {}".format(dest_path))
+
+        dest_dir = dest_base = None
+        if dest_path:
+            dest_dir, dest_base = op.split(dest_path)
+            if dest_dir and not exists(dest_dir):
+                mkdir(dest_dir)
+
+        if not dest_base:
+            dest_base = op.basename(src_path)
+            dest_path = op.join(dest_dir, dest_base) if dest_dir else dest_base
+        return dest_path
+
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         """Take file on the local file system and copy over into the resource
 
         The src_path and dest_path must include the name of the file being
         transferred.
-        
+
         Parameters
         ----------
         src_path : string
             Path to file to push to resource environment
         dest_path : string
-            Path of resource directory to put local file in
+            Path of resource directory to put local file in.  If this contains
+            a trailing separator, it is considered directory and the base name
+            is taken from `src_path`.
         uid : int, optional
             System user ID to assign ownership of file on resource  (the
             default is -1, which will preserve the user owner of the local file)
@@ -301,18 +347,19 @@ class Session(object):
         """
         raise NotImplementedError
 
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
         """Take file on the resource and copy over into the local system
 
-        The src_path and dest_path must include the name of the file being
-        transferred.
-        
+        The src_path must include the name of the file being transferred.
+
         Parameters
         ----------
         src_path : string
             Path to file to pull from resource environment
-        dest_path : string
-            Path in local file system to put local file in
+        dest_path : string, optional
+            Path in local file system to put local file in.  If unspecified,
+            the destination path defaults the base name of `src_path` within
+            the current directory.
         uid : int, optional
             System user ID to assign ownership of file on resource  (the
             default is -1, which will preserve the user owner of the local file)
@@ -324,12 +371,12 @@ class Session(object):
 
     def get_mtime(self, path):
         """Returns the modification time for a file in the resource
-        
+
         Parameters
         ----------
         path : string
             Path to file on resource
-        
+
         Returns
         -------
         string
@@ -343,14 +390,14 @@ class Session(object):
     #
     def read(self, path, mode='r'):
         """Return content of a file
-        
+
         Parameters
         ----------
         path : string
             Filesystem path to file to be read
         mode : string, optional
             Access mode when reading file (the default is 'r', which is read-only)
-        
+
         Returns
         -------
         list of strings
@@ -360,7 +407,7 @@ class Session(object):
 
     def mkdir(self, path, parents=False):
         """Create a directory
-        
+
         Parameters
         ----------
         path : string
@@ -382,12 +429,12 @@ class Session(object):
 
     def isdir(self, path):
         """Return True if path is pointing to a directory
-        
+
         Parameters
         ----------
         path : string
             Path to test in the resource
-        
+
         Returns
         -------
         bool
@@ -397,7 +444,7 @@ class Session(object):
 
     def chmod(self, path, mode, recursive=False):
         """Set the mode of the indicated path
-        
+
         Parameters
         ----------
         path : string
@@ -412,7 +459,7 @@ class Session(object):
 
     def chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
         """Set the owner and group ownership of a file or directory.
-        
+
         Parameters
         ----------
         path : string
@@ -438,7 +485,7 @@ class Session(object):
 @attr.s
 class POSIXSession(Session):
     """A Session which relies on commands present in any POSIX-compliant env
-    
+
     """
 
     # -0 is not provided by busybox's env command.  So if we decide to make it
@@ -454,12 +501,12 @@ class POSIXSession(Session):
 
     def _parse_envvars_output(self, out):
         """Decode a JSON string into an object
-        
+
         Parameters
         ----------
         out : string
             JSON string to decode.
-        
+
         Returns
         -------
         object
@@ -542,8 +589,7 @@ class POSIXSession(Session):
     def exists(self, path):
         """Return if file exists"""
         try:
-            command = ['test', '-e', path, '&&', 'echo', 'Found']
-            out, err = self.execute_command(['bash', '-c', ' '.join(command)])
+            out, err = self.execute_command(self.exists_command(path))
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for file presence failed: %s", exc_str(exc))
             return False
@@ -554,6 +600,11 @@ class POSIXSession(Session):
                       "test for file presence has failed", err)
             return False
 
+    def exists_command(self, path):
+        """Return the command to run for the exists method."""
+        command = ['test', '-e', shlex_quote(path), '&&', 'echo', 'Found']
+        return ['bash', '-c', ' '.join(command)]
+
     # def lexists(self, path):
     #     """Return if file (or just a broken symlink) exists"""
     #     return os.path.lexists(path)
@@ -562,10 +613,13 @@ class POSIXSession(Session):
     #  may be we could assume presence of e.g. python so we could use std library?
     def get_mtime(self, path):
         # TODO:  too common of a pattern -- we need a helper to wrap such calls
-        out, err = self.execute_command(
-            ['python', '-c', "import os, sys; print(os.path.getmtime(sys.argv[1]))", path]
-        )
+        out, err = self.execute_command(self.get_mtime_command(path))
         return out.strip()
+
+    def get_mtime_command(self, path):
+        """Return the command to run for the get_mtime method."""
+        command = "import os, sys; print(os.path.getmtime(sys.argv[1]))"
+        return ['python', '-c', command, path]
 
     #
     # Somewhat optional since could be implemented with native "POSIX" commands
@@ -594,8 +648,7 @@ class POSIXSession(Session):
 
     def isdir(self, path):
         try:
-            command = ['test', '-d', path, '&&', 'echo', 'Found']
-            out, err = self.execute_command(['bash', '-c', ' '.join(command)])
+            out, err = self.execute_command(self.isdir_command(path))
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for directory failed: %s", exc_str(exc))
             return False
@@ -605,6 +658,11 @@ class POSIXSession(Session):
             lgr.debug("Standard error was not empty (%r), thus assuming that "
                       "test for direcory has failed", err)
             return False
+
+    def isdir_command(self, path):
+        """Return the command to run for the exists method."""
+        command = ['test', '-d', shlex_quote(path), '&&', 'echo', 'Found']
+        return ['bash', '-c', ' '.join(command)]
 
     def chmod(self, path, mode, recursive=False):
         """Set the mode of a remote path
@@ -636,7 +694,7 @@ class POSIXSession(Session):
         else:
             # Run on the local file system
             Runner().run(command)
-            
+
 
 def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
     """A shortcut to get a local session"""
@@ -652,7 +710,7 @@ def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
 
 def get_updated_env(env, update):
     """Given an environment and set of updates, return updated one
-    
+
     Special handling -- keys with None for the value, will be removed
     """
     env_ = updated(env, update)

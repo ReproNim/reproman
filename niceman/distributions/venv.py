@@ -142,7 +142,7 @@ class VenvTracer(DistributionTracer):
             package_details, file_to_pkg = self._get_package_details(venv_path)
             local_pkgs = set(piputils.get_pip_packages(self._session,
                                                        venv_path + "/bin/pip",
-                                                       local_only=True))
+                                                       restriction="local"))
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but

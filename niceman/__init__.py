@@ -47,7 +47,7 @@ def test(package='niceman', **kwargs):
     try:
         # from numpy.testing import Tester
         # Tester(package=package).test(**kwargs)
-        pytest.main(['--disable-pytest-warnings', os.path.dirname(__file__)])
+        pytest.main(['-s', '--disable-pytest-warnings', os.path.dirname(__file__)])
         # we don't have any benchmarks atm
         # bench = Tester().bench
     except ImportError:

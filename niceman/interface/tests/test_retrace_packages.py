@@ -7,8 +7,6 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from pprint import pprint
-
 from ..retrace import identify_distributions
 
 
@@ -23,6 +21,4 @@ def test_identify_packages():
              "/home/butch"]
     # Simple sanity check that the pipeline works
     distributions, files = identify_distributions(files)
-    pprint(files)
-    pprint(distributions)
     assert True

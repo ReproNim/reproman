@@ -11,28 +11,44 @@
 
 __docformat__ = 'restructuredtext'
 
-from .base import Interface, backend_help, backend_set_config
+from collections import Mapping
+
+from .base import Interface
 import niceman.interface.base # Needed for test patching
-# from ..formats import Provenance
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
-from ..resource import ResourceManager
-from ..resource import Resource
+from ..resource import get_manager
 from ..dochelpers import exc_str
 
 from logging import getLogger
 lgr = getLogger('niceman.api.create')
 
 
+def parse_backend_parameters(params):
+    """Parse a list of backend parameters.
+
+    Parameters
+    ----------
+    params : sequence of str or mapping
+        For a sequence, each item should have the form "<key>=<value".  If
+        `params` is a mapping, it will be returned as is.
+
+    Returns
+    -------
+    A mapping from backend key to value.
+    """
+    if isinstance(params, Mapping):
+        res = params
+    elif params:
+        res = dict(p.split("=", 1) for p in params)
+    else:
+        res = {}
+    return res
+
+
 class Create(Interface):
-    """Create a computation environment out from provided specification(s)
-
-    Examples
-    --------
-
-      $ niceman create --spec recipe_for_failure.yml --name never_again
-
+    """Create a computation environment
     """
 
     _params_ = dict(
@@ -49,9 +65,9 @@ class Create(Interface):
         #     # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         # ),
         name=Parameter(
-            args=("-n", "--name"),
-            doc="""For which resource to create a new environment. To see
-            available resources, run the command 'niceman ls'""",
+            args=("name",),
+            metavar="NAME",
+            doc="""Name of the resource to create""",
             constraints=EnsureStr(),
         ),
         resource_type=Parameter(
@@ -59,44 +75,30 @@ class Create(Interface):
             doc="""Resource type to create""",
             constraints=EnsureStr(),
         ),
-        config = Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            constraints=EnsureStr(),
-        ),
-        resource_id=Parameter(
-            args=("-id", "--resource-id",),
-            doc="ID of environment container",
-            constraints=EnsureStr(),
-        ),
-        clone=Parameter(
-            args=("--clone",),
-            doc="Name or ID of the resource to clone to another new resource",
-            constraints=EnsureStr(),
-        ),
-        only_env=Parameter(
-            args=("--only-env",),
-            doc="only env spec",
+        # TODO: Implement --only-env and --existing.
+        # only_env=Parameter(
+        #     args=("--only-env",),
+        #     doc="only env spec",
+        #     nargs="+",
+        #     #action="store_true",
+        # ),
+        # existing=Parameter(
+        #     args=("-e", "--existing"),
+        #     choices=("fail", "redefine"),
+        #     doc="Action to take if name is already known"
+        # ),
+        backend_parameters=Parameter(
+            metavar="PARAM",
+            args=("-b", "--backend-parameters"),
             nargs="+",
-            #action="store_true",
-        ),
-        existing=Parameter(
-            args=("-e", "--existing"),
-            choices=("fail", "redefine"),
-            doc="Action to take if name is already known"
-        ),
-        backend=Parameter(
-            args=("-b", "--backend"),
-            nargs="+",
-            doc=backend_help()
+            doc="""One or more backend parameters in the form KEY=VALUE. Use
+            the command `niceman backend-parameters` to see the list of
+            available backend parameters."""
         ),
     )
 
     @staticmethod
-    def __call__(name, resource_type, config, resource_id, clone, only_env,
-                 backend, existing='fail '):
-
+    def __call__(name, resource_type, backend_parameters):
         # Load, while possible merging/augmenting sequentially
         # provenance = Provenance.factory(specs)
         #
@@ -121,43 +123,18 @@ class Create(Interface):
 
         from niceman.ui import ui
 
-        if not name and not resource_id:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
+        if not resource_type:
+            resource_type = ui.question(
+                "Enter a resource type",
+                default="docker-container"
             )
-        if not name:
-            name = resource_id
-
         # if only_env:
         #     raise NotImplementedError
 
-        # Get configuration and environment inventory
-        if clone:
-            config, inventory = ResourceManager.get_resource_info(config,
-                clone, resource_id, resource_type)
-            config['name'] = name
-            del config['id']
-            del config['status']
-        else:
-            config, inventory = ResourceManager.get_resource_info(config, name,
-                resource_id, resource_type)
+        # TODO: Add ability to clone a resource.
 
-        # Create resource environment
-        env_resource = ResourceManager.factory(config)
-
-        # Set resource properties to any backend specific command line arguments.
-        if backend:
-            config = backend_set_config(backend, env_resource, config)
-
-        env_resource.connect()
-        resource_attrs = env_resource.create()
-
-        # Save the updated configuration for this resource.
-        config.update(resource_attrs)
-        inventory[name] = config
-        ResourceManager.set_inventory(inventory)
-
+        get_manager().create(name, resource_type,
+                             parse_backend_parameters(backend_parameters))
         lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env

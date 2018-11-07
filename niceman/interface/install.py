@@ -12,10 +12,12 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
+from .common_opts import resref_arg
+from .common_opts import resref_type_opt
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..formats import Provenance
-from ..resource import ResourceManager
+from ..resource import get_manager
 
 from logging import getLogger
 lgr = getLogger('niceman.api.install')
@@ -27,13 +29,15 @@ class Install(Interface):
     Examples
     --------
 
-      $ niceman install --spec recipe_for_failure.yml --resource docker
+      $ niceman install docker recipe_for_failure.yml
 
     """
 
     _params_ = dict(
+        resref=resref_arg,
+        resref_type=resref_type_opt,
         spec=Parameter(
-            args=("-s", "--spec",),
+            args=("spec",),
             doc="file with specifications (in supported formats) of"
                 " packages used in executed environment",
             metavar='SPEC',
@@ -43,38 +47,10 @@ class Install(Interface):
             # provide options, like --no-exec, etc  per each spec
             # ACTUALLY this type doesn't work for us since it is --spec SPEC SPEC... TODO
         ),
-        name=Parameter(
-            args=("-n", "--name",),
-            doc="name of target resource to install spec on",
-            metavar='NAME',
-            constraints=EnsureStr(),
-        ),
-        resource_id=Parameter(
-            args=("-id", "--resource-id",),
-            doc="ID of environment to install resource on",
-            constraints=EnsureStr(),
-        ),
-        config=Parameter(
-            args=("-c", "--config",),
-            doc="path to niceman configuration file",
-            metavar='CONFIG',
-            constraints=EnsureStr(),
-        ),
     )
 
     @staticmethod
-    def __call__(spec, name, resource_id, config):
-
-        from niceman.ui import ui
-        if not spec:
-            spec = [ui.question("Enter a spec filename", default="spec.yml")]
-
-        if not name and not resource_id:
-            name = ui.question(
-                "Enter a resource name",
-                error_message="Missing resource name"
-            )
-
+    def __call__(resref, spec, resref_type="auto"):
         # Load, while possible merging/augmenting sequentially
         assert len(spec) == 1, "For now supporting having only a single spec"
         filename = spec[0]
@@ -84,10 +60,7 @@ class Install(Interface):
         #  - provenance might contain a 'base' which would instruct which
         #    resource to use
 
-        # Get configuration and environment inventory
-        config, inventory = ResourceManager.get_resource_info(config, name, resource_id)
-
-        env_resource = ResourceManager.factory(config)
+        env_resource = get_manager().get_resource(resref, resref_type)
         env_resource.connect()
 
         #  TODOs:

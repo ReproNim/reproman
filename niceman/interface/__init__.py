@@ -17,7 +17,7 @@ __docformat__ = 'restructuredtext'
 # that shall be exposed in the Python API and the cmdline interface
 # all interfaces should be associated with (at least) one of the groups below
 _group_dataset = (
-    'Commands for computation environments manipulation',
+    'Commands for manipulating computation environments',
     [
         # source module, source object[, dest. cmdline name[, dest python name]]
         # src module can be relative, but has to be relative to the main 'niceman' package
@@ -27,7 +27,7 @@ _group_dataset = (
         ('niceman.interface.start', 'Start'),
         ('niceman.interface.stop', 'Stop'),
         ('niceman.interface.login', 'Login'),
-        ('niceman.interface.exec', 'Exec'),
+        ('niceman.interface.execute', 'Execute'),
         # ('niceman.distribution.run', 'Run'),
     ])
 
@@ -35,6 +35,7 @@ _group_misc = (
     'Miscellaneous commands',
     [
         ('niceman.interface.ls', 'Ls'),
+        ('niceman.interface.backend_parameters', 'BackendParameters'),
         # ('niceman.interface.trace', 'Trace'),
         # ('niceman.interface.shell', 'Shell'),
         ('niceman.interface.retrace', 'Retrace'),

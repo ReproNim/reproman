@@ -10,13 +10,15 @@
 
 import attr
 import os
-import six
+from six.moves import shlex_quote
+
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
 from ..support.exceptions import CommandError
 from .session import POSIXSession, Session
 from .base import Resource
 from ..utils import attrib
+from ..utils import command_as_string
 
 import logging
 lgr = logging.getLogger('niceman.resource.singularity')
@@ -58,10 +60,7 @@ class Singularity(Resource):
             if not self.name:
                 self.name = info['name']
             if not self.id:
-                # Daemon names for a singularity instance are unique so they
-                # can do double duty as the ID. While not a global ID, it
-                # will do the trick locally.
-                self.id = info['name']
+                self.id = "{name}-{pid}".format(**info)
             self.image = info['image']
             self.status = 'running'
         else:
@@ -77,7 +76,8 @@ class Singularity(Resource):
         dict : config parameters to capture in the inventory file
         """
         # Check to see if the container is already running.
-        if self.get_instance_info():
+        info = self.get_instance_info()
+        if info:
             lgr.info('Resource {} already exists.'.format(self.name))
         else:
             # Start the container instance.
@@ -85,9 +85,10 @@ class Singularity(Resource):
             # disable the logging in the run call below.
             self._runner.run(['singularity', 'instance.start', self.image,
                 self.name], log_stdout=False, log_stderr=False)
+            info = self.get_instance_info()
 
         # Update status
-        self.id = self.name
+        self.id = "{name}-{pid}".format(**info)
         self.status = 'running'
         return {
             'id': self.id,
@@ -141,7 +142,8 @@ class Singularity(Resource):
         dict : instance info
         """
         try:
-            stdout, _ = self._runner.run(['singularity', 'instance.list'])
+            stdout, _ = self._runner.run(['singularity', 'instance.list'],
+                expect_fail=True)
         except CommandError:
             return None
 
@@ -151,7 +153,7 @@ class Singularity(Resource):
         # Daemon names are unique on each server.
         for row in stdout.splitlines()[1:]:
             items = row.split()
-            if self.name == items[0] or self.id == items[0]:
+            if self.name == items[0] or self.id == "{0}-{1}".format(*items):
                 return {
                     'name': items[0],  # daemon name
                     'pid': items[1],   # daemon process id
@@ -171,31 +173,32 @@ class SingularitySession(POSIXSession):
         if cwd:
             raise NotImplementedError("handle cwd for singularity")
         lgr.debug('Running command %r', command)
-        # If command is a string, convert it to a list
-        if isinstance(command, six.string_types):
-            command = command.split()
-        stdout, stderr = self._runner.run(['singularity', 'exec',
-            'instance://' + self.name] + command)
+        stdout, stderr = self._runner.run(
+            "singularity exec instance://{} {}".format(
+                self.name, command_as_string(command)),
+            expect_fail=True)
 
         return (stdout, stderr)
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, _ = os.path.split(dest_path)
-        self.mkdir(dest_dir, parents=True)
+        dest_path = self._prepare_dest_path(src_path, dest_path,
+                                            local=False, absolute_only=True)
         cmd = 'cat {} | singularity exec instance://{} tee {} > /dev/null'
-        self._runner.run(cmd.format(src_path, self.name, dest_path))
+        self._runner.run(cmd.format(shlex_quote(src_path),
+                                    self.name,
+                                    shlex_quote(dest_path)))
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid)
 
     @borrowdoc(Session)
-    def get(self, src_path, dest_path, uid=-1, gid=-1):
-        dest_dir, _ = os.path.split(dest_path)
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+        dest_path = self._prepare_dest_path(src_path, dest_path)
         cmd = 'singularity exec instance://{} cat {} > {}'
-        self._runner.run(cmd.format(self.name, src_path, dest_path))
+        self._runner.run(cmd.format(self.name,
+                                    shlex_quote(src_path),
+                                    shlex_quote(dest_path)))
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, remote=False)
