@@ -1270,4 +1270,26 @@ def command_as_string(command):
     return command
 
 
+def parse_kv_list(params):
+    """Create a dict from a "key=value" list.
+
+    Parameters
+    ----------
+    params : sequence of str or mapping
+        For a sequence, each item should have the form "<key>=<value".  If
+        `params` is a mapping, it will be returned as is.
+
+    Returns
+    -------
+    A mapping from backend key to value.
+    """
+    if isinstance(params, collections.Mapping):
+        res = params
+    elif params:
+        res = dict(p.split("=", 1) for p in params)
+    else:
+        res = {}
+    return res
+
+
 lgr.log(5, "Done importing niceman.utils")

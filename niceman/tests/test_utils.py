@@ -26,6 +26,7 @@ from collections import OrderedDict
 from ..utils import updated, HashableDict, \
     get_cmd_batch_len, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
+from ..utils import parse_kv_list
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
@@ -502,6 +503,20 @@ def test_parse_semantic_version():
         parse_semantic_version("X.Y.Z")
     with pytest.raises(ValueError):
         parse_semantic_version("1.2")
+
+
+def test_parse_backend_parameters():
+    for value, expected in [(["a=b"], {"a": "b"}),
+                            (["a="], {"a": ""}),
+                            (["a=c=d"], {"a": "c=d"}),
+                            (["a-b=c d"], {"a-b": "c d"}),
+                            ({"a": "c=d"}, {"a": "c=d"})]:
+        assert parse_kv_list(value) == expected
+
+    # We leave any mapping be, including not converting an empty mapping to an
+    # empty dict.
+    assert isinstance(parse_kv_list(OrderedDict({})),
+                      OrderedDict)
 
 
 def test_line_profile():
