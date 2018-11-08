@@ -315,8 +315,64 @@ class DataladPairOrchestrator(Orchestrator):
                 ["git", "merge", "FETCH_HEAD"])
 
 
+class DataladRunOrchestrator(DataladPairOrchestrator):
+    """Capture results locally as run record.
+    """
+    # TODO: This should be restructured so that the remote end isn't required
+    # to have datalad.
+
+    name = "datalad-run"
+
+    def __init__(self, resource, submitter, job_spec=None):
+        super(DataladRunOrchestrator, self).__init__(
+            resource, submitter, job_spec)
+        self.run_kwds = {}
+
+    @borrowdoc(DataladPairOrchestrator)
+    def prepare_remote(self, inputs):
+        super(DataladRunOrchestrator, self).prepare_remote(inputs)
+        self.run_kwds["inputs"] = inputs
+
+    @borrowdoc(DataladPairOrchestrator)
+    def follow(self, outputs):
+        self.submitter.follow()
+
+        if self.resource.type == "ssh":
+            self.ds.repo.fetch(
+                remote=self.resource.name,
+                refspec="refs/niceman/*:refs/niceman/*")
+        else:  # For local testing.
+            self.session.execute_command(
+                ["git", "fetch", self.working_directory,
+                 "refs/niceman/*:refs/niceman/*"])
+
+        import tarfile
+        tfile = "{}.tar.gz".format(self.jobid)
+        remote_tfile = op.join(self.root_directory, "outputs", tfile)
+
+        if not self.session.exists(remote_tfile):
+            lgr.error("Expected output file %s does not exist", remote_tfile)
+            return
+
+        self.session.get(op.join(self.root_directory, "outputs", tfile))
+        with tarfile.open(tfile, mode="r:gz") as tar:
+            tar.extractall(path=".")
+        os.unlink(tfile)
+
+        from datalad.interface.run import run_command
+        lgr.info("Creating run commit")
+        for res in run_command(outputs=outputs,
+                               inject=True,
+                               extra_info={"niceman_jobid": self.jobid},
+                               cmd=self.job_spec["command_str"],
+                               **self.run_kwds):
+            # Oh, if only I were a datalad extension.
+            pass
+
+
 ORCHESTRATORS = collections.OrderedDict(
     (o.name, o) for o in [
         DataladPairOrchestrator,
+        DataladRunOrchestrator,
     ]
 )
