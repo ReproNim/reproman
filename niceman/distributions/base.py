@@ -110,7 +110,13 @@ class SpecObject(object):
         return dumper.represent_mapping('tag:yaml.org,2002:map', ordered_items)
 
 
-    def satisfied_by(self, other):
+    def compare(self, other, mode):
+        if mode == 'satisfied_by':
+            return self._satisfied_by(other)
+        raise ValueError('bad value for mode')
+
+
+    def _satisfied_by(self, other):
         """Determine if the other object satisfies the requirements of this 
         spec object.
 
@@ -133,10 +139,10 @@ class SpecObject(object):
         """
         if hasattr(other, 'collection'):
             if hasattr(self, 'collection'):
-                return all(obj.satisfied_by(other) for obj in self.collection)
+                return all(obj.compare(other, mode='satisfied_by') for obj in self.collection)
             other_collection_type = getattr(other.__class__.__attrs_attrs__, other._collection_attribute).metadata['type']
             if isinstance(self, other_collection_type):
-                return any(self.satisfied_by(obj) for obj in other.collection)
+                return any(self.compare(obj, mode='satisfied_by') for obj in other.collection)
             raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
@@ -148,12 +154,6 @@ class SpecObject(object):
             if self_value != other_value:
                 return False
         return True
-
-
-    def satisfies(self, other):
-        """Determine if this spec object satisfies the requirements of 
-        the other spec object."""
-        return other.satisfied_by(self)
 
 
 def _register_with_representer(cls):

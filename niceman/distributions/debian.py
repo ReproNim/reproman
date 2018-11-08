@@ -258,7 +258,7 @@ class DebianDistribution(Distribution):
         #     what is specified in d1 that is not specified in d2
         #     or how does d2 fall short of d1
         #     or what is in d1 that isn't satisfied by d2
-        return [ p for p in self.packages if not other.satisfies(p) ]
+        return [ p for p in self.packages if not p.compare(other, mode='satisfied_by') ]
 
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)

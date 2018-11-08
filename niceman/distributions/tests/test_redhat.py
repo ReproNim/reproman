@@ -123,36 +123,36 @@ def setup_distributions():
 
 def test_package_satisfies(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert p1.satisfies(p1)
-    assert p1v10.satisfies(p1v10)
-    assert not p1.satisfies(p1v10)
-    assert p1v10.satisfies(p1)
-    assert not p1v10.satisfies(p1v11)
-    assert not p1.satisfies(p2)
-    assert not p1v10.satisfies(p2)
-    assert not p2.satisfies(p1v10)
-    assert not p1v10.satisfies(p1aa)
-    assert p1aa.satisfies(p1)
-    assert not p1aa.satisfies(p1v10)
-    assert not p1aa.satisfies(p1ai)
-    assert not p1v11.satisfies(p1v11ai)
-    assert p1v11ai.satisfies(p1v11)
+    assert p1.compare(p1, mode='satisfied_by')
+    assert p1v10.compare(p1v10, mode='satisfied_by')
+    assert not p1v10.compare(p1, mode='satisfied_by')
+    assert p1.compare(p1v10, mode='satisfied_by')
+    assert not p1v11.compare(p1v10, mode='satisfied_by')
+    assert not p2.compare(p1, mode='satisfied_by')
+    assert not p2.compare(p1v10, mode='satisfied_by')
+    assert not p1v10.compare(p2, mode='satisfied_by')
+    assert not p1aa.compare(p1v10, mode='satisfied_by')
+    assert p1.compare(p1aa, mode='satisfied_by')
+    assert not p1v10.compare(p1aa, mode='satisfied_by')
+    assert not p1ai.compare(p1aa, mode='satisfied_by')
+    assert not p1v11ai.compare(p1v11, mode='satisfied_by')
+    assert p1v11.compare(p1v11ai, mode='satisfied_by')
 
 
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
     (d1, d2) = setup_distributions
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert d1.satisfies(p1)
-    assert not d1.satisfies(p1v10)
-    assert d2.satisfies(p1)
-    assert not d2.satisfies(p1v10)
-    assert d2.satisfies(p1v11)
+    assert p1.compare(d1, mode='satisfied_by')
+    assert not p1v10.compare(d1, mode='satisfied_by')
+    assert p1.compare(d2, mode='satisfied_by')
+    assert not p1v10.compare(d2, mode='satisfied_by')
+    assert p1v11.compare(d2, mode='satisfied_by')
 
 
 def test_distribution_statisfies(setup_distributions):
     (d1, d2) = setup_distributions
-    assert not d1.satisfies(d2)
-    assert d2.satisfies(d1)
+    assert not d2.compare(d1, mode='satisfied_by')
+    assert d1.compare(d2, mode='satisfied_by')
 
 
 def test_distribution_sub():
