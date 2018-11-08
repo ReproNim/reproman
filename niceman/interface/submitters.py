@@ -70,6 +70,44 @@ class Submitter(object):
         pass
 
 
+class PbsSubmitter(Submitter):
+    """Submit a PBS job.
+    """
+
+    name = "pbs"
+
+    def __init__(self, session):
+        super(PbsSubmitter, self).__init__(session)
+
+    @property
+    @borrowdoc(Submitter)
+    def submit_command(self):
+        return ["qsub"]
+
+    @borrowdoc(Submitter)
+    def follow(self):
+        # TODO: Pull out common parts across submitters.
+
+        # FIXME: Is there a reliable, long-lived way to see a job after it's
+        # completed?  (tracejob can fail with permission issues.)
+        while True:
+            try:
+                stat_out, _ = self.session.execute_command(
+                    "qstat -f {}".format(self.submission_id))
+                match = re.search(r"job_state = ([A-Z])", stat_out)
+                if not match:
+                    break
+                job_state = match.group(1)
+                lgr.debug("Job %s state: %s", self.submission_id, job_state)
+                if job_state != "C":
+                    lgr.info("Waiting on job %s", self.submission_id)
+                    time.sleep(10)  # TODO: pull out/make configurable
+                    continue
+            except CommandError:
+                pass
+            break
+
+
 class LocalSubmitter(Submitter):
     """Submit a local job.
     """
@@ -100,6 +138,7 @@ class LocalSubmitter(Submitter):
 
 SUBMITTERS = collections.OrderedDict(
     (o.name, o) for o in [
+        PbsSubmitter,
         LocalSubmitter,
     ]
 )
