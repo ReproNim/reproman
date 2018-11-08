@@ -1,0 +1,25 @@
+Universe     = vanilla
+Executable   = {{ meta_dir }}/runscript
+environment  = ""
+
+Output  = {{ meta_dir }}/stdout
+Error   = {{ meta_dir }}/stderr
+Log     = {{ meta_dir }}/log
+
+
+{#
+  TODO: Need to check spec form compatibility between different batch
+  systems.
+#}
+
+{% if memory is defined %}
+request_memory = {{ memory }}
+{% endif %}
+
+{% if num_processes is defined %}
+request_cpus = {{ num_processes }}
+{% endif %}
+
+getenv = True
+arguments = ""
+queue

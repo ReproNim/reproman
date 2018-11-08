@@ -108,6 +108,59 @@ class PbsSubmitter(Submitter):
             break
 
 
+class CondorSubmitter(Submitter):
+    """Submit a HTCondor job.
+    """
+    name = "condor"
+
+    def __init__(self, session):
+        super(CondorSubmitter, self).__init__(session)
+
+    @property
+    @borrowdoc(Submitter)
+    def submit_command(self):
+        return ["condor_submit", "-terse"]
+
+    @borrowdoc(Submitter)
+    def submit(self, script):
+        # Discard return value, which isn't submission ID for the current
+        # condor_submit form.
+        out = super(CondorSubmitter, self).submit(script)
+        # We only handle single jobs at this point.
+        job_id, job_id0 = out.strip().split(" - ")
+        assert job_id == job_id0, "bug in job ID extraction logic"
+        self.submission_id = job_id
+        return job_id
+
+    @borrowdoc(Submitter)
+    def follow(self):
+        # http://pages.cs.wisc.edu/~adesmet/status.html
+        # 0	Unexpanded 	U
+        # 1	Idle 	I
+        # 2	Running 	R
+        # 3	Removed 	X
+        # 4	Completed 	C
+        # 5	Held 	H
+        # 6	Submission_err 	E
+        while True:
+            try:
+                stat_out, _ = self.session.execute_command(
+                    "condor_q -json {}".format(self.submission_id))
+            except CommandError:
+                pass
+            else:
+                if stat_out.strip():
+                    stat_json = json.loads(stat_out)
+                # TODO: Better logging.
+                if len(stat_json) == 1:
+                    stat_json = stat_json[0]
+                    if stat_json.get("JobStatus") in [0, 1, 2]:
+                        lgr.debug("Waiting on job %s", self.submission_id)
+                        time.sleep(10)  # TODO: pull out/make configurable
+                        continue
+            break
+
+
 class LocalSubmitter(Submitter):
     """Submit a local job.
     """
@@ -139,6 +192,7 @@ class LocalSubmitter(Submitter):
 SUBMITTERS = collections.OrderedDict(
     (o.name, o) for o in [
         PbsSubmitter,
+        CondorSubmitter,
         LocalSubmitter,
     ]
 )
