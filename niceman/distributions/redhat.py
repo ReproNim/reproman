@@ -67,22 +67,7 @@ class RPMPackage(Package):
     vendor = attrib()
     url = attrib()
     files = attrib(default=attr.Factory(list), hash=False)
-
-    def satisfies(self, other):
-        """return True if this package (self) satisfies the requirements of 
-        the passed package (other)"""
-        if not isinstance(other, Package):
-            raise TypeError('satisfies() requires a package argument')
-        if not isinstance(other, RPMPackage):
-            return False
-        if self.name != other.name:
-            return False
-        if other.version is not None and self.version != other.version:
-            return False
-        if other.architecture is not None \
-                and self.architecture != other.architecture:
-            return False
-        return True
+    _satisfies_fields = ('name', 'version', 'architecture')
 
 
 _register_with_representer(RPMPackage)
@@ -97,6 +82,7 @@ class RedhatDistribution(Distribution):
     sources = TypedList(RPMSource)
     packages = TypedList(RPMPackage)
     version = attrib()  # version as depicted by /etc/redhat_version
+    _collection_attribute = 'packages'
 
     def initiate(self, session):
         """
@@ -176,30 +162,12 @@ class RedhatDistribution(Distribution):
             # env={'DEBIAN_FRONTEND': 'noninteractive'}
         )
 
-    def satisfies_package(self, package):
-        """return True if this distribution (self) satisfies the requirements 
-        of the passed package"""
-        if not isinstance(package, Package):
-            raise TypeError('satisfies_package() requires a package argument')
-        if not isinstance(package, RPMPackage):
-            return False
-        return any([p.satisfies(package) for p in self.packages])
-
-    def satisfies(self, other):
-        """return True if this distribution (self) satisfies the requirements 
-        of the other distribution (other)"""
-        if not isinstance(other, Distribution):
-            raise TypeError('satisfies() requires a distribution argument')
-        if not isinstance(other, RedhatDistribution):
-            return False
-        return all(map(self.satisfies_package, other.packages))
-
     def __sub__(self, other):
         # the semantics of distribution subtraction are, for d1 - d2:
         #     what is specified in d1 that is not specified in d2
         #     or how does d2 fall short of d1
         #     or what is in d1 that isn't satisfied by d2
-        return [p for p in self.packages if not other.satisfies_package(p)]
+        return [p for p in self.packages if not other.satisfies(p)]
 
 
 _register_with_representer(RedhatDistribution)
