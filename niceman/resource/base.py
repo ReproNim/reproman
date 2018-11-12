@@ -92,8 +92,6 @@ class ResourceManager(object):
     Typically a NICEMAN process will have a single ResourceManager instance.
     """
 
-    __metaclass__ = abc.ABCMeta
-
     # The keys which are known to be secret and should not be exposed
     SECRET_KEYS = ('access_key_id', 'secret_access_key')
 
