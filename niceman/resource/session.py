@@ -660,7 +660,7 @@ class POSIXSession(Session):
             return False
 
     def isdir_command(self, path):
-        """Return the command to run for the exists method."""
+        """Return the command to run for the isdir method."""
         command = ['test', '-d', shlex_quote(path), '&&', 'echo', 'Found']
         return ['bash', '-c', ' '.join(command)]
 
