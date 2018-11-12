@@ -12,7 +12,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from abc import ABCMeta, abstractmethod
+import abc
 
 from ..utils import auto_repr
 
@@ -21,9 +21,9 @@ from ..utils import auto_repr
 class InteractiveUI(object):
     """Semi-abstract class for interfaces to implement interactive UI"""
 
-    __metaclass__ = ABCMeta
+    __metaclass__ = abc.ABCMeta
 
-    @abstractmethod
+    @abc.abstractmethod
     def question(self, text,
                  title=None, choices=None,
                  default=None,
