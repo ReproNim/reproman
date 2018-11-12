@@ -194,7 +194,7 @@ class DistributionTracer(object):
 
     @abc.abstractmethod
     def identify_distributions(self, files):
-        raise NotImplementedError()
+        return
 
     # This one assumes that distribution works with "packages"
     # TODO: we might want to create a more specialized sub-class for that purpose
@@ -284,11 +284,11 @@ class DistributionTracer(object):
         to actually create packages while grouping into packages
         (having identical returned packagefield values)
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractmethod
     def _create_package(self, **package_fields):
         """Creates implementation-specific Package object using fields
         provided by _get_packagefields_for_files
         """
-        raise NotImplementedError
+        return

@@ -432,10 +432,5 @@ class Resource(object):
             Terminal session (the default is False)
         shared : string, optional
             Shared session identifier (the default is None)
-
-        Raises
-        ------
-        NotImplementedError
-            [description]
         """
-        raise NotImplementedError
+        return

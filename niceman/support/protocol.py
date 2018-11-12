@@ -70,7 +70,7 @@ class ProtocolInterface(object):
           An id of the started section to be used as argument of the
           corresponding call of end_section().
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractmethod
     def end_section(self, id_, exception):
@@ -90,7 +90,7 @@ class ProtocolInterface(object):
         IndexError
           in case `id` is invalid.
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractmethod
     def add_section(self, cmd, exception):
@@ -106,7 +106,7 @@ class ProtocolInterface(object):
         exception: Exception
           The exception raised by the command if any or None otherwise.
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractproperty
     def records_ext_commands(self):
@@ -117,7 +117,7 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractproperty
     def records_callables(self):
@@ -128,7 +128,7 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractproperty
     def do_execute_ext_commands(self):
@@ -139,7 +139,7 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractproperty
     def do_execute_callables(self):
@@ -150,7 +150,7 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
     def write_to_file(self, file_):
         """Writes the protocol to file.

@@ -55,7 +55,7 @@ class Provenance(object):
 
     @abc.abstractmethod
     def _load(self, source):
-        raise NotImplementedError
+        return
 
     def get_environment(self):
         """Return Environment object 
@@ -140,7 +140,7 @@ class Provenance(object):
     #         os['name']
     #         os['version']
     #     """
-    #     raise NotImplementedError()
+    #     return
 
     def get_base(self):
         # Default
