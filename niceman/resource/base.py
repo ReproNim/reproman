@@ -19,13 +19,11 @@ import os
 import os.path as op
 
 from ..dochelpers import exc_str
-from ..support.exceptions import InsufficientArgumentsError
 from ..support.exceptions import ResourceError
 from ..support.exceptions import ResourceNotFoundError
 from ..support.exceptions import ResourceAlreadyExistsError
 from ..support.exceptions import MultipleResourceMatches
-from ..support.exceptions import MissingConfigError, MissingConfigFileError
-from ..ui import ui
+from ..support.exceptions import MissingConfigError
 
 
 import logging

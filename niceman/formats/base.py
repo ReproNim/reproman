@@ -10,7 +10,6 @@
 
 from importlib import import_module
 import abc
-import attr
 from six import string_types
 
 from ..utils import file_basename

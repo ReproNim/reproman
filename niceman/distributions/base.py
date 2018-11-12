@@ -8,7 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrators helping with management of target environments (remote or local)"""
 
-import os
 import os.path as op
 import abc
 import attr
