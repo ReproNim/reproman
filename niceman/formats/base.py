@@ -10,6 +10,7 @@
 
 from importlib import import_module
 import abc
+from six import add_metaclass
 from six import string_types
 
 from ..utils import file_basename
@@ -30,6 +31,7 @@ from ..distributions.base import EnvironmentSpec
 
 # XXX Is just a file format Adapter which should provide us with functionality
 # to load/store EnvironmentSpec
+@add_metaclass(abc.ABCMeta)
 class Provenance(object):
     """Base class to handle the collection and management of provenance files.
     
@@ -38,8 +40,6 @@ class Provenance(object):
     
     Also should provide helpers such as `get_files` so we could do retracing.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, source):
         """

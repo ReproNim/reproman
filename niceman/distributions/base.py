@@ -15,6 +15,7 @@ import collections
 import yaml
 
 from importlib import import_module
+from six import add_metaclass
 from six import viewvalues
 
 from niceman.utils import attrib
@@ -68,11 +69,10 @@ class Package(SpecObject):
         return tuple(getattr(self, a) for a in self._cmp_fields)
 
 
+@add_metaclass(abc.ABCMeta)
 @attr.s
 class Distribution(SpecObject):
     """Base class for distributions"""
-
-    __metaclass__ = abc.ABCMeta
 
     # Actually might want/need to go away since somewhat duplicates the class
     # name and looks awkward
@@ -167,6 +167,7 @@ _register_with_representer(EnvironmentSpec)
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
 
+@add_metaclass(abc.ABCMeta)
 class DistributionTracer(object):
     """Base class for package trackers.
 
@@ -175,8 +176,6 @@ class DistributionTracer(object):
     pip, ...), VCS repositories or even container images -- something which has
     to be installed to fulfill environment spec
     """
-
-    __metaclass__ = abc.ABCMeta
 
     # Default to being able to handle directories
     HANDLES_DIRS = True

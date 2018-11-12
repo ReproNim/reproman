@@ -11,6 +11,7 @@
 import attr
 from importlib import import_module
 import abc
+from six import add_metaclass
 from six.moves.configparser import NoSectionError
 
 import yaml
@@ -324,11 +325,10 @@ class ResourceManager(object):
         self._save()
 
 
+@add_metaclass(abc.ABCMeta)
 class Resource(object):
     """Base class for creating and managing compute resources.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __repr__(self):
         return 'Resource({})'.format(self.name)

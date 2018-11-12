@@ -14,9 +14,12 @@ from os import linesep
 import logging
 import time
 
+from six import add_metaclass
+
 lgr = logging.getLogger('niceman.protocol')
 
 
+@add_metaclass(abc.ABCMeta)
 class ProtocolInterface(object):
     """Interface class for protocols used by the Runner.
 
@@ -26,8 +29,6 @@ class ProtocolInterface(object):
 
     ProtocolInterface is iterable as a list of sections.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self._sections = []
