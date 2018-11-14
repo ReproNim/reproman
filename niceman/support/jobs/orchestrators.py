@@ -163,31 +163,29 @@ class Orchestrator(object):
             template_name or "{}.template".format(self.submitter.name),
             "submission")
 
+    def _put_as_executable(self, text, target):
+        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
+            tfh.write(text)
+        os.chmod(tfh.name, 0o755)
+        self.session.put(tfh.name, target)
+        os.unlink(tfh.name)
+
     def submit(self):
         """Submit the job with `submitter`.
         """
-        session = self.session
-
-        remote_script = op.join(self.meta_directory, "runscript")
-        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
-            tfh.write(self.render_runscript())
-        os.chmod(tfh.name, 0o755)
-        session.put(tfh.name, remote_script)
-        os.unlink(tfh.name)
+        self._put_as_executable(self.render_runscript(),
+                                op.join(self.meta_directory, "runscript"))
 
         submission_file = op.join(self.meta_directory, "submit")
-        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
-            tfh.write(self.render_submission())
-        os.chmod(tfh.name, 0o755)
-        session.put(tfh.name, submission_file)
-        os.unlink(tfh.name)
+        self._put_as_executable(self.render_submission(),
+                                submission_file)
 
         subm_id = self.submitter.submit(submission_file)
         if subm_id is None:
             lgr.warning("No submission ID obtained for %s", self.jobid)
         else:
             lgr.debug("Job %s submitted", subm_id)
-            session.execute_command("echo {} >{}".format(
+            self.session.execute_command("echo {} >{}".format(
                 subm_id,
                 op.join(self.meta_directory, "idmap")))
 
