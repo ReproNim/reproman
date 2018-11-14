@@ -212,9 +212,9 @@ class Run(Interface):
             # TODO: How to deal with submission template?
             print(orc.render_runscript())
         else:
-            orc.prepare_remote(inputs)
+            orc.prepare_remote()
             # TODO: Add support for templates via CLI.
             orc.submit()
             # TODO: Add support for querying/fetching without follow.
             if follow:
-                orc.follow(outputs)
+                orc.follow()

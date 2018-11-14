@@ -156,13 +156,8 @@ class Orchestrator(object):
         return op.join(self.working_directory, ".niceman", "jobs",
                        self.resource.name, self.jobid)
 
-    def prepare_remote(self, inputs):
+    def prepare_remote(self):
         """Prepare remote for run.
-
-        Parameters
-        ----------
-        inputs : list of str
-            Input files for the command.
         """
         if not self.session.exists(self.root_directory):
             self.session.mkdir(self.root_directory, parents=True)
@@ -206,13 +201,8 @@ class Orchestrator(object):
                 op.join(self.meta_directory, "idmap")))
 
     @abc.abstractmethod
-    def follow(self, outputs):
+    def follow(self):
         """Follow the submission.
-
-        Parameters
-        ----------
-        outputs : list of str
-            Pre-specified outputs of the submitted command.
         """
         pass
 
@@ -251,8 +241,8 @@ class DataladPairOrchestrator(Orchestrator):
                                                   self.ds.id)
 
     @borrowdoc(Orchestrator)
-    def prepare_remote(self, inputs):
-        super(DataladPairOrchestrator, self).prepare_remote(inputs)
+    def prepare_remote(self):
+        super(DataladPairOrchestrator, self).prepare_remote()
         resource = self.resource
         session = self.session
 
@@ -290,11 +280,14 @@ class DataladPairOrchestrator(Orchestrator):
 
             # Should use --since for existing repo, but it doesn't seem to sync
             # wrt content.
-            self.ds.publish(to=resource.name, path=inputs, recursive=True)
+            self.ds.publish(to=resource.name, path=self.job_spec.get("inputs"),
+                            recursive=True)
         elif resource.type == "shell":
             import datalad.api as dl
             if not session.exists(self.working_directory):
                 dl.install(self.working_directory, source=self.ds.path)
+
+            inputs = self.job_spec.get("inputs")
             if inputs:
                 installed_ds = dl.Dataset(self.working_directory)
                 installed_ds.get(inputs)
@@ -307,11 +300,12 @@ class DataladPairOrchestrator(Orchestrator):
             session.mkdir(self.meta_directory, parents=True)
 
     @borrowdoc(Orchestrator)
-    def follow(self, outputs):
+    def follow(self):
         self.submitter.follow()
         if self.resource.type == "ssh":
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
+            outputs = self.job_spec.get("outputs")
             if outputs:
                 self.ds.get(path=outputs)
         elif self.resource.type == "shell":
@@ -335,15 +329,9 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
     def __init__(self, resource, submitter, job_spec=None):
         super(DataladRunOrchestrator, self).__init__(
             resource, submitter, job_spec)
-        self.run_kwds = {}
 
     @borrowdoc(DataladPairOrchestrator)
-    def prepare_remote(self, inputs):
-        super(DataladRunOrchestrator, self).prepare_remote(inputs)
-        self.run_kwds["inputs"] = inputs
-
-    @borrowdoc(DataladPairOrchestrator)
-    def follow(self, outputs):
+    def follow(self):
         self.submitter.follow()
 
         if self.resource.type == "ssh":
@@ -370,11 +358,11 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
 
         from datalad.interface.run import run_command
         lgr.info("Creating run commit")
-        for res in run_command(outputs=outputs,
+        for res in run_command(inputs=self.job_spec.get("inputs"),
+                               outputs=self.job_spec.get("outputs"),
                                inject=True,
                                extra_info={"niceman_jobid": self.jobid},
-                               cmd=self.job_spec["command_str"],
-                               **self.run_kwds):
+                               cmd=self.job_spec["command_str"]):
             # Oh, if only I were a datalad extension.
             pass
 
