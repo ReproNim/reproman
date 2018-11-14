@@ -103,7 +103,7 @@ class Orchestrator(object):
         submitter_class = SUBMITTERS[submission_type or "local"]
         self.submitter = submitter_class(self.session)
 
-        self.job_spec = job_spec or {}
+        self.job_spec = job_spec.copy() or {}
         self.jobid = "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                     str(uuid.uuid4())[:4])
         self.submission_id = None
