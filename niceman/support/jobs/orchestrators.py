@@ -163,11 +163,33 @@ class Orchestrator(object):
             template_name or "{}-submit.template".format(self.submitter.name),
             "submission")
 
-    @abc.abstractmethod
     def submit(self):
         """Submit the job with `submitter`.
         """
-        pass
+        session = self.session
+
+        remote_script = op.join(self.meta_directory, "runscript")
+        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
+            tfh.write(self.render_runscript())
+        os.chmod(tfh.name, 0o755)
+        session.put(tfh.name, remote_script)
+        os.unlink(tfh.name)
+
+        submission_file = op.join(self.meta_directory, "submit")
+        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
+            tfh.write(self.render_submit_file())
+        os.chmod(tfh.name, 0o755)
+        session.put(tfh.name, submission_file)
+        os.unlink(tfh.name)
+
+        subm_id = self.submitter.submit(submission_file)
+        if subm_id is None:
+            lgr.warning("No submission ID obtained for %s", self.jobid)
+        else:
+            lgr.debug("Job %s submitted", subm_id)
+            session.execute_command("echo {} >{}".format(
+                subm_id,
+                op.join(self.meta_directory, "idmap")))
 
     @abc.abstractmethod
     def follow(self, outputs):
@@ -269,33 +291,6 @@ class DataladPairOrchestrator(Orchestrator):
                              .format(resource.type))
         if not session.exists(self.meta_directory):
             session.mkdir(self.meta_directory, parents=True)
-
-    @borrowdoc(Orchestrator)
-    def submit(self):
-        session = self.session
-
-        remote_script = op.join(self.meta_directory, "runscript")
-        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
-            tfh.write(self.render_runscript())
-        os.chmod(tfh.name, 0o755)
-        session.put(tfh.name, remote_script)
-        os.unlink(tfh.name)
-
-        submission_file = op.join(self.meta_directory, "submit")
-        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
-            tfh.write(self.render_submit_file())
-        os.chmod(tfh.name, 0o755)
-        session.put(tfh.name, submission_file)
-        os.unlink(tfh.name)
-
-        subm_id = self.submitter.submit(submission_file)
-        if subm_id is None:
-            lgr.warning("No submission ID obtained for %s", self.jobid)
-        else:
-            lgr.debug("Job %s submitted", subm_id)
-            session.execute_command("echo {} >{}".format(
-                subm_id,
-                op.join(self.meta_directory, "idmap")))
 
     @borrowdoc(Orchestrator)
     def follow(self, outputs):
