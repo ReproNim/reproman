@@ -1,3 +1,3 @@
 #!/bin/sh
-exec 1>{{ meta_dir }}/stdout 2>{{ meta_dir }}/stderr
-{{ meta_dir }}/runscript
+exec 1>{{ meta_directory }}/stdout 2>{{ meta_directory }}/stderr
+{{ meta_directory }}/runscript

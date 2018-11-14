@@ -121,8 +121,8 @@ class Orchestrator(object):
         return template.render(
             jobid=self.jobid,
             root_directory=self.root_directory,
-            remote_dir=self.working_directory,
-            meta_dir=self.meta_directory,
+            remote_directory=self.working_directory,
+            meta_directory=self.meta_directory,
             **self.job_spec or {})
 
     def render_runscript(self, template_name=None):

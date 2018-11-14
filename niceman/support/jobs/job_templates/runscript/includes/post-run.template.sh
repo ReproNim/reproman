@@ -1,6 +1,6 @@
 {# Inspired by and modified from dataladh-htcondor. #}
 
-prep_stamp="{{ meta_dir }}/pre-finished"
+prep_stamp="{{ meta_directory }}/pre-finished"
 
 
 {#
@@ -8,22 +8,22 @@ prep_stamp="{{ meta_dir }}/pre-finished"
   the archive to be relative to this working directory.
 #}
 find ./.niceman \( -type f -o -type l \) | \
-    grep {{ jobid }}  >"{{ meta_dir }}/togethome"
+    grep {{ jobid }}  >"{{ meta_directory }}/togethome"
 
 if [ -f "$prep_stamp" ]; then
   find . \
      \( -type f -o -type l \) \
     -newer "$prep_stamp" \
     -not -wholename "./.niceman/*" \
-    >>"{{ meta_dir }}/togethome"
+    >>"{{ meta_directory }}/togethome"
 fi
 
 mkdir -p "{{ root_directory }}/outputs"
 
 tar \
-  --files-from "{{ meta_dir }}/togethome" \
+  --files-from "{{ meta_directory }}/togethome" \
   -cz \
-  -C "{{ remote_dir }}" \
+  -C "{{ remote_directory }}" \
   -f "{{ root_directory }}/outputs/{{ jobid }}.tar.gz"
 
 prev_commit=$(git rev-parse HEAD)

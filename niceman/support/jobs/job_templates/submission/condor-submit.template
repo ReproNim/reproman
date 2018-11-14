@@ -1,10 +1,10 @@
 Universe     = vanilla
-Executable   = {{ meta_dir }}/runscript
+Executable   = {{ meta_directory }}/runscript
 environment  = ""
 
-Output  = {{ meta_dir }}/stdout
-Error   = {{ meta_dir }}/stderr
-Log     = {{ meta_dir }}/log
+Output  = {{ meta_directory }}/stdout
+Error   = {{ meta_directory }}/stderr
+Log     = {{ meta_directory }}/log
 
 
 {#
