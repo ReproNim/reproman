@@ -155,6 +155,12 @@ class Orchestrator(object):
         return op.join(self.working_directory, ".niceman", "jobs",
                        self.resource.name, self.jobid)
 
+    @property
+    def local_directory(self):
+        """Directory on local machine.
+        """
+        return os.getcwd()
+
     def prepare_remote(self):
         """Prepare remote for run.
         """
@@ -238,6 +244,11 @@ class DataladPairOrchestrator(Orchestrator):
     def working_directory(self):
         return self._working_directory or op.join(self.root_directory,
                                                   self.ds.id)
+
+    @property
+    @borrowdoc(Orchestrator)
+    def local_directory(self):
+        return self.ds.path
 
     @borrowdoc(Orchestrator)
     def prepare_remote(self):
