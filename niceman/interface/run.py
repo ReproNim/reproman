@@ -19,6 +19,7 @@ from six.moves import shlex_quote
 from niceman.interface.base import Interface
 from niceman.interface.common_opts import resref_opt
 from niceman.interface.common_opts import resref_type_opt
+from niceman.support.jobs.orchestrators import LocalRegistry
 from niceman.support.jobs.orchestrators import ORCHESTRATORS
 from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.resource import get_manager
@@ -215,6 +216,11 @@ class Run(Interface):
             orc.prepare_remote()
             # TODO: Add support for templates via CLI.
             orc.submit()
+
+            lreg = LocalRegistry()
+            lreg.register(orc.jobid, orc.as_dict())
+
             # TODO: Add support for querying/fetching without follow.
             if follow:
                 orc.follow()
+                lreg.unregister(orc.jobid)

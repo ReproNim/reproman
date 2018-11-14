@@ -21,7 +21,9 @@ import time
 import jinja2
 import six
 from six.moves import shlex_quote
+import yaml
 
+from niceman import cfg
 from niceman.dochelpers import borrowdoc
 from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.support.exceptions import MissingExternalDependency
@@ -85,6 +87,48 @@ class Template(object):
         Rendered submission file (str).
         """
         return self._render(template_name, "submission")
+
+
+class LocalRegistry(object):
+    """Registry of local jobs.
+    """
+
+    def __init__(self, directory=None):
+        self._root = directory or op.join(cfg.dirs.user_data_dir, "jobs")
+
+    def register(self, jobid, kwds):
+        """Register a job.
+
+        Parameters
+        ----------
+        jobid : str
+            Full ID of the job.
+        kwds : dict
+            Values defined here will be dumped to the job file.
+        """
+        if not op.exists(self._root):
+            os.makedirs(self._root)
+
+        job_file = op.join(self._root, jobid)
+        if op.exists(job_file):
+            raise ValueError("%s is already registered", jobid)
+
+        with open(job_file, "w") as jfh:
+            yaml.safe_dump(kwds, jfh)
+        lgr.info("Registered job %s", jobid)
+
+    def unregister(self, jobid):
+        """Unregister a job.
+
+        Parameters
+        ----------
+        jobid : str
+            Full ID of the job.
+        """
+        job_file = op.join(self._root, jobid)
+        if op.exists(job_file):
+            lgr.info("Unregistered job %s", jobid)
+            os.unlink(job_file)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -160,6 +204,21 @@ class Orchestrator(object):
         """Directory on local machine.
         """
         return os.getcwd()
+
+    def as_dict(self):
+        """Represent Orchestrator as a dict.
+
+        The information here will be used to re-initialize an equivalent object
+        (e.g., if fetching results from a detached run).
+        """
+        # Items that may not be in `templates.kwds`.
+        to_dump = {"resource_id": self.resource.id,
+                   "resource_name": self.resource.name,
+                   "local_directory": self.local_directory,
+                   "orchestrator": self.name,
+                   "submitter": self.submitter.name,
+                   "submission_id": self.submitter.submission_id}
+        return dict(to_dump, **self.template.kwds)
 
     def prepare_remote(self):
         """Prepare remote for run.
@@ -262,6 +321,12 @@ class DataladPairOrchestrator(Orchestrator):
     @borrowdoc(Orchestrator)
     def local_directory(self):
         return self.ds.path
+
+    @borrowdoc(Orchestrator)
+    def as_dict(self):
+        d = super(DataladPairOrchestrator, self).as_dict()
+        d["dataset_id"] = self.ds.id
+        return d
 
     @borrowdoc(Orchestrator)
     def prepare_remote(self):
