@@ -144,11 +144,11 @@ class Orchestrator(object):
             template_name or "{}.template.sh".format(self.name),
             "runscript")
 
-    def render_submit_file(self, template_name=None):
-        """Generate the submit file from `template_name`.
+    def render_submission(self, template_name=None):
+        """Generate the submission file from `template_name`.
 
-        A submit file is the file the will be passed to `submitter.submit`. It
-        should result in the execution of the run script.
+        A submission file is the file the will be passed to `submitter.submit`.
+        It should result in the execution of the run script.
 
         Parameters
         ----------
@@ -157,7 +157,7 @@ class Orchestrator(object):
 
         Returns
         -------
-        Rendered submit file (str).
+        Rendered submission file (str).
         """
         return self._render_template(
             template_name or "{}-submit.template".format(self.submitter.name),
@@ -177,7 +177,7 @@ class Orchestrator(object):
 
         submission_file = op.join(self.meta_directory, "submit")
         with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
-            tfh.write(self.render_submit_file())
+            tfh.write(self.render_submission())
         os.chmod(tfh.name, 0o755)
         session.put(tfh.name, submission_file)
         os.unlink(tfh.name)

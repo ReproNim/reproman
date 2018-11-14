@@ -209,7 +209,7 @@ class Run(Interface):
         orc = orchestrator_class(resource, submitter, spec)
 
         if script:
-            # TODO: How to deal with submit template?
+            # TODO: How to deal with submission template?
             print(orc.render_runscript())
         else:
             orc.prepare_remote(inputs)
