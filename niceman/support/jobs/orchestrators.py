@@ -160,7 +160,7 @@ class Orchestrator(object):
         Rendered submission file (str).
         """
         return self._render_template(
-            template_name or "{}-submit.template".format(self.submitter.name),
+            template_name or "{}.template".format(self.submitter.name),
             "submission")
 
     def submit(self):
