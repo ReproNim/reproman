@@ -19,8 +19,8 @@ from six.moves import shlex_quote
 from niceman.interface.base import Interface
 from niceman.interface.common_opts import resref_opt
 from niceman.interface.common_opts import resref_type_opt
-from niceman.interface.orchestrators import ORCHESTRATORS
-from niceman.interface.submitters import SUBMITTERS
+from niceman.support.jobs.orchestrators import ORCHESTRATORS
+from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.resource import get_manager
 from niceman.support.param import Parameter
 from niceman.utils import parse_kv_list

@@ -22,7 +22,7 @@ from niceman.cmd import CommandError
 from niceman.dochelpers import borrowdoc
 
 
-lgr = logging.getLogger("niceman.interface.submitters")
+lgr = logging.getLogger("niceman.support.jobs.submitters")
 
 
 @six.add_metaclass(abc.ABCMeta)

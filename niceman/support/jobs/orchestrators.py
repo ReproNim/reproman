@@ -23,11 +23,11 @@ import six
 from six.moves import shlex_quote
 
 from niceman.dochelpers import borrowdoc
-from niceman.interface.submitters import SUBMITTERS
+from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.support.exceptions import MissingExternalDependency
 from niceman.support.external_versions import external_versions
 
-lgr = logging.getLogger("niceman.interface.orchestrators")
+lgr = logging.getLogger("niceman.support.jobs.orchestrators")
 
 
 @six.add_metaclass(abc.ABCMeta)
