@@ -177,6 +177,8 @@ class Orchestrator(object):
     def submit(self):
         """Submit the job with `submitter`.
         """
+        lgr.info("Submitting %s", self.jobid)
+
         templ = Template(jobid=self.jobid,
                          root_directory=self.root_directory,
                          remote_directory=self.working_directory,
