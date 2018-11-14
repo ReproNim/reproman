@@ -11,6 +11,7 @@
 
 import abc
 import collections
+from functools import wraps
 import json
 import logging
 import re
@@ -23,6 +24,19 @@ from niceman.dochelpers import borrowdoc
 
 
 lgr = logging.getLogger("niceman.support.jobs.submitters")
+
+
+def assert_submission_id(method):
+    """Decorate `method` to guard against unset submission ID.
+    """
+
+    @wraps(method)
+    def wrapped(self, *args, **kwds):
+        if not self.submission_id:
+            lgr.warning("Cannot check status without a submission ID")
+            return "unknown", None
+        return method(self, *args, **kwds)
+    return wrapped
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -63,11 +77,32 @@ class Submitter(object):
             self.submission_id = subm_id
             return subm_id
 
-    @abc.abstractmethod
+    @abc.abstractproperty
+    def status(self):
+        """Return the status of a submitted job.
+
+        The return value is a tuple where the first item is a restricted set of
+        values that the submitter uses to decide what to do. Valid values are
+        'waiting', 'completed', and 'unknown'.
+
+        The second item should be the status as reported by the batch system or
+        None of one could not be determined.
+        """
+        pass
+
     def follow(self):
         """Follow submitted command, exiting once it is finished.
         """
-        pass
+        while True:
+            our_status, their_status = self.status
+            if our_status != "waiting":
+                if their_status:
+                    lgr.info("Final state of job %s: %s",
+                             self.submission_id, their_status)
+                break
+            lgr.info("Waiting on job %s: %s",
+                     self.submission_id, their_status)
+            time.sleep(10)  # TODO: pull out/make configurable
 
 
 class PbsSubmitter(Submitter):
@@ -84,28 +119,35 @@ class PbsSubmitter(Submitter):
     def submit_command(self):
         return ["qsub"]
 
+    @property
+    @assert_submission_id
     @borrowdoc(Submitter)
-    def follow(self):
-        # TODO: Pull out common parts across submitters.
+    def status(self):
+        if not self.submission_id:
+            lgr.warning("Cannot check status without a submission ID")
+            return "unknown", None
 
         # FIXME: Is there a reliable, long-lived way to see a job after it's
         # completed?  (tracejob can fail with permission issues.)
-        while True:
-            try:
-                stat_out, _ = self.session.execute_command(
-                    "qstat -f {}".format(self.submission_id))
-                match = re.search(r"job_state = ([A-Z])", stat_out)
-                if not match:
-                    break
-                job_state = match.group(1)
-                lgr.debug("Job %s state: %s", self.submission_id, job_state)
-                if job_state != "C":
-                    lgr.info("Waiting on job %s", self.submission_id)
-                    time.sleep(10)  # TODO: pull out/make configurable
-                    continue
-            except CommandError:
-                pass
-            break
+        try:
+            stat_out, _ = self.session.execute_command(
+                "qstat -f {}".format(self.submission_id))
+        except CommandError:
+            return "unknown", None
+
+        match = re.search(r"job_state = ([A-Z])", stat_out)
+        if not match:
+            lgr.warning("No job status match found in %s", stat_out)
+            return "unknown", None
+
+        job_state = match.group(1)
+        if job_state in ["R", "E", "H", "Q", "W"]:
+            our_state = "waiting"
+        elif job_state == "C":
+            our_state = "completed"
+        else:
+            our_state = "unknown"
+        return our_state, job_state
 
 
 class CondorSubmitter(Submitter):
@@ -132,33 +174,46 @@ class CondorSubmitter(Submitter):
         self.submission_id = job_id
         return job_id
 
+    @property
+    @assert_submission_id
     @borrowdoc(Submitter)
-    def follow(self):
+    def status(self):
+        if not self.submission_id:
+            lgr.warning("Cannot check status without a submission ID")
+            return "unknown", None
+
+        try:
+            stat_out, _ = self.session.execute_command(
+                "condor_q -json {}".format(self.submission_id))
+        except CommandError:
+            return "unknown", None
+
+        if not stat_out.strip():
+            lgr.debug("Status output for %s empty", self.submission_id)
+            return "unknown", None
+
+        stat_json = json.loads(stat_out)
+        if len(stat_json) != 1:
+            lgr.warning("Expected a single status line, but got %s", stat_json)
+            return "unknown", None
+
         # http://pages.cs.wisc.edu/~adesmet/status.html
-        # 0	Unexpanded 	U
-        # 1	Idle 	I
-        # 2	Running 	R
-        # 3	Removed 	X
-        # 4	Completed 	C
-        # 5	Held 	H
-        # 6	Submission_err 	E
-        while True:
-            try:
-                stat_out, _ = self.session.execute_command(
-                    "condor_q -json {}".format(self.submission_id))
-            except CommandError:
-                pass
-            else:
-                if stat_out.strip():
-                    stat_json = json.loads(stat_out)
-                # TODO: Better logging.
-                if len(stat_json) == 1:
-                    stat_json = stat_json[0]
-                    if stat_json.get("JobStatus") in [0, 1, 2]:
-                        lgr.debug("Waiting on job %s", self.submission_id)
-                        time.sleep(10)  # TODO: pull out/make configurable
-                        continue
-            break
+        condor_states = {0: "unexpanded",
+                         1: "idle",
+                         2: "running",
+                         3: "remove",
+                         4: "completed",
+                         5: "held",
+                         6: "submission error"}
+
+        code = stat_json[0].get("JobStatus")
+        if code in [0, 1, 2, 5]:
+            our_status = "waiting"
+        elif code == 4:
+            our_status = "completed"
+        else:
+            our_status = "unknown"
+        return our_status, condor_states.get(code)
 
 
 class LocalSubmitter(Submitter):
@@ -182,6 +237,21 @@ class LocalSubmitter(Submitter):
         self.proc = sp.Popen([script])
         self.submission_id = str(self.proc.pid)
         return self.submission_id
+
+    @property
+    @assert_submission_id
+    @borrowdoc(Submitter)
+    def status(self):
+        try:
+            out, _ = self.session.execute_command(
+                ["ps", "-o", "pid=", "-p", self.submission_id])
+        except CommandError:
+            return "unknown", None
+        if out.strip():
+            status = "running"
+        else:
+            status = "completed"
+        return status, None
 
     @borrowdoc(Submitter)
     def follow(self):
