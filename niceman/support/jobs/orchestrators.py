@@ -106,7 +106,6 @@ class Orchestrator(object):
         self.job_spec = job_spec.copy() or {}
         self.jobid = "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                     str(uuid.uuid4())[:4])
-        self.submission_id = None
 
         self._working_directory = None
         self._root_directory = None
