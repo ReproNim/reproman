@@ -56,11 +56,11 @@ class Submitter(object):
         submission ID (str) or, if one can't be determined, None.
         """
         lgr.info("Submitting %s", script)
-        subm_id, _ = self.session.execute_command(
+        out, _ = self.session.execute_command(
             self.submit_command + [script])
+        subm_id = out.rstrip()
         if subm_id:
             self.submission_id = subm_id
-            subm_id = subm_id.rstrip()
             return subm_id
 
     @abc.abstractmethod
