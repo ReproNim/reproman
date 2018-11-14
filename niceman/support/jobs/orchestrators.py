@@ -199,7 +199,8 @@ class Orchestrator(object):
         if subm_id is None:
             lgr.warning("No submission ID obtained for %s", self.jobid)
         else:
-            lgr.debug("Job %s submitted", subm_id)
+            lgr.info("Job %s submitted as %s job %s",
+                     self.jobid, self.submitter.name, subm_id)
             self.session.execute_command("echo {} >{}".format(
                 subm_id,
                 op.join(self.meta_directory, "idmap")))
