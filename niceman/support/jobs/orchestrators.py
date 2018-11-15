@@ -97,6 +97,16 @@ class LocalRegistry(object):
     def __init__(self, directory=None):
         self._root = directory or op.join(cfg.dirs.user_data_dir, "jobs")
 
+    def find_job_files(self):
+        """Return job files for all jobs that are registered locally.
+
+        Returns
+        -------
+        OrderedDict mapping job ID to job file.
+        """
+        return collections.OrderedDict((f, op.join(self._root, f))
+                                       for f in sorted(os.listdir(self._root)))
+
     def register(self, jobid, kwds):
         """Register a job.
 
