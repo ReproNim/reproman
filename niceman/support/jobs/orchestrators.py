@@ -205,6 +205,19 @@ class Orchestrator(object):
                 subm_id,
                 op.join(self.meta_directory, "idmap")))
 
+    @property
+    def status(self):
+        """Modify `submitter.status` with information from `status` file.
+        """
+        # We might want to instead just keep all of them.
+        our_status, their_status = self.submitter.status
+        status_file = op.join(self.meta_directory, "status")
+        if self.session.exists(status_file):
+            status = self.session.read(status_file).strip()
+            if status:
+                our_status = status
+        return our_status, their_status
+
     @abc.abstractmethod
     def follow(self):
         """Follow the submission.
