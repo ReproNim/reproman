@@ -95,6 +95,12 @@ def show_oneline(job):
                   command=cmd[:47] + "..." if len(cmd) > 50 else cmd))
 
 
+def show(job):
+    """Display detailed information about `job`.
+    """
+    print(yaml.safe_dump(job))
+
+
 def fetch(job):
     """Fetch `job` locally.
     """
@@ -115,6 +121,8 @@ class Jobs(Interface):
 
       - list: Display a oneline list of all registered jobs
 
+      - show: Display more information for each job over multiple lines
+
       - delete: Unregister a job locally
 
       - fetch: Fetch a completed job
@@ -131,7 +139,7 @@ class Jobs(Interface):
         action=Parameter(
             args=("-a", "--action"),
             constraints=EnsureChoice(
-                "auto", "list",
+                "auto", "list", "show",
                 "delete", "fetch"),
             doc="""Operation to perform on the job(s)."""),
         all_=Parameter(
@@ -177,6 +185,8 @@ class Jobs(Interface):
                 fn = fetch
             elif action == "list" or action == "auto":
                 fn = show_oneline
+            elif action == "show":
+                fn = show
             else:
                 raise RuntimeError("Unknown action: {}".format(action))
 
