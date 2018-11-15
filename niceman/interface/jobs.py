@@ -9,6 +9,7 @@
 """Operate on `niceman run` jobs.
 """
 
+from functools import partial
 import operator
 import logging
 import yaml
@@ -85,19 +86,32 @@ def _resurrect_orc(job):
 # Action functions
 
 
-def show_oneline(job):
+def show_oneline(job, status=False):
     """Display `job` as a single summary line.
     """
     fmt = "{j[jobid]} on {j[resource_name]} via {j[submitter]}$ {command}"
+    our_status = their_status = None
+    if status:
+        our_status, their_status = _resurrect_orc(job).status
+        if our_status == their_status:
+            their_status = None  # Drop repeated info.
+        fmt = "({our_status}{their_status}) " + fmt
+
     cmd = job["command_str"]
     print(fmt
           .format(j=job,
+                  our_status=our_status,
+                  their_status=": " + their_status if their_status else "",
                   command=cmd[:47] + "..." if len(cmd) > 50 else cmd))
 
 
-def show(job):
+def show(job, status=False):
     """Display detailed information about `job`.
     """
+    if status:
+        our_status, their_status = _resurrect_orc(job).status
+        job["status"] = {"recorded": our_status,
+                         "queried": their_status}
     print(yaml.safe_dump(job))
 
 
@@ -147,11 +161,17 @@ class Jobs(Interface):
             args=("--all",),
             action="store_true",
             doc="Operate on all jobs"),
+        status=Parameter(
+            dest="status",
+            args=("-s", "--status"),
+            action="store_true",
+            doc="""Query the resource for status information when listing or
+            showing jobs"""),
         # TODO: Add ability to restrict to resource.
     )
 
     @staticmethod
-    def __call__(queries, action="auto", all_=False):
+    def __call__(queries, action="auto", all_=False, status=False):
         job_files = LREG.find_job_files()
 
         if not job_files:
@@ -184,9 +204,9 @@ class Jobs(Interface):
             if action == "fetch" or (action == "auto" and matched_ids):
                 fn = fetch
             elif action == "list" or action == "auto":
-                fn = show_oneline
+                fn = partial(show_oneline, status=status)
             elif action == "show":
-                fn = show
+                fn = partial(show, status=status)
             else:
                 raise RuntimeError("Unknown action: {}".format(action))
 
