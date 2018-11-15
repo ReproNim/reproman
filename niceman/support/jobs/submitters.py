@@ -123,10 +123,6 @@ class PbsSubmitter(Submitter):
     @assert_submission_id
     @borrowdoc(Submitter)
     def status(self):
-        if not self.submission_id:
-            lgr.warning("Cannot check status without a submission ID")
-            return "unknown", None
-
         # FIXME: Is there a reliable, long-lived way to see a job after it's
         # completed?  (tracejob can fail with permission issues.)
         try:
@@ -178,10 +174,6 @@ class CondorSubmitter(Submitter):
     @assert_submission_id
     @borrowdoc(Submitter)
     def status(self):
-        if not self.submission_id:
-            lgr.warning("Cannot check status without a submission ID")
-            return "unknown", None
-
         try:
             stat_out, _ = self.session.execute_command(
                 "condor_q -json {}".format(self.submission_id))
