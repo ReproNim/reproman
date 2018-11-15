@@ -25,6 +25,7 @@ import yaml
 
 from niceman import cfg
 from niceman.dochelpers import borrowdoc
+from niceman.utils import chpwd
 from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.support.exceptions import MissingExternalDependency
 from niceman.support.external_versions import external_versions
@@ -401,11 +402,12 @@ class DataladPairOrchestrator(Orchestrator):
         elif self.resource.type == "shell":
             # Below is just for local testing.  It doesn't support actually
             # getting the content.
-            self.session.execute_command(
-                ["git", "fetch", self.working_directory,
-                 "refs/heads/master:refs/niceman/{}".format(self.jobid)])
-            self.session.execute_command(
-                ["git", "merge", "FETCH_HEAD"])
+            with chpwd(self.ds.path):
+                self.session.execute_command(
+                    ["git", "fetch", self.working_directory,
+                     "refs/heads/master:refs/niceman/{}".format(self.jobid)])
+                self.session.execute_command(
+                    ["git", "merge", "FETCH_HEAD"])
 
 
 class DataladRunOrchestrator(DataladPairOrchestrator):
@@ -428,9 +430,10 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
                 remote=self.resource.name,
                 refspec="refs/niceman/*:refs/niceman/*")
         else:  # For local testing.
-            self.session.execute_command(
-                ["git", "fetch", self.working_directory,
-                 "refs/niceman/*:refs/niceman/*"])
+            with chpwd(self.ds.path):
+                self.session.execute_command(
+                    ["git", "fetch", self.working_directory,
+                     "refs/niceman/*:refs/niceman/*"])
 
         import tarfile
         tfile = "{}.tar.gz".format(self.jobid)
@@ -440,21 +443,22 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
             lgr.error("Expected output file %s does not exist", remote_tfile)
             return
 
-        self.session.get(op.join(self.root_directory, "outputs", tfile))
-        with tarfile.open(tfile, mode="r:gz") as tar:
-            tar.extractall(path=".")
-        os.unlink(tfile)
-        # TODO: How to handle output cleanup on the remote?
+        with chpwd(self.ds.path):
+            self.session.get(op.join(self.root_directory, "outputs", tfile))
+            with tarfile.open(tfile, mode="r:gz") as tar:
+                tar.extractall(path=".")
+            os.unlink(tfile)
+            # TODO: How to handle output cleanup on the remote?
 
-        from datalad.interface.run import run_command
-        lgr.info("Creating run commit")
-        for res in run_command(inputs=self.job_spec.get("inputs"),
-                               outputs=self.job_spec.get("outputs"),
-                               inject=True,
-                               extra_info={"niceman_jobid": self.jobid},
-                               cmd=self.job_spec["command_str"]):
-            # Oh, if only I were a datalad extension.
-            pass
+            from datalad.interface.run import run_command
+            lgr.info("Creating run commit in %s", self.ds.path)
+            for res in run_command(inputs=self.job_spec.get("inputs"),
+                                   outputs=self.job_spec.get("outputs"),
+                                   inject=True,
+                                   extra_info={"niceman_jobid": self.jobid},
+                                   cmd=self.job_spec["command_str"]):
+                # Oh, if only I were a datalad extension.
+                pass
 
 
 ORCHESTRATORS = collections.OrderedDict(
