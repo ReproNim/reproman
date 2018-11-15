@@ -389,6 +389,7 @@ class DataladPairOrchestrator(Orchestrator):
 
     @borrowdoc(Orchestrator)
     def fetch(self):
+        lgr.info("Fetching results for %s", self.jobid)
         if self.resource.type == "ssh":
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
@@ -419,6 +420,7 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
 
     @borrowdoc(DataladPairOrchestrator)
     def fetch(self):
+        lgr.info("Fetching results for %s", self.jobid)
         if self.resource.type == "ssh":
             self.ds.repo.fetch(
                 remote=self.resource.name,
