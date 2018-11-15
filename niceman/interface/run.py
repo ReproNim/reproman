@@ -183,7 +183,7 @@ class Run(Interface):
         job_parameters = parse_kv_list(job_parameters)
 
         # Precedence: CLI option > CLI job parameter > spec file
-        spec = _combine_job_specs(_load_specs(job_specs) +
+        spec = _combine_job_specs(_load_specs(job_specs or {}) +
                                   [job_parameters, cli_spec])
 
         # Treat "command" as a special case because it's a list and the
