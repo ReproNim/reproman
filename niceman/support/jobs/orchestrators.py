@@ -159,10 +159,10 @@ class Orchestrator(object):
         self.submitter = submitter_class(self.session)
 
         self.job_spec = job_spec.copy() or {}
-        self.jobid = job_spec.get(
-            "jobid",
-            "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
-                           str(uuid.uuid4())[:4]))
+
+        prev_id = job_spec.get("jobid")
+        self.jobid = prev_id or "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
+                                               str(uuid.uuid4())[:4])
 
         self._working_directory = None
         self._root_directory = None
