@@ -115,6 +115,8 @@ class Jobs(Interface):
 
       - list: Display a oneline list of all registered jobs
 
+      - delete: Unregister a job locally
+
       - fetch: Fetch a completed job
 
       - auto: If jobs are specified (via JOB or --all), behave like 'fetch'.
@@ -129,7 +131,8 @@ class Jobs(Interface):
         action=Parameter(
             args=("-a", "--action"),
             constraints=EnsureChoice(
-                "auto", "list", "fetch"),
+                "auto", "list",
+                "delete", "fetch"),
             doc="""Operation to perform on the job(s)."""),
         all_=Parameter(
             dest="all_",
@@ -158,17 +161,24 @@ class Jobs(Interface):
                 else:
                     lgr.warning("No jobs matched query %s", query)
 
-        if not matched_ids and action == "fetch":
-            raise ValueError("Must specify jobs to fetch")
+        if not matched_ids and action in ["delete", "fetch"]:
+            # These are actions where we don't want to just conveniently
+            # default to "all" unless --all is explicitly specified.
+            raise ValueError("Must specify jobs to {}".format(action))
 
-        jobs = [_load(job_files[i]) for i in matched_ids or job_files]
-
-        if action == "fetch" or (action == "auto" and matched_ids):
-            fn = fetch
-        elif action == "list" or action == "auto":
-            fn = show_oneline
+        # We don't need to load the job to delete it, so check that first.
+        if action == "delete":
+            for i in matched_ids:
+                LREG.unregister(i)
         else:
-            raise RuntimeError("Unknown action: {}".format(action))
+            jobs = [_load(job_files[i]) for i in matched_ids or job_files]
 
-        for job in jobs:
-            fn(job)
+            if action == "fetch" or (action == "auto" and matched_ids):
+                fn = fetch
+            elif action == "list" or action == "auto":
+                fn = show_oneline
+            else:
+                raise RuntimeError("Unknown action: {}".format(action))
+
+            for job in jobs:
+                fn(job)
