@@ -278,8 +278,8 @@ class Orchestrator(object):
         return our_status, their_status
 
     @abc.abstractmethod
-    def follow(self):
-        """Follow the submission.
+    def fetch(self):
+        """Fetch the submission result.
         """
         pass
 
@@ -388,8 +388,7 @@ class DataladPairOrchestrator(Orchestrator):
             session.mkdir(self.meta_directory, parents=True)
 
     @borrowdoc(Orchestrator)
-    def follow(self):
-        self.submitter.follow()
+    def fetch(self):
         if self.resource.type == "ssh":
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
@@ -419,9 +418,7 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
             resource, submitter, job_spec)
 
     @borrowdoc(DataladPairOrchestrator)
-    def follow(self):
-        self.submitter.follow()
-
+    def fetch(self):
         if self.resource.type == "ssh":
             self.ds.repo.fetch(
                 remote=self.resource.name,
