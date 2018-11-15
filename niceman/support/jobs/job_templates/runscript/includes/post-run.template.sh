@@ -31,5 +31,3 @@ prev_commit=$(git rev-parse HEAD)
 {% include "includes/datalad-add.template.sh" %}
 
 git update-ref refs/niceman/{{ jobid }} HEAD
-# TODO: Be more careful.
-git reset --hard $prev_commit
