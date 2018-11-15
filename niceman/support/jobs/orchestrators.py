@@ -443,6 +443,7 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
         with tarfile.open(tfile, mode="r:gz") as tar:
             tar.extractall(path=".")
         os.unlink(tfile)
+        # TODO: How to handle output cleanup on the remote?
 
         from datalad.interface.run import run_command
         lgr.info("Creating run commit")
