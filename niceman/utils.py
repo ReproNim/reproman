@@ -32,7 +32,7 @@ import glob
 import attr
 from functools import wraps
 from time import sleep
-from inspect import getargspec
+import inspect
 
 from niceman.support.exceptions import CommandError
 
@@ -57,6 +57,17 @@ except:  # pragma: no cover
 #
 # Little helpers
 #
+
+# `getargspec` has been deprecated in Python 3.
+if hasattr(inspect, "getfullargspec"):
+    def getargspec(func):
+        """Backward-compatibility wrapper for inspect.getargspec.
+        """
+        # The first four elements in getfullargspec's return value match
+        # getargspec's.
+        return inspect.getfullargspec(func)[:4]
+else:
+    getargspec = inspect.getargspec
 
 
 def get_func_kwargs_doc(func):

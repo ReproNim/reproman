@@ -9,7 +9,7 @@
 '''Unit tests for Python API functionality.'''
 
 import re
-from inspect import getargspec
+from niceman.utils import getargspec
 import pytest
 
 from .utils import assert_true, assert_false, eq_
