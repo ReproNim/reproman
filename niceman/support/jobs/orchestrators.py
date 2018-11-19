@@ -451,7 +451,7 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
             return
 
         with chpwd(self.ds.path):
-            self.session.get(op.join(self.root_directory, "outputs", tfile))
+            self.session.get(remote_tfile)
             with tarfile.open(tfile, mode="r:gz") as tar:
                 tar.extractall(path=".")
             os.unlink(tfile)
