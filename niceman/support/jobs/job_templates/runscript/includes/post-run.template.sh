@@ -23,7 +23,7 @@ mkdir -p "{{ root_directory }}/outputs"
 tar \
   --files-from "{{ meta_directory }}/togethome" \
   -cz \
-  -C "{{ remote_directory }}" \
+  -C "{{ working_directory }}" \
   -f "{{ root_directory }}/outputs/{{ jobid }}.tar.gz"
 
 {% include "includes/datalad-add.template.sh" %}

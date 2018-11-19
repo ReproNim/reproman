@@ -8,7 +8,7 @@ echo "submitted" >"{{ meta_directory }}/status"
 echo "[NICEMAN] pre-command..."
 
 {% block pre_command %}
-cd "{{ remote_directory }}"
+cd "{{ working_directory }}"
 {% endblock %}
 
 echo "running" >"{{ meta_directory }}/status"

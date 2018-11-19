@@ -250,7 +250,7 @@ class Orchestrator(object):
 
         templ = Template(jobid=self.jobid,
                          root_directory=self.root_directory,
-                         remote_directory=self.working_directory,
+                         working_directory=self.working_directory,
                          meta_directory=self.meta_directory,
                          **self.job_spec or {})
         self.template = templ
