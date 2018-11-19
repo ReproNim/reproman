@@ -252,7 +252,7 @@ class Orchestrator(object):
                          root_directory=self.root_directory,
                          working_directory=self.working_directory,
                          meta_directory=self.meta_directory,
-                         **self.job_spec or {})
+                         **self.job_spec)
         self.template = templ
 
         self._put_as_executable(
