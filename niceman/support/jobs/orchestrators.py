@@ -303,7 +303,7 @@ class Orchestrator(object):
 
 
 class DataladPairOrchestrator(Orchestrator):
-    """Execute command with remote dataset sibling to execute command.
+    """Execute command on remote dataset sibling.
     """
 
     name = "datalad-pair"
