@@ -26,8 +26,6 @@ tar \
   -C "{{ remote_directory }}" \
   -f "{{ root_directory }}/outputs/{{ jobid }}.tar.gz"
 
-prev_commit=$(git rev-parse HEAD)
-
 {% include "includes/datalad-add.template.sh" %}
 
 git update-ref refs/niceman/{{ jobid }} HEAD
