@@ -165,7 +165,7 @@ class Orchestrator(object):
                                                str(uuid.uuid4())[:4])
 
         self._working_directory = None
-        self._root_directory = None
+        self._root_directory = self.job_spec.pop("root_directory", None)
 
         self.template = None
 
@@ -182,14 +182,12 @@ class Orchestrator(object):
         if self._root_directory is not None:
             return self._root_directory
 
-        root_directory = self.job_spec.pop("root_directory", None)
-        if not root_directory:
-            remote_pwd, _ = self.session.execute_command("printf '%s' $PWD")
-            if not remote_pwd:
-                raise ValueError("Could not determine PWD on remote")
-            root_directory = op.join(remote_pwd, ".niceman", "run-root")
-            lgr.info("No root directory supplied for %s; using '%s'",
-                     self.resource.name, root_directory)
+        remote_pwd, _ = self.session.execute_command("printf '%s' $PWD")
+        if not remote_pwd:
+            raise ValueError("Could not determine PWD on remote")
+        root_directory = op.join(remote_pwd, ".niceman", "run-root")
+        lgr.info("No root directory supplied for %s; using '%s'",
+                 self.resource.name, root_directory)
         if not op.isabs(root_directory):
             raise ValueError("Root directory is not an absolute path: {}"
                              .format(root_directory))
