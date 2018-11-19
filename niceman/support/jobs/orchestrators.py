@@ -187,10 +187,7 @@ class Orchestrator(object):
             remote_pwd, _ = self.session.execute_command("printf '%s' $PWD")
             if not remote_pwd:
                 raise ValueError("Could not determine PWD on remote")
-            root_directory = op.join(
-                remote_pwd, ".niceman",
-                # We won't require these to be DataLad datasets... better name?
-                "datasets")
+            root_directory = op.join(remote_pwd, ".niceman", "run-root")
             lgr.info("No root directory supplied for %s; using '%s'",
                      self.resource.name, root_directory)
         if not op.isabs(root_directory):
