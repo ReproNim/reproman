@@ -425,10 +425,6 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
 
     name = "datalad-run"
 
-    def __init__(self, resource, submitter, job_spec=None):
-        super(DataladRunOrchestrator, self).__init__(
-            resource, submitter, job_spec)
-
     @borrowdoc(DataladPairOrchestrator)
     def fetch(self):
         lgr.info("Fetching results for %s", self.jobid)
