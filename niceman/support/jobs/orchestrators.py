@@ -164,7 +164,7 @@ class Orchestrator(object):
         self.jobid = prev_id or "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                                str(uuid.uuid4())[:4])
 
-        self._working_directory = None
+        self._working_directory = self.job_spec.pop("working_directory", None)
         self._root_directory = self.job_spec.pop("root_directory", None)
 
         self.template = None
@@ -173,8 +173,10 @@ class Orchestrator(object):
     def root_directory(self):
         """The root run directory on the resource.
 
-        The working directory for a particular command is a subdirectory of
-        this directory.
+        By default, the working directory for a particular command should be a
+        subdirectory of this directory. Orchestrators can also use this root to
+        storing things outside of the working directory (e.g. artifacts used in
+        the fetch).
         """
         # TODO: We should allow root directory to be configured for each
         # resource.  What's the best way to do this?  Adding an attr for each
