@@ -31,6 +31,9 @@ from niceman.support.external_versions import external_versions
 lgr = logging.getLogger("niceman.support.jobs.orchestrators")
 
 
+# Abstract orchestrators
+
+
 @six.add_metaclass(abc.ABCMeta)
 class Orchestrator(object):
     """Base Orchestrator class.
@@ -118,11 +121,11 @@ class Orchestrator(object):
                    "submission_id": self.submitter.submission_id}
         return dict(to_dump, **self.template.kwds)
 
+    @abc.abstractmethod
     def prepare_remote(self):
         """Prepare remote for run.
         """
-        if not self.session.exists(self.root_directory):
-            self.session.mkdir(self.root_directory, parents=True)
+        pass
 
     def _put_as_executable(self, text, target):
         with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
@@ -181,32 +184,24 @@ class Orchestrator(object):
         pass
 
 
-# TODO: Need to rework/polish/extend the orchestrators. Think about how to
-# handle the orchestration type (plain, datalad local, datalad pair, ...),
-# shared/non-shared file system, and batch system interaction at both the class
-# and template level.
-
-# TODO: Improve the docstring descriptions of what the orchestrators do.
-
-
-class DataladPairOrchestrator(Orchestrator):
-    """Execute command on remote dataset sibling.
+@six.add_metaclass(abc.ABCMeta)
+class DataladOrchestrator(Orchestrator):
+    """Execute command assuming (at least) a local dataset.
     """
-
-    name = "datalad-pair"
 
     def __init__(self, resource, submitter, job_spec=None):
         if not external_versions["datalad"]:
             raise MissingExternalDependency(
                 "DataLad is required for orchestrator '{}'".format(self.name))
 
-        super(DataladPairOrchestrator, self).__init__(
+        super(DataladOrchestrator, self).__init__(
             resource, submitter, job_spec)
 
         from datalad.api import Dataset
         self.ds = Dataset(".")
         if not self.ds.id:
-            raise ValueError("datalad-pair requires a local dataset")
+            raise ValueError("orchestrator {} require a local dataset"
+                             .format(self.name))
 
     @property
     @cached_property
@@ -222,13 +217,22 @@ class DataladPairOrchestrator(Orchestrator):
 
     @borrowdoc(Orchestrator)
     def as_dict(self):
-        d = super(DataladPairOrchestrator, self).as_dict()
+        d = super(DataladOrchestrator, self).as_dict()
         d["dataset_id"] = self.ds.id
         return d
 
-    @borrowdoc(Orchestrator)
+
+# Orchestrator method mixins
+
+
+class PrepareRemoteDataladMixin(object):
+
     def prepare_remote(self):
-        super(DataladPairOrchestrator, self).prepare_remote()
+        """Prepare dataset sibling on remote.
+        """
+        if not self.session.exists(self.root_directory):
+            self.session.mkdir(self.root_directory, parents=True)
+
         resource = self.resource
         session = self.session
 
@@ -285,8 +289,12 @@ class DataladPairOrchestrator(Orchestrator):
         if not session.exists(self.meta_directory):
             session.mkdir(self.meta_directory, parents=True)
 
-    @borrowdoc(Orchestrator)
+
+class FetchDataladPairMixin(object):
+
     def fetch(self):
+        """Fetch the results from the remote dataset sibling.
+        """
         lgr.info("Fetching results for %s", self.jobid)
         if self.resource.type == "ssh":
             self.ds.update(sibling=self.resource.name,
@@ -305,16 +313,12 @@ class DataladPairOrchestrator(Orchestrator):
                     ["git", "merge", "FETCH_HEAD"])
 
 
-class DataladRunOrchestrator(DataladPairOrchestrator):
-    """Capture results locally as run record.
-    """
-    # TODO: This should be restructured so that the remote end isn't required
-    # to have datalad.
+class FetchDataladRunMixin(object):
 
-    name = "datalad-run"
-
-    @borrowdoc(DataladPairOrchestrator)
     def fetch(self):
+        """Fetch results tarball and inject run record into the local dataset.
+        """
+        lgr.info("Fetching results for %s", self.jobid)
         import tarfile
         tfile = "{}.tar.gz".format(self.jobid)
         remote_tfile = op.join(self.root_directory, "outputs", tfile)
@@ -339,6 +343,31 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
                                    cmd=self.job_spec["command_str"]):
                 # Oh, if only I were a datalad extension.
                 pass
+
+
+# Concrete orchestrators
+
+# TODO: Need to polish and extend the orchestrators. The prepare_remote() and
+# fetch() steps currently lack many safeguards and don't deal well previous
+# state. There's also no support for non-shared file systems.
+
+# TODO: Improve the docstring descriptions of what the orchestrators do.
+
+
+class DataladPairOrchestrator(
+        PrepareRemoteDataladMixin, FetchDataladPairMixin, DataladOrchestrator):
+    """Execute command on remote dataset sibling.
+    """
+
+    name = "datalad-pair"
+
+
+class DataladRunOrchestrator(
+        PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
+    """Capture results locally as run record.
+    """
+
+    name = "datalad-run"
 
 
 ORCHESTRATORS = collections.OrderedDict(
