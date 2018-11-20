@@ -61,10 +61,10 @@ class Orchestrator(object):
         self.template = None
 
     def _find_root(self):
-        remote_pwd, _ = self.session.execute_command("printf '%s' $PWD")
-        if not remote_pwd:
-            raise ValueError("Could not determine PWD on remote")
-        root_directory = op.join(remote_pwd, ".niceman", "run-root")
+        home = self.session.query_envvars().get("HOME")
+        if not home:
+            raise ValueError("Could not determine $HOME on remote")
+        root_directory = op.join(home, ".niceman", "run-root")
         lgr.info("No root directory supplied for %s; using '%s'",
                  self.resource.name, root_directory)
         if not op.isabs(root_directory):
