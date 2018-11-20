@@ -227,6 +227,29 @@ class DataladOrchestrator(Orchestrator):
 # Orchestrator method mixins
 
 
+class PrepareRemotePlainMixin(object):
+
+    def prepare_remote(self):
+        """Prepare "plain" execution directory on remote.
+
+        Create directory and copy inputs to it.
+        """
+        # TODO: Provide better handling of existing directories. This is
+        # unlikely to happen with the default working directory but can easily
+        # happen with user-supplied working directory.
+
+        session = self.session
+        if not session.exists(self.root_directory):
+            session.mkdir(self.root_directory, parents=True)
+
+        inputs = self.job_spec.get("inputs")
+        if not inputs:
+            return
+
+        for i in inputs:
+            session.put(i, op.join(self.working_directory, op.basename(i)))
+
+
 class PrepareRemoteDataladMixin(object):
 
     def prepare_remote(self):
@@ -290,6 +313,21 @@ class PrepareRemoteDataladMixin(object):
                              .format(resource.type))
         if not session.exists(self.meta_directory):
             session.mkdir(self.meta_directory, parents=True)
+
+
+class FetchPlainMixin(object):
+
+    def fetch(self):
+        """Get outputs from remote.
+        """
+        outputs = self.job_spec.get("outputs")
+        if not outputs:
+            return
+
+        for o in outputs:
+            self.session.get(
+                o if op.isabs(o) else op.join(self.working_directory, o),
+                self.local_directory)
 
 
 class FetchDataladPairMixin(object):
@@ -356,6 +394,26 @@ class FetchDataladRunMixin(object):
 # TODO: Improve the docstring descriptions of what the orchestrators do.
 
 
+class PlainOrchestrator(
+        PrepareRemotePlainMixin, FetchPlainMixin, Orchestrator):
+    """Plain execution on remote directory.
+
+    If no working directory is supplied, the remote directory is named with the
+    job ID. Inputs are made available with a session.put(), and outputs are
+    fetched with a session.get().
+    """
+
+    name = "plain"
+    template_name = "base"
+
+    @property
+    @cached_property
+    @borrowdoc(Orchestrator)
+    def working_directory(self):
+        wdir = self.job_spec.get("working_directory")
+        return wdir or op.join(self.root_directory, self.jobid)
+
+
 class DataladPairOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladPairMixin, DataladOrchestrator):
     """Execute command on remote dataset sibling.
@@ -374,6 +432,7 @@ class DataladRunOrchestrator(
 
 ORCHESTRATORS = collections.OrderedDict(
     (o.name, o) for o in [
+        PlainOrchestrator,
         DataladPairOrchestrator,
         DataladRunOrchestrator,
     ]
