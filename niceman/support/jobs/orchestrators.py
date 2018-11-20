@@ -170,6 +170,18 @@ class Orchestrator(object):
 
         self.template = None
 
+    def _find_root(self):
+        remote_pwd, _ = self.session.execute_command("printf '%s' $PWD")
+        if not remote_pwd:
+            raise ValueError("Could not determine PWD on remote")
+        root_directory = op.join(remote_pwd, ".niceman", "run-root")
+        lgr.info("No root directory supplied for %s; using '%s'",
+                 self.resource.name, root_directory)
+        if not op.isabs(root_directory):
+            raise ValueError("Root directory is not an absolute path: {}"
+                             .format(root_directory))
+        return root_directory
+
     @property
     @cached_property
     def root_directory(self):
@@ -183,20 +195,7 @@ class Orchestrator(object):
         # TODO: We should allow root directory to be configured for each
         # resource.  What's the best way to do this?  Adding an attr for each
         # resource class is a lot of duplication.
-        if self._root_directory is not None:
-            return self._root_directory
-
-        remote_pwd, _ = self.session.execute_command("printf '%s' $PWD")
-        if not remote_pwd:
-            raise ValueError("Could not determine PWD on remote")
-        root_directory = op.join(remote_pwd, ".niceman", "run-root")
-        lgr.info("No root directory supplied for %s; using '%s'",
-                 self.resource.name, root_directory)
-        if not op.isabs(root_directory):
-            raise ValueError("Root directory is not an absolute path: {}"
-                             .format(root_directory))
-        self._root_directory = root_directory
-        return root_directory
+        return self._root_directory or self._find_root()
 
     @abc.abstractproperty
     def working_directory(self):
