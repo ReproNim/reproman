@@ -424,10 +424,19 @@ class DataladPairOrchestrator(
 
 class DataladRunPairOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
-    """Capture results locally as run record.
+    """Execute command in remote dataset sibling and capture results locally as
+    run record.
     """
 
     name = "datalad-pair-run"
+
+
+class DataladLocalRunOrchestrator(
+        PrepareRemotePlainMixin, FetchDataladRunMixin, DataladOrchestrator):
+    """Execute command in a plain remote directory and capture results locally
+    as run record."""
+
+    name = "datalad-local-run"
 
 
 ORCHESTRATORS = collections.OrderedDict(
@@ -435,5 +444,6 @@ ORCHESTRATORS = collections.OrderedDict(
         PlainOrchestrator,
         DataladPairOrchestrator,
         DataladRunPairOrchestrator,
+        DataladLocalRunOrchestrator,
     ]
 )

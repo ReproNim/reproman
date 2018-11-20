@@ -1,13 +1,7 @@
-{% extends "base.template.sh" %}
-
-{% block pre_command %}
-{{ super() }}
-{% include "includes/pre-run.template.sh" %}
-{% endblock %}
+{% extends "datalad-local-run.template.sh" %}
 
 {% block post_command %}
 {{ super() }}
-{% include "includes/post-run.template.sh" %}
 
 {% include "includes/datalad-add.template.sh" %}
 
