@@ -25,7 +25,3 @@ tar \
   -cz \
   -C "{{ working_directory }}" \
   -f "{{ root_directory }}/outputs/{{ jobid }}.tar.gz"
-
-{% include "includes/datalad-add.template.sh" %}
-
-git update-ref refs/niceman/{{ jobid }} HEAD

@@ -422,18 +422,18 @@ class DataladPairOrchestrator(
     name = "datalad-pair"
 
 
-class DataladRunOrchestrator(
+class DataladRunPairOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
     """Capture results locally as run record.
     """
 
-    name = "datalad-run"
+    name = "datalad-pair-run"
 
 
 ORCHESTRATORS = collections.OrderedDict(
     (o.name, o) for o in [
         PlainOrchestrator,
         DataladPairOrchestrator,
-        DataladRunOrchestrator,
+        DataladRunPairOrchestrator,
     ]
 )
