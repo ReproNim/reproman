@@ -54,7 +54,7 @@ class Orchestrator(object):
 
         self.job_spec = job_spec or {}
 
-        prev_id = job_spec.get("jobid")
+        prev_id = self.job_spec.get("jobid")
         self.jobid = prev_id or "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                                str(uuid.uuid4())[:4])
 
