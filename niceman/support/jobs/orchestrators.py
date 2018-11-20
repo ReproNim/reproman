@@ -42,6 +42,8 @@ class Orchestrator(object):
     submitting it with the specified submitter, and then handling the results.
     """
 
+    template_name = None
+
     def __init__(self, resource, submission_type, job_spec=None):
         self.resource = resource
         self.session = resource.get_session()
@@ -144,9 +146,9 @@ class Orchestrator(object):
                                 working_directory=self.working_directory,
                                 meta_directory=self.meta_directory))
         self.template = templ
-
         self._put_as_executable(
-            templ.render_runscript("{}.template.sh".format(self.name)),
+            templ.render_runscript("{}.template.sh".format(
+                self.template_name or self.name)),
             op.join(self.meta_directory, "runscript"))
 
         submission_file = op.join(self.meta_directory, "submit")
