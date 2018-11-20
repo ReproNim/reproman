@@ -549,13 +549,20 @@ def cached_property(prop):
 
     This should be positioned below the @property declaration.
     """
-    cache = []  # Wrap result to distinguish false return value.
+    # Modified from MIT-licensed
+    # https://code.activestate.com/recipes/576563-cached-property/
 
     @wraps(prop)
     def wrapped(self):
-        if not cache:
-            cache.append(prop(self))
-        return cache[0]
+        try:
+            return self._property_cache[prop]
+        except AttributeError:
+            self._property_cache = {}
+            x = self._property_cache[prop] = prop(self)
+            return x
+        except KeyError:
+            x = self._property_cache[prop] = prop(self)
+            return x
     return wrapped
 
 

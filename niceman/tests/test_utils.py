@@ -535,6 +535,10 @@ def test_cached_property(value):
     c.val = "changed"
     assert c.prop == value
 
+    c = C()
+    c.val = "other-instance"
+    assert c.prop == "other-instance"
+
 
 def test_line_profile():
     pytest.importorskip("line_profiler")
