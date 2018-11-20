@@ -33,6 +33,7 @@ from ..utils import getpwd, chpwd
 from ..utils import auto_repr
 from ..utils import find_files
 from ..utils import line_profile
+from ..utils import cached_property
 from ..utils import not_supported_on_windows
 from ..utils import file_basename
 from ..utils import expandpath, is_explicit_path
@@ -517,6 +518,22 @@ def test_parse_backend_parameters():
     # empty dict.
     assert isinstance(parse_kv_list(OrderedDict({})),
                       OrderedDict)
+
+
+@pytest.mark.parametrize("value", [None, False, [], "x"])
+def test_cached_property(value):
+    class C(object):
+        val = value
+
+        @property
+        @cached_property
+        def prop(self):
+            return self.val
+
+    c = C()
+    assert c.prop == value
+    c.val = "changed"
+    assert c.prop == value
 
 
 def test_line_profile():

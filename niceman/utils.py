@@ -536,6 +536,29 @@ def line_profile(func):
             prof.print_stats()
     return newfunc
 
+
+def cached_property(prop):
+    """Cache a property's return value.
+
+    This avoids using `lru_cache`, which is more complicated than needed for
+    simple properties and isn't available in Python 2's stdlib.
+
+    Use this only if the property's return value is constant over the life of
+    the object. This isn't appropriate for a property with a setter or a
+    property whose getter value may change based some outside state.
+
+    This should be positioned below the @property declaration.
+    """
+    cache = []  # Wrap result to distinguish false return value.
+
+    @wraps(prop)
+    def wrapped(self):
+        if not cache:
+            cache.append(prop(self))
+        return cache[0]
+    return wrapped
+
+
 #
 # Context Managers
 #
