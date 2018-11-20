@@ -25,6 +25,7 @@ import yaml
 
 from niceman import cfg
 from niceman.dochelpers import borrowdoc
+from niceman.utils import cached_property
 from niceman.utils import chpwd
 from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.support.exceptions import MissingExternalDependency
@@ -170,6 +171,7 @@ class Orchestrator(object):
         self.template = None
 
     @property
+    @cached_property
     def root_directory(self):
         """The root run directory on the resource.
 
@@ -203,6 +205,7 @@ class Orchestrator(object):
         pass
 
     @property
+    @cached_property
     def meta_directory(self):
         """Directory used to store metadata for the run.
         """
@@ -210,6 +213,7 @@ class Orchestrator(object):
                        self.resource.name, self.jobid)
 
     @property
+    @cached_property
     def local_directory(self):
         """Directory on local machine.
         """
@@ -322,6 +326,7 @@ class DataladPairOrchestrator(Orchestrator):
             raise ValueError("datalad-pair requires a local dataset")
 
     @property
+    @cached_property
     @borrowdoc(Orchestrator)
     def working_directory(self):
         return self._working_directory or op.join(self.root_directory,
