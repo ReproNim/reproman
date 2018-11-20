@@ -427,17 +427,6 @@ class DataladRunOrchestrator(DataladPairOrchestrator):
 
     @borrowdoc(DataladPairOrchestrator)
     def fetch(self):
-        lgr.info("Fetching results for %s", self.jobid)
-        if self.resource.type == "ssh":
-            self.ds.repo.fetch(
-                remote=self.resource.name,
-                refspec="refs/niceman/*:refs/niceman/*")
-        else:  # For local testing.
-            with chpwd(self.ds.path):
-                self.session.execute_command(
-                    ["git", "fetch", self.working_directory,
-                     "refs/niceman/*:refs/niceman/*"])
-
         import tarfile
         tfile = "{}.tar.gz".format(self.jobid)
         remote_tfile = op.join(self.root_directory, "outputs", tfile)
