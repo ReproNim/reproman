@@ -159,14 +159,11 @@ class Orchestrator(object):
         submitter_class = SUBMITTERS[submission_type or "local"]
         self.submitter = submitter_class(self.session)
 
-        self.job_spec = job_spec.copy() or {}
+        self.job_spec = job_spec or {}
 
         prev_id = job_spec.get("jobid")
         self.jobid = prev_id or "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                                str(uuid.uuid4())[:4])
-
-        self._working_directory = self.job_spec.pop("working_directory", None)
-        self._root_directory = self.job_spec.pop("root_directory", None)
 
         self.template = None
 
@@ -195,7 +192,7 @@ class Orchestrator(object):
         # TODO: We should allow root directory to be configured for each
         # resource.  What's the best way to do this?  Adding an attr for each
         # resource class is a lot of duplication.
-        return self._root_directory or self._find_root()
+        return self.job_spec.get("root_directory") or self._find_root()
 
     @abc.abstractproperty
     def working_directory(self):
@@ -250,12 +247,11 @@ class Orchestrator(object):
         """Submit the job with `submitter`.
         """
         lgr.info("Submitting %s", self.jobid)
-
-        templ = Template(jobid=self.jobid,
-                         root_directory=self.root_directory,
-                         working_directory=self.working_directory,
-                         meta_directory=self.meta_directory,
-                         **self.job_spec)
+        templ = Template(**dict(self.job_spec,
+                                jobid=self.jobid,
+                                root_directory=self.root_directory,
+                                working_directory=self.working_directory,
+                                meta_directory=self.meta_directory))
         self.template = templ
 
         self._put_as_executable(
@@ -328,8 +324,8 @@ class DataladPairOrchestrator(Orchestrator):
     @cached_property
     @borrowdoc(Orchestrator)
     def working_directory(self):
-        return self._working_directory or op.join(self.root_directory,
-                                                  self.ds.id)
+        wdir = self.job_spec.get("working_directory")
+        return wdir or op.join(self.root_directory, self.ds.id)
 
     @property
     @borrowdoc(Orchestrator)
