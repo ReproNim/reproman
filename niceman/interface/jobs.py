@@ -15,7 +15,7 @@ import logging
 import yaml
 
 from niceman.interface.base import Interface
-from niceman.support.jobs.orchestrators import LocalRegistry
+from niceman.support.jobs.local_registry import LocalRegistry
 from niceman.support.jobs.orchestrators import ORCHESTRATORS
 from niceman.resource import get_manager
 from niceman.support.param import Parameter

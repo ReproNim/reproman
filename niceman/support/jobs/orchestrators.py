@@ -18,129 +18,17 @@ import uuid
 from tempfile import NamedTemporaryFile
 import time
 
-import jinja2
 import six
-from six.moves import shlex_quote
-import yaml
 
-from niceman import cfg
 from niceman.dochelpers import borrowdoc
 from niceman.utils import cached_property
 from niceman.utils import chpwd
 from niceman.support.jobs.submitters import SUBMITTERS
+from niceman.support.jobs.template import Template
 from niceman.support.exceptions import MissingExternalDependency
 from niceman.support.external_versions import external_versions
 
 lgr = logging.getLogger("niceman.support.jobs.orchestrators")
-
-
-class Template(object):
-    """Job templates.
-
-    Parameters
-    ----------
-    **kwds
-        Passed as keywords when rendering templates.
-    """
-
-    def __init__(self, **kwds):
-        self.kwds = kwds
-
-    def _render(self, template_name, subdir):
-        lgr.debug("Using template %s", template_name)
-        env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(
-                [op.join(op.dirname(__file__), "job_templates", subdir)]),
-            undefined=jinja2.StrictUndefined,
-            trim_blocks=True)
-        env.globals["shlex_quote"] = shlex_quote
-        return env.get_template(template_name).render(**self.kwds)
-
-    def render_runscript(self, template_name):
-        """Generate the run script from `template_name`.
-
-        A run script is a wrapper around the original command and may do
-        additional pre- and post-processing.
-
-        Parameters
-        ----------
-        template_name : str
-            Name of template to use instead of the default one for this class.
-
-        Returns
-        -------
-        Rendered run script (str).
-        """
-        return self._render(template_name, "runscript")
-
-    def render_submission(self, template_name):
-        """Generate the submission file from `template_name`.
-
-        A submission file is the file the will be passed to `submitter.submit`.
-        It should result in the execution of the run script.
-
-        Parameters
-        ----------
-        template_name : str
-            Name of template to use instead of the default one for this class.
-
-        Returns
-        -------
-        Rendered submission file (str).
-        """
-        return self._render(template_name, "submission")
-
-
-class LocalRegistry(object):
-    """Registry of local jobs.
-    """
-
-    def __init__(self, directory=None):
-        self._root = directory or op.join(cfg.dirs.user_data_dir, "jobs")
-
-    def find_job_files(self):
-        """Return job files for all jobs that are registered locally.
-
-        Returns
-        -------
-        OrderedDict mapping job ID to job file.
-        """
-        return collections.OrderedDict((f, op.join(self._root, f))
-                                       for f in sorted(os.listdir(self._root)))
-
-    def register(self, jobid, kwds):
-        """Register a job.
-
-        Parameters
-        ----------
-        jobid : str
-            Full ID of the job.
-        kwds : dict
-            Values defined here will be dumped to the job file.
-        """
-        if not op.exists(self._root):
-            os.makedirs(self._root)
-
-        job_file = op.join(self._root, jobid)
-        if op.exists(job_file):
-            raise ValueError("%s is already registered", jobid)
-
-        with open(job_file, "w") as jfh:
-            yaml.safe_dump(kwds, jfh)
-        lgr.info("Registered job %s", jobid)
-
-    def unregister(self, jobid):
-        """Unregister a job.
-
-        Parameters
-        ----------
-        jobid : str
-            Full ID of the job.
-        """
-        job_file = op.join(self._root, jobid)
-        if op.exists(job_file):
-            lgr.info("Unregistered job %s", jobid)
-            os.unlink(job_file)
 
 
 @six.add_metaclass(abc.ABCMeta)
