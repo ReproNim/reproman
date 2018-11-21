@@ -36,6 +36,9 @@ matrix:
   - python: 3.5
     env:
     - NICEMAN_TESTS_SSH=1
+  - python: 3.5
+    env:
+    - INSTALL_DATALAD=1
   # Those aren't yet ready since lxml Ibelieve fails to install
   #- python: pypy
   #- python: pypy3
@@ -70,6 +73,7 @@ install:
   # for SVN tests (SVNRepoShim._ls_files_command())
   - sudo apt-get install sqlite3
   - travis_retry sudo eatmydata apt-get install singularity-container
+  - if [ ! -z "${INSTALL_DATALAD:-}" ]; then tools/ci/install_datalad; fi
 
 script:
   # Verify that setup.py build doesn't puke
