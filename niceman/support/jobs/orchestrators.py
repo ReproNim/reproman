@@ -191,13 +191,13 @@ class DataladOrchestrator(Orchestrator):
     """Execute command assuming (at least) a local dataset.
     """
 
-    def __init__(self, resource, submitter, job_spec=None):
+    def __init__(self, resource, submission_type, job_spec=None):
         if not external_versions["datalad"]:
             raise MissingExternalDependency(
                 "DataLad is required for orchestrator '{}'".format(self.name))
 
         super(DataladOrchestrator, self).__init__(
-            resource, submitter, job_spec)
+            resource, submission_type, job_spec)
 
         from datalad.api import Dataset
         self.ds = Dataset(".")
