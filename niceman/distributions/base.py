@@ -44,12 +44,13 @@ class SpecObject(object):
     # TODO: make sure these can't stay empty in subclasses where they are 
     # needed (or make sure the trivial case is handled)
 
-    # Fields used to establish the "identity" of the specobject
+    # Fields used to establish the "identity" of the specobject for the 
+    # purposes of diff
     _cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
-    # Fields used in determination of satisfaction
-    _satisfies_fields = tuple()
+    # Fields used in determination of comparison (satisfied_by and identical_to)
+    _comparison_fields = tuple()
 
     @property
     def _cmp_id(self):
@@ -121,7 +122,7 @@ class SpecObject(object):
         spec object.
 
         We require that the values of the attributes given by 
-        _satisfies_fields are the same.  A specobject with a value of None 
+        _comparison_fields are the same.  A specobject with a value of None 
         for one of these attributes is less specific than one with 
         a specific value; the former cannot satisfy the latter, 
         but the latter can satisfy the former.
@@ -129,7 +130,7 @@ class SpecObject(object):
         TODO: Ensure we don't encounter the case where self is completely 
         unspecified (all values are None), in which case satisfied_by() 
         returns True by default.  Perhaps this is done by making 
-        sure that at least one of the _satisfies_fields cannot be None.
+        sure that at least one of the _comparison_fields cannot be None.
 
         TODO: derive _collection_type directly from _collection.  This isn't 
         possible at the moment because DebianDistribution.packages is 
@@ -146,7 +147,7 @@ class SpecObject(object):
             raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
-        for attr_name in self._satisfies_fields:
+        for attr_name in self._comparison_fields:
             self_value = getattr(self, attr_name)
             other_value = getattr(other, attr_name)
             if self_value is None:

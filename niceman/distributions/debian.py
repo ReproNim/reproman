@@ -92,7 +92,7 @@ class DEBPackage(Package):
 
     _cmp_fields = ('name', 'architecture')
     _diff_fields = ('version',)
-    _satisfies_fields = ('name', 'architecture', 'version')
+    _comparison_fields = ('name', 'architecture', 'version')
 
 _register_with_representer(DEBPackage)
 
