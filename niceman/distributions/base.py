@@ -69,7 +69,7 @@ class SpecObject(object):
         return tuple(str(getattr(self, a)) for a in self._diff_fields)
 
     @property
-    def identity_string(self):
+    def diff_identity_string(self):
         """a string describing the identity of the object
 
         this can be overridden if there's a nicer way of expressing the 
@@ -80,8 +80,8 @@ class SpecObject(object):
         return " ".join(str(el) for el in self._diff_cmp_id)
 
     @property
-    def subidentity_string(self):
-        """like identity_string, but to distinguish objects that have 
+    def diff_subidentity_string(self):
+        """like diff_identity_string, but to distinguish objects that have 
         matching _diff_cmp_fields
         """
         return " ".join(str(el) for el in self._diff_vals)

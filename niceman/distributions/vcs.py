@@ -80,12 +80,12 @@ class VCSRepo(SpecObject):
     files = attrib(default=attr.Factory(list))
 
     @property
-    def identity_string(self):
-        return super(VCSRepo, self).identity_string + ' (%s)' % self.path
+    def diff_identity_string(self):
+        return super(VCSRepo, self).diff_identity_string + ' (%s)' % self.path
 
     @property
-    def subidentity_string(self):
-        return super(VCSRepo, self).subidentity_string + ' (%s)' % self.path
+    def diff_subidentity_string(self):
+        return super(VCSRepo, self).diff_subidentity_string + ' (%s)' % self.path
 
     @property
     def commit(self):
@@ -113,7 +113,7 @@ class GitRepo(VCSRepo):
     _commit_attribute = 'hexsha'
 
     @property
-    def subidentity_string(self):
+    def diff_subidentity_string(self):
         return 'branch %s, commit %s (%s)' % (self.branch, 
                                               self.hexsha, 
                                               self.path)
