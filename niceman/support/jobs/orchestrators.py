@@ -310,7 +310,6 @@ class PrepareRemoteDataladMixin(object):
                 installed_ds.get(inputs)
         else:
             # TODO: Handle more types?
-            # TODO: Raise a more specific error.
             raise OrchestratorError("Unsupported resource type {}"
                                     .format(resource.type))
         if not session.exists(self.meta_directory):
