@@ -14,6 +14,7 @@ import pytest
 
 from niceman.utils import chpwd
 from niceman.resource.shell import Shell
+from niceman.support.exceptions import OrchestratorError
 from niceman.support.jobs import orchestrators as orcs
 from niceman.tests.utils import create_tree
 
@@ -33,7 +34,7 @@ def test_orc_root_directory(shell):
 def test_orc_root_directory_error(shell, value):
     orc = orcs.PlainOrchestrator(shell, submission_type="local")
     with patch.object(orc.session, "query_envvars", return_value=value):
-        with pytest.raises(ValueError):
+        with pytest.raises(OrchestratorError):
             orc.root_directory
 
 

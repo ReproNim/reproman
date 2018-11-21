@@ -26,6 +26,7 @@ from niceman.utils import chpwd
 from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.support.jobs.template import Template
 from niceman.support.exceptions import MissingExternalDependency
+from niceman.support.exceptions import OrchestratorError
 from niceman.support.external_versions import external_versions
 
 lgr = logging.getLogger("niceman.support.jobs.orchestrators")
@@ -63,13 +64,14 @@ class Orchestrator(object):
     def _find_root(self):
         home = self.session.query_envvars().get("HOME")
         if not home:
-            raise ValueError("Could not determine $HOME on remote")
+            raise OrchestratorError("Could not determine $HOME on remote")
         root_directory = op.join(home, ".niceman", "run-root")
         lgr.info("No root directory supplied for %s; using '%s'",
                  self.resource.name, root_directory)
         if not op.isabs(root_directory):
-            raise ValueError("Root directory is not an absolute path: {}"
-                             .format(root_directory))
+            raise OrchestratorError(
+                "Root directory is not an absolute path: {}"
+                .format(root_directory))
         return root_directory
 
     @property
@@ -202,8 +204,8 @@ class DataladOrchestrator(Orchestrator):
         from datalad.api import Dataset
         self.ds = Dataset(".")
         if not self.ds.id:
-            raise ValueError("orchestrator {} requires a local dataset"
-                             .format(self.name))
+            raise OrchestratorError("orchestrator {} requires a local dataset"
+                                    .format(self.name))
 
     @property
     @cached_property
@@ -309,8 +311,8 @@ class PrepareRemoteDataladMixin(object):
         else:
             # TODO: Handle more types?
             # TODO: Raise a more specific error.
-            raise ValueError("Unsupported resource type {}"
-                             .format(resource.type))
+            raise OrchestratorError("Unsupported resource type {}"
+                                    .format(resource.type))
         if not session.exists(self.meta_directory):
             session.mkdir(self.meta_directory, parents=True)
 
