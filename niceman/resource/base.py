@@ -11,6 +11,7 @@
 import attr
 from importlib import import_module
 import abc
+from six import add_metaclass
 from six.moves.configparser import NoSectionError
 
 import yaml
@@ -19,13 +20,11 @@ import os
 import os.path as op
 
 from ..dochelpers import exc_str
-from ..support.exceptions import InsufficientArgumentsError
 from ..support.exceptions import ResourceError
 from ..support.exceptions import ResourceNotFoundError
 from ..support.exceptions import ResourceAlreadyExistsError
 from ..support.exceptions import MultipleResourceMatches
-from ..support.exceptions import MissingConfigError, MissingConfigFileError
-from ..ui import ui
+from ..support.exceptions import MissingConfigError
 
 
 import logging
@@ -93,8 +92,6 @@ class ResourceManager(object):
     Provides an API for finding existing resources or allocating new ones.
     Typically a NICEMAN process will have a single ResourceManager instance.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     # The keys which are known to be secret and should not be exposed
     SECRET_KEYS = ('access_key_id', 'secret_access_key')
@@ -328,11 +325,10 @@ class ResourceManager(object):
         self._save()
 
 
+@add_metaclass(abc.ABCMeta)
 class Resource(object):
     """Base class for creating and managing compute resources.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __repr__(self):
         return 'Resource({})'.format(self.name)
@@ -436,10 +432,5 @@ class Resource(object):
             Terminal session (the default is False)
         shared : string, optional
             Shared session identifier (the default is None)
-
-        Raises
-        ------
-        NotImplementedError
-            [description]
         """
-        raise NotImplementedError
+        return

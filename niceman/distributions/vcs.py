@@ -66,7 +66,7 @@ class VCSDistribution(Distribution):
     @abc.abstractmethod
     def install_packages(self, session, use_version=True):
         # This is VCS specific
-        raise NotImplementedError()
+        return
 
     def normalize(self):
         pass

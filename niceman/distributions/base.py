@@ -8,7 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrators helping with management of target environments (remote or local)"""
 
-import os
 import os.path as op
 import abc
 import attr
@@ -16,6 +15,7 @@ import collections
 import yaml
 
 from importlib import import_module
+from six import add_metaclass
 from six import viewvalues
 
 from niceman.utils import attrib
@@ -172,11 +172,10 @@ class Package(SpecObject):
     pass
 
 
+@add_metaclass(abc.ABCMeta)
 @attr.s
 class Distribution(SpecObject):
     """Base class for distributions"""
-
-    __metaclass__ = abc.ABCMeta
 
     # Actually might want/need to go away since somewhat duplicates the class
     # name and looks awkward
@@ -271,6 +270,7 @@ _register_with_representer(EnvironmentSpec)
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
 
+@add_metaclass(abc.ABCMeta)
 class DistributionTracer(object):
     """Base class for package trackers.
 
@@ -279,8 +279,6 @@ class DistributionTracer(object):
     pip, ...), VCS repositories or even container images -- something which has
     to be installed to fulfill environment spec
     """
-
-    __metaclass__ = abc.ABCMeta
 
     # Default to being able to handle directories
     HANDLES_DIRS = True
@@ -299,7 +297,7 @@ class DistributionTracer(object):
 
     @abc.abstractmethod
     def identify_distributions(self, files):
-        raise NotImplementedError()
+        return
 
     # This one assumes that distribution works with "packages"
     # TODO: we might want to create a more specialized sub-class for that purpose
@@ -389,11 +387,11 @@ class DistributionTracer(object):
         to actually create packages while grouping into packages
         (having identical returned packagefield values)
         """
-        raise NotImplementedError
+        return
 
     @abc.abstractmethod
     def _create_package(self, **package_fields):
         """Creates implementation-specific Package object using fields
         provided by _get_packagefields_for_files
         """
-        raise NotImplementedError
+        return
