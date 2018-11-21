@@ -202,7 +202,7 @@ class DataladOrchestrator(Orchestrator):
         from datalad.api import Dataset
         self.ds = Dataset(".")
         if not self.ds.id:
-            raise ValueError("orchestrator {} require a local dataset"
+            raise ValueError("orchestrator {} requires a local dataset"
                              .format(self.name))
 
     @property
