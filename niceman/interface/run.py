@@ -214,7 +214,8 @@ class Run(Interface):
             # TODO: We could just set this as the default for the Parameter,
             # but it probably makes sense to have the default configurable per
             # resource.
-            spec["orchestrator"] = "datalad-pair"
+            lgr.debug("No orchestrator specified; setting to 'plain'")
+            spec["orchestrator"] = "plain"
         orchestrator_class = ORCHESTRATORS[spec["orchestrator"]]
         orc = orchestrator_class(resource, spec.get("submitter"), spec)
 
