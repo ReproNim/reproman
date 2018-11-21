@@ -14,7 +14,9 @@ import pytest
 
 from niceman.utils import chpwd
 from niceman.resource.shell import Shell
+from niceman.support.exceptions import MissingExternalDependency
 from niceman.support.exceptions import OrchestratorError
+from niceman.support.external_versions import external_versions
 from niceman.support.jobs import orchestrators as orcs
 from niceman.tests.utils import create_tree
 
@@ -60,6 +62,20 @@ def test_orc_plain(tmpdir, shell):
 
         orc.fetch()
         assert open("out").read() == "content\nmore\n"
+
+
+@pytest.mark.skipif(external_versions["datalad"], reason="DataLad found")
+def test_orc_no_datalad(tmpdir, shell):
+    with chpwd(str(tmpdir)):
+        with pytest.raises(MissingExternalDependency):
+            orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
+
+
+def test_orc_no_dataset(tmpdir, shell):
+    pytest.importorskip("datalad")
+    with chpwd(str(tmpdir)):
+        with pytest.raises(OrchestratorError):
+            orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
 @pytest.mark.parametrize("run_type", ["local", "pair"])
