@@ -210,13 +210,13 @@ class Run(Interface):
                 raise ValueError("No resource specified")
         resource = get_manager().get_resource(resref, resref_type)
 
-        if orchestrator is None:
+        if "orchestrator" not in spec:
             # TODO: We could just set this as the default for the Parameter,
             # but it probably makes sense to have the default configurable per
             # resource.
-            orchestrator = "datalad-pair"
-        orchestrator_class = ORCHESTRATORS[orchestrator]
-        orc = orchestrator_class(resource, submitter, spec)
+            spec["orchestrator"] = "datalad-pair"
+        orchestrator_class = ORCHESTRATORS[spec["orchestrator"]]
+        orc = orchestrator_class(resource, spec.get("submitter"), spec)
 
         if script:
             # TODO: How to deal with submission template?
