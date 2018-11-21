@@ -90,7 +90,7 @@ class DEBPackage(Package):
     install_date = attrib(hash=False)
     files = attrib(default=attr.Factory(list), hash=False)
 
-    _cmp_fields = ('name', 'architecture')
+    _diff_cmp_fields = ('name', 'architecture')
     _diff_fields = ('version',)
     _comparison_fields = ('name', 'architecture', 'version')
 

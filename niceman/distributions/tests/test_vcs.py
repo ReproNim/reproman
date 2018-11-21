@@ -118,7 +118,7 @@ def test_git_repo(git_repo):
         root_hexsha = hexshas.strip('\n').split('\n')[-1]
         repo = dists[0][0].packages[0]
         assert repo.root_hexsha == root_hexsha
-        assert repo._cmp_id == (repo.root_hexsha, )
+        assert repo._diff_cmp_id == (repo.root_hexsha, )
         assert repo.commit == repo.hexsha
 
         # Above we identify a subdirectory file, but we should not
@@ -458,7 +458,7 @@ def test_svn(svn_repo):
     assert svn_repo.uuid == uuid
     assert svn_repo.root_url == 'file://' + svn_repo_root
     assert svn_repo.revision == 1
-    assert svn_repo._cmp_id == (svn_repo.uuid, )
+    assert svn_repo._diff_cmp_id == (svn_repo.uuid, )
     assert svn_repo.commit == svn_repo.revision
 
 

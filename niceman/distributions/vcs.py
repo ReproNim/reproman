@@ -108,7 +108,7 @@ class GitRepo(VCSRepo):
     tracked_remote = attrib()
     remotes = attrib(default=attr.Factory(dict))
 
-    _cmp_fields = ('root_hexsha',)
+    _diff_cmp_fields = ('root_hexsha',)
     _diff_fields = ('hexsha', 'branch')
     _commit_attribute = 'hexsha'
 
@@ -286,7 +286,7 @@ class SVNRepo(VCSRepo):
     relative_url = attrib()
     uuid = attrib()
 
-    _cmp_fields = ('uuid',)
+    _diff_cmp_fields = ('uuid',)
     _diff_fields = ('revision',)
     _commit_attribute = 'revision'
 

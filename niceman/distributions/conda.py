@@ -104,7 +104,7 @@ class CondaPackage(Package):
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))
 
-    _cmp_fields = ('name', 'build')
+    _diff_cmp_fields = ('name', 'build')
     _diff_fields = ('version', )
 
 

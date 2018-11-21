@@ -46,25 +46,25 @@ class SpecObject(object):
 
     # Fields used to establish the "identity" of the specobject for the 
     # purposes of diff
-    _cmp_fields = tuple()
+    _diff_cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
     # Fields used in determination of comparison (satisfied_by and identical_to)
     _comparison_fields = tuple()
 
     @property
-    def _cmp_id(self):
-        if not self._cmp_fields:
+    def _diff_cmp_id(self):
+        if not self._diff_cmp_fields:
             # Might need to be gone or some custom exception
             raise RuntimeError(
-                "Cannot establish identity of %r since _cmp_fields "
+                "Cannot establish identity of %r since _diff_cmp_fields "
                 "are not defined" % self)
-        return tuple(getattr(self, a) for a in self._cmp_fields)
+        return tuple(getattr(self, a) for a in self._diff_cmp_fields)
 
     @property
     def _diff_vals(self):
         """gives the values of the attributes defined by _diff_fields (like 
-        _cmp_id for _cmp_fields)
+        _diff_cmp_id for _diff_cmp_fields)
         """
         return tuple(str(getattr(self, a)) for a in self._diff_fields)
 
@@ -77,12 +77,12 @@ class SpecObject(object):
         a VCS repository identified by an opaque string, we can include 
         the path of the repository)
         """
-        return " ".join(str(el) for el in self._cmp_id)
+        return " ".join(str(el) for el in self._diff_cmp_id)
 
     @property
     def subidentity_string(self):
         """like identity_string, but to distinguish objects that have 
-        matching _cmp_fields
+        matching _diff_cmp_fields
         """
         return " ".join(str(el) for el in self._diff_vals)
 

@@ -79,12 +79,12 @@ class Diff(Interface):
 
             dist_1 = env_1.get_distribution(dist_type)
             if dist_1:
-                pkgs_1 = {p._cmp_id: p for p in dist_1.packages}
+                pkgs_1 = {p._diff_cmp_id: p for p in dist_1.packages}
             else:
                 pkgs_1 = {}
             dist_2 = env_2.get_distribution(dist_type)
             if dist_2:
-                pkgs_2 = {p._cmp_id: p for p in dist_2.packages}
+                pkgs_2 = {p._diff_cmp_id: p for p in dist_2.packages}
             else:
                 pkgs_2 = {}
 
