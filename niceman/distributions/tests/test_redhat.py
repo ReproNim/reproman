@@ -220,3 +220,21 @@ def test_distribution(docker_container, centos_spec):
         assert "Installing fido-1.1.2-1.el7.x86_64" in log.lines
         assert "Running command ['yum', 'install', '-y', 'fido-1.1.2-1.el7.x86_64']" \
             in log.lines
+
+
+def test_package_is_identical_to(setup_packages):
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    assert p1.compare(p1, mode='identical_to')
+    assert p1v10.compare(p1v10, mode='identical_to')
+    assert p1v11.compare(p1v11, mode='identical_to')
+    assert p1ai.compare(p1ai, mode='identical_to')
+    assert p1aa.compare(p1aa, mode='identical_to')
+    assert p1v11ai.compare(p1v11ai, mode='identical_to')
+    assert p2.compare(p2, mode='identical_to')
+    assert not p1.compare(p2, mode='identical_to')
+    assert not p1.compare(p1v10, mode='identical_to')
+    assert not p1v10.compare(p1v11, mode='identical_to')
+    assert not p1.compare(p1ai, mode='identical_to')
+    assert not p1.compare(p1aa, mode='identical_to')
+    assert not p1ai.compare(p1aa, mode='identical_to')
+    assert not p1.compare(p1v11ai, mode='identical_to')

@@ -114,6 +114,8 @@ class SpecObject(object):
     def compare(self, other, mode):
         if mode == 'satisfied_by':
             return self._satisfied_by(other)
+        if mode == 'identical_to':
+            return self._identical_to(other)
         raise ValueError('bad value for mode')
 
 
@@ -153,6 +155,20 @@ class SpecObject(object):
             if self_value is None:
                 continue
             if self_value != other_value:
+                return False
+        return True
+
+
+    def _identical_to(self, other):
+        """Determine if the other object is identical to the spec object.
+
+        We require that the objects are of the same type and that the 
+        values of the attributes given by _comparison_fields are the same.
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        for attr_name in self._comparison_fields:
+            if getattr(self, attr_name) != getattr(other, attr_name):
                 return False
         return True
 
