@@ -422,7 +422,7 @@ class DataladPairOrchestrator(
     name = "datalad-pair"
 
 
-class DataladRunPairOrchestrator(
+class DataladPairRunOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
     """Execute command in remote dataset sibling and capture results locally as
     run record.
@@ -443,7 +443,7 @@ ORCHESTRATORS = collections.OrderedDict(
     (o.name, o) for o in [
         PlainOrchestrator,
         DataladPairOrchestrator,
-        DataladRunPairOrchestrator,
+        DataladPairRunOrchestrator,
         DataladLocalRunOrchestrator,
     ]
 )
