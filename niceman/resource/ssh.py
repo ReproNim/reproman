@@ -67,16 +67,9 @@ class SSH(Resource):
             }
         )
 
-        if self.port:
-            port = self.port
-        else:
-            port = 22
-        lgr.debug("Connecting to remote at {}@{}:{}".format(self.user,
-            self.host, port))
-        if self.key_filename:
-            lgr.debug("Using SSH keyfile {}".format(self.key_filename))
-        elif password:
-            lgr.debug("Using provided password for SSH authentication")
+        lgr.debug("SSH connecting to {}@{}:{} using authentication {}".format(
+            self.user, self.host, self.port or 22, self.key_filename or
+            'password'))
 
         self._connection.open()
 
