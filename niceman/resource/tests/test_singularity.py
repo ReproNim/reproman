@@ -12,6 +12,7 @@
 # are tested in test_session.test_session_abstract_methods()
 
 import os
+import pytest
 import tempfile
 
 import logging
@@ -61,12 +62,12 @@ def test_singularity_resource_class():
         assert info['image'].endswith('.simg')
 
         # Test starting an instance.
-        resource.start()
-        assert_in('Singularity does not provide a start feature.', log.lines)
+        with pytest.raises(NotImplementedError):
+            resource.start()
 
         # Test stopping an instance.
-        resource.stop()
-        assert_in('Singularity does not provide a stop feature.', log.lines)
+        with pytest.raises(NotImplementedError):
+            resource.stop()
 
         # Test getting a resource session.
         session = resource.get_session()

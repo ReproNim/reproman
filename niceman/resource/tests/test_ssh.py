@@ -10,6 +10,7 @@
 
 import logging
 import os
+import pytest
 import re
 import six
 import uuid
@@ -122,8 +123,10 @@ def test_ssh_resource(setup_ssh):
     resource = ResourceManager.factory(config)
     resource.connect(password='root')
 
-    assert resource.start() is None
-    assert resource.stop() is None
+    with pytest.raises(NotImplementedError):
+        resource.start()
+    with pytest.raises(NotImplementedError):
+        resource.stop()
 
     resource.delete()
     assert resource._connection is None
