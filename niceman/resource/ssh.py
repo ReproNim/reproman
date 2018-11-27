@@ -67,9 +67,9 @@ class SSH(Resource):
             }
         )
 
-        lgr.debug("SSH connecting to {}@{}:{} using authentication {}".format(
-            self.user, self.host, self.port or 22, self.key_filename or
-            'password'))
+        lgr.debug("SSH connecting to %s@%s:%s using authentication %s",
+                  self.user, self.host, self.port or 22,
+                  self.key_filename or 'password')
 
         self._connection.open()
 
