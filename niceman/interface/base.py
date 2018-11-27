@@ -289,3 +289,8 @@ class Interface(object):
         except KeyboardInterrupt:
             ui.error("\nInterrupted by user while doing magic")
             sys.exit(1)
+
+class InterfaceReturn:
+
+    def __init__(self, status=0):
+        self.status = status
