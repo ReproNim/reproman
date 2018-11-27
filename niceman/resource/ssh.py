@@ -67,9 +67,17 @@ class SSH(Resource):
             }
         )
 
-        lgr.debug("SSH connecting to %s@%s:%s using authentication %s",
-                  self.user, self.host, self.port or 22,
-                  self.key_filename or 'password')
+        if self.key_filename:
+            auth = self.key_filename
+        elif password is None:
+            auth = "SSH config"
+        else:
+            auth = "password"
+
+        lgr.debug("SSH connecting to %s@%s:%s, authenticating with %s",
+                  self._connection.user, self._connection.host,
+                  self._connection.port,  # Fabric defaults to 22.
+                  auth)
 
         self._connection.open()
 
