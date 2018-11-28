@@ -71,63 +71,77 @@ class Diff(Interface):
 
         status = 0
 
-        # pkg here could be a package or a repository
-        for (dist_type, pkg_type) in (
-                (DebianDistribution, "Debian package"),
-                (CondaDistribution, "Conda package"),
-                (GitDistribution, 'Git repository'),
-                (SVNDistribution, 'SVN repository')
-        ):
+        # distribution type -> package type string
+        supported_distributions = {
+            DebianDistribution: 'Debian package', 
+            CondaDistribution: 'Conda package', 
+            GitDistribution: 'Git repository',
+            SVNDistribution: 'SVN repository'
+        }
 
-            dist_1 = env_1.get_distribution(dist_type)
-            if dist_1:
-                pkgs_1 = {p._diff_cmp_id: p for p in dist_1.packages}
+        env_1_dist_types = { d.__class__ for d in env_1.distributions }
+        env_2_dist_types = { d.__class__ for d in env_2.distributions }
+        all_dist_types = env_1_dist_types.union(env_2_dist_types)
+
+        for dist_type in all_dist_types:
+
+            if dist_type not in supported_distributions:
+
+                pass
+
             else:
-                pkgs_1 = {}
-            dist_2 = env_2.get_distribution(dist_type)
-            if dist_2:
-                pkgs_2 = {p._diff_cmp_id: p for p in dist_2.packages}
-            else:
-                pkgs_2 = {}
 
-            pkgs_1_s = set(pkgs_1)
-            pkgs_2_s = set(pkgs_2)
-    
-            pkgs_only_1 = pkgs_1_s - pkgs_2_s
-            pkgs_only_2 = pkgs_2_s - pkgs_1_s
+                pkg_type = supported_distributions[dist_type]
 
-            if pkgs_only_1 or pkgs_only_2:
-                print(_make_plural(pkg_type) + ':')
+                dist_1 = env_1.get_distribution(dist_type)
+                if dist_1:
+                    pkgs_1 = {p._diff_cmp_id: p for p in dist_1.packages}
+                else:
+                    pkgs_1 = {}
+                dist_2 = env_2.get_distribution(dist_type)
+                if dist_2:
+                    pkgs_2 = {p._diff_cmp_id: p for p in dist_2.packages}
+                else:
+                    pkgs_2 = {}
 
-            if pkgs_only_1:
-                for cmp_key in sorted(pkgs_only_1):
-                    package = pkgs_1[cmp_key]
-                    print('< %s' % package.diff_identity_string)
-                    status = 3
-            if pkgs_only_2 and pkgs_only_2:
-                print('---')
-            if pkgs_only_2:
-                for cmp_key in sorted(pkgs_only_2):
-                    package = pkgs_2[cmp_key]
-                    print('> %s' % package.diff_identity_string)
-                    status = 3
-    
-            for cmp_key in pkgs_1_s.intersection(pkgs_2_s):
-                package_1 = pkgs_1[cmp_key]
-                package_2 = pkgs_2[cmp_key]
-                if package_1._diff_vals != package_2._diff_vals:
-                    print('%s %s:' % (pkg_type, " ".join(cmp_key)))
-                    print('< %s' % package_1.diff_subidentity_string)
+                pkgs_1_s = set(pkgs_1)
+                pkgs_2_s = set(pkgs_2)
+
+                pkgs_only_1 = pkgs_1_s - pkgs_2_s
+                pkgs_only_2 = pkgs_2_s - pkgs_1_s
+
+                if pkgs_only_1 or pkgs_only_2:
+                    print(_make_plural(pkg_type) + ':')
+
+                if pkgs_only_1:
+                    for cmp_key in sorted(pkgs_only_1):
+                        package = pkgs_1[cmp_key]
+                        print('< %s' % package.diff_identity_string)
+                        status = 3
+                if pkgs_only_2 and pkgs_only_2:
                     print('---')
-                    print('> %s' % package_2.diff_subidentity_string)
+                if pkgs_only_2:
+                    for cmp_key in sorted(pkgs_only_2):
+                        package = pkgs_2[cmp_key]
+                        print('> %s' % package.diff_identity_string)
                     status = 3
+
+                for cmp_key in pkgs_1_s.intersection(pkgs_2_s):
+                    package_1 = pkgs_1[cmp_key]
+                    package_2 = pkgs_2[cmp_key]
+                    if package_1._diff_vals != package_2._diff_vals:
+                        print('%s %s:' % (pkg_type, " ".join(cmp_key)))
+                        print('< %s' % package_1.diff_subidentity_string)
+                        print('---')
+                        print('> %s' % package_2.diff_subidentity_string)
+                        status = 3
 
         files1 = set(env_1.files)
         files2 = set(env_2.files)
-    
+
         files_1_only = files1 - files2
         files_2_only = files2 - files1
-    
+
         if files_1_only or files_2_only:
             print('Files:')
             for fname in files_1_only:
