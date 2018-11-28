@@ -267,9 +267,7 @@ def main(args=None):
             # print('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
             sys.exit(1)
-    if ret:
-        if hasattr(cmdlineargs, 'result_renderer'):
-            cmdlineargs.result_renderer(ret)
-        return ret.status
+    if hasattr(cmdlineargs, 'result_renderer'):
+        return cmdlineargs.result_renderer(ret)
 
 lgr.log(5, "Done importing cmdline.main")
