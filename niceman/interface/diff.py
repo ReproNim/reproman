@@ -69,6 +69,8 @@ class Diff(Interface):
         env_1 = NicemanProvenance(prov1).get_environment()
         env_2 = NicemanProvenance(prov2).get_environment()
 
+        status = 0
+
         # pkg here could be a package or a repository
         for (dist_type, pkg_type) in (
                 (DebianDistribution, "Debian package"),
@@ -101,12 +103,14 @@ class Diff(Interface):
                 for cmp_key in sorted(pkgs_only_1):
                     package = pkgs_1[cmp_key]
                     print('< %s' % package.diff_identity_string)
+                    status = 3
             if pkgs_only_2 and pkgs_only_2:
                 print('---')
             if pkgs_only_2:
                 for cmp_key in sorted(pkgs_only_2):
                     package = pkgs_2[cmp_key]
                     print('> %s' % package.diff_identity_string)
+                    status = 3
     
             for cmp_key in pkgs_1_s.intersection(pkgs_2_s):
                 package_1 = pkgs_1[cmp_key]
@@ -116,6 +120,7 @@ class Diff(Interface):
                     print('< %s' % package_1.diff_subidentity_string)
                     print('---')
                     print('> %s' % package_2.diff_subidentity_string)
+                    status = 3
 
         files1 = set(env_1.files)
         files2 = set(env_2.files)
@@ -131,5 +136,10 @@ class Diff(Interface):
                 print('---')
             for fname in files_2_only:
                 print('> %s' % fname)
+            status = 3
 
-        return
+        return {'status': status}
+
+    @staticmethod
+    def result_renderer_cmdline(result):
+        return result['status']

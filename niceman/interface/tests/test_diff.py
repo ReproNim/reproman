@@ -38,7 +38,8 @@ def test_multi_debian_files():
 def test_same():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_1_yaml]
-        main(args)
+        rv = main(args)
+        assert_equal(rv, 0)
         assert_equal(outputs.out, '')
         assert_equal(outputs.err, '')
 
@@ -46,7 +47,8 @@ def test_same():
 def test_diff_files():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_2_yaml]
-        main(args)
+        rv = main(args)
+        assert_equal(rv, 3)
         assert_equal(outputs.err, '')
         assert_in('Files:', outputs.out)
         assert_in('< /etc/a', outputs.out)
@@ -58,7 +60,8 @@ def test_diff_files():
 def test_diff_debian_packages():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_2_yaml]
-        main(args)
+        rv = main(args)
+        assert_equal(rv, 3)
         assert_equal(outputs.err, '')
         assert_in('Debian packages:', outputs.out)
         assert_in('< lib1only x86', outputs.out)
@@ -74,7 +77,8 @@ def test_diff_debian_packages():
 def test_diff_conda_packages():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_2_yaml]
-        main(args)
+        rv = main(args)
+        assert_equal(rv, 3)
         assert_equal(outputs.err, '')
         assert_in('Conda packages:', outputs.out)
         assert_in('< c_lib1only py36_0', outputs.out)
@@ -93,7 +97,8 @@ def test_diff_conda_packages():
 def test_diff_no_distributions():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, empty_yaml]
-        main(args)
+        rv = main(args)
+        assert_equal(rv, 3)
         assert_equal(outputs.err, '')
         assert_in('Debian packages:', outputs.out)
         assert_in('< lib1only x86', outputs.out)
@@ -113,7 +118,8 @@ def test_diff_no_distributions():
 def test_diff_git():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_2_yaml]
-        main(args)
+        rv = main(args)
+        assert_equal(rv, 3)
         assert_equal(outputs.err, '')
         assert_in('Git repositories:', outputs.out)
         assert_in('< 43e8e6577c7bf493ddb01ea7d49bef7dc7a6643b (/path/to/git/repo/1/only)', outputs.out)
@@ -130,7 +136,8 @@ def test_diff_git():
 def test_diff_svn():
     with swallow_outputs() as outputs:
         args = ['diff', diff_1_yaml, diff_2_yaml]
-        main(args)
+        rv = main(args)
+        assert_equal(rv, 3)
         assert_equal(outputs.err, '')
         assert_in('SVN repositories:', outputs.out)
         assert_in('< c8ed47ab-45c9-818d-5d62-549dcc6d97d4 (/path/to/svn/repo/1/only)', outputs.out)
