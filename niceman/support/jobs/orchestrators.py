@@ -288,6 +288,23 @@ class PrepareRemoteDataladMixin(object):
             raise OrchestratorError("Remote repository {} is dirty"
                                     .format(self.working_directory))
 
+    def _checkout_target(self):
+        target_commit = self.ds.repo.get_hexsha()
+        self._execute_in_wdir(
+            "git rev-parse --verify {}^{{commit}}".format(target_commit),
+            err_msg=("Target commit wasn't found in remote repository {}"
+                     .format(self.working_directory)))
+
+        head_commit = self._execute_in_wdir(
+            "git rev-parse HEAD",
+            err_msg=("Could not find current commit in remote repository {}"
+                     .format(self.working_directory)))
+
+        if target_commit != head_commit.strip():
+            lgr.info("Checking out %s in remote repository %s",
+                     target_commit, self.working_directory)
+            self._execute_in_wdir("git checkout {}".format(target_commit))
+
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
         """
@@ -310,7 +327,6 @@ class PrepareRemoteDataladMixin(object):
         # depending on the setting of ssh.variant.  For non-standard ports,
         # this relies on the user setting up their ssh config.
 
-        # TODO: Check that we're on the right commit.
         inputs = self.job_spec.get("inputs")
 
         if resource.type == "ssh":
@@ -351,6 +367,7 @@ class PrepareRemoteDataladMixin(object):
                                     .format(resource.type))
 
         self._assert_clean_repo()
+        self._checkout_target()
 
         if not session.exists(self.meta_directory):
             session.mkdir(self.meta_directory, parents=True)
@@ -378,6 +395,7 @@ class FetchDataladPairMixin(object):
         """
         lgr.info("Fetching results for %s", self.jobid)
         if self.resource.type == "ssh":
+            # TODO: This won't work if _checkout_target() checked out a commit.
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
             outputs = self.job_spec.get("outputs")
