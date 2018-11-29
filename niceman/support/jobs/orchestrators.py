@@ -25,6 +25,7 @@ from niceman.utils import cached_property
 from niceman.utils import chpwd
 from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.support.jobs.template import Template
+from niceman.support.exceptions import CommandError
 from niceman.support.exceptions import MissingExternalDependency
 from niceman.support.exceptions import OrchestratorError
 from niceman.support.external_versions import external_versions
@@ -137,6 +138,34 @@ class Orchestrator(object):
         os.chmod(tfh.name, 0o755)
         self.session.put(tfh.name, target)
         os.unlink(tfh.name)
+
+    def _execute_in_wdir(self, command, err_msg=None):
+        """Helper to run command in remote working directory.
+
+        TODO: Adjust (or perhaps remove entirely) once
+        `SSHSession.execute_command` supports the `cwd` argument.
+
+        Parameters
+        ----------
+        command : str
+        err_msg : optional
+            Message to use if an OrchestratorError is raised.
+
+        Returns
+        -------
+        standard output
+
+        Raises
+        ------
+        OrchestratorError if command fails.
+        """
+        prefix = "cd '{}' && ".format(self.working_directory)
+        try:
+            out, _ = self.session.execute_command(prefix + command)
+        except CommandError as exc:
+            raise OrchestratorError(
+                six.text_type(exc) if err_msg is None else err_msg)
+        return out
 
     def submit(self):
         """Submit the job with `submitter`.
