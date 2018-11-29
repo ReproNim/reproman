@@ -343,6 +343,13 @@ class PrepareRemoteDataladMixin(object):
             # TODO: Add one level deeper with reckless clone per job to deal
             # with concurrent jobs?
             if not session.exists(self.working_directory):
+                remotes = self.ds.repo.get_remotes()
+                if resource.name in remotes:
+                    raise OrchestratorError(
+                        "Remote '{}' unexpectedly exists. "
+                        "Either delete remote or rename resource."
+                        .format(resource.name))
+
                 self.ds.create_sibling(sshurl, name=resource.name,
                                        recursive=True)
 
