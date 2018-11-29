@@ -5,5 +5,6 @@
 
 {% include "includes/datalad-add.template.sh" %}
 
-git update-ref refs/niceman/{{ jobid }} HEAD
+{% include "includes/create-ref.template.sh" %}
+
 {% endblock %}
