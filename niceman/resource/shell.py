@@ -137,13 +137,15 @@ class Shell(Resource):
         """
         Start this environment in the backend.
         """
-        return self
+        # Not a shell feature
+        raise NotImplementedError
 
     def stop(self):
         """
         Stop this environment in the backend.
         """
-        return
+        # Not a shell feature
+        raise NotImplementedError
 
     def get_session(self, pty=False, shared=None):
         """
