@@ -283,6 +283,11 @@ class PrepareRemotePlainMixin(object):
 
 class PrepareRemoteDataladMixin(object):
 
+    def _assert_clean_repo(self):
+        if self._execute_in_wdir("git status --porcelain"):
+            raise OrchestratorError("Remote repository {} is dirty"
+                                    .format(self.working_directory))
+
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
         """
@@ -340,6 +345,9 @@ class PrepareRemoteDataladMixin(object):
             # TODO: Handle more types?
             raise OrchestratorError("Unsupported resource type {}"
                                     .format(resource.type))
+
+        self._assert_clean_repo()
+
         if not session.exists(self.meta_directory):
             session.mkdir(self.meta_directory, parents=True)
 
