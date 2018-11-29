@@ -277,6 +277,7 @@ class PrepareRemoteDataladMixin(object):
         # this relies on the user setting up their ssh config.
 
         # TODO: Check that we're on the right commit.
+        inputs = self.job_spec.get("inputs")
 
         if resource.type == "ssh":
             sshurl = "{}{}:{}".format(
@@ -297,14 +298,12 @@ class PrepareRemoteDataladMixin(object):
 
             # Should use --since for existing repo, but it doesn't seem to sync
             # wrt content.
-            self.ds.publish(to=resource.name, path=self.job_spec.get("inputs"),
-                            recursive=True)
+            self.ds.publish(to=resource.name, path=inputs, recursive=True)
         elif resource.type == "shell":
             import datalad.api as dl
             if not session.exists(self.working_directory):
                 dl.install(self.working_directory, source=self.ds.path)
 
-            inputs = self.job_spec.get("inputs")
             if inputs:
                 installed_ds = dl.Dataset(self.working_directory)
                 installed_ds.get(inputs)
