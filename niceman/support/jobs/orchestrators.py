@@ -337,6 +337,10 @@ class PrepareRemoteDataladMixin(object):
             import datalad.api as dl
             if not session.exists(self.working_directory):
                 dl.install(self.working_directory, source=self.ds.path)
+            else:
+                self.session.execute_command(
+                    "git push '{}' HEAD:refs/niceman/head"
+                    .format(self.working_directory))
 
             if inputs:
                 installed_ds = dl.Dataset(self.working_directory)
