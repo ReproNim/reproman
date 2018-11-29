@@ -389,7 +389,7 @@ class FetchDataladPairMixin(object):
             with chpwd(self.ds.path):
                 self.session.execute_command(
                     ["git", "fetch", self.working_directory,
-                     "refs/heads/master:refs/niceman/{}".format(self.jobid)])
+                     "refs/niceman/{0}:refs/niceman/{0}".format(self.jobid)])
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
 
