@@ -123,7 +123,7 @@ def test_trace_docker(docker_container, trace_info):
 @pytest.mark.skipif(os.environ.get('NICEMAN_TESTS_NONETWORK'),
                     reason="No network")
 @pytest.mark.skipif("cmd:apt-cache" in external_versions,
-                    reason="Not apt-cache")
+                    reason="No apt-cache")
 def test_trace_local(trace_info):
     with patch("niceman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",
