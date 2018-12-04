@@ -91,13 +91,15 @@ def show_oneline(job, status=False):
     """
     fmt = "{status}{j[jobid]} on {j[resource_name]} via {j[submitter]}$ {cmd}"
     if status:
-        our_status, their_status = _resurrect_orc(job).status
-        if our_status == their_status:
+        orc = _resurrect_orc(job)
+        orc_status = orc.status
+        _, queried_status = orc.submitter.status
+        if orc_status == queried_status:
             # Drop repeated status (e.g., our and condor's "running").
-            their_status = None
-        stat = "({our_status}{their_status}) ".format(
-            our_status=our_status,
-            their_status=": " + their_status if their_status else "")
+            queried_status = None
+        stat = "[status: {}{}] ".format(
+            orc_status,
+            ", " + queried_status if queried_status else "")
     else:
         stat = ""
     cmd = job["command_str"]
@@ -110,9 +112,11 @@ def show(job, status=False):
     """Display detailed information about `job`.
     """
     if status:
-        our_status, their_status = _resurrect_orc(job).status
-        job["status"] = {"recorded": our_status,
-                         "queried": their_status}
+        orc = _resurrect_orc(job)
+        queried_normalized, queried = orc.submitter.status
+        job["status"] = {"orchestrator": orc.status,
+                         "queried": queried,
+                         "queried_normalized": queried_normalized}
     print(yaml.safe_dump(job))
 
 
@@ -120,13 +124,13 @@ def fetch(job):
     """Fetch `job` locally.
     """
     orc = _resurrect_orc(job)
-    our_status, their_status = orc.submitter.status
-    if our_status == "waiting":
-        lgr.warning("Not fetching incomplete job %s: %s",
-                    job["jobid"], their_status)
-    else:
+    if orc.has_completed:
         orc.fetch()
         LREG.unregister(orc.jobid)
+    else:
+        lgr.warning("Not fetching incomplete job %s [status: %s]",
+                    job["jobid"],
+                    orc.status or "unknown")
 
 
 class Jobs(Interface):

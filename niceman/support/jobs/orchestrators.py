@@ -201,14 +201,28 @@ class Orchestrator(object):
     def status(self):
         """Modify `submitter.status` with information from `status` file.
         """
-        # We might want to instead just keep all of them.
-        our_status, their_status = self.submitter.status
         status_file = op.join(self.meta_directory, "status")
+        status = "unknown"
         if self.session.exists(status_file):
             status = self.session.read(status_file).strip()
-            if status:
-                our_status = status
-        return our_status, their_status
+        return status
+
+    @property
+    def has_completed(self):
+        """Has the run, including post-command processing, completed?
+        """
+        return self.session.exists(
+            op.join(self.meta_directory, "processing-complete"))
+
+    def follow(self):
+        """Follow command, exiting when post-command processing completes."""
+        self.submitter.follow()
+        # We're done according to the submitter. This includes the
+        # post-processing. Make sure it looks like it passed.
+        if not self.has_completed:
+            raise OrchestratorError(
+                "Post-processing failed for {} [status: {}] ({})"
+                .format(self.jobid, self.status, self.working_directory))
 
     @abc.abstractmethod
     def fetch(self):

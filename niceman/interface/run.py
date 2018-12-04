@@ -232,6 +232,6 @@ class Run(Interface):
 
             # TODO: Add support for querying/fetching without follow.
             if follow:
-                orc.submitter.follow()
+                orc.follow()
                 orc.fetch()
                 lreg.unregister(orc.jobid)
