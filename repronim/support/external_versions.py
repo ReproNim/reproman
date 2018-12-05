@@ -15,11 +15,11 @@ from six import binary_type
 
 from distutils.version import LooseVersion
 
-from datalad.dochelpers import exc_str
-from datalad.log import lgr
+from repronim.dochelpers import exc_str
+from repronim.log import lgr
 # import version helper from config to have only one implementation
 # config needs this to avoid circular imports
-from datalad.config import get_git_version as __get_git_version
+from repronim.config import get_git_version as __get_git_version
 from .exceptions import CommandError
 
 __all__ = ['UnknownVersion', 'ExternalVersions', 'external_versions']
