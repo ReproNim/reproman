@@ -29,6 +29,7 @@ import glob
 from functools import wraps
 from time import sleep
 from inspect import getargspec
+from itertools import tee
 from repronim.dochelpers import get_docstring_split
 
 lgr = logging.getLogger("repronim.utils")
@@ -56,7 +57,7 @@ except:  # pragma: no cover
 
 def get_func_kwargs_doc(func):
     """ Provides args for a function
-    
+
     Parameters
     ----------
     func: str
@@ -428,6 +429,63 @@ def assure_dict_from_str(s, **kwargs):
     return out
 
 
+def assure_bytes(s, encoding='utf-8'):
+    """Convert/encode unicode to str (PY2) or bytes (PY3) if of 'text_type'
+
+    Parameters
+    ----------
+    encoding: str, optional
+      Encoding to use.  "utf-8" is the default
+    """
+    if not isinstance(s, text_type):
+        return s
+    return s.encode(encoding)
+
+
+def assure_unicode(s, encoding=None, confidence=None):
+    """Convert/decode to unicode (PY2) or str (PY3) if of 'binary_type'
+
+    Parameters
+    ----------
+    encoding: str, optional
+      Encoding to use.  If None, "utf-8" is tried, and then if not a valid
+      UTF-8, encoding will be guessed
+    confidence: float, optional
+      A value between 0 and 1, so if guessing of encoding is of lower than
+      specified confidence, ValueError is raised
+    """
+    if not isinstance(s, binary_type):
+        return s
+    if encoding is None:
+        # Figure out encoding, defaulting to 'utf-8' which is our common
+        # target in contemporary digital society
+        try:
+            return s.decode('utf-8')
+        except UnicodeDecodeError as exc:
+            from .dochelpers import exc_str
+            lgr.debug("Failed to decode a string as utf-8: %s", exc_str(exc))
+        # And now we could try to guess
+        from chardet import detect
+        enc = detect(s)
+        denc = enc.get('encoding', None)
+        if denc:
+            denc_confidence = enc.get('confidence', 0)
+            if confidence is not None and  denc_confidence < confidence:
+                raise ValueError(
+                    "Failed to auto-detect encoding with high enough "
+                    "confidence. Highest confidence was %s for %s"
+                    % (denc_confidence, denc)
+                )
+            return s.decode(denc)
+        else:
+            raise ValueError(
+                "Could not decode value as utf-8, or to guess its encoding: %s"
+                % repr(s)
+            )
+    else:
+        return s.decode(encoding)
+
+
 def unique(seq, key=None):
     """Given a sequence return a list only with unique elements while maintaining order
 
@@ -454,6 +512,33 @@ def unique(seq, key=None):
         # OPT: could be optimized, since key is called twice, but for our cases
         # should be just as fine
         return [x for x in seq if not (key(x) in seen or seen_add(key(x)))]
+
+
+def partition(items, predicate=bool):
+    """Partition `items` by `predicate`.
+
+    Parameters
+    ----------
+    items : iterable
+    predicate : callable
+        A function that will be mapped over each element in `items`. The
+        elements will partitioned based on whether the return value is false or
+        true.
+
+    Returns
+    -------
+    A tuple with two generators, the first for 'false' items and the second for
+    'true' ones.
+
+    Notes
+    -----
+    Taken from Peter Otten's snippet posted at
+    https://nedbatchelder.com/blog/201306/filter_a_list_into_two_parts.html
+    """
+    a, b = tee((predicate(item), item) for item in items)
+    return ((item for pred, item in a if not pred),
+            (item for pred, item in b if pred))
+
 
 #
 # Decorators
