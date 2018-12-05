@@ -17,7 +17,6 @@ from ...version import __version__
 from ..external_versions import ExternalVersions, LooseVersion
 from ..exceptions import CommandError
 from ..exceptions import OutdatedExternalDependency, MissingExternalDependency
-from ...support.annexrepo import AnnexRepo
 from ...tests.utils import (
     with_tempfile,
     create_tree,
@@ -135,67 +134,9 @@ def test_external_versions_rogue_module(topd):
 
 def test_custom_versions():
     ev = ExternalVersions()
-    assert(ev['cmd:annex'] > '6.20160101')  # annex must be present and recentish
-    assert_equal(set(ev.versions.keys()), {'cmd:annex'})
-    # some older git version don't support files to be passed to
-    # `commit` call under some conditions and this will lead to diverse
-    # errors
-    assert(ev['cmd:git'] > '2.0')  # git must be present and recentish
-    assert(isinstance(ev['cmd:git'], LooseVersion))
-    assert_equal(set(ev.versions.keys()), {'cmd:annex', 'cmd:git'})
-
-    # and there is also a version of system-wide installed git, which might
-    # differ from cmd:git but should be at least good old 1.7
-    assert(ev['cmd:system-git'] > '1.7')
-
     ev.CUSTOM = {'bogus': lambda: 1 / 0}
     assert_equal(ev['bogus'], None)
     assert_equal(set(ev.versions), {'cmd:annex', 'cmd:git', 'cmd:system-git'})
-
-
-def test_ancient_annex():
-
-    class _runner(object):
-        def run(self, cmd):
-            if '--raw' in cmd:
-                raise CommandError
-            return "git-annex version: 0.1", ""
-
-    ev = ExternalVersions()
-    with patch('datalad.support.external_versions._runner', _runner()):
-        assert_equal(ev['cmd:annex'], '0.1')
-
-
-def _test_annex_version_comparison(v, cmp_):
-    class _runner(object):
-        def run(self, cmd):
-            return v, ""
-
-    ev = ExternalVersions()
-    with patch('datalad.support.external_versions._runner', _runner()), \
-         patch('datalad.support.annexrepo.external_versions',
-               ExternalVersions()):
-        ev['cmd:annex'] < AnnexRepo.GIT_ANNEX_MIN_VERSION
-        if cmp_ in (1, 0):
-            AnnexRepo._check_git_annex_version()
-            if cmp_ == 0:
-                assert_equal(AnnexRepo.git_annex_version, v)
-        elif cmp == -1:
-            with assert_raises(OutdatedExternalDependency):
-                ev.check('cmd:annex', min_version=AnnexRepo.GIT_ANNEX_MIN_VERSION)
-            with assert_raises(OutdatedExternalDependency):
-                AnnexRepo._check_git_annex_version()
-
-
-def test_annex_version_comparison():
-    # see https://github.com/datalad/datalad/issues/1128
-    for cmp_, base in [(-1, '6.2011'), (1, "2100.0")]:
-        # there could be differing versions of a version
-        #   release, snapshot, neurodebian build of a snapshot
-        for v in base, base + '-g0a34f08', base + '+gitg9f179ae-1~ndall+1':
-            # they all must be comparable to our specification of min version
-            yield _test_annex_version_comparison, v, cmp_
-    yield _test_annex_version_comparison, str(AnnexRepo.GIT_ANNEX_MIN_VERSION), 0
 
 
 def _test_list_tuple(thing):
@@ -216,22 +157,6 @@ def test_list_tuple():
 
     for v in thing_with_list_version, thing_with_tuple_version, '0.1', (0, 1), [0, 1]:
         yield _test_list_tuple, v
-
-
-def test_system_ssh_version():
-    ev = ExternalVersions()
-    assert ev['cmd:system-ssh']  # usually we have some available at boxes we test
-
-    for s, v in [
-        ('OpenSSH_7.4p1 Debian-6, OpenSSL 1.0.2k  26 Jan 2017', '7.4p1'),
-    ]:
-        ev = ExternalVersions()
-        # TODO: figure out leaner way
-        class _runner(object):
-            def run(self, cmd, expect_fail, expect_stderr):
-                return "", s
-        with patch('datalad.support.external_versions._runner', _runner()):
-            assert_equal(ev['cmd:system-ssh'], v)
 
 
 def test_humanize():
