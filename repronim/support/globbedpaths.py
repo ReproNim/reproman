@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,12 +13,12 @@ import glob
 import logging
 import os.path as op
 
-from datalad.utils import assure_unicode
-from datalad.utils import chpwd
-from datalad.utils import getpwd
-from datalad.utils import partition
+from repronim.utils import assure_unicode
+from repronim.utils import chpwd
+from repronim.utils import getpwd
+from repronim.utils import partition
 
-lgr = logging.getLogger('datalad.support.globbedpaths')
+lgr = logging.getLogger('repronim.support.globbedpaths')
 
 
 class GlobbedPaths(object):

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the datalad package for the
+#   See COPYING file distributed along with the repronim package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,11 +15,11 @@ import logging
 from mock import patch
 import os.path as op
 
-from datalad.support.globbedpaths import GlobbedPaths
-from datalad.tests.utils import assert_in
-from datalad.tests.utils import eq_
-from datalad.tests.utils import swallow_logs
-from datalad.tests.utils import with_tree
+from repronim.support.globbedpaths import GlobbedPaths
+from repronim.tests.utils import assert_in
+from repronim.tests.utils import eq_
+from repronim.tests.utils import swallow_logs
+from repronim.tests.utils import with_tree
 
 
 def test_globbedpaths_get_sub_patterns():
