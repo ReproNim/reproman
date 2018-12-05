@@ -96,21 +96,9 @@ class ExternalVersions(object):
     }
     INTERESTING = (
         'appdirs',
-        'boto',
-        'exifread',
-        'git',
-        'gitdb',
         'humanize',
-        'iso8601',
-        'keyring',
-        'keyrings.alt',
-        'msgpack',
-        'mutagen',
-        'patool',
         'requests',
-        'scrapy',
         'six',
-        'wrapt',
     )
 
     def __init__(self):
