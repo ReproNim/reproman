@@ -9,6 +9,7 @@
 
 import logging
 import os
+import pytest
 import re
 import tempfile
 from pytest import raises
@@ -139,8 +140,10 @@ def test_shell_resource():
 
     assert type(resource.connect()) == Shell
     assert resource.delete() is None
-    assert type(resource.start()) == Shell
-    assert resource.stop() is None
+    with pytest.raises(NotImplementedError):
+        resource.start()
+    with pytest.raises(NotImplementedError):
+        resource.stop()
     assert type(resource.connect()) == Shell
 
     with raises(NotImplementedError):

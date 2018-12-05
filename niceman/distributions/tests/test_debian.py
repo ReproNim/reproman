@@ -227,8 +227,8 @@ def test_package_satisfies(setup_packages):
     assert p1v11ai.satisfies(p1v11)
 
 @pytest.fixture
-def setup_distributions():
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
+def setup_distributions(setup_packages):
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
     d1 = DebianDistribution(name='debian 1')
     d1.packages = [p1]
     d2 = DebianDistribution(name='debian 2')
@@ -249,8 +249,8 @@ def test_distribution_statisfies(setup_distributions):
     assert not d1.satisfies(d2)
     assert d2.satisfies(d1)
 
-def test_distribution_sub():
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages()
+def test_distribution_sub(setup_packages):
+    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
     d1 = DebianDistribution(name='debian 1')
     d1.packages = [p1, p2]
     d2 = DebianDistribution(name='debian 2')

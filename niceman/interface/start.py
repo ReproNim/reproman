@@ -42,7 +42,7 @@ class Start(Interface):
 
     @staticmethod
     def __call__(resref, resref_type="auto"):
-        resource = get_manager().get_resource(resref, resref_type)
-        resource.start()
+        manager = get_manager()
+        resource = manager.get_resource(resref, resref_type)
         resource.connect()
-        lgr.info("Started the environment %s (%s)", resource.name, resource.id)
+        manager.start(resource)

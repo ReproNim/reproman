@@ -7,14 +7,26 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import logging
+
 from os import linesep
 
+from ... import __version__
+from ...dochelpers import exc_str
 from ...version import __version__
-from ..external_versions import ExternalVersions, StrictVersion
+from ..external_versions import ExternalVersions, LooseVersion
 from ...tests.utils import assert_true, assert_false
 from ...tests.utils import assert_equal, assert_greater_equal, assert_greater
+from ..exceptions import CommandError
+from ..exceptions import OutdatedExternalDependency, MissingExternalDependency
+from ...tests.utils import (
+    with_tempfile,
+    create_tree,
+    swallow_logs,
+)
 
 import pytest
+from mock import patch
 from six import PY3
 
 if PY3:
@@ -35,10 +47,9 @@ def test_external_versions_basic():
     assert_true(our_module in ev)
     assert_false('unknown' in ev)
 
-    # StrictVersion might remove training .0
-    version_str = str(ev[our_module]) \
-        if isinstance(ev[our_module], StrictVersion) \
-        else __version__
+    # all are LooseVersions now
+    assert_true(isinstance(ev[our_module], LooseVersion))
+    version_str = __version__
     assert_equal(ev.dumps(), "Versions: %s=%s" % (our_module, version_str))
 
     # For non-existing one we get None
@@ -70,6 +81,12 @@ def test_external_versions_basic():
     assert_equal(ev[our_module], __version__)
 
 
+def test_external_version_contains():
+    ev = ExternalVersions()
+    assert_true("niceman" in ev)
+    assert_false("does not exist" in ev)
+
+
 def test_external_versions_unknown():
     assert_equal(str(ExternalVersions.UNKNOWN), 'UNKNOWN')
 
@@ -90,20 +107,68 @@ def test_external_versions_popular_packages(modname):
     except ImportError:
         pytest.skip("External %s not present" % modname)
     except Exception as e:
-        pytest.skip("External %s fails to import: %s" % (modname, e))
+        pytest.skip("External %s fails to import: %s" % (modname, exc_str(e)))
     assert (ev[modname] is not ev.UNKNOWN)
     assert_greater(ev[modname], '0.0.1')
     assert_greater('1000000.0', ev[modname])  # unlikely in our lifetimes
 
 
+def test_external_versions_rogue_module(tmpdir):
+    topd = str(tmpdir)
+    ev = ExternalVersions()
+    # if module throws some other non-ImportError exception upon import
+    # we must not crash, but issue a warning
+    modname = 'verycustomrogue__'
+    create_tree(topd, {modname + '.py': 'raise Exception("pickaboo")'})
+    with patch('sys.path', [topd]), \
+        swallow_logs(new_level=logging.WARNING) as cml:
+        assert ev[modname] is None
+        assert_true(ev.dumps(indent=True).endswith(linesep))
+        assert 'pickaboo' in cml.out
+
+
 def test_custom_versions():
     ev = ExternalVersions()
-    # assert(ev['cmd:annex'] > '6.20160101')  # annex must be present and recentish
-    # assert_equal(set(ev.versions.keys()), {'cmd:annex'})
-    # assert(ev['cmd:git'] > '1.7')  # git must be present and recentish
-    # assert_equal(set(ev.versions.keys()), {'cmd:annex', 'cmd:git'})
-    # assert (ev['cmd:apt-cache'] > '1.1') # apt-cache must be present and recentish
-
-    ev.CUSTOM = {'bogus': lambda: 1/0}
+    ev.CUSTOM = {'bogus': lambda: 1 / 0}
     assert_equal(ev['bogus'], None)
-    # assert_equal(set(ev.versions.keys()), {'cmd:annex', 'cmd:git'})
+
+
+class thing_with_tuple_version:
+    __version__ = (0, 1)
+
+
+class thing_with_list_version:
+    __version__ = [0, 1]
+
+
+@pytest.mark.parametrize("thing",
+                         [thing_with_tuple_version, thing_with_list_version,
+                          '0.1', (0, 1), [0, 1]])
+def test_list_tuple(thing):
+    version = ExternalVersions._deduce_version(thing)
+    assert_greater(version, '0.0.1')
+    assert_greater('0.2', version)
+    assert_equal('0.1', version)
+    assert_equal(version, '0.1')
+
+
+def test_humanize():
+    # doesn't provide __version__
+    assert ExternalVersions()['humanize']
+
+
+def test_check():
+    ev = ExternalVersions()
+    # should be all good
+    ev.check('niceman')
+    ev.check('niceman', min_version=__version__)
+
+    with pytest.raises(MissingExternalDependency):
+        ev.check('dataladkukaracha')
+    with pytest.raises(MissingExternalDependency) as cme:
+        ev.check('dataladkukaracha', min_version="buga", msg="duga")
+
+    assert "duga" in str(cme.value)
+
+    with pytest.raises(OutdatedExternalDependency):
+        ev.check('niceman', min_version="10000000")  # we will never get there!

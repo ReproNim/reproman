@@ -1,4 +1,5 @@
 # emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -17,6 +18,7 @@ import sys
 import logging
 from mock import patch
 from six import PY3
+from six import text_type
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename
@@ -37,8 +39,10 @@ from ..utils import cached_property
 from ..utils import not_supported_on_windows
 from ..utils import file_basename
 from ..utils import expandpath, is_explicit_path
+from ..utils import assure_unicode
 from ..utils import any_re_search
 from ..utils import unique
+from ..utils import partition
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
@@ -381,6 +385,21 @@ def test_unique():
     eq_(unique([(1, 2), (1, 3), (1, 2), (0, 3)], key=itemgetter(1)), [(1, 2), (1, 3)])
 
 
+def test_partition():
+    def fn(*args, **kwargs):
+        left, right = partition(*args, **kwargs)
+        return list(left), list(right)
+
+    eq_(fn([False, True, False]),
+        ([False, False], [True]))
+
+    eq_(fn([1, 5, 4, 10], lambda x: x > 4),
+        ([1, 4], [5, 10]))
+
+    eq_(fn([1, 5, 4, 10], lambda x: x < 0),
+        ([1, 5, 4, 10], []))
+
+
 def test_path_():
     eq_(_path_('a'), 'a')
     if on_windows:
@@ -388,6 +407,31 @@ def test_path_():
     else:
         p = 'a/b/c'
         assert(_path_(p) is p)  # nothing is done to it whatsoever
+
+
+def test_assure_unicode():
+    ok_(isinstance(assure_unicode("m"), text_type))
+    ok_(isinstance(assure_unicode('grandchild_äöü東'), text_type))
+    ok_(isinstance(assure_unicode(u'grandchild_äöü東'), text_type))
+    eq_(assure_unicode('grandchild_äöü東'), u'grandchild_äöü東')
+    # now, non-utf8
+    # Decoding could be deduced with high confidence when the string is
+    # really encoded in that codepage
+    mom_koi8r = u"мама".encode('koi8-r')
+    eq_(assure_unicode(mom_koi8r), u"мама")
+    eq_(assure_unicode(mom_koi8r, confidence=0.9), u"мама")
+    mom_iso8859 = u'mamá'.encode('iso-8859-1')
+    eq_(assure_unicode(mom_iso8859), u'mamá')
+    eq_(assure_unicode(mom_iso8859, confidence=0.5), u'mamá')
+    # but when we mix, it does still guess something allowing to decode:
+    mixedin = mom_koi8r + u'東'.encode('iso2022_jp') + u'東'.encode('utf-8')
+    ok_(isinstance(assure_unicode(mixedin), text_type))
+    # but should fail if we request high confidence result:
+    with assert_raises(ValueError):
+        assure_unicode(mixedin, confidence=0.9)
+    # For other, non string values, actually just returns original value
+    # TODO: RF to actually "assure" or fail??  For now hardcoding that assumption
+    assert assure_unicode(1) is 1
 
 
 def test_unicode_and_binary_conversion():

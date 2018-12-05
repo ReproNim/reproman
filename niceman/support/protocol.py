@@ -9,14 +9,17 @@
 """ Protocolling  command calls.
 """
 
-from abc import ABCMeta, abstractmethod, abstractproperty
+import abc
 from os import linesep
 import logging
 import time
 
+from six import add_metaclass
+
 lgr = logging.getLogger('niceman.protocol')
 
 
+@add_metaclass(abc.ABCMeta)
 class ProtocolInterface(object):
     """Interface class for protocols used by the Runner.
 
@@ -26,8 +29,6 @@ class ProtocolInterface(object):
 
     ProtocolInterface is iterable as a list of sections.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         self._sections = []
@@ -51,7 +52,7 @@ class ProtocolInterface(object):
 
         return protocol_str
 
-    @abstractmethod
+    @abc.abstractmethod
     def start_section(self, cmd):
         """Starts a new section of the protocol.
 
@@ -69,9 +70,9 @@ class ProtocolInterface(object):
           An id of the started section to be used as argument of the
           corresponding call of end_section().
         """
-        raise NotImplementedError
+        return
 
-    @abstractmethod
+    @abc.abstractmethod
     def end_section(self, id_, exception):
         """Ends the section `id`.
 
@@ -89,9 +90,9 @@ class ProtocolInterface(object):
         IndexError
           in case `id` is invalid.
         """
-        raise NotImplementedError
+        return
 
-    @abstractmethod
+    @abc.abstractmethod
     def add_section(self, cmd, exception):
         """Adds a section to the protocol.
 
@@ -105,9 +106,9 @@ class ProtocolInterface(object):
         exception: Exception
           The exception raised by the command if any or None otherwise.
         """
-        raise NotImplementedError
+        return
 
-    @abstractproperty
+    @abc.abstractproperty
     def records_ext_commands(self):
         """Indicates whether or not the protocol is supposed to include
         external command calls.
@@ -116,9 +117,9 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
-    @abstractproperty
+    @abc.abstractproperty
     def records_callables(self):
         """Indicates whether or not the protocol is supposed to include
         calls of python callables.
@@ -127,9 +128,9 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
-    @abstractproperty
+    @abc.abstractproperty
     def do_execute_ext_commands(self):
         """Indicates whether or not the called commands are
         supposed to actually be executed.
@@ -138,9 +139,9 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
-    @abstractproperty
+    @abc.abstractproperty
     def do_execute_callables(self):
         """Indicates whether or not the callables are supposed to actually
         be executed.
@@ -149,7 +150,7 @@ class ProtocolInterface(object):
         -------
         bool
         """
-        raise NotImplementedError
+        return
 
     def write_to_file(self, file_):
         """Writes the protocol to file.

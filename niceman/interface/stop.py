@@ -48,6 +48,7 @@ class Stop(Interface):
 
     @staticmethod
     def __call__(resref, resref_type="auto"):
-        resource = get_manager().get_resource(resref, resref_type)
-        resource.stop()
-        lgr.info("Stopped the environment %s", resource.name)
+        manager = get_manager()
+        resource = manager.get_resource(resref, resref_type)
+        resource.connect()
+        manager.stop(resource)
