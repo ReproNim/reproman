@@ -17,9 +17,6 @@ from distutils.version import LooseVersion
 
 from repronim.dochelpers import exc_str
 from repronim.log import lgr
-# import version helper from config to have only one implementation
-# config needs this to avoid circular imports
-from repronim.config import get_git_version as __get_git_version
 from .exceptions import CommandError
 
 __all__ = ['UnknownVersion', 'ExternalVersions', 'external_versions']
@@ -43,44 +40,25 @@ class UnknownVersion:
 # Custom handlers
 #
 from repronim.cmd import Runner
-from repronim.cmd import GitRunner
 from repronim.support.exceptions import (
     MissingExternalDependency,
     OutdatedExternalDependency,
 )
 _runner = Runner()
-_git_runner = GitRunner()
 
 
 def _get_annex_version():
     """Return version of available git-annex"""
-    try:
-        return _runner.run('git annex version --raw'.split())[0]
-    except CommandError:
-        # fall back on method that could work with older installations
-        out, err = _runner.run(['git', 'annex', 'version'])
-        return out.split('\n')[0].split(':')[1].strip()
+    return _runner.run('git annex version --raw'.split())[0]
 
 
 def _get_git_version():
-    """Return version of git we use (might be bundled)"""
-    return __get_git_version(_git_runner)
-
-
-def _get_system_git_version():
-    """Return version of git available system-wide
-
-    Might be different from the one we are using, which might be
-    bundled with git-annex
-    """
-    return __get_git_version(_runner)
+    """Return version of available git"""
+    return _runner.run('git version'.split())[0].split()[-1]
 
 
 def _get_system_ssh_version():
     """Return version of ssh available system-wide
-
-    Annex prior 20170302 was using bundled version, but now would use system one
-    if installed
     """
     try:
         out, err = _runner.run('ssh -V'.split(),
@@ -114,7 +92,6 @@ class ExternalVersions(object):
     CUSTOM = {
         'cmd:annex': _get_annex_version,
         'cmd:git': _get_git_version,
-        'cmd:system-git': _get_system_git_version,
         'cmd:system-ssh': _get_system_ssh_version,
     }
     INTERESTING = (
