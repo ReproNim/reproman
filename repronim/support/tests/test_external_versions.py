@@ -87,7 +87,7 @@ def test_external_versions_basic():
 
 def test_external_version_contains():
     ev = ExternalVersions()
-    assert_true("datalad" in ev)
+    assert_true("repronim" in ev)
     assert_false("does not exist" in ev)
 
 
@@ -242,8 +242,8 @@ def test_humanize():
 def test_check():
     ev = ExternalVersions()
     # should be all good
-    ev.check('datalad')
-    ev.check('datalad', min_version=__version__)
+    ev.check('repronim')
+    ev.check('repronim', min_version=__version__)
 
     with assert_raises(MissingExternalDependency):
         ev.check('dataladkukaracha')
@@ -253,4 +253,4 @@ def test_check():
     assert_in("duga", str(cme.exception))
 
     with assert_raises(OutdatedExternalDependency):
-        ev.check('datalad', min_version="10000000")  # we will never get there!
+        ev.check('repronim', min_version="10000000")  # we will never get there!
