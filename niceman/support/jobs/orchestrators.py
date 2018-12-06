@@ -212,7 +212,7 @@ class Orchestrator(object):
         """Has the run, including post-command processing, completed?
         """
         return self.session.exists(
-            op.join(self.meta_directory, "processing-complete"))
+            op.join(self.root_directory, "completed", self.jobid))
 
     def follow(self):
         """Follow command, exiting when post-command processing completes."""

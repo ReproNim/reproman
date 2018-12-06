@@ -24,5 +24,5 @@ echo "[NICEMAN] post-command..."
 {% block post_command %}
 {% endblock %}
 
-# TODO: This will break dirty checks for upcoming run calls.
-touch "{{ meta_directory }}/processing-complete"
+mkdir -p "{{ root_directory }}/completed/"
+touch "{{ root_directory }}/completed/{{ jobid }}"
