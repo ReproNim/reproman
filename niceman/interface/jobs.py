@@ -89,19 +89,19 @@ def _resurrect_orc(job):
 def show_oneline(job, status=False):
     """Display `job` as a single summary line.
     """
-    fmt = "{j[jobid]} on {j[resource_name]} via {j[submitter]}$ {cmd}"
-    our_status = their_status = None
+    fmt = "{status}{j[jobid]} on {j[resource_name]} via {j[submitter]}$ {cmd}"
     if status:
         our_status, their_status = _resurrect_orc(job).status
         if our_status == their_status:
             their_status = None  # Drop repeated info.
-        fmt = "({our_status}{their_status}) " + fmt
-
+        stat = "({our_status}{their_status}) ".format(
+            our_status=our_status,
+            their_status=": " + their_status if their_status else "")
+    else:
+        stat = ""
     cmd = job["command_str"]
     print(fmt
-          .format(j=job,
-                  our_status=our_status,
-                  their_status=": " + their_status if their_status else "",
+          .format(status=stat, j=job,
                   cmd=cmd[:47] + "..." if len(cmd) > 50 else cmd))
 
 
