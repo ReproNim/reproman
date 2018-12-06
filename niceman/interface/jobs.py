@@ -93,7 +93,8 @@ def show_oneline(job, status=False):
     if status:
         our_status, their_status = _resurrect_orc(job).status
         if our_status == their_status:
-            their_status = None  # Drop repeated info.
+            # Drop repeated status (e.g., our and condor's "running").
+            their_status = None
         stat = "({our_status}{their_status}) ".format(
             our_status=our_status,
             their_status=": " + their_status if their_status else "")
