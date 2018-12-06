@@ -48,7 +48,7 @@ class Diff(Interface):
     Examples
     --------
 
-      $ niceman diff --env environment.yml --req required_environment.yml
+      $ niceman diff environment1.yml environment2.yml
 
     """
 
