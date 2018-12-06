@@ -456,11 +456,12 @@ class FetchDataladRunMixin(object):
 
             from datalad.interface.run import run_command
             lgr.info("Creating run commit in %s", self.ds.path)
-            for res in run_command(inputs=self.job_spec.get("inputs"),
-                                   outputs=self.job_spec.get("outputs"),
-                                   inject=True,
-                                   extra_info={"niceman_jobid": self.jobid},
-                                   cmd=self.job_spec["command_str"]):
+            for res in run_command(
+                    inputs=self.job_spec.get("inputs"),
+                    outputs=self.job_spec.get("outputs"),
+                    inject=True,
+                    extra_info={"niceman_jobid": self.jobid},
+                    cmd=self.job_spec["command_str"]):
                 # Oh, if only I were a datalad extension.
                 pass
 
