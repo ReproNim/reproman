@@ -324,6 +324,40 @@ class ResourceManager(object):
         del self.inventory[resource.name]
         self._save()
 
+    def start(self, resource):
+        """Start a `resource` in the inventory.
+
+        Parameters
+        ----------
+        resource : Resource object
+        """
+        try:
+            resource.start()
+        except NotImplementedError:
+            lgr.info("This resource type does not support the 'start' feature")
+            return
+
+        self.inventory[resource.name]['status'] = "running"
+        self._save()
+        lgr.info("Started the environment %s (%s)", resource.name, resource.id)
+
+    def stop(self, resource):
+        """Stop but do not delete a `resource` in the inventory.
+
+        Parameters
+        ----------
+        resource : Resource object
+        """
+        try:
+            resource.stop()
+        except NotImplementedError:
+            lgr.info("This resource type does not support the 'stop' feature")
+            return
+
+        self.inventory[resource.name]['status'] = "stopped"
+        self._save()
+        lgr.info("Stopped the environment %s", resource.name)
+
 
 @add_metaclass(abc.ABCMeta)
 class Resource(object):

@@ -106,10 +106,12 @@ class SSH(Resource):
         return
 
     def start(self):
-        return
+        # Not a SSH feature
+        raise NotImplementedError
 
     def stop(self):
-        return
+        # Not a SSH feature
+        raise NotImplementedError
 
     def get_session(self, pty=False, shared=None):
         """

@@ -114,13 +114,15 @@ class Singularity(Resource):
         """
         Start a stopped container.
         """
-        lgr.info("Singularity does not provide a start feature.")
+        # Not a Singularity feature
+        raise NotImplementedError
 
     def stop(self):
         """
         Stop a running container.
         """
-        lgr.info("Singularity does not provide a stop feature.")
+        # Not a Singularity feature
+        raise NotImplementedError
 
     @borrowdoc(Resource)
     def get_session(self, pty=False, shared=None):
