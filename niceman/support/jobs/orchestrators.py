@@ -231,6 +231,32 @@ class Orchestrator(object):
         pass
 
 
+def _datalad_format_command(ds, spec):
+    """Adjust `spec` to use `datalad run`-style formatting.
+
+    The "inputs", "outputs", and "command_str" keys in `spec` are replaced and
+    the original are moved under the `*_unexpanded` key.
+    """
+    if "command_str_unexpanded" in spec:
+        # Already adjust (most likely orchestrator is being resurrected).
+        return
+    from datalad.interface.run import format_command
+    from datalad.interface.run import GlobbedPaths
+
+    spec["inputs_unexpanded"] = spec["inputs"]
+    spec["outputs_unexpanded"] = spec["outputs"]
+
+    inputs = GlobbedPaths(spec["inputs"])
+    outputs = GlobbedPaths(spec["outputs"])
+    spec["inputs"] = inputs.expand(dot=False)
+    spec["outputs"] = outputs.expand(dot=False)
+
+    cmd_expanded = format_command(
+        ds, spec["command_str"], inputs=inputs, outputs=outputs)
+    spec["command_str_unexpanded"] = spec["command_str"]
+    spec["command_str"] = cmd_expanded
+
+
 @six.add_metaclass(abc.ABCMeta)
 class DataladOrchestrator(Orchestrator):
     """Execute command assuming (at least) a local dataset.
@@ -249,6 +275,8 @@ class DataladOrchestrator(Orchestrator):
         if not self.ds.id:
             raise OrchestratorError("orchestrator {} requires a local dataset"
                                     .format(self.name))
+
+        _datalad_format_command(self.ds, self.job_spec)
 
     @property
     @cached_property
@@ -457,11 +485,11 @@ class FetchDataladRunMixin(object):
             from datalad.interface.run import run_command
             lgr.info("Creating run commit in %s", self.ds.path)
             for res in run_command(
-                    inputs=self.job_spec.get("inputs"),
-                    outputs=self.job_spec.get("outputs"),
+                    inputs=self.job_spec.get("inputs_unexpanded"),
+                    outputs=self.job_spec.get("outputs_unexpanded"),
                     inject=True,
                     extra_info={"niceman_jobid": self.jobid},
-                    cmd=self.job_spec["command_str"]):
+                    cmd=self.job_spec["command_str_unexpanded"]):
                 # Oh, if only I were a datalad extension.
                 pass
 

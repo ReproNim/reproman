@@ -160,13 +160,8 @@ class Run(Interface):
                             ["Orchestrators"] + fmt(ORCHESTRATORS)))
             return
 
-        # TODO: inputs/outputs don't support globs like datalad run does.
-        # We're not a datalad extension and don't even require datalad, so we
-        # can't piggyback off of datalad's interface.  The best option I can
-        # think of is the ugly inclusion of GlobbedPaths (and perhaps other
-        # things) via the third-party branch.  This is just one of the places
-        # where this lack of coupling and focus causes headache.  It's all very
-        # ugly.
+        # TODO: globbing for inputs/outputs and command string formatting is
+        # only supported for DataLad-based orchestrators.
 
         # CLI things that can also be specified in spec.
         cli_spec = {
