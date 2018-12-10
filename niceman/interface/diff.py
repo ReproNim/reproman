@@ -136,6 +136,20 @@ class Diff(Interface):
 
         result = {'method': 'satisfies', 'distributions': []}
 
+        # distribution type -> package type string
+        supported_distributions = {
+            DebianDistribution: 'Debian package'
+        }
+
+        env_1_dist_types = { d.__class__ for d in env_1.distributions }
+        env_2_dist_types = { d.__class__ for d in env_2.distributions }
+        all_dist_types = env_1_dist_types.union(env_2_dist_types)
+
+        for dist_type in all_dist_types:
+            if dist_type not in supported_distributions:
+                msg = 'diff --satisfies doesn\'t know how to handle %s' % str(dist_type)
+                raise ValueError(msg)
+
         return result
 
     @staticmethod

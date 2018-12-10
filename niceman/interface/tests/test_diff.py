@@ -8,6 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from os.path import join as opj, dirname
+import subprocess
 from niceman.cmdline.main import main
 
 from niceman.utils import swallow_outputs, swallow_logs
@@ -20,6 +21,7 @@ diff_1_yaml = opj(dirname(__file__), 'files', 'diff_1.yaml')
 diff_2_yaml = opj(dirname(__file__), 'files', 'diff_2.yaml')
 diff_satisfies_1_yaml = opj(dirname(__file__), 'files', 'diff_satisfies_1.yaml')
 diff_satisfies_2_yaml = opj(dirname(__file__), 'files', 'diff_satisfies_2.yaml')
+diff_satisfies_unsupported_yaml = opj(dirname(__file__), 'files', 'diff_satisfies_unsupported.yaml')
 empty_yaml = opj(dirname(__file__), 'files', 'empty.yaml')
 
 multi_debian_yaml = opj(dirname(__file__), 'files', 'multi_debian.yaml')
@@ -149,6 +151,27 @@ def test_diff_svn():
         assert_in('> 14 (/path/2/to/different/svn/commit)', outputs.out)
         assert_not_in('(/path/1/to/common/svn/repo)', outputs.out)
         assert_not_in('(/path/2/to/common/svn/repo)', outputs.out)
+
+
+def test_diff_satisfies_unsupported_distribution():
+    # using subprocess.call() here because we're looking for a condition 
+    # that raises an exception in main(), so it doesn't return and we 
+    # can't catch its return value
+    with swallow_outputs() as outputs:
+        args = ['niceman', 
+                'diff', 
+                '--satisfies', 
+                diff_satisfies_unsupported_yaml, 
+                diff_satisfies_2_yaml]
+        rv = subprocess.call(args)
+        assert_equal(rv, 1)
+        args = ['niceman', 
+                'diff', 
+                '--satisfies', 
+                diff_satisfies_1_yaml, 
+                diff_satisfies_unsupported_yaml]
+        rv = subprocess.call(args)
+        assert_equal(rv, 1)
 
 
 def test_diff_satisfies():
