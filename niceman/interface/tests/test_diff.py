@@ -181,4 +181,6 @@ def test_diff_satisfies():
                 diff_satisfies_1_yaml, 
                 diff_satisfies_2_yaml]
         rv = main(args)
-        assert_equal(outputs.err, '')
+        assert_equal(rv, 3)
+        assert_in('Unsatisfied files:', outputs.out)
+        assert_in('/etc/c', outputs.out)

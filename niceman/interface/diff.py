@@ -150,6 +150,10 @@ class Diff(Interface):
                 msg = 'diff --satisfies doesn\'t know how to handle %s' % str(dist_type)
                 raise ValueError(msg)
 
+        files1 = set(env_1.files)
+        files2 = set(env_2.files)
+        result['files'] = files2 - files1
+
         return result
 
     @staticmethod
@@ -205,4 +209,13 @@ class Diff(Interface):
 
     @staticmethod
     def render_cmdline_satisfies(result):
-        return 0
+
+        status = 0
+
+        if result['files']:
+            print('Unsatisfied files:')
+            for fname in result['files']:
+                print(fname)
+            status = 3
+
+        return status
