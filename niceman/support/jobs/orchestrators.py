@@ -243,16 +243,19 @@ def _datalad_format_command(ds, spec):
     from datalad.interface.run import format_command
     from datalad.interface.run import GlobbedPaths
 
-    spec["inputs_unexpanded"] = spec["inputs"]
-    spec["outputs_unexpanded"] = spec["outputs"]
+    fmt_kwds = {}
+    if "inputs" in spec:
+        spec["inputs_unexpanded"] = spec["inputs"]
+        inputs = GlobbedPaths(spec["inputs"])
+        spec["inputs"] = inputs.expand(dot=False)
+        fmt_kwds["inputs"] = inputs
+    if "outputs" in spec:
+        spec["outputs_unexpanded"] = spec["outputs"]
+        outputs = GlobbedPaths(spec["outputs"])
+        spec["outputs"] = outputs.expand(dot=False)
+        fmt_kwds["outputs"] = outputs
 
-    inputs = GlobbedPaths(spec["inputs"])
-    outputs = GlobbedPaths(spec["outputs"])
-    spec["inputs"] = inputs.expand(dot=False)
-    spec["outputs"] = outputs.expand(dot=False)
-
-    cmd_expanded = format_command(
-        ds, spec["command_str"], inputs=inputs, outputs=outputs)
+    cmd_expanded = format_command(ds, spec["command_str"], **fmt_kwds)
     spec["command_str_unexpanded"] = spec["command_str"]
     spec["command_str"] = cmd_expanded
 
