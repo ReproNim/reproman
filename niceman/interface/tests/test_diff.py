@@ -18,6 +18,8 @@ from pytest import raises
 
 diff_1_yaml = opj(dirname(__file__), 'files', 'diff_1.yaml')
 diff_2_yaml = opj(dirname(__file__), 'files', 'diff_2.yaml')
+diff_satisfies_1_yaml = opj(dirname(__file__), 'files', 'diff_satisfies_1.yaml')
+diff_satisfies_2_yaml = opj(dirname(__file__), 'files', 'diff_satisfies_2.yaml')
 empty_yaml = opj(dirname(__file__), 'files', 'empty.yaml')
 
 multi_debian_yaml = opj(dirname(__file__), 'files', 'multi_debian.yaml')
@@ -147,3 +149,13 @@ def test_diff_svn():
         assert_in('> 14 (/path/2/to/different/svn/commit)', outputs.out)
         assert_not_in('(/path/1/to/common/svn/repo)', outputs.out)
         assert_not_in('(/path/2/to/common/svn/repo)', outputs.out)
+
+
+def test_diff_satisfies():
+    with swallow_outputs() as outputs:
+        args = ['diff', 
+                '--satisfies', 
+                diff_satisfies_1_yaml, 
+                diff_satisfies_2_yaml]
+        rv = main(args)
+        assert_equal(outputs.err, '')

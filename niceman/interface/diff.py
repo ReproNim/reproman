@@ -60,16 +60,28 @@ class Diff(Interface):
         prov2=Parameter(
             metavar="prov2",
             doc="NICEMAN provenance file", 
-            constraints=EnsureStr())
+            constraints=EnsureStr()), 
+        satisfies=Parameter(
+            args=("--satisfies", "-s"), 
+            doc="Make sure the first environment satisfies the needs of the second environment", 
+            action="store_true")
     )
 
     @staticmethod
-    def __call__(prov1, prov2):
+    def __call__(prov1, prov2, satisfies):
 
         env_1 = NicemanProvenance(prov1).get_environment()
         env_2 = NicemanProvenance(prov2).get_environment()
 
-        result = {'distributions': []}
+        if satisfies:
+            return Diff.satisfies(env_1, env_2)
+
+        return Diff.diff(env_1, env_2)
+
+    @staticmethod
+    def diff(env_1, env_2):
+
+        result = {'method': 'diff', 'distributions': []}
 
         # distribution type -> package type string
         supported_distributions = {
@@ -120,7 +132,21 @@ class Diff(Interface):
         return result
 
     @staticmethod
+    def satisfies(env_1, env_2):
+
+        result = {'method': 'satisfies', 'distributions': []}
+
+        return result
+
+    @staticmethod
     def result_renderer_cmdline(result):
+
+        if result['method'] == 'diff':
+            return Diff.render_cmdline_diff(result)
+        return Diff.render_cmdline_satisfies(result)
+
+    @staticmethod
+    def render_cmdline_diff(result):
 
         status = 0
 
@@ -161,3 +187,8 @@ class Diff(Interface):
             status = 3
 
         return status
+
+
+    @staticmethod
+    def render_cmdline_satisfies(result):
+        return 0
