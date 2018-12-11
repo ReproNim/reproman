@@ -149,6 +149,18 @@ class Diff(Interface):
             if dist_type not in supported_distributions:
                 msg = 'diff --satisfies doesn\'t know how to handle %s' % str(dist_type)
                 raise ValueError(msg)
+            unsatisfied_packages = []
+            dist_1 = env_1.get_distribution(dist_type)
+            dist_2 = env_2.get_distribution(dist_type)
+            if not dist_2:
+                continue
+            for pkg in dist_2.packages:
+                if not pkg.compare(dist_1, mode='satisfied_by'):
+                    unsatisfied_packages.append(pkg)
+            if unsatisfied_packages:
+                dist_res = {'pkg_type': supported_distributions[dist_type], 
+                            'packages': unsatisfied_packages}
+                result['distributions'].append(dist_res)
 
         files1 = set(env_1.files)
         files2 = set(env_2.files)
@@ -211,6 +223,12 @@ class Diff(Interface):
     def render_cmdline_satisfies(result):
 
         status = 0
+
+        for dist_res in result['distributions']:
+            print('Unsatisfied %s:' % _make_plural(dist_res['pkg_type']))
+            for package in dist_res['packages']:
+                print package.identity_string
+            status = 3
 
         if result['files']:
             print('Unsatisfied files:')

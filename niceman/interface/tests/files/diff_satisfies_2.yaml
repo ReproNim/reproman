@@ -3,16 +3,14 @@ version: 0.0.1
 distributions:
 - name: debian
   packages:
-  - name: libsame
+  - name: lib2
     architecture: x86
     version: 2.4.6
-  - name: libarchdiff
+  - name: lib3
     architecture: amd64
     version: 2.4.6
-  - name: libversdiff
+  - name: lib4
     architecture: x86
     version: 2.4.7
-  - name: lib2only
-    architecture: x86
-    version: 2:1.6.4-3
+  - name: lib5
 files: [/etc/c, /etc/b]

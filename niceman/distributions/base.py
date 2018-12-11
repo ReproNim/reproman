@@ -62,6 +62,15 @@ class SpecObject(object):
         return tuple(getattr(self, a) for a in self._diff_cmp_fields)
 
     @property
+    def _cmp_id(self):
+        if not self._comparison_fields:
+            # Might need to be gone or some custom exception
+            raise RuntimeError(
+                "Cannot establish identity of %r since _comaprison_fields "
+                "are not defined" % self)
+        return tuple(getattr(self, a) for a in self._comparison_fields)
+
+    @property
     def _diff_vals(self):
         """gives the values of the attributes defined by _diff_fields (like 
         _diff_cmp_id for _diff_cmp_fields)
@@ -85,6 +94,13 @@ class SpecObject(object):
         matching _diff_cmp_fields
         """
         return " ".join(str(el) for el in self._diff_vals)
+
+    @property
+    def identity_string(self):
+        """like diff_identity_string, but for _comparison_fields (used in 
+        satisfied_by comparisons)
+        """
+        return " ".join(str(el) for el in self._cmp_id)
 
     # TODO: make it "lazy" or may be there is already a helper in attrs?
     @property
