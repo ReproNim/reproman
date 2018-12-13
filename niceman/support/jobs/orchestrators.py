@@ -231,6 +231,38 @@ class Orchestrator(object):
         pass
 
 
+def _datalad_check_container(ds, spec):
+    """Adjust spec for `datalad-container`-configured container.
+
+    If a "container" key is found, "command_str" will be replaced, and the
+    previous "command_str" value will be placed under
+    "command_str_nocontainer".
+    """
+    container = spec.get("container")
+    if container is not None:
+
+        def cfg_get(key):
+            full_key = "datalad.containers.{}.{}".format(container, key)
+            value = ds.config.get(full_key)
+            if value is None:
+                raise OrchestratorError(
+                    "No value configured for {}".format(full_key))
+            return value
+
+        cmdexec = cfg_get("cmdexec")
+        image = cfg_get("image")
+
+        command_str = spec["command_str"]
+        spec["commmand_str_nocontainer"] = command_str
+        spec["command_str"] = cmdexec.format(img=image, cmd=command_str)
+
+        # TODO: When datalad-container starts passing the image as
+        # extra_inputs, we should handle that here (and in fetch below).
+        inputs = spec.get("inputs", [])
+        if image not in inputs:
+            spec["inputs"] = inputs + [image]
+
+
 def _datalad_format_command(ds, spec):
     """Adjust `spec` to use `datalad run`-style formatting.
 
@@ -275,6 +307,7 @@ class DataladOrchestrator(Orchestrator):
             raise OrchestratorError("orchestrator {} requires a local dataset"
                                     .format(self.name))
 
+        _datalad_check_container(self.ds, self.job_spec)
         _datalad_format_command(self.ds, self.job_spec)
 
     @property
