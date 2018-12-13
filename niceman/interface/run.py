@@ -14,6 +14,7 @@ import collections
 import logging
 import yaml
 
+from six.moves import map
 from six.moves import shlex_quote
 
 from niceman.interface.base import Interface
