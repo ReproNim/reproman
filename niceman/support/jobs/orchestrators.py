@@ -19,6 +19,8 @@ from tempfile import NamedTemporaryFile
 import time
 
 import six
+from six.moves import map
+from six.moves import shlex_quote
 
 from niceman.dochelpers import borrowdoc
 from niceman.utils import cached_property
@@ -426,10 +428,23 @@ class PrepareRemoteDataladMixin(object):
 
                 self.ds.create_sibling(sshurl, name=resource.name,
                                        recursive=True)
+                since = None  # Avoid since="" for non-existing repo.
+            else:
+                since = ""
 
-            # Should use --since for existing repo, but it doesn't seem to sync
-            # wrt content.
-            self.ds.publish(to=resource.name, path=inputs, recursive=True)
+            self.ds.publish(to=resource.name, since=since, recursive=True)
+            if inputs:
+                try:
+                    # TODO: Whether we try this `get` should be configurable.
+                    self._execute_in_wdir("datalad get {}".format(
+                        # FIXME: This should use something like
+                        # execute_command_batch.
+                        " ".join(map(shlex_quote, inputs))))
+                except OrchestratorError:
+                    # Should use --since for existing repo, but it doesn't seem
+                    # to sync wrt content.
+                    self.ds.publish(to=resource.name, path=inputs,
+                                    recursive=True)
         elif resource.type == "shell":
             import datalad.api as dl
             if not session.exists(self.working_directory):
