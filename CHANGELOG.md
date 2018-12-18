@@ -4,6 +4,15 @@ All notable changes to this project will be documented (for humans) in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - Date
+TODO Summary
+### Added
+### Changed
+### Deprecated
+### Fixed
+### Removed
+### Security
+
 ## [0.1.0] - 2018-12-18
 Largely bugfixes and small enhancements. Major work is ongoing in PRs
 to provide new functionality (such as remote execution and environment
