@@ -225,15 +225,15 @@ class Diff(Interface):
         status = 0
 
         for dist_res in result['distributions']:
-            print('Unsatisfied %s:' % _make_plural(dist_res['pkg_type']))
+            print(_make_plural(dist_res['pkg_type']) + ':')
             for package in dist_res['packages']:
-                print package.identity_string
+                print('> %s' % package.identity_string)
             status = 3
 
         if result['files']:
-            print('Unsatisfied files:')
+            print('Files:')
             for fname in result['files']:
-                print(fname)
+                print('> %s' % fname)
             status = 3
 
         return status
