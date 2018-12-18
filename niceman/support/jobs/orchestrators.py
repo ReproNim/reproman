@@ -536,6 +536,7 @@ class FetchDataladRunMixin(object):
                     outputs=self.job_spec.get("outputs_unexpanded"),
                     inject=True,
                     extra_info={"niceman_jobid": self.jobid},
+                    message=self.job_spec.get("message"),
                     cmd=self.job_spec["command_str_unexpanded"]):
                 # Oh, if only I were a datalad extension.
                 pass

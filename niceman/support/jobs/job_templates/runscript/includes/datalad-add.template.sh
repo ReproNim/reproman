@@ -5,4 +5,9 @@
 #}
 
 echo "Using DataLad version $(datalad --version)"  # for debugging
-datalad add -m"[NICEMAN] save results for {{ jobid }}" . .niceman >/dev/null 2>&1
+{% if message is defined %}
+msg={{ shlex_quote(message) }}
+{% else %}
+msg="[NICEMAN] save results for {{ jobid }}"
+{% endif %}
+datalad add -m"$msg" . .niceman >/dev/null 2>&1

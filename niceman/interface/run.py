@@ -140,10 +140,17 @@ class Run(Interface):
             nargs=REMAINDER,
             metavar="COMMAND",
             doc="command for execution"),
+        message=Parameter(
+            args=("-m", "--message"),
+            metavar="MESSAGE",
+            doc="""Message to use when saving the run. The details depend on
+            the orchestator, but in general this message will be used in the
+            commit message."""),
     )
 
     @staticmethod
-    def __call__(command=None, resref=None, resref_type="auto",
+    def __call__(command=None, message=None,
+                 resref=None, resref_type="auto",
                  list_=False, submitter=None, orchestrator=None,
                  job_specs=None, job_parameters=None,
                  inputs=None, outputs=None,
@@ -168,6 +175,7 @@ class Run(Interface):
         cli_spec = {
             k: v for k, v in
             {
+                "message": message,
                 "submitter": submitter,
                 "orchestrator": orchestrator,
                 "inputs": inputs,
