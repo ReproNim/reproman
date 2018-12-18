@@ -86,21 +86,21 @@ class SpecObject(object):
         a VCS repository identified by an opaque string, we can include 
         the path of the repository)
         """
-        return " ".join(str(el) for el in self._diff_cmp_id)
+        return " ".join(str(el) for el in self._diff_cmp_id if el is not None)
 
     @property
     def diff_subidentity_string(self):
         """like diff_identity_string, but to distinguish objects that have 
         matching _diff_cmp_fields
         """
-        return " ".join(str(el) for el in self._diff_vals)
+        return " ".join(str(el) for el in self._diff_vals if el is not None)
 
     @property
     def identity_string(self):
         """like diff_identity_string, but for _comparison_fields (used in 
         satisfied_by comparisons)
         """
-        return " ".join(str(el) for el in self._cmp_id)
+        return " ".join(str(el) for el in self._cmp_id if el is not None)
 
     # TODO: make it "lazy" or may be there is already a helper in attrs?
     @property
