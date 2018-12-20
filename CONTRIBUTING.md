@@ -202,7 +202,7 @@ Additional Hints
    
    and if conflicts occur, provide short summary on how they were resolved
    in "Conflicts" listing within the merge commit
-   (see [example](https://github.com/ReproNim/niceman/commit/eb062a8009d160ae51929998771964738636dcc2)).
+   (see [example](https://github.com/ReproNim/niceman/commit/f939595d3f09dde9fd4d142e863ba0cea26a13ed)).
 
 
 Quality Assurance
