@@ -168,9 +168,7 @@ class DebianDistribution(Distribution):
                 "sh -c 'echo \"# Niceman repo sources\" > {}'"
                 .format(apt_source_file))
 
-        for source in [s for s in self.apt_sources
-            if s.origin in repo_info.keys()]:
-            
+        for source in [s for s in self.apt_sources if s.origin in repo_info]:
             # Write snapshot repo to apt sources file.
             date = datetime.strptime(source.date.split('+')[0], "%Y-%m-%d %X")
             template = 'deb http://{}/archive/{}/{}/ {} main contrib non-free'
