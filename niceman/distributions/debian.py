@@ -162,15 +162,14 @@ class DebianDistribution(Distribution):
             }
         }
 
+        sources = [s for s in self.apt_sources if s.origin in repo_info]
         # Create a new apt sources file if needed.
-        if not session.exists(apt_source_file):
+        if sources and not session.exists(apt_source_file):
             session.execute_command(
                 "sh -c 'echo \"# Niceman repo sources\" > {}'"
                 .format(apt_source_file))
 
-        for source in [s for s in self.apt_sources
-            if s.origin in repo_info.keys()]:
-            
+        for source in sources:
             # Write snapshot repo to apt sources file.
             date = datetime.strptime(source.date.split('+')[0], "%Y-%m-%d %X")
             template = 'deb http://{}/archive/{}/{}/ {} main contrib non-free'
