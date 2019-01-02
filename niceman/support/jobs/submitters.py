@@ -212,23 +212,24 @@ class LocalSubmitter(Submitter):
     """Submit a local job.
     """
 
-    # NOTE: At least for testing, this is really local, not "local" as in
-    # submission rather than execution node.
     name = "local"
 
     def __init__(self, session):
         super(LocalSubmitter, self).__init__(session)
-        self.proc = None
 
+    @property
+    @borrowdoc(Submitter)
     def submit_command(self):
-        pass
+        return ["sh"]
 
     @borrowdoc(Submitter)
     def submit(self, script):
-        import subprocess as sp
-        self.proc = sp.Popen([script])
-        self.submission_id = str(self.proc.pid)
-        return self.submission_id
+        out = super(LocalSubmitter, self).submit(script)
+        pid = None
+        if out:
+            pid = out.strip() or None
+        self.submission_id = pid
+        return pid
 
     @property
     @assert_submission_id
@@ -240,15 +241,10 @@ class LocalSubmitter(Submitter):
         except CommandError:
             return "unknown", None
         if out.strip():
-            status = "running"
+            status = "waiting", "running"
         else:
-            status = "completed"
-        return status, None
-
-    @borrowdoc(Submitter)
-    def follow(self):
-        lgr.info("Waiting on PID %s", self.submission_id)
-        self.proc.communicate()
+            status = "completed", "completed"
+        return status
 
 
 SUBMITTERS = collections.OrderedDict(

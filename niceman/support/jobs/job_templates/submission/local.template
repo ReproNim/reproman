@@ -1,3 +1,4 @@
 #!/bin/sh
-exec 1>{{ meta_directory }}/stdout 2>{{ meta_directory }}/stderr
-{{ meta_directory }}/runscript
+{{ meta_directory }}/runscript 1>{{ meta_directory }}/stdout 2>{{ meta_directory }}/stderr &
+RUNSCRIPT_PID=$!
+printf "%d" $RUNSCRIPT_PID
