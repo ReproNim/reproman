@@ -42,6 +42,7 @@ from niceman.distributions.base import DistributionTracer
 
 lgr = logging.getLogger('niceman.distributions.debian')
 
+from ..dochelpers import single_or_plural
 from .base import SpecObject
 from .base import Package
 from .base import Distribution
@@ -133,6 +134,10 @@ class DebianDistribution(Distribution):
         """
         lgr.debug("Adding Debian update to environment command list.")
         self._init_apt_sources(session)
+        # TODO: run apt-get update only if new apt-sources returned in above
+        # call OR apt-cache policy output is empty
+        # TODO: make Check-Valid-Until  not default
+        lgr.info("Updating list of available via APT packages")
         session.execute_command(['apt-get', '-o',
             'Acquire::Check-Valid-Until=false', 'update'])
         #session.execute_command(['apt-get', 'install', '-y', 'python-pip'])
@@ -147,6 +152,11 @@ class DebianDistribution(Distribution):
         ----------
         session : Session object
         apt_source_file: string
+
+        Returns
+        -------
+        list
+          Relevant apt sources. Empty if no apt sources were specified
         """
 
         repo_info = {
@@ -207,6 +217,7 @@ class DebianDistribution(Distribution):
                 session.execute_command(['apt-key', 'adv', '--recv-keys',
                     '--keyserver', repo_info[source.origin]['keyserver'],
                     repo_info[source.origin]['key']])
+        return sources
 
     def _write_apt_sources(self, session, apt_source_file, source_line):
         """
@@ -250,12 +261,18 @@ class DebianDistribution(Distribution):
 
         # Doing in one shot to fail early if any of the versioned specs
         # couldn't be satisfied
+        lgr.info(
+            "Installing %s via APT",
+            single_or_plural("package", "packages", len(package_specs),
+                             include_count=True)
+        )
         lgr.debug("Installing %s", ', '.join(package_specs))
         session.execute_command(
             # TODO: Pull env out of provenance for this command.
-            ['apt-get', 'install', '-y'] + package_specs,
-            # env={'DEBIAN_FRONTEND': 'noninteractive'}
+            ['apt-get', 'install', '-y'] + package_specs
+            , env={'DEBIAN_FRONTEND': 'noninteractive'}
         )
+        # TODO: react on message   asking to run   dpkg --configure -a
 
     def normalize(self):
         # TODO:
