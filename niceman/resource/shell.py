@@ -102,7 +102,10 @@ class Shell(Resource):
     id = attrib()
     type = attrib(default='shell')
 
-    status = attrib()
+    # TODO: standardize status outputs
+    # "available" is chosen in favor of "running", which is to be used
+    # e.g. if we know that this shell is currently in use.
+    status = attrib(default='available')
 
     def create(self):
         """
@@ -118,7 +121,7 @@ class Shell(Resource):
             self.id = Resource._generate_id()
         return {
             'id': self.id,
-            'status': 'N/A'
+            'status': 'available'
         }
 
     def connect(self):

@@ -35,7 +35,7 @@ def test_create_start_stop(tmpdir):
 
     with open(inventory_file) as ifh:
         inventory = yaml.safe_load(ifh)
-    assert inventory["testshell"]["status"] == "N/A"
+    assert inventory["testshell"]["status"] == "available"
 
     with patch("niceman.interface.start.get_manager",
                return_value=rm):
