@@ -278,7 +278,7 @@ def test_session_abstract_methods(testing_container, resource_session,
 
     # Check _execute_command with env set
     # TODO: Implement env parameter for _execute_command()
-    if session.__class__.__name__ != 'ShellSession':
+    if not isinstance(session, (ShellSession, SSHSession, PTYSSHSession)):
         with pytest.raises(NotImplementedError):
             out, err = session._execute_command(['cat', '/etc/hosts'],
                 env={'NEW_VAR': 'NEW_VAR_VALUE'})
