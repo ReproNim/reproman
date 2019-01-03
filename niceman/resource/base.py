@@ -303,7 +303,15 @@ class ResourceManager(object):
                 "Resource with {} {} already exists"
                 .format("name" if results_name else "ID", name))
 
-        config = {'name': name, 'type': resource_type}
+        try:
+            config = dict(
+                self.config_manager.items(resource_type.split('-')[0]))
+        except NoSectionError:
+            config = {}
+
+        config['name'] = name
+        config['type'] = resource_type
+
         if backend_params:
             config.update(backend_params)
         resource = self.factory(config)
