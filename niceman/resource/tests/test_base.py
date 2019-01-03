@@ -5,9 +5,11 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+from mock import patch
 import os.path as op
 import pytest
 
+from niceman.config import ConfigManager
 from niceman.resource.base import ResourceManager
 from niceman.resource.base import backend_check_parameters
 from niceman.resource.shell import Shell
@@ -150,3 +152,18 @@ def test_create_conflict():
                                             "type": "shell"}}
     with pytest.raises(ResourceAlreadyExistsError):
         manager.create("already-exists", "type-doesnt-matter")
+
+
+def test_create_includes_config(tmpdir):
+    tmpdir = str(tmpdir)
+    manager = ResourceManager(op.join(tmpdir, "inventory.yml"))
+    # We load items from the config.
+    config_file = op.join(tmpdir, "niceman.cfg")
+    with open(config_file, "w") as cfh:
+        cfh.write("[ssh]\nhost = myhost\n")
+    config = ConfigManager(filenames=[config_file], load_default=False)
+    with patch.object(manager, "config_manager", config):
+        with patch.object(manager, "factory") as factory:
+            manager.create("myssh", "ssh")
+            factory.assert_called_with(
+                {"host": "myhost", "name": "myssh", "type": "ssh"})
