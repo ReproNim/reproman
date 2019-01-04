@@ -25,6 +25,7 @@ from six.moves import shlex_quote
 from niceman.dochelpers import borrowdoc
 from niceman.utils import cached_property
 from niceman.utils import chpwd
+from niceman.resource.ssh import SSHSession
 from niceman.support.jobs.submitters import SUBMITTERS
 from niceman.support.jobs.template import Template
 from niceman.support.exceptions import CommandError
@@ -404,14 +405,13 @@ class PrepareRemoteDataladMixin(object):
         # this relies on the user setting up their ssh config.
 
         inputs = self.job_spec.get("inputs")
-
-        if resource.type == "ssh":
+        if isinstance(session, SSHSession):
             sshurl = "{}{}:{}".format(
                 resource.user + "@" if resource.user else "",
-                resource.host,
+                session.connection.host,
                 self.working_directory)
 
-            if resource.port:
+            if getattr(resource, "port", None):
                 lgr.warning("Using SSH url %s; "
                             "port should be specified in SSH config",
                             sshurl)
