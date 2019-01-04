@@ -122,8 +122,8 @@ def test_trace_docker(docker_container, trace_info):
 # TypeError under Python 2.
 @pytest.mark.skipif(os.environ.get('NICEMAN_TESTS_NONETWORK'),
                     reason="No network")
-@pytest.mark.skipif("cmd:apt-cache" in external_versions,
-                    reason="Not apt-cache")
+@pytest.mark.skipif("cmd:apt-cache" not in external_versions,
+                    reason="No apt-cache")
 def test_trace_local(trace_info):
     with patch("niceman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",
