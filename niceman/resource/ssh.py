@@ -9,9 +9,11 @@
 """Resource sub-class to provide management of a SSH connection."""
 
 import attr
+import getpass
 import invoke
 import uuid
 from fabric import Connection
+from paramiko import AuthenticationException
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
@@ -79,7 +81,20 @@ class SSH(Resource):
                   self._connection.port,  # Fabric defaults to 22.
                   auth)
 
-        self._connection.open()
+        try:
+            self._connection.open()
+        except AuthenticationException:
+            # Give the user a chance to enter the password again.
+            if password:
+                print('Password failed.')
+            password = getpass.getpass()
+            self._connection = Connection(
+                self.host,
+                user=self.user,
+                port=self.port,
+                connect_kwargs={'password': password}
+            )
+            self._connection.open()
 
     def create(self):
         """

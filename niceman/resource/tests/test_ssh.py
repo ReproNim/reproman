@@ -9,6 +9,7 @@
 # Test string to read
 
 import logging
+import mock
 import os
 import pytest
 import re
@@ -61,6 +62,11 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$',
                         resource.id) is not None
         assert resource.status == 'N/A'
+
+        # Test bad password handling
+        with mock.patch('getpass.getpass') as getpass:
+            getpass.return_value = 'root'
+            resource.connect(password='incorrect')
 
         # Test running commands in a resource.
         resource.connect(password='root')
