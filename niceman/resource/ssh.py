@@ -84,9 +84,6 @@ class SSH(Resource):
         try:
             self._connection.open()
         except AuthenticationException:
-            # Give the user a chance to enter the password again.
-            if password:
-                print('Password failed.')
             password = getpass.getpass()
             self._connection = Connection(
                 self.host,
