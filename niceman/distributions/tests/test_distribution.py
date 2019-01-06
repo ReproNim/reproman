@@ -19,7 +19,7 @@ from niceman.tests.utils import assert_in
 
 def test_distributions(demo1_spec):
 
-    def mock_execute_command(command):
+    def mock_execute_command(command, env=None):
         if isinstance(command, list):
             if command == ['apt-cache', 'policy', 'libc6-dev:amd64']:
                 return (
