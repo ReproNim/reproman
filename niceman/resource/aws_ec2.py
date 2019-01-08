@@ -278,7 +278,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
             self.name,
             host=self._ec2_instance.public_ip_address,
             user=self.user,
-            key_filename=self.key_filename
+            key_filename=[self.key_filename]
         )
 
         return ssh.get_session(pty=pty, shared=shared)
