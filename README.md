@@ -70,8 +70,10 @@ MIT/Expat
 
 # Disclaimer
 
-It is in a alpha stage -- **nothing** is set in stone yet and nothing is
-usable ATM -- subscribe and wait for the first release.
+It is in a beta stage -- majority of the functionality is usable but
+Documentation and API enhancements is WiP to make it better.  Please do not be
+shy of filing an issue or a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for the guidance.
 
 [Git]: https://git-scm.com
 [Git-annex]: http://git-annex.branchable.com
