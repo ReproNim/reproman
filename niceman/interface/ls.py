@@ -55,7 +55,7 @@ class Ls(Interface):
     @staticmethod
     def __call__(verbose=False, refresh=False):
         id_length = 19  # todo: make it possible to output them long
-        template = '{:<20} {:<20} {:<%(id_length)s} {:<10}' % locals()
+        template = '{:<20} {:<20} {:<%(id_length)s} {!s:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 

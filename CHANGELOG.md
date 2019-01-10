@@ -4,6 +4,31 @@ All notable changes to this project will be documented (for humans) in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - Date
+TODO Summary
+### Added
+### Changed
+### Deprecated
+### Fixed
+### Removed
+### Security
+
+## [0.1.0] - 2018-12-18
+Largely bugfixes and small enhancements. Major work is ongoing in PRs
+to provide new functionality (such as remote execution and environment
+comparisons)
+### Added
+- Tracing RPM-based (RedHat, CentOS) environments
+- Tracing Singularity images
+### Fixed
+- A variety of fixes and enhances in tracing details of git, conda,
+  etc resources.
+- interactive ssh sessions fixes through use of `fabric` module instead of
+  custom code
+### Changed
+- Refactored handling of resource parameters to avoid code duplication/boiler
+  plate
+
 ## [0.0.6] - 2018-06-17
 Enhancement and fixes primarily targetting better tracing (collecting
 information about) of the computational components

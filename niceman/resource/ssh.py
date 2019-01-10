@@ -9,9 +9,11 @@
 """Resource sub-class to provide management of a SSH connection."""
 
 import attr
+import getpass
 import invoke
 import uuid
 from fabric import Connection
+from paramiko import AuthenticationException
 
 import logging
 lgr = logging.getLogger('niceman.resource.ssh')
@@ -79,7 +81,17 @@ class SSH(Resource):
                   self._connection.port,  # Fabric defaults to 22.
                   auth)
 
-        self._connection.open()
+        try:
+            self._connection.open()
+        except AuthenticationException:
+            password = getpass.getpass()
+            self._connection = Connection(
+                self.host,
+                user=self.user,
+                port=self.port,
+                connect_kwargs={'password': password}
+            )
+            self._connection.open()
 
     def create(self):
         """
@@ -139,32 +151,46 @@ class SSHSession(POSIXSession):
     connection = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
-    def _execute_command(self, command, env=None, cwd=None):
+    def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
+        command = command_as_string(command)
         if env:
-            raise NotImplementedError("passing env variables to execution")
+            command = ' '.join(['%s=%s' % k for k in env.items()]) \
+                      + ' ' + command
 
         if cwd:
             raise NotImplementedError("implement cwd support")
-        # if command_env:
-            # TODO: might not work - not tested it
-            # command = ['export %s=%s;' % k for k in command_env.items()] + command
 
-        command = command_as_string(command)
         try:
             result = self.connection.run(command, hide=True)
         except invoke.exceptions.UnexpectedExit as e:
-            result = e.result
+            if 'permission denied' in e.result.stderr.lower() and handle_permission_denied:
+                # Issue warning once
+                if not getattr(self, '_use_sudo_warning', False):
+                    lgr.warning(
+                        "Permission is denied for %s. From now on will use 'sudo' "
+                        "in such cases",
+                        command
+                    )
+                    self._use_sudo_warning = True
+                return self._execute_command(
+                    "sudo " + command,  # there was command_as_string
+                    env=env,
+                    cwd=cwd,
+                    handle_permission_denied=False
+                )
+            else:
+                result = e.result
 
         if result.return_code not in [0, None]:
             msg = "Failed to run %r. Exit code=%d. out=%s err=%s" \
-                % (command, result.return_code, result.stdout, result.stderr)
+                  % (command, result.return_code, result.stdout, result.stderr)
             raise CommandError(str(command), msg, result.return_code,
-                result.stdout, result.stderr)
+                               result.stdout, result.stderr)
         else:
             lgr.log(8, "Finished running %r with status %s", command,
-                result.return_code)
+                    result.return_code)
 
         return (result.stdout, result.stderr)
 
