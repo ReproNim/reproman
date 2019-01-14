@@ -177,20 +177,21 @@ class ResourceManager(object):
         return sorted(l)
 
     def _find_resources(self, resref, resref_type):
-        def from_name(x):
-            return [(name, config) for name, config in self.inventory.items()
-                    if x == name]
+        def match_name(inventory_item):
+            return resref == inventory_item[0]
 
-        def from_id(x):
-            return [(name, config) for name, config in self.inventory.items()
-                    if x == config.get("id")]
+        def match_id(inventory_item):
+            return resref == inventory_item[1].get("id")
+
+        def filter_inventory(pred):
+            return list(filter(pred, self.inventory.items()))
 
         results_name = None
         results_id = None
         if resref_type in ["auto", "name"]:
-            results_name = from_name(resref)
+            results_name = filter_inventory(match_name)
         if resref_type in ["auto", "id"]:
-            results_id = from_id(resref)
+            results_id = filter_inventory(match_id)
         return results_name, results_id
 
     def _get_resource_config(self, resref, resref_type="auto"):
