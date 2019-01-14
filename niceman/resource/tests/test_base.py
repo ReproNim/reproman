@@ -133,7 +133,7 @@ def test_get_resources():
     resource_uniq = manager.get_resource("myshell")
     assert resource_uniq.name == "myshell"
     # We can get the same resource by ID.
-    assert resource_uniq.id == "myshell-id"
+    assert manager.get_resource(resource_uniq.id).name == resource_uniq.name
 
     with pytest.raises(MultipleResourceMatches):
         manager.get_resource("ambig-id")
