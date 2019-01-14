@@ -117,7 +117,7 @@ def test_get_resources():
     manager.inventory = {
         "myshell": {"name": "myshell",
                     "type": "shell",
-                    "id": "myshell-id"},
+                    "id": "0-myshell-id"},
         "ambig-id0": {"name": "ambig-id0",
                       "type": "shell",
                       "id": "ambig-id"},
@@ -126,10 +126,16 @@ def test_get_resources():
                       "id": "ambig-id"},
         "id-name-same": {"name": "id-name-same",
                          "type": "shell",
-                         "id": "uniq-id"},
+                         "id": "0-uniq-id"},
         "same-id": {"name": "same-id",
                     "type": "shell",
-                    "id": "id-name-same"}
+                    "id": "id-name-same"},
+        "00": {"name": "00",
+               "type": "shell",
+               "id": "00s-id"},
+        "partial-is-other": {"name": "partial-is-other",
+                             "type": "shell",
+                             "id": "00-rest-of-id"}
     }
 
     with pytest.raises(ResourceError):
@@ -139,6 +145,8 @@ def test_get_resources():
     assert resource_uniq.name == "myshell"
     # We can get the same resource by ID.
     assert manager.get_resource(resource_uniq.id).name == resource_uniq.name
+    # ... or by a unique partial prefix match on ID.
+    assert manager.get_resource("0-m").name == resource_uniq.name
 
     with pytest.raises(MultipleResourceMatches):
         manager.get_resource("ambig-id")
@@ -147,8 +155,21 @@ def test_get_resources():
     with pytest.raises(MultipleResourceMatches):
         manager.get_resource("id-name-same")
     # ... but we can disambiguate with resref_type.
-    assert manager.get_resource("id-name-same", "name").id == "uniq-id"
+    assert manager.get_resource("id-name-same", "name").id == "0-uniq-id"
     assert manager.get_resource("id-name-same", "id").id == "id-name-same"
+
+    # Ambiguous prefix match on ID:
+    with pytest.raises(MultipleResourceMatches):
+        manager.get_resource("0-")
+
+    # When a name matches the partial ID match, we prefer the name.
+    assert manager.get_resource("00").id == "00s-id"
+    # We could do partial match on ID if we specify resref type, though.
+    assert manager.get_resource("00-r", "id").id == "00-rest-of-id"
+
+    # ... but it still must be unique.
+    with pytest.raises(MultipleResourceMatches):
+        assert manager.get_resource("00", "id")
 
 
 def test_create_conflict():
