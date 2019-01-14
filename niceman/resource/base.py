@@ -197,6 +197,8 @@ class ResourceManager(object):
         return results_name, results_id
 
     def _get_resource_config(self, resref, resref_type="auto"):
+        if not resref:
+            raise ValueError("`resref` cannot be empty")
         results_name, results_id = self._find_resources(resref, resref_type)
         if results_name and results_id:
             raise MultipleResourceMatches(

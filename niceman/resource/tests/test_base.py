@@ -107,6 +107,11 @@ def test_resource_manager_save(tmpdir):
     assert "added" in content_reread
 
 
+def test_get_resources_empty_resref():
+    with pytest.raises(ValueError):
+        ResourceManager().get_resource("")
+
+
 def test_get_resources():
     manager = ResourceManager()
     manager.inventory = {
