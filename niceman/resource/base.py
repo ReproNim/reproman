@@ -187,12 +187,9 @@ class ResourceManager(object):
 
         results_name = None
         results_id = None
-        if resref_type == "auto":
+        if resref_type in ["auto", "name"]:
             results_name = from_name(resref)
-            results_id = from_id(resref)
-        elif resref_type == "name":
-            results_name = from_name(resref)
-        elif resref_type == "id":
+        if resref_type in ["auto", "id"]:
             results_id = from_id(resref)
         return results_name, results_id
 
