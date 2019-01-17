@@ -8,7 +8,7 @@ Python module reference
 ***********************
 
 This module reference extends the manual with a comprehensive overview of the
-available functionality built into niceman.  Each module in the package is
+available functionality built into reproman.  Each module in the package is
 documented by a general summary of its purpose and the list of classes and
 functions it provides.
 
@@ -16,7 +16,7 @@ functions it provides.
 High-level user interface
 =========================
 
-.. currentmodule:: niceman
+.. currentmodule:: reproman
 .. autosummary::
    :toctree: generated
 
@@ -25,7 +25,7 @@ High-level user interface
 Plumbing
 ========
 
-.. currentmodule:: niceman
+.. currentmodule:: reproman
 .. autosummary::
    :toctree: generated
 
@@ -39,7 +39,7 @@ Plumbing
 Configuration management
 ========================
 
-.. currentmodule:: niceman
+.. currentmodule:: reproman
 .. autosummary::
    :toctree: generated
 
@@ -48,7 +48,7 @@ Configuration management
 Test infrastructure
 ===================
 
-.. currentmodule:: niceman
+.. currentmodule:: reproman
 .. autosummary::
    :toctree: generated
 
@@ -57,7 +57,7 @@ Test infrastructure
 Command line interface infrastructure
 =====================================
 
-.. currentmodule:: niceman
+.. currentmodule:: reproman
 .. autosummary::
    :toctree: generated
 

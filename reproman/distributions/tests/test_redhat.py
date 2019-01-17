@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -207,7 +207,7 @@ def test_distribution(docker_container, centos_spec):
     resource = DockerContainer(docker_container)
     resource.connect()
     session = resource.get_session()
-    provenance = Provenance.factory(centos_spec, 'niceman')
+    provenance = Provenance.factory(centos_spec, 'reproman')
     dist = provenance.get_distributions()[0]
 
     with swallow_logs(new_level=logging.DEBUG) as log:

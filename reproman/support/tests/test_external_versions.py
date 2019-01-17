@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -37,7 +37,7 @@ if PY3:
 
 def test_external_versions_basic():
     ev = ExternalVersions()
-    our_module = 'niceman'
+    our_module = 'reproman'
     assert_equal(ev.versions, {})
     assert_equal(ev[our_module], __version__)
     # and it could be compared
@@ -71,7 +71,7 @@ def test_external_versions_basic():
     # Code below is from original duecredit, and we don't care about
     # testing this one
     # And we can get versions based on modules themselves
-    from niceman.tests import mod
+    from reproman.tests import mod
     assert_equal(ev[mod], mod.__version__)
 
     # Check that we can get a copy of the versions
@@ -83,7 +83,7 @@ def test_external_versions_basic():
 
 def test_external_version_contains():
     ev = ExternalVersions()
-    assert_true("niceman" in ev)
+    assert_true("reproman" in ev)
     assert_false("does not exist" in ev)
 
 
@@ -160,8 +160,8 @@ def test_humanize():
 def test_check():
     ev = ExternalVersions()
     # should be all good
-    ev.check('niceman')
-    ev.check('niceman', min_version=__version__)
+    ev.check('reproman')
+    ev.check('reproman', min_version=__version__)
 
     with pytest.raises(MissingExternalDependency):
         ev.check('dataladkukaracha')
@@ -171,4 +171,4 @@ def test_check():
     assert "duga" in str(cme.value)
 
     with pytest.raises(OutdatedExternalDependency):
-        ev.check('niceman', min_version="10000000")  # we will never get there!
+        ev.check('reproman', min_version="10000000")  # we will never get there!

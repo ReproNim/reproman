@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -19,7 +19,7 @@ from six import PY2, text_type
 from mock import patch
 import pytest
 
-from niceman.support.external_versions import external_versions
+from reproman.support.external_versions import external_versions
 from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
 from six.moves.BaseHTTPServer import HTTPServer
 from six import reraise
@@ -226,7 +226,7 @@ def with_tree(t, tree=None, archives_leading_dir=True, delete=True, **tkwargs):
     return newfunc
 
 
-lgr = logging.getLogger('niceman.tests')
+lgr = logging.getLogger('reproman.tests')
 
 
 class SilentHTTPHandler(SimpleHTTPRequestHandler):
@@ -633,7 +633,7 @@ def with_testsui(t, responses=None):
 
     @wraps(t)
     def newfunc(*args, **kwargs):
-        from niceman.ui import ui
+        from reproman.ui import ui
         old_backend = ui.backend
         try:
             ui.set_backend('tests')

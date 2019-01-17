@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -158,16 +158,16 @@ def test_session_class():
 
         # Check unauthorized commands raise CommandError exception
         with pytest.raises(CommandError):
-            session.niceman_exec('sudo', ['rm', '-r', '/'])
+            session.reproman_exec('sudo', ['rm', '-r', '/'])
 
         # Check mangled arg raises exception
         with pytest.raises(CommandError):
-            session.niceman_exec('mkdir', ['bad=passed=argument'])
+            session.reproman_exec('mkdir', ['bad=passed=argument'])
 
         # Check exec command to valid method passes through to not implemented
         # exception
         with pytest.raises(NotImplementedError):
-            session.niceman_exec('mkdir', ['/my/new/dir', 'parents=True'])
+            session.reproman_exec('mkdir', ['/my/new/dir', 'parents=True'])
 
         # Check abstract methods raise NotImplementedError
         with pytest.raises(NotImplementedError):
@@ -318,7 +318,7 @@ def test_session_abstract_methods(testing_container, resource_session,
         f.write('NICEMAN test content\nline 2\nline 3'.encode('utf8'))
         f.flush()
         local_path = temp_file.name
-        remote_path = '{}/niceman upload/{}'.format(resource_test_dir,
+        remote_path = '{}/reproman upload/{}'.format(resource_test_dir,
             uuid.uuid4().hex)
 
         # Check put() method

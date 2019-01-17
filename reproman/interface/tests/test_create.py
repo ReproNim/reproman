@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,12 +13,12 @@ import logging
 import pytest
 from mock import patch, call, MagicMock
 
-from niceman.api import create
-from niceman.cmdline.main import main
-from niceman.utils import swallow_logs
-from niceman.resource.base import ResourceManager
-from niceman.tests.utils import assert_in
-from niceman.support.exceptions import ResourceError
+from reproman.api import create
+from reproman.cmdline.main import main
+from reproman.utils import swallow_logs
+from reproman.resource.base import ResourceManager
+from reproman.tests.utils import assert_in
+from reproman.support.exceptions import ResourceError
 
 from ..create import parse_backend_parameters
 
@@ -29,8 +29,8 @@ def test_create_interface():
     """
 
     with patch('docker.Client') as client, \
-        patch('niceman.resource.ResourceManager._save'), \
-        patch('niceman.resource.ResourceManager._get_inventory'), \
+        patch('reproman.resource.ResourceManager._save'), \
+        patch('reproman.resource.ResourceManager._get_inventory'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
@@ -50,7 +50,7 @@ def test_create_interface():
                 '--',
                 'my-test-resource'
         ]
-        with patch("niceman.interface.create.get_manager",
+        with patch("reproman.interface.create.get_manager",
                    return_value=ResourceManager()):
             main(args)
 
@@ -68,7 +68,7 @@ def test_create_interface():
 def test_create_missing_required():
     with pytest.raises(ResourceError) as exc:
         # SSH requires host.
-        with patch("niceman.interface.create.get_manager",
+        with patch("reproman.interface.create.get_manager",
                    return_value=ResourceManager()):
             create("somessh", "ssh", [])
     assert "host" in str(exc.value)

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -20,7 +20,7 @@ import uuid
 from .base import Interface
 from ..support.exceptions import CommandError
 from ..support.exceptions import MissingExternalDependency
-import niceman.interface.base  # Needed for test patching
+import reproman.interface.base  # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.external_versions import external_versions
@@ -31,7 +31,7 @@ from .common_opts import resref_opt
 from .common_opts import resref_type_opt
 
 from logging import getLogger
-lgr = getLogger('niceman.api.execute')
+lgr = getLogger('reproman.api.execute')
 
 
 class CommandAdapter(object):
@@ -90,7 +90,7 @@ class PlainCommand(CommandAdapter):
 class InternalCommand(CommandAdapter):
 
     def execute(self):
-        self.session.niceman_exec(self.command, self.cmd_args)
+        self.session.reproman_exec(self.command, self.cmd_args)
         return None, None  # Return same form as Session.execute_command.
 
 
@@ -104,7 +104,7 @@ class TracedCommand(CommandAdapter):
 
     After the command is executed under the tracer, the post-command step
     downloads the trace artifacts locally, uses ReproZip to write a
-    configuration file from these artifacts, and then calls `niceman retrace`
+    configuration file from these artifacts, and then calls `reproman retrace`
     on the result..
     """
 
@@ -125,13 +125,13 @@ class TracedCommand(CommandAdapter):
             str(uuid.uuid4())[:2])
 
         # Local session variables
-        local_cache_dir = local_dir or op.expanduser('~/.cache/niceman')
+        local_cache_dir = local_dir or op.expanduser('~/.cache/reproman')
         self.local_tracer_dir = op.join(local_cache_dir,
                                         "tracers",
                                         self.tracer_md5sum)
         self.local_trace_dir = op.join(local_cache_dir, 'traces', self.exec_id)
         self.local_tracer_gz = op.join(self.local_tracer_dir,
-                                       "niceman_trace.gz")
+                                       "reproman_trace.gz")
 
         # Remote session variables
         self.remote_dir = remote_dir
@@ -164,20 +164,20 @@ class TracedCommand(CommandAdapter):
         mng_ses = self.resource.get_session(pty=False)
         remote_env_full = mng_ses.query_envvars()
         root = self.remote_dir or '{HOME}/.cache'.format(**remote_env_full)
-        remote_niceman_dir = '{}/niceman'.format(root)
+        remote_reproman_dir = '{}/reproman'.format(root)
 
-        remote_traces_dir = op.join(remote_niceman_dir, 'traces')
+        remote_traces_dir = op.join(remote_reproman_dir, 'traces')
         mng_ses.mkdir(remote_traces_dir, parents=True)
         self.remote_trace_dir = op.join(remote_traces_dir, self.exec_id)
         mng_ses.mkdir(self.remote_trace_dir, parents=True)
 
-        remote_tracer_dir = op.join(remote_niceman_dir,
+        remote_tracer_dir = op.join(remote_reproman_dir,
                                     "tracers",
                                     self.tracer_md5sum)
         # TODO: augment "entry point" somehow in a generic way?
         #    For interactive sessions with bash, we could overload ~/.bashrc
         #    to do our wrapping of actual call to bashrc under the "tracer"
-        self.remote_tracer = op.join(remote_tracer_dir, "niceman_trace")
+        self.remote_tracer = op.join(remote_tracer_dir, "reproman_trace")
 
         if not self.session.exists(self.remote_tracer):
             remote_tracer_gz = self.remote_tracer + ".gz"
@@ -228,14 +228,14 @@ class TracedCommand(CommandAdapter):
             sort_packages=False,
             find_inputs_outputs=True)
 
-        from niceman.api import retrace
-        niceman_spec_path = op.join(self.local_trace_dir, "niceman.yml")
+        from reproman.api import retrace
+        reproman_spec_path = op.join(self.local_trace_dir, "reproman.yml")
         retrace(
             spec=op.join(self.local_trace_dir, "config.yml"),
-            output_file=niceman_spec_path,
+            output_file=reproman_spec_path,
             resref=self.session
         )
-        lgr.info("NICEMAN trace %s", niceman_spec_path)
+        lgr.info("NICEMAN trace %s", reproman_spec_path)
 
 
 # Exists for ease of testing.
@@ -250,7 +250,7 @@ class Execute(Interface):
     Examples
     --------
 
-      $ niceman execute mkdir /home/blah/data
+      $ reproman execute mkdir /home/blah/data
 
     """
 
@@ -288,7 +288,7 @@ class Execute(Interface):
     @staticmethod
     def __call__(command, args, resref=None, resref_type="auto",
                  internal=False, trace=False):
-        from niceman.ui import ui
+        from reproman.ui import ui
 
         if internal and trace:
             raise NotImplementedError("No --trace for --internal commands")

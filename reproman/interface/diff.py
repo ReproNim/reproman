@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,7 +16,7 @@ from .base import Interface
 from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
-from niceman.formats.niceman import NicemanProvenance
+from reproman.formats.reproman import NicemanProvenance
 from ..distributions.debian import DebianDistribution
 from ..distributions.conda import CondaDistribution
 from ..distributions.vcs import GitDistribution, SVNDistribution
@@ -24,7 +24,7 @@ from ..distributions.vcs import GitDistribution, SVNDistribution
 __docformat__ = 'restructuredtext'
 
 from logging import getLogger
-lgr = getLogger('niceman.api.retrace')
+lgr = getLogger('reproman.api.retrace')
 
 
 class MultipleDistributionsError(Exception):
@@ -48,7 +48,7 @@ class Diff(Interface):
     Examples
     --------
 
-      $ niceman diff environment1.yml environment2.yml
+      $ reproman diff environment1.yml environment2.yml
 
     """
 

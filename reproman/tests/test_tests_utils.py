@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -57,7 +57,7 @@ def _with_tempfile_decorated_dummy(path):
 
 
 def test_with_tempfile_dir_via_env_variable():
-    target = os.path.join(os.path.expanduser("~"), "nicemantesttmpdir")
+    target = os.path.join(os.path.expanduser("~"), "repromantesttmpdir")
     assert_false(os.path.exists(target), "directory %s already exists." % target)
     with patch.dict('os.environ', {'NICEMAN_TESTS_TEMPDIR': target}):
         filename = _with_tempfile_decorated_dummy()
@@ -124,7 +124,7 @@ def test_with_tempfile_mkdir():
 @with_tempfile()
 def test_with_tempfile_default_prefix(d1=None):
     d = basename(d1)
-    short = 'niceman_temp_'
+    short = 'reproman_temp_'
     full = short + \
            'test_with_tempfile_default_prefix'
     if on_windows:
@@ -134,9 +134,9 @@ def test_with_tempfile_default_prefix(d1=None):
         ok_startswith(d, full)
 
 
-@with_tempfile(prefix="noniceman_")
+@with_tempfile(prefix="noreproman_")
 def test_with_tempfile_specified_prefix(d1=None):
-    ok_startswith(basename(d1), 'noniceman_')
+    ok_startswith(basename(d1), 'noreproman_')
     ok_('test_with_tempfile_specified_prefix' not in d1)
 
 

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -18,9 +18,9 @@ import string
 
 import attr
 
-from niceman.utils import attrib
+from reproman.utils import attrib
 
-lgr = logging.getLogger('niceman.distributions.debian')
+lgr = logging.getLogger('reproman.distributions.debian')
 
 __docformat__ = 'restructuredtext'
 

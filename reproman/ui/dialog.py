@@ -13,7 +13,7 @@
 __docformat__ = 'restructuredtext'
 
 from logging import getLogger
-lgr = getLogger('niceman.ui.dialog')
+lgr = getLogger('reproman.ui.dialog')
 
 lgr.log(5, "Starting importing ui.dialog")
 

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -11,22 +11,22 @@ from __future__ import absolute_import
 
 import io
 
-from niceman.distributions.base import EnvironmentSpec
-from niceman.distributions.conda import CondaChannel
-from niceman.distributions.conda import CondaDistribution
-from niceman.distributions.conda import CondaEnvironment
-from niceman.distributions.conda import CondaPackage
-from niceman.distributions.debian import APTSource
-from niceman.distributions.debian import DEBPackage
-from niceman.distributions.debian import DebianDistribution
-from niceman.distributions.vcs import GitDistribution
-from niceman.distributions.vcs import GitRepo
-from niceman.distributions.vcs import SVNDistribution
-from niceman.distributions.vcs import SVNRepo
-from niceman.distributions.venv import VenvDistribution
-from niceman.distributions.venv import VenvEnvironment
-from niceman.distributions.venv import VenvPackage
-from niceman.formats.niceman import NicemanProvenance
+from reproman.distributions.base import EnvironmentSpec
+from reproman.distributions.conda import CondaChannel
+from reproman.distributions.conda import CondaDistribution
+from reproman.distributions.conda import CondaEnvironment
+from reproman.distributions.conda import CondaPackage
+from reproman.distributions.debian import APTSource
+from reproman.distributions.debian import DEBPackage
+from reproman.distributions.debian import DebianDistribution
+from reproman.distributions.vcs import GitDistribution
+from reproman.distributions.vcs import GitRepo
+from reproman.distributions.vcs import SVNDistribution
+from reproman.distributions.vcs import SVNRepo
+from reproman.distributions.venv import VenvDistribution
+from reproman.distributions.venv import VenvEnvironment
+from reproman.distributions.venv import VenvPackage
+from reproman.formats.reproman import NicemanProvenance
 
 from .constants import NICEMAN_SPEC1_YML_FILENAME
 
@@ -126,7 +126,7 @@ def test_spec_round_trip():
                 venv_version="15.1.0",
                 environments=[
                     VenvEnvironment(
-                        path="venv-niceman",
+                        path="venv-reproman",
                         python_version="3.5.3",
                         packages=[
                             VenvPackage(

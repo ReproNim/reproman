@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -22,7 +22,7 @@ __all__ = ['ColorFormatter']
 # Snippets from traceback borrowed from duecredit which was borrowed from
 # PyMVPA upstream/2.4.0-39-g69ad545  MIT license (the same copyright as DataLad)
 # and then from DataLad 0.2.3-427-g09ee8d7 (MIT license, copyright notice in
-# COPYING of niceman)
+# COPYING of reproman)
 
 
 def mbasename(s):
@@ -162,7 +162,7 @@ class ColorFormatter(logging.Formatter):
 class LoggerHelper(object):
     """Helper to establish and control a Logger"""
 
-    def __init__(self, name='niceman', logtarget=None):
+    def __init__(self, name='reproman', logtarget=None):
         """
 
         Parameters
@@ -184,7 +184,7 @@ class LoggerHelper(object):
     def set_level(self, level=None, default='INFO'):
         """Helper to set loglevel for an arbitrary logger
 
-        By default operates for 'niceman'.
+        By default operates for 'reproman'.
         TODO: deduce name from upper module name so it could be reused without changes
         """
         if level is None:

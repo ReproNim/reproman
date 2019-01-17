@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,13 +16,13 @@ from fabric import Connection
 from paramiko import AuthenticationException
 
 import logging
-lgr = logging.getLogger('niceman.resource.ssh')
+lgr = logging.getLogger('reproman.resource.ssh')
 
 from .base import Resource
 from ..utils import attrib
 from ..utils import command_as_string
-from niceman.dochelpers import borrowdoc
-from niceman.resource.session import Session
+from reproman.dochelpers import borrowdoc
+from reproman.resource.session import Session
 from ..support.exceptions import CommandError
 
 
@@ -95,7 +95,7 @@ class SSH(Resource):
 
     def create(self):
         """
-        Register the SSH connection to the niceman inventory registry.
+        Register the SSH connection to the reproman inventory registry.
 
         Returns
         -------
@@ -143,7 +143,7 @@ class Ssh(SSH):
     pass
 
 
-from niceman.resource.session import POSIXSession
+from reproman.resource.session import POSIXSession
 
 
 @attr.s

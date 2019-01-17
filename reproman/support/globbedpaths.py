@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,12 +13,12 @@ import glob
 import logging
 import os.path as op
 
-from niceman.utils import assure_unicode
-from niceman.utils import chpwd
-from niceman.utils import getpwd
-from niceman.utils import partition
+from reproman.utils import assure_unicode
+from reproman.utils import chpwd
+from reproman.utils import getpwd
+from reproman.utils import partition
 
-lgr = logging.getLogger('niceman.support.globbedpaths')
+lgr = logging.getLogger('reproman.support.globbedpaths')
 
 
 class GlobbedPaths(object):

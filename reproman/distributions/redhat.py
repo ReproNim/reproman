@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,9 +15,9 @@ import datetime
 import logging
 import re
 
-from niceman.distributions.base import DistributionTracer
+from reproman.distributions.base import DistributionTracer
 
-lgr = logging.getLogger('niceman.distributions.redhat')
+lgr = logging.getLogger('reproman.distributions.redhat')
 
 from .base import SpecObject
 from .base import Package

@@ -2,11 +2,11 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""" niceman exceptions
+""" reproman exceptions
 """
 
 
@@ -130,7 +130,7 @@ class MultipleReleaseFileMatch(RuntimeError):
 
 
 class ResourceError(RuntimeError):
-    """To be raised when there is a problem with a niceman resource"""
+    """To be raised when there is a problem with a reproman resource"""
     pass
 
 

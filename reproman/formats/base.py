@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -17,14 +17,14 @@ from ..utils import file_basename
 from ..dochelpers import exc_str
 from ..support.exceptions import SpecLoadingError
 
-_known_formats = ['reprozip', 'niceman', 'trig']
+_known_formats = ['reprozip', 'reproman', 'trig']
 _known_extensions = {
-    'yml': ['niceman', 'reprozip'],
+    'yml': ['reproman', 'reprozip'],
     'trig': ['trig']
 }
 
 import logging
-lgr = logging.getLogger('niceman.formats')
+lgr = logging.getLogger('reproman.formats')
 
 from ..distributions.base import EnvironmentSpec
 
@@ -72,7 +72,7 @@ class Provenance(object):
 
     # XXX should we rename into more obvious from_file/from_files?
     @staticmethod
-    def factory(source, format='niceman'):
+    def factory(source, format='reproman'):
         """
         Factory method for creating the appropriate Provenance sub-class based
         on format type.
@@ -82,14 +82,14 @@ class Provenance(object):
         source : string
             File name or http endpoint containing provenance information.
         format : string
-            ID of provenance format. Valid values are: "niceman", "reprozip"
+            ID of provenance format. Valid values are: "reproman", "reprozip"
 
         Returns
         -------
         Provenance sub-class instance
         """
         class_name = format.capitalize() + 'Provenance'
-        module = import_module('niceman.formats.' + format)
+        module = import_module('reproman.formats.' + format)
         return getattr(module, class_name)(source)
 
     @staticmethod

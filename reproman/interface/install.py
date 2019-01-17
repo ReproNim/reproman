@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -20,7 +20,7 @@ from ..formats import Provenance
 from ..resource import get_manager
 
 from logging import getLogger
-lgr = getLogger('niceman.api.install')
+lgr = getLogger('reproman.api.install')
 
 
 class Install(Interface):
@@ -29,7 +29,7 @@ class Install(Interface):
     Examples
     --------
 
-      $ niceman install docker recipe_for_failure.yml
+      $ reproman install docker recipe_for_failure.yml
 
     """
 

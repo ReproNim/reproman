@@ -1,17 +1,17 @@
 Contributing to NICEMAN
 ========================
 
-[gh-niceman]: http://github.com/ReproNim/niceman
+[gh-reproman]: http://github.com/ReproNim/reproman
 
 Files organization
 ------------------
 
-- `niceman/` is the main Python module where major development is happening,
+- `reproman/` is the main Python module where major development is happening,
   with major submodules being:
     - `cmdline/` - helpers for accessing `interface/` functionality from
      command line
     - `interface/` - high level interface functions which get exposed via
-      command line (`cmdline/`) or Python (`niceman.api`).
+      command line (`cmdline/`) or Python (`reproman.api`).
     - `tests/` - some unit- and regression- tests (more could be found under
       `tests/` of corresponding submodules)
         - `utils.py` provides convenience helpers used by unit-tests such as
@@ -22,7 +22,7 @@ Files organization
     - `support/` - various support modules, e.g. for git/git-annex interfaces,
       constraints for the `interface/`, etc
 - `docs/` - yet to be heavily populated documentation
-    - `bash-completions` - bash and zsh completion setup for niceman (just
+    - `bash-completions` - bash and zsh completion setup for reproman (just
       `source` it)
 - `tools/` contains helper utilities used during development, testing, and
   benchmarking of NICEMAN.  Implemented in any most appropriate language
@@ -32,23 +32,23 @@ How to contribute
 -----------------
 
 The preferred way to contribute to the NICEMAN code base is
-to fork the [main repository][gh-niceman] on GitHub.  Here
+to fork the [main repository][gh-reproman] on GitHub.  Here
 we outline the workflow used by the developers:
 
 
-0. Have a clone of our main [project repository][gh-niceman] as `origin`
+0. Have a clone of our main [project repository][gh-reproman] as `origin`
    remote in your git:
 
-          git clone git://github.com/ReproNim/niceman
+          git clone git://github.com/ReproNim/reproman
 
-1. Fork the [project repository][gh-niceman]: click on the 'Fork'
+1. Fork the [project repository][gh-reproman]: click on the 'Fork'
    button near the top of the page.  This creates a copy of the code
    base under your account on the GitHub server.
 
 2. Add your forked clone as a remote to the local clone you already have on your
    local disk:
 
-          git remote add gh-YourLogin git@github.com:YourLogin/niceman.git
+          git remote add gh-YourLogin git@github.com:YourLogin/reproman.git
           git fetch gh-YourLogin
 
     To ease addition of other github repositories as remotes, here is
@@ -65,7 +65,7 @@ we outline the workflow used by the developers:
 
     thus you could simply run:
 
-         ghremote git@github.com:YourLogin/niceman.git
+         ghremote git@github.com:YourLogin/reproman.git
 
     to add the above `gh-YourLogin` remote.  Additional handy aliases
     such as `ghpr` (to fetch existing pr from someone's remote) and 
@@ -119,7 +119,7 @@ with `python{,3}-{` to also install dependencies for Python 3 (e.g., if you woul
 like to develop and test through tox).
 
 See [README.md:Dependencies](README.md#Dependencies) for basic information
-about installation of niceman itself.
+about installation of reproman itself.
 On Debian-based systems we recommend to enable [NeuroDebian](http://neuro.debian.net)
 since we use it to provide backports of recent fixed external modules we depend upon.
 
@@ -202,7 +202,7 @@ Additional Hints
    
    and if conflicts occur, provide short summary on how they were resolved
    in "Conflicts" listing within the merge commit
-   (see [example](https://github.com/ReproNim/niceman/commit/f939595d3f09dde9fd4d142e863ba0cea26a13ed)).
+   (see [example](https://github.com/ReproNim/reproman/commit/f939595d3f09dde9fd4d142e863ba0cea26a13ed)).
 
 
 Quality Assurance
@@ -221,7 +221,7 @@ rules before submitting a pull request:
 
 ### Tests
 
-`niceman/tests` contains tests for the core portion of the project, and
+`reproman/tests` contains tests for the core portion of the project, and
 more tests are provided under corresponding submodules in `tests/`
 subdirectories to simplify re-running the tests concerning that portion
 of the codebase.  To execute many tests, the codebase first needs to be
@@ -305,7 +305,7 @@ Easy Issues
 -----------
 
 A great way to start contributing to NICEMAN is to pick an item from the list of
-[Easy issues](https://github.com/ReproNim/niceman/labels/easy) in the issue
+[Easy issues](https://github.com/ReproNim/reproman/labels/easy) in the issue
 tracker.  Resolving these issues allows you to start contributing to the project
 without much prior knowledge.  Your assistance in this area will be greatly
 appreciated by the more experienced developers as it helps free up their time to
@@ -332,14 +332,14 @@ Various hints for developers
   (Firefox, Chrome) which annotates pull requests on github regarding changed coverage.
 
 ### Useful Environment Variables
-Refer niceman/config.py for information on how to add these environment variables to the config file and their naming convention
+Refer reproman/config.py for information on how to add these environment variables to the config file and their naming convention
 
 - *NICEMAN_LOGLEVEL*: 
-  Used for control the verbosity of logs printed to stdout while running niceman commands/debugging
+  Used for control the verbosity of logs printed to stdout while running reproman commands/debugging
 - *NICEMAN_TESTS_KEEPTEMP*: 
   Function rmtemp will not remove temporary file/directory created for testing if this flag is set
 - *NICEMAN_EXC_STR_TBLIMIT*: 
-  This flag is used by the niceman extract_tb function which extracts and formats stack-traces.
+  This flag is used by the reproman extract_tb function which extracts and formats stack-traces.
   It caps the number of lines to NICEMAN_EXC_STR_TBLIMIT of pre-processed entries from traceback.
 - *NICEMAN_TESTS_TEMPDIR*: 
   Create a temporary directory at location specified by this flag.
@@ -360,13 +360,13 @@ Refer niceman/config.py for information on how to add these environment variable
 - *NICEMAN_CMD_PROTOCOL*: 
   Specifies the protocol number used by the Runner to note shell command or python function call times and allows for dry runs. 
   'externals-time' for ExecutionTimeExternalsProtocol, 'time' for ExecutionTimeProtocol and 'null' for NullProtocol.
-  Any new NICEMAN_CMD_PROTOCOL has to implement niceman.support.protocol.ProtocolInterface
+  Any new NICEMAN_CMD_PROTOCOL has to implement reproman.support.protocol.ProtocolInterface
 - *NICEMAN_CMD_PROTOCOL_PREFIX*: 
   Sets a prefix to add before the command call times are noted by NICEMAN_CMD_PROTOCOL.
 - *NICEMAN_PROTOCOL_REMOTE*:
   Binary flag to specify whether to test protocol interactions of custom remote with annex
 - *NICEMAN_LOG_TIMESTAMP*:
-  Used to add timestamp to niceman logs
+  Used to add timestamp to reproman logs
 - *NICEMAN_RUN_CMDLINE_TESTS*:
   Binary flag to specify if shell testing using shunit2 to be carried out
 - *NICEMAN_TEMP_FS*:

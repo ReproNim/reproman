@@ -505,7 +505,7 @@ packages (allowing for mixing):
 those sugarings would be type dependent, e.g. here NAME=VERSION and in GIT, PATH=URL@treeish, etc
 
 git:
- - /opt/niceman=http://github.com/repronim/niceman@1.0.0
+ - /opt/reproman=http://github.com/repronim/reproman@1.0.0
 
 then normalization would unroll those into full fledged specs
 
@@ -550,7 +550,7 @@ Resource - base class for anything we manage within out 'inventory'
                    But becomes somewhat incongruent since after this one is done we want the one without any spaces
 
                    Might be difficult/cumbersome to make it generic across all sessions, may be only via
-                   generating (e.g. /root/.niceman/spaces/SPACE) and sourcing them for every command run in
+                   generating (e.g. /root/.reproman/spaces/SPACE) and sourcing them for every command run in
                    case of docker since we can't otherwise augment env.  Having a single "session_only" makes
                    it easi(er)
             .set_envvars(vars:dict, update=True, ...) - sugaring on top to pass entire dict and update or overload entirely
@@ -562,8 +562,8 @@ Resource - base class for anything we manage within out 'inventory'
                  may be we need some kind of execution profiles (again -- `space`)
                   so I could say ".set_envvar('DEBIAN_FRONTEND', 'noninteractive', space='deb'); .set_runner('eatmydata', space='deb')"
                - might be avoided if we create a shim for commands we care to run through `eatmydata` and then
-                  `.copy_files_into('shims/', '/usr/local/niceman/bootstrap/shims')`
-                  `.set_envvar('PATH', '/usr/local/niceman/bootstrap/shims:{PATH}', space='apt')`
+                  `.copy_files_into('shims/', '/usr/local/reproman/bootstrap/shims')`
+                  `.set_envvar('PATH', '/usr/local/reproman/bootstrap/shims:{PATH}', space='apt')`
                  This way we could control via spaces where we want eatmydata assistance and for which tools
                - could be default, per distribution in some kind of "prepare_for_deploy" step -- which packages to install and what to set for the env
             .source_file(filename, args=[])
@@ -628,7 +628,7 @@ Depending on the backend
     - svn
   - formats/ - serialized (files) representations
     - base -- base classes
-    - niceman -- will be pretty much straight dump of the model BUT there could be others
+    - reproman -- will be pretty much straight dump of the model BUT there could be others
     - reprozip
     - trig
     - NEW: human  ;)

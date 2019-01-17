@@ -2,19 +2,19 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from niceman.cmdline.main import main
+from reproman.cmdline.main import main
 
 import logging
 from mock import patch, call, MagicMock
 
-from niceman.utils import swallow_logs
-from niceman.resource.base import ResourceManager
-from niceman.tests.utils import assert_in
+from reproman.utils import swallow_logs
+from reproman.resource.base import ResourceManager
+from reproman.tests.utils import assert_in
 
 
 def test_delete_interface():
@@ -23,8 +23,8 @@ def test_delete_interface():
     """
 
     with patch('docker.Client') as client, \
-        patch('niceman.resource.ResourceManager._save'), \
-        patch('niceman.resource.ResourceManager._get_inventory') as get_inventory, \
+        patch('reproman.resource.ResourceManager._save'), \
+        patch('reproman.resource.ResourceManager._get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
@@ -53,7 +53,7 @@ def test_delete_interface():
             'my-resource'
 
         ]
-        with patch("niceman.interface.delete.get_manager",
+        with patch("reproman.interface.delete.get_manager",
                    return_value=ResourceManager()):
             main(args)
 

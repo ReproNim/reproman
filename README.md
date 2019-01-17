@@ -19,11 +19,11 @@ internals and/or contributing to the project.
 
 ## Code status:
 
-* [![Travis tests status](https://secure.travis-ci.org/ReproNim/niceman.png?branch=master)](https://travis-ci.org/ReproNim/niceman) travis-ci.org (master branch)
+* [![Travis tests status](https://secure.travis-ci.org/ReproNim/reproman.png?branch=master)](https://travis-ci.org/ReproNim/reproman) travis-ci.org (master branch)
 
-* [![codecov.io](https://codecov.io/github/ReproNim/niceman/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/niceman?branch=master)
+* [![codecov.io](https://codecov.io/github/ReproNim/reproman/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/reproman?branch=master)
 
-* [![Documentation](https://readthedocs.org/projects/NICEMAN/badge/?version=latest)](http://niceman.rtfd.org)
+* [![Documentation](https://readthedocs.org/projects/NICEMAN/badge/?version=latest)](http://reproman.rtfd.org)
 
 # Installation
 
@@ -36,13 +36,13 @@ all necessary packages from that repository.
 
 ## Other Linux'es, OSX (Windows yet TODO) via pip
 
-By default, installation via pip installs core functionality of niceman
+By default, installation via pip installs core functionality of reproman
 allowing for managing datasets etc.  Additional installation schemes
 are available, so you could provide enhanced installation via
-`pip install niceman[SCHEME]` where `SCHEME` could be
+`pip install reproman[SCHEME]` where `SCHEME` could be
 
 - tests
-     to also install dependencies used by unit-tests battery of the niceman
+     to also install dependencies used by unit-tests battery of the reproman
 - full
      to install all of possible dependencies.
 

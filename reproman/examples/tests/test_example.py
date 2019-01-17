@@ -10,12 +10,12 @@
 
 """
 
-from niceman.examples.example import get_url_for_packages
+from reproman.examples.example import get_url_for_packages
 
 __docformat__ = 'restructuredtext'
 
-# from niceman.examples.example import
-from niceman.tests.utils import assert_equal
+# from reproman.examples.example import
+from reproman.tests.utils import assert_equal
 
 
 def test_get_url_for_packages():

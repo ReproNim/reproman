@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -17,11 +17,11 @@ try:
 except ImportError:  # pragma: no cover
     # must be running from installed version where formatters is not present
     # These tests can be ran only with formatters, which is outside of the
-    # niceman module space in the root of the sourcebase
+    # reproman module space in the root of the sourcebase
     if not exists('formatters.py'):
         pytestmark = pytest.mark.skip("can't locate formatters")
 
-from niceman.cmdline.main import setup_parser
+from reproman.cmdline.main import setup_parser
 from .utils import ok_, assert_in, ok_startswith
 
 demo_example = """
@@ -42,7 +42,7 @@ HOME=IS_MY_CASTLE
 # Lorem ipsum
 #%
 
-niceman install http://the.world.com
+reproman install http://the.world.com
 
 #%
 # Epilog -- with multiline rubish sdoifpwjefw
@@ -50,7 +50,7 @@ niceman install http://the.world.com
 # pfdsvja329u0fjpdsv sdpf9p93qk
 #%
 
-niceman imagine --too \\
+reproman imagine --too \\
         --much \\
         --too say \\
         yes=no

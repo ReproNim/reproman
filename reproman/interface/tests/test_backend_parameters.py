@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -11,8 +11,8 @@ import logging
 import mock
 from six.moves import StringIO
 
-from niceman.api import backend_parameters
-from niceman.utils import swallow_logs
+from reproman.api import backend_parameters
+from reproman.utils import swallow_logs
 
 
 def test_backend_parameters_unknown_resource():

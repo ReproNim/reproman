@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 from collections import Mapping
 
 from .base import Interface
-import niceman.interface.base # Needed for test patching
+import reproman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
@@ -22,7 +22,7 @@ from ..resource import get_manager
 from ..dochelpers import exc_str
 
 from logging import getLogger
-lgr = getLogger('niceman.api.create')
+lgr = getLogger('reproman.api.create')
 
 
 def parse_backend_parameters(params):
@@ -92,7 +92,7 @@ class Create(Interface):
             args=("-b", "--backend-parameters"),
             nargs="+",
             doc="""One or more backend parameters in the form KEY=VALUE. Use
-            the command `niceman backend-parameters` to see the list of
+            the command `reproman backend-parameters` to see the list of
             available backend parameters."""
         ),
     )
@@ -104,7 +104,7 @@ class Create(Interface):
         #
         # TODO: need to be redone to be able to operate based on a spec
         #  we do want
-        #     niceman create --resource_type docker_container --spec analysis.spec
+        #     reproman create --resource_type docker_container --spec analysis.spec
         #  which would choose appropriate base container etc
         #
         # if nothing in cmdline instructed on specific one to use:
@@ -121,7 +121,7 @@ class Create(Interface):
         # if not specs:
         #     specs = question("Enter a spec filename", default="spec.yml")
 
-        from niceman.ui import ui
+        from reproman.ui import ui
 
         if not resource_type:
             resource_type = ui.question(

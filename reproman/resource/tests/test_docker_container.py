@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -17,7 +17,7 @@ from ...support.exceptions import ResourceError
 from ...consts import TEST_SSH_DOCKER_DIGEST
 from ..docker_container import DockerContainer
 
-from niceman.tests.fixtures import get_docker_fixture
+from reproman.tests.fixtures import get_docker_fixture
 
 from pytest import raises
 
@@ -25,7 +25,7 @@ from pytest import raises
 setup_ubuntu = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST,
     scope='module',
-    name='niceman-test-ssh-container'
+    name='reproman-test-ssh-container'
 )
 
 

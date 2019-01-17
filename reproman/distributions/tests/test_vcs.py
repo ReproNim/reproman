@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,17 +14,17 @@ import copy
 import logging
 import pytest
 
-from niceman.cmd import GitRunner
-from niceman.distributions.vcs import VCSTracer
-from niceman.support.exceptions import CommandError
-from niceman.utils import chpwd
-from niceman.utils import swallow_logs
-from niceman.tests.utils import assert_is_subset_recur
-from niceman.tests.utils import create_tree
-from niceman.tests.utils import with_tree
-from niceman.tests.fixtures import git_repo_fixture, svn_repo_fixture
-from niceman.distributions.vcs import GitDistribution
-from niceman.distributions.vcs import GitRepo
+from reproman.cmd import GitRunner
+from reproman.distributions.vcs import VCSTracer
+from reproman.support.exceptions import CommandError
+from reproman.utils import chpwd
+from reproman.utils import swallow_logs
+from reproman.tests.utils import assert_is_subset_recur
+from reproman.tests.utils import create_tree
+from reproman.tests.utils import with_tree
+from reproman.tests.fixtures import git_repo_fixture, svn_repo_fixture
+from reproman.distributions.vcs import GitDistribution
+from reproman.distributions.vcs import GitRepo
 
 git_repo_empty = git_repo_fixture(kind="empty")
 git_repo = git_repo_fixture()
@@ -35,7 +35,7 @@ svn_repo_empty = svn_repo_fixture(kind='empty')
 svn_repo = svn_repo_fixture()
 
 
-# TODO: Move to niceman.test.utils and use in other tracer tests.
+# TODO: Move to reproman.test.utils and use in other tracer tests.
 def assert_distributions(result, expected_length=None, which=0,
                          expected_unknown=None, expected_subset=None):
     """Wrap common assertions about identified distributions.

@@ -43,7 +43,7 @@ distributions:
    components: [main, contrib, non-free]
 
  #
- # If niceman isn't familiar with the source's distribution, just record the 
+ # If reproman isn't familiar with the source's distribution, just record the 
  # sources.list information
  #
  - name: us.archive.ubuntu.com-1

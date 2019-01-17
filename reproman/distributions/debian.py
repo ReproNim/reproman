@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -20,8 +20,8 @@ from six.moves import map
 
 import pytz
 
-from niceman import utils
-from niceman.utils import attrib
+from reproman import utils
+from reproman.utils import attrib
 
 from email.utils import mktime_tz, parsedate_tz
 
@@ -29,18 +29,18 @@ import logging
 
 import requests
 
-from niceman.support.distributions.debian import \
+from reproman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
     parse_apt_cache_policy_source_info, get_apt_release_file_names, \
     get_spec_from_release_file, parse_dpkgquery_line
 
 # Pick a conservative max command-line
-from niceman.utils import get_cmd_batch_len, execute_command_batch, \
+from reproman.utils import get_cmd_batch_len, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
 
-from niceman.distributions.base import DistributionTracer
+from reproman.distributions.base import DistributionTracer
 
-lgr = logging.getLogger('niceman.distributions.debian')
+lgr = logging.getLogger('reproman.distributions.debian')
 
 from ..dochelpers import single_or_plural
 from .base import SpecObject
@@ -131,7 +131,7 @@ class DebianDistribution(Distribution):
         # session.set_env(DEBIAN_FRONTEND='noninteractive', this_session_only=True)
 
     def _init_apt_sources(self, session,
-        apt_source_file='/etc/apt/sources.list.d/niceman.sources.list'):
+        apt_source_file='/etc/apt/sources.list.d/reproman.sources.list'):
         """
         Update /etc/apt/sources if necessary based on source date.
 

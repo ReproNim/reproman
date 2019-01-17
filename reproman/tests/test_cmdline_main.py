@@ -2,11 +2,11 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Test functioning of the niceman main cmdline utility """
+"""Test functioning of the reproman main cmdline utility """
 
 import re
 import sys
@@ -14,13 +14,13 @@ from six.moves import StringIO
 from mock import patch
 import pytest
 
-import niceman
+import reproman
 from ..cmdline.main import main
 from .utils import assert_equal, in_, ok_startswith
 
 
 def run_main(args, exit_code=0, expect_stderr=False):
-    """Run main() of the niceman, do basic checks and provide outputs
+    """Run main() of the reproman, do basic checks and provide outputs
 
     Parameters
     ----------
@@ -62,7 +62,7 @@ def test_version():
 
     # https://hg.python.org/cpython/file/default/Doc/whatsnew/3.4.rst#l1952
     out = stdout if sys.version_info >= (3, 4) else stderr
-    ok_startswith(out, 'niceman %s\n' % niceman.__version__)
+    ok_startswith(out, 'reproman %s\n' % reproman.__version__)
     in_("Copyright", out)
     in_("Permission is hereby granted", out)
 
@@ -71,12 +71,12 @@ def test_help_np():
     stdout, stderr = run_main(['--help-np'])
 
     # Let's extract section titles:
-    # enough of bin/niceman and .tox/py27/bin/niceman -- guarantee consistency! ;)
-    ok_startswith(stdout, 'Usage: niceman')
+    # enough of bin/reproman and .tox/py27/bin/reproman -- guarantee consistency! ;)
+    ok_startswith(stdout, 'Usage: reproman')
     # Sections start/end with * if ran under NICEMAN_HELP2MAN mode
     sections = [l[1:-1] for l in filter(re.compile('^\*.*\*$').match, stdout.split('\n'))]
     # but order is still not guaranteed (dict somewhere)! TODO
-    # see https://travis-ci.org/niceman/niceman/jobs/80519004
+    # see https://travis-ci.org/reproman/reproman/jobs/80519004
     # thus testing sets
     assert_equal(set(sections),
                  {'Commands for manipulating computation environments',

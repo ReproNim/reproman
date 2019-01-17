@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,22 +14,22 @@ __docformat__ = 'restructuredtext'
 from importlib import import_module
 from logging import getLogger
 
-from niceman.dochelpers import exc_str
-from niceman.interface.base import Interface
-from niceman.resource import Resource
-from niceman.resource.base import ResourceManager
-from niceman.resource.base import get_resource_backends
-from niceman.support.constraints import EnsureStr
-from niceman.support.param import Parameter
+from reproman.dochelpers import exc_str
+from reproman.interface.base import Interface
+from reproman.resource import Resource
+from reproman.resource.base import ResourceManager
+from reproman.resource.base import get_resource_backends
+from reproman.support.constraints import EnsureStr
+from reproman.support.param import Parameter
 
 
-lgr = getLogger('niceman.api.backend_parameters')
+lgr = getLogger('reproman.api.backend_parameters')
 
 
 def get_resource_classes(names=None):
     for name in names or ResourceManager._discover_types():
         try:
-            module = import_module('niceman.resource.{}'.format(name))
+            module = import_module('reproman.resource.{}'.format(name))
         except ImportError as exc:
             import difflib
             known = ResourceManager._discover_types()

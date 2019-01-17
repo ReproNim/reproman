@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -32,7 +32,7 @@ from .support.protocol import NullProtocol, DryRunProtocol, \
 from .utils import on_windows
 from . import cfg
 
-lgr = logging.getLogger('niceman.cmd')
+lgr = logging.getLogger('reproman.cmd')
 
 _TEMP_std = sys.stdout, sys.stderr
 
@@ -52,7 +52,7 @@ class Runner(object):
     stdout/stderr during execution.
     This can be enabled or disabled for both of them independently.
     Additionally, a protocol object can be a used with the Runner. Such a
-    protocol has to implement niceman.support.protocol.ProtocolInterface, is
+    protocol has to implement reproman.support.protocol.ProtocolInterface, is
     able to record calls and allows for dry runs.
     """
 

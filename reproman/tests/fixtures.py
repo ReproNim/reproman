@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,9 +13,9 @@ import tempfile
 
 import pytest
 from .constants import NICEMAN_CFG_PATH
-from niceman.cmd import Runner
-from niceman.tests.utils import skip_if_no_network, skip_if_no_svn
-from niceman.utils import chpwd
+from reproman.cmd import Runner
+from reproman.tests.utils import skip_if_no_network, skip_if_no_svn
+from reproman.utils import chpwd
 
 
 def get_docker_fixture(image, portmaps={}, name=None,
@@ -140,7 +140,7 @@ def git_repo_fixture(kind="default", scope="function"):
     def fixture():
         # We can't use pytest's tempdir because that is limited to
         # scope=function.
-        tmpdir = tempfile.mkdtemp(prefix="niceman-tests-")
+        tmpdir = tempfile.mkdtemp(prefix="reproman-tests-")
         repodir = os.path.realpath(os.path.join(tmpdir, "repo0"))
         os.mkdir(repodir)
 
@@ -190,7 +190,7 @@ def svn_repo_fixture(kind='default', scope='function'):
     def fixture():
         skip_if_no_svn()
         repo_name = 'svnrepo'
-        tmpdir = os.path.realpath(tempfile.mkdtemp(prefix='niceman-tests-'))
+        tmpdir = os.path.realpath(tempfile.mkdtemp(prefix='reproman-tests-'))
         root_dir = os.path.join(tmpdir, repo_name)
         subdir = os.path.join(tmpdir, 'subdir')
         os.mkdir(subdir)

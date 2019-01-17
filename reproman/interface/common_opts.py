@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,9 +12,9 @@
 
 __docformat__ = 'restructuredtext'
 
-from niceman.support.param import Parameter
-from niceman.support.constraints import EnsureChoice
-from niceman.support.constraints import EnsureInt, EnsureNone, EnsureStr
+from reproman.support.param import Parameter
+from reproman.support.constraints import EnsureChoice
+from reproman.support.constraints import EnsureInt, EnsureNone, EnsureStr
 
 
 trace_opt = Parameter(
@@ -31,7 +31,7 @@ resref_arg = Parameter(
     args=("resref",),
     metavar="RESOURCE",
     doc="""Name or ID of the resource to operate on. To see available resources, run
-    'niceman ls'""",
+    'reproman ls'""",
     constraints=EnsureStr() | EnsureNone())
 
 resref_opt = Parameter(
@@ -39,7 +39,7 @@ resref_opt = Parameter(
     dest="resref",
     metavar="RESOURCE",
     doc="""Name or ID of the resource to operate on. To see available resources, run
-    'niceman ls'""",
+    'reproman ls'""",
     constraints=EnsureStr() | EnsureNone())
 
 resref_type_opt = Parameter(

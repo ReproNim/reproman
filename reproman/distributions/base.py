@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -18,11 +18,11 @@ from importlib import import_module
 from six import add_metaclass
 from six import viewvalues
 
-from niceman.utils import attrib
-from niceman.resource.session import get_local_session
+from reproman.utils import attrib
+from reproman.resource.session import get_local_session
 
 import logging
-lgr = logging.getLogger('niceman.distributions')
+lgr = logging.getLogger('reproman.distributions')
 
 
 Factory = attr.Factory
@@ -240,7 +240,7 @@ class Distribution(SpecObject):
         dlower = distribution_type.lower()
         class_name = special_dists.get(dlower,
                                        dlower.capitalize() + 'Distribution')
-        module = import_module('niceman.distributions.' +
+        module = import_module('reproman.distributions.' +
                                special_modules.get(dlower, dlower))
         class_ = getattr(module, class_name)
         return class_ if provenance is None else class_(**provenance)

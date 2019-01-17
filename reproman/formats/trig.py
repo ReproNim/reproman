@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,7 +12,7 @@ Plugin support for TriG formatted RDF provenance files.
 See: https://en.wikipedia.org/wiki/TriG_(syntax)
 """
 
-from niceman.formats.base import Provenance
+from reproman.formats.base import Provenance
 from rdflib import ConjunctiveGraph
 
 

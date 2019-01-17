@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -21,20 +21,20 @@ from os.path import join as opj
 
 from logging import getLogger
 
-from niceman.dochelpers import exc_str
-from niceman.utils import attrib
-from niceman.utils import only_with_values
-from niceman.utils import instantiate_attr_object
-from niceman.resource.session import get_local_session
+from reproman.dochelpers import exc_str
+from reproman.utils import attrib
+from reproman.utils import only_with_values
+from reproman.utils import instantiate_attr_object
+from reproman.resource.session import get_local_session
 
-from niceman.cmd import CommandError, Runner
+from reproman.cmd import CommandError, Runner
 
-lgr = getLogger('niceman.distributions.vcs')
+lgr = getLogger('reproman.distributions.vcs')
 
-from niceman.distributions.base import DistributionTracer
-from niceman.distributions.base import SpecObject
-from niceman.distributions.base import Distribution
-from niceman.distributions.base import TypedList
+from reproman.distributions.base import DistributionTracer
+from reproman.distributions.base import SpecObject
+from reproman.distributions.base import Distribution
+from reproman.distributions.base import TypedList
 
 
 # # TODO: use metaclass I guess... ?

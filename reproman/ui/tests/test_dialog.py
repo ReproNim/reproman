@@ -24,7 +24,7 @@ from ...tests.utils import assert_in
 from ...tests.utils import ok_startswith
 from ...tests.utils import ok_endswith
 from ..dialog import DialogUI
-from niceman.ui.progressbars import progressbars
+from reproman.ui.progressbars import progressbars
 
 
 def patch_input(**kwargs):

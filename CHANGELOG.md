@@ -74,6 +74,6 @@ TODO Summary
 
 ## References
 [datalad]: http://datalad.org
-[niceman]: http://niceman.repronim.org
+[reproman]: http://reproman.repronim.org
 [repronim]: http://repronim.org
 [simple_workflow]: https://github.com/ReproNim/simple_workflow

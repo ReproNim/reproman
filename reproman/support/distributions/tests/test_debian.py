@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,7 +14,7 @@ from ..debian import DebianReleaseSpec
 from ..debian import get_spec_from_release_file
 from ..debian import parse_dpkgquery_line
 
-from niceman.tests.utils import eq_, assert_is_subset_recur
+from reproman.tests.utils import eq_, assert_is_subset_recur
 
 
 def test_get_spec_from_release_file(f=None):

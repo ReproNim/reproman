@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -17,7 +17,7 @@ __version__ = '0.1.0'
 # NOTE: might cause problems with "python setup.py develop" deployments
 #  so I have even changed buildbot to use  pip install -e .
 moddir = dirname(__file__)
-projdir = curdir if moddir == 'niceman' else dirname(moddir)
+projdir = curdir if moddir == 'reproman' else dirname(moddir)
 if lexists(opj(projdir, '.git')):
     # If under git -- attempt to deduce a better "dynamic" version following git
     try:

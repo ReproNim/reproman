@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,15 +15,15 @@ import attr
 import pytest
 import logging
 
-from niceman.cmd import Runner
-from niceman.utils import chpwd
-from niceman.tests.utils import create_pymodule
-from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
-from niceman.tests.utils import swallow_logs
-from niceman.distributions.venv import VenvDistribution
-from niceman.distributions.venv import VenvEnvironment
-from niceman.distributions.venv import VenvPackage
-from niceman.distributions.venv import VenvTracer
+from reproman.cmd import Runner
+from reproman.utils import chpwd
+from reproman.tests.utils import create_pymodule
+from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
+from reproman.tests.utils import swallow_logs
+from reproman.distributions.venv import VenvDistribution
+from reproman.distributions.venv import VenvEnvironment
+from reproman.distributions.venv import VenvPackage
+from reproman.distributions.venv import VenvTracer
 
 PY_VERSION = "python{v.major}.{v.minor}".format(v=sys.version_info)
 
@@ -31,7 +31,7 @@ PY_VERSION = "python{v.major}.{v.minor}".format(v=sys.version_info)
 @pytest.fixture(scope="session")
 @skip_if_no_network
 def venv_test_dir():
-    dirs = AppDirs('niceman')
+    dirs = AppDirs('reproman')
     test_dir = os.path.join(dirs.user_cache_dir, 'venv_test')
     if os.path.exists(test_dir):
         return test_dir

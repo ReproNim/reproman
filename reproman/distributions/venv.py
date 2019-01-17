@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,21 +15,21 @@ import os.path as op
 import attr
 
 from six import iteritems
-from niceman.distributions import Distribution
-from niceman.distributions import piputils
-from niceman.dochelpers import borrowdoc
-from niceman.dochelpers import exc_str
-from niceman.utils import attrib, PathRoot, is_subpath
-from niceman.utils import execute_command_batch
-from niceman.utils import parse_semantic_version
-from niceman.resource.session import get_local_session
+from reproman.distributions import Distribution
+from reproman.distributions import piputils
+from reproman.dochelpers import borrowdoc
+from reproman.dochelpers import exc_str
+from reproman.utils import attrib, PathRoot, is_subpath
+from reproman.utils import execute_command_batch
+from reproman.utils import parse_semantic_version
+from reproman.resource.session import get_local_session
 
 from .base import DistributionTracer
 from .base import Package
 from .base import SpecObject
 from .base import TypedList
 
-lgr = logging.getLogger("niceman.distributions.venv")
+lgr = logging.getLogger("reproman.distributions.venv")
 
 
 @attr.s

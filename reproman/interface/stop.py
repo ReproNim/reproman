@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 import re
 
 from .base import Interface
-import niceman.interface.base # Needed for test patching
+import reproman.interface.base # Needed for test patching
 from .common_opts import resref_arg
 from .common_opts import resref_type_opt
 from ..support.param import Parameter
@@ -22,7 +22,7 @@ from ..support.constraints import EnsureStr
 from ..resource import get_manager
 
 from logging import getLogger
-lgr = getLogger('niceman.api.stop')
+lgr = getLogger('reproman.api.stop')
 
 
 class Stop(Interface):
@@ -31,7 +31,7 @@ class Stop(Interface):
     Examples
     --------
 
-      $ niceman stop my-resource
+      $ reproman stop my-resource
 
     """
 

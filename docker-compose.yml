@@ -9,10 +9,10 @@ services:
         - UNAME=$USER
         # - UID=1000
         # - GID=1000
-    image: niceman:redhat
-    container_name: niceman-redhat
+    image: reproman:redhat
+    container_name: reproman-redhat
     volumes:
-      - $PWD:/home/$USER/niceman
+      - $PWD:/home/$USER/reproman
       - /var/run/docker.sock:/var/run/docker.sock
   debian:
     build:
@@ -23,8 +23,8 @@ services:
         - UNAME=$USER
         # - UID=1000
         # - GID=1000
-    image: niceman:debian
-    container_name: niceman-debian
+    image: reproman:debian
+    container_name: reproman-debian
     volumes:
-      - $PWD:/home/$USER/niceman
+      - $PWD:/home/$USER/reproman
       - /var/run/docker.sock:/var/run/docker.sock

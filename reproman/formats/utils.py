@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,7 +13,7 @@ from __future__ import absolute_import
 
 import yaml
 
-from niceman.utils import safe_write
+from reproman.utils import safe_write
 
 
 def write_config_key(stream, envconfig, key, intro_comment=""):

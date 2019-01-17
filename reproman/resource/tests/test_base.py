@@ -1,6 +1,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -9,15 +9,15 @@ from mock import patch
 import os.path as op
 import pytest
 
-from niceman.config import ConfigManager
-from niceman.resource.base import ResourceManager
-from niceman.resource.base import backend_check_parameters
-from niceman.resource.shell import Shell
-from niceman.resource.docker_container import DockerContainer
-from niceman.support.exceptions import MissingConfigError
-from niceman.support.exceptions import MultipleResourceMatches
-from niceman.support.exceptions import ResourceAlreadyExistsError
-from niceman.support.exceptions import ResourceError
+from reproman.config import ConfigManager
+from reproman.resource.base import ResourceManager
+from reproman.resource.base import backend_check_parameters
+from reproman.resource.shell import Shell
+from reproman.resource.docker_container import DockerContainer
+from reproman.support.exceptions import MissingConfigError
+from reproman.support.exceptions import MultipleResourceMatches
+from reproman.support.exceptions import ResourceAlreadyExistsError
+from reproman.support.exceptions import ResourceError
 
 
 def test_resource_manager_factory_missing_type():
@@ -158,7 +158,7 @@ def test_create_includes_config(tmpdir):
     tmpdir = str(tmpdir)
     manager = ResourceManager(op.join(tmpdir, "inventory.yml"))
     # We load items from the config.
-    config_file = op.join(tmpdir, "niceman.cfg")
+    config_file = op.join(tmpdir, "reproman.cfg")
     with open(config_file, "w") as cfh:
         cfh.write("[ssh]\nhost = myhost\n")
     config = ConfigManager(filenames=[config_file], load_default=False)

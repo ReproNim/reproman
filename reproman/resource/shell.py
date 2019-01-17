@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,14 +12,14 @@ import attr
 import shutil
 
 from .base import Resource
-from niceman.cmd import Runner
-from niceman.dochelpers import borrowdoc
-from niceman.resource.session import Session
-from niceman.support.exceptions import CommandError
-from niceman.utils import attrib
+from reproman.cmd import Runner
+from reproman.dochelpers import borrowdoc
+from reproman.resource.session import Session
+from reproman.support.exceptions import CommandError
+from reproman.utils import attrib
 
 import logging
-lgr = logging.getLogger('niceman.resource.shell')
+lgr = logging.getLogger('reproman.resource.shell')
 
 import os
 

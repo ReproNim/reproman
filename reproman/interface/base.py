@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -19,7 +19,7 @@ import textwrap
 
 from ..ui import ui
 from logging import getLogger
-lgr = getLogger('niceman.interface')
+lgr = getLogger('reproman.interface')
 
 
 def get_api_name(intfspec):
@@ -160,7 +160,7 @@ def alter_interface_docs_for_cmdline(docs):
         docs)
     # clean up sphinx API refs
     docs = re.sub(
-        '\~niceman\.api\.\S*',
+        '\~reproman\.api\.\S*',
         lambda match: "`{0}`".format(match.group(0)[13:]),
         docs)
     # Remove RST paragraph markup
@@ -184,7 +184,7 @@ def update_docstring_with_parameters(func, params, prefix=None, suffix=None):
     description of its parameters. The Parameter spec needs to match
     the number and names of the callables arguments.
     """
-    from niceman.utils import getargspec
+    from reproman.utils import getargspec
     # get the signature
     ndefaults = 0
     args, varargs, varkw, defaults = getargspec(func)
@@ -231,7 +231,7 @@ class Interface(object):
         # XXX needs safety check for name collisions
         # XXX allow for parser kwargs customization
         parser_kwargs = {}
-        from niceman.utils import getargspec
+        from reproman.utils import getargspec
         # get the signature
         ndefaults = 0
         args, varargs, varkw, defaults = getargspec(cls.__call__)
@@ -281,7 +281,7 @@ class Interface(object):
     @classmethod
     def call_from_parser(cls, args):
         # XXX needs safety check for name collisions
-        from niceman.utils import getargspec
+        from reproman.utils import getargspec
         argnames = getargspec(cls.__call__)[0]
         kwargs = {k: getattr(args, k) for k in argnames if k != 'self'}
         try:

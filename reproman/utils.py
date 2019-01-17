@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -35,11 +35,11 @@ from time import sleep
 import inspect
 from itertools import tee
 
-from niceman.support.exceptions import CommandError
+from reproman.support.exceptions import CommandError
 
-lgr = logging.getLogger("niceman.utils")
+lgr = logging.getLogger("reproman.utils")
 
-lgr.log(5, "Importing niceman.utils")
+lgr.log(5, "Importing reproman.utils")
 #
 # Some useful variables
 #
@@ -185,10 +185,10 @@ def sorted_files(dout):
 
 from os.path import sep as dirsep
 _VCS_REGEX = '%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)' % (dirsep, dirsep)
-_NICEMAN_REGEX = '%s\.(?:niceman)(?:%s|$)' % (dirsep, dirsep)
+_NICEMAN_REGEX = '%s\.(?:reproman)(?:%s|$)' % (dirsep, dirsep)
 
 
-def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_niceman=False, dirs=False):
+def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_reproman=False, dirs=False):
     """Generator to find files matching regex
 
     Parameters
@@ -199,9 +199,9 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_nic
     exclude_vcs:
       If True, excludes commonly known VCS subdirectories.  If string, used
       as regex to exclude those files (regex: `%r`)
-    exclude_niceman:
-      If True, excludes files known to be niceman meta-data files (e.g. under
-      .niceman/ subdirectory) (regex: `%r`)
+    exclude_reproman:
+      If True, excludes files known to be reproman meta-data files (e.g. under
+      .reproman/ subdirectory) (regex: `%r`)
     topdir: basestring, optional
       Directory where to search
     dirs: bool, optional
@@ -218,7 +218,7 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_nic
                 continue
             if exclude_vcs and re.search(_VCS_REGEX, path):
                 continue
-            if exclude_niceman and re.search(_NICEMAN_REGEX, path):
+            if exclude_reproman and re.search(_NICEMAN_REGEX, path):
                 continue
             yield path
 find_files.__doc__ %= (_VCS_REGEX, _NICEMAN_REGEX)
@@ -605,7 +605,7 @@ def get_tempfile_kwargs(tkwargs={}, prefix="", wrapped=None):
     # if len(targs)<2 and \
     if not 'prefix' in tkwargs_:
         tkwargs_['prefix'] = '_'.join(
-            ['niceman_temp'] +
+            ['reproman_temp'] +
             ([prefix] if prefix else []) +
             ([''] if (on_windows or not wrapped)
                   else [wrapped.__name__]))
@@ -729,7 +729,7 @@ def swallow_logs(new_level=None):
     """Context manager to consume all logs.
 
     """
-    lgr = logging.getLogger("niceman")
+    lgr = logging.getLogger("reproman")
 
     # Keep old settings
     old_level = lgr.level
@@ -800,7 +800,7 @@ def setup_exceptionhook(ipython=False):
        pdb.post_mortem; if not interactive, then invokes default handler.
     """
 
-    def _niceman_pdb_excepthook(type, value, tb):
+    def _reproman_pdb_excepthook(type, value, tb):
         import traceback
         traceback.print_exception(type, value, tb)
         print()
@@ -814,7 +814,7 @@ def setup_exceptionhook(ipython=False):
                                              # color_scheme='Linux',
                                              call_pdb=is_interactive())
     else:
-        sys.excepthook = _niceman_pdb_excepthook
+        sys.excepthook = _reproman_pdb_excepthook
 
 
 def assure_dir(*args):
@@ -901,7 +901,7 @@ def knows_annex(path):
     if not exists(path):
         lgr.debug("No annex: test path {0} doesn't exist".format(path))
         return False
-    from niceman.support.gitrepo import GitRepo
+    from reproman.support.gitrepo import GitRepo
     return GitRepo(path, init=False, create=False).is_with_annex()
 
 
@@ -930,7 +930,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
     Examples
     --------
         >>> from os.path import exists
-        >>> from niceman.utils import make_tempfile
+        >>> from reproman.utils import make_tempfile
         >>> with make_tempfile() as fname:
         ...    k = open(fname, 'w').write('silly test')
         >>> assert not exists(fname)  # was removed
@@ -1366,4 +1366,4 @@ def command_as_string(command):
     return command
 
 
-lgr.log(5, "Done importing niceman.utils")
+lgr.log(5, "Done importing reproman.utils")

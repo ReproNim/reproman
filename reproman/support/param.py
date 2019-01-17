@@ -2,7 +2,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import re
 import textwrap
 import argparse
-from niceman.utils import getargspec
+from reproman.utils import getargspec
 
 from .constraints import expand_constraint_spec
 
@@ -52,8 +52,8 @@ class Parameter(object):
         Examples
         --------
         Ensure a parameter is a float
-        >>> from niceman.support.param import Parameter
-        >>> from niceman.support.constraints import (EnsureFloat, EnsureRange,
+        >>> from reproman.support.param import Parameter
+        >>> from reproman.support.constraints import (EnsureFloat, EnsureRange,
         ...                              AltConstraints, Constraints)
         >>> C = Parameter(constraints=EnsureFloat())
 

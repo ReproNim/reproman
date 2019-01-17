@@ -9,7 +9,7 @@
 '''Unit tests for Python API functionality.'''
 
 import re
-from niceman.utils import getargspec
+from reproman.utils import getargspec
 import pytest
 
 from .utils import assert_true, assert_false, eq_
@@ -18,7 +18,7 @@ from .utils import assert_true, assert_false, eq_
 def test_basic_setup():
     # the import alone will verify that all default values match their
     # constraints
-    from niceman import api
+    from reproman import api
     # random pick of something that should be there
     assert_true(hasattr(api, 'create'))
     assert_true(hasattr(api, 'test'))
@@ -29,12 +29,12 @@ def test_basic_setup():
 
 def get_interface_specs():
     from importlib import import_module
-    from niceman.interface.base import get_interface_groups
+    from reproman.interface.base import get_interface_groups
 
     for grp_name, grp_descr, interfaces in get_interface_groups():
         for intfspec in interfaces:
             # turn the interface spec into an instance
-            mod = import_module(intfspec[0], package='niceman')
+            mod = import_module(intfspec[0], package='reproman')
             intf = getattr(mod, intfspec[1])
             spec = getattr(intf, '_params_', dict())
 

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,11 +16,11 @@ from subprocess import call
 import yaml
 import attr
 
-from niceman.formats.niceman import NicemanProvenance
-from niceman.tests.utils import create_pymodule
-from niceman.tests.utils import skip_if_no_network, assert_is_subset_recur
+from reproman.formats.reproman import NicemanProvenance
+from reproman.tests.utils import create_pymodule
+from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
-from niceman.distributions.conda import CondaTracer, CondaDistribution, \
+from reproman.distributions.conda import CondaTracer, CondaDistribution, \
     CondaEnvironment, CondaPackage, CondaChannel, \
     get_conda_platform_from_python, get_miniconda_url
 
@@ -61,7 +61,7 @@ def test_format_pip_package():
 def test_create_conda_export():
     env = CondaEnvironment(
         name="mytest",
-        path="/home/butch/.cache/niceman/conda_test/miniconda/envs/mytest",
+        path="/home/butch/.cache/reproman/conda_test/miniconda/envs/mytest",
         packages=[
             CondaPackage(
                 name="xz",
@@ -91,7 +91,7 @@ def test_create_conda_export():
            "channels": ["conda-forge"],
            "dependencies": ["xz=5.2.3=0",
                             {"pip": ["rpaths==0.13"]}],
-           "prefix": "/home/butch/.cache/niceman/conda_test/miniconda/envs/mytest"
+           "prefix": "/home/butch/.cache/reproman/conda_test/miniconda/envs/mytest"
            }
     export = yaml.safe_load(CondaDistribution.create_conda_export(env))
     assert export == out
@@ -100,7 +100,7 @@ def test_create_conda_export():
 @pytest.mark.integration
 @skip_if_no_network
 def test_conda_init_install_and_detect():
-    test_dir = "/tmp/niceman_conda/miniconda"
+    test_dir = "/tmp/reproman_conda/miniconda"
 
     dist = CondaDistribution(
         name="conda",
@@ -188,7 +188,7 @@ def test_conda_init_install_and_detect():
                     CondaChannel(
                         name="conda-forge",
                         url="https://conda.anaconda.org/conda-forge/linux-64")])])
-    # First install the environment in /tmp/niceman_conda/miniconda
+    # First install the environment in /tmp/reproman_conda/miniconda
     dist.initiate(None)
     dist.install_packages()
     # Add an empty environment to test detection of them
@@ -268,7 +268,7 @@ def test_get_conda_env_export_exceptions():
     def raise_other(_):
         raise Exception("unknown")
 
-    from niceman.distributions.conda import lgr
+    from reproman.distributions.conda import lgr
 
     tracer = CondaTracer()
     with mock.patch.object(tracer._session, "execute_command",

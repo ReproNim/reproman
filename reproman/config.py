@@ -2,7 +2,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -21,18 +21,18 @@ from os.path import join as opj
 from .support.configparserinc import SafeConfigParserWithIncludes
 
 LOCATIONS_DOC = """
-    1. '/etc/niceman/niceman.cfg'
-    2. 'niceman/niceman.cfg' in all directories defined by $XDG_CONFIG_DIRS
+    1. '/etc/reproman/reproman.cfg'
+    2. 'reproman/reproman.cfg' in all directories defined by $XDG_CONFIG_DIRS
        (by default: /etc/xdg/)
-    3. 'niceman/niceman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
-    4. '.niceman/niceman.cfg', relative to the current directory""".lstrip()
+    3. 'reproman/reproman.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
+    4. '.reproman/reproman.cfg', relative to the current directory""".lstrip()
 
 
 class ConfigManager(SafeConfigParserWithIncludes, object):
-    """Central configuration registry for niceman.
+    """Central configuration registry for reproman.
 
     The purpose of this class is to collect all configurable settings
-    used by various parts of niceman. It is fairly simple and does
+    used by various parts of reproman. It is fairly simple and does
     only little more than the standard Python ConfigParser. Like
     ConfigParser it is blind to the data that it stores, i.e. no type
     checking is performed.
@@ -78,7 +78,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
     overrides any settings read from any file.
     """
 
-    dirs = AppDirs("niceman", "niceman.org")
+    dirs = AppDirs("reproman", "reproman.org")
 
     # things we want to count on to be available
     _DEFAULTS = {'general': {'verbose': '1'}}
@@ -119,20 +119,20 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         homedir = os.path.expanduser('~')  # seems to be useless ???
         cfg_file_candidates = [
             # shipped-with config
-            # opj(os.path.dirname(__file__), 'niceman.cfg'),
+            # opj(os.path.dirname(__file__), 'reproman.cfg'),
             # system config
-            '/etc/niceman/niceman.cfg']
+            '/etc/reproman/reproman.cfg']
         # XDG system config
         cfg_file_candidates.append(opj(self.dirs.site_config_dir,
-                                       'niceman.cfg'))
+                                       'reproman.cfg'))
 
         # XDG user config
         home_cfg_base_path = self.dirs.user_config_dir
         if os.path.isabs(home_cfg_base_path):
-            cfg_file_candidates.append(opj(home_cfg_base_path, 'niceman.cfg'))
+            cfg_file_candidates.append(opj(home_cfg_base_path, 'reproman.cfg'))
 
         # current dir config
-        cfg_file_candidates.append(opj('.niceman', 'niceman.cfg'))
+        cfg_file_candidates.append(opj('.reproman', 'reproman.cfg'))
         return cfg_file_candidates
 
     def _get_file_candidates(self):

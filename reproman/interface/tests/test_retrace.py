@@ -2,18 +2,18 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from niceman.cmdline.main import main
-from niceman.formats import Provenance
+from reproman.cmdline.main import main
+from reproman.formats import Provenance
 
 import logging
 
-from niceman.utils import swallow_logs, swallow_outputs, make_tempfile
-from niceman.tests.utils import assert_in, skip_if_no_apt_cache
+from reproman.utils import swallow_logs, swallow_outputs, make_tempfile
+from reproman.tests.utils import assert_in, skip_if_no_apt_cache
 
 from ..retrace import identify_distributions
 

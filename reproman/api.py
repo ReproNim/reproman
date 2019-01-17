@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -22,7 +22,7 @@ def _generate_func_api():
     for grp_name, grp_descr, interfaces in get_interface_groups():
         for intfspec in interfaces:
             # turn the interface spec into an instance
-            mod = import_module(intfspec[0], package='niceman')
+            mod = import_module(intfspec[0], package='reproman')
             intf = getattr(mod, intfspec[1])
             spec = getattr(intf, '_params_', dict())
 

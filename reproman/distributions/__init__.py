@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,4 +13,4 @@
 __docformat__ = 'restructuredtext'
 
 # Allow base Distribution class to be available directly from the package.
-from niceman.distributions.base import Distribution
+from reproman.distributions.base import Distribution

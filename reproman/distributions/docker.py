@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,7 +12,7 @@ import attr
 import json
 import logging
 
-lgr = logging.getLogger('niceman.distributions.docker')
+lgr = logging.getLogger('reproman.distributions.docker')
 
 from .base import Package
 from .base import Distribution
@@ -57,7 +57,7 @@ class DockerDistribution(Distribution):
             The Session to work in
         """
 
-        # Raise niceman.support.exceptions.CommandError exception if Docker 
+        # Raise reproman.support.exceptions.CommandError exception if Docker 
         # engine is not to be found.
         session.execute_command(['docker', 'info'])
 

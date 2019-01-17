@@ -73,8 +73,8 @@ script:
   # Verify that setup.py build doesn't puke
   - python setup.py build
   - if [ ! -z "$NICEMAN_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
-  # - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package niceman --logging-level=INFO
-  - coverage run `which py.test` -s --integration niceman
+  # - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package reproman --logging-level=INFO
+  - coverage run `which py.test` -s --integration reproman
   - if [ ! -z "$NICEMAN_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # Generate documentation and run doctests
   - PYTHONPATH=$PWD make -C docs html doctest
@@ -91,5 +91,5 @@ after_success:
 # for a particular debugging
 #after_failure:
 #  - if [ ! -z "$NICEMAN_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
-#  - NICEMAN_LOGLEVEL=DEBUG $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package niceman --logging-level=DEBUG
+#  - NICEMAN_LOGLEVEL=DEBUG $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package reproman --logging-level=DEBUG
 #  - if [ ! -z "$NICEMAN_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,16 +16,16 @@ import json
 import os
 import requests
 import tarfile
-from niceman import utils
+from reproman import utils
 from ..cmd import Runner
 from ..support.exceptions import CommandError, ResourceError
-from niceman.dochelpers import borrowdoc
-from niceman.resource.session import POSIXSession, Session
+from reproman.dochelpers import borrowdoc
+from reproman.resource.session import POSIXSession, Session
 from .base import Resource
 from ..utils import attrib
 
 import logging
-lgr = logging.getLogger('niceman.resource.docker_container')
+lgr = logging.getLogger('reproman.resource.docker_container')
 
 
 @attr.s

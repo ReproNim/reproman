@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,7 +16,7 @@ import tempfile
 import uuid
 
 
-lgr = logging.getLogger('niceman.distributions.singularity')
+lgr = logging.getLogger('reproman.distributions.singularity')
 
 from .base import Package
 from .base import Distribution
@@ -66,7 +66,7 @@ class SingularityDistribution(Distribution):
             The Session to work in
         """
 
-        # Raise niceman.support.exceptions.CommandError exception if
+        # Raise reproman.support.exceptions.CommandError exception if
         # Singularity is not to be found.
         session.execute_command(['singularity', 'selftest'])
 

@@ -1,6 +1,6 @@
 """
     Example script to read a provenance file and then create the environment on the localhost.
-    The provenance files in the niceman/examples directory are used for this example.
+    The provenance files in the reproman/examples directory are used for this example.
 """
 
 # # Add current NeuroDebian and archived NeuroDebian repos.
@@ -19,7 +19,7 @@
 # orchestrator.add_task('apt', dict(update_cache='yes'))
 
 import logging
-lgr = logging.getLogger('niceman.examples')
+lgr = logging.getLogger('reproman.examples')
 
 
 # Add packages to task list.

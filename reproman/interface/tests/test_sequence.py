@@ -1,6 +1,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,11 +15,11 @@ import pytest
 from mock import patch
 import yaml
 
-from niceman.cmdline.main import main
-from niceman.cmd import Runner
-from niceman.resource.base import ResourceManager
-from niceman.support.exceptions import CommandError
-from niceman.tests.utils import swallow_logs
+from reproman.cmdline.main import main
+from reproman.cmd import Runner
+from reproman.resource.base import ResourceManager
+from reproman.support.exceptions import CommandError
+from reproman.tests.utils import swallow_logs
 
 
 def test_create_start_stop(tmpdir):
@@ -29,7 +29,7 @@ def test_create_start_stop(tmpdir):
 
     # Simple smoke test.  We can't easily test the effects of start/stop with
     # shell because those the start and stop methods are noops.
-    with patch("niceman.interface.create.get_manager",
+    with patch("reproman.interface.create.get_manager",
                return_value=rm):
         main(["create", "-t", "shell", "testshell"])
 
@@ -37,15 +37,15 @@ def test_create_start_stop(tmpdir):
         inventory = yaml.safe_load(ifh)
     assert inventory["testshell"]["status"] == "available"
 
-    with patch("niceman.interface.start.get_manager",
+    with patch("reproman.interface.start.get_manager",
                return_value=rm):
         main(["start", "testshell"])
 
-    with patch("niceman.interface.stop.get_manager",
+    with patch("reproman.interface.stop.get_manager",
                return_value=rm):
         main(["stop", "testshell"])
 
-    with patch("niceman.interface.delete.get_manager",
+    with patch("reproman.interface.delete.get_manager",
                return_value=rm):
         main(["delete", "--skip-confirmation", "testshell"])
 
@@ -63,11 +63,11 @@ def test_create_and_start(tmpdir):
     with open(cfg_file, "w") as cfg_fh:
         cfg_fh.write("[general]\ninventory_file = {}\n".format(inventory_file))
 
-    def run_niceman(args):
-        runner(["niceman", "--config", cfg_file] + args,
+    def run_reproman(args):
+        runner(["reproman", "--config", cfg_file] + args,
                expect_stderr=True)
 
-    run_niceman(["create", "--resource-type=shell", "myshell"])
+    run_reproman(["create", "--resource-type=shell", "myshell"])
 
     with open(inventory_file) as ifh:
         dumped = ifh.read()
@@ -81,9 +81,9 @@ def test_create_and_start(tmpdir):
 
     with swallow_logs(new_level=logging.ERROR) as cml:
         with pytest.raises(CommandError):
-            runner(["niceman", "--config", empty_cfg_file,
+            runner(["reproman", "--config", empty_cfg_file,
                     "start", "myshell"])
         if os.environ.get("NICEMAN_LOGTARGET", "stderr") == "stderr":
             assert "ResourceNotFoundError" in cml.out
     # ... but using the same config works.
-    run_niceman(["start", "myshell"])
+    run_reproman(["start", "myshell"])

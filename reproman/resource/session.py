@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -10,7 +10,7 @@
 
 import logging
 
-lgr = logging.getLogger('niceman.resource.session')
+lgr = logging.getLogger('reproman.resource.session')
 
 import attr
 from functools import partial
@@ -19,15 +19,15 @@ import os.path as op
 import re
 from six.moves import shlex_quote
 
-from niceman.support.exceptions import SessionRuntimeError
-from niceman.cmd import Runner
-from niceman.dochelpers import exc_str, borrowdoc
-from niceman.support.exceptions import CommandError
-from niceman.utils import updated
-from niceman.utils import to_unicode
+from reproman.support.exceptions import SessionRuntimeError
+from reproman.cmd import Runner
+from reproman.dochelpers import exc_str, borrowdoc
+from reproman.support.exceptions import CommandError
+from reproman.utils import updated
+from reproman.utils import to_unicode
 
 import logging
-lgr = logging.getLogger('niceman.session')
+lgr = logging.getLogger('reproman.session')
 
 
 @attr.s
@@ -234,8 +234,8 @@ class Session(object):
     # TODO:  should be in subspace (.path) may be? This would allow for
     #        more flexible mixups
 
-    def niceman_exec(self, command, args):
-        """Run a niceman utility "exec" command in the environment
+    def reproman_exec(self, command, args):
+        """Run a reproman utility "exec" command in the environment
 
         Parameters
         ----------
@@ -701,7 +701,7 @@ def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
     # TODO: support arbitrary session as obtained from a resource
     # TODO:  Shell needs a name -- should we request from manager
     #        which would assume some magical name for reuse??
-    from niceman.resource.shell import Shell
+    from reproman.resource.shell import Shell
     session = Shell("localshell").get_session(pty=pty, shared=shared)
     # or we shouldn't set it ? XXXX
     if env:

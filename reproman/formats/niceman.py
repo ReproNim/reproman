@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -20,17 +20,17 @@ from collections import OrderedDict
 import attr
 import yaml
 
-import niceman
-from niceman.distributions.base import Factory
-from niceman.distributions.base import SpecObject
-from niceman.utils import instantiate_attr_object
+import reproman
+from reproman.distributions.base import Factory
+from reproman.distributions.base import SpecObject
+from reproman.utils import instantiate_attr_object
 from .base import Provenance
 from .utils import write_config
 from .. import utils
 from ..distributions import Distribution
 from ..dochelpers import exc_str
 
-lgr = logging.getLogger('niceman.formats.niceman')
+lgr = logging.getLogger('reproman.formats.reproman')
 
 __version__ = '0.0.1'
 
@@ -166,7 +166,7 @@ class NicemanProvenance(Provenance):
             subclass = in_value['name'].strip('-0123456789')
             # Uses our factory decided by the 'name'
             # So it is pretty much some kind of a helper factory
-            #   get_instance_by_name('niceman.distributions', in_value['name'])
+            #   get_instance_by_name('reproman.distributions', in_value['name'])
             # and then populate it.  Could become part of the model spec
             # describing that. ATM it is just a FactoryListOf(Distribution)
             # but we want to say that it is not just any Distribution
@@ -277,7 +277,7 @@ class NicemanProvenance(Provenance):
             output,
             ("# NICEMAN Environment Configuration File\n"
              "# This file was created by NICEMAN {0} on {1}\n").format(
-                niceman.__version__, datetime.datetime.now()))
+                reproman.__version__, datetime.datetime.now()))
 
         #c = "\n# Runs: Commands and related environment variables\n\n"
         #write_config_key(output, envconfig, "runs", c)

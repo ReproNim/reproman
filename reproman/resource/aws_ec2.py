@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -17,7 +17,7 @@ from appdirs import AppDirs
 from botocore.exceptions import ClientError
 
 import logging
-lgr = logging.getLogger('niceman.resource.aws_ec2')
+lgr = logging.getLogger('reproman.resource.aws_ec2')
 
 from .base import Resource
 from ..ui import ui
@@ -251,7 +251,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
 
         # Create private key file.
         basedir = join(
-            AppDirs('niceman', 'niceman.org').user_data_dir, 'ec2_keys')
+            AppDirs('reproman', 'reproman.org').user_data_dir, 'ec2_keys')
         assure_dir(basedir)
         key_filename = join(basedir, key_name + '.pem')
 

@@ -2,18 +2,18 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from os.path import join as opj, dirname
 import subprocess
-from niceman.cmdline.main import main
+from reproman.cmdline.main import main
 
-from niceman.utils import swallow_outputs, swallow_logs
-from niceman.tests.utils import assert_in, assert_not_in, assert_equal
-from niceman.tests.utils import assert_in_in
+from reproman.utils import swallow_outputs, swallow_logs
+from reproman.tests.utils import assert_in, assert_not_in, assert_equal
+from reproman.tests.utils import assert_in_in
 
 from pytest import raises
 
@@ -31,12 +31,12 @@ def test_multi_debian_files():
         args = ['diff', multi_debian_yaml, diff_1_yaml]
         with raises(SystemExit):
             main(args)
-        assert_in_in("multiple <class 'niceman.distributions.debian.DebianDistribution'> found", log.lines)
+        assert_in_in("multiple <class 'reproman.distributions.debian.DebianDistribution'> found", log.lines)
     with swallow_logs() as log:
         args = ['diff', diff_1_yaml, multi_debian_yaml]
         with raises(SystemExit):
             main(args)
-        assert_in_in("multiple <class 'niceman.distributions.debian.DebianDistribution'> found", log.lines)
+        assert_in_in("multiple <class 'reproman.distributions.debian.DebianDistribution'> found", log.lines)
 
 
 def test_same():
@@ -158,14 +158,14 @@ def test_diff_satisfies_unsupported_distribution():
     # that raises an exception in main(), so it doesn't return and we 
     # can't catch its return value
     with swallow_outputs() as outputs:
-        args = ['niceman', 
+        args = ['reproman', 
                 'diff', 
                 '--satisfies', 
                 diff_satisfies_unsupported_yaml, 
                 diff_satisfies_2_yaml]
         rv = subprocess.call(args)
         assert_equal(rv, 1)
-        args = ['niceman', 
+        args = ['reproman', 
                 'diff', 
                 '--satisfies', 
                 diff_satisfies_1_yaml, 

@@ -1,4 +1,4 @@
-# More or less detailed (but minimalistic) example for the niceman spec
+# More or less detailed (but minimalistic) example for the reproman spec
 version: "0.0.1"
 
 distributions:

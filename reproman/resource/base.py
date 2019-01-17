@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -28,7 +28,7 @@ from ..support.exceptions import MissingConfigError
 
 
 import logging
-lgr = logging.getLogger('niceman.resource.base')
+lgr = logging.getLogger('reproman.resource.base')
 
 
 def get_required_fields(cls):
@@ -134,7 +134,7 @@ class ResourceManager(object):
         module_name = '_'.join(type_.split('-'))
         class_name = ''.join([token.capitalize() for token in type_.split('-')])
         try:
-            module = import_module('niceman.resource.{}'.format(module_name))
+            module = import_module('reproman.resource.{}'.format(module_name))
         except Exception as exc:
             # Typically it should be an ImportError, but let's catch and recast
             # anything just in case.
@@ -244,7 +244,7 @@ class ResourceManager(object):
         Parameters
         ----------
         inventory_path : string
-            Path to the inventory file which is declared in the niceman.cfg file.
+            Path to the inventory file which is declared in the reproman.cfg file.
 
         Returns
         -------

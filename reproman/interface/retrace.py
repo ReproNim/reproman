@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,8 +15,8 @@ from os.path import normpath
 import sys
 import time
 
-from niceman.resource.session import get_local_session
-from niceman.resource.session import Session
+from reproman.resource.session import get_local_session
+from reproman.resource.session import Session
 from .common_opts import resref_opt
 from .common_opts import resref_type_opt
 from .base import Interface
@@ -31,7 +31,7 @@ from ..resource import get_manager
 __docformat__ = 'restructuredtext'
 
 from logging import getLogger
-lgr = getLogger('niceman.api.retrace')
+lgr = getLogger('reproman.api.retrace')
 
 
 class Retrace(Interface):
@@ -40,7 +40,7 @@ class Retrace(Interface):
     Examples
     --------
 
-      $ niceman retrace --spec reprozip_run.yml > niceman_config.yml
+      $ reproman retrace --spec reprozip_run.yml > reproman_config.yml
 
     """
 
@@ -70,7 +70,7 @@ class Retrace(Interface):
             dest="resref",
             metavar="RESOURCE",
             doc="""Name or ID of the resource to operate on. To see available
-            resources, run 'niceman ls'.[PY: Note: As a special case, a session
+            resources, run 'reproman ls'.[PY: Note: As a special case, a session
             instance can be passed as the value for `resref`.  PY]""",
             constraints=EnsureStr() | EnsureNone()),
         resref_type=resref_type_opt,
@@ -92,7 +92,7 @@ class Retrace(Interface):
         if spec:
             lgr.info("reading spec file %s", spec)
             # TODO: generic loader to auto-detect formats etc
-            from niceman.formats.reprozip import ReprozipProvenance
+            from reproman.formats.reprozip import ReprozipProvenance
             spec = ReprozipProvenance(spec)
             paths += spec.get_files() or []
 
@@ -119,7 +119,7 @@ class Retrace(Interface):
             paths,
             session=session
         )
-        from niceman.distributions.base import EnvironmentSpec
+        from reproman.distributions.base import EnvironmentSpec
         spec = EnvironmentSpec(
             distributions=distributions,
         )
@@ -127,7 +127,7 @@ class Retrace(Interface):
             spec.files = sorted(files)
 
         # TODO: generic writer!
-        from niceman.formats.niceman import NicemanProvenance
+        from reproman.formats.reproman import NicemanProvenance
         stream = open(output_file, "w") if output_file else sys.stdout
         NicemanProvenance.write(stream, spec)
         if stream is not sys.stdout:
@@ -235,13 +235,13 @@ def get_tracer_classes():
     The order should not but does matter and ATM is magically provided
     """
     # TODO: automate discovery of available tracers
-    from niceman.distributions.debian import DebTracer
-    from niceman.distributions.redhat import RPMTracer
-    from niceman.distributions.conda import CondaTracer
-    from niceman.distributions.venv import VenvTracer
-    from niceman.distributions.vcs import VCSTracer
-    from niceman.distributions.docker import DockerTracer
-    from niceman.distributions.singularity import SingularityTracer
+    from reproman.distributions.debian import DebTracer
+    from reproman.distributions.redhat import RPMTracer
+    from reproman.distributions.conda import CondaTracer
+    from reproman.distributions.venv import VenvTracer
+    from reproman.distributions.vcs import VCSTracer
+    from reproman.distributions.docker import DockerTracer
+    from reproman.distributions.singularity import SingularityTracer
     Tracers = [DebTracer, RPMTracer, CondaTracer, VenvTracer, VCSTracer,
         DockerTracer, SingularityTracer]
     return Tracers

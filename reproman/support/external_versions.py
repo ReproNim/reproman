@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,8 +15,8 @@ from six import binary_type
 
 from distutils.version import LooseVersion
 
-from niceman.dochelpers import exc_str
-from niceman.log import lgr
+from reproman.dochelpers import exc_str
+from reproman.log import lgr
 from .exceptions import CommandError
 
 __all__ = ['UnknownVersion', 'ExternalVersions', 'external_versions']
@@ -39,8 +39,8 @@ class UnknownVersion:
 #
 # Custom handlers
 #
-from niceman.cmd import Runner
-from niceman.support.exceptions import (
+from reproman.cmd import Runner
+from reproman.support.exceptions import (
     MissingExternalDependency,
     OutdatedExternalDependency,
 )

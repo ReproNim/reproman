@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 from six.moves.configparser import NoSectionError
 
 from .base import Interface
-import niceman.interface.base # Needed for test patching
+import reproman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr, EnsureNone
 from  ..resource import get_manager
@@ -24,7 +24,7 @@ from ..support.exceptions import ResourceNotFoundError
 from ..dochelpers import exc_str
 
 from logging import getLogger
-lgr = getLogger('niceman.api.ls')
+lgr = getLogger('reproman.api.ls')
 
 
 class Ls(Interface):
@@ -33,7 +33,7 @@ class Ls(Interface):
     Examples
     --------
 
-      $ niceman ls
+      $ reproman ls
     """
 
     _params_ = dict(
@@ -98,4 +98,4 @@ class Ls(Interface):
         #     ui.message('(Use --refresh option to view current status.)')
         #
         # if refresh:
-        #     niceman.interface.base.set_resource_inventory(inventory)
+        #     reproman.interface.base.set_resource_inventory(inventory)

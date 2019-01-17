@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -24,7 +24,7 @@ def test_ls_interface():
 
     with patch('docker.Client') as docker_client, \
         patch('boto3.resource') as aws_client, \
-        patch('niceman.resource.ResourceManager._get_inventory') as get_inventory, \
+        patch('reproman.resource.ResourceManager._get_inventory') as get_inventory, \
         swallow_logs(new_level=logging.DEBUG) as log:
 
         docker_client.return_value = MagicMock(
@@ -81,7 +81,7 @@ def test_ls_interface():
         args = [
             'ls',
         ]
-        with patch("niceman.interface.login.get_manager",
+        with patch("reproman.interface.login.get_manager",
                    return_value=ResourceManager()):
             main(args)
 

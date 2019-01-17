@@ -2,12 +2,12 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from niceman.cmdline.main import main
+from reproman.cmdline.main import main
 
 import functools
 import uuid
@@ -18,11 +18,11 @@ import pytest
 
 import attr
 
-from niceman.api import execute
-from niceman.formats.niceman import NicemanProvenance
-from niceman.utils import swallow_outputs
-from niceman.interface.execute import TracedCommand
-from niceman.support.external_versions import external_versions
+from reproman.api import execute
+from reproman.formats.reproman import NicemanProvenance
+from reproman.utils import swallow_outputs
+from reproman.interface.execute import TracedCommand
+from reproman.support.external_versions import external_versions
 from ...resource.base import ResourceManager
 from ...tests.utils import assert_is_subset_recur
 from ...tests.utils import skip_if_no_apt_cache
@@ -42,7 +42,7 @@ docker_container = skip_ssh(get_docker_fixture)(
 
 def test_execute_interface(docker_container):
 
-    with patch('niceman.resource.ResourceManager._get_inventory') as get_inventory:
+    with patch('reproman.resource.ResourceManager._get_inventory') as get_inventory:
         config = {
             "status": "running",
             "engine_url": "unix:///var/run/docker.sock",
@@ -62,7 +62,7 @@ def test_execute_interface(docker_container):
             cmd.extend(['mkdir', path])
 
             manager = ResourceManager()
-            with patch("niceman.interface.execute.get_manager",
+            with patch("reproman.interface.execute.get_manager",
                        return_value=manager):
                 main(cmd)
 
@@ -96,16 +96,16 @@ def trace_info(tmpdir_factory):
 
 
 def test_trace_docker(docker_container, trace_info):
-    with patch("niceman.resource.ResourceManager._get_inventory") as get_inv:
+    with patch("reproman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",
                   "engine_url": "unix:///var/run/docker.sock",
                   "type": "docker-container",
                   "name": "testing-container"}
         get_inv.return_value = {"testing-container": config}
         manager = ResourceManager()
-        with patch("niceman.interface.execute.get_manager",
+        with patch("reproman.interface.execute.get_manager",
                    return_value=ResourceManager()):
-            with patch("niceman.interface.execute.CMD_CLASSES",
+            with patch("reproman.interface.execute.CMD_CLASSES",
                        {"trace": trace_info["class"]}):
                 execute("ls", ["-l"],
                         trace=True, resref="testing-container")
@@ -125,14 +125,14 @@ def test_trace_docker(docker_container, trace_info):
 @pytest.mark.skipif("cmd:apt-cache" not in external_versions,
                     reason="No apt-cache")
 def test_trace_local(trace_info):
-    with patch("niceman.resource.ResourceManager._get_inventory") as get_inv:
+    with patch("reproman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",
                   "type": "shell",
                   "name": "testing-local"}
         get_inv.return_value = {"testing-local": config}
-        with patch("niceman.interface.execute.get_manager",
+        with patch("reproman.interface.execute.get_manager",
                    return_value=ResourceManager()):
-            with patch("niceman.interface.execute.CMD_CLASSES",
+            with patch("reproman.interface.execute.CMD_CLASSES",
                        {"trace": trace_info["class"]}):
                 execute("ls", ["-l"], trace=True, resref="testing-local")
 
@@ -142,7 +142,7 @@ def test_trace_local(trace_info):
     assert len(trace_dirs) == 1
 
     prov = NicemanProvenance(op.join(local_dir, "traces",
-                                     trace_dirs[0], "niceman.yml"))
+                                     trace_dirs[0], "reproman.yml"))
     deb_dists = [dist for dist in prov.get_distributions()
                  if dist.name == "debian"]
     assert len(deb_dists) == 1

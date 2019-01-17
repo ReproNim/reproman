@@ -82,7 +82,7 @@ def test_with_testsui():
     # responses were not used
     assert_raises(AssertionError, nothing, 1, k=2)
 
-    from niceman.ui import ui
+    from reproman.ui import ui
 
     @with_testsui(responses='a')
     def ask():

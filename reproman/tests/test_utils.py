@@ -3,7 +3,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -101,7 +101,7 @@ def test_swallow_outputs():
 
 
 def test_swallow_logs():
-    lgr = logging.getLogger('niceman')
+    lgr = logging.getLogger('reproman')
     with swallow_logs(new_level=9) as cm:
         eq_(cm.out, '')
         lgr.log(8, "very heavy debug")
@@ -122,7 +122,7 @@ def test_setup_exceptionhook(interactive):
         post_mortem_tb.append(tb)
 
     with patch('sys.excepthook'), \
-            patch('niceman.utils.is_interactive', lambda: interactive), \
+            patch('reproman.utils.is_interactive', lambda: interactive), \
             patch('pdb.post_mortem', our_post_mortem):
         setup_exceptionhook()
         our_exceptionhook = sys.excepthook
@@ -156,7 +156,7 @@ def test_md5sum():
     _ = md5sum(__file__)
 
 
-# archives support in with_tree disabled in niceman's copy
+# archives support in with_tree disabled in reproman's copy
 # @with_tree([('1.tar.gz', (('1 f.txt', '1 f load'),))])
 # def test_md5sum_archive(d):
 #     # just a smoke (encoding/decoding) test for md5sum
@@ -327,11 +327,11 @@ def test_find_files_exclude_vcs(repo=None):
 
 
 def test_not_supported_on_windows():
-    with patch('niceman.utils.on_windows', True):
+    with patch('reproman.utils.on_windows', True):
         assert_raises(NotImplementedError, not_supported_on_windows)
         assert_raises(NotImplementedError, not_supported_on_windows, "msg")
 
-    with patch('niceman.utils.on_windows', False):
+    with patch('reproman.utils.on_windows', False):
         assert_equal(not_supported_on_windows(), None)
         assert_equal(not_supported_on_windows("msg"), None)
 

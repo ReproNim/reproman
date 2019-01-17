@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,7 +16,7 @@ import time
 
 from six import add_metaclass
 
-lgr = logging.getLogger('niceman.protocol')
+lgr = logging.getLogger('reproman.protocol')
 
 
 @add_metaclass(abc.ABCMeta)
@@ -222,7 +222,7 @@ class DryRunProtocol(ProtocolInterface):
         self._sections.append({'command': cmd})
         # TODO: it somewhat duplicates how currently all the dry running is
         # reported... but without it I seems to have no dry run logging at
-        # all for e.g. "niceman crawl" command
+        # all for e.g. "reproman crawl" command
         # lgr.info("DRY: %s" % cmd)
         return id_
 

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -11,7 +11,7 @@
 
 # Some commonly used fixtures
 
-from niceman.formats.tests.fixtures import demo1_spec, reprozip_spec2
+from reproman.formats.tests.fixtures import demo1_spec, reprozip_spec2
 
 import pytest
 

@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,11 +15,11 @@ import logging
 from mock import patch
 import os.path as op
 
-from niceman.support.globbedpaths import GlobbedPaths
-from niceman.tests.utils import assert_in
-from niceman.tests.utils import eq_
-from niceman.tests.utils import swallow_logs
-from niceman.tests.utils import with_tree
+from reproman.support.globbedpaths import GlobbedPaths
+from reproman.tests.utils import assert_in
+from reproman.tests.utils import eq_
+from reproman.tests.utils import swallow_logs
+from reproman.tests.utils import with_tree
 
 
 def test_globbedpaths_get_sub_patterns():

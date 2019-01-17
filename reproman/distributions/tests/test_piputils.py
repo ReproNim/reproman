@@ -2,15 +2,15 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import mock
 
-from niceman.distributions import piputils
-from niceman.tests.utils import assert_is_subset_recur
+from reproman.distributions import piputils
+from reproman.tests.utils import assert_is_subset_recur
 
 
 def test_pip_batched_show():
@@ -32,7 +32,7 @@ Name: pkg2
 Version: 4""",
               None, None)]
 
-    with mock.patch("niceman.distributions.piputils.execute_command_batch",
+    with mock.patch("reproman.distributions.piputils.execute_command_batch",
                     return_value=batches):
         pkg_entries = list(piputils._pip_batched_show(None, None, pkgs))
 
@@ -53,7 +53,7 @@ Name: pkg
 Version: 0.3.0
 Summary: foo
 # Comment line
-Home-page: https://github.com/ReproNim/niceman/
+Home-page: https://github.com/ReproNim/reproman/
 Author: marty
 Author-email: marty@nowhere
 License: GPL3

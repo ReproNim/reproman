@@ -1,4 +1,4 @@
-# Minimalistic example for the niceman spec which lists only desired components
+# Minimalistic example for the reproman spec which lists only desired components
 # So it is geared toward the user to provide a simple spec.
 # It demonstrates also ability to list items simply by the name with possibly
 # some additional semantic for version

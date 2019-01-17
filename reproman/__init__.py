@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -29,7 +29,7 @@ cfg = ConfigManager()
 # ssh_manager = SSHManager()
 #
 import atexit
-import niceman
+import reproman
 import os
 # atexit.register(ssh_manager.close, allow_fail=False)
 atexit.register(lgr.log, 5, "Exiting")
@@ -37,8 +37,8 @@ atexit.register(lgr.log, 5, "Exiting")
 from .version import __version__
 
 
-def test(package='niceman', **kwargs):
-    """A helper to run niceman's tests.  Requires numpy and pytest
+def test(package='reproman', **kwargs):
+    """A helper to run reproman's tests.  Requires numpy and pytest
 
     See numpy.testing.Tester -- **kwargs are passed into the
     Tester().test call
@@ -51,11 +51,11 @@ def test(package='niceman', **kwargs):
         # we don't have any benchmarks atm
         # bench = Tester().bench
     except ImportError:
-        raise RuntimeError('Problem with pytest for niceman.tests().  Nothing is done')
+        raise RuntimeError('Problem with pytest for reproman.tests().  Nothing is done')
 test.__test__ = False
 
 # Following fixtures are necessary at the top level __init__ for fixtures which
-# would cover all **/tests and not just niceman/tests/
+# would cover all **/tests and not just reproman/tests/
 
 # To store settings which setup_package changes and teardown_package should return
 _test_states = {
@@ -107,8 +107,8 @@ def teardown_package():
         else:
             os.environ['NICEMAN_LOGLEVEL'] = _test_states['NICEMAN_LOGLEVEL']
 
-    from niceman.tests import _TEMP_PATHS_GENERATED
-    from niceman.tests.utils import rmtemp
+    from reproman.tests import _TEMP_PATHS_GENERATED
+    from reproman.tests.utils import rmtemp
     if len(_TEMP_PATHS_GENERATED):
         msg = "Removing %d dirs/files: %s" % (len(_TEMP_PATHS_GENERATED), ', '.join(_TEMP_PATHS_GENERATED))
     else:

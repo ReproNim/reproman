@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -11,7 +11,7 @@
 __docformat__ = 'restructuredtext'
 
 import logging
-lgr = logging.getLogger('niceman.cmdline')
+lgr = logging.getLogger('reproman.cmdline')
 
 lgr.log(5, "Importing cmdline.main")
 
@@ -20,10 +20,10 @@ import sys
 import textwrap
 from importlib import import_module
 
-import niceman
+import reproman
 
-from niceman.cmdline import helpers
-from niceman.support.exceptions import InsufficientArgumentsError, MissingConfigFileError
+from reproman.cmdline import helpers
+from reproman.support.exceptions import InsufficientArgumentsError, MissingConfigFileError
 from ..utils import setup_exceptionhook, chpwd
 from ..dochelpers import exc_str
 
@@ -82,7 +82,7 @@ def setup_parser(
     helpers.parser_add_common_opt(
         parser,
         'version',
-        version='niceman %s\n\n%s' % (niceman.__version__, _license_info()))
+        version='reproman %s\n\n%s' % (reproman.__version__, _license_info()))
     if __debug__:
         parser.add_argument(
             '--dbg', action='store_true', dest='common_debug',
@@ -92,7 +92,7 @@ def setup_parser(
             help="enter IPython debugger when uncaught exception happens")
     parser.add_argument(
         '-C', action='append', dest='change_path', metavar='PATH',
-        help="""run as if niceman were started in <path> instead
+        help="""run as if reproman were started in <path> instead
         of the current working directory.  When multiple -C options are given,
         each subsequent non-absolute -C <path> is interpreted relative to the
         preceding -C <path>.  This option affects the interpretations of the
@@ -133,7 +133,7 @@ def setup_parser(
         for _intfspec in _interfaces:
             # turn the interface spec into an instance
             lgr.log(5, "Importing module %s " % _intfspec[0])
-            _mod = import_module(_intfspec[0], package='niceman')
+            _mod = import_module(_intfspec[0], package='reproman')
             _intf = getattr(_mod, _intfspec[1])
             cmd_name = get_cmdline_command_name(_intfspec)
             # deal with optional parser args
@@ -149,7 +149,7 @@ def setup_parser(
             # all subparser can report the version
             helpers.parser_add_common_opt(
                 subparser, 'version',
-                version='niceman %s %s\n\n%s' % (cmd_name, niceman.__version__,
+                version='reproman %s %s\n\n%s' % (cmd_name, reproman.__version__,
                                                  _license_info()))
             # our own custom help for all commands
             helpers.parser_add_common_opt(subparser, 'help')
@@ -197,9 +197,9 @@ def setup_parser(
            textwrap.fill(dedent_docstring("""\
     Detailed usage information for individual commands is
     available via command-specific --help, i.e.:
-    niceman <command> --help"""),
+    reproman <command> --help"""),
                          75, initial_indent='', subsequent_indent=''))
-    parts['niceman'] = parser
+    parts['reproman'] = parser
     lgr.log(5, "Finished setup_parser")
     if return_subparsers:
         return parts
@@ -237,8 +237,8 @@ def main(args=None):
         # In this case, we're unnecessarily instantiating ConfigManager twice,
         # at import and now, but it might not be worth the effort to
         # restructure things to delay the import.
-        from niceman.config import ConfigManager
-        niceman.cfg = ConfigManager(cmdlineargs.config, load_default=False)
+        from reproman.config import ConfigManager
+        reproman.cfg = ConfigManager(cmdlineargs.config, load_default=False)
 
     if not hasattr(cmdlineargs, 'func'):
         lgr.info("No command given, returning")

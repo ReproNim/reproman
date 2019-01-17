@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -13,12 +13,12 @@ from collections import defaultdict
 
 import attr
 import yaml
-from niceman.resource.session import get_local_session
+from reproman.resource.session import get_local_session
 
-from niceman.distributions import Distribution, piputils
-from niceman.dochelpers import exc_str
-from niceman.support.exceptions import CommandError
-from niceman.utils import attrib, PathRoot, is_subpath, make_tempfile
+from reproman.distributions import Distribution, piputils
+from reproman.dochelpers import exc_str
+from reproman.support.exceptions import CommandError
+from reproman.utils import attrib, PathRoot, is_subpath, make_tempfile
 
 from .base import SpecObject
 from .base import DistributionTracer
@@ -27,7 +27,7 @@ from .base import TypedList
 
 
 import logging
-lgr = logging.getLogger('niceman.distributions.conda')
+lgr = logging.getLogger('reproman.distributions.conda')
 
 
 def get_conda_platform_from_python(py_platform):

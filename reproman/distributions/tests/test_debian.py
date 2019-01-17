@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -15,16 +15,16 @@ import logging
 
 import attr
 
-from niceman.distributions.debian import DebTracer
-from niceman.distributions.debian import DEBPackage
-from niceman.distributions.debian import DebianDistribution
+from reproman.distributions.debian import DebTracer
+from reproman.distributions.debian import DEBPackage
+from reproman.distributions.debian import DebianDistribution
 
 import pytest
 
 import mock
 
-from niceman.utils import swallow_logs
-from niceman.tests.utils import skip_if_no_apt_cache
+from reproman.utils import swallow_logs
+from reproman.tests.utils import skip_if_no_apt_cache
 
 
 @skip_if_no_apt_cache
@@ -158,7 +158,7 @@ afni: /usr/lib/afni/bin/afni
 fail2ban: /usr/bin/fail2ban-server
 fail2ban: /usr/bin/fail2ban-server
 """, None, None)
-    with mock.patch('niceman.distributions.debian.execute_command_batch',
+    with mock.patch('reproman.distributions.debian.execute_command_batch',
                     exec_cmd_batch_mock):
         out = manager._get_packagefields_for_files(files)
 
@@ -186,7 +186,7 @@ def test_parse_dpkgquery_line():
                        "pkgs_rest": ", more, packages"}
     }
 
-    with mock.patch("niceman.distributions.debian.parse_dpkgquery_line",
+    with mock.patch("reproman.distributions.debian.parse_dpkgquery_line",
                     mock_values.get):
         assert parse("unique") == {"name": "pkg",
                                    "path": "/path/to/file"}
