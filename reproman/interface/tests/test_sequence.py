@@ -83,7 +83,7 @@ def test_create_and_start(tmpdir):
         with pytest.raises(CommandError):
             runner(["reproman", "--config", empty_cfg_file,
                     "start", "myshell"])
-        if os.environ.get("NICEMAN_LOGTARGET", "stderr") == "stderr":
+        if os.environ.get("REPROMAN_LOGTARGET", "stderr") == "stderr":
             assert "ResourceNotFoundError" in cml.out
     # ... but using the same config works.
     run_reproman(["start", "myshell"])

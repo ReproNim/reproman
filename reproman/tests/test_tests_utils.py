@@ -59,7 +59,7 @@ def _with_tempfile_decorated_dummy(path):
 def test_with_tempfile_dir_via_env_variable():
     target = os.path.join(os.path.expanduser("~"), "repromantesttmpdir")
     assert_false(os.path.exists(target), "directory %s already exists." % target)
-    with patch.dict('os.environ', {'NICEMAN_TESTS_TEMPDIR': target}):
+    with patch.dict('os.environ', {'REPROMAN_TESTS_TEMPDIR': target}):
         filename = _with_tempfile_decorated_dummy()
         ok_startswith(filename, target)
 
@@ -117,7 +117,7 @@ def test_with_tempfile_mkdir():
             f.write("TEST LOAD")
 
     check_mkdir()
-    if not os.environ.get('NICEMAN_TESTS_KEEPTEMP'):
+    if not os.environ.get('REPROMAN_TESTS_KEEPTEMP'):
         ok_(not os.path.exists(dnames[0]))  # got removed
 
 
@@ -151,7 +151,7 @@ def test_get_most_obscure_supported_name():
 
 def test_keeptemp_via_env_variable():
 
-    if os.environ.get('NICEMAN_TESTS_KEEPTEMP'):
+    if os.environ.get('REPROMAN_TESTS_KEEPTEMP'):
         pytest.skip("We have env variable set to preserve tempfiles")
 
     files = []
@@ -164,7 +164,7 @@ def test_keeptemp_via_env_variable():
     with patch.dict('os.environ', {}):
         check()
 
-    with patch.dict('os.environ', {'NICEMAN_TESTS_KEEPTEMP': '1'}):
+    with patch.dict('os.environ', {'REPROMAN_TESTS_KEEPTEMP': '1'}):
         check()
 
     eq_(len(files), 2)
@@ -422,19 +422,19 @@ def test_assert_re_in():
 
 def test_skip_if_no_network():
     cleaned_env = os.environ.copy()
-    cleaned_env.pop('NICEMAN_TESTS_NONETWORK', None)
+    cleaned_env.pop('REPROMAN_TESTS_NONETWORK', None)
     # we need to run under cleaned env to make sure we actually test in both conditions
     with patch('os.environ', cleaned_env):
         @skip_if_no_network
         def somefunc(a1):
             return a1
         eq_(somefunc.tags, ['network'])
-        with patch.dict('os.environ', {'NICEMAN_TESTS_NONETWORK': '1'}):
+        with patch.dict('os.environ', {'REPROMAN_TESTS_NONETWORK': '1'}):
             assert_raises(pytest.skip.Exception, somefunc, 1)
         with patch.dict('os.environ', {}):
             eq_(somefunc(1), 1)
         # and now if used as a function, not a decorator
-        with patch.dict('os.environ', {'NICEMAN_TESTS_NONETWORK': '1'}):
+        with patch.dict('os.environ', {'REPROMAN_TESTS_NONETWORK': '1'}):
             assert_raises(pytest.skip.Exception, skip_if_no_network)
         with patch.dict('os.environ', {}):
             eq_(skip_if_no_network(), None)
@@ -501,10 +501,10 @@ def test_skip_ssh():
         def func(x):
             return x + 2
 
-        with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': "1"}):
+        with patch.dict('os.environ', {'REPROMAN_TESTS_SSH': "1"}):
             assert func(2) == 4
     except pytest.skip.Exception:
         raise AssertionError("must have not skipped")
 
-    with patch.dict('os.environ', {'NICEMAN_TESTS_SSH': ""}):
+    with patch.dict('os.environ', {'REPROMAN_TESTS_SSH': ""}):
         assert_raises(pytest.skip.Exception, func, 2)

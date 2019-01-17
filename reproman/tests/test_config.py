@@ -18,7 +18,7 @@ def test_config_empty():
     # nevertheless we should be able to specify variables via env
 
     assert_raises(ValueError, config.getboolean, 'tests', 'somenonexistingone')
-    with patch.dict('os.environ', {'NICEMAN_TESTS_NONETWORK': '1'}):
+    with patch.dict('os.environ', {'REPROMAN_TESTS_NONETWORK': '1'}):
         config.reload()
         ok_(config.getboolean('tests', 'nonetwork'))
         eq_(config.get_as_dtype('tests', 'nonetwork', int), 1)

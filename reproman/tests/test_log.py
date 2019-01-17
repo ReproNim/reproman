@@ -45,12 +45,12 @@ def test_logging_to_a_file(dst=None):
 
 @with_tempfile
 def test_logtarget_via_env_variable(dst=None):
-    with patch.dict('os.environ', {'NICEMAN_TEST_LOGTARGET': dst}):
+    with patch.dict('os.environ', {'REPROMAN_TEST_LOGTARGET': dst}):
         ok_(not exists(dst))
         lgr = LoggerHelper("reproman_test").get_initialized_logger()
         ok_(exists(dst))
     # just to see that mocking patch worked
-    ok_(not 'NICEMAN_TEST_LOGTARGET' in os.environ)
+    ok_(not 'REPROMAN_TEST_LOGTARGET' in os.environ)
 
 @with_tempfile
 @with_tempfile

@@ -155,7 +155,7 @@ def test_exc_str():
         estr2 = exc_str(e, 2)
         estr1 = exc_str(e, 1)
         # and we can control it via environ by default
-        with patch.dict('os.environ', {'NICEMAN_EXC_STR_TBLIMIT': '3'}):
+        with patch.dict('os.environ', {'REPROMAN_EXC_STR_TBLIMIT': '3'}):
             estr3 = exc_str(e)
         with patch.dict('os.environ', {}, clear=True):
             estr_ = exc_str()

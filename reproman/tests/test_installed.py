@@ -20,7 +20,7 @@ def check_run_and_get_output(cmd):
     runner = Runner()
     try:
         # suppress log output happen it was set to high values
-        with patch.dict('os.environ', {'NICEMAN_LOGLEVEL': 'WARN'}):
+        with patch.dict('os.environ', {'REPROMAN_LOGLEVEL': 'WARN'}):
             output = runner.run(["reproman", "--help"])
     except CommandError as e:
         raise AssertionError("'reproman --help' failed to start normally. "

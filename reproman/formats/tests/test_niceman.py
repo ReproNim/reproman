@@ -28,13 +28,13 @@ from reproman.distributions.venv import VenvEnvironment
 from reproman.distributions.venv import VenvPackage
 from reproman.formats.reproman import NicemanProvenance
 
-from .constants import NICEMAN_SPEC1_YML_FILENAME
+from .constants import REPROMAN_SPEC1_YML_FILENAME
 
 
 def test_write():
     output = io.StringIO()
     # just load
-    file_format = NicemanProvenance(NICEMAN_SPEC1_YML_FILENAME)
+    file_format = NicemanProvenance(REPROMAN_SPEC1_YML_FILENAME)
     env = file_format.get_environment()
     # just a basic test that we loaded stuff correctly
     assert len(env.distributions) == 2

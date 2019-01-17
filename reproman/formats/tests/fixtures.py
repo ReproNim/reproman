@@ -8,10 +8,10 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import pytest
-from .constants import NICEMAN_SPEC1_YML_FILENAME, REPROZIP_SPEC2_YML_FILENAME
+from .constants import REPROMAN_SPEC1_YML_FILENAME, REPROZIP_SPEC2_YML_FILENAME
 
-NICEMAN_SPECS = [
-    NICEMAN_SPEC1_YML_FILENAME,
+REPROMAN_SPECS = [
+    REPROMAN_SPEC1_YML_FILENAME,
     # This one could have been another "serialization" of the effectively
     # identical spec on which we could try to run
     # REPROZIP_SPEC1
@@ -23,7 +23,7 @@ REPROZIP_SPEC2 = [
 
 
 # Let's make a convenience fixture to run tests against demo1 file(s)
-@pytest.fixture(params=NICEMAN_SPECS)
+@pytest.fixture(params=REPROMAN_SPECS)
 def demo1_spec(request):
     yield request.param
 

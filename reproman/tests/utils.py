@@ -326,7 +326,7 @@ def with_tempfile(t, **tkwargs):
     ----------
 
     To change the used directory without providing keyword argument 'dir' set
-    NICEMAN_TESTS_TEMPDIR.
+    REPROMAN_TESTS_TEMPDIR.
 
     Examples
     --------
@@ -353,7 +353,7 @@ def skip_if_no_network(func=None):
     """
 
     def check_and_raise():
-        if os.environ.get('NICEMAN_TESTS_NONETWORK'):
+        if os.environ.get('REPROMAN_TESTS_NONETWORK'):
             pytest.skip("Skipping since no network settings",
                         allow_module_level=True)
 
@@ -417,12 +417,12 @@ def skip_if_no_svn():
 
 def skip_ssh(func=None):
     """Skips SSH tests if on windows or if environment variable
-    NICEMAN_TESTS_SSH was not set
+    REPROMAN_TESTS_SSH was not set
     """
 
     def check_and_raise():
-        if not os.environ.get('NICEMAN_TESTS_SSH'):
-            pytest.skip("Run this test by setting NICEMAN_TESTS_SSH",
+        if not os.environ.get('REPROMAN_TESTS_SSH'):
+            pytest.skip("Run this test by setting REPROMAN_TESTS_SSH",
                         allow_module_level=True)
 
     if func:

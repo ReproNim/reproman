@@ -117,13 +117,13 @@ class ColorFormatter(logging.Formatter):
             use_color = is_interactive()
         self.use_color = use_color and platform.system() != 'Windows'  # don't use color on windows
         msg = self.formatter_msg(self._get_format(log_name, log_pid), self.use_color)
-        self._tb = TraceBack(collide=os.environ.get('NICEMAN_LOGTRACEBACK', '') == 'collide') \
-            if os.environ.get('NICEMAN_LOGTRACEBACK', False) else None
+        self._tb = TraceBack(collide=os.environ.get('REPROMAN_LOGTRACEBACK', '') == 'collide') \
+            if os.environ.get('REPROMAN_LOGTRACEBACK', False) else None
         logging.Formatter.__init__(self, msg)
 
     def _get_format(self, log_name=False, log_pid=False):
         # TODO: config log.timestamp=True
-        return (("" if not int(os.environ.get("NICEMAN_LOG_TIMESTAMP", True)) else "$BOLD%(asctime)-15s$RESET ") +
+        return (("" if not int(os.environ.get("REPROMAN_LOG_TIMESTAMP", True)) else "$BOLD%(asctime)-15s$RESET ") +
                 ("%(name)-15s " if log_name else "") +
                 ("{%(process)d}" if log_pid else "") +
                 "[%(levelname)s] "

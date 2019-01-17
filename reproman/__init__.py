@@ -60,7 +60,7 @@ test.__test__ = False
 # To store settings which setup_package changes and teardown_package should return
 _test_states = {
     'loglevel': None,
-    'NICEMAN_LOGLEVEL': None,
+    'REPROMAN_LOGLEVEL': None,
 }
 
 def setup_package():
@@ -80,16 +80,16 @@ def setup_package():
             lgr.debug("Removing %s from the environment since it is empty", ev)
             os.environ.pop(ev)
 
-    NICEMAN_LOGLEVEL = os.environ.get('NICEMAN_LOGLEVEL', None)
-    if NICEMAN_LOGLEVEL is None:
+    REPROMAN_LOGLEVEL = os.environ.get('REPROMAN_LOGLEVEL', None)
+    if REPROMAN_LOGLEVEL is None:
         # very very silent.  Tests introspecting logs should use
         # swallow_logs(new_level=...)
         _test_states['loglevel'] = lgr.getEffectiveLevel()
         lgr.setLevel(100)
 
         # And we should also set it within environ so underlying commands also stay silent
-        _test_states['NICEMAN_LOGLEVEL'] = NICEMAN_LOGLEVEL
-        os.environ['NICEMAN_LOGLEVEL'] = '100'
+        _test_states['REPROMAN_LOGLEVEL'] = REPROMAN_LOGLEVEL
+        os.environ['REPROMAN_LOGLEVEL'] = '100'
     else:
         # We are not overriding them, since explicitly were asked to have some log level
         _test_states['loglevel'] = None
@@ -97,15 +97,15 @@ def setup_package():
 
 def teardown_package():
     import os
-    if os.environ.get('NICEMAN_TESTS_NOTEARDOWN'):
+    if os.environ.get('REPROMAN_TESTS_NOTEARDOWN'):
         return
 
     if _test_states['loglevel'] is not None:
         lgr.setLevel(_test_states['loglevel'])
-        if _test_states['NICEMAN_LOGLEVEL'] is None:
-            os.environ.pop('NICEMAN_LOGLEVEL')
+        if _test_states['REPROMAN_LOGLEVEL'] is None:
+            os.environ.pop('REPROMAN_LOGLEVEL')
         else:
-            os.environ['NICEMAN_LOGLEVEL'] = _test_states['NICEMAN_LOGLEVEL']
+            os.environ['REPROMAN_LOGLEVEL'] = _test_states['REPROMAN_LOGLEVEL']
 
     from reproman.tests import _TEMP_PATHS_GENERATED
     from reproman.tests.utils import rmtemp

@@ -10,5 +10,5 @@
 from os.path import join as opj, dirname
 
 # Configuration file for testing
-NICEMAN_CFG_PATH = opj(dirname(__file__), 'files', 'reproman.cfg')
-NICEMAN_CFG = open(NICEMAN_CFG_PATH).read()
+REPROMAN_CFG_PATH = opj(dirname(__file__), 'files', 'reproman.cfg')
+REPROMAN_CFG = open(REPROMAN_CFG_PATH).read()

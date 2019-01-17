@@ -185,7 +185,7 @@ def sorted_files(dout):
 
 from os.path import sep as dirsep
 _VCS_REGEX = '%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)' % (dirsep, dirsep)
-_NICEMAN_REGEX = '%s\.(?:reproman)(?:%s|$)' % (dirsep, dirsep)
+_REPROMAN_REGEX = '%s\.(?:reproman)(?:%s|$)' % (dirsep, dirsep)
 
 
 def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_reproman=False, dirs=False):
@@ -218,10 +218,10 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_rep
                 continue
             if exclude_vcs and re.search(_VCS_REGEX, path):
                 continue
-            if exclude_reproman and re.search(_NICEMAN_REGEX, path):
+            if exclude_reproman and re.search(_REPROMAN_REGEX, path):
                 continue
             yield path
-find_files.__doc__ %= (_VCS_REGEX, _NICEMAN_REGEX)
+find_files.__doc__ %= (_VCS_REGEX, _REPROMAN_REGEX)
 
 
 def expandpath(path, force_absolute=True):
@@ -301,10 +301,10 @@ def rmtree(path, chmod_files='auto', *args, **kwargs):
 def rmtemp(f, *args, **kwargs):
     """Wrapper to centralize removing of temp files so we could keep them around
 
-    It will not remove the temporary file/directory if NICEMAN_TESTS_KEEPTEMP
+    It will not remove the temporary file/directory if REPROMAN_TESTS_KEEPTEMP
     environment variable is defined
     """
-    if not os.environ.get('NICEMAN_TESTS_KEEPTEMP'):
+    if not os.environ.get('REPROMAN_TESTS_KEEPTEMP'):
         if not os.path.lexists(f):
             lgr.debug("Path %s does not exist, so can't be removed" % f)
             return
@@ -610,7 +610,7 @@ def get_tempfile_kwargs(tkwargs={}, prefix="", wrapped=None):
             ([''] if (on_windows or not wrapped)
                   else [wrapped.__name__]))
 
-    directory = os.environ.get('NICEMAN_TESTS_TEMPDIR')
+    directory = os.environ.get('REPROMAN_TESTS_TEMPDIR')
     if directory and 'dir' not in tkwargs_:
         tkwargs_['dir'] = directory
 
@@ -925,7 +925,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
         '_').
 
     To change the used directory without providing keyword argument 'dir' set
-    NICEMAN_TESTS_TEMPDIR.
+    REPROMAN_TESTS_TEMPDIR.
 
     Examples
     --------
@@ -944,7 +944,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
 
     tkwargs_ = get_tempfile_kwargs(tkwargs, wrapped=wrapped)
 
-    # if NICEMAN_TESTS_TEMPDIR is set, use that as directory,
+    # if REPROMAN_TESTS_TEMPDIR is set, use that as directory,
     # let mktemp handle it otherwise. However, an explicitly provided
     # dir=... will override this.
     mkdir = tkwargs_.pop('mkdir', False)

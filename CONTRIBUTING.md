@@ -334,44 +334,44 @@ Various hints for developers
 ### Useful Environment Variables
 Refer reproman/config.py for information on how to add these environment variables to the config file and their naming convention
 
-- *NICEMAN_LOGLEVEL*: 
+- *REPROMAN_LOGLEVEL*: 
   Used for control the verbosity of logs printed to stdout while running reproman commands/debugging
-- *NICEMAN_TESTS_KEEPTEMP*: 
+- *REPROMAN_TESTS_KEEPTEMP*: 
   Function rmtemp will not remove temporary file/directory created for testing if this flag is set
-- *NICEMAN_EXC_STR_TBLIMIT*: 
+- *REPROMAN_EXC_STR_TBLIMIT*: 
   This flag is used by the reproman extract_tb function which extracts and formats stack-traces.
-  It caps the number of lines to NICEMAN_EXC_STR_TBLIMIT of pre-processed entries from traceback.
-- *NICEMAN_TESTS_TEMPDIR*: 
+  It caps the number of lines to REPROMAN_EXC_STR_TBLIMIT of pre-processed entries from traceback.
+- *REPROMAN_TESTS_TEMPDIR*: 
   Create a temporary directory at location specified by this flag.
   It is used by tests to create a temporary git directory while testing git annex archives etc
-- *NICEMAN_TESTS_NONETWORK*: 
+- *REPROMAN_TESTS_NONETWORK*: 
   Skips network tests completely if this flag is set
   Examples include test for s3, git_repositories, openfmri etc
-- *NICEMAN_TESTS_SSH*: 
+- *REPROMAN_TESTS_SSH*: 
   Skips SSH tests if this flag is **not** set
-- *NICEMAN_LOGTRACEBACK*: 
+- *REPROMAN_LOGTRACEBACK*: 
   Runs TraceBack function with collide set to True, if this flag is set to 'collide'.
   This replaces any common prefix between current traceback log and previous invocation with "..."
-- *NICEMAN_TESTS_NOTEARDOWN*: 
+- *REPROMAN_TESTS_NOTEARDOWN*: 
   Does not execute teardown_package which cleans up temp files and directories created by tests if this flag is set
-- *NICEMAN_USECASSETTE*:
+- *REPROMAN_USECASSETTE*:
   Specifies the location of the file to record network transactions by the VCR module.
   Currently used by when testing custom special remotes
-- *NICEMAN_CMD_PROTOCOL*: 
+- *REPROMAN_CMD_PROTOCOL*: 
   Specifies the protocol number used by the Runner to note shell command or python function call times and allows for dry runs. 
   'externals-time' for ExecutionTimeExternalsProtocol, 'time' for ExecutionTimeProtocol and 'null' for NullProtocol.
-  Any new NICEMAN_CMD_PROTOCOL has to implement reproman.support.protocol.ProtocolInterface
-- *NICEMAN_CMD_PROTOCOL_PREFIX*: 
-  Sets a prefix to add before the command call times are noted by NICEMAN_CMD_PROTOCOL.
-- *NICEMAN_PROTOCOL_REMOTE*:
+  Any new REPROMAN_CMD_PROTOCOL has to implement reproman.support.protocol.ProtocolInterface
+- *REPROMAN_CMD_PROTOCOL_PREFIX*: 
+  Sets a prefix to add before the command call times are noted by REPROMAN_CMD_PROTOCOL.
+- *REPROMAN_PROTOCOL_REMOTE*:
   Binary flag to specify whether to test protocol interactions of custom remote with annex
-- *NICEMAN_LOG_TIMESTAMP*:
+- *REPROMAN_LOG_TIMESTAMP*:
   Used to add timestamp to reproman logs
-- *NICEMAN_RUN_CMDLINE_TESTS*:
+- *REPROMAN_RUN_CMDLINE_TESTS*:
   Binary flag to specify if shell testing using shunit2 to be carried out
-- *NICEMAN_TEMP_FS*:
-  Specify the temporary file system to use as loop device for testing NICEMAN_TESTS_TEMPDIR creation
-- *NICEMAN_TEMP_FS_SIZE*:
-  Specify the size of temporary file system to use as loop device for testing NICEMAN_TESTS_TEMPDIR creation
-- *NICEMAN_NONLO*:
+- *REPROMAN_TEMP_FS*:
+  Specify the temporary file system to use as loop device for testing REPROMAN_TESTS_TEMPDIR creation
+- *REPROMAN_TEMP_FS_SIZE*:
+  Specify the size of temporary file system to use as loop device for testing REPROMAN_TESTS_TEMPDIR creation
+- *REPROMAN_NONLO*:
   Specifies network interfaces to bring down/up for testing. Currently used by travis.

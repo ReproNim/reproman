@@ -47,24 +47,24 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
 
     In addition to configuration files, this class also looks for
     special environment variables to read settings from. Names of such
-    variables have to start with `NICEMAN_` following by the an
+    variables have to start with `REPROMAN_` following by the an
     optional section name and the variable name itself ('_' as
     delimiter). If no section name is provided, the variables will be
     associated with section `general`. Some examples::
 
-        NICEMAN_VERBOSE=1
+        REPROMAN_VERBOSE=1
 
     will become::
 
         [general]
         verbose = 1
 
-    However, `NICEMAN_VERBOSE_OUTPUT=stdout` becomes::
+    However, `REPROMAN_VERBOSE_OUTPUT=stdout` becomes::
 
         [verbose]
         output = stdout
 
-    Any length of variable name as allowed, e.g. NICEMAN_SEC1_LONG_NAME=1
+    Any length of variable name as allowed, e.g. REPROMAN_SEC1_LONG_NAME=1
     becomes::
 
         [sec1]
@@ -74,7 +74,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
     argument) have the highest priority and override settings found in any of
     the config files read from default locations (which are themselves read in
     the order stated above -- overwriting earlier configuration settings
-    accordingly). Finally, the content of any `NICEMAN_*` environment variables
+    accordingly). Finally, the content of any `REPROMAN_*` environment variables
     overrides any settings read from any file.
     """
 
@@ -153,9 +153,9 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         self.read(self._get_file_candidates())
 
         # now look for variables in the environment
-        pref = 'NICEMAN_'
+        pref = 'REPROMAN_'
         for var in [v for v in os.environ.keys() if v.startswith(pref)]:
-            # strip leading 'NICEMAN_' and lower case entries
+            # strip leading 'REPROMAN_' and lower case entries
             svar = var[len(pref):].lower()
 
             # section is next element in name (or 'general' if simple name)

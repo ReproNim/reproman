@@ -120,7 +120,7 @@ def test_trace_docker(docker_container, trace_info):
 @pytest.mark.integration
 # Avoiding skip_if_no_network and skip_if_no_apt_cache because it leads to a
 # TypeError under Python 2.
-@pytest.mark.skipif(os.environ.get('NICEMAN_TESTS_NONETWORK'),
+@pytest.mark.skipif(os.environ.get('REPROMAN_TESTS_NONETWORK'),
                     reason="No network")
 @pytest.mark.skipif("cmd:apt-cache" not in external_versions,
                     reason="No apt-cache")

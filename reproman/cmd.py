@@ -76,7 +76,7 @@ class Runner(object):
         self.env = env
         if protocol is None:
             # TODO: config cmd.protocol = null
-            cfg = os.environ.get('NICEMAN_CMD_PROTOCOL', 'null')
+            cfg = os.environ.get('REPROMAN_CMD_PROTOCOL', 'null')
             protocol = {
                 'externals-time': ExecutionTimeExternalsProtocol,
                 'time': ExecutionTimeProtocol,
@@ -86,7 +86,7 @@ class Runner(object):
                 # we need to dump it into a file at the end
                 # TODO: config cmd.protocol_prefix = protocol
                 filename = '%s-%s.log' % (
-                    os.environ.get('NICEMAN_CMD_PROTOCOL_PREFIX', 'protocol'),
+                    os.environ.get('REPROMAN_CMD_PROTOCOL_PREFIX', 'protocol'),
                     id(self)
                 )
                 atexit.register(functools.partial(protocol.write_to_file, filename))
