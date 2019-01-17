@@ -134,7 +134,7 @@ ATM provides extraction of
 
 sub-classes:
 - ReprozipProvenance
-- NicemanspecProvenance
+- RepromanProvenance
 
 But it seems to be not the type passed into "Distribution" which just gets a
 dictionary with
