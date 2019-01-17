@@ -35,7 +35,7 @@ lgr = logging.getLogger('reproman.formats.reproman')
 __version__ = '0.0.1'
 
 
-class NicemanProvenance(Provenance):
+class RepromanProvenance(Provenance):
     """
     Parser for ReproMan Spec (YAML specification)
     """

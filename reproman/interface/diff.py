@@ -16,7 +16,7 @@ from .base import Interface
 from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
-from reproman.formats.reproman import NicemanProvenance
+from reproman.formats.reproman import RepromanProvenance
 from ..distributions.debian import DebianDistribution
 from ..distributions.conda import CondaDistribution
 from ..distributions.vcs import GitDistribution, SVNDistribution
@@ -70,8 +70,8 @@ class Diff(Interface):
     @staticmethod
     def __call__(prov1, prov2, satisfies):
 
-        env_1 = NicemanProvenance(prov1).get_environment()
-        env_2 = NicemanProvenance(prov2).get_environment()
+        env_1 = RepromanProvenance(prov1).get_environment()
+        env_2 = RepromanProvenance(prov2).get_environment()
 
         if satisfies:
             return Diff.satisfies(env_1, env_2)

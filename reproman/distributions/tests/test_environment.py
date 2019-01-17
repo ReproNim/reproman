@@ -9,7 +9,7 @@
 
 from os.path import join as opj, dirname, pardir
 from pytest import raises
-from reproman.formats.reproman import NicemanProvenance
+from reproman.formats.reproman import RepromanProvenance
 from reproman.distributions.debian import DebianDistribution
 from reproman.distributions.conda import CondaDistribution
 
@@ -18,11 +18,11 @@ multi_debian_yaml = opj(yaml_dir, 'multi_debian.yaml')
 diff_1_yaml = opj(yaml_dir, 'diff_1.yaml')
 
 def test_get_distributions():
-    env = NicemanProvenance(multi_debian_yaml).get_environment()
+    env = RepromanProvenance(multi_debian_yaml).get_environment()
     with raises(ValueError):
         env.get_distribution(DebianDistribution)
     dist = env.get_distribution(CondaDistribution)
     assert dist is None
-    env = NicemanProvenance(diff_1_yaml).get_environment()
+    env = RepromanProvenance(diff_1_yaml).get_environment()
     dist = env.get_distribution(DebianDistribution)
     assert isinstance(dist, DebianDistribution)

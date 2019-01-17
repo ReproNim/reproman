@@ -19,7 +19,7 @@ import pytest
 import attr
 
 from reproman.api import execute
-from reproman.formats.reproman import NicemanProvenance
+from reproman.formats.reproman import RepromanProvenance
 from reproman.utils import swallow_outputs
 from reproman.interface.execute import TracedCommand
 from reproman.support.external_versions import external_versions
@@ -141,7 +141,7 @@ def test_trace_local(trace_info):
     trace_dirs = os.listdir(op.join(local_dir, "traces"))
     assert len(trace_dirs) == 1
 
-    prov = NicemanProvenance(op.join(local_dir, "traces",
+    prov = RepromanProvenance(op.join(local_dir, "traces",
                                      trace_dirs[0], "reproman.yml"))
     deb_dists = [dist for dist in prov.get_distributions()
                  if dist.name == "debian"]

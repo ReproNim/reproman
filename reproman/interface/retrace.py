@@ -127,9 +127,9 @@ class Retrace(Interface):
             spec.files = sorted(files)
 
         # TODO: generic writer!
-        from reproman.formats.reproman import NicemanProvenance
+        from reproman.formats.reproman import RepromanProvenance
         stream = open(output_file, "w") if output_file else sys.stdout
-        NicemanProvenance.write(stream, spec)
+        RepromanProvenance.write(stream, spec)
         if stream is not sys.stdout:
             stream.close()
 

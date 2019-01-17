@@ -16,7 +16,7 @@ from subprocess import call
 import yaml
 import attr
 
-from reproman.formats.reproman import NicemanProvenance
+from reproman.formats.reproman import RepromanProvenance
 from reproman.tests.utils import create_pymodule
 from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
 
@@ -216,7 +216,7 @@ def test_conda_init_install_and_detect():
 
     (distributions, unknown_files) = dists[0]
 
-    # NicemanProvenance.write(sys.stdout, distributions)
+    # RepromanProvenance.write(sys.stdout, distributions)
 
     assert distributions.platform.startswith(
         get_conda_platform_from_python(sys.platform)), \
@@ -286,7 +286,7 @@ def test_get_conda_env_export_exceptions():
 conda_yaml = os.path.join(os.path.dirname(__file__), 'files', 'conda.yaml')
 
 def test_conda_packages():
-    env = NicemanProvenance(conda_yaml).get_environment()
+    env = RepromanProvenance(conda_yaml).get_environment()
     conda_dist = env.get_distribution(CondaDistribution)
     assert isinstance(conda_dist.packages, list)
     assert len(conda_dist.packages) == 4
