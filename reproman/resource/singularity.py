@@ -214,7 +214,7 @@ class PTYSingularitySession(SingularitySession):
     def open(self):
         lgr.debug("Opening TTY connection to singularity container.")
         cmdline = ['singularity', 'shell', 'instance://' + self.name]
-        # TODO: Until we work out how the Niceman session interactive prompt is
+        # TODO: Until we work out how the ReproMan session interactive prompt is
         # going to work, we are returning to the OS command prompt when the
         # resource login shell closes. The following line will change after the
         # session management code is developed.

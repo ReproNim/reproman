@@ -5,7 +5,7 @@ From:repronim/simple_workflow:latest
 %runscript
     echo "Welcome to the ReproMan development environment."
     echo "Reprozip pre-installed via pip.  "
-    echo "Niceman git repo under /opt/reproman and installed for development systemwide"
+    echo "ReproMan git repo under /opt/reproman and installed for development systemwide"
     /bin/bash
 
 %post

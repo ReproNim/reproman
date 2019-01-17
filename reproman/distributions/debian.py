@@ -163,7 +163,7 @@ class DebianDistribution(Distribution):
         # Create a new apt sources file if needed.
         if sources and not session.exists(apt_source_file):
             session.execute_command(
-                "sh -c 'echo \"# Niceman repo sources\" > {}'"
+                "sh -c 'echo \"# ReproMan repo sources\" > {}'"
                 .format(apt_source_file))
 
         for source in sources:
