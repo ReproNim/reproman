@@ -73,7 +73,7 @@ def setup_parser(
         description=dedent_docstring("""\
             ReproMan aims to ease construction and execution of computation environments
             based on collected provenance data."""),
-        epilog='"Nicely Manage Your Environments"',
+        epilog='"Reproducibly Manage Your Environments"',
         formatter_class=formatter_class,
         add_help=False)
     # common options
