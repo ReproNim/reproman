@@ -177,38 +177,53 @@ class ResourceManager(object):
         return sorted(l)
 
     def _find_resources(self, resref, resref_type):
-        def from_name(x):
-            return [(name, config) for name, config in self.inventory.items()
-                    if x == name]
+        def match_name(inventory_item):
+            return resref == inventory_item[0]
 
-        def from_id(x):
-            return [(name, config) for name, config in self.inventory.items()
-                    if x == config.get("id")]
+        def match_id(inventory_item):
+            return resref == inventory_item[1].get("id")
+
+        def match_id_partial(inventory_item):
+            return inventory_item[1].get("id", "").startswith(resref)
+
+        def filter_inventory(pred):
+            return list(filter(pred, self.inventory.items()))
 
         results_name = None
         results_id = None
-        if resref_type == "auto":
-            results_name = from_name(resref)
-            results_id = from_id(resref)
-        elif resref_type == "name":
-            results_name = from_name(resref)
-        elif resref_type == "id":
-            results_id = from_id(resref)
-        return results_name, results_id
+        partial_id = False
+        if resref_type in ["auto", "name"]:
+            results_name = filter_inventory(match_name)
+        if resref_type in ["auto", "id"]:
+            results_id = filter_inventory(match_id)
+            if not results_id:
+                partial_id = True
+                results_id = filter_inventory(match_id_partial)
+        return results_name, results_id, partial_id
 
     def _get_resource_config(self, resref, resref_type="auto"):
-        results_name, results_id = self._find_resources(resref, resref_type)
-        if results_name and results_id:
+        if not resref:
+            raise ValueError("`resref` cannot be empty")
+        results_name, results_id, partial_id = self._find_resources(
+            resref, resref_type)
+        if results_name and results_id and not partial_id:
             raise MultipleResourceMatches(
                 "{} is ambiguous. "
                 "Explicitly specify whether it is a name or id".format(resref))
         elif not (results_name or results_id):
             raise ResourceNotFoundError(
                 "Resource matching {} not found".format(resref))
+        elif results_name:
+            # Don't bother with partial ID matches when we have a full name
+            # match.
+            pass
         elif results_id and len(results_id) > 1:
             raise MultipleResourceMatches(
-                "ID {} matches multiple resources. "
-                "Try specifying with the name instead".format(resref))
+                "ID {} {}matches multiple resources. "
+                "Try specifying the {}name instead"
+                .format(resref,
+                        "partially " if partial_id else "",
+                        "full ID or " if partial_id else ""))
 
         name, inventory_config = (results_name or results_id)[0]
         type_ = inventory_config['type']
@@ -297,8 +312,9 @@ class ResourceManager(object):
             yaml.safe_dump(inventory, fp, default_flow_style=False)
 
     def create(self, name, resource_type, backend_params=None):
-        results_name, results_id = self._find_resources(name, "auto")
-        if results_name or results_id:
+        results_name, results_id, partial_id = self._find_resources(
+            name, "auto")
+        if results_name or (results_id and not partial_id):
             raise ResourceAlreadyExistsError(
                 "Resource with {} {} already exists"
                 .format("name" if results_name else "ID", name))
