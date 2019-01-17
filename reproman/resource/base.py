@@ -90,7 +90,7 @@ class ResourceManager(object):
     """Manager of available resources.
 
     Provides an API for finding existing resources or allocating new ones.
-    Typically a NICEMAN process will have a single ResourceManager instance.
+    Typically a ReproMan process will have a single ResourceManager instance.
     """
 
     # The keys which are known to be secret and should not be exposed

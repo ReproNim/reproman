@@ -1,13 +1,13 @@
-# NICEMAN
+# ReproMan
 
-NICEMAN aims to simplify creation and management of computing environments
+ReproMan aims to simplify creation and management of computing environments
 in Neuroimaging.  While concentrating on Neuroimaging use-cases, it is
 by no means is limited to this field of science and tools will find
 utility in other fields as well.
 
 # Status
 
-NICEMAN is under initial rapid development to establish core functionality.  While
+ReproMan is under initial rapid development to establish core functionality.  While
 the code base is still growing the focus is increasingly shifting towards
 robust and safe operation with a sensible API. There has been no major public
 release yet, as organization and configuration are still subject of
@@ -23,14 +23,14 @@ internals and/or contributing to the project.
 
 * [![codecov.io](https://codecov.io/github/ReproNim/reproman/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/reproman?branch=master)
 
-* [![Documentation](https://readthedocs.org/projects/NICEMAN/badge/?version=latest)](http://reproman.rtfd.org)
+* [![Documentation](https://readthedocs.org/projects/ReproMan/badge/?version=latest)](http://reproman.rtfd.org)
 
 # Installation
 
 ## Debian-based systems
 
 On Debian-based systems we recommend to enable [NeuroDebian](http://neuro.debian.net)
-from which we will soon provide recent releases of NICEMAN (as soon as
+from which we will soon provide recent releases of ReproMan (as soon as
 there is something to release).  We will also provide backports of
 all necessary packages from that repository.
 
@@ -59,7 +59,7 @@ depend upon.  Additionally, if you would
 like to develop and run our tests battery see [CONTRIBUTING.md](CONTRIBUTING.md)
 regarding additional dependencies.
 
-Later we will provide bundled installations of NICEMAN across popular
+Later we will provide bundled installations of ReproMan across popular
 platforms.
 
 

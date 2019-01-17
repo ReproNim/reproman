@@ -531,7 +531,7 @@ class POSIXSession(Session):
         # if session is persistent (i.e all commands run in persistent session)
         # and we don't need this source  to be permanent -- we could
         # just run it and be done
-        marker = "== =NICEMAN == ="  # unique marker to be able to split away
+        marker = "== =ReproMan == ="  # unique marker to be able to split away
         # possible output from the sourced script
         get_env_command = " ".join('"%s"' % s for s in self._GET_ENVIRON_CMD)
         shell = shell or self.query_envvars().get('SHELL', None)

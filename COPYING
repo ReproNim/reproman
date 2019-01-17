@@ -1,6 +1,6 @@
 # Main Copyright/License
 
-NICEMAN, including all examples, code snippets and attached
+ReproMan, including all examples, code snippets and attached
 documentation is covered by the MIT license.  A good portion of the source
 code base was bootstrapped with materials from the DataLad project 
 (http://datalad.org)
@@ -9,7 +9,7 @@ code base was bootstrapped with materials from the DataLad project
 
   Copyright (c) 2013-2016 Yaroslav Halchenko
                 2015-2016 DataLad Team
-                2016-     NICEMAN Team
+                2016-     ReproMan Team
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,12 @@ code base was bootstrapped with materials from the DataLad project
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 
-See CONTRIBUTORS file for a full list of contributors within NICEMAN code-base.
+See CONTRIBUTORS file for a full list of contributors within ReproMan code-base.
 
 
 # 3rd Party Code
 
-Some code distributed within NICEMAN was not developed by the NICEMAN team,
+Some code distributed within ReproMan was not developed by the ReproMan team,
 hence you should adhere to the copyright and license terms of respective
 authors if you are to use corresponding parts.
 

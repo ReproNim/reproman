@@ -1,6 +1,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the NICEMAN package for the
+#   See COPYING file distributed along with the ReproMan package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -140,7 +140,7 @@ class BuildRSTExamplesFromScripts(Command):
                     ref='_example_{0}'.format(exname))
 
 """
-# Placed into a string for effecting comment-out since not used in NICEMAN
+# Placed into a string for effecting comment-out since not used in ReproMan
 # project ATM
 
 class BuildConfigInfo(Command):

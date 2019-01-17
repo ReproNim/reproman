@@ -30,7 +30,7 @@ from ..dochelpers import exc_str
 
 def _license_info():
     return """\
-Copyright (c) 2016- NICEMAN developers (parts 2013-2016 DataLad developers)
+Copyright (c) 2016- ReproMan developers (parts 2013-2016 DataLad developers)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -71,7 +71,7 @@ def setup_parser(
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars='@',
         description=dedent_docstring("""\
-            NICEMAN aims to ease construction and execution of computation environments
+            ReproMan aims to ease construction and execution of computation environments
             based on collected provenance data."""),
         epilog='"Nicely Manage Your Environments"',
         formatter_class=formatter_class,
@@ -101,7 +101,7 @@ def setup_parser(
 
     parser.add_argument(
         "-c", "--config", metavar="CONFIG", action="append",
-        help="""path to NICEMAN configuration file.  This option can be given
+        help="""path to ReproMan configuration file.  This option can be given
         multiple times, in which case values in the later files override
         previous ones.""")
 

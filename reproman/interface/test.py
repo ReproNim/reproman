@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Run internal NICEMAN (unit)tests to verify correct operation on the system"""
+"""Run internal ReproMan (unit)tests to verify correct operation on the system"""
 
 
 __docformat__ = 'restructuredtext'
@@ -17,7 +17,7 @@ from .base import Interface
 
 
 class Test(Interface):
-    """Run internal NICEMAN (unit)tests.
+    """Run internal ReproMan (unit)tests.
 
     This can be used to verify correct operation on the system
     """

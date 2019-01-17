@@ -1,5 +1,5 @@
 # vim ft=yaml
-# travis-ci.org definition for NICEMAN build
+# travis-ci.org definition for ReproMan build
 language: python
 sudo: required
 #dist: precise

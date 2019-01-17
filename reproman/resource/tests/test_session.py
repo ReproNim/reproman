@@ -315,7 +315,7 @@ def test_session_abstract_methods(testing_container, resource_session,
     # Create a temporary test file
     temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
     with temp_file as f:
-        f.write('NICEMAN test content\nline 2\nline 3'.encode('utf8'))
+        f.write('ReproMan test content\nline 2\nline 3'.encode('utf8'))
         f.flush()
         local_path = temp_file.name
         remote_path = '{}/reproman upload/{}'.format(resource_test_dir,
@@ -350,7 +350,7 @@ def test_session_abstract_methods(testing_container, resource_session,
 
     # Check read() method
     output = session.read(remote_path).split('\n')
-    assert output[0] == 'NICEMAN test content'
+    assert output[0] == 'ReproMan test content'
     assert output[1] == 'line 2'
 
     # Check get() method
@@ -361,7 +361,7 @@ def test_session_abstract_methods(testing_container, resource_session,
     assert os.path.isfile(local_path)
     with open(local_path, 'r') as f:
         content = f.read().split('\n')
-        assert content[0] == 'NICEMAN test content'
+        assert content[0] == 'ReproMan test content'
     os.remove(local_path)
     os.rmdir(os.path.dirname(local_path))
 

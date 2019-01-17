@@ -36,8 +36,8 @@ def docker_container():
 def centos_spec():
     tmp = tempfile.NamedTemporaryFile(delete=False)
     with open(tmp.name, 'w') as f:
-        f.write("""# NICEMAN Environment Configuration File
-# This file was created by NICEMAN 0.0.5 on 2018-05-23 22:03:22.820177
+        f.write("""# ReproMan Environment Configuration File
+# This file was created by ReproMan 0.0.5 on 2018-05-23 22:03:22.820177
 version: 0.0.1
 distributions:
 - name: redhat

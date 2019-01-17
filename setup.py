@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the NICEMAN package for the
+#   See COPYING file distributed along with the ReproMan package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -140,7 +140,7 @@ except ImportError:
 
 setup(
     name="reproman",
-    author="The NICEMAN Team and Contributors",
+    author="The ReproMan Team and Contributors",
     author_email="team@reproman.org",
     version=version,
     description="Neuroimaging Computational Environments Manager",

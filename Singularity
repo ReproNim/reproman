@@ -3,7 +3,7 @@ From:repronim/simple_workflow:latest
 
 # so if image is executed we just enter the environment
 %runscript
-    echo "Welcome to the NICEMAN development environment."
+    echo "Welcome to the ReproMan development environment."
     echo "Reprozip pre-installed via pip.  "
     echo "Niceman git repo under /opt/reproman and installed for development systemwide"
     /bin/bash

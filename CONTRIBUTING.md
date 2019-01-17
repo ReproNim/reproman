@@ -1,4 +1,4 @@
-Contributing to NICEMAN
+Contributing to ReproMan
 ========================
 
 [gh-reproman]: http://github.com/ReproNim/reproman
@@ -25,13 +25,13 @@ Files organization
     - `bash-completions` - bash and zsh completion setup for reproman (just
       `source` it)
 - `tools/` contains helper utilities used during development, testing, and
-  benchmarking of NICEMAN.  Implemented in any most appropriate language
+  benchmarking of ReproMan.  Implemented in any most appropriate language
   (Python, bash, etc.)
 
 How to contribute
 -----------------
 
-The preferred way to contribute to the NICEMAN code base is
+The preferred way to contribute to the ReproMan code base is
 to fork the [main repository][gh-reproman] on GitHub.  Here
 we outline the workflow used by the developers:
 
@@ -94,14 +94,14 @@ we outline the workflow used by the developers:
    also use `TST` for commits concerned solely with tests, and `BK` to signal
    that the commit causes a breakage (e.g. of tests) at that point.  Multiple
    entries could be listed joined with a `+` (e.g. `rf+doc-`).  See `git log` for
-   examples.  If a commit closes an existing NICEMAN issue, then add to the end
+   examples.  If a commit closes an existing ReproMan issue, then add to the end
    of the message `(Closes #ISSUE_NUMER)`
 
 5. Push to GitHub with:
 
           git push -u gh-YourLogin nf-my-feature
 
-   Finally, go to the web page of your fork of the NICEMAN repo, and click
+   Finally, go to the web page of your fork of the ReproMan repo, and click
    'Pull request' (PR) to send your changes to the maintainers for review. This
    will send an email to the committers.  You can commit new changes to this branch
    and keep pushing to your remote -- github automagically adds them to your
@@ -304,7 +304,7 @@ package to ease pycharm installation even further.
 Easy Issues
 -----------
 
-A great way to start contributing to NICEMAN is to pick an item from the list of
+A great way to start contributing to ReproMan is to pick an item from the list of
 [Easy issues](https://github.com/ReproNim/reproman/labels/easy) in the issue
 tracker.  Resolving these issues allows you to start contributing to the project
 without much prior knowledge.  Your assistance in this area will be greatly

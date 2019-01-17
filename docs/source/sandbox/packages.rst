@@ -1,7 +1,7 @@
 High-level Package Handling (and ReproZip Architecture Discussion)
 ******************************************************************
 
-What NICEMAN aims (not) to be
+What ReproMan aims (not) to be
 ==============================
 
 We want to leverage existing solutions (such as existing containers, cloud
@@ -21,7 +21,7 @@ distribution.
 
 Construction of such environments would heavily depend on specification of
 "packages" which contain sufficient information to reconstruct and execute in
-the environment. Such specifications could be constructed manually, by NICEMAN
+the environment. Such specifications could be constructed manually, by ReproMan
 from loose human description, or via automated provenance collection of "shell"
 command.  They also should provide sufficient expressive power to be able to
 tune them quickly for most common cases (e.g. upgrade from release X to
@@ -67,16 +67,16 @@ packages (yum & apt-get) will need to be installed first, enabling other
 package managers (pip, conda, npm) to then run and build upon the base
 packages.
 
-The fundamental challenge of NICEMAN's "trace" ability is to identify and
+The fundamental challenge of ReproMan's "trace" ability is to identify and
 record the package managers, distributions, and packages from the files used in
-an experiment. Then to "create" an environment, NICEMAN needs to reinstall the
+an experiment. Then to "create" an environment, ReproMan needs to reinstall the
 packages from the specification (ideally matching as many properties, such as
 version, architecture, size, and hash as possible).
 
 Package Management and Environment Configuration
 ------------------------------------------------
 
-Here we discuss package managers and key distributions that NICEMAN should
+Here we discuss package managers and key distributions that ReproMan should
 cover (and list other potential package managers to consider)
 
 OS Package Managers
@@ -97,9 +97,9 @@ stand on their own but depend upon specific OS distributions or configurations:
 
 Finally, OS package managers (and related repositories and distributions) are
 typically used to install the language-specific package managers described in
-the next section. Therefore, NICEMAN "create" will need to install OS packages
+the next section. Therefore, ReproMan "create" will need to install OS packages
 first, followed by language-specific packages. We may need to allow the
-NICEMAN environment specification to allow the user to order the package
+ReproMan environment specification to allow the user to order the package
 installation across multiple package managers to ensure resolution of
 dependencies.
 
@@ -158,7 +158,7 @@ Provisioners
 
 Provisioners allow you to automatically install software, alter configurations,
 and maintain files across multiple machines from a central server (or
-configuration specification). NICEMAN may need to both recognize its use to
+configuration specification). ReproMan may need to both recognize its use to
 create an environment and may have an opportunity to use any of the following
 provisioners to recreate an environment:
 

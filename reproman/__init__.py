@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""NICEMAN - Neuroimaging Computation Environments Manager
+"""ReproMan - Neuroimaging Computation Environments Manager
 
 It is a part of the ReproNim (Reproducible Neuroimaging) suite of tools
 to ease construction and execution of computation environments based on the

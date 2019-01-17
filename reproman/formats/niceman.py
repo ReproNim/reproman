@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """
-Plugin support for provenance YAML files following NICEMAN spec.
+Plugin support for provenance YAML files following ReproMan spec.
 
 """
 from __future__ import absolute_import
@@ -37,7 +37,7 @@ __version__ = '0.0.1'
 
 class NicemanProvenance(Provenance):
     """
-    Parser for NICEMAN Spec (YAML specification)
+    Parser for ReproMan Spec (YAML specification)
     """
 
     @classmethod
@@ -275,8 +275,8 @@ class NicemanProvenance(Provenance):
 
         utils.safe_write(
             output,
-            ("# NICEMAN Environment Configuration File\n"
-             "# This file was created by NICEMAN {0} on {1}\n").format(
+            ("# ReproMan Environment Configuration File\n"
+             "# This file was created by ReproMan {0} on {1}\n").format(
                 reproman.__version__, datetime.datetime.now()))
 
         #c = "\n# Runs: Commands and related environment variables\n\n"
@@ -330,7 +330,7 @@ def spec_to_dict(spec):
         write_config_key(output, envconfig, "other_files", c)
 
         if envconfig:
-            utils.safe_write(output, "\n# Other ReproZip keys (not used by NICEMAN) \n\n")
+            utils.safe_write(output, "\n# Other ReproZip keys (not used by ReproMan) \n\n")
             utils.safe_write(output, yaml.safe_dump(envconfig,
                                                     encoding="utf-8",
                                                     allow_unicode=True))

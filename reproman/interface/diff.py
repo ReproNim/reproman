@@ -54,12 +54,12 @@ class Diff(Interface):
 
     _params_ = dict(
         prov1=Parameter(
-            doc="NICEMAN provenance file", 
+            doc="ReproMan provenance file", 
             metavar='prov1',
             constraints=EnsureStr()),
         prov2=Parameter(
             metavar="prov2",
-            doc="NICEMAN provenance file", 
+            doc="ReproMan provenance file", 
             constraints=EnsureStr()), 
         satisfies=Parameter(
             args=("--satisfies", "-s"), 

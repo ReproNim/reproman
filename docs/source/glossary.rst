@@ -13,8 +13,8 @@
 Glossary
 ********
 
-NICEMAN uses terminology which is collated from various technologies. This
-glossary provides definitions for terms used in the NICEMAN documentation
+ReproMan uses terminology which is collated from various technologies. This
+glossary provides definitions for terms used in the ReproMan documentation
 and API, and provides additional references where to seek more information
 
 .. glossary::

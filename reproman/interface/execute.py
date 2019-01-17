@@ -235,7 +235,7 @@ class TracedCommand(CommandAdapter):
             output_file=reproman_spec_path,
             resref=self.session
         )
-        lgr.info("NICEMAN trace %s", reproman_spec_path)
+        lgr.info("ReproMan trace %s", reproman_spec_path)
 
 
 # Exists for ease of testing.
@@ -279,7 +279,7 @@ class Execute(Interface):
             args=("--internal",),
             action="store_true",
             doc="Instead of running a generic/any command, execute the internal"
-                " NICEMAN command available within sessions.  Known are: %s"
+                " ReproMan command available within sessions.  Known are: %s"
                 % ', '.join(Session.INTERNAL_COMMANDS)
         ),
         trace=trace_opt,

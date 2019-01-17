@@ -15,7 +15,7 @@ from reproman.formats import Provenance
 
 def test_get_distributions(demo1_spec):
 
-    # Test reading the distributions from the NICEMAN spec file.
+    # Test reading the distributions from the ReproMan spec file.
     provenance = Provenance.factory(demo1_spec, 'reproman')
 
     with swallow_logs(new_level=logging.DEBUG) as log:
