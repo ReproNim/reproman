@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,9 +16,9 @@ import os.path as op
 
 import yaml
 
-from niceman import cfg
+from reproman import cfg
 
-lgr = logging.getLogger("niceman.support.jobs.local_registry")
+lgr = logging.getLogger("reproman.support.jobs.local_registry")
 
 
 class LocalRegistry(object):

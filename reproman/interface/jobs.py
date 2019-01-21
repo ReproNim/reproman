@@ -2,11 +2,11 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Operate on `niceman run` jobs.
+"""Operate on `reproman run` jobs.
 """
 
 from functools import partial
@@ -14,16 +14,16 @@ import operator
 import logging
 import yaml
 
-from niceman.interface.base import Interface
-from niceman.support.jobs.local_registry import LocalRegistry
-from niceman.support.jobs.orchestrators import ORCHESTRATORS
-from niceman.resource import get_manager
-from niceman.support.param import Parameter
-from niceman.support.constraints import EnsureChoice
-from niceman.support.exceptions import ResourceNotFoundError
-from niceman.utils import chpwd
+from reproman.interface.base import Interface
+from reproman.support.jobs.local_registry import LocalRegistry
+from reproman.support.jobs.orchestrators import ORCHESTRATORS
+from reproman.resource import get_manager
+from reproman.support.param import Parameter
+from reproman.support.constraints import EnsureChoice
+from reproman.support.exceptions import ResourceNotFoundError
+from reproman.utils import chpwd
 
-lgr = logging.getLogger("niceman.interface.jobs")
+lgr = logging.getLogger("reproman.interface.jobs")
 
 __docformat__ = "restructuredtext"
 
@@ -134,7 +134,7 @@ def fetch(job):
 
 
 class Jobs(Interface):
-    """View and manage `niceman run` jobs.
+    """View and manage `reproman run` jobs.
 
     The possible actions are
 

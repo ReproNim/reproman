@@ -2,11 +2,11 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Submitters for `niceman run`.
+"""Submitters for `reproman run`.
 """
 
 import abc
@@ -19,11 +19,11 @@ import time
 
 import six
 
-from niceman.cmd import CommandError
-from niceman.dochelpers import borrowdoc
+from reproman.cmd import CommandError
+from reproman.dochelpers import borrowdoc
 
 
-lgr = logging.getLogger("niceman.support.jobs.submitters")
+lgr = logging.getLogger("reproman.support.jobs.submitters")
 
 
 def assert_submission_id(method):

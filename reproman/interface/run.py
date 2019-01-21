@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -17,17 +17,17 @@ import yaml
 from six.moves import map
 from six.moves import shlex_quote
 
-from niceman.interface.base import Interface
-from niceman.interface.common_opts import resref_opt
-from niceman.interface.common_opts import resref_type_opt
-from niceman.support.jobs.local_registry import LocalRegistry
-from niceman.support.jobs.orchestrators import ORCHESTRATORS
-from niceman.support.jobs.submitters import SUBMITTERS
-from niceman.resource import get_manager
-from niceman.support.param import Parameter
-from niceman.utils import parse_kv_list
+from reproman.interface.base import Interface
+from reproman.interface.common_opts import resref_opt
+from reproman.interface.common_opts import resref_type_opt
+from reproman.support.jobs.local_registry import LocalRegistry
+from reproman.support.jobs.orchestrators import ORCHESTRATORS
+from reproman.support.jobs.submitters import SUBMITTERS
+from reproman.resource import get_manager
+from reproman.support.param import Parameter
+from reproman.utils import parse_kv_list
 
-lgr = logging.getLogger("niceman.api.run")
+lgr = logging.getLogger("reproman.api.run")
 
 __docformat__ = "restructuredtext"
 

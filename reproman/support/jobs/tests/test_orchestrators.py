@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,13 +12,13 @@ import os.path as op
 from mock import patch
 import pytest
 
-from niceman.utils import chpwd
-from niceman.resource.shell import Shell
-from niceman.support.exceptions import MissingExternalDependency
-from niceman.support.exceptions import OrchestratorError
-from niceman.support.external_versions import external_versions
-from niceman.support.jobs import orchestrators as orcs
-from niceman.tests.utils import create_tree
+from reproman.utils import chpwd
+from reproman.resource.shell import Shell
+from reproman.support.exceptions import MissingExternalDependency
+from reproman.support.exceptions import OrchestratorError
+from reproman.support.external_versions import external_versions
+from reproman.support.jobs import orchestrators as orcs
+from reproman.tests.utils import create_tree
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +28,7 @@ def shell():
 
 def test_orc_root_directory(shell):
     orc = orcs.PlainOrchestrator(shell, submission_type="local")
-    assert orc.root_directory == op.expanduser("~/.niceman/run-root")
+    assert orc.root_directory == op.expanduser("~/.reproman/run-root")
 
 
 @pytest.mark.parametrize("value", [{}, {"HOME": "rel/path"}],

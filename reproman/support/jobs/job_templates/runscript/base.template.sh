@@ -5,14 +5,14 @@
 set -eu
 
 echo "submitted" >"{{ meta_directory }}/status"
-echo "[NICEMAN] pre-command..."
+echo "[ReproMan] pre-command..."
 
 {% block pre_command %}
 cd "{{ working_directory }}"
 {% endblock %}
 
 echo "running" >"{{ meta_directory }}/status"
-echo "[NICEMAN] executing command within $PWD..."
+echo "[ReproMan] executing command within $PWD..."
 {% block command %}
 /bin/sh -c {{ shlex_quote(command_str) }} && \
     echo "succeeded" >"{{ meta_directory }}/status" || \
@@ -20,7 +20,7 @@ echo "[NICEMAN] executing command within $PWD..."
 {% endblock %}
 
 
-echo "[NICEMAN] post-command..."
+echo "[ReproMan] post-command..."
 {% block post_command %}
 {% endblock %}
 

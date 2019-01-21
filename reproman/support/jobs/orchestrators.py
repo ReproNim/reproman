@@ -2,11 +2,11 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Orchestrators for `niceman run`.
+"""Orchestrators for `reproman run`.
 """
 
 import abc
@@ -22,18 +22,18 @@ import six
 from six.moves import map
 from six.moves import shlex_quote
 
-from niceman.dochelpers import borrowdoc
-from niceman.utils import cached_property
-from niceman.utils import chpwd
-from niceman.resource.ssh import SSHSession
-from niceman.support.jobs.submitters import SUBMITTERS
-from niceman.support.jobs.template import Template
-from niceman.support.exceptions import CommandError
-from niceman.support.exceptions import MissingExternalDependency
-from niceman.support.exceptions import OrchestratorError
-from niceman.support.external_versions import external_versions
+from reproman.dochelpers import borrowdoc
+from reproman.utils import cached_property
+from reproman.utils import chpwd
+from reproman.resource.ssh import SSHSession
+from reproman.support.jobs.submitters import SUBMITTERS
+from reproman.support.jobs.template import Template
+from reproman.support.exceptions import CommandError
+from reproman.support.exceptions import MissingExternalDependency
+from reproman.support.exceptions import OrchestratorError
+from reproman.support.external_versions import external_versions
 
-lgr = logging.getLogger("niceman.support.jobs.orchestrators")
+lgr = logging.getLogger("reproman.support.jobs.orchestrators")
 
 
 # Abstract orchestrators
@@ -69,7 +69,7 @@ class Orchestrator(object):
         home = self.session.query_envvars().get("HOME")
         if not home:
             raise OrchestratorError("Could not determine $HOME on remote")
-        root_directory = op.join(home, ".niceman", "run-root")
+        root_directory = op.join(home, ".reproman", "run-root")
         lgr.info("No root directory supplied for %s; using '%s'",
                  self.resource.name, root_directory)
         if not op.isabs(root_directory):
@@ -104,7 +104,7 @@ class Orchestrator(object):
     def meta_directory(self):
         """Directory used to store metadata for the run.
         """
-        return op.join(self.working_directory, ".niceman", "jobs",
+        return op.join(self.working_directory, ".reproman", "jobs",
                        self.resource.name, self.jobid)
 
     @property
@@ -136,7 +136,7 @@ class Orchestrator(object):
         pass
 
     def _put_as_executable(self, text, target):
-        with NamedTemporaryFile('w', prefix="niceman-", delete=False) as tfh:
+        with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
             tfh.write(text)
         os.chmod(tfh.name, 0o755)
         self.session.put(tfh.name, target)
@@ -451,7 +451,7 @@ class PrepareRemoteDataladMixin(object):
                 dl.install(self.working_directory, source=self.ds.path)
             else:
                 self.session.execute_command(
-                    "git push '{}' HEAD:refs/niceman/head"
+                    "git push '{}' HEAD:refs/reproman/head"
                     .format(self.working_directory))
 
             if inputs:
@@ -503,7 +503,7 @@ class FetchDataladPairMixin(object):
             with chpwd(self.ds.path):
                 self.session.execute_command(
                     ["git", "fetch", self.working_directory,
-                     "refs/niceman/{0}:refs/niceman/{0}".format(self.jobid)])
+                     "refs/reproman/{0}:refs/reproman/{0}".format(self.jobid)])
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
 
@@ -535,7 +535,7 @@ class FetchDataladRunMixin(object):
                     inputs=self.job_spec.get("inputs_unexpanded"),
                     outputs=self.job_spec.get("outputs_unexpanded"),
                     inject=True,
-                    extra_info={"niceman_jobid": self.jobid},
+                    extra_info={"reproman_jobid": self.jobid},
                     message=self.job_spec.get("message"),
                     cmd=self.job_spec["command_str_unexpanded"]):
                 # Oh, if only I were a datalad extension.

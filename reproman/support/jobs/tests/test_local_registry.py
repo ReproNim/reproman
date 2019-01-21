@@ -2,7 +2,7 @@
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the niceman package for the
+#   See COPYING file distributed along with the reproman package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -12,7 +12,7 @@ import os.path as op
 import pytest
 import yaml
 
-from niceman.support.jobs.local_registry import LocalRegistry
+from reproman.support.jobs.local_registry import LocalRegistry
 
 
 def test_local_registry(tmpdir):
