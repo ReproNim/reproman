@@ -16,4 +16,4 @@ _python_argcomplete() {
     fi
 }
 
-complete -o nospace -o default -F _python_argcomplete "niceman"
+complete -o nospace -o default -F _python_argcomplete "reproman"

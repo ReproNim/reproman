@@ -1,5 +1,5 @@
 .pybuild/
-niceman.build/
+reproman.build/
 /.idea
 .coverage
 /venv*

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "The following people have contributed to NICEMAN:" > CONTRIBUTORS
+echo "The following people have contributed to ReproMan:" > CONTRIBUTORS
 echo >> CONTRIBUTORS
 
 # note: some exclusions to clean up botched git author tags that got fixed in

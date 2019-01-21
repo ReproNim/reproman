@@ -1,4 +1,4 @@
-NICEMAN |---| tools for reproducible neuroimaging
+ReproMan |---| tools for reproducible neuroimaging
 **************************************************
 
 .. toctree::
