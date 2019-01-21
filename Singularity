@@ -3,13 +3,13 @@ From:repronim/simple_workflow:latest
 
 # so if image is executed we just enter the environment
 %runscript
-    echo "Welcome to the NICEMAN development environment."
+    echo "Welcome to the ReproMan development environment."
     echo "Reprozip pre-installed via pip.  "
-    echo "Niceman git repo under /opt/niceman and installed for development systemwide"
+    echo "ReproMan git repo under /opt/reproman and installed for development systemwide"
     /bin/bash
 
 %post
-    echo "Adding niceman pieces"
+    echo "Adding reproman pieces"
     umask 022
     # knock
     curl -s http://neuro.debian.net/_files/knock-snapshots;
@@ -21,21 +21,21 @@ From:repronim/simple_workflow:latest
     echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen
     locale-gen
 
-    # additional depends for niceman
+    # additional depends for reproman
     eatmydata apt-get install -y libffi-dev libssl-dev  python-apt
 
     # Generate our shareable env
-    rm -rf /opt/niceman; mkdir -p /opt/niceman
+    rm -rf /opt/reproman; mkdir -p /opt/reproman
     # not available within singularity's shell so will do system wide
-    # virtualenv --system-site-packages /opt/niceman/venv
-    # source /opt/niceman/venv/bin/activate
-    git clone git://github.com/repronim/niceman /opt/niceman
+    # virtualenv --system-site-packages /opt/reproman/venv
+    # source /opt/reproman/venv/bin/activate
+    git clone git://github.com/repronim/reproman /opt/reproman
     pip install reprozip
     # we need updated cryptography (I guess paramiko lacks versioned depends)
     pip install --upgrade cryptography
-    pip install -e /opt/niceman
+    pip install -e /opt/reproman
 
     # So outside 'staff' ppl could modify inside as well
-    chown nobody.staff -R /opt/niceman
-    chmod g+rwX -R /opt/niceman /usr/local
-    chmod o+rwX -R /opt/niceman /usr/local
+    chown nobody.staff -R /opt/reproman
+    chmod g+rwX -R /opt/reproman /usr/local
+    chmod o+rwX -R /opt/reproman /usr/local

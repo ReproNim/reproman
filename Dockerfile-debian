@@ -1,7 +1,7 @@
-# Container holding a niceman development environment.
+# Container holding a reproman development environment.
 #
 # To build:
-#	docker build -t niceman:debian \
+#	docker build -t reproman:debian \
 #       -f Dockerfile-debian \
 #		--build-arg IMAGE=debian:jessie \
 #		--build-arg UNAME=$USER \
@@ -12,10 +12,10 @@
 #	or docker-compose build debian(be sure to update IMAGE, UID, and GID in docker-compose.yml)
 #
 # To run:
-#	docker run -it --name niceman-debian \
-#		-v $PWD:/home/$USER/niceman \
+#	docker run -it --name reproman-debian \
+#		-v $PWD:/home/$USER/reproman \
 #		-v /var/run/docker.sock:/var/run/docker.sock \
-#		niceman:debian
+#		reproman:debian
 #
 #	or docker-compose run debian
 
@@ -28,19 +28,19 @@ RUN apt-get update \
     && pip install --upgrade pip
 
 # Create a container user account that matches a system user account.
-ARG UNAME=niceman
+ARG UNAME=reproman
 ARG UID=1000
 ARG GID=1000
 RUN groupadd -g $GID $UNAME \
 	&& useradd -m -u $UID -g $GID -s /bin/bash $UNAME
 
-COPY . /home/$UNAME/niceman
-COPY niceman.cfg /home/$UNAME
+COPY . /home/$UNAME/reproman
+COPY reproman.cfg /home/$UNAME
 
 RUN chown -R $UID.$GID /home/$UNAME \
-    && rm -r '/home/'$UNAME'/niceman/niceman.egg-info' \
-    && find '/home/'$UNAME'/niceman' -name "*.pyc" -delete \
-    && pip install -e '/home/'$UNAME'/niceman[devel]'
+    && rm -r '/home/'$UNAME'/reproman/reproman.egg-info' \
+    && find '/home/'$UNAME'/reproman' -name "*.pyc" -delete \
+    && pip install -e '/home/'$UNAME'/reproman[devel]'
 
 # USER $UID:$GID
 
