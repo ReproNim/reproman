@@ -13,10 +13,14 @@ import getpass
 import invoke
 import uuid
 from fabric import Connection
+from ..log import LoggerHelper
 from paramiko import AuthenticationException
 
 import logging
 lgr = logging.getLogger('reproman.resource.ssh')
+# Add Paramiko logging for log levels below DEBUG
+if lgr.getEffectiveLevel() < logging.DEBUG:
+    LoggerHelper("paramiko").get_initialized_logger()
 
 from .base import Resource
 from ..utils import attrib
@@ -104,7 +108,7 @@ class SSH(Resource):
         if not self.id:
             self.id = str(uuid.uuid4())
         self.status = 'N/A'
-        return {
+        yield {
             'id': self.id,
             'status': self.status,
             'host': self.host,

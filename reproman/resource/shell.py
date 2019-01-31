@@ -119,7 +119,7 @@ class Shell(Resource):
         # Generic logic to reside in Resource???
         if self.id is None:
             self.id = Resource._generate_id()
-        return {
+        yield {
             'id': self.id,
             'status': 'available'
         }

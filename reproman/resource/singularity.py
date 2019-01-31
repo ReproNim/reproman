@@ -90,7 +90,7 @@ class Singularity(Resource):
         # Update status
         self.id = "{name}-{pid}".format(**info)
         self.status = 'running'
-        return {
+        yield {
             'id': self.id,
             'status': self.status
         }

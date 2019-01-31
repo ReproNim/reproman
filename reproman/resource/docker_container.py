@@ -166,7 +166,7 @@ class DockerContainer(Resource):
         self.id = self._container.get('Id')
         self._client.start(container=self.id)
         self.status = 'running'
-        return {
+        yield {
             'id': self.id,
             'status': self.status
         }
