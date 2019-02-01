@@ -155,6 +155,12 @@ setup(
     },
     cmdclass=cmdclass,
     package_data={
-        'reproman': []
+        'reproman':
+            findsome(opj("distributions", "tests", "files"), {"yml", "yaml"}) +
+            findsome("examples", {"trig", "yml", "yaml"}) +
+            findsome(opj("formats", "tests", "files"), {"yml", "yaml"}) +
+            findsome(opj("interface", "tests"), {"yml", "yaml"}) +
+            findsome(opj("interface", "tests", "files"), {"yml", "yaml"}) +
+            findsome(opj("tests", "files"), {"cfg"})
     }
 )
