@@ -15,6 +15,7 @@ import tempfile
 from pytest import raises
 from mock import patch, call
 
+from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ..base import ResourceManager
@@ -135,7 +136,7 @@ def test_shell_resource():
     }
     resource = ResourceManager.factory(config)
 
-    status = resource.create()
+    status = merge_dicts(resource.create())
     assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
 
     assert type(resource.connect()) == Shell

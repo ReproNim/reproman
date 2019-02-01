@@ -17,6 +17,7 @@ import six
 import uuid
 from pytest import raises
 
+from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_ssh
 from ..base import ResourceManager
@@ -57,7 +58,7 @@ def test_ssh_class(setup_ssh, resource_test_dir):
             **setup_ssh['custom']
         )
         resource = ResourceManager.factory(config)
-        updated_config = resource.create()
+        updated_config = merge_dicts(resource.create())
         config.update(updated_config)
         assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$',
                         resource.id) is not None
