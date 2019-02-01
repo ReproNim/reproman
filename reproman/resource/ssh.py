@@ -63,12 +63,18 @@ class SSH(Resource):
             but do allow tests to authenticate by passing a password as
             a parameter to this method.
         """
+        # Convert key_filename to a list
+        # See: https://github.com/ReproNim/reproman/commit/3807f1287c39ea2393bae26803e6da8122ac5cff
+        key_filename = None
+        if self.key_filename:
+            key_filename = [self.key_filename]
+
         self._connection = Connection(
             self.host,
             user=self.user,
             port=self.port,
             connect_kwargs={
-                'key_filename': self.key_filename,
+                'key_filename': key_filename,
                 'password': password
             }
         )
