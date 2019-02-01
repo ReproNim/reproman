@@ -121,7 +121,7 @@ def test_awsec2_class():
         assert results['id'] == 'i-11112777d52482d9c'
         assert results['status'] == 'running'
         assert_in('EC2 instance i-11112777d52482d9c initialized!', log.lines)
-        assert_in('EC2 instance i-11112777d52482d9c to start running!', log.lines)
+        assert_in('EC2 instance i-11112777d52482d9c is running!', log.lines)
         assert_in('Waiting for EC2 instance i-11112777d52482d9c to complete initialization...', log.lines)
         assert_in('EC2 instance i-11112777d52482d9c initialized!', log.lines)
 
