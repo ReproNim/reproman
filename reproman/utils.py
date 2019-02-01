@@ -1366,4 +1366,23 @@ def command_as_string(command):
     return command
 
 
+def merge_dicts(ds):
+    """Convert an iterable of dictionaries.
+
+    In the case of key collisions, the last value wins.
+
+    Parameters
+    ----------
+    ds : iterable of dicts
+
+    Returns
+    -------
+    dict
+    """
+    merged = {}
+    for d in ds:
+        merged.update(d)
+    return merged
+
+
 lgr.log(5, "Done importing reproman.utils")

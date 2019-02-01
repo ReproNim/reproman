@@ -48,6 +48,7 @@ from ..utils import to_unicode
 from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
 from ..utils import parse_semantic_version
+from ..utils import merge_dicts
 
 from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -546,6 +547,15 @@ def test_parse_semantic_version():
         parse_semantic_version("X.Y.Z")
     with pytest.raises(ValueError):
         parse_semantic_version("1.2")
+
+
+def test_merge_dicts():
+    assert merge_dicts([]) == {}
+    assert merge_dicts([{1: 1}]) == {1: 1}
+    assert merge_dicts([{1: 1}, {2: 2}]) == {1: 1, 2: 2}
+    assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
+    assert merge_dicts(iter([{1: 1}, {2: 2}, {1: 3}])) == {1: 3, 2: 2}
+    assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
 
 
 def test_line_profile():
