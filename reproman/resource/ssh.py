@@ -107,9 +107,9 @@ class SSH(Resource):
         """
         Register the SSH connection to the reproman inventory registry.
 
-        Returns
+        Yields
         -------
-        dict : config and state parameters to capture in the inventory file
+        dict : config parameters to capture in the inventory file
         """
         if not self.id:
             self.id = str(uuid.uuid4())

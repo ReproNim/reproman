@@ -111,7 +111,7 @@ class AwsEc2(Resource):
         """
         Create an EC2 instance.
 
-        Returns
+        Yields
         -------
         dict : config and state parameters to capture in the inventory file
         """

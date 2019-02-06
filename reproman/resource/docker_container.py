@@ -131,7 +131,7 @@ class DockerContainer(Resource):
         """
         Create a baseline Docker image and run it to create the container.
 
-        Returns
+        Yields
         -------
         dict : config parameters to capture in the inventory file
         """

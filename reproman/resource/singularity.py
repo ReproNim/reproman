@@ -71,7 +71,7 @@ class Singularity(Resource):
         """
         Create a container instance.
 
-        Returns
+        Yields
         -------
         dict : config parameters to capture in the inventory file
         """
