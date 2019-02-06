@@ -110,6 +110,13 @@ class AwsEc2(Resource):
     def create(self):
         """
         Create an EC2 instance.
+        
+        There are 2 yields for the AWS create method. The first yield occurs
+        immediately after the AWS service is sent the EC2 instance run command
+        so that the instance details can immediately be saved to the
+        inventory.yml file. The second yield occurs after the EC2 instance
+        has fully spun up and the "running" status is saved to the
+        inventory.yml file.
 
         Yields
         -------
