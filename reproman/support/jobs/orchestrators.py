@@ -358,6 +358,31 @@ class PrepareRemotePlainMixin(object):
             session.put(i, op.join(self.working_directory, op.basename(i)))
 
 
+def _format_ssh_url(user, host, port, path):
+    # Stick to git scp-like syntax for now since something like
+    #
+    #   sshurl = "ssh://{}@{}:{}{}".format(
+    #       resource.user, resource.host, resource.port, remote_dir)
+    #
+    # can fail with
+    #
+    #   stderr: 'fatal: ssh variant 'simple' does not support setting port'
+    #   [cmd.py:wait:415] (GitCommandError)
+    #
+    # depending on the setting of ssh.variant.  For non-standard ports,
+    # this relies on the user setting up their ssh config.
+    sshurl = "{}{}:{}".format(
+        user + "@" if user else "",
+        host,
+        path)
+
+    if port:
+        lgr.warning("Using SSH url %s; "
+                    "port should be specified in SSH config",
+                    sshurl)
+    return sshurl
+
+
 class PrepareRemoteDataladMixin(object):
 
     def _assert_clean_repo(self):
@@ -391,31 +416,14 @@ class PrepareRemoteDataladMixin(object):
         resource = self.resource
         session = self.session
 
-        # Stick to git scp-like syntax for now since something like
-        #
-        #   sshurl = "ssh://{}@{}:{}{}".format(
-        #       resource.user, resource.host, resource.port, remote_dir)
-        #
-        # can fail with
-        #
-        #   stderr: 'fatal: ssh variant 'simple' does not support setting port'
-        #   [cmd.py:wait:415] (GitCommandError)
-        #
-        # depending on the setting of ssh.variant.  For non-standard ports,
-        # this relies on the user setting up their ssh config.
-
         inputs = self.job_spec.get("inputs")
         if isinstance(session, SSHSession):
-            sshurl = "{}{}:{}".format(
-                resource.user + "@" if resource.user else "",
+            sshurl = _format_ssh_url(
+                resource.user,
                 # AWS resource does not have host attribute.
                 getattr(resource, "host", None) or session.connection.host,
+                getattr(resource, "port", None),
                 self.working_directory)
-
-            if getattr(resource, "port", None):
-                lgr.warning("Using SSH url %s; "
-                            "port should be specified in SSH config",
-                            sshurl)
 
             # TODO: Add one level deeper with reckless clone per job to deal
             # with concurrent jobs?
