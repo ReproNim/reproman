@@ -408,7 +408,8 @@ class PrepareRemoteDataladMixin(object):
         if isinstance(session, SSHSession):
             sshurl = "{}{}:{}".format(
                 resource.user + "@" if resource.user else "",
-                session.connection.host,
+                # AWS resource does not have host attribute.
+                getattr(resource, "host", None) or session.connection.host,
                 self.working_directory)
 
             if getattr(resource, "port", None):
