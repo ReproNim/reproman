@@ -244,7 +244,7 @@ def resource_session(request):
         name = str(uuid.uuid4().hex)[:11]
         resource = Singularity(name=name, image='docker://python:2.7')
         resource.connect()
-        resource.create()
+        list(resource.create())
         yield request.param(name)
         resource.delete()
     else:

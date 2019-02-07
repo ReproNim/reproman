@@ -42,7 +42,7 @@ def test_singularity_resource_class():
         resource.connect()
         assert resource.id is None
         assert resource.status is None
-        resource.create()
+        list(resource.create())
         assert resource.id.startswith('foo-')
         assert resource.status == 'running'
 
@@ -52,7 +52,7 @@ def test_singularity_resource_class():
         resource_duplicate.connect()
         assert resource_duplicate.id.startswith('foo-')
         assert resource_duplicate.status == 'running'
-        resource_duplicate.create()
+        list(resource_duplicate.create())
         assert_in('Resource foo already exists.', log.lines)
 
         # Test retrieving instance info.

@@ -71,7 +71,7 @@ class Singularity(Resource):
         """
         Create a container instance.
 
-        Returns
+        Yields
         -------
         dict : config parameters to capture in the inventory file
         """
@@ -90,7 +90,7 @@ class Singularity(Resource):
         # Update status
         self.id = "{name}-{pid}".format(**info)
         self.status = 'running'
-        return {
+        yield {
             'id': self.id,
             'status': self.status
         }
