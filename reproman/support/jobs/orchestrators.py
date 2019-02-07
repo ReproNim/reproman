@@ -306,6 +306,26 @@ class DataladOrchestrator(Orchestrator):
 
         from datalad.api import Dataset
         self.ds = Dataset(".")
+
+        # TODO: This check would be better placed in .prepare_remote(), but we
+        # need to do it here because (as of DataLad cf3f899e) the ds.id below
+        # triggers SSHManager.assure_initialized() to be called, and that is
+        # when the identity file is retrieved. Update when DataLad is fixed.
+        if resource.key_filename:
+            dl_version = external_versions["datalad"]
+            if dl_version <= "0.11.2":
+                # Connecting will probably fail because `key_filename` is
+                # set, but we have no way to tell DataLad about it.
+                lgr.warning(
+                    "DataLad version %s detected. "
+                    "0.11.3 or greater is required to use an "
+                    "identity file not specified in ~/.ssh/config",
+                    dl_version)
+            # Make the identity file available to 'datalad sshrun' even if
+            # it is not configured in .ssh/config. This is particularly
+            # important for AWS keys.
+            os.environ["DATALAD_SSH_IDENTITYFILE"] = resource.key_filename
+
         if not self.ds.id:
             raise OrchestratorError("orchestrator {} requires a local dataset"
                                     .format(self.name))
