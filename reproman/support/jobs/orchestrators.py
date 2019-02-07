@@ -393,7 +393,7 @@ class PrepareRemoteDataladMixin(object):
 
         # Stick to git scp-like syntax for now since something like
         #
-        #   shurl = "ssh://{}@{}:{}{}".format(
+        #   sshurl = "ssh://{}@{}:{}{}".format(
         #       resource.user, resource.host, resource.port, remote_dir)
         #
         # can fail with
