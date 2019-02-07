@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
-#   See COPYING file distributed along with the NICEMAN package for the
+#   See COPYING file distributed along with the ReproMan package for the
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -26,20 +26,20 @@ from setup_support import get_version
 def findsome(subdir, extensions):
     """Find files under subdir having specified extensions
 
-    Leading directory (niceman) gets stripped
+    Leading directory (reproman) gets stripped
     """
     return [
-        f.split(pathsep, 1)[1] for f in findall(opj('niceman', subdir))
+        f.split(pathsep, 1)[1] for f in findall(opj('reproman', subdir))
         if splitext(f)[-1].lstrip('.') in extensions
     ]
 
-# niceman version to be installed
+# reproman version to be installed
 version = get_version()
 
 # Only recentish versions of find_packages support include
-# niceman_pkgs = find_packages('.', include=['niceman*'])
+# reproman_pkgs = find_packages('.', include=['reproman*'])
 # so we will filter manually for maximal compatibility
-niceman_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('niceman')]
+reproman_pkgs = [pkg for pkg in find_packages('.') if pkg.startswith('reproman')]
 
 requires = {
     'core': [
@@ -139,22 +139,28 @@ except ImportError:
     long_description = open(README).read()
 
 setup(
-    name="niceman",
-    author="The NICEMAN Team and Contributors",
-    author_email="team@niceman.org",
+    name="reproman",
+    author="The ReproMan Team and Contributors",
+    author_email="team@reproman.org",
     version=version,
     description="Neuroimaging Computational Environments Manager",
     long_description=long_description,
-    packages=niceman_pkgs,
+    packages=reproman_pkgs,
     install_requires=requires['core'],
     extras_require=requires,
     entry_points={
         'console_scripts': [
-            'niceman=niceman.cmdline.main:main',
+            'reproman=reproman.cmdline.main:main',
         ],
     },
     cmdclass=cmdclass,
     package_data={
-        'niceman': []
+        'reproman':
+            findsome(opj("distributions", "tests", "files"), {"yml", "yaml"}) +
+            findsome("examples", {"trig", "yml", "yaml"}) +
+            findsome(opj("formats", "tests", "files"), {"yml", "yaml"}) +
+            findsome(opj("interface", "tests"), {"yml", "yaml"}) +
+            findsome(opj("interface", "tests", "files"), {"yml", "yaml"}) +
+            findsome(opj("tests", "files"), {"cfg"})
     }
 )

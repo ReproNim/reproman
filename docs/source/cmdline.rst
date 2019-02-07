@@ -13,7 +13,7 @@ Main command
 .. toctree::
    :maxdepth: 1
 
-   generated/man/niceman
+   generated/man/reproman
 
 Environments operations
 =======================
@@ -21,13 +21,13 @@ Environments operations
 .. toctree::
    :maxdepth: 1
 
-   generated/man/niceman-ls
-   generated/man/niceman-create
-   generated/man/niceman-install
-   generated/man/niceman-delete
-   generated/man/niceman-start
-   generated/man/niceman-stop
-   generated/man/niceman-login
+   generated/man/reproman-ls
+   generated/man/reproman-create
+   generated/man/reproman-install
+   generated/man/reproman-delete
+   generated/man/reproman-start
+   generated/man/reproman-stop
+   generated/man/reproman-login
 
 Miscellaneous commands
 ======================
@@ -35,5 +35,5 @@ Miscellaneous commands
 .. toctree::
    :maxdepth: 1
 
-   generated/man/niceman-retrace
-   generated/man/niceman-test
+   generated/man/reproman-retrace
+   generated/man/reproman-test

@@ -1,0 +1,16 @@
+# ReproMan Environment Configuration File
+version: 0.0.1
+distributions:
+- name: debian
+  packages:
+  - name: lib1
+    architecture: x86
+    version: 2:1.6.4-3
+  - name: lib2
+    architecture: x86
+    version: 2.4.6
+  - name: lib3
+  - name: lib5
+    architecture: x86
+    version: 2:1.6.4-3
+files: [/etc/a, /etc/b]

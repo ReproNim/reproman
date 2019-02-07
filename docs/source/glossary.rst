@@ -2,7 +2,7 @@
 .. vi: set ft=rst sts=4 ts=4 sw=4 et tw=79:
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
   #
-  #   See COPYING file distributed along with the niceman package for the
+  #   See COPYING file distributed along with the reproman package for the
   #   copyright and license terms.
   #
   ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
@@ -13,8 +13,8 @@
 Glossary
 ********
 
-NICEMAN uses terminology which is collated from various technologies. This
-glossary provides definitions for terms used in the NICEMAN documentation
+ReproMan uses terminology which is collated from various technologies. This
+glossary provides definitions for terms used in the ReproMan documentation
 and API, and provides additional references where to seek more information
 
 .. glossary::
