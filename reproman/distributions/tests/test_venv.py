@@ -64,6 +64,8 @@ def test_venv_identify_distributions(venv_test_dir):
             os.path.join(venv_test_dir, "venv0", paths[0]),
             # ... and relative paths work.
             os.path.join("venv1", paths[1]),
+            # A virtualenv file that isn't part of any particular package.
+            os.path.join("venv1", "bin", "python"),
         ]
         path_args.append("/sbin/iptables")
 
@@ -73,6 +75,8 @@ def test_venv_identify_distributions(venv_test_dir):
         assert len(dists) == 1
 
         distributions, unknown_files = dists[0]
+        # Unknown files do not include "venv0/bin/python", which is a link
+        # another path within venv0.
         assert unknown_files == {
             "/sbin/iptables",
             # The editable package was added by VenvTracer as an unknown file.
