@@ -11,10 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-import re
-
 from .base import Interface
-import reproman.interface.base # Needed for test patching
 from .common_opts import resref_arg
 from .common_opts import resref_type_opt
 from ..support.param import Parameter
@@ -49,25 +46,39 @@ class Delete(Interface):
             action="store_true",
             doc="Delete resource without prompting user for confirmation",
         ),
+        force=Parameter(
+            args=("-f", "--force"),
+            action="store_true",
+            doc="Remove a resource from the local inventory regardless of connection errors. Use with caution!",
+        ),
     )
 
     @staticmethod
-    def __call__(resref, resref_type="auto", skip_confirmation=False):
+    def __call__(resref, resref_type="auto", skip_confirmation=False,
+            force=False):
+
         from reproman.ui import ui
 
         manager = get_manager()
         resource = manager.get_resource(resref, resref_type)
 
-        if skip_confirmation:
-            response = True
+        if skip_confirmation or force:
+            delete_confirmed = True
         else:
-            response = ui.yesno(
+            delete_confirmed = ui.yesno(
                 "Delete the resource '{}'? (ID: {})".format(
                     resource.name, resource.id[:20]),
                 default="no"
             )
 
-        if response:
-            resource.connect()
-            manager.delete(resource)
+        if delete_confirmed:
+            try:
+                resource.connect()
+                manager.delete(resource)
+            except:
+                if force:
+                    manager.delete(resource, inventory_only=True)
+                else:
+                    raise
+
             lgr.info("Deleted the environment %s", resource.name)

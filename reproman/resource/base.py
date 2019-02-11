@@ -281,13 +281,13 @@ class ResourceManager(object):
 
         return inventory
 
-    def _save(self):
+    def save_inventory(self):
         """Save the resource inventory.
         """
         # Operate on a copy so there is no side-effect of modifying original
         # inventory.
         #
-        # The attribute may not exist yet because _get_inventory calls _save.
+        # The attribute may not exist yet because _get_inventory calls save_inventory.
         inventory = self.inventory.copy() if hasattr(self, "inventory") else {}
 
         for key in list(inventory):  # go through a copy of all keys since we modify
@@ -337,18 +337,23 @@ class ResourceManager(object):
         for resource_attrs in resource.create():
             config.update(resource_attrs)
             self.inventory[name] = config
-            self._save()
+            self.save_inventory()
 
-    def delete(self, resource):
+    def delete(self, resource, inventory_only=False):
         """Delete `resource` from the inventory.
 
         Parameters
         ----------
         resource : Resource object
+
+        inventory_only : boolean
+            Flag to indicate that we should only remove the resource record
+            from the inventory file
         """
-        resource.delete()
+        if not inventory_only:
+            resource.delete()
         del self.inventory[resource.name]
-        self._save()
+        self.save_inventory()
 
     def start(self, resource):
         """Start a `resource` in the inventory.
@@ -364,7 +369,7 @@ class ResourceManager(object):
             return
 
         self.inventory[resource.name]['status'] = "running"
-        self._save()
+        self.save_inventory()
         lgr.info("Started the environment %s (%s)", resource.name, resource.id)
 
     def stop(self, resource):
@@ -381,7 +386,7 @@ class ResourceManager(object):
             return
 
         self.inventory[resource.name]['status'] = "stopped"
-        self._save()
+        self.save_inventory()
         lgr.info("Stopped the environment %s", resource.name)
 
 
