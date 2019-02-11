@@ -39,7 +39,7 @@ class Ls(Interface):
             doc="provide more verbose listing",
         ),
         refresh=Parameter(
-            args=("--refresh",),
+            args=("-r", "--refresh",),
             action="store_true",
             doc="Refresh the status of the resources listed",
         ),
