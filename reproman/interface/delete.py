@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 from .base import Interface
 from .common_opts import resref_arg
 from .common_opts import resref_type_opt
+from ..dochelpers import exc_str
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
 from ..resource import get_manager
@@ -76,8 +77,10 @@ class Delete(Interface):
             try:
                 resource.connect()
                 manager.delete(resource)
-            except:
+            except Exception as exc:
                 if force:
+                    lgr.warning("Force deleting %s following failure: %s",
+                                resource.name, exc_str(exc))
                     manager.delete(resource, inventory_only=True)
                 else:
                     raise
