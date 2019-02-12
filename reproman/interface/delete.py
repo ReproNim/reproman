@@ -49,13 +49,14 @@ class Delete(Interface):
         force=Parameter(
             args=("-f", "--force"),
             action="store_true",
-            doc="Remove a resource from the local inventory regardless of connection errors. Use with caution!",
+            doc="""Remove a resource from the local inventory regardless of
+            connection errors. Use with caution!""",
         ),
     )
 
     @staticmethod
     def __call__(resref, resref_type="auto", skip_confirmation=False,
-            force=False):
+                 force=False):
 
         from reproman.ui import ui
 
