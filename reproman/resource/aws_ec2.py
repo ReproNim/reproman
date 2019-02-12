@@ -110,8 +110,15 @@ class AwsEc2(Resource):
     def create(self):
         """
         Create an EC2 instance.
+        
+        There are 2 yields for the AWS create method. The first yield occurs
+        immediately after the AWS service is sent the EC2 instance run command
+        so that the instance details can immediately be saved to the
+        inventory.yml file. The second yield occurs after the EC2 instance
+        has fully spun up and the "running" status is saved to the
+        inventory.yml file.
 
-        Returns
+        Yields
         -------
         dict : config and state parameters to capture in the inventory file
         """
@@ -162,6 +169,15 @@ class AwsEc2(Resource):
         # Save the EC2 Instance object.
         self._ec2_instance = self._ec2_resource.Instance(instances[0].id)
         self.id = self._ec2_instance.instance_id
+        self.status = self._ec2_instance.state['Name']
+
+        # Send initial info back to be saved in inventory file.
+        yield {
+            'id': self.id,
+            'status': self.status,
+            'key_name': self.key_name,
+            'key_filename': self.key_filename
+        }
 
         lgr.info("Waiting for EC2 instance %s to start running...", self.id)
         self._ec2_instance.wait_until_running(
@@ -172,7 +188,7 @@ class AwsEc2(Resource):
                 },
             ]
         )
-        lgr.info("EC2 instance %s to start running!", self.id)
+        lgr.info("EC2 instance %s is running!", self.id)
 
         lgr.info("Waiting for EC2 instance %s to complete initialization...",
                  self.id)
@@ -180,11 +196,8 @@ class AwsEc2(Resource):
         waiter.wait(InstanceIds=[self.id])
         lgr.info("EC2 instance %s initialized!", self.id)
         self.status = self._ec2_instance.state['Name']
-        return {
-            'id': self.id,
-            'status': self.status,
-            'key_name': self.key_name,
-            'key_filename': self.key_filename
+        yield {
+            'status': self.status
         }
 
     def delete(self):
@@ -278,7 +291,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
             self.name,
             host=self._ec2_instance.public_ip_address,
             user=self.user,
-            key_filename=[self.key_filename]
+            key_filename=self.key_filename
         )
 
         return ssh.get_session(pty=pty, shared=shared)

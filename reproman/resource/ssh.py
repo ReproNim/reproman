@@ -13,10 +13,14 @@ import getpass
 import invoke
 import uuid
 from fabric import Connection
+from ..log import LoggerHelper
 from paramiko import AuthenticationException
 
 import logging
 lgr = logging.getLogger('reproman.resource.ssh')
+# Add Paramiko logging for log levels below DEBUG
+if lgr.getEffectiveLevel() < logging.DEBUG:
+    LoggerHelper("paramiko").get_initialized_logger()
 
 from .base import Resource
 from ..utils import attrib
@@ -59,12 +63,18 @@ class SSH(Resource):
             but do allow tests to authenticate by passing a password as
             a parameter to this method.
         """
+        # Convert key_filename to a list
+        # See: https://github.com/ReproNim/reproman/commit/3807f1287c39ea2393bae26803e6da8122ac5cff
+        key_filename = None
+        if self.key_filename:
+            key_filename = [self.key_filename]
+
         self._connection = Connection(
             self.host,
             user=self.user,
             port=self.port,
             connect_kwargs={
-                'key_filename': self.key_filename,
+                'key_filename': key_filename,
                 'password': password
             }
         )
@@ -97,14 +107,14 @@ class SSH(Resource):
         """
         Register the SSH connection to the reproman inventory registry.
 
-        Returns
+        Yields
         -------
-        dict : config and state parameters to capture in the inventory file
+        dict : config parameters to capture in the inventory file
         """
         if not self.id:
             self.id = str(uuid.uuid4())
         self.status = 'N/A'
-        return {
+        yield {
             'id': self.id,
             'status': self.status,
             'host': self.host,

@@ -10,6 +10,7 @@
 import logging
 from mock import patch, MagicMock, call
 
+from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in, skip_if_no_docker_engine
 from ..base import ResourceManager
@@ -106,7 +107,7 @@ def test_dockercontainer_class():
 
         # Test creating an existing resource and catch the exception.
         try:
-            resource.create()
+            list(resource.create())
         except Exception as e:
             assert e.args[0] == "Container 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
 
@@ -118,7 +119,7 @@ def test_dockercontainer_class():
         }
         resource = ResourceManager.factory(config)
         resource.connect()
-        results = resource.create()
+        results = merge_dicts(resource.create())
         assert results['id'] == '18b31b30e3a5'
         assert results['status'] == 'running'
         assert_in('status 1 progress 1', log.lines)

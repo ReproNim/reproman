@@ -111,15 +111,14 @@ class Shell(Resource):
         """
         Create a running environment.
 
-        Parameters
-        ----------
-        name : string
-            Name identifier of the environment to be created.
+        Yields
+        -------
+        dict : config parameters to capture in the inventory file
         """
         # Generic logic to reside in Resource???
         if self.id is None:
             self.id = Resource._generate_id()
-        return {
+        yield {
             'id': self.id,
             'status': 'available'
         }
