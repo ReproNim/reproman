@@ -332,10 +332,12 @@ class ResourceManager(object):
             config.update(backend_params)
         resource = self.factory(config)
         resource.connect()
-        resource_attrs = resource.create()
-        config.update(resource_attrs)
-        self.inventory[name] = config
-        self._save()
+        # Resource can yield and save inventory info as it needs to throughout
+        # the create process.
+        for resource_attrs in resource.create():
+            config.update(resource_attrs)
+            self.inventory[name] = config
+            self._save()
 
     def delete(self, resource):
         """Delete `resource` from the inventory.

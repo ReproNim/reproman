@@ -131,7 +131,7 @@ class DockerContainer(Resource):
         """
         Create a baseline Docker image and run it to create the container.
 
-        Returns
+        Yields
         -------
         dict : config parameters to capture in the inventory file
         """
@@ -166,7 +166,7 @@ class DockerContainer(Resource):
         self.id = self._container.get('Id')
         self._client.start(container=self.id)
         self.status = 'running'
-        return {
+        yield {
             'id': self.id,
             'status': self.status
         }

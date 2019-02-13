@@ -95,7 +95,7 @@ def test_awsec2_class():
 
         # Test creating an existing resource and catch the exception.
         try:
-            resource.create()
+            list(resource.create())
         except Exception as e:
             assert e.args[0] == "Instance 'i-00002777d52482d9c' already exists in AWS subscription"
 
@@ -104,7 +104,7 @@ def test_awsec2_class():
             instances=MagicMock(filter=lambda Filters: []),
             Instance=lambda id: MagicMock(
                 instance_id='i-11112777d52482d9c',
-                state={'Name': 'running'}
+                state={'Name': 'pending'}
             )
         )
         config = {
@@ -117,11 +117,16 @@ def test_awsec2_class():
         }
         resource = ResourceManager.factory(config)
         resource.connect()
-        results = resource.create()
-        assert results['id'] == 'i-11112777d52482d9c'
-        assert results['status'] == 'running'
+        # Test retrieving more than one yield from the create method
+        create_generator = resource.create()
+        result_1 = next(create_generator)
+        assert result_1['id'] == 'i-11112777d52482d9c'
+        assert result_1['status'] == 'pending'
+        resource._ec2_instance.state['Name'] = 'running'
+        result_2 = next(create_generator)
+        assert result_2['status'] == 'running'
         assert_in('EC2 instance i-11112777d52482d9c initialized!', log.lines)
-        assert_in('EC2 instance i-11112777d52482d9c to start running!', log.lines)
+        assert_in('EC2 instance i-11112777d52482d9c is running!', log.lines)
         assert_in('Waiting for EC2 instance i-11112777d52482d9c to complete initialization...', log.lines)
         assert_in('EC2 instance i-11112777d52482d9c initialized!', log.lines)
 
