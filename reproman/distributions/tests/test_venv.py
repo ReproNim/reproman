@@ -58,7 +58,8 @@ def venv_test_dir():
 @pytest.mark.integration
 def test_venv_identify_distributions(venv_test_dir):
     libpaths = {p[-1]: os.path.join("lib", PY_VERSION, *p)
-                for p in [("site-packages", "yaml", "parser.py"),
+                for p in [("abc.py",),
+                          ("site-packages", "yaml", "parser.py"),
                           ("site-packages", "attr", "filters.py")]}
 
     with chpwd(venv_test_dir):
@@ -69,6 +70,8 @@ def test_venv_identify_distributions(venv_test_dir):
             os.path.join("venv1", libpaths["filters.py"]),
             # A virtualenv file that isn't part of any particular package.
             os.path.join("venv1", "bin", "python"),
+            # A link to the outside world.
+            os.path.join("venv1", libpaths["abc.py"])
         ]
         path_args.append("/sbin/iptables")
 
@@ -79,9 +82,11 @@ def test_venv_identify_distributions(venv_test_dir):
 
         distributions, unknown_files = dists[0]
         # Unknown files do not include "venv0/bin/python", which is a link
-        # another path within venv0.
+        # another path within venv0, but they do include the link to the system
+        # abc.py.
         assert unknown_files == {
             "/sbin/iptables",
+            op.realpath(os.path.join("venv1", libpaths["abc.py"])),
             # The editable package was added by VenvTracer as an unknown file.
             os.path.join(venv_test_dir, "minimal_pymodule")}
 
