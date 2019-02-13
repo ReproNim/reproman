@@ -36,22 +36,20 @@ def venv_test_dir():
     if os.path.exists(test_dir):
         return test_dir
 
-    runner = Runner()
-
     os.makedirs(test_dir)
     pymod_dir = os.path.join(test_dir, "minimal_pymodule")
     create_pymodule(pymod_dir)
 
-    with chpwd(test_dir):
-        pip0 = op.join("venv0", "bin", "pip")
-        pip1 = op.join("venv1", "bin", "pip")
-        runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
-        runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
-        runner.run([pip0, "install", "pyyaml"])
-        runner.run([pip0, "install", "-e", pymod_dir])
-        runner.run([pip1, "install", "attrs"])
-        # Make sure we're compatible with older pips.
-        runner.run([pip1, "install", "pip==9.0.3"])
+    runner = Runner(cwd=test_dir)
+    pip0 = op.join("venv0", "bin", "pip")
+    pip1 = op.join("venv1", "bin", "pip")
+    runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
+    runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
+    runner.run([pip0, "install", "pyyaml"])
+    runner.run([pip0, "install", "-e", pymod_dir])
+    runner.run([pip1, "install", "attrs"])
+    # Make sure we're compatible with older pips.
+    runner.run([pip1, "install", "pip==9.0.3"])
     return test_dir
 
 
