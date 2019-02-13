@@ -37,26 +37,30 @@ def venv_test_dir():
         return test_dir
 
     runner = Runner()
-    runner.run(["mkdir", "-p", test_dir])
 
+    os.makedirs(test_dir)
     pymod_dir = os.path.join(test_dir, "minimal_pymodule")
     create_pymodule(pymod_dir)
 
     with chpwd(test_dir):
+        pip0 = op.join("venv0", "bin", "pip")
+        pip1 = op.join("venv1", "bin", "pip")
         runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
         runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
-        runner.run(["./venv0/bin/pip", "install", "pyyaml"])
-        runner.run(["./venv0/bin/pip", "install", "-e", pymod_dir])
-        runner.run(["./venv1/bin/pip", "install", "attrs"])
+        runner.run([pip0, "install", "pyyaml"])
+        runner.run([pip0, "install", "-e", pymod_dir])
+        runner.run([pip1, "install", "attrs"])
         # Make sure we're compatible with older pips.
-        runner.run(["./venv1/bin/pip", "install", "pip==9.0.3"])
+        runner.run([pip1, "install", "pip==9.0.3"])
     return test_dir
 
 
 @pytest.mark.integration
 def test_venv_identify_distributions(venv_test_dir):
-    paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
-             "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
+    paths = [
+        os.path.join("lib", PY_VERSION, "site-packages", "yaml", "parser.py"),
+        os.path.join("lib", PY_VERSION, "site-packages", "attr", "filters.py"),
+    ]
 
     with chpwd(venv_test_dir):
         path_args = [
@@ -97,8 +101,10 @@ def test_venv_identify_distributions(venv_test_dir):
 @pytest.mark.integration
 def test_venv_install(venv_test_dir, tmpdir):
     tmpdir = str(tmpdir)
-    paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
-             "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
+    paths = [
+        op.join("lib", PY_VERSION, "site-packages", "yaml", "parser.py"),
+        op.join("lib", PY_VERSION, "site-packages", "attr", "filters.py"),
+    ]
 
     tracer = VenvTracer()
     dists = list(
