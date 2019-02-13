@@ -200,12 +200,12 @@ class Run(Interface):
             spec["command_str"] = command_str
 
         if resref is None:
-            if "resource_name" in spec:
-                resref = spec["resource_name"]
-                resref_type = "name"
-            elif "resource_id" in spec:
+            if "resource_id" in spec:
                 resref = spec["resource_id"]
                 resref_type = "id"
+            elif "resource_name" in spec:
+                resref = spec["resource_name"]
+                resref_type = "name"
             else:
                 raise ValueError("No resource specified")
         resource = get_manager().get_resource(resref, resref_type)
