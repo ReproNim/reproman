@@ -126,10 +126,6 @@ class Run(Interface):
             action="append",
             doc="""An output file to the command. How output files are handled
             depends on the orchestrator."""),
-        script=Parameter(
-            args=("--script",),
-            action="store_true",
-            doc="""Print the run script rather than running the command."""),
         follow=Parameter(
             args=("--follow",),
             action="store_true",
@@ -154,7 +150,7 @@ class Run(Interface):
                  list_=False, submitter=None, orchestrator=None,
                  job_specs=None, job_parameters=None,
                  inputs=None, outputs=None,
-                 script=False, follow=False):
+                 follow=False):
         if list_:
             # TODO: The docstrings will need more massaging once they're
             # extended/improved.
@@ -223,19 +219,15 @@ class Run(Interface):
         orchestrator_class = ORCHESTRATORS[spec["orchestrator"]]
         orc = orchestrator_class(resource, spec.get("submitter"), spec)
 
-        if script:
-            # TODO: How to deal with submission template?
-            print(orc.render_runscript())
-        else:
-            orc.prepare_remote()
-            # TODO: Add support for templates via CLI.
-            orc.submit()
+        orc.prepare_remote()
+        # TODO: Add support for templates via CLI.
+        orc.submit()
 
-            lreg = LocalRegistry()
-            lreg.register(orc.jobid, orc.as_dict())
+        lreg = LocalRegistry()
+        lreg.register(orc.jobid, orc.as_dict())
 
-            # TODO: Add support for querying/fetching without follow.
-            if follow:
-                orc.follow()
-                orc.fetch()
-                lreg.unregister(orc.jobid)
+        # TODO: Add support for querying/fetching without follow.
+        if follow:
+            orc.follow()
+            orc.fetch()
+            lreg.unregister(orc.jobid)
