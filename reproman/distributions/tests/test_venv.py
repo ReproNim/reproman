@@ -57,17 +57,16 @@ def venv_test_dir():
 @pytest.mark.skipif(not on_linux, reason="Test assumes GNU/Linux system")
 @pytest.mark.integration
 def test_venv_identify_distributions(venv_test_dir):
-    libpaths = [
-        os.path.join("lib", PY_VERSION, "site-packages", "yaml", "parser.py"),
-        os.path.join("lib", PY_VERSION, "site-packages", "attr", "filters.py"),
-    ]
+    libpaths = {p[-1]: os.path.join("lib", PY_VERSION, *p)
+                for p in [("site-packages", "yaml", "parser.py"),
+                          ("site-packages", "attr", "filters.py")]}
 
     with chpwd(venv_test_dir):
         path_args = [
             # Both full ...
-            os.path.join(venv_test_dir, "venv0", libpaths[0]),
+            os.path.join(venv_test_dir, "venv0", libpaths["parser.py"]),
             # ... and relative paths work.
-            os.path.join("venv1", libpaths[1]),
+            os.path.join("venv1", libpaths["filters.py"]),
             # A virtualenv file that isn't part of any particular package.
             os.path.join("venv1", "bin", "python"),
         ]
@@ -89,11 +88,13 @@ def test_venv_identify_distributions(venv_test_dir):
         assert len(distributions.environments) == 2
 
         expect = {"environments":
-                  [{"packages": [{"files": [libpaths[0]], "name": "PyYAML",
+                  [{"packages": [{"files": [libpaths["parser.py"]],
+                                  "name": "PyYAML",
                                   "editable": False},
                                  {"files": [], "name": "nmtest",
                                   "editable": True}]},
-                   {"packages": [{"files": [libpaths[1]], "name": "attrs",
+                   {"packages": [{"files": [libpaths["filters.py"]],
+                                  "name": "attrs",
                                   "editable": False}]}]}
         assert_is_subset_recur(expect, attr.asdict(distributions), [dict, list])
 
