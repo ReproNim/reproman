@@ -17,6 +17,7 @@ import logging
 
 from reproman.cmd import Runner
 from reproman.utils import chpwd
+from reproman.utils import on_linux
 from reproman.tests.utils import create_pymodule
 from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
 from reproman.tests.utils import swallow_logs
@@ -53,6 +54,7 @@ def venv_test_dir():
     return test_dir
 
 
+@pytest.mark.skipif(not on_linux, reason="Test assumes GNU/Linux system")
 @pytest.mark.integration
 def test_venv_identify_distributions(venv_test_dir):
     paths = [
