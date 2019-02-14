@@ -24,7 +24,9 @@ matrix:
     env:
     - REPROMAN_LOGLEVEL=2
     - REPROMAN_LOGTARGET=/dev/null
-  - python: 3.5
+  - python: 3.6
+    # Note: This this no network run appears to hang or otherwise
+    # behave oddly on 3.5.
     env:
     - REPROMAN_TESTS_NONETWORK=1
     # must operate nicely with those env variables set
