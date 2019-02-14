@@ -163,7 +163,7 @@ class VenvTracer(DistributionTracer):
                     unknown_files.remove(path)
 
             packages = []
-            for name, details in iteritems(package_details):
+            for name, details in package_details.items():
                 location = details["location"]
                 packages.append(
                     VenvPackage(name=details["name"],
