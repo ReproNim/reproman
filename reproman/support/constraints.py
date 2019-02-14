@@ -81,7 +81,7 @@ class EnsureDType(Constraint):
 
     def __call__(self, value):
         if hasattr(value, '__iter__') and \
-                not (isinstance(value, (binary_type, str))):
+                not (isinstance(value, (bytes, str))):
             return list(map(self._dtype, value))
         else:
             return self._dtype(value)
@@ -163,7 +163,7 @@ class EnsureBool(Constraint):
     def __call__(self, value):
         if isinstance(value, bool):
             return value
-        elif isinstance(value, (binary_type, str)):
+        elif isinstance(value, (bytes, str)):
             value = value.lower()
             if value in ('0', 'no', 'off', 'disable', 'false'):
                 return False
@@ -195,7 +195,7 @@ class EnsureStr(Constraint):
         super(EnsureStr, self).__init__()
 
     def __call__(self, value):
-        if not isinstance(value, (binary_type, str)):
+        if not isinstance(value, (bytes, str)):
             # do not perform a blind conversion ala str(), as almost
             # anything can be converted and the result is most likely
             # unintended

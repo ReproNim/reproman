@@ -135,7 +135,7 @@ class Runner(object):
 
     def _get_output_online(self, proc, log_stdout, log_stderr,
                            expect_stderr=False, expect_fail=False):
-        stdout, stderr = binary_type(), binary_type()
+        stdout, stderr = bytes(), bytes()
         while proc.poll() is None:
             if log_stdout:
                 line = proc.stdout.readline()
@@ -273,7 +273,7 @@ class Runner(object):
             if PY3:
                 # Decoding was delayed to this point
                 def decode_if_not_None(x):
-                    return "" if x is None else binary_type.decode(x)
+                    return "" if x is None else bytes.decode(x)
                 # TODO: check if we can avoid PY3 specific here
                 out = tuple(map(decode_if_not_None, out))
 
