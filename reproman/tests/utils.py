@@ -543,7 +543,7 @@ def assert_cwd_unchanged(func, ok_to_chdir=False):
                                  "CWD changed from %s to %s" % (cwd_before, cwd_after))
 
         if exc_info is not None:
-            reraise(*exc_info)
+            raise exc_info[0].with_traceback(exc_info[1], exc_info[2])
 
     return newfunc
 
