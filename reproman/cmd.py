@@ -147,7 +147,7 @@ class Runner(object):
                 line = proc.stderr.readline()
                 if line:
                     stderr += line
-                    self._log_err(line.decode() if PY3 else line,
+                    self._log_err(line.decode(),
                                   expect_stderr or expect_fail)
                     # TODO: what's the proper log level here?
                     # Changes on that should be properly adapted in
@@ -265,12 +265,11 @@ class Runner(object):
             else:
                 out = proc.communicate()
 
-            if PY3:
-                # Decoding was delayed to this point
-                def decode_if_not_None(x):
-                    return "" if x is None else bytes.decode(x)
-                # TODO: check if we can avoid PY3 specific here
-                out = tuple(map(decode_if_not_None, out))
+            # Decoding was delayed to this point
+            def decode_if_not_None(x):
+                return "" if x is None else bytes.decode(x)
+            # TODO: check if we can avoid PY3 specific here
+            out = tuple(map(decode_if_not_None, out))
 
             status = proc.poll()
 

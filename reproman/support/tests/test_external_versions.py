@@ -28,10 +28,9 @@ from ...tests.utils import (
 import pytest
 from mock import patch
 
-if PY3:
-    # just to ease testing
-    def cmp(a, b):
-        return (a > b) - (a < b)
+
+def cmp(a, b):
+    return (a > b) - (a < b)
 
 
 def test_external_versions_basic():
