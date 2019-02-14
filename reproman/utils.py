@@ -16,7 +16,7 @@ from shlex import quote as shlex_quote
 import time
 
 from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
-from six.moves.urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
+from urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
 from six import text_type, binary_type, PY3
 
 import logging
