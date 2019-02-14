@@ -995,7 +995,7 @@ def is_unicode(s):
 
 def is_binarystring(s):
     """Return true if an object is a binary string (not unicode)"""
-    return isinstance(s, six.binary_type)
+    return isinstance(s, bytes)
 
 
 def to_unicode(s, encoding="utf-8"):
