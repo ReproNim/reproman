@@ -12,7 +12,7 @@ import re
 import six
 
 import builtins
-from six.moves import shlex_quote
+from shlex import quote as shlex_quote
 import time
 
 from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
