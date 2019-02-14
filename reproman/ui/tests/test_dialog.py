@@ -28,7 +28,7 @@ from reproman.ui.progressbars import progressbars
 
 def patch_input(**kwargs):
     """A helper to provide mocked cm patching input function which was renamed in PY3"""
-    return patch.object(builtins, 'raw_input' if PY2 else 'input', **kwargs)
+    return patch.object(builtins, 'input', **kwargs)
 
 
 def patch_getpass(**kwargs):

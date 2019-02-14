@@ -34,11 +34,6 @@ lgr = logging.getLogger('reproman.cmd')
 
 _TEMP_std = sys.stdout, sys.stderr
 
-if PY2:
-    # TODO apparently there is a recommended substitution for Python2
-    # which is a backported implementation of python3 subprocess
-    # https://pypi.python.org/pypi/subprocess32/
-    pass
 
 class Runner(object):
     """Provides a wrapper for calling functions and commands.

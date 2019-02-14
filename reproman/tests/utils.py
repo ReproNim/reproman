@@ -136,8 +136,6 @@ def create_tree(path, tree, archives_leading_dir=True):
             #if isinstance(full_name, str):
             #    import pydb; pydb.debugger()
             with open(full_name, 'w') as f:
-                if PY2 and isinstance(load, str):
-                    load = load.encode('utf-8')
                 f.write(load)
 
 #

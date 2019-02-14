@@ -225,8 +225,6 @@ def test_ok_generator():
     def gen(a, b=1):
         yield a+b
     # not sure how to determine if xrange is a generator
-    if PY2:
-        assert_raises(AssertionError, ok_generator, xrange(2))
     assert_raises(AssertionError, ok_generator, range(2))
     assert_raises(AssertionError, ok_generator, gen)
     ok_generator(gen(1))
@@ -288,10 +286,6 @@ def test_assert_cwd_unchanged_not_masking_exceptions():
         with pytest.raises(ValueError) as cm:
             do_chdir_value_error()
         # retrospect exception
-        if PY2:
-            # could not figure out how to make it legit for PY3
-            # but on manual try -- works, and exception traceback is not masked out
-            cm.match('error exception')
 
         eq_(orig_cwd, os.getcwd(),
             "assert_cwd_unchanged didn't return us back to %s" % orig_cwd)
