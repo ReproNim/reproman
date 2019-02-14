@@ -20,7 +20,7 @@ from mock import patch
 import pytest
 
 from reproman.support.external_versions import external_versions
-from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
+from http.server import SimpleHTTPRequestHandler
 from six.moves.BaseHTTPServer import HTTPServer
 from six import reraise
 
