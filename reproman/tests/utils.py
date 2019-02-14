@@ -21,7 +21,7 @@ import pytest
 
 from reproman.support.external_versions import external_versions
 from http.server import SimpleHTTPRequestHandler
-from six.moves.BaseHTTPServer import HTTPServer
+from http.server import HTTPServer
 from six import reraise
 
 from functools import wraps
