@@ -11,7 +11,7 @@ import collections
 import re
 import six
 
-import six.moves.builtins as __builtin__
+import builtins
 from six.moves import shlex_quote
 import time
 
