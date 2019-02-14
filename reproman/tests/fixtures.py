@@ -8,10 +8,13 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import os
+from functools import partial
 import shutil
 import tempfile
 
 import pytest
+from six import text_type
+
 from reproman.cmd import Runner
 from reproman.tests.utils import skip_if_no_network, skip_if_no_svn
 from reproman.utils import chpwd
@@ -203,4 +206,28 @@ def svn_repo_fixture(kind='default', scope='function'):
             runner.run(['svn', 'commit', '-m', 'bar'], cwd=checked_out_dir)
         yield (root_dir, checked_out_dir)
         shutil.rmtree(tmpdir)
+    return fixture
+
+
+def job_registry_fixture(scope="function"):
+    """Return a fixture for a LocalRegistry object.
+
+    This is like the vanilla LocalRegistry, but points to a temporary
+    directory.
+
+    Parameters
+    ----------
+    scope : {"function", "class", "module", "session"}, optional
+        A `pytest.fixture` scope argument.
+
+    Returns
+    -------
+    A fixture function.
+    """
+    from reproman.support.jobs.local_registry import LocalRegistry
+
+    @pytest.fixture(scope=scope)
+    def fixture(tmpdir_factory):
+        return partial(LocalRegistry,
+                       text_type(tmpdir_factory.mktemp("registry")))
     return fixture
