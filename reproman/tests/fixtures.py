@@ -12,7 +12,6 @@ import shutil
 import tempfile
 
 import pytest
-from .constants import REPROMAN_CFG_PATH
 from reproman.cmd import Runner
 from reproman.tests.utils import skip_if_no_network, skip_if_no_svn
 from reproman.utils import chpwd
