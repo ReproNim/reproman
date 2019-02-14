@@ -112,7 +112,7 @@ class Orchestrator(object):
     def local_directory(self):
         """Directory on local machine.
         """
-        return os.getcwd()
+        return self.job_spec.get("local_directory") or os.getcwd()
 
     def as_dict(self):
         """Represent Orchestrator as a dict.
