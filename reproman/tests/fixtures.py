@@ -16,6 +16,7 @@ import pytest
 from six import text_type
 
 from reproman.cmd import Runner
+from reproman.resource.base import ResourceManager
 from reproman.tests.utils import skip_if_no_network, skip_if_no_svn
 from reproman.utils import chpwd
 
@@ -230,4 +231,36 @@ def job_registry_fixture(scope="function"):
     def fixture(tmpdir_factory):
         return partial(LocalRegistry,
                        text_type(tmpdir_factory.mktemp("registry")))
+    return fixture
+
+
+def resource_manager_fixture(resources=None, scope="function"):
+    """Return a fixture for a ResourceManager instance.
+
+    This points to a temporary inventory and is intended to be used in place of
+    the main ResourceManager instance.
+
+    Parameters
+    ----------
+    resources : dict or None, optional
+        Resources to create. Each key is the resource name, and the value
+        should be keyword arguments to pass to ResourceManager.create(). If not
+        specified, create one shell resource named "myshell".
+    scope : {"function", "class", "module", "session"}, optional
+        A `pytest.fixture` scope argument.
+
+    Returns
+    -------
+    A fixture function.
+    """
+    if resources is None:
+        resources = {"myshell": {"resource_type": "shell"}}
+
+    @pytest.fixture(scope=scope)
+    def fixture(tmpdir_factory):
+        path = text_type(tmpdir_factory.mktemp("rmanager").join("inventory"))
+        manager = ResourceManager(path)
+        for name, kwargs in resources.items():
+            manager.create(name, **kwargs)
+        return manager
     return fixture
