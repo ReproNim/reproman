@@ -24,7 +24,7 @@ from os.path import exists, basename
 
 from six import PY2
 from six import text_type
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 
 from mock import patch
 from .utils import assert_in, assert_not_in, assert_true
