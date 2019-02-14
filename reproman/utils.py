@@ -990,7 +990,7 @@ def _path_(p):
 
 def is_unicode(s):
     """Return true if an object is unicode"""
-    return isinstance(s, six.text_type)
+    return isinstance(s, str)
 
 
 def is_binarystring(s):
