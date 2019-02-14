@@ -14,7 +14,6 @@ import os.path as op
 
 import attr
 
-from six import iteritems
 from reproman.distributions import Distribution
 from reproman.distributions import piputils
 from reproman.dochelpers import borrowdoc

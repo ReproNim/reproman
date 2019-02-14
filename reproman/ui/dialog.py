@@ -21,7 +21,6 @@ import os
 import sys
 import time
 
-from six import PY2
 import getpass
 
 #!!! OPT adds >100ms to import time!!!

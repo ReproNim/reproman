@@ -10,8 +10,6 @@
 """
 import sys
 from os import linesep
-from six import string_types
-from six import binary_type
 
 from distutils.version import LooseVersion
 

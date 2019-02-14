@@ -16,7 +16,6 @@ import time
 
 from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
 from urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
-from six import text_type, binary_type, PY3
 
 import logging
 import shutil

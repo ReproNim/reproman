@@ -11,7 +11,6 @@
 import attr
 from importlib import import_module
 import abc
-from six import add_metaclass
 from configparser import NoSectionError
 
 import yaml

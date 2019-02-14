@@ -22,8 +22,6 @@ except ImportError:
 from glob import glob
 from os.path import exists, basename
 
-from six import PY2
-from six import text_type
 from urllib.request import urlopen
 
 from mock import patch

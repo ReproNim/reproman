@@ -14,7 +14,6 @@ __docformat__ = 'restructuredtext'
 
 import abc
 
-from six import add_metaclass
 
 from ..utils import auto_repr
 

@@ -15,8 +15,6 @@ import collections
 import yaml
 
 from importlib import import_module
-from six import add_metaclass
-from six import viewvalues
 
 from reproman.utils import attrib
 from reproman.resource.session import get_local_session

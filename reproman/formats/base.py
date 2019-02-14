@@ -10,8 +10,6 @@
 
 from importlib import import_module
 import abc
-from six import add_metaclass
-from six import string_types
 
 from ..utils import file_basename
 from ..dochelpers import exc_str

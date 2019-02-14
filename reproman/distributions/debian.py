@@ -16,7 +16,6 @@ from datetime import datetime
 import attr
 from collections import defaultdict
 
-from six.moves import map
 
 import pytz
 

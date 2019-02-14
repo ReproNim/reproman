@@ -21,8 +21,6 @@ import shlex
 import atexit
 import functools
 
-from six import PY3, PY2
-from six import string_types, binary_type
 from os.path import abspath, isabs
 
 from .dochelpers import exc_str

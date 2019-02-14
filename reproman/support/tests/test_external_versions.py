@@ -27,7 +27,6 @@ from ...tests.utils import (
 
 import pytest
 from mock import patch
-from six import PY3
 
 if PY3:
     # just to ease testing

@@ -10,7 +10,6 @@
 
 
 import sys
-from six import string_types, PY2
 
 from ..support import constraints as ct
 from .utils import assert_equal, assert_raises

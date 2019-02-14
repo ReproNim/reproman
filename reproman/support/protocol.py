@@ -14,7 +14,6 @@ from os import linesep
 import logging
 import time
 
-from six import add_metaclass
 
 lgr = logging.getLogger('reproman.protocol')
 

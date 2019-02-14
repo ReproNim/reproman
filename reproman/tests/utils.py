@@ -15,14 +15,12 @@ import tempfile
 import platform
 import multiprocessing
 import logging
-from six import PY2, text_type
 from mock import patch
 import pytest
 
 from reproman.support.external_versions import external_versions
 from http.server import SimpleHTTPRequestHandler
 from http.server import HTTPServer
-from six import reraise
 
 from functools import wraps
 from os.path import exists, realpath, join as opj
