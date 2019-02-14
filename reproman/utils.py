@@ -9,7 +9,6 @@
 
 import collections
 import re
-import six
 
 import builtins
 from shlex import quote as shlex_quote

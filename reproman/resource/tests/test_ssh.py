@@ -13,7 +13,6 @@ import mock
 import os
 import pytest
 import re
-import six
 import uuid
 from pytest import raises
 
