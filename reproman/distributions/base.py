@@ -203,9 +203,8 @@ class Package(SpecObject):
     pass
 
 
-@add_metaclass(abc.ABCMeta)
 @attr.s
-class Distribution(SpecObject):
+class Distribution(SpecObject, metaclass=abc.ABCMeta):
     """Base class for distributions"""
 
     # Actually might want/need to go away since somewhat duplicates the class
@@ -301,8 +300,7 @@ _register_with_representer(EnvironmentSpec)
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
 
-@add_metaclass(abc.ABCMeta)
-class DistributionTracer(object):
+class DistributionTracer(object, metaclass=abc.ABCMeta):
     """Base class for package trackers.
 
     ATM :term:`Package` describes all of possible "archives" which deliver

@@ -29,8 +29,7 @@ from ..distributions.base import EnvironmentSpec
 
 # XXX Is just a file format Adapter which should provide us with functionality
 # to load/store EnvironmentSpec
-@add_metaclass(abc.ABCMeta)
-class Provenance(object):
+class Provenance(object, metaclass=abc.ABCMeta):
     """Base class to handle the collection and management of provenance files.
     
     Main purpose is to provide basic interface to provide adapters
