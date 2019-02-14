@@ -11,7 +11,7 @@
 
 __docformat__ = 'restructuredtext'
 
-from six.moves.configparser import NoSectionError
+from configparser import NoSectionError
 
 from .base import Interface
 import reproman.interface.base # Needed for test patching
