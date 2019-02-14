@@ -349,7 +349,7 @@ def escape_filename(filename):
 def encode_filename(filename):
     """Encode unicode filename
     """
-    if isinstance(filename, text_type):
+    if isinstance(filename, str):
         return filename.encode(sys.getfilesystemencoding())
     else:
         return filename
@@ -449,14 +449,14 @@ def only_with_values(d):
     return d.__class__((k, v) for k,v in d.items() if v)
 
 def assure_bytes(s, encoding='utf-8'):
-    """Convert/encode unicode to str (PY2) or bytes (PY3) if of 'text_type'
+    """Convert/encode unicode to str (PY2) or bytes (PY3) if of 'str'
 
     Parameters
     ----------
     encoding: str, optional
       Encoding to use.  "utf-8" is the default
     """
-    if not isinstance(s, text_type):
+    if not isinstance(s, str):
         return s
     return s.encode(encoding)
 

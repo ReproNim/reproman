@@ -407,9 +407,9 @@ def test_path_():
 
 
 def test_assure_unicode():
-    ok_(isinstance(assure_unicode("m"), text_type))
-    ok_(isinstance(assure_unicode('grandchild_äöü東'), text_type))
-    ok_(isinstance(assure_unicode(u'grandchild_äöü東'), text_type))
+    ok_(isinstance(assure_unicode("m"), str))
+    ok_(isinstance(assure_unicode('grandchild_äöü東'), str))
+    ok_(isinstance(assure_unicode(u'grandchild_äöü東'), str))
     eq_(assure_unicode('grandchild_äöü東'), u'grandchild_äöü東')
     # now, non-utf8
     # Decoding could be deduced with high confidence when the string is
@@ -422,7 +422,7 @@ def test_assure_unicode():
     eq_(assure_unicode(mom_iso8859, confidence=0.5), u'mamá')
     # but when we mix, it does still guess something allowing to decode:
     mixedin = mom_koi8r + u'東'.encode('iso2022_jp') + u'東'.encode('utf-8')
-    ok_(isinstance(assure_unicode(mixedin), text_type))
+    ok_(isinstance(assure_unicode(mixedin), str))
     # but should fail if we request high confidence result:
     with assert_raises(ValueError):
         assure_unicode(mixedin, confidence=0.9)
