@@ -449,7 +449,7 @@ def only_with_values(d):
     return d.__class__((k, v) for k,v in d.items() if v)
 
 def assure_bytes(s, encoding='utf-8'):
-    """Convert/encode unicode to str (PY2) or bytes (PY3) if of 'str'
+    """Convert/encode unicode to bytes if of 'str'
 
     Parameters
     ----------
@@ -462,7 +462,7 @@ def assure_bytes(s, encoding='utf-8'):
 
 
 def assure_unicode(s, encoding=None, confidence=None):
-    """Convert/decode to unicode (PY2) or str (PY3) if of 'bytes'
+    """Convert/decode to str if of 'bytes'
 
     Parameters
     ----------
