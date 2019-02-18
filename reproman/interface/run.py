@@ -189,7 +189,7 @@ class Run(Interface):
         # template expects a string.
         if not command and "command_str" in spec:
             pass
-        elif command is None and "command" not in spec:
+        elif not command and "command" not in spec:
             raise ValueError("No command specified via CLI or job spec")
         else:
             command = command or spec["command"]
