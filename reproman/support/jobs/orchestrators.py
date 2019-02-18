@@ -425,7 +425,7 @@ class PrepareRemoteDataladMixin(object):
         if isinstance(session, SSHSession):
             if resource.key_filename:
                 dl_version = external_versions["datalad"]
-                if dl_version <= "0.11.2":
+                if dl_version < "0.11.3":
                     # Connecting will probably fail because `key_filename` is
                     # set, but we have no way to tell DataLad about it.
                     lgr.warning(
