@@ -11,8 +11,7 @@
 import attr
 from importlib import import_module
 import abc
-from six import add_metaclass
-from six.moves.configparser import NoSectionError
+from configparser import NoSectionError
 
 import yaml
 from glob import glob
@@ -390,8 +389,7 @@ class ResourceManager(object):
         lgr.info("Stopped the environment %s", resource.name)
 
 
-@add_metaclass(abc.ABCMeta)
-class Resource(object):
+class Resource(object, metaclass=abc.ABCMeta):
     """Base class for creating and managing compute resources.
     """
 

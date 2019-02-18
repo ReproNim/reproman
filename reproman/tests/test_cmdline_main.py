@@ -10,7 +10,7 @@
 
 import re
 import sys
-from six.moves import StringIO
+from io import StringIO
 from mock import patch
 import pytest
 

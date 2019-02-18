@@ -17,6 +17,7 @@ import logging
 
 from reproman.cmd import Runner
 from reproman.utils import chpwd
+from reproman.utils import on_linux
 from reproman.tests.utils import create_pymodule
 from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
 from reproman.tests.utils import swallow_logs
@@ -36,34 +37,41 @@ def venv_test_dir():
     if os.path.exists(test_dir):
         return test_dir
 
-    runner = Runner()
-    runner.run(["mkdir", "-p", test_dir])
-
+    os.makedirs(test_dir)
     pymod_dir = os.path.join(test_dir, "minimal_pymodule")
     create_pymodule(pymod_dir)
 
-    with chpwd(test_dir):
-        runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
-        runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
-        runner.run(["./venv0/bin/pip", "install", "pyyaml"])
-        runner.run(["./venv0/bin/pip", "install", "-e", pymod_dir])
-        runner.run(["./venv1/bin/pip", "install", "attrs"])
-        # Make sure we're compatible with older pips.
-        runner.run(["./venv1/bin/pip", "install", "pip==9.0.3"])
+    runner = Runner(cwd=test_dir)
+    pip0 = op.join("venv0", "bin", "pip")
+    pip1 = op.join("venv1", "bin", "pip")
+    runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
+    runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
+    runner.run([pip0, "install", "pyyaml"])
+    runner.run([pip0, "install", "-e", pymod_dir])
+    runner.run([pip1, "install", "attrs"])
+    # Make sure we're compatible with older pips.
+    runner.run([pip1, "install", "pip==9.0.3"])
     return test_dir
 
 
+@pytest.mark.skipif(not on_linux, reason="Test assumes GNU/Linux system")
 @pytest.mark.integration
 def test_venv_identify_distributions(venv_test_dir):
-    paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
-             "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
+    libpaths = {p[-1]: os.path.join("lib", PY_VERSION, *p)
+                for p in [("abc.py",),
+                          ("site-packages", "yaml", "parser.py"),
+                          ("site-packages", "attr", "filters.py")]}
 
     with chpwd(venv_test_dir):
         path_args = [
             # Both full ...
-            os.path.join(venv_test_dir, "venv0", paths[0]),
+            os.path.join(venv_test_dir, "venv0", libpaths["parser.py"]),
             # ... and relative paths work.
-            os.path.join("venv1", paths[1]),
+            os.path.join("venv1", libpaths["filters.py"]),
+            # A virtualenv file that isn't part of any particular package.
+            os.path.join("venv1", "bin", "python"),
+            # A link to the outside world.
+            os.path.join("venv1", libpaths["abc.py"])
         ]
         path_args.append("/sbin/iptables")
 
@@ -73,19 +81,25 @@ def test_venv_identify_distributions(venv_test_dir):
         assert len(dists) == 1
 
         distributions, unknown_files = dists[0]
+        # Unknown files do not include "venv0/bin/python", which is a link
+        # another path within venv0, but they do include the link to the system
+        # abc.py.
         assert unknown_files == {
             "/sbin/iptables",
+            op.realpath(os.path.join("venv1", libpaths["abc.py"])),
             # The editable package was added by VenvTracer as an unknown file.
             os.path.join(venv_test_dir, "minimal_pymodule")}
 
         assert len(distributions.environments) == 2
 
         expect = {"environments":
-                  [{"packages": [{"files": [paths[0]], "name": "PyYAML",
+                  [{"packages": [{"files": [libpaths["parser.py"]],
+                                  "name": "PyYAML",
                                   "editable": False},
                                  {"files": [], "name": "nmtest",
                                   "editable": True}]},
-                   {"packages": [{"files": [paths[1]], "name": "attrs",
+                   {"packages": [{"files": [libpaths["filters.py"]],
+                                  "name": "attrs",
                                   "editable": False}]}]}
         assert_is_subset_recur(expect, attr.asdict(distributions), [dict, list])
 
@@ -93,8 +107,10 @@ def test_venv_identify_distributions(venv_test_dir):
 @pytest.mark.integration
 def test_venv_install(venv_test_dir, tmpdir):
     tmpdir = str(tmpdir)
-    paths = ["lib/" + PY_VERSION + "/site-packages/yaml/parser.py",
-             "lib/" + PY_VERSION + "/site-packages/attr/filters.py"]
+    paths = [
+        op.join("lib", PY_VERSION, "site-packages", "yaml", "parser.py"),
+        op.join("lib", PY_VERSION, "site-packages", "attr", "filters.py"),
+    ]
 
     tracer = VenvTracer()
     dists = list(

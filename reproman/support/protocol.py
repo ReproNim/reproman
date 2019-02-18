@@ -14,13 +14,11 @@ from os import linesep
 import logging
 import time
 
-from six import add_metaclass
 
 lgr = logging.getLogger('reproman.protocol')
 
 
-@add_metaclass(abc.ABCMeta)
-class ProtocolInterface(object):
+class ProtocolInterface(object, metaclass=abc.ABCMeta):
     """Interface class for protocols used by the Runner.
 
     Implementations of this interface are supposed to store one section per

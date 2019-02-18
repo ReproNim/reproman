@@ -48,7 +48,6 @@ requires = {
         'humanize',
         'mock',  # mock is also used for auto.py, not only for testing
         'pyyaml',
-        'six>=1.9',
         'tqdm',
         'fabric>=2.3.1',
         'cryptography>=1.5',

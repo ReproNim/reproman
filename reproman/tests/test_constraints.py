@@ -10,7 +10,6 @@
 
 
 import sys
-from six import string_types, PY2
 
 from ..support import constraints as ct
 from .utils import assert_equal, assert_raises
@@ -210,4 +209,3 @@ def test_both():
 
 def test_type_str():
     assert_equal(ct._type_str((str,)), 'str')
-    assert_equal(ct._type_str(string_types), 'basestring' if PY2 else 'str')

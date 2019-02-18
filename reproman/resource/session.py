@@ -17,7 +17,7 @@ from functools import partial
 import os
 import os.path as op
 import re
-from six.moves import shlex_quote
+from shlex import quote as shlex_quote
 
 from reproman.support.exceptions import SessionRuntimeError
 from reproman.cmd import Runner
