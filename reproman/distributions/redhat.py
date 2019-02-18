@@ -9,7 +9,6 @@
 """Support for Redhat(-based) distribution(s)."""
 import attr
 
-from six.moves import map
 
 import datetime
 import logging

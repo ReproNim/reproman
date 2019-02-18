@@ -14,7 +14,6 @@ import os.path as op
 
 import attr
 
-from six import iteritems
 from reproman.distributions import Distribution
 from reproman.distributions import piputils
 from reproman.dochelpers import borrowdoc
@@ -169,7 +168,7 @@ class VenvTracer(DistributionTracer):
                     unknown_files.remove(path)
 
             packages = []
-            for name, details in iteritems(package_details):
+            for name, details in package_details.items():
                 location = details["location"]
                 packages.append(
                     VenvPackage(name=details["name"],

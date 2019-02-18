@@ -12,30 +12,27 @@ cache:
 
 matrix:
   include:
-  - python: 2.7
-  # no loop dev support on travis yet :-/ https://github.com/travis-ci/travis-ci/issues/2700
-  #- python: 2.7
+  - python: 3.5
     env:
     - REPROMAN_TESTS_SSH=1
-  - python: 2.7
+  - python: 3.5
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
     - REPROMAN_LOGLEVEL=INFO
-  - python: 2.7
+  - python: 3.5
     # By default no logs will be output. This one is to test with low level but dumped to /dev/null
     env:
     - REPROMAN_LOGLEVEL=2
     - REPROMAN_LOGTARGET=/dev/null
-  - python: 2.7
+  - python: 3.6
+    # Note: This this no network run appears to hang or otherwise
+    # behave oddly on 3.5.
     env:
     - REPROMAN_TESTS_NONETWORK=1
     # must operate nicely with those env variables set
     - http_proxy=
     - https_proxy=
   - python: 3.4
-  - python: 3.5
-    env:
-    - REPROMAN_TESTS_SSH=1
   # Those aren't yet ready since lxml Ibelieve fails to install
   #- python: pypy
   #- python: pypy3

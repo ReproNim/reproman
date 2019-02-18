@@ -21,8 +21,6 @@ import shlex
 import atexit
 import functools
 
-from six import PY3, PY2
-from six import string_types, binary_type
 from os.path import abspath, isabs
 
 from .dochelpers import exc_str
@@ -36,11 +34,6 @@ lgr = logging.getLogger('reproman.cmd')
 
 _TEMP_std = sys.stdout, sys.stderr
 
-if PY2:
-    # TODO apparently there is a recommended substitution for Python2
-    # which is a backported implementation of python3 subprocess
-    # https://pypi.python.org/pypi/subprocess32/
-    pass
 
 class Runner(object):
     """Provides a wrapper for calling functions and commands.
@@ -116,7 +109,7 @@ class Runner(object):
           if cmd is neither a string nor a callable.
         """
 
-        if isinstance(cmd, string_types) or isinstance(cmd, list):
+        if isinstance(cmd, str) or isinstance(cmd, list):
             return self.run(cmd, *args, **kwargs)
         elif callable(cmd):
             return self.call(cmd, *args, **kwargs)
@@ -137,7 +130,7 @@ class Runner(object):
 
     def _get_output_online(self, proc, log_stdout, log_stderr,
                            expect_stderr=False, expect_fail=False):
-        stdout, stderr = binary_type(), binary_type()
+        stdout, stderr = bytes(), bytes()
         while proc.poll() is None:
             if log_stdout:
                 line = proc.stdout.readline()
@@ -154,7 +147,7 @@ class Runner(object):
                 line = proc.stderr.readline()
                 if line:
                     stderr += line
-                    self._log_err(line.decode() if PY3 else line,
+                    self._log_err(line.decode(),
                                   expect_stderr or expect_fail)
                     # TODO: what's the proper log level here?
                     # Changes on that should be properly adapted in
@@ -239,13 +232,13 @@ class Runner(object):
         if self.protocol.do_execute_ext_commands:
 
             if shell is None:
-                shell = isinstance(cmd, string_types)
+                shell = isinstance(cmd, str)
 
             if self.protocol.records_ext_commands:
                 prot_exc = None
                 prot_id = self.protocol.start_section(
                     shlex.split(cmd, posix=not on_windows)
-                    if isinstance(cmd, string_types)
+                    if isinstance(cmd, str)
                     else cmd)
 
             try:
@@ -272,12 +265,11 @@ class Runner(object):
             else:
                 out = proc.communicate()
 
-            if PY3:
-                # Decoding was delayed to this point
-                def decode_if_not_None(x):
-                    return "" if x is None else binary_type.decode(x)
-                # TODO: check if we can avoid PY3 specific here
-                out = tuple(map(decode_if_not_None, out))
+            # Decoding was delayed to this point
+            def decode_if_not_None(x):
+                return "" if x is None else bytes.decode(x)
+            # TODO: check if we can avoid PY3 specific here
+            out = tuple(map(decode_if_not_None, out))
 
             status = proc.poll()
 
@@ -303,7 +295,7 @@ class Runner(object):
             if self.protocol.records_ext_commands:
                 self.protocol.add_section(shlex.split(cmd,
                                                       posix=not on_windows)
-                                          if isinstance(cmd, string_types)
+                                          if isinstance(cmd, str)
                                           else cmd, None)
             out = ("DRY", "DRY")
 

@@ -15,14 +15,12 @@ import tempfile
 import platform
 import multiprocessing
 import logging
-from six import PY2, text_type
 from mock import patch
 import pytest
 
 from reproman.support.external_versions import external_versions
-from six.moves.SimpleHTTPServer import SimpleHTTPRequestHandler
-from six.moves.BaseHTTPServer import HTTPServer
-from six import reraise
+from http.server import SimpleHTTPRequestHandler
+from http.server import HTTPServer
 
 from functools import wraps
 from os.path import exists, realpath, join as opj
@@ -135,11 +133,9 @@ def create_tree(path, tree, archives_leading_dir=True):
                 create_tree(full_name, load, archives_leading_dir=archives_leading_dir)
         else:
             #encoding = sys.getfilesystemencoding()
-            #if isinstance(full_name, text_type):
+            #if isinstance(full_name, str):
             #    import pydb; pydb.debugger()
             with open(full_name, 'w') as f:
-                if PY2 and isinstance(load, text_type):
-                    load = load.encode('utf-8')
                 f.write(load)
 
 #
@@ -547,7 +543,7 @@ def assert_cwd_unchanged(func, ok_to_chdir=False):
                                  "CWD changed from %s to %s" % (cwd_before, cwd_after))
 
         if exc_info is not None:
-            reraise(*exc_info)
+            raise exc_info[1].with_traceback(exc_info[2])
 
     return newfunc
 
