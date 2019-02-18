@@ -29,7 +29,8 @@ from reproman.tests.utils import create_tree
 # Tests that do not require a resource, registry, or orchestator.
 
 
-@pytest.mark.parametrize("command", [None, []])
+@pytest.mark.parametrize("command", [None, []],
+                         ids=["None", "[]"])
 def test_run_no_command(command):
     with pytest.raises(ValueError) as exc:
         run(command=command)
