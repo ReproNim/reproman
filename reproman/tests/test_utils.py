@@ -58,7 +58,7 @@ from .utils import assert_cwd_unchanged
 from .utils import assert_in
 from .utils import with_tree
 from .utils import with_tempfile
-from .utils import skip_if_on_windows
+from .skip import mark
 from ..utils import assure_dict_from_str, assure_list_from_str
 from .utils import ok_generator
 from .utils import assert_not_in
@@ -199,7 +199,7 @@ def test_getpwd_basic():
         assert_false(oschdir.called)
 
 
-@skip_if_on_windows
+@mark.skipif_windows
 @with_tempfile(mkdir=True)
 @assert_cwd_unchanged
 def test_getpwd_symlink(tdir=None):
