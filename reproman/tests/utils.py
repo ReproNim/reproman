@@ -10,6 +10,7 @@
 
 import inspect
 import os
+import sys
 import re
 import tempfile
 import platform
@@ -25,7 +26,13 @@ from http.server import HTTPServer
 from functools import wraps
 from os.path import exists, realpath, join as opj
 
-from ..utils import *
+from ..utils import chpwd
+from ..utils import get_tempfile_kwargs
+from ..utils import getpwd
+from ..utils import make_tempfile
+from ..utils import on_windows
+from ..utils import optional_args
+from ..utils import rmtemp
 from ..dochelpers import borrowkwargs
 from ..resource.docker_container import DockerContainer
 
