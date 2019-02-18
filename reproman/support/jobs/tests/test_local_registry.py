@@ -19,6 +19,8 @@ def test_local_registry(tmpdir):
     tmpdir = str(tmpdir)
     lreg = LocalRegistry(directory=op.join(tmpdir, "registry"))
 
+    assert not lreg.find_job_files()
+
     lreg.register("jobid0", {"value0": "foo", "value1": "bar"})
     files = lreg.find_job_files()
     with open(files["jobid0"]) as yfh:

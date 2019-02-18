@@ -35,8 +35,9 @@ class LocalRegistry(object):
         -------
         OrderedDict mapping job ID to job file.
         """
+        files = os.listdir(self._root) if op.exists(self._root) else []
         return collections.OrderedDict((f, op.join(self._root, f))
-                                       for f in sorted(os.listdir(self._root)))
+                                       for f in sorted(files))
 
     def register(self, jobid, kwds):
         """Register a job.
