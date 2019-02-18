@@ -113,10 +113,7 @@ we outline the workflow used by the developers:
 Development environment
 -----------------------
 
-Although we now support Python 3 (>= 3.3), primarily we still use Python 2.7
-and thus instructions below are for python 2.7 deployments.  Replace `python-{`
-with `python{,3}-{` to also install dependencies for Python 3 (e.g., if you would
-like to develop and test through tox).
+We support Python 3 (>= 3.4).
 
 See [README.md:Dependencies](README.md#Dependencies) for basic information
 about installation of reproman itself.
@@ -125,14 +122,14 @@ since we use it to provide backports of recent fixed external modules we depend 
 
 ```sh
 apt-get install -y -q eatmydata  # to speed up subsequent installations
-eatmydata apt-get install -y -q python-{appdirs,argcomplete,humanize,mock,setuptools,six,yaml,debian,boto3,docker,tqdm,rdflib,dockerpty,docker} libssl-dev libffi-dev
+eatmydata apt-get install -y -q python3-{appdirs,argcomplete,humanize,mock,setuptools,six,yaml,debian,boto3,docker,tqdm,rdflib,dockerpty,docker} libssl-dev libffi-dev
 ```
 
 and additionally, for development we suggest to use tox and new
 versions of dependencies from pypi:
 
 ```sh
-eatmydata apt-get install -y -q python-{pip,vcr,virtualenv,tox}
+eatmydata apt-get install -y -q python3-{pip,vcr,virtualenv,tox}
 ```
 
 some of which you could also install from PyPi using pip
@@ -154,7 +151,7 @@ documentation, run tests requiring nibabel etc, first install necessary
 core dependencies using apt-get
 
 ```sh
-eatmydata apt-get install -y -q python-{numpy,nibabel,sphinx,dev} ipython
+eatmydata apt-get install -y -q python3-{numpy,nibabel,sphinx,dev} ipython3
 ```
 
 and then run

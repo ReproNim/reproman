@@ -9,15 +9,13 @@
 
 import collections
 import re
-import six
 
-import six.moves.builtins as __builtin__
-from six.moves import shlex_quote
+import builtins
+from shlex import quote as shlex_quote
 import time
 
 from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
-from six.moves.urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
-from six import text_type, binary_type, PY3
+from urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
 
 import logging
 import shutil
@@ -351,7 +349,7 @@ def escape_filename(filename):
 def encode_filename(filename):
     """Encode unicode filename
     """
-    if isinstance(filename, text_type):
+    if isinstance(filename, str):
         return filename.encode(sys.getfilesystemencoding())
     else:
         return filename
@@ -451,20 +449,20 @@ def only_with_values(d):
     return d.__class__((k, v) for k,v in d.items() if v)
 
 def assure_bytes(s, encoding='utf-8'):
-    """Convert/encode unicode to str (PY2) or bytes (PY3) if of 'text_type'
+    """Convert/encode unicode to bytes if of 'str'
 
     Parameters
     ----------
     encoding: str, optional
       Encoding to use.  "utf-8" is the default
     """
-    if not isinstance(s, text_type):
+    if not isinstance(s, str):
         return s
     return s.encode(encoding)
 
 
 def assure_unicode(s, encoding=None, confidence=None):
-    """Convert/decode to unicode (PY2) or str (PY3) if of 'binary_type'
+    """Convert/decode to str if of 'bytes'
 
     Parameters
     ----------
@@ -475,7 +473,7 @@ def assure_unicode(s, encoding=None, confidence=None):
       A value between 0 and 1, so if guessing of encoding is of lower than
       specified confidence, ValueError is raised
     """
-    if not isinstance(s, binary_type):
+    if not isinstance(s, bytes):
         return s
     if encoding is None:
         # Figure out encoding, defaulting to 'utf-8' which is our common
@@ -737,7 +735,7 @@ def swallow_outputs():
 
     from .ui import ui
     # preserve -- they could have been mocked already
-    oldprint = getattr(__builtin__, 'print')
+    oldprint = getattr(builtins, 'print')
     oldout, olderr = sys.stdout, sys.stderr
     olduiout = ui.out
     adapter = StringIOAdapter()
@@ -745,12 +743,12 @@ def swallow_outputs():
     try:
         sys.stdout, sys.stderr = adapter.handles
         ui.out = adapter.handles[0]
-        setattr(__builtin__, 'print', fake_print)
+        setattr(builtins, 'print', fake_print)
 
         yield adapter
     finally:
         sys.stdout, sys.stderr, ui.out = oldout, olderr, olduiout
-        setattr(__builtin__, 'print',  oldprint)
+        setattr(builtins, 'print',  oldprint)
         adapter.cleanup()
 
 
@@ -984,7 +982,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
     filename = realpath(filename)
 
     if content:
-        with open(filename, 'w' + ('b' if isinstance(content, binary_type) else '')) as f:
+        with open(filename, 'w' + ('b' if isinstance(content, bytes) else '')) as f:
             f.write(content)
 
     if __debug__:
@@ -1022,12 +1020,12 @@ def _path_(p):
 
 def is_unicode(s):
     """Return true if an object is unicode"""
-    return isinstance(s, six.text_type)
+    return isinstance(s, str)
 
 
 def is_binarystring(s):
     """Return true if an object is a binary string (not unicode)"""
-    return isinstance(s, six.binary_type)
+    return isinstance(s, bytes)
 
 
 def to_unicode(s, encoding="utf-8"):

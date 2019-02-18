@@ -15,8 +15,6 @@ import collections
 import yaml
 
 from importlib import import_module
-from six import add_metaclass
-from six import viewvalues
 
 from reproman.utils import attrib
 from reproman.resource.session import get_local_session
@@ -205,9 +203,8 @@ class Package(SpecObject):
     pass
 
 
-@add_metaclass(abc.ABCMeta)
 @attr.s
-class Distribution(SpecObject):
+class Distribution(SpecObject, metaclass=abc.ABCMeta):
     """Base class for distributions"""
 
     # Actually might want/need to go away since somewhat duplicates the class
@@ -303,8 +300,7 @@ _register_with_representer(EnvironmentSpec)
 # Note: The following was derived from ReproZip's PkgManager class
 # (Revised BSD License)
 
-@add_metaclass(abc.ABCMeta)
-class DistributionTracer(object):
+class DistributionTracer(object, metaclass=abc.ABCMeta):
     """Base class for package trackers.
 
     ATM :term:`Package` describes all of possible "archives" which deliver
@@ -411,7 +407,7 @@ class DistributionTracer(object):
             nb_pkg_files,
             len(unknown_files))
 
-        return list(viewvalues(found_packages)), unknown_files
+        return list(found_packages.values()), unknown_files
 
     @abc.abstractmethod
     def _get_packagefields_for_files(self, files):

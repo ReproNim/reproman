@@ -10,8 +10,6 @@
 """
 import sys
 from os import linesep
-from six import string_types
-from six import binary_type
 
 from distutils.version import LooseVersion
 
@@ -134,9 +132,9 @@ class ExternalVersions(object):
         if isinstance(version, (tuple, list)):
             #  Generate string representation
             version = ".".join(str(x) for x in version)
-        elif isinstance(version, binary_type):
+        elif isinstance(version, bytes):
             version = version.decode()
-        elif isinstance(version, string_types):
+        elif isinstance(version, str):
             pass
         else:
             version = None
@@ -150,7 +148,7 @@ class ExternalVersions(object):
         # when ran straight in its source code -- fails to discover nipy's version.. TODO
         #if module == 'nipy':
         #    import pdb; pdb.set_trace()
-        if not isinstance(module, string_types):
+        if not isinstance(module, str):
             modname = module.__name__
         else:
             modname = module
