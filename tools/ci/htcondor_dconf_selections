@@ -1,0 +1,11 @@
+htcondor	condor/daemons	multiselect	COLLECTOR:NEGOTIATOR, SCHEDD, STARTD
+htcondor	condor/wantdebconf	boolean	true
+htcondor	condor/personal	boolean	true
+htcondor	condor/allowwrite	string	$(CONDOR_HOST) $(IPV4_ADDRESS) $(IPV6_ADDRESS) 127.* ::1
+htcondor	condor/startpolicy	boolean	true
+htcondor	condor/uiddomain	string	$(FULL_HOSTNAME)
+htcondor	condor/reservedmemory	string	
+htcondor	condor/centralmanager	string	127.0.0.1
+htcondor	condor/phonehome	boolean	false
+htcondor	condor/filesystemdomain	string	$(FULL_HOSTNAME)
+htcondor	condor/admin	string	root@localhost
