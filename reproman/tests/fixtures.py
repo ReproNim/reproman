@@ -13,7 +13,6 @@ import shutil
 import tempfile
 
 import pytest
-from six import text_type
 
 from reproman.cmd import Runner
 from reproman.resource.base import ResourceManager
@@ -230,7 +229,7 @@ def job_registry_fixture(scope="function"):
     @pytest.fixture(scope=scope)
     def fixture(tmpdir_factory):
         return partial(LocalRegistry,
-                       text_type(tmpdir_factory.mktemp("registry")))
+                       str(tmpdir_factory.mktemp("registry")))
     return fixture
 
 
@@ -258,7 +257,7 @@ def resource_manager_fixture(resources=None, scope="function"):
 
     @pytest.fixture(scope=scope)
     def fixture(tmpdir_factory):
-        path = text_type(tmpdir_factory.mktemp("rmanager").join("inventory"))
+        path = str(tmpdir_factory.mktemp("rmanager").join("inventory"))
         manager = ResourceManager(path)
         for name, kwargs in resources.items():
             manager.create(name, **kwargs)

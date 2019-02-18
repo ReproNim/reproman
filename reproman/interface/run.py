@@ -14,8 +14,7 @@ import collections
 import logging
 import yaml
 
-from six.moves import map
-from six.moves import shlex_quote
+from shlex import quote as shlex_quote
 
 from reproman.interface.base import Interface
 from reproman.interface.common_opts import resref_opt

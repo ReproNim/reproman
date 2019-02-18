@@ -18,9 +18,7 @@ import uuid
 from tempfile import NamedTemporaryFile
 import time
 
-import six
-from six.moves import map
-from six.moves import shlex_quote
+from shlex import quote as shlex_quote
 
 from reproman.dochelpers import borrowdoc
 from reproman.utils import cached_property
@@ -39,8 +37,7 @@ lgr = logging.getLogger("reproman.support.jobs.orchestrators")
 # Abstract orchestrators
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Orchestrator(object):
+class Orchestrator(object, metaclass=abc.ABCMeta):
     """Base Orchestrator class.
 
     An Orchestrator is responsible for preparing a directory to run a command,
@@ -167,7 +164,7 @@ class Orchestrator(object):
             out, _ = self.session.execute_command(prefix + command)
         except CommandError as exc:
             raise OrchestratorError(
-                six.text_type(exc) if err_msg is None else err_msg)
+                str(exc) if err_msg is None else err_msg)
         return out
 
     def submit(self):
@@ -291,8 +288,7 @@ def _datalad_format_command(ds, spec):
     spec["command_str"] = cmd_expanded
 
 
-@six.add_metaclass(abc.ABCMeta)
-class DataladOrchestrator(Orchestrator):
+class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     """Execute command assuming (at least) a local dataset.
     """
 

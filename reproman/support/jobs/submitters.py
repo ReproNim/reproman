@@ -17,8 +17,6 @@ import logging
 import re
 import time
 
-import six
-
 from reproman.cmd import CommandError
 from reproman.dochelpers import borrowdoc
 
@@ -39,8 +37,7 @@ def assert_submission_id(method):
     return wrapped
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Submitter(object):
+class Submitter(object, metaclass=abc.ABCMeta):
     """Base Submitter class.
 
     A submitter is responsible for submitting a command on a resource (e.g., to

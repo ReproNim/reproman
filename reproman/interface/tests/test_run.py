@@ -15,7 +15,6 @@ import os
 import os.path as op
 
 import pytest
-from six import text_type
 
 from reproman.api import jobs
 from reproman.api import run
@@ -33,13 +32,13 @@ from reproman.tests.utils import create_tree
 def test_run_no_command():
     with pytest.raises(ValueError) as exc:
         run()
-    assert "No command" in text_type(exc)
+    assert "No command" in str(exc)
 
 
 def test_run_no_resource():
     with pytest.raises(ValueError) as exc:
         run(command="blahbert")
-    assert "No resource" in text_type(exc)
+    assert "No resource" in str(exc)
 
 
 def test_run_list():
@@ -73,7 +72,7 @@ def context(tmpdir, resource_manager, job_registry):
     - directory: temporary path that is the current directory when run_fn is
       called.
     """
-    path = text_type(tmpdir)
+    path = str(tmpdir)
 
     # TODO: Use contextlib.ExitStack() for these nested with's once we drop py2
     # support.
@@ -117,19 +116,19 @@ def test_run_resource_specification(context):
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"],
             job_specs=["js0.yaml"])
-    assert "name-via-js" in text_type(exc)
+    assert "name-via-js" in str(exc)
 
     # If job spec as name and ID, ID takes precedence.
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"],
             job_specs=["js1.yaml"])
-    assert "id-via-js" in text_type(exc)
+    assert "id-via-js" in str(exc)
 
     # Command-line overrides job spec.
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"], resref="fromcli",
             job_specs=["js1.yaml"])
-    assert "fromcli" in text_type(exc)
+    assert "fromcli" in str(exc)
 
 
 def test_run_and_fetch(context):
@@ -271,4 +270,4 @@ def test_jobs_ambig_id_match(context):
 
     with pytest.raises(ValueError) as exc:
         jobs(queries=[jobid0[0], jobid1[0]])
-    assert "matches multiple jobs" in text_type(exc)
+    assert "matches multiple jobs" in str(exc)

@@ -13,7 +13,7 @@ import os.path as op
 import logging
 
 import jinja2
-from six.moves import shlex_quote
+from shlex import quote as shlex_quote
 
 lgr = logging.getLogger("reproman.support.jobs.template")
 
