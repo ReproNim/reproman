@@ -42,14 +42,66 @@ Doing that will make the skip condition available in two places:
 now be `mark.skipif_windows` and `skipif.windows`.
 """
 import abc
+import os
+
 import pytest
+
+from reproman.resource.docker_container import DockerContainer
+from reproman.support.external_versions import external_versions
+from reproman.utils import on_windows
 
 # Condition functions
 #
 # To create a new condition, (1) add a condition function and (2) add that
 # function to CONDITION_FNS.
 
+
+def no_apt_cache():
+    return ("apt-cache not available",
+            not external_versions["cmd:apt-cache"])
+
+
+def no_docker_engine():
+    return ("No Docker",
+            not DockerContainer.is_engine_running())
+
+
+def no_network():
+    return ("no network settings",
+            os.environ.get('REPROMAN_TESTS_NONETWORK'))
+
+
+def no_singularity():
+    return ("singularity not available",
+            not external_versions["cmd:singularity"])
+
+
+def no_ssh():
+    if on_windows:
+        reason = "no ssh on windows"
+    else:
+        reason = "no ssh (REPROMAN_TESTS_SSH unset)"
+    return (reason,
+            on_windows or not os.environ.get('REPROMAN_TESTS_SSH'))
+
+
+def no_svn():
+    return ("subversion not available",
+            not external_versions["cmd:svn"])
+
+
+def windows():
+    return "on windows", on_windows
+
+
 CONDITION_FNS = [
+    no_apt_cache,
+    no_docker_engine,
+    no_network,
+    no_singularity,
+    no_ssh,
+    no_svn,
+    windows,
 ]
 
 # Entry points: skipif and mark
