@@ -19,7 +19,8 @@ import logging
 import re
 from ..singularity import Singularity, SingularitySession
 from ...tests.utils import skip_if_no_singularity, skip_if_no_network, \
-    swallow_logs, assert_in
+    assert_in
+from ...utils import swallow_logs
 
 
 @skip_if_no_network

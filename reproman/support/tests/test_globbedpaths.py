@@ -15,10 +15,10 @@ import logging
 from mock import patch
 import os.path as op
 
+from reproman.utils import swallow_logs
 from reproman.support.globbedpaths import GlobbedPaths
 from reproman.tests.utils import assert_in
 from reproman.tests.utils import eq_
-from reproman.tests.utils import swallow_logs
 from reproman.tests.utils import with_tree
 
 

@@ -22,9 +22,8 @@ from ..exceptions import OutdatedExternalDependency, MissingExternalDependency
 from ...tests.utils import (
     with_tempfile,
     create_tree,
-    swallow_logs,
 )
-
+from ...utils import swallow_logs
 import pytest
 from mock import patch
 

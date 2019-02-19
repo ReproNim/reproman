@@ -18,9 +18,9 @@ import logging
 from reproman.cmd import Runner
 from reproman.utils import chpwd
 from reproman.utils import on_linux
+from reproman.utils import swallow_logs
 from reproman.tests.utils import create_pymodule
 from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
-from reproman.tests.utils import swallow_logs
 from reproman.distributions.venv import VenvDistribution
 from reproman.distributions.venv import VenvEnvironment
 from reproman.distributions.venv import VenvPackage

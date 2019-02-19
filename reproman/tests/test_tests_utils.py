@@ -29,11 +29,10 @@ from .utils import assert_in, assert_not_in, assert_true
 import pytest
 
 from ..utils import getpwd, chpwd
-
+from ..utils import swallow_logs
 from .utils import eq_, ok_, assert_false, ok_startswith, nok_startswith, \
     with_tempfile, with_tree, \
     rmtemp, OBSCURE_FILENAMES, get_most_obscure_supported_name, \
-    swallow_logs, \
     on_windows, assert_raises, assert_cwd_unchanged, serve_path_via_http, \
     ok_symlink, ok_good_symlink, ok_broken_symlink, \
     assert_is_subset_recur
