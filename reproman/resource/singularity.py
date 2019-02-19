@@ -15,6 +15,7 @@ from shlex import quote as shlex_quote
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
 from ..support.exceptions import CommandError
+from ..support.external_versions import external_versions
 from .session import POSIXSession, Session
 from .base import Resource
 from ..utils import attrib
@@ -45,14 +46,12 @@ class Singularity(Resource):
         """
         Open a connection to the environment.
         """
-        self._runner = Runner()
-
-        # Make sure singularity is installed
-        stdout, _ = self._runner.run(['singularity', '--version'])
-        if stdout.startswith('2.2') or stdout.startswith('2.3'):
+        version = external_versions["cmd:singularity"]
+        if version is None or version < "2.4":
+            msg = "Found version {}".format(version) if version else ""
             # Running singularity instances and managing them didn't happen
             # until version 2.4. See: https://singularity.lbl.gov/archive/
-            raise CommandError(msg="Singularity version >= 2.4 required.")
+            raise CommandError(msg="Singularity version >= 2.4 required." + msg)
 
         # Get instance info if we have one running.
         info = self.get_instance_info()

@@ -76,6 +76,12 @@ def _get_system_ssh_version():
         return None
 
 
+def _get_singularity_version():
+    """Return version of available singularity."""
+    # example output: "2.6.1-dist"
+    return _runner.run(["singularity", "--version"])[0].split("-")[0]
+
+
 class ExternalVersions(object):
     """Helper to figure out/use versions of the externals (modules, cmdline tools, etc).
 
@@ -95,6 +101,7 @@ class ExternalVersions(object):
     CUSTOM = {
         'cmd:annex': _get_annex_version,
         'cmd:git': _get_git_version,
+        'cmd:singularity': _get_singularity_version,
         'cmd:system-ssh': _get_system_ssh_version,
         'cmd:apt-cache': _get_apt_cache_version
     }

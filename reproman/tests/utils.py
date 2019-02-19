@@ -25,7 +25,6 @@ from http.server import HTTPServer
 from functools import wraps
 from os.path import exists, realpath, join as opj
 
-from ..cmd import Runner
 from ..utils import *
 from ..dochelpers import borrowkwargs
 from ..resource.docker_container import DockerContainer
@@ -488,14 +487,11 @@ def skip_if_no_singularity(func):
     func
         Decorator function
     """
-    # Make sure singularity is installed
-    try:
-        stdout, _ = Runner().run(['singularity', '--version'])
-    except Exception:
+    version = external_versions["cmd:singularity"]
+    if version is None:
         msg = "Singularity not installed, skipping test {}"
         pytest.skip(msg.format(func.__name__), allow_module_level=True)
-
-    if stdout.startswith('2.2') or stdout.startswith('2.3'):
+    elif version < "2.4":
         # Running singularity instances and managing them didn't happen
         # until version 2.4. See: https://singularity.lbl.gov/archive/
         msg = "Singularity version >= 2.4 required, skipping test {}"
