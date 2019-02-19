@@ -19,7 +19,6 @@ import logging
 from mock import patch
 import pytest
 
-from reproman.support.external_versions import external_versions
 from http.server import SimpleHTTPRequestHandler
 from http.server import HTTPServer
 
@@ -34,7 +33,6 @@ from ..utils import on_windows
 from ..utils import optional_args
 from ..utils import rmtemp
 from ..dochelpers import borrowkwargs
-from ..resource.docker_container import DockerContainer
 
 # temp paths used by clones
 _TEMP_PATHS_CLONES = set()
@@ -347,129 +345,6 @@ def with_tempfile(t, **tkwargs):
 
     return newfunc
 
-
-def skip_if_no_network(func=None):
-    """Skip test completely in NONETWORK settings
-
-    If not used as a decorator, and just a function, could be used at the module level
-    """
-
-    def check_and_raise():
-        if os.environ.get('REPROMAN_TESTS_NONETWORK'):
-            pytest.skip("Skipping since no network settings",
-                        allow_module_level=True)
-
-    if func:
-        @wraps(func)
-        def newfunc(*args, **kwargs):
-            check_and_raise()
-            return func(*args, **kwargs)
-        # right away tag the test as a networked test
-        tags = getattr(newfunc, 'tags', [])
-        newfunc.tags = tags + ['network']
-        return newfunc
-    else:
-        check_and_raise()
-
-
-def skip_if_on_windows(func):
-    """Skip test completely under Windows
-    """
-    @wraps(func)
-    def newfunc(*args, **kwargs):
-        if on_windows:
-            pytest.skip("Skipping on Windows", allow_module_level=True)
-        return func(*args, **kwargs)
-    return newfunc
-
-
-def skip_if_no_apt_cache(func=None):
-    """Skip test completely if apt is unavailable
-
-    If not used as a decorator, and just a function, could be used at the module level
-    """
-
-    def check_and_raise():
-        if not external_versions["cmd:apt-cache"]:
-            pytest.skip("Skipping since apt-cache is not available",
-                        allow_module_level=True)
-
-    if func:
-        @wraps(func)
-        def newfunc(*args, **kwargs):
-            check_and_raise()
-            return func(*args, **kwargs)
-        return newfunc
-    else:
-        check_and_raise()
-
-
-def skip_if_no_svn():
-    if not external_versions["cmd:svn"]:
-        pytest.skip('subversion is not installed',
-                    allow_module_level=True)
-
-
-def skip_ssh(func=None):
-    """Skips SSH tests if on windows or if environment variable
-    REPROMAN_TESTS_SSH was not set
-    """
-
-    def check_and_raise():
-        if not os.environ.get('REPROMAN_TESTS_SSH'):
-            pytest.skip("Run this test by setting REPROMAN_TESTS_SSH",
-                        allow_module_level=True)
-
-    if func:
-        @wraps(func)
-        def newfunc(*args, **kwargs):
-            if on_windows:
-                pytest.skip("SSH currently not available on windows.",
-                            allow_module_level=True)
-            check_and_raise()
-            return func(*args, **kwargs)
-        return newfunc
-    else:
-        check_and_raise()
-
-
-def skip_if_no_docker_engine(func):
-    """Test decorator that will skip a test if a Docker engine can't be found.
-
-    Returns
-    -------
-    func
-        Decorator function
-
-    Raises
-    ------
-    SkipTest
-    """
-    if not DockerContainer.is_engine_running():
-        pytest.skip("Docker not found, skipping test {}".format(func.__name__),
-                    allow_module_level=True)
-    return func
-
-
-def skip_if_no_singularity(func):
-    """Test decorator that will skip a test if the singularity executable is
-    not found.
-    
-    Returns
-    -------
-    func
-        Decorator function
-    """
-    version = external_versions["cmd:singularity"]
-    if version is None:
-        msg = "Singularity not installed, skipping test {}"
-        pytest.skip(msg.format(func.__name__), allow_module_level=True)
-    elif version < "2.4":
-        # Running singularity instances and managing them didn't happen
-        # until version 2.4. See: https://singularity.lbl.gov/archive/
-        msg = "Singularity version >= 2.4 required, skipping test {}"
-        pytest.skip(msg.format(func.__name__), allow_module_level=True)
-    return func
 
 @optional_args
 def assert_cwd_unchanged(func, ok_to_chdir=False):
