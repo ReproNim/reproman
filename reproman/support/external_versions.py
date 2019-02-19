@@ -82,6 +82,15 @@ def _get_singularity_version():
     return _runner.run(["singularity", "--version"])[0].split("-")[0]
 
 
+def _get_svn_version():
+    """Return version of available SVN."""
+    # Example output:
+    #
+    # svn, version 1.9.5 (r1770682)
+    # [...]
+    return _runner.run(["svn", "--version"])[0].split()[2]
+
+
 class ExternalVersions(object):
     """Helper to figure out/use versions of the externals (modules, cmdline tools, etc).
 
@@ -103,6 +112,7 @@ class ExternalVersions(object):
         'cmd:git': _get_git_version,
         'cmd:singularity': _get_singularity_version,
         'cmd:system-ssh': _get_system_ssh_version,
+        'cmd:svn': _get_svn_version,
         'cmd:apt-cache': _get_apt_cache_version
     }
     INTERESTING = (

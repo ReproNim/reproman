@@ -398,16 +398,9 @@ def skip_if_no_apt_cache(func=None):
 
 
 def skip_if_no_svn():
-    runner = Runner()
-    try:
-        # will raise OSError(errno=2) if the command is not found
-        runner.run(['svnadmin', '--help'])
-        runner.run(['svn', '--help'])
-    except OSError as exc:
-        if exc.errno == 2:
-            pytest.skip('subversion is not installed',
-                        allow_module_level=True)
-    return
+    if not external_versions["cmd:svn"]:
+        pytest.skip('subversion is not installed',
+                    allow_module_level=True)
 
 
 def skip_ssh(func=None):
