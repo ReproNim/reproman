@@ -39,7 +39,7 @@ class Singularity(Resource):
     type = attrib(default='singularity')
 
     status = attrib()
-    _runner = attrib()
+    _runner = Runner()
 
     def connect(self):
         """
