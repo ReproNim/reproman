@@ -54,9 +54,11 @@ def _get_git_version():
     """Return version of available git"""
     return _runner.run('git version'.split())[0].split()[-1]
 
+
 def _get_apt_cache_version():
-    """Return version of available git"""
+    """Return version of available apt-cache."""
     return _runner.run('apt-cache -v'.split())[0].split()[1]
+
 
 def _get_system_ssh_version():
     """Return version of ssh available system-wide
