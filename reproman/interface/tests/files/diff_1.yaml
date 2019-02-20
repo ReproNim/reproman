@@ -58,4 +58,34 @@ distributions:
   - path: /path/1/to/different/svn/commit
     revision: 12
     uuid: 95e4b738-84c7-154c-f082-34d40e21fdd4
+- name: venv
+  path: /usr/bin/virtualenv
+  venv_version: 15.1.0
+  environments:
+  - path: /home/user/venvs/test/both
+    python_version: 2.7.15+
+    packages:
+    - name: six
+      version: 1.12.0
+      local: true
+      location: /home/user/venvs/test/lib/python2.7/site-packages
+      files:
+      - lib/python2.7/site-packages/six-1.12.0.dist-info/METADATA
+      - lib/python2.7/site-packages/six.pyc
+      - lib/python2.7/site-packages/six.py
+  - path: /home/user/venvs/test/1_only
+    python_version: 2.7.15+
+    packages:
+    - name: funcsigs
+      version: 1.0.2
+      local: true
+      location: /home/user/venvs/test/lib/python2.7/site-packages
+      files:
+      - lib/python2.7/site-packages/funcsigs-1.0.2.dist-info/METADATA
+    - name: rpaths
+      version: '0.13'
+      local: true
+      location: /home/user/venvs/test/lib/python2.7/site-packages
+      files:
+      - lib/python2.7/site-packages/rpaths-0.13.dist-info/METADATA
 files: [/etc/a, /etc/b]

@@ -47,6 +47,7 @@ class VenvEnvironment(SpecObject):
     path = attrib()
     python_version = attrib()
     packages = TypedList(VenvPackage)
+    _diff_cmp_fields = ('path', 'python_version')
 
 
 @attr.s

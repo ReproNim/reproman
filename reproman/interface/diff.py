@@ -20,6 +20,7 @@ from reproman.formats.reproman import RepromanProvenance
 from ..distributions.debian import DebianDistribution
 from ..distributions.conda import CondaDistribution
 from ..distributions.vcs import GitDistribution, SVNDistribution
+from ..distributions.venv import VenvDistribution, VenvEnvironment
 
 __docformat__ = 'restructuredtext'
 
@@ -88,7 +89,8 @@ class Diff(Interface):
             DebianDistribution: 'Debian package', 
             CondaDistribution: 'Conda package', 
             GitDistribution: 'Git repository',
-            SVNDistribution: 'SVN repository'
+            SVNDistribution: 'SVN repository', 
+            VenvDistribution: 'Venv environment', 
         }
 
         env_1_dist_types = { d.__class__ for d in env_1.distributions }
@@ -103,12 +105,18 @@ class Diff(Interface):
                         'pkg_diffs': []}
             dist_1 = env_1.get_distribution(dist_type)
             if dist_1:
-                pkgs_1 = {p._diff_cmp_id: p for p in dist_1.packages}
+                if dist_type == VenvDistribution:
+                    pkgs_1 = {p._diff_cmp_id: p for p in dist_1.environments}
+                else:
+                    pkgs_1 = {p._diff_cmp_id: p for p in dist_1.packages}
             else:
                 pkgs_1 = {}
             dist_2 = env_2.get_distribution(dist_type)
             if dist_2:
-                pkgs_2 = {p._diff_cmp_id: p for p in dist_2.packages}
+                if dist_type == VenvDistribution:
+                    pkgs_2 = {p._diff_cmp_id: p for p in dist_2.environments}
+                else:
+                    pkgs_2 = {p._diff_cmp_id: p for p in dist_2.packages}
             else:
                 pkgs_2 = {}
             dist_res['pkgs_1'] = pkgs_1
