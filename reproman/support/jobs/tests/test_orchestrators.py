@@ -18,6 +18,7 @@ from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
 from reproman.support.external_versions import external_versions
 from reproman.support.jobs import orchestrators as orcs
+from reproman.tests.skip import mark
 from reproman.tests.utils import create_tree
 
 
@@ -71,19 +72,19 @@ def test_orc_no_datalad(tmpdir, shell):
             orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
+@mark.skipif_no_datalad
 def test_orc_no_dataset(tmpdir, shell):
-    pytest.importorskip("datalad")
     with chpwd(str(tmpdir)):
         with pytest.raises(OrchestratorError):
             orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
+@mark.skipif_no_datalad
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
                           orcs.DataladPairRunOrchestrator],
                          ids=["orc:local", "orc:pair"])
 def test_orc_datalad_run(tmpdir, shell, orc_class):
-    pytest.importorskip("datalad")
     import datalad.api as dl
 
     tmpdir = str(tmpdir)
@@ -109,8 +110,8 @@ def test_orc_datalad_run(tmpdir, shell, orc_class):
         assert open("out").read() == "content\nmore\n"
 
 
+@mark.skipif_no_datalad
 def test_orc_datalad_pair(tmpdir, shell):
-    pytest.importorskip("datalad")
     import datalad.api as dl
 
     tmpdir = str(tmpdir)

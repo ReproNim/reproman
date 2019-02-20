@@ -61,6 +61,11 @@ def no_apt_cache():
             not external_versions["cmd:apt-cache"])
 
 
+def no_datalad():
+    return ("datalad not available",
+            not external_versions["cmd:datalad"])
+
+
 def no_docker_engine():
     return ("No Docker",
             not DockerContainer.is_engine_running())
@@ -96,6 +101,7 @@ def windows():
 
 CONDITION_FNS = [
     no_apt_cache,
+    no_datalad,
     no_docker_engine,
     no_network,
     no_singularity,
