@@ -78,8 +78,11 @@ def test_orc_no_dataset(tmpdir, shell):
             orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
-@pytest.mark.parametrize("run_type", ["local", "pair"])
-def test_orc_datalad_run(tmpdir, shell, run_type):
+@pytest.mark.parametrize("orc_class",
+                         [orcs.DataladLocalRunOrchestrator,
+                          orcs.DataladPairRunOrchestrator],
+                         ids=["orc:local", "orc:pair"])
+def test_orc_datalad_run(tmpdir, shell, orc_class):
     pytest.importorskip("datalad")
     import datalad.api as dl
 
@@ -94,11 +97,6 @@ def test_orc_datalad_run(tmpdir, shell, run_type):
     create_tree(local_dir, {"in": "content\n"})
     ds = dl.Dataset(local_dir).create(force=True)
     ds.add(".")
-
-    if run_type == "local":
-        orc_class = orcs.DataladLocalRunOrchestrator
-    else:
-        orc_class = orcs.DataladPairRunOrchestrator
 
     with chpwd(local_dir):
         orc = orc_class(shell, submission_type="local", job_spec=job_spec)
