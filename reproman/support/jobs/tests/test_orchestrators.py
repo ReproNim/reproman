@@ -79,6 +79,7 @@ def test_orc_no_dataset(tmpdir, shell):
             orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
+@pytest.mark.integration
 @mark.skipif_no_datalad
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
