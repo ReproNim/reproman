@@ -190,7 +190,7 @@ class CondorSubmitter(Submitter):
         condor_states = {0: "unexpanded",
                          1: "idle",
                          2: "running",
-                         3: "remove",
+                         3: "removed",
                          4: "completed",
                          5: "held",
                          6: "submission error"}
