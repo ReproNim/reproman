@@ -24,10 +24,10 @@ import pytest
 import mock
 
 from reproman.utils import swallow_logs
-from reproman.tests.utils import skip_if_no_apt_cache
+from reproman.tests.skip import mark
 
 
-@skip_if_no_apt_cache
+@mark.skipif_no_apt_cache
 def test_dpkg_manager_identify_packages():
     files = ["/sbin/iptables"]
     tracer = DebTracer()
@@ -59,7 +59,7 @@ def test_dpkg_manager_identify_packages():
 
 
 @pytest.mark.integration
-@skip_if_no_apt_cache
+@mark.skipif_no_apt_cache
 def test_check_bin_packages():
     # Gather files in /usr/bin and /usr/lib
     files = list_all_files("/usr/bin") + list_all_files("/usr/lib")

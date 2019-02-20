@@ -18,12 +18,13 @@ import tempfile
 import logging
 import re
 from ..singularity import Singularity, SingularitySession
-from ...tests.utils import skip_if_no_singularity, skip_if_no_network, \
-    swallow_logs, assert_in
+from ...tests.utils import assert_in
+from ...tests.skip import mark
+from ...utils import swallow_logs
 
 
-@skip_if_no_network
-@skip_if_no_singularity
+@mark.skipif_no_network
+@mark.skipif_no_singularity
 def test_singularity_resource_class():
 
     # Set working directory to a scratch directory since we will be creating

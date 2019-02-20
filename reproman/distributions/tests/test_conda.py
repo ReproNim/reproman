@@ -18,7 +18,8 @@ import attr
 
 from reproman.formats.reproman import RepromanProvenance
 from reproman.tests.utils import create_pymodule
-from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
+from reproman.tests.utils import assert_is_subset_recur
+from reproman.tests.skip import mark
 
 from reproman.distributions.conda import CondaTracer, CondaDistribution, \
     CondaEnvironment, CondaPackage, CondaChannel, \
@@ -98,7 +99,7 @@ def test_create_conda_export():
 
 
 @pytest.mark.integration
-@skip_if_no_network
+@mark.skipif_no_network
 def test_conda_init_install_and_detect():
     test_dir = "/tmp/reproman_conda/miniconda"
 

@@ -29,18 +29,16 @@ from .utils import assert_in, assert_not_in, assert_true
 import pytest
 
 from ..utils import getpwd, chpwd
-
+from ..utils import swallow_logs
 from .utils import eq_, ok_, assert_false, ok_startswith, nok_startswith, \
     with_tempfile, with_tree, \
     rmtemp, OBSCURE_FILENAMES, get_most_obscure_supported_name, \
-    swallow_logs, \
     on_windows, assert_raises, assert_cwd_unchanged, serve_path_via_http, \
     ok_symlink, ok_good_symlink, ok_broken_symlink, \
     assert_is_subset_recur
 
 from .utils import ok_generator
 from .utils import assert_re_in
-from .utils import skip_if_no_network
 from .utils import run_under_dir
 from .utils import ok_file_has_content
 from .utils import without_http_proxy
@@ -412,26 +410,6 @@ def test_assert_re_in():
     assert_raises(AssertionError, assert_re_in, "", [])
 
 
-def test_skip_if_no_network():
-    cleaned_env = os.environ.copy()
-    cleaned_env.pop('REPROMAN_TESTS_NONETWORK', None)
-    # we need to run under cleaned env to make sure we actually test in both conditions
-    with patch('os.environ', cleaned_env):
-        @skip_if_no_network
-        def somefunc(a1):
-            return a1
-        eq_(somefunc.tags, ['network'])
-        with patch.dict('os.environ', {'REPROMAN_TESTS_NONETWORK': '1'}):
-            assert_raises(pytest.skip.Exception, somefunc, 1)
-        with patch.dict('os.environ', {}):
-            eq_(somefunc(1), 1)
-        # and now if used as a function, not a decorator
-        with patch.dict('os.environ', {'REPROMAN_TESTS_NONETWORK': '1'}):
-            assert_raises(pytest.skip.Exception, skip_if_no_network)
-        with patch.dict('os.environ', {}):
-            eq_(skip_if_no_network(), None)
-
-
 @assert_cwd_unchanged
 @with_tempfile(mkdir=True)
 def test_run_under_dir(d=None):
@@ -485,18 +463,3 @@ def test_assert_is_subset_recur():
                   [3, [2]], [3, [2, 1]], [dict])
 
 
-def test_skip_ssh():
-    from .utils import skip_ssh
-
-    try:
-        @skip_ssh
-        def func(x):
-            return x + 2
-
-        with patch.dict('os.environ', {'REPROMAN_TESTS_SSH': "1"}):
-            assert func(2) == 4
-    except pytest.skip.Exception:
-        raise AssertionError("must have not skipped")
-
-    with patch.dict('os.environ', {'REPROMAN_TESTS_SSH': ""}):
-        assert_raises(pytest.skip.Exception, func, 2)

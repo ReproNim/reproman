@@ -22,17 +22,14 @@ from reproman.api import execute
 from reproman.formats.reproman import RepromanProvenance
 from reproman.utils import swallow_outputs
 from reproman.interface.execute import TracedCommand
-from reproman.support.external_versions import external_versions
 from ...resource.base import ResourceManager
 from ...tests.utils import assert_is_subset_recur
-from ...tests.utils import skip_if_no_apt_cache
-from ...tests.utils import skip_if_no_network
-from ...tests.utils import skip_ssh
+from ...tests.skip import mark
 from ...tests.fixtures import get_docker_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
 
-docker_container = skip_ssh(get_docker_fixture)(
+docker_container = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST,
     name='testing-container',
     scope='module',
@@ -40,6 +37,7 @@ docker_container = skip_ssh(get_docker_fixture)(
 )
 
 
+@mark.skipif_no_ssh
 def test_execute_interface(docker_container):
 
     with patch('reproman.resource.ResourceManager._get_inventory') as get_inventory:
@@ -95,6 +93,7 @@ def trace_info(tmpdir_factory):
             "class": cls}
 
 
+@mark.skipif_no_ssh
 def test_trace_docker(docker_container, trace_info):
     with patch("reproman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",
@@ -118,12 +117,8 @@ def test_trace_docker(docker_container, trace_info):
 
 
 @pytest.mark.integration
-# Avoiding skip_if_no_network and skip_if_no_apt_cache because it leads to a
-# TypeError under Python 2.
-@pytest.mark.skipif(os.environ.get('REPROMAN_TESTS_NONETWORK'),
-                    reason="No network")
-@pytest.mark.skipif("cmd:apt-cache" not in external_versions,
-                    reason="No apt-cache")
+@mark.skipif_no_network
+@mark.skipif_no_apt_cache
 def test_trace_local(trace_info):
     with patch("reproman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",

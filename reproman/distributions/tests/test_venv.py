@@ -18,9 +18,10 @@ import logging
 from reproman.cmd import Runner
 from reproman.utils import chpwd
 from reproman.utils import on_linux
+from reproman.utils import swallow_logs
 from reproman.tests.utils import create_pymodule
-from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
-from reproman.tests.utils import swallow_logs
+from reproman.tests.utils import assert_is_subset_recur
+from reproman.tests.skip import skipif
 from reproman.distributions.venv import VenvDistribution
 from reproman.distributions.venv import VenvEnvironment
 from reproman.distributions.venv import VenvPackage
@@ -30,8 +31,8 @@ PY_VERSION = "python{v.major}.{v.minor}".format(v=sys.version_info)
 
 
 @pytest.fixture(scope="session")
-@skip_if_no_network
 def venv_test_dir():
+    skipif.no_network()
     dirs = AppDirs('reproman')
     test_dir = os.path.join(dirs.user_cache_dir, 'venv_test')
     if os.path.exists(test_dir):

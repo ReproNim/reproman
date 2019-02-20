@@ -14,11 +14,11 @@ from ...cmd import Runner
 # from ...distributions.singularity import SingularityDistribution
 # from ...distributions.singularity import SingularityImage
 from ...distributions.singularity import SingularityTracer
-from ...tests.utils import skip_if_no_singularity, skip_if_no_network
+from ...tests.skip import mark
 
 
-@skip_if_no_network
-@skip_if_no_singularity
+@mark.skipif_no_network
+@mark.skipif_no_singularity
 def test_singularity_trace():
 
     # Download and set up singularity image file
