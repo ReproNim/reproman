@@ -58,7 +58,7 @@ def test_orc_plain(tmpdir, shell):
         assert op.exists(op.join(orc.working_directory, "in"))
 
         orc.submit()
-        orc.submitter.follow()
+        orc.follow()
         assert op.exists(op.join(orc.working_directory, "out"))
 
         orc.fetch()
@@ -108,7 +108,7 @@ def test_orc_datalad_run(tmpdir, shell, orc_class, sub_type):
         orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
-        orc.submitter.follow()
+        orc.follow()
 
         orc.fetch()
         assert ds.repo.file_has_content("out")
@@ -136,7 +136,7 @@ def test_orc_datalad_pair(tmpdir, shell):
             shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
-        orc.submitter.follow()
+        orc.follow()
 
         orc.fetch()
         # The local fetch variant doesn't currently get the content, so just
