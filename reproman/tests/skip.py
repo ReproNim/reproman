@@ -46,7 +46,9 @@ import os
 
 import pytest
 
+from reproman.cmd import Runner
 from reproman.resource.docker_container import DockerContainer
+from reproman.support.exceptions import CommandError
 from reproman.support.external_versions import external_versions
 from reproman.utils import on_windows
 
@@ -59,6 +61,18 @@ from reproman.utils import on_windows
 def no_apt_cache():
     return ("apt-cache not available",
             not external_versions["cmd:apt-cache"])
+
+
+def no_condor():
+    def is_running():
+        try:
+            Runner().run(["condor_status"])
+        except CommandError as exc:
+            return False
+        return True
+
+    return ("condor not available",
+            not (external_versions["cmd:condor"] and is_running()))
 
 
 def no_datalad():
@@ -101,6 +115,7 @@ def windows():
 
 CONDITION_FNS = [
     no_apt_cache,
+    no_condor,
     no_datalad,
     no_docker_engine,
     no_network,
