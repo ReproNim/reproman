@@ -26,7 +26,7 @@ from reproman.tests import fixtures
 from reproman.tests.utils import create_tree
 
 
-# Tests that do not require a resource, registry, or orchestator.
+# Tests that do not require a resource, registry, or orchestrator.
 
 
 @pytest.mark.parametrize("command", [None, []],
