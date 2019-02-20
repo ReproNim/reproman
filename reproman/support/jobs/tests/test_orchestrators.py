@@ -84,7 +84,11 @@ def test_orc_no_dataset(tmpdir, shell):
                          [orcs.DataladLocalRunOrchestrator,
                           orcs.DataladPairRunOrchestrator],
                          ids=["orc:local", "orc:pair"])
-def test_orc_datalad_run(tmpdir, shell, orc_class):
+@pytest.mark.parametrize("sub_type",
+                         ["local",
+                          pytest.param("condor", marks=mark.skipif_no_condor)],
+                         ids=["sub:local", "sub:condor"])
+def test_orc_datalad_run(tmpdir, shell, orc_class, sub_type):
     import datalad.api as dl
 
     tmpdir = str(tmpdir)
@@ -100,7 +104,7 @@ def test_orc_datalad_run(tmpdir, shell, orc_class):
     ds.add(".")
 
     with chpwd(local_dir):
-        orc = orc_class(shell, submission_type="local", job_spec=job_spec)
+        orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.submitter.follow()
