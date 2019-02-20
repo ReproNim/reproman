@@ -74,6 +74,12 @@ def _get_system_ssh_version():
         return None
 
 
+def _get_datalad_version():
+    """Return version of available datalad"""
+    # Example output: datalad 0.11.3.dev17
+    return _runner.run(['datalad', '--version'])[0].split()[1]
+
+
 class ExternalVersions(object):
     """Helper to figure out/use versions of the externals (modules, cmdline tools, etc).
 
@@ -94,6 +100,7 @@ class ExternalVersions(object):
         'cmd:annex': _get_annex_version,
         'cmd:git': _get_git_version,
         'cmd:system-ssh': _get_system_ssh_version,
+        'cmd:datalad': _get_datalad_version,
         'cmd:apt-cache': _get_apt_cache_version
     }
     INTERESTING = (
