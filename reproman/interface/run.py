@@ -21,6 +21,7 @@ from reproman.interface.base import Interface
 from reproman.interface.common_opts import resref_opt
 from reproman.interface.common_opts import resref_type_opt
 from reproman.support.jobs.local_registry import LocalRegistry
+from reproman.support.jobs.orchestrators import Orchestrator
 from reproman.support.jobs.orchestrators import ORCHESTRATORS
 from reproman.support.jobs.submitters import SUBMITTERS
 from reproman.resource import get_manager
@@ -63,6 +64,36 @@ def _combine_job_specs(specs):
     return initial
 
 
+JOB_PARAMETERS = collections.OrderedDict(
+    [
+        ("root_directory", Orchestrator.root_directory),
+        ("meta_directory", Orchestrator.meta_directory),
+        ("working_directory", Orchestrator.working_directory),
+        ("command_str, command",
+         """Command to run (string and list form). A command will usually be
+         set from the command line, but it can also be set in the job spec. If
+         string and list forms are defined, the string form is used."""),
+        ("submitter",
+         """Name of submitter. The submitter controls how the command should be
+         submitted on the resource (e.g., with `condor_submit`)."""),
+        ("orchestrator",
+         """Name of orchestrator. The orchestrator performs pre- and
+         post-command steps like setting up the directory for command execution
+         and storing the results."""),
+        ("inputs, outputs",
+         """Input and output files (list) to the command."""),
+        ("message",
+         """Message to use when saving the run. The details depend on the orchestator,
+         but in general this message will be used in the commit message."""),
+        # TODO: Add more information for the rest of these.
+        ("memory, num_processes",
+         """Supported by Condor and PBS submitters."""),
+        ("num_nodes, walltime",
+         """Supported by PBS submitter."""),
+    ]
+)
+
+
 class Run(Interface):
     """Run a command on the specified resource.
     """
@@ -80,17 +111,13 @@ class Run(Interface):
         submitter=Parameter(
             args=("--submitter", "--sub"),
             metavar="NAME",
-            doc="""Name of submitter. The submitter controls how the command
-            should be submitted on the resource (e.g., with
-            `condor_submit`)[CMD: . Use --list to see available submitters
-            CMD]."""),
+            doc=(JOB_PARAMETERS["submitter"] +
+                 "[CMD:  Use --list to see available submitters CMD]")),
         orchestrator=Parameter(
             args=("--orchestrator", "--orc"),
             metavar="NAME",
-            doc="""Name of orchestrator. The orchestrator performs pre- and
-            post-command steps like setting up the directory for command
-            execution and storing the results[CMD: . Use --list to see
-            available orchestrators CMD]."""),
+            doc=(JOB_PARAMETERS["orchestrator"] +
+                 "[CMD:  Use --list to see available orchestrators CMD]")),
         # TODO: Make it possible to list available parameters for --js and -b.
         job_specs=Parameter(
             args=("--job-spec", "--js"),
@@ -139,9 +166,7 @@ class Run(Interface):
         message=Parameter(
             args=("-m", "--message"),
             metavar="MESSAGE",
-            doc="""Message to use when saving the run. The details depend on
-            the orchestator, but in general this message will be used in the
-            commit message."""),
+            doc=JOB_PARAMETERS["message"]),
     )
 
     @staticmethod
