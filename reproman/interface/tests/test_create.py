@@ -29,7 +29,7 @@ def test_create_interface():
     """
 
     with patch('docker.Client') as client, \
-        patch('reproman.resource.ResourceManager._save'), \
+        patch('reproman.resource.ResourceManager.save_inventory'), \
         patch('reproman.resource.ResourceManager._get_inventory'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 

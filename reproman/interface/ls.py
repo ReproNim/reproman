@@ -11,16 +11,12 @@
 
 __docformat__ = 'restructuredtext'
 
-from configparser import NoSectionError
-
 from .base import Interface
-import reproman.interface.base # Needed for test patching
+# import reproman.interface.base  # Needed for test patching
 from ..support.param import Parameter
-from ..support.constraints import EnsureStr, EnsureNone
-from  ..resource import get_manager
+from ..resource import get_manager
 from ..ui import ui
 from ..support.exceptions import ResourceError
-from ..support.exceptions import ResourceNotFoundError
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -40,15 +36,12 @@ class Ls(Interface):
         verbose=Parameter(
             args=("-v", "--verbose"),
             action="store_true",
-            #constraints=EnsureBool() | EnsureNone(),
             doc="provide more verbose listing",
         ),
         refresh=Parameter(
-            args=("--refresh",),
+            args=("-r", "--refresh",),
             action="store_true",
             doc="Refresh the status of the resources listed",
-            # metavar='CONFIG',
-            # constraints=EnsureStr(),
         ),
     )
 
@@ -64,38 +57,33 @@ class Ls(Interface):
             if name.startswith('_'):
                 continue
 
-            # if refresh:
             try:
-                resource = manager.get_resource(name, resref_type="name")
-            except ResourceNotFoundError:
-                lgr.warning("Manager did not return a resource for %r", name)
+                resource = manager.get_resource(manager.inventory[name]['id'])
+            except ResourceError as e:
+                lgr.warning("Manager did not return a resource for %s: %s", name, exc_str(e))
                 continue
 
-            try:
-                if refresh:
+            if refresh:
+                try:
                     resource.connect()
-                if not resource.id:
-                    # continue  # A missing ID indicates a deleted resource.
-                    resource.id = 'DELETED'
-                    resource.status = 'N/A'
-                report_status = resource.status
-            except Exception as exc:
-                lgr.error("%s resource query error: %s", name, exc_str(exc))
-                report_status = "N/A (QUERY-ERROR)"
-                for f in 'id', 'status':
-                    if not getattr(resource, f):
-                        setattr(resource, f, "?")
+                    if not resource.id:
+                        resource.status = 'NOT FOUND'
+                except Exception as e:
+                    lgr.debug("%s resource query error: %s", name, exc_str(e))
+                    resource.status = 'CONNECTION ERROR'
+
+                manager.inventory[name].update({'status': resource.status})
+
             msgargs = (
                 name,
                 resource.type,
-                resource.id[:id_length] if resource.id else '',
-                report_status,
+                manager.inventory[name]['id'][:id_length],
+                resource.status,
             )
             ui.message(template.format(*msgargs))
             lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
 
-        # if not refresh:
-        #     ui.message('(Use --refresh option to view current status.)')
-        #
-        # if refresh:
-        #     reproman.interface.base.set_resource_inventory(inventory)
+        if refresh:
+            manager.save_inventory()
+        else:
+            ui.message('Use --refresh option to view updated status.')

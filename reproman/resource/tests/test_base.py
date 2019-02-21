@@ -85,7 +85,7 @@ def test_resource_manager_save(tmpdir):
         "null-id": {"name": "null-id",
                     "id": None,
                     "type": "baz-type"}}
-    manager._save()
+    manager.save_inventory()
     assert op.exists(inventory)
     with open(inventory) as fh:
         content = fh.read()
@@ -99,7 +99,7 @@ def test_resource_manager_save(tmpdir):
     manager_reborn.inventory["added"] = {"name": "added",
                                          "type": "added-type",
                                          "id": "added-id"}
-    manager_reborn._save()
+    manager_reborn.save_inventory()
     with open(inventory) as fh:
         content_reread = fh.read()
     for line in content:
