@@ -106,8 +106,8 @@ class Run(Interface):
             args=("--list",),
             dest="list_",
             action="store_true",
-            doc="""Show available submitters and orchestrators instead of
-            running a command."""),
+            doc="""Show available submitters, orchestrators, and job parameters
+            instead of running a command."""),
         submitter=Parameter(
             args=("--submitter", "--sub"),
             metavar="NAME",
@@ -126,7 +126,8 @@ class Run(Interface):
             action="append",
             doc="""YAML files that define job parameters. Multiple paths can be
             given. If a parameter is defined in multiple specs, the value from
-            the last path that defines it is used."""),
+            the last path that defines it is used[CMD: . Use --list to see
+            available parameters for the built-in templates CMD]."""),
         job_parameters=Parameter(
             metavar="PARAM",
             dest="job_parameters",
@@ -135,8 +136,11 @@ class Run(Interface):
             # use 'append' there.
             action="append",
             doc="""A job parameter in the form KEY=VALUE. If the same parameter
-            is defined via a job spec, the value given here takes
-            precedence."""),
+            is defined via a job spec, the value given here takes precedence.
+            The values are available as fields in the templates used to
+            generate both the run script and submission script[CMD: . Use
+            --list to see available parameters for the built-in templates
+            CMD]."""),
         inputs=Parameter(
             args=("-i", "--input"),
             dest="inputs",
@@ -192,7 +196,9 @@ class Run(Interface):
 
             print("\n".join(["Submitters"] + fmt(SUBMITTERS) +
                             [""] +
-                            ["Orchestrators"] + fmt(ORCHESTRATORS)))
+                            ["Orchestrators"] + fmt(ORCHESTRATORS) +
+                            [""] +
+                            ["Job parameters"] + fmt(JOB_PARAMETERS)))
             return
 
         # TODO: globbing for inputs/outputs and command string formatting is

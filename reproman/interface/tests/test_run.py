@@ -48,6 +48,7 @@ def test_run_list():
         run(list_=True)
         assert "local" in output.out
         assert "plain" in output.out
+        assert "message" in output.out
 
 
 # Tests that require `context`.
