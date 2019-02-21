@@ -150,6 +150,7 @@ class CondorSubmitter(Submitter):
 
     def __init__(self, session):
         super(CondorSubmitter, self).__init__(session)
+        self._status_method = self._status_json
 
     @property
     @borrowdoc(Submitter)
@@ -172,10 +173,19 @@ class CondorSubmitter(Submitter):
     @borrowdoc(Submitter)
     def status(self):
         try:
-            stat_out, _ = self.session.execute_command(
-                "condor_q -json {}".format(self.submission_id))
+            st = self._status_method()
         except CommandError:
-            return "unknown", None
+            if self._status_method.__name__ == "_status_json":
+                lgr.debug("condor_q -json failed. Trying another method.")
+                self._status_method = self._status_no_json
+                st = self._status_method()
+            else:
+                st = "unknown", None
+        return st
+
+    def _status_json(self):
+        stat_out, _ = self.session.execute_command(
+            "condor_q -json {}".format(self.submission_id))
 
         if not stat_out.strip():
             lgr.debug("Status output for %s empty", self.submission_id)
@@ -203,6 +213,25 @@ class CondorSubmitter(Submitter):
         else:
             our_status = "unknown"
         return our_status, condor_states.get(code)
+
+    def _status_no_json(self):
+        """Unclever status for older condor versions without 'condor_q -json'.
+        """
+        # Parse the trailing:
+        # 0 jobs; 0 completed, 0 removed, 0 idle, 0 running, 0 held, 0 suspended
+        stat_out, _ = self.session.execute_command(
+            "condor_q {}".format(self.submission_id))
+        last_line = stat_out.strip().splitlines()[-1]
+        # Try to match our json matching above. This leaves some out from both
+        # lists. I don't know what the exact map is.
+        for theirs, ours in [("completed", "completed"),
+                             ("removed", "unknown"),
+                             ("idle", "waiting"),
+                             ("running", "waiting"),
+                             ("held", "waiting")]:
+            if "1 {}".format(theirs) in last_line:
+                return ours, theirs
+        return "unknown", None
 
 
 class LocalSubmitter(Submitter):
