@@ -162,8 +162,8 @@ class Run(Interface):
                 return wrapper.fill(doc)
 
             def fmt(d):
-                return ["  {}\n{}".format(x.name, get_doc(x))
-                        for x in d.values()]
+                return ["  {}\n{}".format(k, get_doc(v))
+                        for k, v in d.items()]
 
             print("\n".join(["Submitters"] + fmt(SUBMITTERS) +
                             [""] +
