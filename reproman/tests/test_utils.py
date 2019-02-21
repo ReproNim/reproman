@@ -199,7 +199,7 @@ def test_getpwd_basic():
         assert_false(oschdir.called)
 
 
-@mark.skipif_windows
+@mark.skipif_on_windows
 @with_tempfile(mkdir=True)
 @assert_cwd_unchanged
 def test_getpwd_symlink(tdir=None):

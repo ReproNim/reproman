@@ -48,7 +48,7 @@ import pytest
 
 from reproman.resource.docker_container import DockerContainer
 from reproman.support.external_versions import external_versions
-from reproman.utils import on_windows
+from reproman.utils import on_windows as _on_windows
 
 # Condition functions
 #
@@ -77,12 +77,12 @@ def no_singularity():
 
 
 def no_ssh():
-    if on_windows:
+    if _on_windows:
         reason = "no ssh on windows"
     else:
         reason = "no ssh (REPROMAN_TESTS_SSH unset)"
     return (reason,
-            on_windows or not os.environ.get('REPROMAN_TESTS_SSH'))
+            _on_windows or not os.environ.get('REPROMAN_TESTS_SSH'))
 
 
 def no_svn():
@@ -90,8 +90,8 @@ def no_svn():
             not external_versions["cmd:svn"])
 
 
-def windows():
-    return "on windows", on_windows
+def on_windows():
+    return "on windows", _on_windows
 
 
 CONDITION_FNS = [
@@ -101,7 +101,7 @@ CONDITION_FNS = [
     no_singularity,
     no_ssh,
     no_svn,
-    windows,
+    on_windows,
 ]
 
 # Entry points: skipif and mark

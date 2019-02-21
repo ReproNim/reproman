@@ -35,7 +35,7 @@ def test_skipif_no_ssh():
             assert 0, "Test should not have been skipped"
 
         # We skip SSH on windows even when REPROMAN_TESTS_SSH is set.
-        with patch("reproman.tests.skip.on_windows", True):
+        with patch("reproman.tests.skip._on_windows", True):
             with pytest.raises(pytest.skip.Exception):
                 skipif.no_ssh()
 
