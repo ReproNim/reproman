@@ -43,7 +43,7 @@ class Delete(Interface):
         # ),
         resref_type=resref_type_opt,
         skip_confirmation=Parameter(
-            args=("--skip-confirmation",),
+            args=("-y", "--skip-confirmation",),
             action="store_true",
             doc="Delete resource without prompting user for confirmation",
         ),
@@ -64,7 +64,7 @@ class Delete(Interface):
         manager = get_manager()
         resource = manager.get_resource(resref, resref_type)
 
-        if skip_confirmation or force:
+        if skip_confirmation:
             delete_confirmed = True
         else:
             delete_confirmed = ui.yesno(

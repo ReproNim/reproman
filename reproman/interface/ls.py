@@ -16,7 +16,7 @@ from .base import Interface
 from ..support.param import Parameter
 from ..resource import get_manager
 from ..ui import ui
-from ..support.exceptions import ResourceNotFoundError
+from ..support.exceptions import ResourceError
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -59,8 +59,8 @@ class Ls(Interface):
 
             try:
                 resource = manager.get_resource(manager.inventory[name]['id'])
-            except ResourceNotFoundError:
-                lgr.warning("Manager did not return a resource for %r", name)
+            except ResourceError as e:
+                lgr.warning("Manager did not return a resource for %s: %s", name, exc_str(e))
                 continue
 
             if refresh:

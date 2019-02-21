@@ -82,5 +82,5 @@ def test_delete_interface():
         client.assert_has_calls(calls, any_order=True)
         assert_in('Deleted the environment my-resource', log.lines)
    
-        main(['delete', '--force', 'missing-resource'])
+        main(['delete', '-y', '--force', 'missing-resource'])
         assert_in('Deleted the environment missing-resource', log.lines)
