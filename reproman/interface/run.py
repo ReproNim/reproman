@@ -12,6 +12,7 @@
 from argparse import REMAINDER
 import collections
 import logging
+import textwrap
 import yaml
 
 from shlex import quote as shlex_quote
@@ -151,11 +152,17 @@ class Run(Interface):
                  inputs=None, outputs=None,
                  follow=False):
         if list_:
-            # TODO: The docstrings will need more massaging once they're
-            # extended/improved.
+            wrapper = textwrap.TextWrapper(
+                initial_indent="    ",
+                subsequent_indent="    ")
+
+            def get_doc(x):
+                doc = x if isinstance(x, str) else x.__doc__
+                doc = " ".join(doc.split())  # Collapse whitespace.
+                return wrapper.fill(doc)
 
             def fmt(d):
-                return ["  {x.name}\n    {x.__doc__}".format(x=x)
+                return ["  {}\n{}".format(x.name, get_doc(x))
                         for x in d.values()]
 
             print("\n".join(["Submitters"] + fmt(SUBMITTERS) +
