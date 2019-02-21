@@ -15,11 +15,11 @@ from ...distributions.docker import DockerImage
 from ...distributions.docker import DockerTracer
 from ...resource.session import get_local_session
 from ...support.exceptions import CommandError
-from ...tests.utils import skip_if_no_docker_engine, skip_if_no_network
+from ...tests.skip import mark
 
 
-@skip_if_no_network
-@skip_if_no_docker_engine
+@mark.skipif_no_network
+@mark.skipif_no_docker_engine
 def test_docker_trace_tag():
     client = docker.Client()
     client.pull('alpine:3.6')
@@ -36,8 +36,8 @@ def test_docker_trace_tag():
     assert 'non-existent-image' in remaining_files
 
 
-@skip_if_no_network
-@skip_if_no_docker_engine
+@mark.skipif_no_network
+@mark.skipif_no_docker_engine
 def test_docker_trace_id():
     client = docker.Client()
     repo_id = 'sha256:f625bd3ff910ad2c68a405ccc5e294d2714fc8cfe7b5d80a8331c72ad5cc7630'
@@ -58,8 +58,8 @@ def test_docker_trace_id():
     assert dist.images[0].created == '2018-01-09T21:10:38.538173323Z'
 
 
-@skip_if_no_network
-@skip_if_no_docker_engine
+@mark.skipif_no_network
+@mark.skipif_no_docker_engine
 def test_docker_trace_local_image():
     client = docker.Client()
     client.pull('alpine:3.6')
@@ -80,8 +80,8 @@ def test_docker_trace_local_image():
     client.remove_image(new_image['Id'])
 
 
-@skip_if_no_network
-@skip_if_no_docker_engine
+@mark.skipif_no_network
+@mark.skipif_no_docker_engine
 def test_docker_distribution():
 
     client = docker.Client()

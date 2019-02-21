@@ -22,7 +22,7 @@ from ..support.protocol import DryRunProtocol, DryRunExternalsProtocol, \
     ProtocolInterface
 from ..cmd import Runner
 from .utils import with_tempfile
-from .utils import swallow_logs
+from ..utils import swallow_logs
 
 
 @with_tempfile

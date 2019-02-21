@@ -24,14 +24,12 @@ from ..shell import ShellSession
 from ..singularity import Singularity, SingularitySession, \
     PTYSingularitySession
 from ..ssh import SSHSession, PTYSSHSession
-from ...tests.utils import skip_ssh
+from ...tests.skip import mark
 from ...tests.fixtures import get_docker_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
 
-# Note: due to skip_ssh right here, it would skip the entire module with
-# all the tests here if no ssh testing is requested
-testing_container = skip_ssh(get_docker_fixture)(
+testing_container = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST,
     name='testing-container',
     portmaps={
@@ -251,7 +249,7 @@ def resource_session(request):
         yield request.param()
 
 
-
+@mark.skipif_no_ssh
 def test_session_abstract_methods(testing_container, resource_session,
         resource_test_dir):
 

@@ -14,7 +14,7 @@ import tempfile
 import pytest
 from .constants import REPROMAN_CFG_PATH
 from reproman.cmd import Runner
-from reproman.tests.utils import skip_if_no_network, skip_if_no_svn
+from reproman.tests.skip import skipif
 from reproman.utils import chpwd
 
 
@@ -67,7 +67,7 @@ def get_docker_fixture(image, portmaps={}, name=None,
         on teardown, this fixture stops the docker container it started
         """
 
-        skip_if_no_network()
+        skipif.no_network()
         args = ['docker',
                 'run',
                 '-d',
@@ -188,7 +188,7 @@ def svn_repo_fixture(kind='default', scope='function'):
     """
     @pytest.fixture(scope=scope)
     def fixture():
-        skip_if_no_svn()
+        skipif.no_svn()
         repo_name = 'svnrepo'
         tmpdir = os.path.realpath(tempfile.mkdtemp(prefix='reproman-tests-'))
         root_dir = os.path.join(tmpdir, repo_name)
