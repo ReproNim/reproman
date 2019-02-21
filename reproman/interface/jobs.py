@@ -69,13 +69,7 @@ def match(query_id, jobids):
 
 
 def _resurrect_orc(job):
-    try:
-        resource = get_manager().get_resource(job["resource_id"], "id")
-    except ResourceNotFoundError:
-        lgr.error("Resource %s (%s) no longer exists",
-                  job["resource_id"], job["resource_name"])
-        return
-
+    resource = get_manager().get_resource(job["resource_id"], "id")
     with chpwd(job["local_directory"]):
         orchestrator_class = ORCHESTRATORS[job["orchestrator"]]
         orc = orchestrator_class(resource, job["submitter"], job)
@@ -216,4 +210,8 @@ class Jobs(Interface):
                 raise RuntimeError("Unknown action: {}".format(action))
 
             for job in jobs:
-                fn(job)
+                try:
+                    fn(job)
+                except ResourceNotFoundError as exc:
+                    lgr.error("Resource %s (%s) no longer exists",
+                              job["resource_id"], job["resource_name"])

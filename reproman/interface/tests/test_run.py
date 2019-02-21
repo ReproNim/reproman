@@ -100,6 +100,7 @@ def context(tmpdir, resource_manager, job_registry):
 
     return {"directory": path,
             "registry": registry,
+            "resource_manager": resource_manager,
             "run_fn": run_fn,
             "jobs_fn": jobs_fn}
 
@@ -273,3 +274,29 @@ def test_jobs_ambig_id_match(context):
     with pytest.raises(ValueError) as exc:
         jobs(queries=[jobid0[0], jobid1[0]])
     assert "matches multiple jobs" in str(exc)
+
+
+def test_jobs_deleted_resource(context):
+    run = context["run_fn"]
+    jobs = context["jobs_fn"]
+    registry = context["registry"]
+    resman = context["resource_manager"]
+
+    resman.create("todelete", resource_type="shell")
+
+    run(command=["doesntmatter0"], resref="todelete")
+    run(command=["doesntmatter1"], resref="myshell")
+
+    resman.delete(resman.get_resource("todelete"))
+
+    jobfiles = registry.find_job_files()
+    assert len(jobfiles) == 2
+
+    with swallow_outputs() as output:
+        with swallow_logs(new_level=logging.ERROR) as log:
+            jobs(queries=[], status=True)
+            assert "todelete" in log.out
+            # The deleted resource won't be there
+            assert "todelete" not in output.out
+            # ... but the alive one will.
+            assert "myshell" in output.out
