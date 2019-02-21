@@ -9,7 +9,7 @@
 
 import logging
 import mock
-from six.moves import StringIO
+from io import StringIO
 
 from reproman.api import backend_parameters
 from reproman.utils import swallow_logs

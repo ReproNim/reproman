@@ -17,8 +17,6 @@ import shutil
 import sys
 import logging
 from mock import patch
-from six import PY3
-from six import text_type
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename
@@ -137,10 +135,9 @@ def test_setup_exceptionhook(interactive):
             except Exception as e:  # RuntimeError:
                 type_, value_, tb_ = sys.exc_info()
             our_exceptionhook(type_, value_, tb_)
-            if PY3:
-                # Happens under tox environment but not in manually crafted ones -- not yet sure
-                # what it is about but --dbg does work with python3 so lettting it skip for now
-                pytest.skip("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
+            # Happens under tox environment but not in manually crafted ones -- not yet sure
+            # what it is about but --dbg does work with python3 so lettting it skip for now
+            pytest.skip("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
             assert_in('Traceback (most recent call last)', cmo.err)
             assert_in('in test_setup_exceptionhook', cmo.err)
             if interactive:
@@ -409,9 +406,9 @@ def test_path_():
 
 
 def test_assure_unicode():
-    ok_(isinstance(assure_unicode("m"), text_type))
-    ok_(isinstance(assure_unicode('grandchild_äöü東'), text_type))
-    ok_(isinstance(assure_unicode(u'grandchild_äöü東'), text_type))
+    ok_(isinstance(assure_unicode("m"), str))
+    ok_(isinstance(assure_unicode('grandchild_äöü東'), str))
+    ok_(isinstance(assure_unicode(u'grandchild_äöü東'), str))
     eq_(assure_unicode('grandchild_äöü東'), u'grandchild_äöü東')
     # now, non-utf8
     # Decoding could be deduced with high confidence when the string is
@@ -424,7 +421,7 @@ def test_assure_unicode():
     eq_(assure_unicode(mom_iso8859, confidence=0.5), u'mamá')
     # but when we mix, it does still guess something allowing to decode:
     mixedin = mom_koi8r + u'東'.encode('iso2022_jp') + u'東'.encode('utf-8')
-    ok_(isinstance(assure_unicode(mixedin), text_type))
+    ok_(isinstance(assure_unicode(mixedin), str))
     # but should fail if we request high confidence result:
     with assert_raises(ValueError):
         assure_unicode(mixedin, confidence=0.9)

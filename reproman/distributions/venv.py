@@ -14,7 +14,6 @@ import os.path as op
 
 import attr
 
-from six import iteritems
 from reproman.distributions import Distribution
 from reproman.distributions import piputils
 from reproman.dochelpers import borrowdoc
@@ -161,11 +160,16 @@ class VenvTracer(DistributionTracer):
             # system wide installation of python
             for path in unknown_files.copy():
                 if is_subpath(path, venv_path) and op.islink(path):
-                    unknown_files.add(op.realpath(path))
+                    rpath = op.realpath(path)
+                    # ... but the resolved link may point to another path under
+                    # the environment (e.g., bin/python -> bin/python3), and we
+                    # don't want to pass that back out as unknown.
+                    if not is_subpath(rpath, venv_path):
+                        unknown_files.add(rpath)
                     unknown_files.remove(path)
 
             packages = []
-            for name, details in iteritems(package_details):
+            for name, details in package_details.items():
                 location = details["location"]
                 packages.append(
                     VenvPackage(name=details["name"],

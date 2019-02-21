@@ -27,6 +27,8 @@ internals and/or contributing to the project.
 
 # Installation
 
+ReproMan requires Python 3 (>= 3.4).
+
 ## Debian-based systems
 
 On Debian-based systems we recommend to enable [NeuroDebian](http://neuro.debian.net)

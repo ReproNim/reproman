@@ -10,7 +10,7 @@
 
 import attr
 import os
-from six.moves import shlex_quote
+from shlex import quote as shlex_quote
 
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
