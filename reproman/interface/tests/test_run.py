@@ -43,12 +43,16 @@ def test_run_no_resource():
     assert "No resource" in str(exc)
 
 
-def test_run_list():
+@pytest.mark.parametrize("arg,expected",
+                         [("", ["local", "plain", "message"]),
+                          ("submitters", ["local"]),
+                          ("orchestrators", ["plain"]),
+                          ("parameters", ["message"])])
+def test_run_list(arg, expected):
     with swallow_outputs() as output:
-        run(list_=True)
-        assert "local" in output.out
-        assert "plain" in output.out
-        assert "message" in output.out
+        run(list_=arg)
+        for e in expected:
+            assert e in output.out
 
 
 # Tests that require `context`.

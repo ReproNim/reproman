@@ -105,9 +105,9 @@ class Run(Interface):
         list_=Parameter(
             args=("--list",),
             dest="list_",
-            action="store_true",
-            doc="""Show available submitters, orchestrators, and job parameters
-            instead of running a command."""),
+            choices=('submitters', 'orchestrators', 'parameters', ''),
+            doc="""Show available submitters, orchestrators, or job parameters.
+            If an empty string is given, show all."""),
         submitter=Parameter(
             args=("--submitter", "--sub"),
             metavar="NAME",
@@ -176,11 +176,11 @@ class Run(Interface):
     @staticmethod
     def __call__(command=None, message=None,
                  resref=None, resref_type="auto",
-                 list_=False, submitter=None, orchestrator=None,
+                 list_=None, submitter=None, orchestrator=None,
                  job_specs=None, job_parameters=None,
                  inputs=None, outputs=None,
                  follow=False):
-        if list_:
+        if list_ is not None:
             wrapper = textwrap.TextWrapper(
                 initial_indent="    ",
                 subsequent_indent="    ")
@@ -194,11 +194,17 @@ class Run(Interface):
                 return ["  {}\n{}".format(k, get_doc(v))
                         for k, v in d.items()]
 
-            print("\n".join(["Submitters"] + fmt(SUBMITTERS) +
-                            [""] +
-                            ["Orchestrators"] + fmt(ORCHESTRATORS) +
-                            [""] +
-                            ["Job parameters"] + fmt(JOB_PARAMETERS)))
+            categories = [
+                ("submitters", ["Submitters"] + fmt(SUBMITTERS)),
+                ("orchestrators", ["Orchestrator"] + fmt(ORCHESTRATORS)),
+                ("parameters", ["Job parameters"] + fmt(JOB_PARAMETERS)),
+            ]
+            items = []
+            for c, lines in categories:
+                if not list_ or c == list_:
+                    items.extend(lines)
+                    items.append("")
+            print("\n".join(items))
             return
 
         # TODO: globbing for inputs/outputs and command string formatting is
