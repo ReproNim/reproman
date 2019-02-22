@@ -15,7 +15,7 @@ matrix:
   - python: 3.5
     env:
     - REPROMAN_TESTS_SSH=1
-  - python: 3.5
+  - python: 3.4
     env:
     - REPROMAN_TESTS_SSH=1
     - REPROMAN_TESTS_DEPS=core
@@ -36,7 +36,6 @@ matrix:
     # must operate nicely with those env variables set
     - http_proxy=
     - https_proxy=
-  - python: 3.4
   # Those aren't yet ready since lxml Ibelieve fails to install
   #- python: pypy
   #- python: pypy3
