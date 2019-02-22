@@ -171,7 +171,6 @@ def test_engine_exits():
     assert not DockerContainer.is_engine_running(base_url='foo')
 
 
-@mark.skipif_no_docker_engine
 def test_container_exists(setup_ubuntu):
     assert DockerContainer.is_container_running(setup_ubuntu['name'])
     assert not DockerContainer.is_container_running('foo')
