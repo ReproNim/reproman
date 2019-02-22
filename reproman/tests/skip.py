@@ -60,6 +60,10 @@ def no_apt_cache():
             not external_versions["cmd:apt-cache"])
 
 
+def no_aws_dependencies():
+    return "boto3 not installed", not external_versions["boto3"]
+
+
 def no_docker_engine():
     return ("No Docker",
             not DockerContainer.is_engine_running())
@@ -95,6 +99,7 @@ def on_windows():
 
 CONDITION_FNS = [
     no_apt_cache,
+    no_aws_dependencies,
     no_docker_engine,
     no_network,
     no_singularity,
