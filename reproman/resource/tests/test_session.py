@@ -19,8 +19,8 @@ from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ...utils import chpwd, swallow_logs
 from ...tests.skip import mark
-from ...tests.skip import skipif
 from ...tests.fixtures import get_docker_fixture
+from ...tests.fixtures import get_singularity_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
 
@@ -39,18 +39,7 @@ testing_container = get_docker_fixture(
 )
 
 
-@pytest.fixture(scope="module")
-def singularity_resource():
-    skipif.no_network()
-    skipif.no_singularity()
-    from reproman.resource.singularity import Singularity
-    # Initialize Singularity test container.
-    name = str(uuid.uuid4().hex)[:11]
-    resource = Singularity(name=name, image='docker://python:2.7')
-    resource.connect()
-    list(resource.create())
-    yield resource
-    resource.delete()
+singularity_resource = get_singularity_fixture()
 
 
 @pytest.fixture(scope="module")
