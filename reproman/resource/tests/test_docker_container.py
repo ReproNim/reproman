@@ -16,7 +16,6 @@ from ...tests.skip import mark
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
 from ...consts import TEST_SSH_DOCKER_DIGEST
-from ..docker_container import DockerContainer
 
 from reproman.tests.fixtures import get_docker_fixture
 
@@ -168,10 +167,12 @@ def test_setup_ubuntu(setup_ubuntu):
 
 @mark.skipif_no_docker_engine
 def test_engine_exits():
+    from ..docker_container import DockerContainer
     assert DockerContainer.is_engine_running()
     assert not DockerContainer.is_engine_running(base_url='foo')
 
 
 def test_container_exists(setup_ubuntu):
+    from ..docker_container import DockerContainer
     assert DockerContainer.is_container_running(setup_ubuntu['name'])
     assert not DockerContainer.is_container_running('foo')
