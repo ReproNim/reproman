@@ -11,8 +11,11 @@ from mock import patch, call, MagicMock
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
+from ...tests.skip import mark
 from ..base import ResourceManager
 from ..ssh import SSH
+
+pytestmark = mark.skipif_no_aws_dependencies
 
 
 def test_awsec2_class():
