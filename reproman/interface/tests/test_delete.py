@@ -13,6 +13,7 @@ from mock import patch, call, MagicMock
 
 from ...resource.base import ResourceManager
 from ...utils import swallow_logs
+from ...tests.skip import mark
 from ...tests.utils import assert_in
 
 
@@ -55,6 +56,7 @@ def mock_docker_client():
     return mock
 
 
+@mark.skipif_no_docker_dependencies
 def test_delete_interface():
     """
     Test deleting a resource.

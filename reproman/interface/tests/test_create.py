@@ -16,12 +16,14 @@ from reproman.api import create
 from reproman.cmdline.main import main
 from reproman.utils import swallow_logs
 from reproman.resource.base import ResourceManager
+from reproman.tests.skip import mark
 from reproman.tests.utils import assert_in
 from reproman.support.exceptions import ResourceError
 
 from ..create import parse_backend_parameters
 
 
+@mark.skipif_no_docker_dependencies
 def test_create_interface():
     """
     Test creating an environment

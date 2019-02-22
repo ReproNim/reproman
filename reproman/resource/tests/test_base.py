@@ -18,6 +18,7 @@ from reproman.support.exceptions import MissingConfigError
 from reproman.support.exceptions import MultipleResourceMatches
 from reproman.support.exceptions import ResourceAlreadyExistsError
 from reproman.support.exceptions import ResourceError
+from reproman.tests.skip import mark
 
 
 def test_resource_manager_factory_missing_type():
@@ -38,6 +39,7 @@ def test_backend_check_parameters_no_known():
     assert "no known parameters" in str(exc.value)
 
 
+@mark.skipif_no_docker_dependencies
 def test_backend_check_parameters_nowhere_close():
     with pytest.raises(ResourceError) as exc:
         backend_check_parameters(DockerContainer,
@@ -46,6 +48,7 @@ def test_backend_check_parameters_nowhere_close():
     assert "Known backend parameters" in str(exc.value)
 
 
+@mark.skipif_no_docker_dependencies
 def test_backend_check_parameters_close_match():
     with pytest.raises(ResourceError) as exc:
         backend_check_parameters(DockerContainer,
@@ -54,6 +57,7 @@ def test_backend_check_parameters_close_match():
     assert "Did you mean?" in str(exc.value)
 
 
+@mark.skipif_no_docker_dependencies
 def test_backend_check_parameters_missing_required():
     with pytest.raises(ResourceError) as exc:
         backend_check_parameters(DockerContainer, {"imagee": "value"})

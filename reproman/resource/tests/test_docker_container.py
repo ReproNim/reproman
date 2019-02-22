@@ -30,6 +30,7 @@ setup_ubuntu = get_docker_fixture(
 )
 
 
+@mark.skipif_no_docker_dependencies
 def test_dockercontainer_class():
 
     with patch('docker.Client') as client, \

@@ -7,8 +7,9 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import docker
 import pytest
+
+docker = pytest.importorskip("docker")
 
 from ...distributions.docker import DockerDistribution
 from ...distributions.docker import DockerImage
