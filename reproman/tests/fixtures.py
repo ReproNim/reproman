@@ -65,7 +65,7 @@ def get_docker_fixture(image, portmaps={}, name=None,
 
         on teardown, this fixture stops the docker container it started
         """
-
+        skipif.no_docker_engine()
         skipif.no_network()
         args = ['docker',
                 'run',
