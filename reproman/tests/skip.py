@@ -45,7 +45,6 @@ import os
 
 import pytest
 
-from reproman.resource.docker_container import DockerContainer
 from reproman.support.external_versions import external_versions
 from reproman.utils import on_windows as _on_windows
 
@@ -64,9 +63,25 @@ def no_aws_dependencies():
     return "boto3 not installed", not external_versions["boto3"]
 
 
+def no_docker_dependencies():
+    missing_deps = []
+    for dep in "docker", "dockerpty":
+        if dep not in external_versions:
+            missing_deps.append(dep)
+    msg = "missing dependencies: {}".format(", ".join(missing_deps))
+    return msg, missing_deps
+
+
 def no_docker_engine():
-    return ("No Docker",
-            not DockerContainer.is_engine_running())
+    def is_engine_running():
+        from reproman.resource.docker_container import DockerContainer
+        return DockerContainer.is_engine_running()
+
+    # DockerContainer depends on docker.
+    msg, missing_deps = no_docker_dependencies()
+    if missing_deps:
+        return msg, missing_deps
+    return "docker engine not running", not is_engine_running()
 
 
 def no_network():
@@ -100,6 +115,7 @@ def on_windows():
 CONDITION_FNS = [
     no_apt_cache,
     no_aws_dependencies,
+    no_docker_dependencies,
     no_docker_engine,
     no_network,
     no_singularity,
