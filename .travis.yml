@@ -16,6 +16,10 @@ matrix:
     env:
     - REPROMAN_TESTS_SSH=1
   - python: 3.5
+    env:
+    - REPROMAN_TESTS_SSH=1
+    - REPROMAN_TESTS_DEPS=core
+  - python: 3.5
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
     - REPROMAN_LOGLEVEL=INFO
@@ -40,9 +44,12 @@ matrix:
 # - python: nightly
 
 env:
-  # to overcome problem with system-wide installed boto on travis
-  # see https://github.com/travis-ci/travis-ci/issues/5246
-  - BOTO_CONFIG=/tmp/nowhere
+  global:
+    - REPROMAN_TESTS_DEPS=full
+  matrix:
+    # to overcome problem with system-wide installed boto on travis
+    # see https://github.com/travis-ci/travis-ci/issues/5246
+    - BOTO_CONFIG=/tmp/nowhere
 
 before_install:
   # we do not need anything from those APT sources, and they often fail, disable!
@@ -59,7 +66,12 @@ install:
   - pip install --upgrade pip
   # needed by html5lib
   - pip install --upgrade 'setuptools>=18.5'
-  - pip install -r requirements-devel.txt
+  - pip install -e .[$REPROMAN_TESTS_DEPS]
+  # The above could have been a core dependencies install, so make
+  # sure we have the other devel dependencies we need.
+  - pip install -e .[tests]
+  - pip install -e .[devel-docs]
+  - pip install -e .[devel-utils]
   # So we could test under sudo -E with PATH pointing to installed location
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
   # for SVN tests (SVNRepoShim._ls_files_command())
