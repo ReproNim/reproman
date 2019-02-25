@@ -132,7 +132,7 @@ class Retrace(Interface):
         RepromanProvenance.write(stream, spec)
         if stream is not sys.stdout:
             stream.close()
-
+        return distributions, files
 
 # TODO: session should be with a state.  Idea is that if we want
 #  to trace while inheriting all custom PATHs which that run might have
