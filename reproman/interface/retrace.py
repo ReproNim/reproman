@@ -25,6 +25,7 @@ from ..support.constraints import EnsureStr
 from ..support.exceptions import InsufficientArgumentsError
 from ..support.param import Parameter
 from ..utils import assure_list
+from ..utils import pycache_source
 from ..utils import to_unicode
 from ..resource import get_manager
 
@@ -98,6 +99,9 @@ class Retrace(Interface):
 
         # Convert paths to unicode
         paths = map(to_unicode, paths)
+        # If .pyc files come in (common for ReprozipProvenance), the tracers
+        # don't recognize them.
+        paths = (pycache_source(p) or p for p in paths)
         # The tracers assume normalized paths.
         paths = list(map(normpath, paths))
 

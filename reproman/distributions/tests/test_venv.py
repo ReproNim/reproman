@@ -155,6 +155,29 @@ def test_venv_install(venv_test_dir, tmpdir):
                     for p in e.packages])
 
 
+@pytest.mark.integration
+def test_venv_pyc(venv_test_dir, tmpdir):
+    from reproman.api import retrace
+    tmpdir = str(tmpdir)
+    venv_path = op.join("lib", PY_VERSION, "site-packages", "attr")
+    pyc_path = op.join(
+        venv_test_dir, "venv1", venv_path, "__pycache__",
+        "exceptions.cpython-{v.major}{v.minor}.pyc".format(v=sys.version_info))
+
+    if not op.exists(pyc_path):
+        pytest.skip("Expected file does not exist: {}".format(pyc_path))
+
+    distributions, unknown_files = retrace([pyc_path])
+    assert not unknown_files
+    assert len(distributions) == 1
+    expect = {"environments":
+              [{"packages": [{"files": [op.join(venv_path, "exceptions.py")],
+                              "name": "attrs",
+                              "editable": False}]}]}
+    assert_is_subset_recur(expect,
+                           attr.asdict(distributions[0]), [dict, list])
+
+
 def test_venv_install_noop():
     dist = VenvDistribution(
         name="venv",
