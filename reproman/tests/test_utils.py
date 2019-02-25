@@ -48,6 +48,7 @@ from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
 from ..utils import parse_semantic_version
 from ..utils import merge_dicts
+from ..utils import pycache_source
 
 from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -559,6 +560,19 @@ def test_merge_dicts():
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
     assert merge_dicts(iter([{1: 1}, {2: 2}, {1: 3}])) == {1: 3, 2: 2}
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [("/tmp/a/b/c/d.pyc", "/tmp/a/b/c/d.py"),
+     ("/tmp/a/b/c/__pycache__/d.cpython-35.pyc", "/tmp/a/b/c/d.py"),
+     ("d.pyc", "d.py"),
+     ("__pycache__/d.cpython-35.pyc", "d.py"),
+     ("not a pycache", None),
+     ("", None)],
+    ids=["full-py2", "full", "relative-py2", "relative", "not pyc", "empty"])
+def test_pycache_source(value, expected):
+    assert pycache_source(value) == expected
 
 
 def test_line_profile():

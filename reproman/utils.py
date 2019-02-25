@@ -14,6 +14,7 @@ import builtins
 from shlex import quote as shlex_quote
 import time
 
+import os.path as op
 from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
 from urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
 
@@ -1381,6 +1382,35 @@ def merge_dicts(ds):
     for d in ds:
         merged.update(d)
     return merged
+
+
+def pycache_source(path):
+    """Map a pycache path to the original path.
+
+    Parameters
+    ----------
+    path : str
+        A Python cache file.
+
+    Returns
+    -------
+    Path of cached Python file (str) or None if `path` doesn't look like a
+    cache file.
+    """
+    if not path.endswith(".pyc"):
+        lgr.debug("Path does not look like a pyc file: %s", path)
+        return
+
+    if "__pycache__" not in path:  # py2
+        pyfile = path[:-1]
+    else:
+        # It should be a py3-style path, e.g., "__pycache__/f.cpython-35.pyc".
+        leading, base = op.split(path)
+        name, *_ = base.rsplit(".", 2)
+        pyfile = op.join(leading[:-len("__pycache__")], name + ".py")
+    lgr.debug("Converted pycache file %s to source file %s",
+              path, pyfile)
+    return pyfile
 
 
 lgr.log(5, "Done importing reproman.utils")
