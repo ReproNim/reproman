@@ -27,7 +27,8 @@ def docker_container():
     skipif.no_docker_engine()
     name = str(uuid.uuid4())  # Generate a random name for the container.
     Runner().run(['docker', 'run', '-t', '-d', '--rm', '--name',
-        name, 'centos:7'])
+                  name, 'centos:7'],
+                 expect_stderr=True)
     yield name
     Runner().run(['docker', 'stop', name])
 

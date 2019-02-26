@@ -85,7 +85,7 @@ def get_docker_fixture(image, portmaps={}, name=None,
                 args += ['-p', '%d:%d' % from_to]
                 params['port'] = from_to[0]
         args += [image]
-        stdout, _ = Runner().run(args)
+        stdout, _ = Runner().run(args, expect_stderr=True)
         params['container_id'] = container_id = stdout.strip( )
         params['custom'] = custom_params
         yield params
