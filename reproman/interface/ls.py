@@ -11,6 +11,8 @@
 
 __docformat__ = 'restructuredtext'
 
+from collections import OrderedDict
+
 from .base import Interface
 # import reproman.interface.base  # Needed for test patching
 from ..support.param import Parameter
@@ -52,6 +54,7 @@ class Ls(Interface):
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 
+        results = OrderedDict()
         manager = get_manager()
         for name in sorted(manager):
             if name.startswith('_'):
@@ -74,16 +77,18 @@ class Ls(Interface):
 
                 manager.inventory[name].update({'status': resource.status})
 
+            id_ = manager.inventory[name]['id']
             msgargs = (
                 name,
                 resource.type,
-                manager.inventory[name]['id'][:id_length],
+                id_[:id_length],
                 resource.status,
             )
             ui.message(template.format(*msgargs))
-            lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
+            results[id_] = msgargs
 
         if refresh:
             manager.save_inventory()
         else:
             ui.message('Use --refresh option to view updated status.')
+        return results
