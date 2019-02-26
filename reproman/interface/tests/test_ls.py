@@ -7,13 +7,17 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import contextlib
 from mock import patch
+
+import pytest
 
 from ...api import ls
 from ...resource.base import ResourceManager
 
 
-def mock_get_manager():
+@pytest.fixture(scope="function")
+def resource_manager():
     manager = ResourceManager()
     manager.inventory = {
         'docker-resource-1': {
@@ -48,21 +52,31 @@ def mock_get_manager():
     return manager
 
 
-def test_ls_interface():
+@pytest.fixture(scope="function")
+def ls_fn(resource_manager):
+
+    def fn(*args, **kwargs):
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch("docker.Client"))
+            stack.enter_context(patch("reproman.interface.ls.get_manager",
+                                      return_value=resource_manager))
+            return ls(*args, **kwargs)
+    return fn
+
+
+def test_ls_interface(ls_fn):
     """
     Test listing the resources.
     """
-    with patch('docker.Client'), \
-            patch('reproman.interface.ls.get_manager', new=mock_get_manager):
-        results = ls()
-        assert "running" in results["326b0fdfbf838"]
-        assert "docker-container" in results["326b0fdfbf838"]
-        assert "i-22221ddf096c22bb0" in results
-        assert "stopped" in results["i-3333f40de2b9b8967"]
-        assert "aws-ec2" in results["i-3333f40de2b9b8967"]
+    results = ls_fn()
+    assert "running" in results["326b0fdfbf838"]
+    assert "docker-container" in results["326b0fdfbf838"]
+    assert "i-22221ddf096c22bb0" in results
+    assert "stopped" in results["i-3333f40de2b9b8967"]
+    assert "aws-ec2" in results["i-3333f40de2b9b8967"]
 
-        # Test --refresh output
-        results = ls(refresh=True)
-        assert "NOT FOUND" in results["326b0fdfbf838"]
-        assert "CONNECTION ERROR" in results["i-22221ddf096c22bb0"]
-        assert "CONNECTION ERROR" in results["i-3333f40de2b9b8967"]
+    # Test --refresh output
+    results = ls_fn(refresh=True)
+    assert "NOT FOUND" in results["326b0fdfbf838"]
+    assert "CONNECTION ERROR" in results["i-22221ddf096c22bb0"]
+    assert "CONNECTION ERROR" in results["i-3333f40de2b9b8967"]
