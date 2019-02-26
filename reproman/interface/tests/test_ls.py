@@ -7,17 +7,17 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import contextlib
 from mock import patch
 
+import pytest
+
+from ...api import ls
 from ...resource.base import ResourceManager
-from ...cmdline.main import main
-from ...utils import swallow_logs
-from ...tests.utils import assert_in
-
-import logging
 
 
-def mock_get_manager():
+@pytest.fixture(scope="function")
+def resource_manager():
     manager = ResourceManager()
     manager.inventory = {
         'docker-resource-1': {
@@ -52,22 +52,38 @@ def mock_get_manager():
     return manager
 
 
-def test_ls_interface():
+@pytest.fixture(scope="function")
+def ls_fn(resource_manager):
+
+    def fn(*args, **kwargs):
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch("docker.Client"))
+            stack.enter_context(patch("reproman.interface.ls.get_manager",
+                                      return_value=resource_manager))
+            return ls(*args, **kwargs)
+    return fn
+
+
+def test_ls_interface(ls_fn):
     """
     Test listing the resources.
     """
+    results = ls_fn()
+    assert "running" in results["326b0fdfbf838"]
+    assert "docker-container" in results["326b0fdfbf838"]
+    assert "i-22221ddf096c22bb0" in results
+    assert "stopped" in results["i-3333f40de2b9b8967"]
+    assert "aws-ec2" in results["i-3333f40de2b9b8967"]
 
-    with patch('docker.Client'), \
-            patch('reproman.interface.ls.get_manager', new=mock_get_manager), \
-            swallow_logs(new_level=logging.DEBUG) as log:
+    # Test --refresh output
+    results = ls_fn(refresh=True)
+    assert "NOT FOUND" in results["326b0fdfbf838"]
+    assert "CONNECTION ERROR" in results["i-22221ddf096c22bb0"]
+    assert "CONNECTION ERROR" in results["i-3333f40de2b9b8967"]
 
-        main(['ls'])
-        assert_in('list result: docker-resource-1, docker-container, 326b0fdfbf838, running', log.lines)
-        assert_in('list result: ec2-resource-1, aws-ec2, i-22221ddf096c22bb0, running', log.lines)
-        assert_in('list result: ec2-resource-2, aws-ec2, i-3333f40de2b9b8967, stopped', log.lines)
 
-        # Test --refresh output
-        main(['ls', '--refresh'])
-        assert_in('list result: docker-resource-1, docker-container, 326b0fdfbf838, NOT FOUND', log.lines)
-        assert_in('list result: ec2-resource-1, aws-ec2, i-22221ddf096c22bb0, CONNECTION ERROR', log.lines)
-        assert_in('list result: ec2-resource-2, aws-ec2, i-3333f40de2b9b8967, CONNECTION ERROR', log.lines)
+def test_ls_interface_limited(ls_fn):
+    results = ls_fn(resrefs=["326", "i-33"])
+    assert "326b0fdfbf838" in results
+    assert "i-22221ddf096c22bb0" not in results
+    assert "i-3333f40de2b9b8967" in results

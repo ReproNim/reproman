@@ -11,6 +11,8 @@
 
 __docformat__ = 'restructuredtext'
 
+from collections import OrderedDict
+
 from .base import Interface
 # import reproman.interface.base  # Needed for test patching
 from ..support.param import Parameter
@@ -43,24 +45,34 @@ class Ls(Interface):
             action="store_true",
             doc="Refresh the status of the resources listed",
         ),
+        resrefs=Parameter(
+            args=("resrefs",),
+            metavar="RESOURCE",
+            nargs="*",
+            doc="Restrict the output to this resource name or ID"
+        ),
     )
 
     @staticmethod
-    def __call__(verbose=False, refresh=False):
+    def __call__(resrefs=None, verbose=False, refresh=False):
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {!s:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
         ui.message(template.format('-------------', '----', '--', '------'))
 
+        results = OrderedDict()
         manager = get_manager()
-        for name in sorted(manager):
-            if name.startswith('_'):
-                continue
+        if not resrefs:
+            resrefs = (manager.inventory[n]["id"] for n in sorted(manager)
+                       if not n.startswith("_"))
 
+        for resref in resrefs:
             try:
-                resource = manager.get_resource(manager.inventory[name]['id'])
+                resource = manager.get_resource(resref)
+                name = resource.name
             except ResourceError as e:
-                lgr.warning("Manager did not return a resource for %s: %s", name, exc_str(e))
+                lgr.warning("Manager did not return a resource for %s: %s",
+                            resref, exc_str(e))
                 continue
 
             if refresh:
@@ -74,16 +86,18 @@ class Ls(Interface):
 
                 manager.inventory[name].update({'status': resource.status})
 
+            id_ = manager.inventory[name]['id']
             msgargs = (
                 name,
                 resource.type,
-                manager.inventory[name]['id'][:id_length],
+                id_[:id_length],
                 resource.status,
             )
             ui.message(template.format(*msgargs))
-            lgr.debug('list result: {}, {}, {}, {}'.format(*msgargs))
+            results[id_] = msgargs
 
         if refresh:
             manager.save_inventory()
         else:
             ui.message('Use --refresh option to view updated status.')
+        return results
