@@ -255,11 +255,6 @@ class ResourceManager(object):
     def _get_inventory(self):
         """Return a dict with the config information for all resources.
 
-        Parameters
-        ----------
-        inventory_path : string
-            Path to the inventory file which is declared in the reproman.cfg file.
-
         Returns
         -------
         inventory : dict
