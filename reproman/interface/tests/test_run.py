@@ -8,6 +8,7 @@
 """Tests for run and jobs interfaces.
 """
 
+import contextlib
 import logging
 from unittest.mock import patch
 import os
@@ -80,19 +81,17 @@ def context(tmpdir, resource_manager, job_registry):
     """
     path = str(tmpdir)
 
-    # TODO: Use contextlib.ExitStack() for these nested with's once we drop py2
-    # support.
-
     def run_fn(*args, **kwargs):
-        with chpwd(path):
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(chpwd(path))
             # Patch home to avoid populating testing machine with jobs when
             # using local shell.
-            with patch.dict(os.environ, {"HOME": path}):
-                with patch("reproman.interface.run.get_manager",
-                           return_value=resource_manager):
-                    with patch("reproman.interface.run.LocalRegistry",
-                               job_registry):
-                        return run(*args, **kwargs)
+            stack.enter_context(patch.dict(os.environ, {"HOME": path}))
+            stack.enter_context(patch("reproman.interface.run.get_manager",
+                                      return_value=resource_manager))
+            stack.enter_context(patch("reproman.interface.run.LocalRegistry",
+                                      job_registry))
+            return run(*args, **kwargs)
 
     registry = job_registry()
 
