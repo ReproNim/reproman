@@ -45,10 +45,16 @@ class Ls(Interface):
             action="store_true",
             doc="Refresh the status of the resources listed",
         ),
+        resrefs=Parameter(
+            args=("resrefs",),
+            metavar="RESOURCE",
+            nargs="*",
+            doc="Restrict the output to this resource name or ID"
+        ),
     )
 
     @staticmethod
-    def __call__(verbose=False, refresh=False):
+    def __call__(resrefs=None, verbose=False, refresh=False):
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {!s:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
@@ -56,14 +62,17 @@ class Ls(Interface):
 
         results = OrderedDict()
         manager = get_manager()
-        for name in sorted(manager):
-            if name.startswith('_'):
-                continue
+        if not resrefs:
+            resrefs = (manager.inventory[n]["id"] for n in sorted(manager)
+                       if not n.startswith("_"))
 
+        for resref in resrefs:
             try:
-                resource = manager.get_resource(manager.inventory[name]['id'])
+                resource = manager.get_resource(resref)
+                name = resource.name
             except ResourceError as e:
-                lgr.warning("Manager did not return a resource for %s: %s", name, exc_str(e))
+                lgr.warning("Manager did not return a resource for %s: %s",
+                            resref, exc_str(e))
                 continue
 
             if refresh:

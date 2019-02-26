@@ -80,3 +80,10 @@ def test_ls_interface(ls_fn):
     assert "NOT FOUND" in results["326b0fdfbf838"]
     assert "CONNECTION ERROR" in results["i-22221ddf096c22bb0"]
     assert "CONNECTION ERROR" in results["i-3333f40de2b9b8967"]
+
+
+def test_ls_interface_limited(ls_fn):
+    results = ls_fn(resrefs=["326", "i-33"])
+    assert "326b0fdfbf838" in results
+    assert "i-22221ddf096c22bb0" not in results
+    assert "i-3333f40de2b9b8967" in results
