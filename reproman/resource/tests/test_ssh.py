@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -96,7 +95,7 @@ def test_ssh_class(setup_ssh, resource_test_dir):
 
         file_contents = session.read('remote_test_ssh.py')
         file_contents = file_contents.splitlines()
-        assert file_contents[8] == '# Test string to read'
+        assert file_contents[7] == '# Test string to read'
 
         path = '/tmp/{}'.format(str(uuid.uuid4()))
         assert session.isdir(path) is False
