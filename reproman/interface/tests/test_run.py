@@ -18,6 +18,7 @@ import pytest
 
 from reproman.api import jobs
 from reproman.api import run
+from reproman.interface.run import _combine_job_specs
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
 from reproman.utils import swallow_outputs
@@ -53,6 +54,23 @@ def test_run_list(arg, expected):
         run(list_=arg)
         for e in expected:
             assert e in output.out
+
+
+@pytest.mark.parametrize(
+    "specs,expected",
+    [([], {}),
+     ([{"a": "a"}, {"b": "b"}],
+      {"a": "a", "b": "b"}),
+     ([{"a": "a"}, {"a": "A", "b": "b"}],
+      {"a": "A", "b": "b"}),
+     ([{"a": {"aa": "aa"}}, {"a": "A", "b": "b"}],
+      {"a": "A", "b": "b"}),
+     ([{"a": {"aa": "aa"}}, {"a": {"aa": "AA"}, "b": "b"}],
+      {"a": {"aa": "AA"}, "b": "b"})],
+    ids=["empty", "exclusive", "simple-update",
+         "mapping-to-atom", "atom-to-mapping"])
+def test_combine_specs(specs, expected):
+    assert _combine_job_specs(specs) == expected
 
 
 # Tests that require `context`.
