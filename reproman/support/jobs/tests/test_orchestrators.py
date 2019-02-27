@@ -9,7 +9,7 @@
 
 import os.path as op
 
-from mock import patch
+from unittest.mock import patch
 import pytest
 
 from reproman.utils import chpwd
