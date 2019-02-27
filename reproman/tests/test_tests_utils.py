@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -24,7 +24,7 @@ from os.path import exists, basename
 
 from urllib.request import urlopen
 
-from mock import patch
+from unittest.mock import patch
 from .utils import assert_in, assert_not_in, assert_true
 import pytest
 

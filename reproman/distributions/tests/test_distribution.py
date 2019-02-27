@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -10,7 +9,7 @@
 from ...formats import Provenance
 
 import logging
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from reproman.utils import swallow_logs
 from reproman.utils import items_to_dict

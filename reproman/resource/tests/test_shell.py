@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -13,7 +12,7 @@ import pytest
 import re
 import tempfile
 from pytest import raises
-from mock import patch, call
+from unittest.mock import patch, call
 
 from ...utils import merge_dicts
 from ...utils import swallow_logs

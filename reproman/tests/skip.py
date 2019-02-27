@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -47,10 +46,9 @@ import os
 import pytest
 
 from reproman.cmd import Runner
-from reproman.resource.docker_container import DockerContainer
 from reproman.support.exceptions import CommandError
 from reproman.support.external_versions import external_versions
-from reproman.utils import on_windows
+from reproman.utils import on_windows as _on_windows
 
 # Condition functions
 #
@@ -61,6 +59,10 @@ from reproman.utils import on_windows
 def no_apt_cache():
     return ("apt-cache not available",
             not external_versions["cmd:apt-cache"])
+
+
+def no_aws_dependencies():
+    return "boto3 not installed", not external_versions["boto3"]
 
 
 def no_condor():
@@ -80,9 +82,25 @@ def no_datalad():
             not external_versions["cmd:datalad"])
 
 
+def no_docker_dependencies():
+    missing_deps = []
+    for dep in "docker", "dockerpty":
+        if dep not in external_versions:
+            missing_deps.append(dep)
+    msg = "missing dependencies: {}".format(", ".join(missing_deps))
+    return msg, missing_deps
+
+
 def no_docker_engine():
-    return ("No Docker",
-            not DockerContainer.is_engine_running())
+    def is_engine_running():
+        from reproman.resource.docker_container import DockerContainer
+        return DockerContainer.is_engine_running()
+
+    # DockerContainer depends on docker.
+    msg, missing_deps = no_docker_dependencies()
+    if missing_deps:
+        return msg, missing_deps
+    return "docker engine not running", not is_engine_running()
 
 
 def no_network():
@@ -96,12 +114,12 @@ def no_singularity():
 
 
 def no_ssh():
-    if on_windows:
+    if _on_windows:
         reason = "no ssh on windows"
     else:
         reason = "no ssh (REPROMAN_TESTS_SSH unset)"
     return (reason,
-            on_windows or not os.environ.get('REPROMAN_TESTS_SSH'))
+            _on_windows or not os.environ.get('REPROMAN_TESTS_SSH'))
 
 
 def no_svn():
@@ -109,20 +127,22 @@ def no_svn():
             not external_versions["cmd:svn"])
 
 
-def windows():
-    return "on windows", on_windows
+def on_windows():
+    return "on windows", _on_windows
 
 
 CONDITION_FNS = [
     no_apt_cache,
+    no_aws_dependencies,
     no_condor,
     no_datalad,
+    no_docker_dependencies,
     no_docker_engine,
     no_network,
     no_singularity,
     no_ssh,
     no_svn,
-    windows,
+    on_windows,
 ]
 
 # Entry points: skipif and mark

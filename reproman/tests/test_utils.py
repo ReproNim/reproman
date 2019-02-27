@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,7 +15,7 @@ import pytest
 import shutil
 import sys
 import logging
-from mock import patch
+from unittest.mock import patch
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename
@@ -201,7 +200,7 @@ def test_getpwd_basic():
         assert_false(oschdir.called)
 
 
-@mark.skipif_windows
+@mark.skipif_on_windows
 @with_tempfile(mkdir=True)
 @assert_cwd_unchanged
 def test_getpwd_symlink(tdir=None):

@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -10,23 +9,25 @@
 
 import logging
 import pytest
-from mock import patch, call, MagicMock
+from unittest.mock import patch, call, MagicMock
 
 from reproman.api import create
 from reproman.cmdline.main import main
 from reproman.utils import swallow_logs
 from reproman.resource.base import ResourceManager
+from reproman.tests.skip import mark
 from reproman.tests.utils import assert_in
 from reproman.support.exceptions import ResourceError
 
 
+@mark.skipif_no_docker_dependencies
 def test_create_interface():
     """
     Test creating an environment
     """
 
     with patch('docker.Client') as client, \
-        patch('reproman.resource.ResourceManager._save'), \
+        patch('reproman.resource.ResourceManager.save_inventory'), \
         patch('reproman.resource.ResourceManager._get_inventory'), \
         swallow_logs(new_level=logging.DEBUG) as log:
 

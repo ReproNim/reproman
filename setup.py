@@ -46,7 +46,6 @@ requires = {
         'appdirs',
         'attrs>=16.3.0',
         'humanize',
-        'mock',  # mock is also used for auto.py, not only for testing
         'pyyaml',
         'tqdm',
         'fabric>=2.3.1',
@@ -80,7 +79,6 @@ requires = {
         'rdflib',
     ],
     'tests': [
-        'mock',
         'pytest>=3.3.0',
     ]
 }

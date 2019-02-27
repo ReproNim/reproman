@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -7,7 +6,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from mock import patch
+from unittest.mock import patch
 
 import pytest
 
@@ -35,7 +34,7 @@ def test_skipif_no_ssh():
             assert 0, "Test should not have been skipped"
 
         # We skip SSH on windows even when REPROMAN_TESTS_SSH is set.
-        with patch("reproman.tests.skip.on_windows", True):
+        with patch("reproman.tests.skip._on_windows", True):
             with pytest.raises(pytest.skip.Exception):
                 skipif.no_ssh()
 

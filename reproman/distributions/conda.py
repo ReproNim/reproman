@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 8; tab-width: 6; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #

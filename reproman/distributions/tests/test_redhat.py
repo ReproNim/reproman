@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -16,7 +16,6 @@ from ...distributions.redhat import RPMTracer
 from ...distributions.redhat import RPMPackage
 from ...distributions.redhat import RedhatDistribution
 from ...formats import Provenance
-from ...resource.docker_container import DockerContainer
 from ...tests.skip import skipif
 from ...utils import swallow_logs
 
@@ -27,7 +26,8 @@ def docker_container():
     skipif.no_docker_engine()
     name = str(uuid.uuid4())  # Generate a random name for the container.
     Runner().run(['docker', 'run', '-t', '-d', '--rm', '--name',
-        name, 'centos:7'])
+                  name, 'centos:7'],
+                 expect_stderr=True)
     yield name
     Runner().run(['docker', 'stop', name])
 
@@ -168,6 +168,7 @@ def test_distribution_sub(setup_packages):
 
 
 def test_tracer(docker_container):
+    from ...resource.docker_container import DockerContainer
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()
@@ -197,6 +198,7 @@ def test_tracer(docker_container):
 
 
 def test_distribution(docker_container, centos_spec):
+    from ...resource.docker_container import DockerContainer
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()

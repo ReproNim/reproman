@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -21,7 +21,7 @@ from reproman.distributions.debian import DebianDistribution
 
 import pytest
 
-import mock
+from unittest import mock
 
 from reproman.utils import swallow_logs
 from reproman.tests.skip import mark
