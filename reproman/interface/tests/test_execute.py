@@ -10,7 +10,7 @@ from reproman.cmdline.main import main
 
 import functools
 import uuid
-from mock import patch
+from unittest.mock import patch
 import os
 import os.path as op
 import pytest

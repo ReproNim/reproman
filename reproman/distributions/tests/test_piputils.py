@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import mock
+from unittest import mock
 
 from reproman.distributions import piputils
 from reproman.tests.utils import assert_is_subset_recur

@@ -9,7 +9,7 @@
 from ...formats import Provenance
 
 import logging
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from reproman.utils import swallow_logs
 from reproman.utils import items_to_dict

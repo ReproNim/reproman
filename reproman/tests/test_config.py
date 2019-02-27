@@ -6,7 +6,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from mock import patch
+from unittest.mock import patch
 from ..config import ConfigManager
 from .utils import ok_, eq_, assert_raises, assert_greater
 

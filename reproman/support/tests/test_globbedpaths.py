@@ -12,7 +12,7 @@
 __docformat__ = 'restructuredtext'
 
 import logging
-from mock import patch
+from unittest.mock import patch
 import os.path as op
 
 from reproman.utils import swallow_logs

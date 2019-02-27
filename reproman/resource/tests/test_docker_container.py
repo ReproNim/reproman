@@ -7,7 +7,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-from mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock, call
 
 from ...utils import merge_dicts
 from ...utils import swallow_logs

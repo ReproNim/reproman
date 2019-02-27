@@ -8,7 +8,8 @@
 """Test invocation of reproman utilities "as is installed"
 """
 
-from mock import patch
+from unittest.mock import patch
+
 import pytest
 from .utils import ok_startswith, eq_, \
     assert_cwd_unchanged

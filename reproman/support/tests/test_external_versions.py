@@ -24,7 +24,7 @@ from ...tests.utils import (
 )
 from ...utils import swallow_logs
 import pytest
-from mock import patch
+from unittest.mock import patch
 
 
 def cmp(a, b):

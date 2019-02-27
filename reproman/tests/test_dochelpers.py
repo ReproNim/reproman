@@ -8,7 +8,7 @@
 """Tests for dochelpers (largely copied from PyMVPA, the same copyright)
 """
 
-from mock import patch
+from unittest.mock import patch
 
 from ..dochelpers import single_or_plural, borrowdoc, borrowkwargs
 from ..dochelpers import exc_str

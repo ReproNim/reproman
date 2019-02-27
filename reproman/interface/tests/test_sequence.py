@@ -12,7 +12,7 @@ import os
 import os.path as op
 import pytest
 
-from mock import patch
+from unittest.mock import patch
 import yaml
 
 from reproman.cmdline.main import main

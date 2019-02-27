@@ -9,7 +9,7 @@
 from reproman.cmdline.main import main
 
 import logging
-from mock import patch, call, MagicMock
+from unittest.mock import patch, call, MagicMock
 
 from ...resource.base import ResourceManager
 from ...utils import swallow_logs

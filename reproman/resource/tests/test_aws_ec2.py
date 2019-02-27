@@ -7,7 +7,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-from mock import patch, call, MagicMock
+from unittest.mock import patch, call, MagicMock
 
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
