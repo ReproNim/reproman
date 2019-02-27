@@ -508,7 +508,9 @@ class FetchPlainMixin(object):
         for o in outputs:
             self.session.get(
                 o if op.isabs(o) else op.join(self.working_directory, o),
-                self.local_directory)
+                # Make sure directory has trailing slash so that get doesn't
+                # treat it as the file.
+                op.join(self.local_directory, ""))
 
 
 class FetchDataladPairMixin(object):

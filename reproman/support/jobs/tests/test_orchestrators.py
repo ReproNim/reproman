@@ -12,14 +12,29 @@ import os.path as op
 from unittest.mock import patch
 import pytest
 
+from reproman.consts import TEST_SSH_DOCKER_DIGEST
 from reproman.utils import chpwd
 from reproman.resource.shell import Shell
 from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
 from reproman.support.external_versions import external_versions
 from reproman.support.jobs import orchestrators as orcs
+from reproman.tests.fixtures import get_docker_fixture
 from reproman.tests.skip import mark
 from reproman.tests.utils import create_tree
+
+
+docker_container = get_docker_fixture(TEST_SSH_DOCKER_DIGEST,
+                                      name="testing-container", scope="module")
+
+
+@pytest.fixture(scope="module")
+def docker_resource(docker_container):
+    # TODO: This could be reworked to be included in fixtures.py. It is similar
+    # to get_singularity_fixture, which should probably be renamed to include
+    # "resource".
+    from reproman.resource.docker_container import DockerContainer
+    return DockerContainer("testing-container")
 
 
 @pytest.fixture(scope="module")
@@ -69,6 +84,10 @@ def check_orc_plain(tmpdir):
 
 def test_orc_plain_shell(check_orc_plain, shell, tmpdir):
     check_orc_plain(shell, str(tmpdir))
+
+
+def test_orc_plain_docker(check_orc_plain, docker_resource):
+    check_orc_plain(docker_resource, "/root/")
 
 
 @pytest.mark.skipif(external_versions["datalad"], reason="DataLad found")
