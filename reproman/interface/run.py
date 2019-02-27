@@ -96,9 +96,14 @@ JOB_PARAMETERS = collections.OrderedDict(
 
 class Run(Interface):
     """Run a command on the specified resource.
-    """
-    # TODO: Expand description.
 
+    Two main options control how the job is executed: the orchestator and the
+    submitter. The orchestrator that is selected controls details like how the
+    data is made available on the resource and how the results are fetched. The
+    submitter controls how the job is submitted on the resource (e.g., as a
+    condor job). Use --list to see information on the available orchestrators
+    and submitters.
+    """
     _params_ = dict(
         resref=resref_opt,
         resref_type=resref_type_opt,
