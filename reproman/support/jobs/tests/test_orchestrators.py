@@ -41,28 +41,34 @@ def test_orc_root_directory_error(shell, value):
             orc.root_directory
 
 
-def test_orc_plain(tmpdir, shell):
-    tmpdir = str(tmpdir)
+@pytest.fixture()
+def check_orc_plain(tmpdir):
+    local_dir = str(tmpdir)
 
-    job_spec = {"root_directory": op.join(tmpdir, "nm-run"),
-                "inputs": ["in"],
-                "outputs": ["out"],
-                "command_str": 'bash -c "cat in >out && echo more >>out"'}
-    local_dir = op.join(tmpdir, "local")
+    def fn(resource, remote_dir):
+        job_spec = {"root_directory": op.join(remote_dir, "nm-run"),
+                    "inputs": ["in"],
+                    "outputs": ["out"],
+                    "command_str": 'bash -c "cat in >out && echo more >>out"'}
 
-    create_tree(local_dir, {"in": "content\n"})
-    with chpwd(local_dir):
-        orc = orcs.PlainOrchestrator(shell, submission_type="local",
-                                     job_spec=job_spec)
-        orc.prepare_remote()
-        assert op.exists(op.join(orc.working_directory, "in"))
+        create_tree(local_dir, {"in": "content\n"})
+        with chpwd(local_dir):
+            orc = orcs.PlainOrchestrator(resource, submission_type="local",
+                                         job_spec=job_spec)
+            orc.prepare_remote()
+            assert orc.session.exists(op.join(orc.working_directory, "in"))
 
-        orc.submit()
-        orc.follow()
-        assert op.exists(op.join(orc.working_directory, "out"))
+            orc.submit()
+            orc.follow()
+            assert orc.session.exists(op.join(orc.working_directory, "out"))
 
-        orc.fetch()
-        assert open("out").read() == "content\nmore\n"
+            orc.fetch()
+            assert open("out").read() == "content\nmore\n"
+    return fn
+
+
+def test_orc_plain_shell(check_orc_plain, shell, tmpdir):
+    check_orc_plain(shell, str(tmpdir))
 
 
 @pytest.mark.skipif(external_versions["datalad"], reason="DataLad found")
