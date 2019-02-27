@@ -13,9 +13,11 @@ from mock import patch, call, MagicMock
 
 from reproman.utils import swallow_logs
 from reproman.resource.base import ResourceManager
+from reproman.tests.skip import mark
 from reproman.tests.utils import assert_in
 
 
+@mark.skipif_no_docker_dependencies
 def test_login_interface():
     """
     Test logging into an environment

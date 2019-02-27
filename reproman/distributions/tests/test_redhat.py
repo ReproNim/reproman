@@ -16,7 +16,6 @@ from ...distributions.redhat import RPMTracer
 from ...distributions.redhat import RPMPackage
 from ...distributions.redhat import RedhatDistribution
 from ...formats import Provenance
-from ...resource.docker_container import DockerContainer
 from ...tests.skip import skipif
 from ...utils import swallow_logs
 
@@ -169,6 +168,7 @@ def test_distribution_sub(setup_packages):
 
 
 def test_tracer(docker_container):
+    from ...resource.docker_container import DockerContainer
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()
@@ -198,6 +198,7 @@ def test_tracer(docker_container):
 
 
 def test_distribution(docker_container, centos_spec):
+    from ...resource.docker_container import DockerContainer
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()

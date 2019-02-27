@@ -13,6 +13,7 @@ import pytest
 
 from ...api import ls
 from ...resource.base import ResourceManager
+from ...tests.skip import skipif
 
 
 @pytest.fixture(scope="function")
@@ -53,8 +54,8 @@ def resource_manager():
 
 @pytest.fixture(scope="function")
 def ls_fn(resource_manager):
-
     def fn(*args, **kwargs):
+        skipif.no_docker_dependencies()
         with contextlib.ExitStack() as stack:
             stack.enter_context(patch("docker.Client"))
             stack.enter_context(patch("reproman.interface.ls.get_manager",
