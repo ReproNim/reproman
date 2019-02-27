@@ -118,7 +118,6 @@ class Run(Interface):
             metavar="NAME",
             doc=(JOB_PARAMETERS["orchestrator"] +
                  "[CMD:  Use --list to see available orchestrators CMD]")),
-        # TODO: Make it possible to list available parameters for --js and -b.
         job_specs=Parameter(
             args=("--job-spec", "--js"),
             dest="job_specs",
@@ -269,7 +268,6 @@ class Run(Interface):
         lreg = LocalRegistry()
         lreg.register(orc.jobid, orc.as_dict())
 
-        # TODO: Add support for querying/fetching without follow.
         if follow:
             orc.follow()
             orc.fetch()
