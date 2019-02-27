@@ -24,7 +24,7 @@ from os.path import exists, basename
 
 from urllib.request import urlopen
 
-from mock import patch
+from unittest.mock import patch
 from .utils import assert_in, assert_not_in, assert_true
 import pytest
 

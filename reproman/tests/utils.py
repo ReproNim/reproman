@@ -15,7 +15,7 @@ import tempfile
 import platform
 import multiprocessing
 import logging
-from mock import patch
+from unittest.mock import patch
 import pytest
 
 from http.server import SimpleHTTPRequestHandler

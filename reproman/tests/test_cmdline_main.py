@@ -10,7 +10,7 @@
 import re
 import sys
 from io import StringIO
-from mock import patch
+from unittest.mock import patch
 import pytest
 
 import reproman

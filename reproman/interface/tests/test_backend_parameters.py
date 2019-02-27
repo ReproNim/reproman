@@ -7,7 +7,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-import mock
+from unittest import mock
 from io import StringIO
 
 from reproman.api import backend_parameters

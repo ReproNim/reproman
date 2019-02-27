@@ -10,7 +10,7 @@ import os
 import pytest
 
 import sys
-from mock import mock
+from unittest import mock
 from subprocess import call
 
 import yaml

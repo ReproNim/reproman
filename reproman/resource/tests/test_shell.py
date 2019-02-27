@@ -12,7 +12,7 @@ import pytest
 import re
 import tempfile
 from pytest import raises
-from mock import patch, call
+from unittest.mock import patch, call
 
 from ...utils import merge_dicts
 from ...utils import swallow_logs

@@ -15,7 +15,7 @@ import pytest
 import shutil
 import sys
 import logging
-from mock import patch
+from unittest.mock import patch
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename

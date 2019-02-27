@@ -8,7 +8,7 @@
 """Test command call wrapper
 """
 
-from mock import patch
+from unittest.mock import patch
 import os
 import sys
 import logging

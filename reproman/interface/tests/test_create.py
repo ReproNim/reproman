@@ -10,7 +10,7 @@
 from collections import OrderedDict
 import logging
 import pytest
-from mock import patch, call, MagicMock
+from unittest.mock import patch, call, MagicMock
 
 from reproman.api import create
 from reproman.cmdline.main import main
