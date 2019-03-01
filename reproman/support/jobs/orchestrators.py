@@ -306,6 +306,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
             raise OrchestratorError("orchestrator {} requires a local dataset"
                                     .format(self.name))
 
+        self.head = self.job_spec.get("head") or self.ds.repo.get_hexsha()
         _datalad_check_container(self.ds, self.job_spec)
         _datalad_format_command(self.ds, self.job_spec)
 
@@ -330,6 +331,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     def as_dict(self):
         d = super(DataladOrchestrator, self).as_dict()
         d["dataset_id"] = self.ds.id
+        d["head"] = self.head
         return d
 
     @property
@@ -413,7 +415,7 @@ class PrepareRemoteDataladMixin(object):
                                     .format(self.working_directory))
 
     def _checkout_target(self):
-        target_commit = self.ds.repo.get_hexsha()
+        target_commit = self.head
         self._execute_in_wdir(
             "git rev-parse --verify {}^{{commit}}".format(target_commit),
             err_msg=("Target commit wasn't found in remote repository {}"
