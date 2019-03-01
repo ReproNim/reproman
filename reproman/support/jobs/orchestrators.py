@@ -485,6 +485,9 @@ class PrepareRemoteDataladMixin(object):
                 since = ""
 
             self.ds.publish(to=resource.name, since=since, recursive=True)
+
+            self._checkout_target()
+
             if inputs:
                 try:
                     # TODO: Whether we try this `get` should be configurable.
@@ -506,6 +509,8 @@ class PrepareRemoteDataladMixin(object):
                     "git push '{}' HEAD:refs/reproman/head"
                     .format(self.working_directory))
 
+            self._checkout_target()
+
             if inputs:
                 installed_ds = dl.Dataset(self.working_directory)
                 installed_ds.get(inputs)
@@ -513,8 +518,6 @@ class PrepareRemoteDataladMixin(object):
             # TODO: Handle more types?
             raise OrchestratorError("Unsupported resource type {}"
                                     .format(resource.type))
-
-        self._checkout_target()
 
         if not session.exists(self.meta_directory):
             session.mkdir(self.meta_directory, parents=True)
