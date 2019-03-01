@@ -332,6 +332,22 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         d["dataset_id"] = self.ds.id
         return d
 
+    @property
+    def status(self):
+        """Like Orchestrator.status, but inspect the job's git ref if needed.
+        """
+        status = super(DataladOrchestrator, self).status
+        if status == "unknown":
+            # The local tree might be different because of another just. Check
+            # the ref for the status.
+            status_from_ref = self._execute_in_wdir(
+                "git cat-file -p {}:{}"
+                .format(self.job_refname,
+                        op.relpath(op.join(self.meta_directory, "status"),
+                                   self.working_directory)))
+            status = status_from_ref.strip() or status
+        return status
+
 
 # Orchestrator method mixins
 
