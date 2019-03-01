@@ -321,6 +321,11 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     def local_directory(self):
         return self.ds.path
 
+    @property
+    @cached_property
+    def job_refname(self):
+        return "refs/reproman/{}".format(self.jobid)
+
     @borrowdoc(Orchestrator)
     def as_dict(self):
         d = super(DataladOrchestrator, self).as_dict()
@@ -532,7 +537,7 @@ class FetchDataladPairMixin(object):
             with chpwd(self.ds.path):
                 self.session.execute_command(
                     ["git", "fetch", self.working_directory,
-                     "refs/reproman/{0}:refs/reproman/{0}".format(self.jobid)])
+                     "{0}:{0}".format(self.job_refname)])
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
 
