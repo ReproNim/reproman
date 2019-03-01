@@ -482,9 +482,24 @@ class PrepareRemoteDataladMixin(object):
                                        recursive=True)
                 since = None  # Avoid since="" for non-existing repo.
             else:
-                since = ""
+                remote_branch = "{}/{}".format(
+                    resource.name,
+                    self.ds.repo.get_active_branch())
+                if self.ds.repo.commit_exists(remote_branch):
+                    since = ""
+                else:
+                    # If the remote branch doesn't exist yet, publish will fail
+                    # with since="".
+                    since = None
 
-            self.ds.publish(to=resource.name, since=since, recursive=True)
+            from datalad.support.exceptions import IncompleteResultsError
+            try:
+                self.ds.publish(to=resource.name, since=since, recursive=True)
+            except IncompleteResultsError:
+                raise OrchestratorError(
+                    "'datalad publish' failed. Try running "
+                    "'datalad update -s {} --merge --recursive' first"
+                    .format(resource.name))
 
             self._checkout_target()
 
