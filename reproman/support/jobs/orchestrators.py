@@ -623,24 +623,32 @@ class FetchDataladRunMixin(object):
             lgr.error("Expected output file %s does not exist", remote_tfile)
             return
 
-        with chpwd(self.ds.path):
-            self.session.get(remote_tfile)
-            with tarfile.open(tfile, mode="r:gz") as tar:
-                tar.extractall(path=".")
-            os.unlink(tfile)
-            # TODO: How to handle output cleanup on the remote?
+        with head_at(self.ds, self.head) as moved:
+            with chpwd(self.ds.path):
+                self.session.get(remote_tfile)
+                with tarfile.open(tfile, mode="r:gz") as tar:
+                    tar.extractall(path=".")
+                os.unlink(tfile)
+                # TODO: How to handle output cleanup on the remote?
 
-            from datalad.interface.run import run_command
-            lgr.info("Creating run commit in %s", self.ds.path)
-            for res in run_command(
-                    inputs=self.job_spec.get("inputs_unexpanded"),
-                    outputs=self.job_spec.get("outputs_unexpanded"),
-                    inject=True,
-                    extra_info={"reproman_jobid": self.jobid},
-                    message=self.job_spec.get("message"),
-                    cmd=self.job_spec["command_str_unexpanded"]):
-                # Oh, if only I were a datalad extension.
-                pass
+                from datalad.interface.run import run_command
+                lgr.info("Creating run commit in %s", self.ds.path)
+                for res in run_command(
+                        inputs=self.job_spec.get("inputs_unexpanded"),
+                        outputs=self.job_spec.get("outputs_unexpanded"),
+                        inject=True,
+                        extra_info={"reproman_jobid": self.jobid},
+                        message=self.job_spec.get("message"),
+                        cmd=self.job_spec["command_str_unexpanded"]):
+                    # Oh, if only I were a datalad extension.
+                    pass
+                ref = self.job_refname
+                if moved:
+                    lgr.info("Results stored on %s. "
+                             "Bring them into this branch with "
+                             "'git merge %s'",
+                             ref, ref)
+                self.ds.repo.update_ref(ref, "HEAD")
 
 
 # Concrete orchestrators

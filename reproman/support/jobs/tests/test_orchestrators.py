@@ -162,6 +162,69 @@ def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
 
 
 @pytest.mark.integration
+def test_orc_datalad_run_change_head(job_spec, dataset, shell):
+    create_tree(dataset.path, {"in": "content\n"})
+    dataset.add(".")
+
+    with chpwd(dataset.path):
+        orc = orcs.DataladLocalRunOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+
+        create_tree(dataset.path, {"sinceyouvebeengone":
+                                   "imsomovingon,yeahyeah"})
+        dataset.add(".")
+
+        orc.fetch()
+        ref = "refs/reproman/{}".format(orc.jobid)
+        assert not dataset.repo.is_ancestor(ref, "HEAD")
+
+        with orcs.head_at(dataset, ref):
+            assert dataset.repo.file_has_content("out")
+            assert open("out").read() == "content\nmore\n"
+
+
+@pytest.mark.integration
+def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
+    ds = dataset
+    create_tree(ds.path, {"in": "content\n"})
+    ds.add(".")
+
+    js0 = job_spec
+    js1 = dict(job_spec, command_str='bash -c "echo other >other"')
+    with chpwd(ds.path):
+        orc0, orc1 = [
+            orcs.DataladPairRunOrchestrator(shell, submission_type="local",
+                                            job_spec=js)
+            for js in [js0, js1]]
+
+        for orc in [orc0, orc1]:
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+
+        # The status for the first one is now out-of-tree ...
+        assert not op.exists(op.join(orc0.meta_directory, "status"))
+        # but we can still get it.
+        assert orc0.status == "succeeded"
+
+        orc0.fetch()
+        orc1.fetch()
+
+        ref0 = "refs/reproman/{}".format(orc0.jobid)
+        ref1 = "refs/reproman/{}".format(orc1.jobid)
+        assert not ds.repo.is_ancestor(ref0, ref1)
+        assert not ds.repo.is_ancestor(ref1, ref0)
+
+        # Both runs branched off of master. The first one fetched advanced it.
+        # The other one is a side-branch.
+        assert not ds.repo.is_ancestor(ref1, "HEAD")
+        assert ds.repo.get_hexsha(ref0) == ds.repo.get_hexsha("master")
+
+
+@pytest.mark.integration
 def test_orc_datalad_pair(job_spec, dataset, shell):
     create_tree(dataset.path, {"in": "content\n"})
     dataset.add(".")
