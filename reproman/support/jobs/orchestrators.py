@@ -436,6 +436,11 @@ class PrepareRemoteDataladMixin(object):
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
         """
+        if not self.ds.repo.get_active_branch():
+            # publish() fails when HEAD is detached.
+            raise OrchestratorError(
+                "You must be on a branch to use the {} orchestrator"
+                .format(self.name))
         if not self.session.exists(self.root_directory):
             self.session.mkdir(self.root_directory, parents=True)
 

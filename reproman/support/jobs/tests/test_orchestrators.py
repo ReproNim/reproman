@@ -242,6 +242,17 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
         assert dataset.repo.is_under_annex("out")
 
 
+@mark.skipif_no_datalad
+def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
+    dataset.repo.checkout("HEAD^{}")
+
+    with chpwd(dataset.path):
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        with pytest.raises(OrchestratorError):
+            orc.prepare_remote()
+
+
 def test_head_at_dirty(dataset):
     create_tree(dataset.path, {"dirt": ""})
     with pytest.raises(OrchestratorError):
