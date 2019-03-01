@@ -199,7 +199,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
     @property
     def status(self):
-        """Modify `submitter.status` with information from `status` file.
+        """Get information from job status file.
         """
         status_file = op.join(self.meta_directory, "status")
         status = "unknown"
