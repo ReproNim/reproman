@@ -11,6 +11,7 @@
 
 import abc
 import collections
+from contextlib import contextmanager
 import logging
 import os
 import os.path as op
@@ -534,6 +535,54 @@ class FetchPlainMixin(object):
                 # Make sure directory has trailing slash so that get doesn't
                 # treat it as the file.
                 op.join(self.local_directory, ""))
+
+
+@contextmanager
+def head_at(dataset, commit):
+    """Run block with `commit` checked out in `dataset`.
+
+    Check `commit` out if HEAD isn't already at it and restore the previous
+    HEAD and branch on exit. Note: If `commit` is a ref, this function is
+    concerned only with checking out the dereferenced commit.
+
+    Parameters
+    ----------
+    dataset : DataLad dataset
+    commit : str
+        A commit-ish.
+
+    Yields
+    ------
+    A boolean indicating whether HEAD needed to be moved in order to make
+    `commit` current.
+    """
+    if dataset.repo.dirty:
+        raise OrchestratorError(
+            "Refusing to work with dirty repository: {}"
+            .format(dataset.path))
+
+    try:
+        commit = dataset.repo.get_hexsha(commit)
+    except ValueError:
+        raise OrchestratorError("Could not resolve '{}' in {}"
+                                .format(commit, dataset.path))
+    current = dataset.repo.get_hexsha()
+    if current is None:
+        raise OrchestratorError("No commits on current branch in {}"
+                                .format(dataset.path))
+    to_restore = dataset.repo.get_active_branch() or current
+
+    moved = commit != current
+    if moved:
+        lgr.info("Checking out %s", commit)
+        try:
+            dataset.repo.checkout(commit)
+            yield moved
+        finally:
+            lgr.info("Restoring checkout of %s", to_restore)
+            dataset.repo.checkout(to_restore)
+    else:
+        yield moved
 
 
 class FetchDataladPairMixin(object):

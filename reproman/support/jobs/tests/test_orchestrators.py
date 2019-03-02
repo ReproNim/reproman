@@ -177,3 +177,54 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
         # The local fetch variant doesn't currently get the content, so just
         # check that the file is under annex.
         assert dataset.repo.is_under_annex("out")
+
+
+def test_head_at_dirty(dataset):
+    create_tree(dataset.path, {"dirt": ""})
+    with pytest.raises(OrchestratorError):
+        with orcs.head_at(dataset, "doesntmatter"):
+            pass
+
+
+def test_head_at_unknown_ref(dataset):
+    with pytest.raises(OrchestratorError) as exc:
+        with orcs.head_at(dataset, "youdontknowme"):
+            pass
+    assert "youdontknowme" in str(exc)
+
+
+def test_head_at_empty_branch(dataset):
+    dataset.repo.checkout("orph", options=["--orphan"])
+    # FIXME: Use expose method once available.
+    dataset.repo._git_custom_command([], ["git", "reset", "--hard"])
+    assert not dataset.repo.dirty
+    with pytest.raises(OrchestratorError) as exc:
+        with orcs.head_at(dataset, "master"):
+            pass
+    assert "No commit" in str(exc)
+
+
+def test_head_at_no_move(dataset):
+    with orcs.head_at(dataset, "master") as moved:
+        assert not moved
+        create_tree(dataset.path, {"on-master": "on-maser"})
+        dataset.add("on-master", message="advance master")
+        assert dataset.repo.get_active_branch() == "master"
+    assert dataset.repo.get_active_branch() == "master"
+
+
+def test_head_at_move(dataset):
+    def dataset_path_exists(path):
+        return op.exists(op.join(dataset.path, path))
+
+    create_tree(dataset.path, {"pre": "pre"})
+    dataset.add("pre")
+    with orcs.head_at(dataset, "master~1") as moved:
+        assert moved
+        assert dataset.repo.get_active_branch() is None
+        assert not dataset_path_exists("pre")
+        create_tree(dataset.path, {"at-head": "at-head"})
+        dataset.add("at-head", message="advance head (not master)")
+    assert dataset_path_exists("pre")
+    assert not dataset_path_exists("at-head")
+    assert dataset.repo.get_active_branch() == "master"
