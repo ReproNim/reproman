@@ -548,10 +548,7 @@ class FetchPlainMixin(object):
     def fetch(self):
         """Get outputs from remote.
         """
-        outputs = self.job_spec.get("outputs")
-        if not outputs:
-            return
-
+        outputs = self.job_spec.get("outputs", [])
         for o in outputs:
             self.session.get(
                 o if op.isabs(o) else op.join(self.working_directory, o),
