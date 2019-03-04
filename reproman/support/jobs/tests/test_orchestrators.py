@@ -88,6 +88,7 @@ def test_orc_plain_shell(check_orc_plain, shell, tmpdir):
     check_orc_plain(shell, str(tmpdir))
 
 
+@pytest.mark.integration
 def test_orc_plain_docker(check_orc_plain, docker_resource):
     check_orc_plain(docker_resource, "/root/")
 
@@ -162,6 +163,7 @@ def test_orc_datalad_run(tmpdir, dataset, shell, orc_class, sub_type):
         assert open("out").read() == "content\nmore\n"
 
 
+@pytest.mark.integration
 def test_orc_datalad_pair(tmpdir, dataset, shell):
     tmpdir = str(tmpdir)
     job_spec = {"root_directory": op.join(tmpdir, "nm-run"),
