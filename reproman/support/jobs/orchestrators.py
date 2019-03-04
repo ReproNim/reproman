@@ -125,7 +125,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "orchestrator": self.name,
                    "submitter": self.submitter.name,
                    "submission_id": self.submitter.submission_id}
-        return dict(to_dump, **self.template.kwds)
+        return dict(to_dump, **(self.template.kwds if self.template else {}))
 
     @abc.abstractmethod
     def prepare_remote(self):
