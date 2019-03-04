@@ -683,9 +683,7 @@ class FetchDataladRunMixin(object):
 
 # Concrete orchestrators
 
-# TODO: Need to polish and extend the orchestrators. The prepare_remote() and
-# fetch() steps currently lack many safeguards and don't deal well with
-# previous state. There's also no support for non-shared file systems.
+# TODO: There's no support for non-shared file systems.
 
 # TODO: Improve the docstring descriptions of what the orchestrators do.
 
