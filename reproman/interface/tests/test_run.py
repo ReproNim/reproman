@@ -22,6 +22,7 @@ from reproman.interface.run import _combine_job_specs
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
 from reproman.utils import swallow_outputs
+from reproman.support.exceptions import OrchestratorError
 from reproman.support.exceptions import ResourceNotFoundError
 from reproman.tests import fixtures
 from reproman.tests.utils import create_tree
@@ -321,3 +322,25 @@ def test_jobs_deleted_resource(context):
             assert "todelete" not in output.out
             # ... but the alive one will.
             assert "myshell" in output.out
+
+
+def test_jobs_orc_error(context):
+    run = context["run_fn"]
+    jobs = context["jobs_fn"]
+    registry = context["registry"]
+
+    run(command=["doesntmatter1"], resref="myshell")
+
+    jobfiles = registry.find_job_files()
+    assert len(jobfiles) == 1
+
+    with swallow_outputs() as output:
+        with swallow_logs(new_level=logging.ERROR) as log:
+            def die_orc(*args, **kwargs):
+                raise OrchestratorError("resurrection failed")
+
+            with patch("reproman.interface.jobs.show_oneline",
+                       side_effect=die_orc):
+                jobs(queries=[], status=True)
+            assert "myshell" not in output.out
+            assert "resurrection failed" in log.out

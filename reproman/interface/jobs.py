@@ -14,12 +14,14 @@ import operator
 import logging
 import yaml
 
+from reproman.dochelpers import exc_str
 from reproman.interface.base import Interface
 from reproman.support.jobs.local_registry import LocalRegistry
 from reproman.support.jobs.orchestrators import ORCHESTRATORS
 from reproman.resource import get_manager
 from reproman.support.param import Parameter
 from reproman.support.constraints import EnsureChoice
+from reproman.support.exceptions import OrchestratorError
 from reproman.support.exceptions import ResourceNotFoundError
 from reproman.utils import chpwd
 
@@ -212,6 +214,8 @@ class Jobs(Interface):
             for job in jobs:
                 try:
                     fn(job)
+                except OrchestratorError as exc:
+                    lgr.error("job %s failed: %s", job, exc_str(exc))
                 except ResourceNotFoundError as exc:
                     lgr.error("Resource %s (%s) no longer exists",
                               job["resource_id"], job["resource_name"])
