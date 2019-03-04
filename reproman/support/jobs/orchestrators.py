@@ -594,12 +594,12 @@ class FetchDataladPairMixin(object):
         if self.resource.type == "ssh":
             ref = self.job_refname
             self.ds.repo.fetch(self.resource.name, "{0}:{0}".format(ref))
-            # TODO: This won't work if _checkout_target() checked out a commit.
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
-            outputs = self.job_spec.get("outputs")
-            if outputs:
-                self.ds.get(path=outputs)
+            with head_at(self.ds, ref):
+                outputs = self.job_spec.get("outputs")
+                if outputs:
+                    self.ds.get(path=outputs)
         elif self.resource.type == "shell":
             # Below is just for local testing.  It doesn't support actually
             # getting the content.
