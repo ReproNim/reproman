@@ -647,8 +647,8 @@ class FetchDataladRunMixin(object):
         remote_tfile = op.join(self.root_directory, "outputs", tfile)
 
         if not self.session.exists(remote_tfile):
-            lgr.error("Expected output file %s does not exist", remote_tfile)
-            return
+            raise OrchestratorError("Expected output file does not exist: {}"
+                                    .format(remote_tfile))
 
         with head_at(self.ds, self.head) as moved:
             with chpwd(self.ds.path):

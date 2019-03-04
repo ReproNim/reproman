@@ -225,6 +225,23 @@ def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
+def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
+    create_tree(dataset.path, {"in": "content\n"})
+    dataset.add(".")
+
+    with chpwd(dataset.path):
+        orc = orcs.DataladLocalRunOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        os.unlink(op.join(orc.root_directory, "outputs",
+                          "{}.tar.gz".format(orc.jobid)))
+        with pytest.raises(OrchestratorError):
+            orc.fetch()
+
+
+@pytest.mark.integration
 def test_orc_datalad_pair(job_spec, dataset, shell):
     create_tree(dataset.path, {"in": "content\n"})
     dataset.add(".")
