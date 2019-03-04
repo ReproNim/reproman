@@ -592,6 +592,8 @@ class FetchDataladPairMixin(object):
         """
         lgr.info("Fetching results for %s", self.jobid)
         if self.resource.type == "ssh":
+            ref = self.job_refname
+            self.ds.repo.fetch(self.resource.name, "{0}:{0}".format(ref))
             # TODO: This won't work if _checkout_target() checked out a commit.
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
