@@ -59,19 +59,22 @@ def test_orc_root_directory_error(shell, value):
 
 
 @pytest.fixture()
+def job_spec(tmpdir):
+    return {"root_directory": op.join(str(tmpdir), "nm-run"),
+            "inputs": ["in"],
+            "outputs": ["out"],
+            "command_str": 'bash -c "cat in >out && echo more >>out"'}
+
+
+@pytest.fixture()
 def check_orc_plain(tmpdir):
     local_dir = str(tmpdir)
 
-    def fn(resource, remote_dir):
-        job_spec = {"root_directory": op.join(remote_dir, "nm-run"),
-                    "inputs": ["in"],
-                    "outputs": ["out"],
-                    "command_str": 'bash -c "cat in >out && echo more >>out"'}
-
+    def fn(resource, jspec):
         create_tree(local_dir, {"in": "content\n"})
         with chpwd(local_dir):
             orc = orcs.PlainOrchestrator(resource, submission_type="local",
-                                         job_spec=job_spec)
+                                         job_spec=jspec)
             orc.prepare_remote()
             assert orc.session.exists(op.join(orc.working_directory, "in"))
 
@@ -84,13 +87,14 @@ def check_orc_plain(tmpdir):
     return fn
 
 
-def test_orc_plain_shell(check_orc_plain, shell, tmpdir):
-    check_orc_plain(shell, str(tmpdir))
+def test_orc_plain_shell(check_orc_plain, shell, job_spec):
+    check_orc_plain(shell, job_spec)
 
 
 @pytest.mark.integration
-def test_orc_plain_docker(check_orc_plain, docker_resource):
-    check_orc_plain(docker_resource, "/root/")
+def test_orc_plain_docker(check_orc_plain, docker_resource, job_spec):
+    job_spec["root_directory"] = "/root/nm-run"
+    check_orc_plain(docker_resource, job_spec)
 
 
 @pytest.mark.skipif(external_versions["datalad"], reason="DataLad found")
@@ -142,13 +146,7 @@ def dataset(base_dataset):
                          ["local",
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
-def test_orc_datalad_run(tmpdir, dataset, shell, orc_class, sub_type):
-    tmpdir = str(tmpdir)
-    job_spec = {"root_directory": op.join(tmpdir, "nm-run"),
-                "inputs": ["in"],
-                "outputs": ["out"],
-                "command_str": 'bash -c "cat in >out && echo more >>out"'}
-
+def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
     create_tree(dataset.path, {"in": "content\n"})
     dataset.add(".")
 
@@ -164,13 +162,7 @@ def test_orc_datalad_run(tmpdir, dataset, shell, orc_class, sub_type):
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair(tmpdir, dataset, shell):
-    tmpdir = str(tmpdir)
-    job_spec = {"root_directory": op.join(tmpdir, "nm-run"),
-                "inputs": ["in"],
-                "outputs": ["out"],
-                "command_str": 'bash -c "cat in >out && echo more >>out"'}
-
+def test_orc_datalad_pair(job_spec, dataset, shell):
     create_tree(dataset.path, {"in": "content\n"})
     dataset.add(".")
 
