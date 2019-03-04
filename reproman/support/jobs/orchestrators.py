@@ -600,6 +600,11 @@ class FetchDataladPairMixin(object):
                 outputs = self.job_spec.get("outputs")
                 if outputs:
                     self.ds.get(path=outputs)
+            if not self.ds.repo.is_ancestor(ref, "HEAD"):
+                lgr.info("Results stored on %s. "
+                         "Bring them into this branch with "
+                         "'git merge %s'",
+                         ref, ref)
         elif self.resource.type == "shell":
             # Below is just for local testing.  It doesn't support actually
             # getting the content.
