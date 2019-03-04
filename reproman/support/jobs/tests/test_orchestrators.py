@@ -7,6 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import os
 import os.path as op
 
 from unittest.mock import patch
@@ -21,6 +22,7 @@ from reproman.support.external_versions import external_versions
 from reproman.support.jobs import orchestrators as orcs
 from reproman.tests.fixtures import get_docker_fixture
 from reproman.tests.skip import mark
+from reproman.tests.skip import skipif
 from reproman.tests.utils import create_tree
 
 
@@ -104,8 +106,33 @@ def test_orc_no_dataset(tmpdir, shell):
             orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
+@pytest.fixture(scope="module")
+def base_dataset(tmpdir_factory):
+    skipif.no_datalad()
+    import datalad.api as dl
+    path = str(tmpdir_factory.mktemp("dataset"))
+    ds = dl.Dataset(path).create(force=True)
+
+    create_tree(ds.path, {"foo": "foo",
+                          "bar": "bar"})
+    ds.add(".")
+    ds.repo.tag("root")
+    return ds
+
+
+@pytest.fixture()
+def dataset(base_dataset):
+    base_dataset.repo.checkout("master")
+    # FIXME: Use expose method once available.
+    base_dataset.repo._git_custom_command([],
+                                          ["git", "reset", "--hard", "root"])
+    for f in base_dataset.repo.untracked_files:
+        os.unlink(op.join(base_dataset.path, f))
+    assert not base_dataset.repo.dirty
+    return base_dataset
+
+
 @pytest.mark.integration
-@mark.skipif_no_datalad
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
                           orcs.DataladPairRunOrchestrator],
@@ -114,49 +141,38 @@ def test_orc_no_dataset(tmpdir, shell):
                          ["local",
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
-def test_orc_datalad_run(tmpdir, shell, orc_class, sub_type):
-    import datalad.api as dl
-
+def test_orc_datalad_run(tmpdir, dataset, shell, orc_class, sub_type):
     tmpdir = str(tmpdir)
-
     job_spec = {"root_directory": op.join(tmpdir, "nm-run"),
                 "inputs": ["in"],
                 "outputs": ["out"],
                 "command_str": 'bash -c "cat in >out && echo more >>out"'}
-    local_dir = op.join(tmpdir, "local")
 
-    create_tree(local_dir, {"in": "content\n"})
-    ds = dl.Dataset(local_dir).create(force=True)
-    ds.add(".")
+    create_tree(dataset.path, {"in": "content\n"})
+    dataset.add(".")
 
-    with chpwd(local_dir):
+    with chpwd(dataset.path):
         orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
 
         orc.fetch()
-        assert ds.repo.file_has_content("out")
+        assert dataset.repo.file_has_content("out")
         assert open("out").read() == "content\nmore\n"
 
 
-@mark.skipif_no_datalad
-def test_orc_datalad_pair(tmpdir, shell):
-    import datalad.api as dl
-
+def test_orc_datalad_pair(tmpdir, dataset, shell):
     tmpdir = str(tmpdir)
-
     job_spec = {"root_directory": op.join(tmpdir, "nm-run"),
                 "inputs": ["in"],
                 "outputs": ["out"],
                 "command_str": 'bash -c "cat in >out && echo more >>out"'}
-    local_dir = op.join(tmpdir, "local")
 
-    create_tree(local_dir, {"in": "content\n"})
-    ds = dl.Dataset(local_dir).create(force=True)
-    ds.add(".")
+    create_tree(dataset.path, {"in": "content\n"})
+    dataset.add(".")
 
-    with chpwd(local_dir):
+    with chpwd(dataset.path):
         orc = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
@@ -166,4 +182,4 @@ def test_orc_datalad_pair(tmpdir, shell):
         orc.fetch()
         # The local fetch variant doesn't currently get the content, so just
         # check that the file is under annex.
-        assert ds.repo.is_under_annex("out")
+        assert dataset.repo.is_under_annex("out")
