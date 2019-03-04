@@ -302,3 +302,14 @@ def test_head_at_move(dataset):
     assert dataset_path_exists("pre")
     assert not dataset_path_exists("at-head")
     assert dataset.repo.get_active_branch() == "master"
+
+
+def test_dataset_as_dict(shell, dataset, job_spec):
+    with chpwd(dataset.path):
+        orc = orcs.DataladLocalRunOrchestrator(shell, submission_type="local",
+                                               job_spec=job_spec)
+    d = orc.as_dict()
+    # Check for keys that DataladOrchestrator should extend
+    # OrchestratorError.asdict() with.
+    assert "head" in d
+    assert "dataset_id" in d
