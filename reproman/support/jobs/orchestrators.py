@@ -416,6 +416,7 @@ class PrepareRemoteDataladMixin(object):
                                     .format(self.working_directory))
 
     def _checkout_target(self):
+        self._assert_clean_repo()
         target_commit = self.head
         self._execute_in_wdir(
             "git rev-parse --verify {}^{{commit}}".format(target_commit),
@@ -513,7 +514,6 @@ class PrepareRemoteDataladMixin(object):
             raise OrchestratorError("Unsupported resource type {}"
                                     .format(resource.type))
 
-        self._assert_clean_repo()
         self._checkout_target()
 
         if not session.exists(self.meta_directory):
