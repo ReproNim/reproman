@@ -10,6 +10,4 @@ msg={{ shlex_quote(message) }}
 {% else %}
 msg="[ReproMan] save results for {{ jobid }}"
 {% endif %}
-# Track these small files directly in git.
-git add "{{ meta_directory }}/status" "{{ meta_directory }}/idmap"
 datalad add -m"$msg" . .reproman >/dev/null 2>&1

@@ -24,6 +24,7 @@ from shlex import quote as shlex_quote
 from reproman.dochelpers import borrowdoc
 from reproman.utils import cached_property
 from reproman.utils import chpwd
+from reproman.utils import write_update
 from reproman.resource.ssh import SSHSession
 from reproman.support.jobs.submitters import SUBMITTERS
 from reproman.support.jobs.template import Template
@@ -319,6 +320,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         if self._resurrection:
             self.head = self.job_spec.get("head")
         else:
+            self._configure_repo()
             self.head = self.ds.repo.get_hexsha()
             _datalad_check_container(self.ds, self.job_spec)
             _datalad_format_command(self.ds, self.job_spec)
@@ -362,6 +364,18 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
                                    self.working_directory)))
             status = status_from_ref.strip() or status
         return status
+
+    def _configure_repo(self):
+        gitattrs = op.join(self.ds.path, ".reproman", "jobs", ".gitattributes")
+        write_update(
+            gitattrs,
+            ("# Automatically created by ReproMan.\n"
+             "# Do not change manually.\n"
+             "status annex.largefiles=nothing\n"
+             "idmap annex.largefiles=nothing\n"))
+
+        self.ds.add([gitattrs],
+                    message="[ReproMan] Configure jobs directory")
 
 
 # Orchestrator method mixins
