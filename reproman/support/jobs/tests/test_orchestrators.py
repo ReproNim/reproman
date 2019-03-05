@@ -259,6 +259,28 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
         assert dataset.repo.is_under_annex("out")
 
 
+@pytest.mark.integration
+def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
+    create_tree(dataset.path, {"in": "content\n"})
+    dataset.add(".")
+
+    with chpwd(dataset.path):
+        orc0 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        # Run one job so that we create the remote repository.
+        orc0.prepare_remote()
+        orc0.submit()
+        orc0.follow()
+
+    with chpwd(dataset.path):
+        orc1 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+    create_tree(orc1.working_directory, {"dirty": ""})
+    with pytest.raises(OrchestratorError) as exc:
+        orc1.prepare_remote()
+    assert "dirty" in str(exc)
+
+
 def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
     dataset.repo.checkout("HEAD^{}")
 
