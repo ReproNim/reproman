@@ -1397,16 +1397,17 @@ def pycache_source(path):
     Path of cached Python file (str) or None if `path` doesn't look like a
     cache file.
     """
-    if not path.endswith(".pyc"):
-        lgr.debug("Path does not look like a pyc file: %s", path)
+    if not (path.endswith(".pyc") or path.endswith(".pyo")):
+        lgr.debug("Path does not look like a Python cache file: %s", path)
         return
 
     if "__pycache__" not in path:  # py2
         pyfile = path[:-1]
     else:
-        # It should be a py3-style path, e.g., "__pycache__/f.cpython-35.pyc".
+        # It should be a py3-style path, e.g., "__pycache__/f.cpython-35.pyc"
+        # or "__pycache__/f.cpython-35.opt-2.pyc".
         leading, base = op.split(path)
-        name, *_ = base.rsplit(".", 2)
+        name = base.split(".", 1)[0]
         pyfile = op.join(leading[:-len("__pycache__")], name + ".py")
     lgr.debug("Converted pycache file %s to source file %s",
               path, pyfile)

@@ -567,10 +567,13 @@ def test_merge_dicts():
     [("/tmp/a/b/c/d.pyc", "/tmp/a/b/c/d.py"),
      ("/tmp/a/b/c/__pycache__/d.cpython-35.pyc", "/tmp/a/b/c/d.py"),
      ("d.pyc", "d.py"),
+     ("d.pyo", "d.py"),
      ("__pycache__/d.cpython-35.pyc", "d.py"),
+     ("__pycache__/d.cpython-35.opt-1.pyc", "d.py"),
      ("not a pycache", None),
      ("", None)],
-    ids=["full-py2", "full", "relative-py2", "relative", "not pyc", "empty"])
+    ids=["full-py2", "full", "relative-py2", "relative-py2-pyo",
+         "relative", "relative-pyo", "not pyc", "empty"])
 def test_pycache_source(value, expected):
     assert pycache_source(value) == expected
 
