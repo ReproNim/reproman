@@ -366,6 +366,13 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         return status
 
     def _configure_repo(self):
+        gitignore = op.join(self.ds.path, ".reproman", "jobs", ".gitignore")
+        write_update(
+            gitignore,
+            ("# Automatically created by ReproMan.\n"
+             "# Do not change manually.\n"
+             "log\n"))
+
         gitattrs = op.join(self.ds.path, ".reproman", "jobs", ".gitattributes")
         write_update(
             gitattrs,
@@ -374,7 +381,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
              "status annex.largefiles=nothing\n"
              "idmap annex.largefiles=nothing\n"))
 
-        self.ds.add([gitattrs],
+        self.ds.add([gitignore, gitattrs],
                     message="[ReproMan] Configure jobs directory")
 
 
