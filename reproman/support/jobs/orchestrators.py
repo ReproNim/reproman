@@ -554,6 +554,13 @@ class FetchPlainMixin(object):
                 # Make sure directory has trailing slash so that get doesn't
                 # treat it as the file.
                 op.join(self.local_directory, ""))
+        for f in ["status", "stdout", "stderr"]:
+            self.session.get(
+                op.join(self.meta_directory, f),
+                op.join(self.local_directory,
+                        op.relpath(self.meta_directory,
+                                   self.working_directory),
+                        ""))
 
 
 @contextmanager
