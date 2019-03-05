@@ -563,19 +563,34 @@ def test_merge_dicts():
 
 
 @pytest.mark.parametrize(
-    "value,expected",
-    [("/tmp/a/b/c/d.pyc", "/tmp/a/b/c/d.py"),
-     ("/tmp/a/b/c/__pycache__/d.cpython-35.pyc", "/tmp/a/b/c/d.py"),
-     ("d.pyc", "d.py"),
-     ("d.pyo", "d.py"),
-     ("__pycache__/d.cpython-35.pyc", "d.py"),
-     ("__pycache__/d.cpython-35.opt-1.pyc", "d.py"),
-     ("not a pycache", None),
-     ("", None)],
-    ids=["full-py2", "full", "relative-py2", "relative-py2-pyo",
-         "relative", "relative-pyo", "not pyc", "empty"])
-def test_pycache_source(value, expected):
-    assert pycache_source(value) == expected
+    "case",
+    [{"label": "full-py2",
+      "value": "/tmp/a/b/c/d.pyc",
+      "expected": "/tmp/a/b/c/d.py"},
+     {"label": "full",
+      "value": "/tmp/a/b/c/__pycache__/d.cpython-35.pyc",
+      "expected": "/tmp/a/b/c/d.py"},
+     {"label": "relative-py2",
+      "value": "d.pyc",
+      "expected": "d.py"},
+     {"label": "relative-py2-pyo",
+      "value": "d.pyo",
+      "expected": "d.py"},
+     {"label": "relative",
+      "value": "__pycache__/d.cpython-35.pyc",
+      "expected": "d.py"},
+     {"label": "relative-pyo",
+      "value": "__pycache__/d.cpython-35.opt-1.pyc",
+      "expected": "d.py"},
+     {"label": "not pyc",
+      "value": "not a pycache",
+      "expected": None},
+     {"label": "empty",
+      "value": "",
+      "expected": None}],
+    ids=itemgetter("label"))
+def test_pycache_source(case):
+    assert pycache_source(case["value"]) == case["expected"]
 
 
 def test_line_profile():
