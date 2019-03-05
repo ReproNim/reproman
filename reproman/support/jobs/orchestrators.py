@@ -47,9 +47,11 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
     template_name = None
 
-    def __init__(self, resource, submission_type, job_spec=None):
+    def __init__(self, resource, submission_type, job_spec=None,
+                 resurrection=False):
         self.resource = resource
         self.session = resource.get_session()
+        self._resurrection = resurrection
 
         # TODO: Probe remote and try to infer.
         submitter_class = SUBMITTERS[submission_type or "local"]
@@ -57,9 +59,19 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
         self.job_spec = job_spec or {}
 
-        prev_id = self.job_spec.get("jobid")
-        self.jobid = prev_id or "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
-                                               str(uuid.uuid4())[:4])
+        if resurrection:
+            important_keys = ["jobid", "root_directory", "working_directory",
+                              "local_directory"]
+            for key in important_keys:
+                if key not in self.job_spec:
+                    raise OrchestratorError(
+                        "Job spec must have key '{}' to resurrect orchestrator"
+                        .format(key))
+
+            self.jobid = self.job_spec["jobid"]
+        else:
+            self.jobid = "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
+                                        str(uuid.uuid4())[:4])
 
         self.template = None
 
@@ -269,9 +281,6 @@ def _datalad_format_command(ds, spec):
     The "inputs", "outputs", and "command_str" keys in `spec` are replaced and
     the original are moved under the `*_unexpanded` key.
     """
-    if "command_str_unexpanded" in spec:
-        # Already adjust (most likely orchestrator is being resurrected).
-        return
     from datalad.interface.run import format_command
     from datalad.interface.run import GlobbedPaths
 
@@ -292,13 +301,14 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     """Execute command assuming (at least) a local dataset.
     """
 
-    def __init__(self, resource, submission_type, job_spec=None):
+    def __init__(self, resource, submission_type, job_spec=None,
+                 resurrection=False):
         if not external_versions["datalad"]:
             raise MissingExternalDependency(
                 "DataLad is required for orchestrator '{}'".format(self.name))
 
         super(DataladOrchestrator, self).__init__(
-            resource, submission_type, job_spec)
+            resource, submission_type, job_spec, resurrection=resurrection)
 
         from datalad.api import Dataset
         self.ds = Dataset(".")
@@ -306,9 +316,12 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
             raise OrchestratorError("orchestrator {} requires a local dataset"
                                     .format(self.name))
 
-        self.head = self.job_spec.get("head") or self.ds.repo.get_hexsha()
-        _datalad_check_container(self.ds, self.job_spec)
-        _datalad_format_command(self.ds, self.job_spec)
+        if self._resurrection:
+            self.head = self.job_spec.get("head")
+        else:
+            self.head = self.ds.repo.get_hexsha()
+            _datalad_check_container(self.ds, self.job_spec)
+            _datalad_format_command(self.ds, self.job_spec)
 
     @property
     @cached_property

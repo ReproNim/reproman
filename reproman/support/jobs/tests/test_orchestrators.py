@@ -91,6 +91,12 @@ def test_orc_plain_shell(check_orc_plain, shell, job_spec):
     check_orc_plain(shell, job_spec)
 
 
+def test_orc_resurrection_invalid_job_spec(check_orc_plain, shell):
+    with pytest.raises(OrchestratorError):
+        orcs.PlainOrchestrator(shell, submission_type="local",
+                               job_spec={}, resurrection=True)
+
+
 @pytest.mark.integration
 def test_orc_plain_docker(check_orc_plain, docker_resource, job_spec):
     job_spec["root_directory"] = "/root/nm-run"
@@ -289,6 +295,18 @@ def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
             shell, submission_type="local", job_spec=job_spec)
         with pytest.raises(OrchestratorError):
             orc.prepare_remote()
+
+
+def test_orc_datalad_resurrect(job_spec, dataset, shell):
+    for k in ["jobid",
+              "working_directory", "root_directory", "local_directory"]:
+        job_spec[k] = "doesn't matter"
+    job_spec["head"] = "deadbee"
+    with chpwd(dataset.path):
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec,
+            resurrection=True)
+    assert orc.head == "deadbee"
 
 
 def test_head_at_dirty(dataset):

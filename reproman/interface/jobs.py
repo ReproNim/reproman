@@ -74,7 +74,8 @@ def _resurrect_orc(job):
     resource = get_manager().get_resource(job["resource_id"], "id")
     with chpwd(job["local_directory"]):
         orchestrator_class = ORCHESTRATORS[job["orchestrator"]]
-        orc = orchestrator_class(resource, job["submitter"], job)
+        orc = orchestrator_class(resource, job["submitter"], job,
+                                 resurrection=True)
         orc.submitter.submission_id = job.get("submission_id")
     return orc
 
