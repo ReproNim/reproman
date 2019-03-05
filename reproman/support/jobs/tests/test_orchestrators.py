@@ -7,6 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import logging
 import os
 import os.path as op
 
@@ -15,6 +16,7 @@ import pytest
 
 from reproman.consts import TEST_SSH_DOCKER_DIGEST
 from reproman.utils import chpwd
+from reproman.utils import swallow_logs
 from reproman.resource.shell import Shell
 from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
@@ -190,6 +192,23 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
         with orcs.head_at(dataset, ref):
             assert dataset.repo.file_has_content("out")
             assert open("out").read() == "content\nmore\n"
+
+
+@pytest.mark.integration
+def test_orc_datalad_run_failed(job_spec, dataset, shell):
+    job_spec["command_str"] = "iwillfail"
+    job_spec["inputs"] = []
+
+    with chpwd(dataset.path):
+        orc = orcs.DataladLocalRunOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        with swallow_logs(new_level=logging.INFO) as log:
+            orc.fetch()
+            assert "Job status" in log.out
+            assert "stderr:" in log.out
 
 
 @pytest.mark.integration

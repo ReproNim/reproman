@@ -228,6 +228,29 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self.session.exists(
             op.join(self.root_directory, "completed", self.jobid))
 
+    def log_failed(self, func=None):
+        """Display a log message about failed status.
+
+        Parameters
+        ----------
+        func : callable or None, optional
+            If a failed status is detected, call this function with one
+            argument, the local metadata directory.
+        """
+        status = self.status
+        if status.startswith("failed"):
+            local_metadir = op.join(
+                self.local_directory,
+                op.relpath(op.join(self.meta_directory),
+                           self.working_directory),
+                "")
+            lgr.warning("Job status: %r. Check files in %s",
+                        status, local_metadir)
+            lgr.info("%s stderr: %s",
+                     self.jobid, op.join(local_metadir, "stderr"))
+            if func:
+                func(local_metadir)
+
     def follow(self):
         """Follow command, exiting when post-command processing completes."""
         self.submitter.follow()
@@ -241,6 +264,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def fetch(self):
         """Fetch the submission result.
+
+        In addition to doing whatever is need to fetch the results, this method
+        should call `self.log_failed` at the end.
         """
 
 
@@ -595,6 +621,7 @@ class FetchPlainMixin(object):
                         op.relpath(self.meta_directory,
                                    self.working_directory),
                         ""))
+        self.log_failed()
 
 
 @contextmanager
@@ -675,6 +702,12 @@ class FetchDataladPairMixin(object):
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
 
+        def get_metadir(mdir):
+            if self.resource.type == "ssh":
+                self.ds.get(path=mdir)
+
+        self.log_failed(get_metadir)
+
 
 class FetchDataladRunMixin(object):
 
@@ -716,6 +749,8 @@ class FetchDataladRunMixin(object):
                              "'git merge %s'",
                              ref, ref)
                 self.ds.repo.update_ref(ref, "HEAD")
+
+        self.log_failed()
 
 
 # Concrete orchestrators
