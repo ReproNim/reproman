@@ -81,9 +81,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def root_directory(self):
         """The root run directory on the resource.
 
-        By default, the working directory for a particular command should be a
+        By default, the working directory for a particular command is a
         subdirectory of this directory. Orchestrators can also use this root to
-        storing things outside of the working directory (e.g. artifacts used in
+        store things outside of the working directory (e.g. artifacts used in
         the fetch).
         """
         # TODO: We should allow root directory to be configured for each
