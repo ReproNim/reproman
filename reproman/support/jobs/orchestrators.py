@@ -573,7 +573,7 @@ def head_at(dataset, commit):
     A boolean indicating whether HEAD needed to be moved in order to make
     `commit` current.
     """
-    if dataset.repo.dirty:
+    if dataset.repo.is_dirty():
         raise OrchestratorError(
             "Refusing to work with dirty repository: {}"
             .format(dataset.path))

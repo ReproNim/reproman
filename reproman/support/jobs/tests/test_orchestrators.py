@@ -133,7 +133,7 @@ def dataset(base_dataset):
                                           ["git", "reset", "--hard", "root"])
     for f in base_dataset.repo.untracked_files:
         os.unlink(op.join(base_dataset.path, f))
-    assert not base_dataset.repo.dirty
+    assert not base_dataset.repo.is_dirty()
     return base_dataset
 
 
@@ -309,7 +309,7 @@ def test_head_at_empty_branch(dataset):
     dataset.repo.checkout("orph", options=["--orphan"])
     # FIXME: Use expose method once available.
     dataset.repo._git_custom_command([], ["git", "reset", "--hard"])
-    assert not dataset.repo.dirty
+    assert not dataset.repo.is_dirty()
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "master"):
             pass
