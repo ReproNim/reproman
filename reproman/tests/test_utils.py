@@ -18,6 +18,7 @@ import logging
 from unittest.mock import patch
 
 from operator import itemgetter
+import os.path as op
 from os.path import dirname, normpath, pardir, basename
 from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
@@ -49,6 +50,7 @@ from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
 from ..utils import parse_semantic_version
 from ..utils import merge_dicts
+from ..utils import write_update
 
 from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -57,6 +59,7 @@ from ..utils import is_binarystring
 from ..utils import CommandError
 from .utils import assert_cwd_unchanged
 from .utils import assert_in
+from .utils import ok_file_has_content
 from .utils import with_tree
 from .utils import with_tempfile
 from .skip import mark
@@ -594,6 +597,21 @@ def test_cached_property(value):
     c = C()
     c.val = "other-instance"
     assert c.prop == "other-instance"
+
+
+def test_write_update(tmpdir):
+    path = str(tmpdir)
+    foo = op.join(path, "adir", "foo")
+    assert not op.exists(foo)
+    write_update(foo, "ok")
+    ok_file_has_content(foo, "ok")
+
+    with swallow_logs(new_level=logging.DEBUG) as log:
+        write_update(foo, "ok")
+        assert "matching content" in log.out
+
+    write_update(foo, "rewrite")
+    ok_file_has_content(foo, "rewrite")
 
 
 def test_line_profile():

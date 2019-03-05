@@ -20,6 +20,7 @@ import logging
 import shutil
 import stat
 import os
+import os.path as op
 import sys
 import tempfile
 import platform
@@ -1432,6 +1433,38 @@ def parse_kv_list(params):
     else:
         res = {}
     return res
+
+
+def write_update(fname, content, encoding=None):
+    """Write `content` to `fname` unless it already has matching content.
+
+    This is the same as simply writing the content, except no writing occurs if
+    the content of the existing file matches, the write or update is logged,
+    and the leading directories of `fname` are created if needed.
+
+    Parameters
+    ----------
+    fname : str
+        Path to update.
+    content : str
+        Content to dump to path.
+    encoding : str or None, optional
+        Passed to `open`.
+    """
+    existing_content = None
+    if op.exists(fname):
+        with open(fname, encoding=encoding) as fh:
+            existing_content = fh.read()
+
+    if content == existing_content:
+        lgr.debug("File already has matching content: %s", fname)
+    else:
+        lgr.debug("%s content in %s",
+                  "Updating" if existing_content else "Creating",
+                  fname)
+        os.makedirs(op.dirname(fname), exist_ok=True)
+        with open(fname, "w", encoding=encoding) as fh:
+            fh.write(content)
 
 
 lgr.log(5, "Done importing reproman.utils")
