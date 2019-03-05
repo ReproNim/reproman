@@ -52,7 +52,6 @@ class Submitter(object, metaclass=abc.ABCMeta):
     def submit_command(self):
         """A list the defines the command used to submit the job.
         """
-        pass
 
     def submit(self, script):
         """Submit `script`.
@@ -85,7 +84,6 @@ class Submitter(object, metaclass=abc.ABCMeta):
         The second item should be the status as reported by the batch system or
         None of one could not be determined.
         """
-        pass
 
     def follow(self):
         """Follow submitted command, exiting once it is finished.

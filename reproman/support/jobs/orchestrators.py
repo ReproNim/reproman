@@ -95,7 +95,6 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def working_directory(self):
         """Directory in which to run the command.
         """
-        pass
 
     @property
     @cached_property
@@ -131,7 +130,6 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def prepare_remote(self):
         """Prepare remote for run.
         """
-        pass
 
     def _put_as_executable(self, text, target):
         with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
@@ -229,7 +227,6 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def fetch(self):
         """Fetch the submission result.
         """
-        pass
 
 
 def _datalad_check_container(ds, spec):
