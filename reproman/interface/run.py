@@ -67,7 +67,6 @@ def _combine_job_specs(specs):
 JOB_PARAMETERS = collections.OrderedDict(
     [
         ("root_directory", Orchestrator.root_directory),
-        ("meta_directory", Orchestrator.meta_directory),
         ("working_directory", Orchestrator.working_directory),
         ("command_str, command",
          """Command to run (string and list form). A command will usually be

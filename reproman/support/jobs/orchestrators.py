@@ -100,6 +100,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     @cached_property
     def meta_directory(self):
         """Directory used to store metadata for the run.
+
+        This directory must be a subdirectory of `working_directory`.
         """
         return op.join(self.working_directory, ".reproman", "jobs",
                        self.resource.name, self.jobid)
