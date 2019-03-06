@@ -586,8 +586,8 @@ class PrepareRemoteDataladMixin(object):
 
             self._checkout_target()
             self.session.execute_command(
-                "git push '{}' HEAD:refs/reproman/head"
-                .format(self.working_directory))
+                "git push '{}' HEAD:{}-base"
+                .format(self.working_directory, self.job_refname))
 
             if inputs:
                 installed_ds = dl.Dataset(self.working_directory)
