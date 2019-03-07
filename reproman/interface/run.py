@@ -197,6 +197,8 @@ class Run(Interface):
                 return ["  {}\n{}".format(k, get_doc(v))
                         for k, v in d.items()]
 
+            # FIXME: We shouldn't bother calling fmt on items that aren't
+            # selected by list=X.
             categories = [
                 ("submitters", ["Submitters"] + fmt(SUBMITTERS)),
                 ("orchestrators", ["Orchestrator"] + fmt(ORCHESTRATORS)),
