@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -12,13 +12,13 @@
 __docformat__ = 'restructuredtext'
 
 import logging
-from mock import patch
+from unittest.mock import patch
 import os.path as op
 
+from reproman.utils import swallow_logs
 from reproman.support.globbedpaths import GlobbedPaths
 from reproman.tests.utils import assert_in
 from reproman.tests.utils import eq_
-from reproman.tests.utils import swallow_logs
 from reproman.tests.utils import with_tree
 
 

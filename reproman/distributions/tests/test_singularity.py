@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -14,11 +14,11 @@ from ...cmd import Runner
 # from ...distributions.singularity import SingularityDistribution
 # from ...distributions.singularity import SingularityImage
 from ...distributions.singularity import SingularityTracer
-from ...tests.utils import skip_if_no_singularity, skip_if_no_network
+from ...tests.skip import mark
 
 
-@skip_if_no_network
-@skip_if_no_singularity
+@mark.skipif_no_network
+@mark.skipif_no_singularity
 def test_singularity_trace():
 
     # Download and set up singularity image file

@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -9,7 +8,7 @@
 # Test string to read
 
 import logging
-import mock
+from unittest import mock
 import os
 import pytest
 import re
@@ -18,14 +17,16 @@ from pytest import raises
 
 from ...utils import merge_dicts
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, skip_ssh
+from ...tests.utils import assert_in
+from ...tests.skip import mark
 from ..base import ResourceManager
 from reproman.tests.fixtures import get_docker_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
-# Note: due to skip_ssh right here, it would skip the entire module with
-# all the tests here if no ssh testing is requested
-setup_ssh = skip_ssh(get_docker_fixture)(
+# Skip entire module if no SSH is available.
+pytestmark = mark.skipif_no_ssh
+
+setup_ssh = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST,
     portmaps={
         49000: 22
@@ -94,7 +95,7 @@ def test_ssh_class(setup_ssh, resource_test_dir):
 
         file_contents = session.read('remote_test_ssh.py')
         file_contents = file_contents.splitlines()
-        assert file_contents[8] == '# Test string to read'
+        assert file_contents[7] == '# Test string to read'
 
         path = '/tmp/{}'.format(str(uuid.uuid4()))
         assert session.isdir(path) is False

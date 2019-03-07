@@ -5,7 +5,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from mock import patch
+from unittest.mock import patch
 import os.path as op
 import pytest
 
@@ -13,11 +13,11 @@ from reproman.config import ConfigManager
 from reproman.resource.base import ResourceManager
 from reproman.resource.base import backend_check_parameters
 from reproman.resource.shell import Shell
-from reproman.resource.docker_container import DockerContainer
 from reproman.support.exceptions import MissingConfigError
 from reproman.support.exceptions import MultipleResourceMatches
 from reproman.support.exceptions import ResourceAlreadyExistsError
 from reproman.support.exceptions import ResourceError
+from reproman.tests.skip import mark
 
 
 def test_resource_manager_factory_missing_type():
@@ -38,7 +38,10 @@ def test_backend_check_parameters_no_known():
     assert "no known parameters" in str(exc.value)
 
 
+@mark.skipif_no_docker_dependencies
 def test_backend_check_parameters_nowhere_close():
+    from reproman.resource.docker_container import DockerContainer
+
     with pytest.raises(ResourceError) as exc:
         backend_check_parameters(DockerContainer,
                                  {"name": "name",
@@ -46,7 +49,10 @@ def test_backend_check_parameters_nowhere_close():
     assert "Known backend parameters" in str(exc.value)
 
 
+@mark.skipif_no_docker_dependencies
 def test_backend_check_parameters_close_match():
+    from reproman.resource.docker_container import DockerContainer
+
     with pytest.raises(ResourceError) as exc:
         backend_check_parameters(DockerContainer,
                                  {"name": "name",
@@ -54,7 +60,10 @@ def test_backend_check_parameters_close_match():
     assert "Did you mean?" in str(exc.value)
 
 
+@mark.skipif_no_docker_dependencies
 def test_backend_check_parameters_missing_required():
+    from reproman.resource.docker_container import DockerContainer
+
     with pytest.raises(ResourceError) as exc:
         backend_check_parameters(DockerContainer, {"imagee": "value"})
     assert "Missing required" in str(exc.value)
@@ -85,7 +94,7 @@ def test_resource_manager_save(tmpdir):
         "null-id": {"name": "null-id",
                     "id": None,
                     "type": "baz-type"}}
-    manager._save()
+    manager.save_inventory()
     assert op.exists(inventory)
     with open(inventory) as fh:
         content = fh.read()
@@ -99,7 +108,7 @@ def test_resource_manager_save(tmpdir):
     manager_reborn.inventory["added"] = {"name": "added",
                                          "type": "added-type",
                                          "id": "added-id"}
-    manager_reborn._save()
+    manager_reborn.save_inventory()
     with open(inventory) as fh:
         content_reread = fh.read()
     for line in content:

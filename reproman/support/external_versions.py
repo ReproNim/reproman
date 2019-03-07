@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -54,9 +53,11 @@ def _get_git_version():
     """Return version of available git"""
     return _runner.run('git version'.split())[0].split()[-1]
 
+
 def _get_apt_cache_version():
-    """Return version of available git"""
+    """Return version of available apt-cache."""
     return _runner.run('apt-cache -v'.split())[0].split()[1]
+
 
 def _get_system_ssh_version():
     """Return version of ssh available system-wide
@@ -72,6 +73,21 @@ def _get_system_ssh_version():
     except CommandError as exc:
         lgr.debug("Could not determine version of ssh available: %s", exc_str(exc))
         return None
+
+
+def _get_singularity_version():
+    """Return version of available singularity."""
+    # example output: "2.6.1-dist"
+    return _runner.run(["singularity", "--version"])[0].split("-")[0]
+
+
+def _get_svn_version():
+    """Return version of available SVN."""
+    # Example output:
+    #
+    # svn, version 1.9.5 (r1770682)
+    # [...]
+    return _runner.run(["svn", "--version"])[0].split()[2]
 
 
 class ExternalVersions(object):
@@ -93,7 +109,9 @@ class ExternalVersions(object):
     CUSTOM = {
         'cmd:annex': _get_annex_version,
         'cmd:git': _get_git_version,
+        'cmd:singularity': _get_singularity_version,
         'cmd:system-ssh': _get_system_ssh_version,
+        'cmd:svn': _get_svn_version,
         'cmd:apt-cache': _get_apt_cache_version
     }
     INTERESTING = (

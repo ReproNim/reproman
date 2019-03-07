@@ -12,14 +12,14 @@ import os
 import os.path as op
 import pytest
 
-from mock import patch
+from unittest.mock import patch
 import yaml
 
 from reproman.cmdline.main import main
 from reproman.cmd import Runner
+from reproman.utils import swallow_logs
 from reproman.resource.base import ResourceManager
 from reproman.support.exceptions import CommandError
-from reproman.tests.utils import swallow_logs
 
 
 def test_create_start_stop(tmpdir):

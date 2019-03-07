@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
@@ -16,7 +15,7 @@ import pytest
 import shutil
 import sys
 import logging
-from mock import patch
+from unittest.mock import patch
 
 from operator import itemgetter
 from os.path import dirname, normpath, pardir, basename
@@ -42,6 +41,7 @@ from ..utils import partition
 from ..utils import make_tempfile
 from ..utils import on_windows
 from ..utils import _path_
+from ..utils import to_binarystring
 from ..utils import to_unicode
 from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
@@ -50,10 +50,15 @@ from ..utils import merge_dicts
 
 from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
-from .utils import with_tempfile, assert_in, with_tree, to_binarystring, \
-    is_unicode, is_binarystring, CommandError
-from .utils import assert_cwd_unchanged, skip_if_on_windows
-from .utils import assure_dict_from_str, assure_list_from_str
+from ..utils import is_unicode
+from ..utils import is_binarystring
+from ..utils import CommandError
+from .utils import assert_cwd_unchanged
+from .utils import assert_in
+from .utils import with_tree
+from .utils import with_tempfile
+from .skip import mark
+from ..utils import assure_dict_from_str, assure_list_from_str
 from .utils import ok_generator
 from .utils import assert_not_in
 from .utils import assert_raises
@@ -193,7 +198,7 @@ def test_getpwd_basic():
         assert_false(oschdir.called)
 
 
-@skip_if_on_windows
+@mark.skipif_on_windows
 @with_tempfile(mkdir=True)
 @assert_cwd_unchanged
 def test_getpwd_symlink(tdir=None):

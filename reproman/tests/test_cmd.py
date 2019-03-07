@@ -1,4 +1,3 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -9,7 +8,7 @@
 """Test command call wrapper
 """
 
-from mock import patch
+from unittest.mock import patch
 import os
 import sys
 import logging
@@ -22,9 +21,13 @@ from .utils import ok_, eq_, assert_is, assert_equal, assert_false, \
 from ..cmd import Runner, link_file_load
 from ..support.exceptions import CommandError
 from ..support.protocol import DryRunProtocol
-from .utils import with_tempfile, assert_cwd_unchanged, \
-    swallow_outputs, swallow_logs, \
-    on_linux, on_osx, on_windows
+from .utils import assert_cwd_unchanged
+from .utils import with_tempfile
+from ..utils import on_linux
+from ..utils import on_osx
+from ..utils import on_windows
+from ..utils import swallow_logs
+from ..utils import swallow_outputs
 
 
 @assert_cwd_unchanged

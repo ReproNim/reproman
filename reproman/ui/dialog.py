@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -24,7 +23,7 @@ import time
 import getpass
 
 #!!! OPT adds >100ms to import time!!!
-# from mock import patch
+# from unittest.mock import patch
 from collections import deque
 from copy import copy
 
@@ -118,7 +117,7 @@ def getpass_echo(prompt='Password: ', stream=None):
         #     if out == '\n':
         #         return
         #     stream.write(out)
-        from mock import patch
+        from unittest.mock import patch
         with patch('termios.ECHO', 255**2):
             #patch.object(stream, 'write', _no_emptyline_write(stream)):
             return getpass.getpass(prompt=prompt, stream=stream)

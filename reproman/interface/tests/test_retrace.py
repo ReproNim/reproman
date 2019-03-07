@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -13,7 +12,8 @@ from reproman.formats import Provenance
 import logging
 
 from reproman.utils import swallow_logs, swallow_outputs, make_tempfile
-from reproman.tests.utils import assert_in, skip_if_no_apt_cache
+from reproman.tests.utils import assert_in
+from reproman.tests.skip import mark
 
 from ..retrace import identify_distributions
 
@@ -42,7 +42,7 @@ def test_retrace_to_output_file(reprozip_spec2):
         assert len(provenance.get_distributions()) == 1
 
 
-@skip_if_no_apt_cache
+@mark.skipif_no_apt_cache
 def test_retrace_normalize_paths():
     # Retrace should normalize paths before passing them to tracers.
     with swallow_outputs() as cm:

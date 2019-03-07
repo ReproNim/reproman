@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -10,13 +9,15 @@
 from reproman.cmdline.main import main
 
 import logging
-from mock import patch, call, MagicMock
+from unittest.mock import patch, call, MagicMock
 
 from ...resource.base import ResourceManager
 from ...utils import swallow_logs
+from ...tests.skip import mark
 from ...tests.utils import assert_in
 
 
+@mark.skipif_no_docker_dependencies
 def test_install_interface(demo1_spec):
 
     with patch('docker.Client') as client, \

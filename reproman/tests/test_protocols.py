@@ -1,4 +1,3 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -22,7 +21,7 @@ from ..support.protocol import DryRunProtocol, DryRunExternalsProtocol, \
     ProtocolInterface
 from ..cmd import Runner
 from .utils import with_tempfile
-from .utils import swallow_logs
+from ..utils import swallow_logs
 
 
 @with_tempfile

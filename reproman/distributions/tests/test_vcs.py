@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -6,6 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+from functools import partial
 import os
 import os.path as op
 
@@ -368,7 +369,7 @@ def test_git_install_detached(traced_repo_copy, tmpdir):
 
     # We detach if there is no recorded branch.
     git_pkg.branch = None
-    runner(["git", "checkout", "master"])
+    runner(["git", "checkout", "master"], expect_stderr=True)
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
     assert not current_branch(runner)
@@ -400,6 +401,7 @@ def test_git_install_checkout(traced_repo_copy, tmpdir):
 
     install_dir = op.join(tmpdir, "installed")
     runner = GitRunner(cwd=install_dir)
+    run = partial(runner.run, expect_stderr=True)
 
     # Installing to a non-existing location will be more aggressive, creating a
     # new branch at the recorded hexsha rather than just detaching there.
@@ -410,14 +412,14 @@ def test_git_install_checkout(traced_repo_copy, tmpdir):
 
     # If the recorded branch is in the existing installation repo and has the
     # same hexsha, we check it out.
-    runner(["git", "checkout", "master"])
-    runner(["git", "branch", "--force", "other", git_pkg.hexsha])
+    run(["git", "checkout", "master"])
+    run(["git", "branch", "--force", "other", git_pkg.hexsha])
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
     assert current_branch(runner) == "other"
     # Otherwise, we detach.
-    runner(["git", "checkout", "master"])
-    runner(["git", "branch", "--force", "other", git_pkg.hexsha + "^"])
+    run(["git", "checkout", "master"])
+    run(["git", "branch", "--force", "other", git_pkg.hexsha + "^"])
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
     assert not current_branch(runner)

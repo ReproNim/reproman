@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -8,30 +7,24 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import datetime
-import docker
 import logging
 import os
 from fabric import Connection
+from importlib import import_module
 import pytest
 import tempfile
 import uuid
 
 from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
-from ..docker_container import DockerSession, PTYDockerSession
 from ...utils import chpwd, swallow_logs
-from ..shell import ShellSession
-from ..singularity import Singularity, SingularitySession, \
-    PTYSingularitySession
-from ..ssh import SSHSession, PTYSSHSession
-from ...tests.utils import skip_ssh
+from ...tests.skip import mark
 from ...tests.fixtures import get_docker_fixture
+from ...tests.fixtures import get_singularity_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
 
-# Note: due to skip_ssh right here, it would skip the entire module with
-# all the tests here if no ssh testing is requested
-testing_container = skip_ssh(get_docker_fixture)(
+testing_container = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST,
     name='testing-container',
     portmaps={
@@ -44,6 +37,24 @@ testing_container = skip_ssh(get_docker_fixture)(
     },
     scope='module'
 )
+
+
+singularity_resource = get_singularity_fixture()
+
+
+@pytest.fixture(scope="module")
+def ssh_connection(testing_container, request):
+    # Initialize SSH connection to testing Docker container.
+    connection = Connection(
+        'localhost',
+        user='root',
+        port=49000,
+        connect_kwargs={
+            'password': 'root'
+        }
+    )
+    connection.open()
+    return connection
 
 
 @pytest.mark.skip(reason="TODO")
@@ -192,227 +203,225 @@ def test_session_class():
             session.chown('path', 100)
 
 
-# Run the abstract method tests for each class the inherits the Session class.
-@pytest.fixture(params=[
-    DockerSession,
-    PTYDockerSession,
-    ShellSession,
-    SingularitySession,
-    PTYSingularitySession,
-    SSHSession,
-    PTYSSHSession
-])
-def resource_session(request):
-    """Pytest fixture that provides instantiated session objects for each
-    of the classes that inherit the Session or POSIXSession classes.
+@pytest.fixture
+def check_methods(resource_test_dir):
+    def fn(cls_name, session):
+        # Check the validity of the env vars
+        envs = session.query_envvars()
+        assert 'HOME' in envs
+        assert 'PATH' in envs
 
-    The fixture will run the test method once for each session object provided.
+        # Check sourcing new env variables
+        # new_envs = session.source_script(['export', 'SCRIPT_VAR=SCRIPT_VALUE'])
+        # assert 'SCRIPT_VAR' in new_envs
 
-    Parameters
-    ----------
-    request : object
-        Pytest request object that contains the class to test against
+        # Check _execute_command by checking file system
+        out, err = session._execute_command(['cat', '/etc/hosts'])
+        assert '127.0.0.1' in out
+        assert 'localhost' in out
+        assert err == ''
 
-    Yields
-    -------
-    session object
-        Instantiated object based on a class that extends the Session or
-        POSIXSession class
-    """
-    # Initialize docker connection to testing container.
-    if request.param in [DockerSession, PTYDockerSession]:
-        client = docker.Client()
-        container = [
-            c for c in client.containers()
-            if '/testing-container' in c['Names']
-        ][0]
-        yield request.param(client, container)
-    elif request.param in [SSHSession, PTYSSHSession]:
-        # Initialize SSH connection to testing Docker container.
-        connection = Connection(
-            'localhost',
-            user='root',
-            port=49000,
-            connect_kwargs={
-                'password': 'root'
-            }
-        )
-        connection.open()
-        yield request.param(connection)
-    elif request.param in [SingularitySession, PTYSingularitySession]:
-        # Initialize Singularity test container.
-        name = str(uuid.uuid4().hex)[:11]
-        resource = Singularity(name=name, image='docker://python:2.7')
-        resource.connect()
-        list(resource.create())
-        yield request.param(name)
-        resource.delete()
-    else:
-        yield request.param()
+        # Check _execute_command failure
+        with pytest.raises(CommandError):
+            session._execute_command(['cat', '/no/such/file'])
 
+        # Check _execute_command with env set
+        # TODO: Implement env parameter for _execute_command()
+        if cls_name not in ["ShellSession", "SSHSession", "PTYSSHSession"]:
+            with pytest.raises(NotImplementedError):
+                out, err = session._execute_command(['cat', '/etc/hosts'],
+                    env={'NEW_VAR': 'NEW_VAR_VALUE'})
 
+        # Check _execute_command with cwd set
+        # TODO: Implement cwd parameter for _execute_command()
+        if "Docker"in cls_name:
+            with swallow_logs(new_level=logging.WARN) as log:
+                session._execute_command(['cat', '/etc/hosts'], cwd='/tmp')
+                assert "cwd is not handled in docker yet" in log.out
+        elif cls_name != 'ShellSession':
+            with pytest.raises(NotImplementedError):
+                out, err = session._execute_command(['cat', '/etc/hosts'],
+                    cwd='/tmp')
 
-def test_session_abstract_methods(testing_container, resource_session,
-        resource_test_dir):
-
-    session = resource_session
-
-    # Check the validity of the env vars
-    envs = session.query_envvars()
-    assert 'HOME' in envs
-    assert 'PATH' in envs
-
-    # Check sourcing new env variables
-    # new_envs = session.source_script(['export', 'SCRIPT_VAR=SCRIPT_VALUE'])
-    # assert 'SCRIPT_VAR' in new_envs
-
-    # Check _execute_command by checking file system
-    out, err = session._execute_command(['cat', '/etc/hosts'])
-    assert '127.0.0.1' in out
-    assert 'localhost' in out
-    assert err == ''
-
-    # Check _execute_command failure
-    with pytest.raises(CommandError):
-        session._execute_command(['cat', '/no/such/file'])
-
-    # Check _execute_command with env set
-    # TODO: Implement env parameter for _execute_command()
-    if not isinstance(session, (ShellSession, SSHSession, PTYSSHSession)):
-        with pytest.raises(NotImplementedError):
-            out, err = session._execute_command(['cat', '/etc/hosts'],
-                env={'NEW_VAR': 'NEW_VAR_VALUE'})
-
-    # Check _execute_command with cwd set
-    # TODO: Implement cwd parameter for _execute_command()
-    if 'DockerSession' in session.__class__.__name__:
-        with swallow_logs(new_level=logging.WARN) as log:
-            session._execute_command(['cat', '/etc/hosts'], cwd='/tmp')
-            assert "cwd is not handled in docker yet" in log.out
-    elif session.__class__.__name__ != 'ShellSession':
-        with pytest.raises(NotImplementedError):
-            out, err = session._execute_command(['cat', '/etc/hosts'],
-                cwd='/tmp')
-
-    # Check exists() method
-    result = session.exists('/etc')
-    assert result
-    result = session.exists('/etc/hosts')
-    assert result
-    result = session.exists('/no/such/file')
-    assert not result
-    # exists() doesn't get confused by an empty string.
-    assert not session.exists('')
-
-    # Check isdir() method
-    result = session.isdir('/etc')
-    assert result
-    result = session.isdir('/etc/hosts')  # A file, not a dir
-    assert not result
-    result = session.isdir('/no/such/dir')
-    assert not result
-
-    # Create a temporary test file
-    temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
-    with temp_file as f:
-        f.write('ReproMan test content\nline 2\nline 3'.encode('utf8'))
-        f.flush()
-        local_path = temp_file.name
-        remote_path = '{}/reproman upload/{}'.format(resource_test_dir,
-            uuid.uuid4().hex)
-
-        # Check put() method
-        # session.put(local_path, remote_path, uid=3, gid=3) # UID for sys, GID for sys
-        # TODO: Sort out permissions issues with chown for SSH when no sudo
-        session.put(local_path, remote_path)
-        result = session.exists(remote_path)
+        # Check exists() method
+        result = session.exists('/etc')
         assert result
-        # TODO: Check uid and gid of remote file
+        result = session.exists('/etc/hosts')
+        assert result
+        result = session.exists('/no/such/file')
+        assert not result
+        # exists() doesn't get confused by an empty string.
+        assert not session.exists('')
 
-        # We can use a relative name for the target
-        basename_put_dir = os.path.join(resource_test_dir, "basename-put")
-        if not os.path.exists(basename_put_dir):
-            os.mkdir(basename_put_dir)
-        # Change directory to avoid polluting test directory for local shell.
-        with chpwd(basename_put_dir):
-            try:
-                session.put(local_path, os.path.basename(remote_path))
-            except ValueError:
-                # Docker and Singularity don't accept non-absolute paths.
-                assert isinstance(session, (DockerSession, SingularitySession))
+        # Check isdir() method
+        result = session.isdir('/etc')
+        assert result
+        result = session.isdir('/etc/hosts')  # A file, not a dir
+        assert not result
+        result = session.isdir('/no/such/dir')
+        assert not result
 
-    # Check get_mtime() method by checking new file has today's date
-    result = int(session.get_mtime(remote_path).split('.')[0])
-    assert datetime.datetime.fromtimestamp(result).month == \
-        datetime.date.today().month
-    assert datetime.datetime.fromtimestamp(result).day == \
-        datetime.date.today().day
+        # Create a temporary test file
+        temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
+        with temp_file as f:
+            f.write('ReproMan test content\nline 2\nline 3'.encode('utf8'))
+            f.flush()
+            local_path = temp_file.name
+            remote_path = '{}/reproman upload/{}'.format(resource_test_dir,
+                uuid.uuid4().hex)
 
-    # Check read() method
-    output = session.read(remote_path).split('\n')
-    assert output[0] == 'ReproMan test content'
-    assert output[1] == 'line 2'
+            # Check put() method
+            # session.put(local_path, remote_path, uid=3, gid=3) # UID for sys, GID for sys
+            # TODO: Sort out permissions issues with chown for SSH when no sudo
+            session.put(local_path, remote_path)
+            result = session.exists(remote_path)
+            assert result
+            # TODO: Check uid and gid of remote file
 
-    # Check get() method
-    local_path = '{}/download/{}'.format(resource_test_dir,
-        uuid.uuid4().hex)
-    session.get(remote_path, local_path)
-    # TODO: In some cases, updating uid and gid does not work if not root
-    assert os.path.isfile(local_path)
-    with open(local_path, 'r') as f:
-        content = f.read().split('\n')
-        assert content[0] == 'ReproMan test content'
-    os.remove(local_path)
-    os.rmdir(os.path.dirname(local_path))
+            # We can use a relative name for the target
+            basename_put_dir = os.path.join(resource_test_dir, "basename-put")
+            if not os.path.exists(basename_put_dir):
+                os.mkdir(basename_put_dir)
+            # Change directory to avoid polluting test directory for local shell.
+            with chpwd(basename_put_dir):
+                try:
+                    session.put(local_path, os.path.basename(remote_path))
+                except ValueError:
+                    # Docker and Singularity don't accept non-absolute paths.
+                    assert "Docker" in cls_name or "Singularity" in cls_name
 
-    with chpwd(resource_test_dir):
-        # We can get() without a leading directory.
-        session.get(remote_path, "just base")
-        assert os.path.exists("just base")
-        remote_basename = os.path.basename(remote_path)
-        # We can get() without specifying a target.
-        session.get(remote_path)
-        assert os.path.exists(remote_basename)
-        # Or by specifying just the directory.
-        session.get(remote_path, "subdir" + os.path.sep)
-        assert os.path.exists(os.path.join("subdir", remote_basename))
+        # Check get_mtime() method by checking new file has today's date
+        result = int(session.get_mtime(remote_path).split('.')[0])
+        assert datetime.datetime.fromtimestamp(result).month == \
+            datetime.date.today().month
+        assert datetime.datetime.fromtimestamp(result).day == \
+            datetime.date.today().day
 
-    # Check mkdir() method
-    test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)
-    session.mkdir(test_dir)
-    result = session.isdir(test_dir)
-    assert result
+        # Check read() method
+        output = session.read(remote_path).split('\n')
+        assert output[0] == 'ReproMan test content'
+        assert output[1] == 'line 2'
 
-    # Check making parent dirs without setting flag
-    test_dir = '{}/tmp/i fail/{}'.format(resource_test_dir, uuid.uuid4().hex)
-    with pytest.raises(CommandError):
-        session.mkdir(test_dir, parents=False)
-    result = session.isdir(test_dir)
-    assert not result
-    # Check making parent dirs when parents flag set
-    test_dir = '{}/i succeed/{}'.format(resource_test_dir, uuid.uuid4().hex)
-    session.mkdir(test_dir, parents=True)
-    result = session.isdir(test_dir)
-    assert result
+        # Check get() method
+        local_path = '{}/download/{}'.format(resource_test_dir,
+            uuid.uuid4().hex)
+        session.get(remote_path, local_path)
+        # TODO: In some cases, updating uid and gid does not work if not root
+        assert os.path.isfile(local_path)
+        with open(local_path, 'r') as f:
+            content = f.read().split('\n')
+            assert content[0] == 'ReproMan test content'
+        os.remove(local_path)
+        os.rmdir(os.path.dirname(local_path))
 
-    # Check mktmpdir() method
-    test_dir = session.mktmpdir()
-    result = session.isdir(test_dir)
-    assert result, "The path %s is not a directory" % test_dir
+        with chpwd(resource_test_dir):
+            # We can get() without a leading directory.
+            session.get(remote_path, "just base")
+            assert os.path.exists("just base")
+            remote_basename = os.path.basename(remote_path)
+            # We can get() without specifying a target.
+            session.get(remote_path)
+            assert os.path.exists(remote_basename)
+            # Or by specifying just the directory.
+            session.get(remote_path, "subdir" + os.path.sep)
+            assert os.path.exists(os.path.join("subdir", remote_basename))
 
-    # All sessions will take the command in string form...
-    output_string = "{}/stringtest {}".format(
-        resource_test_dir, session.__class__.__name__)
-    assert not session.exists(output_string)
-    session.execute_command("touch '{}'".format(output_string))
-    assert session.exists(output_string)
-    # and the list form.
-    output_list = "{}/listtest {}".format(
-        resource_test_dir, session.__class__.__name__)
-    assert not session.exists(output_list)
-    session.execute_command(["touch", output_list])
-    assert session.exists(output_list)
+        # Check mkdir() method
+        test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)
+        session.mkdir(test_dir)
+        result = session.isdir(test_dir)
+        assert result
 
-    # TODO: How to test chmod and chown? Need to be able to read remote file attributes
-    # session.chmod(self, path, mode, recursive=False):
-    # session.chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
+        # Check making parent dirs without setting flag
+        test_dir = '{}/tmp/i fail/{}'.format(resource_test_dir, uuid.uuid4().hex)
+        with pytest.raises(CommandError):
+            session.mkdir(test_dir, parents=False)
+        result = session.isdir(test_dir)
+        assert not result
+        # Check making parent dirs when parents flag set
+        test_dir = '{}/i succeed/{}'.format(resource_test_dir, uuid.uuid4().hex)
+        session.mkdir(test_dir, parents=True)
+        result = session.isdir(test_dir)
+        assert result
+
+        # Check mktmpdir() method
+        test_dir = session.mktmpdir()
+        result = session.isdir(test_dir)
+        assert result, "The path %s is not a directory" % test_dir
+
+        # All sessions will take the command in string form...
+        output_string = "{}/stringtest {}".format(
+            resource_test_dir, session.__class__.__name__)
+        assert not session.exists(output_string)
+        session.execute_command("touch '{}'".format(output_string))
+        assert session.exists(output_string)
+        # and the list form.
+        output_list = "{}/listtest {}".format(
+            resource_test_dir, session.__class__.__name__)
+        assert not session.exists(output_list)
+        session.execute_command(["touch", output_list])
+        assert session.exists(output_list)
+
+        # TODO: How to test chmod and chown? Need to be able to read remote file attributes
+        # session.chmod(self, path, mode, recursive=False):
+        # session.chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
+    return fn
+
+
+def test_session_shell(check_methods):
+    from reproman.resource.shell import ShellSession
+    check_methods("ShellSession", ShellSession())
+
+
+def import_resource(mod, cls):
+    return getattr(import_module("reproman.resource." + mod),
+                   cls)
+
+
+@pytest.mark.parametrize(
+    "location",
+    [   # module, class
+        ("singularity", "SingularitySession"),
+        ("singularity", "PTYSingularitySession")
+    ],
+    ids=lambda x: x[1])
+def test_session_singularity(location, singularity_resource, check_methods):
+    """Test sessions that depend on `singularity_resource` fixture.
+    """
+    cls = import_resource(*location)
+    session = cls(singularity_resource.name)
+    check_methods(location[1], session)
+
+
+@mark.skipif_no_ssh
+@pytest.mark.parametrize(
+    "location",
+    [   # module, class
+        ("ssh", "SSHSession"),
+        ("ssh", "PTYSSHSession"),
+    ],
+    ids=lambda x: x[1])
+def test_session_ssh(location, ssh_connection, check_methods):
+    """Test sessions that depend on `ssh_connection` fixture.
+    """
+    cls = import_resource(*location)
+    check_methods(location[1], cls(ssh_connection))
+
+
+@pytest.mark.parametrize(
+    "location",
+    [   # module, class
+        ("docker_container", "DockerSession"),
+        ("docker_container", "PTYDockerSession"),
+    ],
+    ids=lambda x: x[1])
+def test_session_container(location, testing_container, check_methods):
+    """Test sessions that depend on `testing_container` fixture.
+    """
+    cls = import_resource(*location)
+    import docker
+    client = docker.Client()
+    container = next(c for c in client.containers()
+                     if '/testing-container' in c['Names'])
+    assert container
+    check_methods(location[1], cls(client, container))

@@ -1,4 +1,3 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -12,7 +11,7 @@ import re
 import os.path
 from os.path import exists
 
-from mock import patch
+from unittest.mock import patch
 
 from reproman.log import LoggerHelper
 

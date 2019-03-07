@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -22,11 +21,10 @@ from ..exceptions import OutdatedExternalDependency, MissingExternalDependency
 from ...tests.utils import (
     with_tempfile,
     create_tree,
-    swallow_logs,
 )
-
+from ...utils import swallow_logs
 import pytest
-from mock import patch
+from unittest.mock import patch
 
 
 def cmp(a, b):

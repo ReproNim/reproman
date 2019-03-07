@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -16,18 +16,18 @@ from ...distributions.redhat import RPMTracer
 from ...distributions.redhat import RPMPackage
 from ...distributions.redhat import RedhatDistribution
 from ...formats import Provenance
-from ...resource.docker_container import DockerContainer
-from ...tests.utils import skip_if_no_network, skip_if_no_docker_engine
+from ...tests.skip import skipif
 from ...utils import swallow_logs
 
 
-@skip_if_no_docker_engine
 @pytest.fixture(scope='function')
 def docker_container():
-    skip_if_no_network()
+    skipif.no_network()
+    skipif.no_docker_engine()
     name = str(uuid.uuid4())  # Generate a random name for the container.
     Runner().run(['docker', 'run', '-t', '-d', '--rm', '--name',
-        name, 'centos:7'])
+                  name, 'centos:7'],
+                 expect_stderr=True)
     yield name
     Runner().run(['docker', 'stop', name])
 
@@ -167,10 +167,8 @@ def test_distribution_sub(setup_packages):
     assert result[0] == p1v11
 
 
-@skip_if_no_docker_engine
 def test_tracer(docker_container):
-    skip_if_no_network()
-
+    from ...resource.docker_container import DockerContainer
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()
@@ -199,10 +197,8 @@ def test_tracer(docker_container):
     assert packages['/usr/bin/ls']['packager'].startswith('CentOS BuildSystem')
 
 
-@skip_if_no_docker_engine
 def test_distribution(docker_container, centos_spec):
-    skip_if_no_network()
-
+    from ...resource.docker_container import DockerContainer
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()

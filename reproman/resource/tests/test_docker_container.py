@@ -1,4 +1,3 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -8,15 +7,15 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import logging
-from mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock, call
 
 from ...utils import merge_dicts
 from ...utils import swallow_logs
-from ...tests.utils import assert_in, skip_if_no_docker_engine
+from ...tests.utils import assert_in
+from ...tests.skip import mark
 from ..base import ResourceManager
 from ...support.exceptions import ResourceError
 from ...consts import TEST_SSH_DOCKER_DIGEST
-from ..docker_container import DockerContainer
 
 from reproman.tests.fixtures import get_docker_fixture
 
@@ -30,6 +29,7 @@ setup_ubuntu = get_docker_fixture(
 )
 
 
+@mark.skipif_no_docker_dependencies
 def test_dockercontainer_class():
 
     with patch('docker.Client') as client, \
@@ -165,13 +165,14 @@ def test_setup_ubuntu(setup_ubuntu):
     assert setup_ubuntu['container_id']
 
 
-@skip_if_no_docker_engine
+@mark.skipif_no_docker_engine
 def test_engine_exits():
+    from ..docker_container import DockerContainer
     assert DockerContainer.is_engine_running()
     assert not DockerContainer.is_engine_running(base_url='foo')
 
 
-@skip_if_no_docker_engine
 def test_container_exists(setup_ubuntu):
+    from ..docker_container import DockerContainer
     assert DockerContainer.is_container_running(setup_ubuntu['name'])
     assert not DockerContainer.is_container_running('foo')

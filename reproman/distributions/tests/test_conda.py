@@ -1,4 +1,4 @@
-# emacs: -*- mode: python; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil; coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # ex: set sts=4 ts=4 sw=4 noet:
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 #
@@ -10,7 +10,7 @@ import os
 import pytest
 
 import sys
-from mock import mock
+from unittest import mock
 from subprocess import call
 
 import yaml
@@ -18,7 +18,8 @@ import attr
 
 from reproman.formats.reproman import RepromanProvenance
 from reproman.tests.utils import create_pymodule
-from reproman.tests.utils import skip_if_no_network, assert_is_subset_recur
+from reproman.tests.utils import assert_is_subset_recur
+from reproman.tests.skip import mark
 
 from reproman.distributions.conda import CondaTracer, CondaDistribution, \
     CondaEnvironment, CondaPackage, CondaChannel, \
@@ -98,10 +99,11 @@ def test_create_conda_export():
 
 
 @pytest.mark.integration
-@skip_if_no_network
-def test_conda_init_install_and_detect():
-    test_dir = "/tmp/reproman_conda/miniconda"
-
+@mark.skipif_no_network
+def test_conda_init_install_and_detect(tmpdir):
+    # Note: We use a subdirectory of tmpdir because `install_packages` decides
+    # to install miniconda based on whether the directory exists.
+    test_dir = os.path.join(str(tmpdir), "miniconda")
     dist = CondaDistribution(
         name="conda",
         path=test_dir,
@@ -188,7 +190,7 @@ def test_conda_init_install_and_detect():
                     CondaChannel(
                         name="conda-forge",
                         url="https://conda.anaconda.org/conda-forge/linux-64")])])
-    # First install the environment in /tmp/reproman_conda/miniconda
+    # First install the environment in the temporary directory.
     dist.initiate(None)
     dist.install_packages()
     # Add an empty environment to test detection of them

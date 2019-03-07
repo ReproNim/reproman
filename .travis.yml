@@ -15,6 +15,10 @@ matrix:
   - python: 3.5
     env:
     - REPROMAN_TESTS_SSH=1
+  - python: 3.4
+    env:
+    - REPROMAN_TESTS_SSH=1
+    - REPROMAN_TESTS_DEPS=core
   - python: 3.5
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
@@ -32,7 +36,6 @@ matrix:
     # must operate nicely with those env variables set
     - http_proxy=
     - https_proxy=
-  - python: 3.4
   # Those aren't yet ready since lxml Ibelieve fails to install
   #- python: pypy
   #- python: pypy3
@@ -40,9 +43,8 @@ matrix:
 # - python: nightly
 
 env:
-  # to overcome problem with system-wide installed boto on travis
-  # see https://github.com/travis-ci/travis-ci/issues/5246
-  - BOTO_CONFIG=/tmp/nowhere
+  global:
+    - REPROMAN_TESTS_DEPS=full
 
 before_install:
   # we do not need anything from those APT sources, and they often fail, disable!
@@ -59,7 +61,12 @@ install:
   - pip install --upgrade pip
   # needed by html5lib
   - pip install --upgrade 'setuptools>=18.5'
-  - pip install -r requirements-devel.txt
+  - pip install -e .[$REPROMAN_TESTS_DEPS]
+  # The above could have been a core dependencies install, so make
+  # sure we have the other devel dependencies we need.
+  - pip install -e .[tests]
+  - pip install -e .[devel-docs]
+  - pip install -e .[devel-utils]
   # So we could test under sudo -E with PATH pointing to installed location
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
   # for SVN tests (SVNRepoShim._ls_files_command())
@@ -71,7 +78,7 @@ script:
   - python setup.py build
   - if [ ! -z "$REPROMAN_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package reproman --logging-level=INFO
-  - coverage run `which py.test` -s --integration reproman
+  - coverage run `which py.test` -s -rs --integration reproman
   - if [ ! -z "$REPROMAN_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # Generate documentation and run doctests
   - PYTHONPATH=$PWD make -C docs html doctest
