@@ -7,6 +7,16 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrators for `reproman run`.
+
+This module has three main parts:
+
+ (1) The Orchestrator and DataladOrchestrator base classes define the
+     interface. The two most important methods these leave undefined are
+     prepare_remote() and fetch().
+
+ (2) Mixin classes define prepare_remote() and fetch().
+
+ (3) Concrete classes bring together 1 and (combinations of) 2.
 """
 
 import abc
