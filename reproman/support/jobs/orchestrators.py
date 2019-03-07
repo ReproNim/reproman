@@ -44,6 +44,26 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
     An Orchestrator is responsible for preparing a directory to run a command,
     submitting it with the specified submitter, and then handling the results.
+
+    Parameters
+    ----------
+    resource : Resource instance
+        Resource to run the command on.
+    submission_type : str
+        A key from `reproman.support.jobs.submitters.SUBMITTERS` that
+        identifies which submitter should be used.
+    job_spec : dict or None, optional
+        These items control aspects of the run in several (too many) ways: (1)
+        these items are exposed as keywords to the runscript and submit
+        templates, (2) the orchestrator looks here for optional values like
+        "working_directory" and "inputs", and (3) on resurrection, the
+        orchestrator looks here for other required values, like "jobid".
+
+        The details around the job_spec are somewhat loose and poorly defined
+        at the moment.
+    resurrection : boolean, optional
+        Whether this instance represents a previous Orchestrator that already
+        submitted a job. This allows a detached job to be fetched.
     """
 
     template_name = None
