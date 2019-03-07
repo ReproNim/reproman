@@ -190,8 +190,10 @@ class Run(Interface):
 
             def get_doc(x):
                 doc = x if isinstance(x, str) else x.__doc__
-                doc = " ".join(doc.split())  # Collapse whitespace.
-                return wrapper.fill(doc)
+                paragraphs = doc.replace("\n\n", "\0").split("\0")
+                # Collapse whitespace.
+                paragraphs = (" ".join(p.strip().split()) for p in paragraphs)
+                return "\n\n".join(wrapper.fill(p) for p in paragraphs)
 
             def fmt(d):
                 return ["  {}\n{}".format(k, get_doc(v))
