@@ -786,16 +786,18 @@ class FetchDataladRunMixin(object):
 
 # TODO: There's no support for non-shared file systems.
 
-# TODO: Improve the docstring descriptions of what the orchestrators do.
-
 
 class PlainOrchestrator(
         PrepareRemotePlainMixin, FetchPlainMixin, Orchestrator):
     """Plain execution on remote directory.
 
-    If no working directory is supplied, the remote directory is named with the
-    job ID. Inputs are made available with a session.put(), and outputs are
-    fetched with a session.get().
+    If no working directory is supplied via the `working_directory` job
+    parameter, the remote directory is named with the job ID. Inputs are made
+    available with a session.put(), and outputs are fetched with a
+    session.get().
+
+    Note: This orchestrator may be sufficient for simple tasks, but using one
+    of the DataLad orchestrators is recommended.
     """
 
     name = "plain"
@@ -812,6 +814,25 @@ class PlainOrchestrator(
 class DataladPairOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladPairMixin, DataladOrchestrator):
     """Execute command on remote dataset sibling.
+
+    **Preparing the remote dataset** The default `working_directory` is the a
+    directory named with dataset ID under `root_directory`. If the dataset
+    doesn't exist, one is created, with a remote named after the resource.
+
+    If the dataset already exists on the remote, the remote is updated, and the
+    local commit is checked out on the remote. The orchestrator will check out
+    a detached HEAD if needed. It won't proceed if the working tree is dirty
+    and it won't advance a branch if it is checked out and the update is a
+    fast-forward.
+
+    To get inputs on the remote, a `datalad get` call is first tried to
+    retrieve inputs from public sources. If that fails, a `datalad publish ...
+    INPUTS` call from the local dataset to the remote dataset is performed.
+
+    **Fetching a completed job** `datalad update` is called to bring in the
+    remote changes, along with a `datalad get` call to fetch the specified
+    outputs. On completion, the HEAD on the remote will be a commit recording
+    changes from the run. It is marked with a git ref: refs/reproman/JOBID.
     """
 
     name = "datalad-pair"
@@ -821,6 +842,14 @@ class DataladPairRunOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
     """Execute command in remote dataset sibling and capture results locally as
     run record.
+
+    The remote is prepared as described for the datalad-pair orchestrator.
+
+    **Fetching a completed job** After the job completes on the remote, the
+    outputs are bundled into a tarball. (Outputs are identified based on file
+    time stamps, not on the specified outputs.) This tarball is downloaded to
+    the local machine and used to create a `datalad run` commit. The local
+    commit will be marked with a git ref: refs/reproman/JOBID.
     """
 
     name = "datalad-pair-run"
@@ -829,7 +858,12 @@ class DataladPairRunOrchestrator(
 class DataladLocalRunOrchestrator(
         PrepareRemotePlainMixin, FetchDataladRunMixin, DataladOrchestrator):
     """Execute command in a plain remote directory and capture results locally
-    as run record."""
+    as run record.
+
+    This orchestrator is useful when the remote resource does not have DataLad
+    installed. The remote is prepared as described for the plain orchestrator.
+    The fetch is performed as described for the datalad-pair-run orchestrator.
+    """
 
     name = "datalad-local-run"
 
