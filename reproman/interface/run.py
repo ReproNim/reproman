@@ -102,6 +102,9 @@ class Run(Interface):
     submitter controls how the job is submitted on the resource (e.g., as a
     condor job). Use --list to see information on the available orchestrators
     and submitters.
+
+    Unless --follow is specified, the job is started and detached. Use
+    `reproman jobs` to list and fetch detached jobs.
     """
     _params_ = dict(
         resref=resref_opt,
