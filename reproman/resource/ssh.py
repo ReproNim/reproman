@@ -40,11 +40,11 @@ class SSH(Resource):
     port = attrib(
         doc="Port to connect to on remote host")
     key_filename = attrib(
-        doc="Path to SSH private key file matched with AWS key name parameter")
+        doc="Path to SSH private key file")
     user = attrib(
         doc="Username to use to log into remote environment")
 
-    id = attrib()  # EC2 instance ID
+    id = attrib()
 
     type = attrib(default='ssh')  # Resource type
 
