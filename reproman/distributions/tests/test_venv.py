@@ -60,6 +60,7 @@ def venv_test_dir():
 def test_venv_identify_distributions(venv_test_dir):
     libpaths = {p[-1]: os.path.join("lib", PY_VERSION, *p)
                 for p in [("abc.py",),
+                          ("importlib", "yaml", "machinery.py"),
                           ("site-packages", "yaml", "parser.py"),
                           ("site-packages", "attr", "filters.py")]}
 
@@ -71,8 +72,10 @@ def test_venv_identify_distributions(venv_test_dir):
             os.path.join("venv1", libpaths["filters.py"]),
             # A virtualenv file that isn't part of any particular package.
             os.path.join("venv1", "bin", "python"),
-            # A link to the outside world.
-            os.path.join("venv1", libpaths["abc.py"])
+            # A link to the outside world ...
+            os.path.join("venv1", libpaths["abc.py"]),
+            # or in a directory that is a link to the outside world.
+            os.path.join("venv1", libpaths["machinery.py"])
         ]
         path_args.append("/sbin/iptables")
 
@@ -88,6 +91,7 @@ def test_venv_identify_distributions(venv_test_dir):
         assert unknown_files == {
             "/sbin/iptables",
             op.realpath(os.path.join("venv1", libpaths["abc.py"])),
+            op.realpath(os.path.join("venv1", libpaths["machinery.py"])),
             # The editable package was added by VenvTracer as an unknown file.
             os.path.join(venv_test_dir, "minimal_pymodule")}
 
@@ -149,6 +153,29 @@ def test_venv_install(venv_test_dir, tmpdir):
     assert not any([p.name == "nmtest"
                     for e in dist_installed.environments
                     for p in e.packages])
+
+
+@pytest.mark.integration
+def test_venv_pyc(venv_test_dir, tmpdir):
+    from reproman.api import retrace
+    tmpdir = str(tmpdir)
+    venv_path = op.join("lib", PY_VERSION, "site-packages", "attr")
+    pyc_path = op.join(
+        venv_test_dir, "venv1", venv_path, "__pycache__",
+        "exceptions.cpython-{v.major}{v.minor}.pyc".format(v=sys.version_info))
+
+    if not op.exists(pyc_path):
+        pytest.skip("Expected file does not exist: {}".format(pyc_path))
+
+    distributions, unknown_files = retrace([pyc_path])
+    assert not unknown_files
+    assert len(distributions) == 1
+    expect = {"environments":
+              [{"packages": [{"files": [op.join(venv_path, "exceptions.py")],
+                              "name": "attrs",
+                              "editable": False}]}]}
+    assert_is_subset_recur(expect,
+                           attr.asdict(distributions[0]), [dict, list])
 
 
 def test_venv_install_noop():
