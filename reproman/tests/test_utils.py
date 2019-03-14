@@ -47,6 +47,7 @@ from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
 from ..utils import parse_semantic_version
 from ..utils import merge_dicts
+from ..utils import pycache_source
 
 from .utils import ok_, eq_, assert_false, assert_equal, assert_true
 
@@ -558,6 +559,37 @@ def test_merge_dicts():
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
     assert merge_dicts(iter([{1: 1}, {2: 2}, {1: 3}])) == {1: 3, 2: 2}
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
+
+
+@pytest.mark.parametrize(
+    "case",
+    [{"label": "full-py2",
+      "value": "/tmp/a/b/c/d.pyc",
+      "expected": "/tmp/a/b/c/d.py"},
+     {"label": "full",
+      "value": "/tmp/a/b/c/__pycache__/d.cpython-35.pyc",
+      "expected": "/tmp/a/b/c/d.py"},
+     {"label": "relative-py2",
+      "value": "d.pyc",
+      "expected": "d.py"},
+     {"label": "relative-py2-pyo",
+      "value": "d.pyo",
+      "expected": "d.py"},
+     {"label": "relative",
+      "value": "__pycache__/d.cpython-35.pyc",
+      "expected": "d.py"},
+     {"label": "relative-pyo",
+      "value": "__pycache__/d.cpython-35.opt-1.pyc",
+      "expected": "d.py"},
+     {"label": "not pyc",
+      "value": "not a pycache",
+      "expected": None},
+     {"label": "empty",
+      "value": "",
+      "expected": None}],
+    ids=itemgetter("label"))
+def test_pycache_source(case):
+    assert pycache_source(case["value"]) == case["expected"]
 
 
 def test_line_profile():
