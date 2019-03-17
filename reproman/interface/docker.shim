@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+#emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*-
+#ex: set sts=4 ts=4 sw=4 noet:
+#
+#
+# This script is a shim for the docker executable. The shim intercepts
+# calls to the docker executable, runs a image id discovery process, and
+# then proceeds with the original call to the original docker executable.
+#
+require 5.002;
+
+# Print debug output
+# 
+# Parameters
+# ----------
+# $output
+#     string : Text to print to the screen.
+# 
+sub debug {
+    return if (!$DEBUG);
+    foreach my $line (@_) {
+        print "[DEBUG DOCKER SHIM] ${line}";
+        print "\n" if (!($line =~ /\n$/));
+    }
+}
+
+# Print debugging if docker debug switch is set
+my $DEBUG = 0;
+foreach(@ARGV) {
+    $DEBUG = 1 if ($_ eq '--debug' or $_ eq '-D');
+}
+
+# Gather ENV info
+my $TRACERS_DIR = $ENV{"REPROMAN_TRACERS_DIR"};
+debug("TRACERS_DIR: ${TRACERS_DIR}");
+my $EXTRA_TRACE_FILE = $ENV{"REPROMAN_EXTRA_TRACE_FILE"};
+debug("EXTRA_TRACE_FILE: ${EXTRA_TRACE_FILE}");
+my $WAIT_SCRIPT = "wait.sh";
+
+# Locate original Docker executable (Most likely in /usr/bin)
+my $stdout = qx/which -a docker/;
+my @paths = split(/\s+/, $stdout);
+my $original_docker_exec = '';
+for my $path (@paths) {
+  $original_docker_exec = $path if $path ne $0;
+}
+if (!$original_docker_exec) {
+  die "Original docker executable not found";
+}
+debug("Found docker executable: ${original_docker_exec}");
+
+# Create the script the will be the entrypoint of the container needed to
+# figure out the image RepoDigest value. The container will be removed when no
+# longer needed or, if the shim fails, will remove itself after the sleep
+# command completes.
+open(my $fh, '>', "${TRACERS_DIR}/${WAIT_SCRIPT}")
+  or die "Could not open file '${TRACERS_DIR}/${WAIT_SCRIPT}' $!";
+print $fh <<'EOF';
+#!/bin/sh
+sleep 30
+EOF
+close($fh);
+chmod(0755, "${TRACERS_DIR}/${WAIT_SCRIPT}");
+
+# Pre-run the docker container in detached mode to get its id
+my $cmd = "${original_docker_exec} run -d --rm ";
+$cmd .= "-v ${TRACERS_DIR}/${WAIT_SCRIPT}:/opt/${WAIT_SCRIPT} ";
+$cmd .= "--entrypoint /opt/${WAIT_SCRIPT} ";
+my ($start_index) = grep { $ARGV[$_] eq 'run' } (0 .. @ARGV-1);
+$cmd .= join(" ", @ARGV[($start_index+1)..$#ARGV]);
+debug("PRE-RUN COMMAND: ${cmd}");
+my $container_id = qx/$cmd/;
+debug("Found container id: ${container_id}");
+
+# Look up the docker image id by inspecting the container
+my $stdout = qx/$original_docker_exec container inspect $container_id/;
+$stdout =~ /"Image": "(\S+)"/;
+my $image_id = $1;
+debug("Found image id: ${image_id}");
+
+# Look up the image RepoDigest by inspecting the image
+$stdout = qx/$original_docker_exec image inspect $image_id/;
+$stdout =~ /"RepoDigests": \[\s+"(\S+)"\s+\]/;
+my $digest_id = $1;
+debug("Found digest ID: ${digest_id}");
+open(my $fh, '>>', "${EXTRA_TRACE_FILE}")
+  or die "Could not open file '${EXTRA_TRACE_FILE}' $!";
+if ($digest_id) {
+  print $fh "- ${digest_id}\n";
+}
+close($fh);
+
+# Clean up the temp directory and the pre-run docker container
+qx/$original_docker_exec stop $container_id/;
+unlink("${TRACERS_DIR}/${WAIT_SCRIPT}");
+
+# Run the original Docker command
+$cmd = "${original_docker_exec} " . join(" ", @ARGV);
+$stdout = qx/$cmd/;
+print($stdout);
+

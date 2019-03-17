@@ -156,6 +156,7 @@ setup(
             findsome(opj("distributions", "tests", "files"), {"yml", "yaml"}) +
             findsome("examples", {"trig", "yml", "yaml"}) +
             findsome(opj("formats", "tests", "files"), {"yml", "yaml"}) +
+            findsome(opj("interface"), {"shim"}) +
             findsome(opj("interface", "tests"), {"yml", "yaml"}) +
             findsome(opj("interface", "tests", "files"), {"yml", "yaml"}) +
             findsome(opj("tests", "files"), {"cfg"})

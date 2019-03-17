@@ -16,6 +16,7 @@ import os.path as op
 import sys
 import time
 import uuid
+import yaml
 
 from .base import Interface
 from ..support.exceptions import CommandError
@@ -132,6 +133,9 @@ class TracedCommand(CommandAdapter):
         self.local_trace_dir = op.join(local_cache_dir, 'traces', self.exec_id)
         self.local_tracer_gz = op.join(self.local_tracer_dir,
                                        "reproman_trace.gz")
+        self.local_docker_shim = op.join(op.dirname(op.realpath(__file__)),
+            "docker.shim")
+        self.extra_trace_file = "trace.extra.yml"
 
         # Remote session variables
         self.remote_dir = remote_dir
@@ -190,11 +194,19 @@ class TracedCommand(CommandAdapter):
         # TODO: might want to add also a "marker" so within the trace
         #       we could avoid retracing session establishing bits themselves
 
+        # Upload Docker shim
+        self.remote_docker_shim = op.join(remote_tracer_dir, "docker")
+        if not self.session.exists(self.remote_docker_shim):
+            self.session.put(self.local_docker_shim, self.remote_docker_shim)
+
     def pre_command(self):
         self._prepare_local()
         self._prepare_remote()
 
     def execute(self):
+        remote_tracer_dir = op.dirname(self.remote_docker_shim)
+        remote_extra_trace_path = op.join(self.remote_trace_dir,
+            self.extra_trace_file)
         cmd_prefix = [
             self.remote_tracer,
             "--logfile", op.join(self.remote_trace_dir, "tracer.log"),
@@ -202,13 +214,23 @@ class TracedCommand(CommandAdapter):
             "--"
         ]
         return self.session.execute_command(
-            cmd_prefix + [self.command] + self.cmd_args)
+            cmd_prefix + [self.command] + self.cmd_args,
+            env=dict(
+                PATH="{}:$PATH".format(remote_tracer_dir),
+                REPROMAN_TRACERS_DIR=remote_tracer_dir,
+                REPROMAN_EXTRA_TRACE_FILE=remote_extra_trace_path
+            )
+        )
 
     def post_command(self):
         # Copy all the tracing artifacts here if not present already (e.g.
         # if session was a local shell)
         if not op.exists(self.local_trace_dir):
-            for fname in ["tracer.log", "trace.sqlite3"]:
+            remote_files = ["tracer.log", "trace.sqlite3"]
+            if self.session.exists(op.join(self.remote_trace_dir,
+                    self.extra_trace_file)):
+                remote_files.append(self.extra_trace_file)
+            for fname in remote_files:
                 self.session.get(op.join(self.remote_trace_dir, fname),
                                  op.join(self.local_trace_dir, fname))
             lgr.info(
@@ -228,12 +250,22 @@ class TracedCommand(CommandAdapter):
             sort_packages=False,
             find_inputs_outputs=True)
 
+        # include extra trace output if we have any
+        local_extra_trace_file = op.join(self.local_trace_dir,
+            self.extra_trace_file)
+        if op.exists(local_extra_trace_file):
+            with open(local_extra_trace_file, 'r') as fp:
+                extra_files = yaml.load(fp)
+        else:
+            extra_files = None
+
         from reproman.api import retrace
         reproman_spec_path = op.join(self.local_trace_dir, "reproman.yml")
         retrace(
             spec=op.join(self.local_trace_dir, "config.yml"),
             output_file=reproman_spec_path,
-            resref=self.session
+            resref=self.session,
+            path=extra_files
         )
         lgr.info("ReproMan trace %s", reproman_spec_path)
 
