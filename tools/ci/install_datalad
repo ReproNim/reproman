@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -eu
+
+sudo apt-get install git-annex-standalone
+pip install git+https://github.com/datalad/datalad.git

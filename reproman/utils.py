@@ -21,6 +21,7 @@ import logging
 import shutil
 import stat
 import os
+import os.path as op
 import sys
 import tempfile
 import platform
@@ -629,6 +630,36 @@ def line_profile(func):
         finally:
             prof.print_stats()
     return newfunc
+
+
+def cached_property(prop):
+    """Cache a property's return value.
+
+    This avoids using `lru_cache`, which is more complicated than needed for
+    simple properties and isn't available in Python 2's stdlib.
+
+    Use this only if the property's return value is constant over the life of
+    the object. This isn't appropriate for a property with a setter or a
+    property whose getter value may change based some outside state.
+
+    This should be positioned below the @property declaration.
+    """
+    # Modified from MIT-licensed
+    # https://code.activestate.com/recipes/576563-cached-property/
+
+    @wraps(prop)
+    def wrapped(self):
+        try:
+            return self._property_cache[prop]
+        except AttributeError:
+            self._property_cache = {}
+            x = self._property_cache[prop] = prop(self)
+            return x
+        except KeyError:
+            x = self._property_cache[prop] = prop(self)
+            return x
+    return wrapped
+
 
 #
 # Context Managers
@@ -1381,6 +1412,60 @@ def merge_dicts(ds):
     for d in ds:
         merged.update(d)
     return merged
+
+
+def parse_kv_list(params):
+    """Create a dict from a "key=value" list.
+
+    Parameters
+    ----------
+    params : sequence of str or mapping
+        For a sequence, each item should have the form "<key>=<value".  If
+        `params` is a mapping, it will be returned as is.
+
+    Returns
+    -------
+    A mapping from backend key to value.
+    """
+    if isinstance(params, collections.Mapping):
+        res = params
+    elif params:
+        res = dict(p.split("=", 1) for p in params)
+    else:
+        res = {}
+    return res
+
+
+def write_update(fname, content, encoding=None):
+    """Write `content` to `fname` unless it already has matching content.
+
+    This is the same as simply writing the content, except no writing occurs if
+    the content of the existing file matches, the write or update is logged,
+    and the leading directories of `fname` are created if needed.
+
+    Parameters
+    ----------
+    fname : str
+        Path to update.
+    content : str
+        Content to dump to path.
+    encoding : str or None, optional
+        Passed to `open`.
+    """
+    existing_content = None
+    if op.exists(fname):
+        with open(fname, encoding=encoding) as fh:
+            existing_content = fh.read()
+
+    if content == existing_content:
+        lgr.debug("File already has matching content: %s", fname)
+    else:
+        lgr.debug("%s content in %s",
+                  "Updating" if existing_content else "Creating",
+                  fname)
+        os.makedirs(op.dirname(fname), exist_ok=True)
+        with open(fname, "w", encoding=encoding) as fh:
+            fh.write(content)
 
 
 def pycache_source(path):

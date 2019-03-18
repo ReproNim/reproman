@@ -150,6 +150,15 @@ class MultipleResourceMatches(ReferenceError):
 class SessionRuntimeError(RuntimeError):
     pass
 
+# Orchestrator errors
+
+
+class OrchestratorError(RuntimeError):
+    """Base class for Orchestrator-related errors.
+    """
+    pass
+
+
 #
 # SSH support errors, largely adopted from starcluster
 #

@@ -90,6 +90,20 @@ def _get_svn_version():
     return _runner.run(["svn", "--version"])[0].split()[2]
 
 
+def _get_condor_version():
+    """Return version of available condor"""
+    # Example output:
+    #
+    # $CondorVersion: 8.6.8 Nov 30 2017 BuildID: [...]
+    return _runner.run(['condor_version'])[0].split()[1]
+
+
+def _get_datalad_version():
+    """Return version of available datalad"""
+    # Example output: datalad 0.11.3.dev17
+    return _runner.run(['datalad', '--version'])[0].split()[1]
+
+
 class ExternalVersions(object):
     """Helper to figure out/use versions of the externals (modules, cmdline tools, etc).
 
@@ -112,6 +126,8 @@ class ExternalVersions(object):
         'cmd:singularity': _get_singularity_version,
         'cmd:system-ssh': _get_system_ssh_version,
         'cmd:svn': _get_svn_version,
+        'cmd:condor': _get_condor_version,
+        'cmd:datalad': _get_datalad_version,
         'cmd:apt-cache': _get_apt_cache_version
     }
     INTERESTING = (

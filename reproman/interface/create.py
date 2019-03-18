@@ -11,8 +11,6 @@
 
 __docformat__ = 'restructuredtext'
 
-from collections import Mapping
-
 from .base import Interface
 import reproman.interface.base # Needed for test patching
 from ..support.param import Parameter
@@ -20,31 +18,11 @@ from ..support.constraints import EnsureStr
 from ..support.exceptions import ResourceError
 from ..resource import get_manager
 from ..dochelpers import exc_str
+from ..utils import parse_kv_list
+
 
 from logging import getLogger
 lgr = getLogger('reproman.api.create')
-
-
-def parse_backend_parameters(params):
-    """Parse a list of backend parameters.
-
-    Parameters
-    ----------
-    params : sequence of str or mapping
-        For a sequence, each item should have the form "<key>=<value".  If
-        `params` is a mapping, it will be returned as is.
-
-    Returns
-    -------
-    A mapping from backend key to value.
-    """
-    if isinstance(params, Mapping):
-        res = params
-    elif params:
-        res = dict(p.split("=", 1) for p in params)
-    else:
-        res = {}
-    return res
 
 
 class Create(Interface):
@@ -134,7 +112,7 @@ class Create(Interface):
         # TODO: Add ability to clone a resource.
 
         get_manager().create(name, resource_type,
-                             parse_backend_parameters(backend_parameters))
+                             parse_kv_list(backend_parameters))
         lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env
