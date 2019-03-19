@@ -151,13 +151,12 @@ class VenvTracer(DistributionTracer):
                     pkg_to_found_files[file_to_pkg[fullpath]].append(
                         os.path.relpath(path, venv_path))
 
-            # Some files, like venvs/dev/lib/python2.7/abc.py could be
-            # symlinks populated by virtualenv itself during venv creation
-            # since it relies on system wide python environment.  So we need
-            # to resolve those into filenames which could be associated with
-            # system wide installation of python
+            # Some virtualenv files are links to system files. Files themselves
+            # may be linked or they may be in a linked directory. We need to
+            # resolve these links and pass them out as unknown files for other
+            # tracers to use.
             for path in unknown_files.copy():
-                if is_subpath(path, venv_path) and op.islink(path):
+                if is_subpath(path, venv_path):
                     rpath = op.realpath(path)
                     # ... but the resolved link may point to another path under
                     # the environment (e.g., bin/python -> bin/python3), and we

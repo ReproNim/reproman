@@ -7,13 +7,15 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import os
+from functools import partial
 import uuid
 import shutil
 import tempfile
 
 import pytest
-from .constants import REPROMAN_CFG_PATH
+
 from reproman.cmd import Runner
+from reproman.resource.base import ResourceManager
 from reproman.tests.skip import skipif
 from reproman.utils import chpwd
 
@@ -231,4 +233,60 @@ def svn_repo_fixture(kind='default', scope='function'):
             runner.run(['svn', 'commit', '-m', 'bar'], cwd=checked_out_dir)
         yield (root_dir, checked_out_dir)
         shutil.rmtree(tmpdir)
+    return fixture
+
+
+def job_registry_fixture(scope="function"):
+    """Return a fixture for a LocalRegistry object.
+
+    This is like the vanilla LocalRegistry, but points to a temporary
+    directory.
+
+    Parameters
+    ----------
+    scope : {"function", "class", "module", "session"}, optional
+        A `pytest.fixture` scope argument.
+
+    Returns
+    -------
+    A fixture function.
+    """
+    from reproman.support.jobs.local_registry import LocalRegistry
+
+    @pytest.fixture(scope=scope)
+    def fixture(tmpdir_factory):
+        return partial(LocalRegistry,
+                       str(tmpdir_factory.mktemp("registry")))
+    return fixture
+
+
+def resource_manager_fixture(resources=None, scope="function"):
+    """Return a fixture for a ResourceManager instance.
+
+    This points to a temporary inventory and is intended to be used in place of
+    the main ResourceManager instance.
+
+    Parameters
+    ----------
+    resources : dict or None, optional
+        Resources to create. Each key is the resource name, and the value
+        should be keyword arguments to pass to ResourceManager.create(). If not
+        specified, create one shell resource named "myshell".
+    scope : {"function", "class", "module", "session"}, optional
+        A `pytest.fixture` scope argument.
+
+    Returns
+    -------
+    A fixture function.
+    """
+    if resources is None:
+        resources = {"myshell": {"resource_type": "shell"}}
+
+    @pytest.fixture(scope=scope)
+    def fixture(tmpdir_factory):
+        path = str(tmpdir_factory.mktemp("rmanager").join("inventory"))
+        manager = ResourceManager(path)
+        for name, kwargs in resources.items():
+            manager.create(name, **kwargs)
+        return manager
     return fixture
