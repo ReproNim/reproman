@@ -21,7 +21,7 @@ from ..support.exceptions import CommandError, ResourceError
 from reproman.dochelpers import borrowdoc
 from reproman.resource.session import POSIXSession, Session
 from .base import Resource
-from ..utils import attrib, command_as_string
+from ..utils import attrib
 
 import logging
 lgr = logging.getLogger('reproman.resource.docker_container')
