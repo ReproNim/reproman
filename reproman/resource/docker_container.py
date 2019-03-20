@@ -21,7 +21,7 @@ from ..support.exceptions import CommandError, ResourceError
 from reproman.dochelpers import borrowdoc
 from reproman.resource.session import POSIXSession, Session
 from .base import Resource
-from ..utils import attrib
+from ..utils import attrib, command_as_string
 
 import logging
 lgr = logging.getLogger('reproman.resource.docker_container')
@@ -215,8 +215,7 @@ class DockerSession(POSIXSession):
     def _execute_command(self, command, env=None, cwd=None):
         #command_env = self.get_updated_env(env)
         if env:
-            raise NotImplementedError("passing env variables to docker session execution")
-
+            env = ' '.join(['%s=%s &&' % k for k in env.items()])
         if cwd:
             # TODO: implement
             # raise NotImplementedError("handle cwd for docker")
@@ -230,6 +229,9 @@ class DockerSession(POSIXSession):
         #    docker.errors.APIError - If the server returns an error.
         lgr.debug('Running command %r', command)
         out = []
+        if env:
+            command = "/bin/sh -c '{} {}'".format(env,
+                command_as_string(command))
         execute = self.client.exec_create(container=self.container, cmd=command)
         out = ''
         for i, line in enumerate(
