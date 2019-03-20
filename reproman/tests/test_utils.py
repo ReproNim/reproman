@@ -18,6 +18,7 @@ import logging
 from unittest.mock import patch
 
 from operator import itemgetter
+import os.path as op
 from os.path import dirname, normpath, pardir, basename
 from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
@@ -25,12 +26,14 @@ from collections import OrderedDict
 from ..utils import updated, HashableDict, \
     get_cmd_batch_len, execute_command_batch, \
     cmd_err_filter, join_sequence_of_dicts
+from ..utils import parse_kv_list
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
 from ..utils import getpwd, chpwd
 from ..utils import auto_repr
 from ..utils import find_files
 from ..utils import line_profile
+from ..utils import cached_property
 from ..utils import not_supported_on_windows
 from ..utils import file_basename
 from ..utils import expandpath, is_explicit_path
@@ -47,6 +50,7 @@ from ..utils import generate_unique_name
 from ..utils import PathRoot, is_subpath
 from ..utils import parse_semantic_version
 from ..utils import merge_dicts
+from ..utils import write_update
 from ..utils import pycache_source
 
 from .utils import ok_, eq_, assert_false, assert_equal, assert_true
@@ -56,6 +60,7 @@ from ..utils import is_binarystring
 from ..utils import CommandError
 from .utils import assert_cwd_unchanged
 from .utils import assert_in
+from .utils import ok_file_has_content
 from .utils import with_tree
 from .utils import with_tempfile
 from .skip import mark
@@ -559,6 +564,55 @@ def test_merge_dicts():
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
     assert merge_dicts(iter([{1: 1}, {2: 2}, {1: 3}])) == {1: 3, 2: 2}
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
+
+
+def test_parse_backend_parameters():
+    for value, expected in [(["a=b"], {"a": "b"}),
+                            (["a="], {"a": ""}),
+                            (["a=c=d"], {"a": "c=d"}),
+                            (["a-b=c d"], {"a-b": "c d"}),
+                            ({"a": "c=d"}, {"a": "c=d"})]:
+        assert parse_kv_list(value) == expected
+
+    # We leave any mapping be, including not converting an empty mapping to an
+    # empty dict.
+    assert isinstance(parse_kv_list(OrderedDict({})),
+                      OrderedDict)
+
+
+@pytest.mark.parametrize("value", [None, False, [], "x"])
+def test_cached_property(value):
+    class C(object):
+        val = value
+
+        @property
+        @cached_property
+        def prop(self):
+            return self.val
+
+    c = C()
+    assert c.prop == value
+    c.val = "changed"
+    assert c.prop == value
+
+    c = C()
+    c.val = "other-instance"
+    assert c.prop == "other-instance"
+
+
+def test_write_update(tmpdir):
+    path = str(tmpdir)
+    foo = op.join(path, "adir", "foo")
+    assert not op.exists(foo)
+    write_update(foo, "ok")
+    ok_file_has_content(foo, "ok")
+
+    with swallow_logs(new_level=logging.DEBUG) as log:
+        write_update(foo, "ok")
+        assert "matching content" in log.out
+
+    write_update(foo, "rewrite")
+    ok_file_has_content(foo, "rewrite")
 
 
 @pytest.mark.parametrize(

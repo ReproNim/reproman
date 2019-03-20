@@ -27,13 +27,14 @@ _group_dataset = (
         ('reproman.interface.stop', 'Stop'),
         ('reproman.interface.login', 'Login'),
         ('reproman.interface.execute', 'Execute'),
-        # ('reproman.distribution.run', 'Run'),
+        ('reproman.interface.run', 'Run'),
     ])
 
 _group_misc = (
     'Miscellaneous commands',
     [
         ('reproman.interface.ls', 'Ls'),
+        ('reproman.interface.jobs', 'Jobs'),
         ('reproman.interface.backend_parameters', 'BackendParameters'),
         # ('reproman.interface.trace', 'Trace'),
         # ('reproman.interface.shell', 'Shell'),

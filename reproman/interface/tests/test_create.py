@@ -7,7 +7,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 
-from collections import OrderedDict
 import logging
 import pytest
 from unittest.mock import patch, call, MagicMock
@@ -19,8 +18,6 @@ from reproman.resource.base import ResourceManager
 from reproman.tests.skip import mark
 from reproman.tests.utils import assert_in
 from reproman.support.exceptions import ResourceError
-
-from ..create import parse_backend_parameters
 
 
 @mark.skipif_no_docker_dependencies
@@ -73,17 +70,3 @@ def test_create_missing_required():
                    return_value=ResourceManager()):
             create("somessh", "ssh", [])
     assert "host" in str(exc.value)
-
-
-def test_parse_backend_parameters():
-    for value, expected in [(["a=b"], {"a": "b"}),
-                            (["a="], {"a": ""}),
-                            (["a=c=d"], {"a": "c=d"}),
-                            (["a-b=c d"], {"a-b": "c d"}),
-                            ({"a": "c=d"}, {"a": "c=d"})]:
-        assert parse_backend_parameters(value) == expected
-
-    # We leave any mapping be, including not converting an empty mapping to an
-    # empty dict.
-    assert isinstance(parse_backend_parameters(OrderedDict({})),
-                      OrderedDict)

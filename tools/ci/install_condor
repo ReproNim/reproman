@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Most of this is taken directly from datalad-htcondor. (Thanks!)
+
+set -eu
+
+sudo debconf-set-selections -v tools/ci/htcondor_dconf_selections
+sudo apt-get install -y htcondor
+sudo service condor start
+
+# Try twice to give condor some time to fire up.
+condor_status || (sleep 5; condor_status)
+condor_run 'uname -a'  # perform a test submission
