@@ -65,7 +65,8 @@ class RPMPackage(Package):
     vendor = attrib()
     url = attrib()
     files = attrib(default=attr.Factory(list), hash=False)
-    _comparison_fields = ('name', 'version', 'architecture')
+    _diff_cmp_fields = ('name', 'architecture')
+    _diff_fields = ('version',)
 
 
 _register_with_representer(RPMPackage)

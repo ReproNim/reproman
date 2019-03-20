@@ -46,8 +46,6 @@ class SpecObject(object):
     _diff_cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
-    # Fields used in determination of comparison (satisfied_by and identical_to)
-    _comparison_fields = tuple()
 
     @property
     def _diff_cmp_id(self):
@@ -60,12 +58,19 @@ class SpecObject(object):
 
     @property
     def _cmp_id(self):
-        if not self._comparison_fields:
+        if not self._diff_cmp_fields:
             # Might need to be gone or some custom exception
             raise RuntimeError(
-                "Cannot establish identity of %r since _comaprison_fields "
+                "Cannot establish identity of %r since _diff_cmp_fields "
                 "are not defined" % self)
-        return tuple(getattr(self, a) for a in self._comparison_fields)
+        if not self._diff_fields:
+            # Might need to be gone or some custom exception
+            raise RuntimeError(
+                "Cannot establish identity of %r since _diff_fields "
+                "are not defined" % self)
+        vals = [ getattr(self, a) for a in self._diff_cmp_fields ]
+        vals.extend([ getattr(self, a) for a in self._diff_fields ])
+        return tuple(vals)
 
     @property
     def _diff_vals(self):
@@ -94,8 +99,8 @@ class SpecObject(object):
 
     @property
     def identity_string(self):
-        """like diff_identity_string, but for _comparison_fields (used in 
-        satisfied_by comparisons)
+        """like diff_identity_string, but for both _diff_cmp_fields and 
+        _diff_fields (used in satisfied_by comparisons)
         """
         return " ".join(str(el) for el in self._cmp_id if el is not None)
 
@@ -137,15 +142,15 @@ class SpecObject(object):
         spec object.
 
         We require that the values of the attributes given by 
-        _comparison_fields are the same.  A specobject with a value of None 
-        for one of these attributes is less specific than one with 
-        a specific value; the former cannot satisfy the latter, 
-        but the latter can satisfy the former.
+        _diff_cmp_fields and _diff_fields are the same.  A specobject 
+        with a value of None for one of these attributes is less specific 
+        than one with a specific value; the former cannot satisfy the 
+        latter, but the latter can satisfy the former.
 
         TODO: Ensure we don't encounter the case where self is completely 
         unspecified (all values are None), in which case satisfied_by() 
         returns True by default.  Perhaps this is done by making 
-        sure that at least one of the _comparison_fields cannot be None.
+        sure that at least one of the _diff_cmp_fields cannot be None.
 
         TODO: derive _collection_type directly from _collection.  This isn't 
         possible at the moment because DebianDistribution.packages is 
@@ -162,7 +167,14 @@ class SpecObject(object):
             raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
-        for attr_name in self._comparison_fields:
+        for attr_name in self._diff_cmp_fields:
+            self_value = getattr(self, attr_name)
+            other_value = getattr(other, attr_name)
+            if self_value is None:
+                continue
+            if self_value != other_value:
+                return False
+        for attr_name in self._diff_fields:
             self_value = getattr(self, attr_name)
             other_value = getattr(other, attr_name)
             if self_value is None:
@@ -176,11 +188,15 @@ class SpecObject(object):
         """Determine if the other object is identical to the spec object.
 
         We require that the objects are of the same type and that the 
-        values of the attributes given by _comparison_fields are the same.
+        values of the attributes given by _diff_cmp_fields and _diff_fields 
+        are the same.
         """
         if not isinstance(other, self.__class__):
             return False
-        for attr_name in self._comparison_fields:
+        for attr_name in self._diff_cmp_fields:
+            if getattr(self, attr_name) != getattr(other, attr_name):
+                return False
+        for attr_name in self._diff_fields:
             if getattr(self, attr_name) != getattr(other, attr_name):
                 return False
         return True
