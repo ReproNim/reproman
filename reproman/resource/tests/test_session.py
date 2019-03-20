@@ -226,10 +226,9 @@ def check_methods(resource_test_dir):
             session._execute_command(['cat', '/no/such/file'])
 
         # Check _execute_command with env set
-        if cls_name not in ["ShellSession"]:
-            out, err = session._execute_command(['echo', '$NEW_VAR'],
-                env={'NEW_VAR': 'NEW_VAR_VALUE'})
-            assert 'NEW_VAR_VALUE' in out
+        out, err = session._execute_command(['env'],
+            env={'NEW_VAR': 'NEW_VAR_VALUE'})
+        assert 'NEW_VAR=NEW_VAR_VALUE' in out
 
         # Check _execute_command with cwd set
         # TODO: Implement cwd parameter for _execute_command()

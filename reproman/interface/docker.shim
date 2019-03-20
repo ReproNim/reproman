@@ -9,6 +9,12 @@
 #
 require 5.002;
 
+# Print debugging if docker debug switch is set
+my $DEBUG = 0;
+foreach(@ARGV) {
+    $DEBUG = 1 if ($_ eq '--debug' or $_ eq '-D');
+}
+
 # Print debug output
 # 
 # Parameters
@@ -22,12 +28,6 @@ sub debug {
         print "[DEBUG DOCKER SHIM] ${line}";
         print "\n" if (!($line =~ /\n$/));
     }
-}
-
-# Print debugging if docker debug switch is set
-my $DEBUG = 0;
-foreach(@ARGV) {
-    $DEBUG = 1 if ($_ eq '--debug' or $_ eq '-D');
 }
 
 # Gather ENV info

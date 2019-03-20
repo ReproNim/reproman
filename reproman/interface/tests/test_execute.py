@@ -14,6 +14,8 @@ from unittest.mock import patch
 import os
 import os.path as op
 import pytest
+import logging
+import tempfile
 
 import attr
 
@@ -22,10 +24,12 @@ from reproman.formats.reproman import RepromanProvenance
 from reproman.utils import swallow_outputs
 from reproman.interface.execute import TracedCommand
 from ...resource.base import ResourceManager
-from ...tests.utils import assert_is_subset_recur
+from ...tests.utils import assert_is_subset_recur, assert_in
 from ...tests.skip import mark
 from ...tests.fixtures import get_docker_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
+from ...cmd import Runner
+from ...utils import swallow_logs
 
 
 docker_container = get_docker_fixture(
@@ -143,3 +147,26 @@ def test_trace_local(trace_info):
 
     expect = {"packages": [{"files": ["/bin/ls"], "name": "coreutils"}]}
     assert_is_subset_recur(expect, attr.asdict(deb_dists[0]), [dict, list])
+
+
+def test_docker_shim():
+    shim = op.join(op.dirname(op.realpath(__file__)),
+            "../docker.shim")
+
+    image_digest = 'debian@sha256:a94839ed73dff831b2382b087b1008877d796946cc716afd4fc72150e082d1b8'
+    command = shim + " --debug run --rm {} cat /etc/debian_version".format(
+        image_digest)
+
+    tempdir = tempfile.mkdtemp()
+
+    env = {
+        "REPROMAN_TRACERS_DIR": tempdir,
+        "REPROMAN_EXTRA_TRACE_FILE": op.join(tempdir, "trace.extra.out")
+    }
+
+    with swallow_logs(new_level=logging.DEBUG) as log:
+        Runner().run(command, env=env)
+        assert_in('buster/sid', log.lines)
+        assert_in('[DEBUG DOCKER SHIM] Found docker executable: /usr/bin/docker', log.lines)
+        assert_in('[DEBUG DOCKER SHIM] Found digest ID: {}'.format(image_digest), log.lines)
+        assert op.exists(op.join(tempdir, env['REPROMAN_EXTRA_TRACE_FILE']))
