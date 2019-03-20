@@ -22,8 +22,7 @@ from reproman.support.exceptions import SessionRuntimeError
 from reproman.cmd import Runner
 from reproman.dochelpers import exc_str, borrowdoc
 from reproman.support.exceptions import CommandError
-from reproman.utils import updated
-from reproman.utils import to_unicode
+from reproman.utils import updated, command_as_string, to_unicode
 
 import logging
 lgr = logging.getLogger('reproman.session')
@@ -34,7 +33,6 @@ class Session(object):
     """Interface for Resources to provide interaction within that environment"""
 
     INTERNAL_COMMANDS = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
-
 
     def __attrs_post_init__(self):
         """
@@ -522,6 +520,33 @@ class POSIXSession(Session):
                 continue
             output[split[0]] = split[1]
         return output
+
+    def _prefix_env(self, env, command, with_shell=True):
+        """Wrap the command in a shell call with ENV vars prefixed to command
+        Will pass through command if env is None
+
+        Parameters
+        ----------
+        env : dict
+            ENV vars to prefix to command
+        command : string or list
+            shell command to be run
+        with_shell : boolean
+            if True, a "/bin/sh -c" call will wrap the env vars and command
+
+        Returns
+        -------
+        string
+            command with env settings prefixed
+        """
+        if env:
+            env_prefix = ' '.join(['export %s=%s &&' % k for k in env.items()])
+            if with_shell:
+                command = "/bin/sh -c '{} {}'".format(env_prefix,
+                    command_as_string(command))
+            else:
+                command = ' '.join([env_prefix, command_as_string(command)])
+        return command
 
     @borrowdoc(Session)
     def source_script(self, command, permanent=False, diff=True, shell=None):

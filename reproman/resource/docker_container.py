@@ -214,8 +214,7 @@ class DockerSession(POSIXSession):
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
         #command_env = self.get_updated_env(env)
-        if env:
-            env = ' '.join(['%s=%s &&' % k for k in env.items()])
+        command = self._prefix_env(env, command)
         if cwd:
             # TODO: implement
             # raise NotImplementedError("handle cwd for docker")
@@ -229,9 +228,6 @@ class DockerSession(POSIXSession):
         #    docker.errors.APIError - If the server returns an error.
         lgr.debug('Running command %r', command)
         out = []
-        if env:
-            command = "/bin/sh -c '{} {}'".format(env,
-                command_as_string(command))
         execute = self.client.exec_create(container=self.container, cmd=command)
         out = ''
         for i, line in enumerate(

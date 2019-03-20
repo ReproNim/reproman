@@ -163,16 +163,13 @@ class SSHSession(POSIXSession):
     def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
-        command = command_as_string(command)
-        if env:
-            command = ' '.join(['%s=%s' % k for k in env.items()]) \
-                      + ' ' + command
+        command = self._prefix_env(env, command, with_shell=False)
 
         if cwd:
             raise NotImplementedError("implement cwd support")
 
         try:
-            result = self.connection.run(command, hide=True)
+            result = self.connection.run(command_as_string(command), hide=True)
         except invoke.exceptions.UnexpectedExit as e:
             if 'permission denied' in e.result.stderr.lower() and handle_permission_denied:
                 # Issue warning once

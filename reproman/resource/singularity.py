@@ -168,14 +168,9 @@ class SingularitySession(POSIXSession):
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
-        if env:
-            env = ' '.join(['%s=%s &&' % k for k in env.items()])
+        command = self._prefix_env(env, command)
         if cwd:
             raise NotImplementedError("handle cwd for singularity")
-        if env:
-            if isinstance(command, list):
-                command = " ".join(command)
-            command = "/bin/sh -c '{} {}'".format(env, command)
         lgr.debug('Running command %r', command)
         stdout, stderr = self._runner.run(
             "singularity exec instance://{} {}".format(
