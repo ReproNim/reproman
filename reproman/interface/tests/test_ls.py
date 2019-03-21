@@ -7,11 +7,14 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import contextlib
+from functools import partial
 from io import StringIO
 import logging
 from unittest.mock import patch
 
 import pytest
+
+from pyout import Tabular
 
 from ...api import ls
 from ...utils import swallow_logs
@@ -58,6 +61,7 @@ def resource_manager():
 @pytest.fixture(scope="function")
 def ls_fn(resource_manager):
     stream = StringIO()
+    TestTabular = partial(Tabular, stream=stream)
 
     def fn(*args, **kwargs):
         skipif.no_docker_dependencies()
@@ -65,8 +69,7 @@ def ls_fn(resource_manager):
             stack.enter_context(patch("docker.Client"))
             stack.enter_context(patch("reproman.interface.ls.get_manager",
                                       return_value=resource_manager))
-            stack.enter_context(patch("reproman.interface.ls.ui._ui.out",
-                                      stream))
+            stack.enter_context(patch("pyout.Tabular", TestTabular))
             return ls(*args, **kwargs), stream.getvalue()
     return fn
 
