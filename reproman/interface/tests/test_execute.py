@@ -150,6 +150,7 @@ def test_trace_local(trace_info):
 
 
 @mark.skipif_no_network
+@mark.skipif_no_docker_engine
 def test_docker_shim():
     shim = op.join(op.dirname(op.realpath(__file__)),
             "../docker.shim")
