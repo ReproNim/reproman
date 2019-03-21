@@ -167,16 +167,7 @@ class SpecObject(object):
             raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
-        for attr_name in self._diff_cmp_fields:
-            self_value = getattr(self, attr_name)
-            other_value = getattr(other, attr_name)
-            if self_value is None:
-                continue
-            if self_value != other_value:
-                return False
-        for attr_name in self._diff_fields:
-            self_value = getattr(self, attr_name)
-            other_value = getattr(other, attr_name)
+        for (self_value, other_value) in zip(self._cmp_id, other._cmp_id):
             if self_value is None:
                 continue
             if self_value != other_value:
@@ -189,17 +180,11 @@ class SpecObject(object):
 
         We require that the objects are of the same type and that the 
         values of the attributes given by _diff_cmp_fields and _diff_fields 
-        are the same.
+        (dereferenced in _cmp_id) are the same.
         """
         if not isinstance(other, self.__class__):
             return False
-        for attr_name in self._diff_cmp_fields:
-            if getattr(self, attr_name) != getattr(other, attr_name):
-                return False
-        for attr_name in self._diff_fields:
-            if getattr(self, attr_name) != getattr(other, attr_name):
-                return False
-        return True
+        return all(sv==ov for sv, ov in zip(self._cmp_id, other._cmp_id))
 
 
 def _register_with_representer(cls):
