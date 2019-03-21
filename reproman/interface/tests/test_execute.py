@@ -149,6 +149,7 @@ def test_trace_local(trace_info):
     assert_is_subset_recur(expect, attr.asdict(deb_dists[0]), [dict, list])
 
 
+@mark.skipif_no_network
 def test_docker_shim():
     shim = op.join(op.dirname(op.realpath(__file__)),
             "../docker.shim")
@@ -170,3 +171,4 @@ def test_docker_shim():
         assert_in('[DEBUG DOCKER SHIM] Found docker executable: /usr/bin/docker', log.lines)
         assert_in('[DEBUG DOCKER SHIM] Found digest ID: {}'.format(image_digest), log.lines)
         assert op.exists(op.join(tempdir, env['REPROMAN_EXTRA_TRACE_FILE']))
+
