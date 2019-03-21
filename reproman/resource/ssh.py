@@ -28,6 +28,13 @@ from reproman.dochelpers import borrowdoc
 from reproman.resource.session import Session
 from ..support.exceptions import CommandError
 
+# Silence CryptographyDeprecationWarning's.
+# TODO: We should bump the required paramiko version and drop the code below
+# once paramiko cuts a release that includes
+# <https://github.com/paramiko/paramiko/pull/1379>.
+import warnings
+warnings.filterwarnings(action="ignore", module=".*paramiko.*")
+
 
 @attr.s
 class SSH(Resource):
