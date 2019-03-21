@@ -739,11 +739,23 @@ def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
         session.set_envvar(env)
     return session
 
+
 def get_updated_env(env, update):
     """Given an environment and set of updates, return updated one
 
     Special handling -- keys with None for the value, will be removed
     """
+    # If an update env var references itself, merge the original env value
+    # into the update value.
+    # (This is to somewhat generalize the "PATH=/foo:$PATH" special case.)
+    for k in update:
+        if k not in env or not isinstance(update[k], str) or \
+                not isinstance(env[k], str):
+            continue
+        token = "${}".format(k)
+        if token in update[k]:
+            update[k] = update[k].replace(token, env[k])
+
     env_ = updated(env, update)
     # pop those explicitly set to None
     for e in list(env_):
