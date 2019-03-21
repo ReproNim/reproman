@@ -9,11 +9,9 @@
 
 import attr
 import getpass
-import invoke
 import uuid
-from fabric import Connection
 from ..log import LoggerHelper
-from paramiko import AuthenticationException
+# OPT: invoke, fabric and paramiko is imported at the point of use
 
 import logging
 lgr = logging.getLogger('reproman.resource.ssh')
@@ -71,6 +69,8 @@ class SSH(Resource):
         """
         # Convert key_filename to a list
         # See: https://github.com/ReproNim/reproman/commit/3807f1287c39ea2393bae26803e6da8122ac5cff
+        from fabric import Connection
+        from paramiko import AuthenticationException
         key_filename = None
         if self.key_filename:
             key_filename = [self.key_filename]
@@ -96,7 +96,6 @@ class SSH(Resource):
                   self._connection.user, self._connection.host,
                   self._connection.port,  # Fabric defaults to 22.
                   auth)
-
         try:
             self._connection.open()
         except AuthenticationException:
@@ -170,6 +169,7 @@ class SSHSession(POSIXSession):
     def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
+        from invoke.exceptions import UnexpectedExit
         command = command_as_string(command)
         if env:
             command = ' '.join(['%s=%s' % k for k in env.items()]) \
@@ -180,7 +180,7 @@ class SSHSession(POSIXSession):
 
         try:
             result = self.connection.run(command, hide=True)
-        except invoke.exceptions.UnexpectedExit as e:
+        except UnexpectedExit as e:
             if 'permission denied' in e.result.stderr.lower() and handle_permission_denied:
                 # Issue warning once
                 if not getattr(self, '_use_sudo_warning', False):
