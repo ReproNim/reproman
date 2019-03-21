@@ -521,31 +521,37 @@ class POSIXSession(Session):
             output[split[0]] = split[1]
         return output
 
-    def _prefix_env(self, env, command, with_shell=True):
-        """Wrap the command in a shell call with ENV vars prefixed to command
-        Will pass through command if env is None
+    def _prefix_command(self, command, env=None, cwd=None, with_shell=True):
+        """Wrap the command in a shell call with ENV vars prefixed and CWD
+        statment to command. Will pass through command if env and cwd is None
 
         Parameters
         ----------
-        env : dict
-            ENV vars to prefix to command
         command : string or list
             shell command to be run
+        env : dict
+            ENV vars to prefix to command
+        cwd : string
+            CWD to change into to prefix to command
         with_shell : boolean
             if True, a "/bin/sh -c" call will wrap the env vars and command
 
         Returns
         -------
         string
-            command with env settings prefixed
+            command with env and cwd settings prefixed
         """
+        prefix = ""
         if env:
-            env_prefix = ' '.join(['export %s=%s &&' % k for k in env.items()])
+            prefix = " ".join(['export %s=%s &&' % k for k in env.items()])
+        if cwd:
+            prefix += " cd {} &&".format(cwd)
+        if env or cwd:
             if with_shell:
-                command = "/bin/sh -c '{} {}'".format(env_prefix,
+                command = "/bin/sh -c '{} {}'".format(prefix,
                     command_as_string(command))
             else:
-                command = ' '.join([env_prefix, command_as_string(command)])
+                command = ' '.join([prefix, command_as_string(command)])
         return command
 
     @borrowdoc(Session)

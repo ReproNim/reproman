@@ -110,9 +110,6 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         assert not session.isdir('not-a-dir')
         assert not session.isdir('/etc/hosts')
 
-        with raises(NotImplementedError):
-            session._execute_command('non-existent-command', cwd='/path')
-
 
 def test_ssh_resource(setup_ssh):
 

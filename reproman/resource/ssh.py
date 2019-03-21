@@ -163,10 +163,8 @@ class SSHSession(POSIXSession):
     def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
-        command = self._prefix_env(env, command, with_shell=False)
-
-        if cwd:
-            raise NotImplementedError("implement cwd support")
+        command = self._prefix_command(command, env=env, cwd=cwd,
+            with_shell=False)
 
         try:
             result = self.connection.run(command_as_string(command), hide=True)

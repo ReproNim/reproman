@@ -214,12 +214,7 @@ class DockerSession(POSIXSession):
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
         #command_env = self.get_updated_env(env)
-        command = self._prefix_env(env, command)
-        if cwd:
-            # TODO: implement
-            # raise NotImplementedError("handle cwd for docker")
-            lgr.warning("cwd is not handled in docker yet")
-            pass
+        command = self._prefix_command(command, env=env, cwd=cwd)
         # if command_env:
             # TODO: might not work - not tested it
             # command = ['export %s=%s' % k for k in command_env.items()] + command

@@ -231,15 +231,9 @@ def check_methods(resource_test_dir):
         assert 'NEW_VAR=NEW_VAR_VALUE' in out
 
         # Check _execute_command with cwd set
-        # TODO: Implement cwd parameter for _execute_command()
-        if "Docker"in cls_name:
-            with swallow_logs(new_level=logging.WARN) as log:
-                session._execute_command(['cat', '/etc/hosts'], cwd='/tmp')
-                assert "cwd is not handled in docker yet" in log.out
-        elif cls_name != 'ShellSession':
-            with pytest.raises(NotImplementedError):
-                out, err = session._execute_command(['cat', '/etc/hosts'],
-                    cwd='/tmp')
+        out, err = session._execute_command(['pwd'],
+            cwd='/var')
+        assert '/var' == out.rstrip("\n")
 
         # Check exists() method
         result = session.exists('/etc')
