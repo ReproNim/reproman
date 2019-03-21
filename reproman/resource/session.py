@@ -522,8 +522,9 @@ class POSIXSession(Session):
         return output
 
     def _prefix_command(self, command, env=None, cwd=None, with_shell=True):
-        """Wrap the command in a shell call with ENV vars prefixed and CWD
-        statment to command. Will pass through command if env and cwd is None
+        """Wrap the command in a shell call with ENV vars and CWD prefixed
+        statment to command. Will pass through the command unchanged if env
+        and cwd are None
 
         Parameters
         ----------
@@ -532,9 +533,9 @@ class POSIXSession(Session):
         env : dict
             ENV vars to prefix to command
         cwd : string
-            CWD to change into to prefix to command
+            working directory to cd into befoe the command is executed
         with_shell : boolean
-            if True, a "/bin/sh -c" call will wrap the env vars and command
+            if True, a "/bin/sh -c" call will wrap the cwd, env and command
 
         Returns
         -------
