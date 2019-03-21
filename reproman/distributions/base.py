@@ -424,3 +424,60 @@ class DistributionTracer(object, metaclass=abc.ABCMeta):
         provided by _get_packagefields_for_files
         """
         return
+
+
+class SpecDiff:
+
+    """Difference object for SpecObjects.
+
+    Instantiate with SpecDiff(a, b).  a and b must be of the same type 
+    or TypeError is raised.  Either (but not both) may be None.
+
+    Attributes:
+
+        a, b: The two objects being compared.
+
+        If _diff_cmp_fields is defined for the SpecObjects:
+
+            diff_cmp_id: The _diff_cmp_id of the two objects.  If 
+                        _diff_cmp_id are different for the two objects, 
+                        they cannot be compared and ValueError is raised.
+
+            diff_vals_a, diff_vals_b: _diff_vals for a and b, respectively, 
+                                    or None if a or b is None.
+
+        For collection SpecObjects (e.g. DebianDistribution, containing 
+        DEBPackages; these have _collection_attribute defined), we also 
+        have:
+
+            collection: a list of SpecDiff objects for the contained 
+                        SpecObjects.
+    """
+
+    def __init__(self, a, b):
+        if not isinstance(a, (SpecObject, type(None))) \
+            or not isinstance(b, (SpecObject, type(None))):
+            raise TypeError('objects must be SpecObjects or None')
+        if not a and not b:
+            raise TypeError('objects cannot both be None')
+        if a and b and type(a) != type(b):
+            raise TypeError('objects must be of the same type')
+        self.cls = type(a) if a is not None else type(b)
+        self.a = a
+        self.b = b
+        if self.cls._diff_cmp_fields:
+            if a and b and a._diff_cmp_id != b._diff_cmp_id:
+                raise ValueError('objects\' _diff_cmp_id differ')
+            self.diff_vals_a = a._diff_vals if a else None
+            self.diff_vals_b = b._diff_vals if b else None
+            self.diff_cmp_id = a._diff_cmp_id if a else b._diff_cmp_id
+        if hasattr(a, '_collection_attribute'):
+            self.collection = []
+            a_collection = { c._diff_cmp_id: c for c in a.collection } if a else {}
+            b_collection = { c._diff_cmp_id: c for c in b.collection } if b else {}
+            all_cmp_ids = set(a_collection).union(b_collection)
+            for cmp_id in all_cmp_ids:
+                ac = a_collection[cmp_id] if cmp_id in a_collection else None
+                bc = b_collection[cmp_id] if cmp_id in b_collection else None
+                self.collection.append(SpecDiff(ac, bc))
+        return
