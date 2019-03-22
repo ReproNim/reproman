@@ -13,8 +13,8 @@ import dockerpty
 import io
 import json
 import os
-import requests
 import tarfile
+
 from reproman import utils
 from ..cmd import Runner
 from ..support.exceptions import CommandError, ResourceError
@@ -66,10 +66,11 @@ class DockerContainer(Resource):
         -------
         boolean
         """
+        from requests.exceptions import ConnectionError
         try:
             session = docker.Client(base_url=base_url)
             session.info()
-        except (requests.exceptions.ConnectionError,
+        except (ConnectionError,
                 docker.errors.DockerException):
             return False
         return True

@@ -12,7 +12,8 @@
 import os.path as op
 import logging
 
-import jinja2
+# jinja2 is imported at the point of use for faster startup
+
 from shlex import quote as shlex_quote
 
 lgr = logging.getLogger("reproman.support.jobs.template")
@@ -31,6 +32,7 @@ class Template(object):
         self.kwds = kwds
 
     def _render(self, template_name, subdir):
+        import jinja2
         lgr.debug("Using template %s", template_name)
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(
