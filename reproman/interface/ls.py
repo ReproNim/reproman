@@ -94,7 +94,8 @@ class Ls(Interface):
                 resource.status,
             )
             ui.message(template.format(*msgargs))
-            results[id_] = msgargs
+            results[(name,)] = dict(zip(["name", "type", "id", "status"],
+                                        msgargs))
 
         if refresh:
             manager.save_inventory()
