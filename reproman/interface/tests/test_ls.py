@@ -8,11 +8,13 @@
 
 import contextlib
 from io import StringIO
+import logging
 from unittest.mock import patch
 
 import pytest
 
 from ...api import ls
+from ...utils import swallow_logs
 from ...resource.base import ResourceManager
 from ...tests.skip import skipif
 
@@ -94,3 +96,10 @@ def test_ls_interface_limited(ls_fn):
     assert "326b0fdfbf838" in stdout
     assert "i-22221ddf096c22bb0" not in stdout
     assert "i-3333f40de2b9b8967" in stdout
+
+
+def test_ls_interface_missing(ls_fn):
+    with swallow_logs(new_level=logging.WARNING) as log:
+        _, stdout = ls_fn(resrefs=["idonotexist"])
+        assert "idonotexist" not in stdout
+        assert "idonotexist" in log.out
