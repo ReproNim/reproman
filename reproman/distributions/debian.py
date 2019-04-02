@@ -14,7 +14,7 @@ from datetime import datetime
 
 import attr
 from collections import defaultdict
-
+# OPT: requests is imported at the point of use
 
 import pytz
 
@@ -24,8 +24,6 @@ from reproman.utils import attrib
 from email.utils import mktime_tz, parsedate_tz
 
 import logging
-
-import requests
 
 from reproman.support.distributions.debian import \
     parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
@@ -183,6 +181,7 @@ class DebianDistribution(Distribution):
                 date.strftime("%Y%m%dT%H%M%SZ"),
                 source.codename
             )
+            import requests  # OPT
             r = requests.get(url)
             m = re.search(
                 '<a href="/archive/\w*debian/(\w+)/dists/\w+/">next change</a>',

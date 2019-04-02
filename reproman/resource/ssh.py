@@ -9,11 +9,9 @@
 
 import attr
 import getpass
-import invoke
 import uuid
-from fabric import Connection
 from ..log import LoggerHelper
-from paramiko import AuthenticationException
+# OPT: invoke, fabric and paramiko is imported at the point of use
 
 import logging
 lgr = logging.getLogger('reproman.resource.ssh')
@@ -27,6 +25,13 @@ from ..utils import command_as_string
 from reproman.dochelpers import borrowdoc
 from reproman.resource.session import Session
 from ..support.exceptions import CommandError
+
+# Silence CryptographyDeprecationWarning's.
+# TODO: We should bump the required paramiko version and drop the code below
+# once paramiko cuts a release that includes
+# <https://github.com/paramiko/paramiko/pull/1379>.
+import warnings
+warnings.filterwarnings(action="ignore", module=".*paramiko.*")
 
 
 @attr.s
@@ -64,6 +69,8 @@ class SSH(Resource):
         """
         # Convert key_filename to a list
         # See: https://github.com/ReproNim/reproman/commit/3807f1287c39ea2393bae26803e6da8122ac5cff
+        from fabric import Connection
+        from paramiko import AuthenticationException
         key_filename = None
         if self.key_filename:
             key_filename = [self.key_filename]
@@ -89,11 +96,11 @@ class SSH(Resource):
                   self._connection.user, self._connection.host,
                   self._connection.port,  # Fabric defaults to 22.
                   auth)
-
         try:
             self._connection.open()
         except AuthenticationException:
-            password = getpass.getpass()
+            password = getpass.getpass(
+                prompt="Password for {}: ".format(self.name))
             self._connection = Connection(
                 self.host,
                 user=self.user,
@@ -163,6 +170,7 @@ class SSHSession(POSIXSession):
     def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
+        from invoke.exceptions import UnexpectedExit
         command = command_as_string(command)
         if env:
             command = ' '.join(['%s=%s' % k for k in env.items()]) \
@@ -173,7 +181,7 @@ class SSHSession(POSIXSession):
 
         try:
             result = self.connection.run(command, hide=True)
-        except invoke.exceptions.UnexpectedExit as e:
+        except UnexpectedExit as e:
             if 'permission denied' in e.result.stderr.lower() and handle_permission_denied:
                 # Issue warning once
                 if not getattr(self, '_use_sudo_warning', False):
