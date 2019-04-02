@@ -21,6 +21,7 @@ from ..distributions.debian import DebianDistribution
 from ..distributions.conda import CondaDistribution
 from ..distributions.vcs import GitDistribution, SVNDistribution
 from ..distributions.venv import VenvDistribution, VenvEnvironment
+from ..distributions.base import SpecDiff
 
 __docformat__ = 'restructuredtext'
 
@@ -82,8 +83,6 @@ class Diff(Interface):
     @staticmethod
     def diff(env_1, env_2):
 
-        result = {'method': 'diff', 'distributions': []}
-
         # distribution type -> package type string
         supported_distributions = {
             DebianDistribution: 'Debian package', 
@@ -97,47 +96,24 @@ class Diff(Interface):
         env_2_dist_types = { d.__class__ for d in env_2.distributions }
         all_dist_types = env_1_dist_types.union(env_2_dist_types)
 
+        diffs = []
+
         for dist_type in all_dist_types:
             if dist_type not in supported_distributions:
                 msg = 'diff doesn\'t know how to handle %s' % str(dist_type)
                 raise ValueError(msg)
-            dist_res = {'pkg_type': supported_distributions[dist_type], 
-                        'pkg_diffs': []}
             dist_1 = env_1.get_distribution(dist_type)
-            if dist_1:
-                if dist_type == VenvDistribution:
-                    pkgs_1 = {p._diff_cmp_id: p for p in dist_1.environments}
-                else:
-                    pkgs_1 = {p._diff_cmp_id: p for p in dist_1.packages}
-            else:
-                pkgs_1 = {}
             dist_2 = env_2.get_distribution(dist_type)
-            if dist_2:
-                if dist_type == VenvDistribution:
-                    pkgs_2 = {p._diff_cmp_id: p for p in dist_2.environments}
-                else:
-                    pkgs_2 = {p._diff_cmp_id: p for p in dist_2.packages}
-            else:
-                pkgs_2 = {}
-            dist_res['pkgs_1'] = pkgs_1
-            dist_res['pkgs_2'] = pkgs_2
-            pkgs_1_s = set(pkgs_1)
-            pkgs_2_s = set(pkgs_2)
-            dist_res['pkgs_only_1'] = pkgs_1_s - pkgs_2_s
-            dist_res['pkgs_only_2'] = pkgs_2_s - pkgs_1_s
-            for cmp_key in pkgs_1_s.intersection(pkgs_2_s):
-                package_1 = pkgs_1[cmp_key]
-                package_2 = pkgs_2[cmp_key]
-                if package_1._diff_vals != package_2._diff_vals:
-                    dist_res['pkg_diffs'].append((package_1, package_2))
-            result['distributions'].append(dist_res)
+            diffs.append({'diff': SpecDiff(dist_1, dist_2), 
+                          'pkg_type': supported_distributions[dist_type]})
 
         files1 = set(env_1.files)
         files2 = set(env_2.files)
-        result['files_1_only'] = files1 - files2
-        result['files_2_only'] = files2 - files1
 
-        return result
+        return {'method': 'diff', 
+                'diffs': diffs, 
+                'files_1_only': files1 - files2, 
+                'files_2_only': files2 - files1}
 
     @staticmethod
     def satisfies(env_1, env_2):
@@ -188,30 +164,44 @@ class Diff(Interface):
 
         status = 0
 
-        for dist_res in result['distributions']:
+        for diff_d in result['diffs']:
 
-            if dist_res['pkgs_only_1'] or dist_res['pkgs_only_2']:
-                print(_make_plural(dist_res['pkg_type']) + ':')
+            diff = diff_d['diff']
+            pkg_type = diff_d['pkg_type']
 
-            if dist_res['pkgs_only_1']:
-                for cmp_key in sorted(dist_res['pkgs_only_1']):
-                    package = dist_res['pkgs_1'][cmp_key]
+            pkgs_only_1 = {}
+            pkgs_only_2 = {}
+            pkg_diffs = []
+
+            for pkg_diff in diff.collection:
+                if pkg_diff.a is None:
+                    pkgs_only_2[pkg_diff.b._diff_cmp_id] = pkg_diff.b
+                elif pkg_diff.b is None:
+                    pkgs_only_1[pkg_diff.a._diff_cmp_id] = pkg_diff.a
+                elif pkg_diff.diff_vals_a != pkg_diff.diff_vals_b:
+                    pkg_diffs.append(pkg_diff)
+            if pkgs_only_1 or pkgs_only_2:
+                print(_make_plural(pkg_type) + ':')
+
+            if pkgs_only_1:
+                for cmp_key in sorted(pkgs_only_1):
+                    package = pkgs_only_1[cmp_key]
                     print('< %s' % package.diff_identity_string)
                 status = 3
-            if dist_res['pkgs_only_1'] and dist_res['pkgs_only_2']:
+            if pkgs_only_1 and pkgs_only_2:
                 print('---')
-            if dist_res['pkgs_only_2']:
-                for cmp_key in sorted(dist_res['pkgs_only_2']):
-                    package = dist_res['pkgs_2'][cmp_key]
+            if pkgs_only_2:
+                for cmp_key in sorted(pkgs_only_2):
+                    package = pkgs_only_2[cmp_key]
                     print('> %s' % package.diff_identity_string)
                 status = 3
 
-            for (package_1, package_2) in dist_res['pkg_diffs']:
-                print('%s %s:' % (dist_res['pkg_type'], 
-                                  " ".join(package_1._diff_cmp_id)))
-                print('< %s' % package_1.diff_subidentity_string)
-                print('---')
-                print('> %s' % package_2.diff_subidentity_string)
+            if pkg_diffs:
+                for pkg_diff in pkg_diffs:
+                    print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
+                    print('< %s' % pkg_diff.a.diff_subidentity_string)
+                    print('---')
+                    print('> %s' % pkg_diff.b.diff_subidentity_string)
                 status = 3
 
         if result['files_1_only'] or result['files_2_only']:
