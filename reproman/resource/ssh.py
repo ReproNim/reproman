@@ -99,7 +99,8 @@ class SSH(Resource):
         try:
             self._connection.open()
         except AuthenticationException:
-            password = getpass.getpass()
+            password = getpass.getpass(
+                prompt="Password for {}: ".format(self.name))
             self._connection = Connection(
                 self.host,
                 user=self.user,
