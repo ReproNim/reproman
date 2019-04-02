@@ -55,6 +55,7 @@ class VenvDistribution(Distribution):
     path = attrib()
     venv_version = attrib()
     environments = TypedList(VenvEnvironment)
+    _collection_attribute = 'environments'
 
     def initiate(self, _):
         return
