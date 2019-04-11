@@ -15,11 +15,14 @@ import json
 import os
 import tarfile
 
-from reproman import utils
+from .. import utils
 from ..cmd import Runner
 from ..support.exceptions import CommandError, ResourceError
-from reproman.dochelpers import borrowdoc
-from reproman.resource.session import POSIXSession, Session
+from ..dochelpers import (
+    borrowdoc,
+    exc_str,
+)
+from ..resource.session import POSIXSession, Session
 from .base import Resource
 from ..utils import attrib
 
@@ -70,8 +73,15 @@ class DockerContainer(Resource):
         try:
             session = docker.Client(base_url=base_url)
             session.info()
+        except docker.errors.InvalidConfigFile as exc:
+            lgr.error(
+                "Failed to query Docker due to problem with configuration "
+                "(possibly in ~/.docker/config.json?) %s", exc_str(exc)
+            )
+            return False
         except (ConnectionError,
-                docker.errors.DockerException):
+                docker.errors.DockerException) as exc:
+            lgr.warning("Failed to query Docker due to %s", exc_str(exc))
             return False
         return True
 
