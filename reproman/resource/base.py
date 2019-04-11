@@ -414,7 +414,7 @@ class Resource(object, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        session : Sesson object, optional
+        session : Session object, optional
             Session object reflects the resource type. (the default is None,
             which will cause the Session object to be retrieved from the
             Resource object.)
