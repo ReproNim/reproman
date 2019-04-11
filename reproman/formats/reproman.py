@@ -55,11 +55,11 @@ class RepromanProvenance(Provenance):
         # either order should matter.  Now in some places then internally
         # sorting alphabetically for consistency
         if '\n' in source:
-            return yaml.load(source)
+            return yaml.safe_load(source)
 
         with open(source, 'r') as stream:
             try:
-                return yaml.load(stream)
+                return yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 lgr.error("Failed to load %s: %s", source, exc_str(exc))
                 raise  # TODO -- we might want a dedicated exception here
