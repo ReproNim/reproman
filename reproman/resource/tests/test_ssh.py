@@ -69,6 +69,8 @@ def test_ssh_class(setup_ssh, resource_test_dir):
             getpass.return_value = 'root'
             resource.connect(password='incorrect')
 
+        assert resource.status == 'ONLINE'
+
         # Test running commands in a resource.
         command = ['apt-get', 'install', '-y', 'bc']
         resource.add_command(command)
