@@ -69,13 +69,14 @@ def test_ssh_class(setup_ssh, resource_test_dir):
             getpass.return_value = 'root'
             resource.connect(password='incorrect')
 
+        assert resource.status == 'ONLINE'
+
         # Test running commands in a resource.
-        command = ['apt-get', 'install', '-y', 'bc']
-        resource.add_command(command)
-        command = ['ls', '/']
-        resource.add_command(command)
+        resource.add_command(['apt-cache', '--help'])
+        resource.add_command(['ls', '/'])
         resource.execute_command_buffer()
-        assert_in("Running command '['apt-get', 'install', '-y', 'bc']'", log.lines)
+
+        assert_in("Running command '['apt-cache', '--help']'", log.lines)
         assert_in("Running command '['ls', '/']'", log.lines)
         # TODO: Figure out why PY3 logger is not picking up STDOUT from SSH server.
 

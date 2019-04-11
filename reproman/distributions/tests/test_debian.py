@@ -29,15 +29,15 @@ from reproman.tests.skip import mark
 
 @mark.skipif_no_apt_cache
 def test_dpkg_manager_identify_packages():
-    files = ["/sbin/iptables"]
+    files = ["/bin/ed"]
     tracer = DebTracer()
     (packages, unknown_files) = \
         tracer.identify_packages_from_files(files)
     # Make sure that iptables was identified
-    assert (not unknown_files), "/sbin/iptables should be identified"
+    assert (not unknown_files), "/bin/ed should be identified"
     assert len(packages) == 1
     pkg = packages[0]
-    assert pkg.name == 'iptables'
+    assert pkg.name == 'ed'
     # Make sure apt_sources are identified, but then we should ask the entire
     # distribution
     distributions = list(tracer.identify_distributions(files))
