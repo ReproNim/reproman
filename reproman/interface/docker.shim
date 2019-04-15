@@ -30,15 +30,51 @@ sub debug {
     }
 }
 
+# Run commands in shell
+# 
+# Parameters
+# ----------
+# $command
+#     string : Command to execute in the shell
+# $default_message
+#     string : Message to send if nothing is found in command stderr
+#
+# Returns
+# -------
+# string : stdout of the executed command
+# 
+sub exec_handler {
+
+	my $command = shift;
+	my $default_message = shift;
+
+	my $output = qx/$command 2>&1/;
+	if ($? != 0) {
+		if ($output) {
+			die $output
+		}
+		else {
+  		die $default_message;
+		}
+	}
+	return $output
+}
+
 # Gather ENV info
 my $TRACERS_DIR = $ENV{"REPROMAN_TRACERS_DIR"};
+if (!$TRACERS_DIR) {
+	die "ENV variable REPROMAN_TRACERS_DIR not found";
+}
 debug("TRACERS_DIR: ${TRACERS_DIR}");
 my $EXTRA_TRACE_FILE = $ENV{"REPROMAN_EXTRA_TRACE_FILE"};
+if (!$EXTRA_TRACE_FILE) {
+	die "ENV variable REPROMAN_EXTRA_TRACE_FILE not found";
+}
 debug("EXTRA_TRACE_FILE: ${EXTRA_TRACE_FILE}");
 my $WAIT_SCRIPT = "wait.sh";
 
 # Locate original Docker executable (Most likely in /usr/bin)
-my $stdout = qx/which -a docker/;
+my $stdout = exec_handler("which -a docker", "Unable to execute system 'which' command");
 my @paths = split(/\s+/, $stdout);
 my $original_docker_exec = '';
 for my $path (@paths) {
@@ -69,17 +105,19 @@ $cmd .= "--entrypoint /opt/${WAIT_SCRIPT} ";
 my ($start_index) = grep { $ARGV[$_] eq 'run' } (0 .. @ARGV-1);
 $cmd .= join(" ", @ARGV[($start_index+1)..$#ARGV]);
 debug("PRE-RUN COMMAND: ${cmd}");
-my $container_id = qx/$cmd/;
+my $container_id = exec_handler($cmd, "Failed running command: ${cmd}");
 debug("Found container id: ${container_id}");
 
 # Look up the docker image id by inspecting the container
-my $stdout = qx/$original_docker_exec container inspect $container_id/;
+$cmd = "${original_docker_exec} container inspect ${container_id}";
+my $stdout = exec_handler($cmd, "Failed to inspect container ${container_id}");
 $stdout =~ /"Image": "(\S+)"/;
 my $image_id = $1;
 debug("Found image id: ${image_id}");
 
 # Look up the image RepoDigest by inspecting the image
-$stdout = qx/$original_docker_exec image inspect $image_id/;
+$cmd = "${original_docker_exec} image inspect ${image_id}";
+my $stdout = exec_handler($cmd, "Failed to inspect image ${image_id}");
 $stdout =~ /"RepoDigests": \[\s+"(\S+)"\s+\]/;
 my $digest_id = $1;
 debug("Found digest ID: ${digest_id}");
@@ -91,11 +129,11 @@ if ($digest_id) {
 close($fh);
 
 # Clean up the temp directory and the pre-run docker container
-qx/$original_docker_exec stop $container_id/;
+$cmd = "${original_docker_exec} stop ${container_id}";
+exec_handler($cmd, "Failed to stop container ${container_id}");
 unlink("${TRACERS_DIR}/${WAIT_SCRIPT}");
 
 # Run the original Docker command
 $cmd = "${original_docker_exec} " . join(" ", @ARGV);
-$stdout = qx/$cmd/;
+$stdout = exec_handler($cmd, "Failed to execute docker command: ${cmd}");
 print($stdout);
-

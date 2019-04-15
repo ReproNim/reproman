@@ -24,6 +24,7 @@ from reproman.formats.reproman import RepromanProvenance
 from reproman.utils import swallow_outputs
 from reproman.interface.execute import TracedCommand
 from ...resource.base import ResourceManager
+from ...support.exceptions import CommandError
 from ...tests.utils import assert_is_subset_recur, assert_in
 from ...tests.skip import mark
 from ...tests.fixtures import get_docker_fixture
@@ -166,6 +167,7 @@ def test_docker_shim():
         "REPROMAN_EXTRA_TRACE_FILE": op.join(tempdir, "trace.extra.out")
     }
 
+    # Test with theoretically successful docker run
     with swallow_logs(new_level=logging.DEBUG) as log:
         Runner().run(command, env=env)
         assert_in('buster/sid', log.lines)
@@ -173,3 +175,14 @@ def test_docker_shim():
         assert_in('[DEBUG DOCKER SHIM] Found digest ID: {}'.format(image_digest), log.lines)
         assert op.exists(op.join(tempdir, env['REPROMAN_EXTRA_TRACE_FILE']))
 
+    # Test with missing ENV variables
+    with pytest.raises(CommandError):
+        Runner().run(command, env={})
+
+    # Test with bad docker command
+    command = shim + " --debug run --rm {} bad-command".format(
+        image_digest)
+    with swallow_logs(new_level=logging.DEBUG) as log:
+        with pytest.raises(CommandError):
+            Runner().run(command, env=env)
+        assert "executable file not found" in log.lines[-3]

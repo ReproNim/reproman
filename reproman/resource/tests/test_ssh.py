@@ -15,6 +15,7 @@ import re
 import uuid
 from pytest import raises
 
+from ...support.exceptions import CommandError
 from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
@@ -110,6 +111,9 @@ def test_ssh_class(setup_ssh, resource_test_dir):
 
         assert not session.isdir('not-a-dir')
         assert not session.isdir('/etc/hosts')
+
+        with raises(CommandError):
+            session._execute_command('non-existent-command', cwd='/path')
 
 
 def test_ssh_resource(setup_ssh):
