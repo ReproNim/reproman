@@ -105,19 +105,21 @@ $cmd .= "--entrypoint /opt/${WAIT_SCRIPT} ";
 my ($start_index) = grep { $ARGV[$_] eq 'run' } (0 .. @ARGV-1);
 $cmd .= join(" ", @ARGV[($start_index+1)..$#ARGV]);
 debug("PRE-RUN COMMAND: ${cmd}");
-my $container_id = exec_handler($cmd, "Failed running command: ${cmd}");
+my $stdout = exec_handler($cmd, "Failed running command: ${cmd}");
+my @output = split("\n", $stdout);
+my $container_id = $output[@output - 1];
 debug("Found container id: ${container_id}");
 
 # Look up the docker image id by inspecting the container
 $cmd = "${original_docker_exec} container inspect ${container_id}";
-my $stdout = exec_handler($cmd, "Failed to inspect container ${container_id}");
+$stdout = exec_handler($cmd, "Failed to inspect container ${container_id}");
 $stdout =~ /"Image": "(\S+)"/;
 my $image_id = $1;
 debug("Found image id: ${image_id}");
 
 # Look up the image RepoDigest by inspecting the image
 $cmd = "${original_docker_exec} image inspect ${image_id}";
-my $stdout = exec_handler($cmd, "Failed to inspect image ${image_id}");
+$stdout = exec_handler($cmd, "Failed to inspect image ${image_id}");
 $stdout =~ /"RepoDigests": \[\s+"(\S+)"\s+\]/;
 my $digest_id = $1;
 debug("Found digest ID: ${digest_id}");
