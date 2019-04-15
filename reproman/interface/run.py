@@ -37,7 +37,7 @@ def _load_specs(files):
     ret = []
     for f in files:
         with open(f) as fh:
-            ret.append(yaml.load(fh))
+            ret.append(yaml.safe_load(fh))
     return ret
 
 

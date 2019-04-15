@@ -217,10 +217,11 @@ class ResourceManager(object):
             pass
         elif results_id and len(results_id) > 1:
             raise MultipleResourceMatches(
-                "ID {} {}matches multiple resources. "
+                "ID {} {}matches {} resources. "
                 "Try specifying the {}name instead"
                 .format(resref,
                         "partially " if partial_id else "",
+                        len(results_id),
                         "full ID or " if partial_id else ""))
 
         name, inventory_config = (results_name or results_id)[0]
@@ -414,7 +415,7 @@ class Resource(object, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        session : Sesson object, optional
+        session : Session object, optional
             Session object reflects the resource type. (the default is None,
             which will cause the Session object to be retrieved from the
             Resource object.)

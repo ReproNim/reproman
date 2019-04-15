@@ -9,11 +9,9 @@
 
 import attr
 import getpass
-import invoke
 import uuid
-from fabric import Connection
 from ..log import LoggerHelper
-from paramiko import AuthenticationException
+# OPT: invoke, fabric and paramiko is imported at the point of use
 
 import logging
 lgr = logging.getLogger('reproman.resource.ssh')
@@ -59,6 +57,15 @@ class SSH(Resource):
     status = attrib()
     _connection = attrib()
 
+    def _connection_open(self):
+        try:
+            self.status = "CONNECTING"
+            self._connection.open()
+            self.status = "ONLINE"
+        except:
+            self.status = "CONNECTION ERROR"
+            raise
+
     def connect(self, password=None):
         """Open a connection to the environment resource.
 
@@ -71,6 +78,8 @@ class SSH(Resource):
         """
         # Convert key_filename to a list
         # See: https://github.com/ReproNim/reproman/commit/3807f1287c39ea2393bae26803e6da8122ac5cff
+        from fabric import Connection
+        from paramiko import AuthenticationException
         key_filename = None
         if self.key_filename:
             key_filename = [self.key_filename]
@@ -96,18 +105,18 @@ class SSH(Resource):
                   self._connection.user, self._connection.host,
                   self._connection.port,  # Fabric defaults to 22.
                   auth)
-
         try:
-            self._connection.open()
+            self._connection_open()
         except AuthenticationException:
-            password = getpass.getpass()
+            password = getpass.getpass(
+                prompt="Password for {}: ".format(self.name))
             self._connection = Connection(
                 self.host,
                 user=self.user,
                 port=self.port,
                 connect_kwargs={'password': password}
             )
-            self._connection.open()
+            self._connection_open()
 
     def create(self):
         """
@@ -170,12 +179,13 @@ class SSHSession(POSIXSession):
     def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
+        from invoke.exceptions import UnexpectedExit
         command = self._prefix_command(command, env=env, cwd=cwd,
             with_shell=False)
 
         try:
             result = self.connection.run(command_as_string(command), hide=True)
-        except invoke.exceptions.UnexpectedExit as e:
+        except UnexpectedExit as e:
             if 'permission denied' in e.result.stderr.lower() and handle_permission_denied:
                 # Issue warning once
                 if not getattr(self, '_use_sudo_warning', False):

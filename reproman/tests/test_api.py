@@ -7,10 +7,14 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 '''Unit tests for Python API functionality.'''
 
+import os
 import re
-from reproman.utils import getargspec
-import pytest
+import sys
 
+from ..utils import getargspec
+from ..cmd import Runner
+
+import pytest
 from .utils import assert_true, assert_false, eq_
 
 
@@ -59,3 +63,26 @@ def test_consistent_order_of_args(intf, spec_posargs):
     if not spec_posargs:
         pytest.skip("no positional args")
     eq_(set(args[:len(spec_posargs)]), spec_posargs)
+
+
+def test_no_heavy_imports():
+
+    def get_modules(extra=''):
+        out, err = Runner().run([
+            sys.executable,
+            '-c',
+            'import os, sys%s; print(os.linesep.join(sys.modules))' % extra
+        ])
+        return set(out.split(os.linesep))
+
+    # Establish baseline
+    modules0 = get_modules()  # e.g. currently ~60
+
+    # new modules brought by import of our .api
+    modules = get_modules(', reproman.api').difference(modules0)
+    assert 'requests' not in modules
+    assert 'boto' not in modules
+    assert 'jinja2' not in modules
+    assert 'paramiko' not in modules
+    # and catch it all!  Raise the boundary as needed
+    assert len(modules) < 230  # currently 203
