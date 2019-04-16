@@ -176,39 +176,21 @@ class Diff(Interface):
                 files_diff = diff_d['diff']
                 continue
 
-            pkgs_only_1 = {}
-            pkgs_only_2 = {}
-            pkg_diffs = []
-
-            for pkg_diff in diff.collection:
-                if pkg_diff.a is None:
-                    pkgs_only_2[pkg_diff.b._diff_cmp_id] = pkg_diff.b
-                elif pkg_diff.b is None:
-                    pkgs_only_1[pkg_diff.a._diff_cmp_id] = pkg_diff.a
-                elif pkg_diff.diff_vals_a != pkg_diff.diff_vals_b:
-                    pkg_diffs.append(pkg_diff)
-            if pkgs_only_1 or pkgs_only_2:
+            if diff.a_only or diff.b_only:
                 print(_make_plural(pkg_type) + ':')
-
-            if pkgs_only_1:
-                for cmp_key in sorted(pkgs_only_1):
-                    package = pkgs_only_1[cmp_key]
-                    print('< %s' % package.diff_identity_string)
                 status = 3
-            if pkgs_only_1 and pkgs_only_2:
+            for package in diff.a_only:
+                print('< %s' % package.diff_identity_string)
+            if diff.a_only and diff.b_only:
                 print('---')
-            if pkgs_only_2:
-                for cmp_key in sorted(pkgs_only_2):
-                    package = pkgs_only_2[cmp_key]
-                    print('> %s' % package.diff_identity_string)
-                status = 3
+            for package in diff.b_only:
+                print('> %s' % package.diff_identity_string)
 
-            if pkg_diffs:
-                for pkg_diff in pkg_diffs:
-                    print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
-                    print('< %s' % pkg_diff.a.diff_subidentity_string)
-                    print('---')
-                    print('> %s' % pkg_diff.b.diff_subidentity_string)
+            for pkg_diff in diff.diffs:
+                print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
+                print('< %s' % pkg_diff.a.diff_subidentity_string)
+                print('---')
+                print('> %s' % pkg_diff.b.diff_subidentity_string)
                 status = 3
 
         files_1_only = [ t[0] for t in files_diff.collection if t[1] is None ]

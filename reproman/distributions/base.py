@@ -453,6 +453,15 @@ class SpecDiff:
             collection: a list of SpecDiff objects for the contained 
                         SpecObjects.
 
+            a_only: SpecObjects from collection that only appear in the first 
+                    passed SpecObject
+
+            b_only: SpecObjects from collection that only appear in the second 
+                    passed SpecObject
+
+            diffs: SpecDiff objects in collection that appear in both 
+                    passed SpecObject
+
     If a and b are lists, they are treated as files specifications, and 
     self.collection is a list of (fname_a, fname_b) tuples.
     TODO: give files and file collections their own specobjects
@@ -480,7 +489,6 @@ class SpecDiff:
                     self.collection.append((fname, None))
                 else:
                     self.collection.append((fname, fname))
-            pass
         else:
             if self.cls._diff_cmp_fields:
                 if a and b and a._diff_cmp_id != b._diff_cmp_id:
@@ -497,4 +505,20 @@ class SpecDiff:
                     ac = a_collection[cmp_id] if cmp_id in a_collection else None
                     bc = b_collection[cmp_id] if cmp_id in b_collection else None
                     self.collection.append(SpecDiff(ac, bc))
+        if hasattr(self, 'collection'):
+            self.a_only = []
+            self.b_only = []
+            self.diffs = []
+            for pkg_diff in self.collection:
+                if isinstance(pkg_diff, tuple):
+                    (a, b) = pkg_diff
+                else:
+                    a = pkg_diff.a
+                    b = pkg_diff.b
+                if not a:
+                    self.b_only.append(b)
+                elif not b:
+                    self.a_only.append(a)
+                elif not isinstance(pkg_diff, tuple) and pkg_diff.diff_vals_a != pkg_diff.diff_vals_b:
+                    self.diffs.append(pkg_diff)
         return
