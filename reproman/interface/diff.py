@@ -107,6 +107,9 @@ class Diff(Interface):
             diffs.append({'diff': SpecDiff(dist_1, dist_2), 
                           'pkg_type': supported_distributions[dist_type]})
 
+        diffs.append({'diff': SpecDiff(env_1.files, env_2.files), 
+                      'pkg_type': 'files'})
+
         files1 = set(env_1.files)
         files2 = set(env_2.files)
 
@@ -169,6 +172,10 @@ class Diff(Interface):
             diff = diff_d['diff']
             pkg_type = diff_d['pkg_type']
 
+            if pkg_type == 'files':
+                files_diff = diff_d['diff']
+                continue
+
             pkgs_only_1 = {}
             pkgs_only_2 = {}
             pkg_diffs = []
@@ -204,13 +211,15 @@ class Diff(Interface):
                     print('> %s' % pkg_diff.b.diff_subidentity_string)
                 status = 3
 
-        if result['files_1_only'] or result['files_2_only']:
+        files_1_only = [ t[0] for t in files_diff.collection if t[1] is None ]
+        files_2_only = [ t[1] for t in files_diff.collection if t[0] is None ]
+        if files_1_only or files_2_only:
             print('Files:')
-            for fname in result['files_1_only']:
+            for fname in files_1_only:
                 print('< %s' % fname)
-            if result['files_1_only'] and result['files_2_only']:
+            if files_1_only and files_2_only:
                 print('---')
-            for fname in result['files_2_only']:
+            for fname in files_2_only:
                 print('> %s' % fname)
             status = 3
 

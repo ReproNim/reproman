@@ -452,11 +452,15 @@ class SpecDiff:
 
             collection: a list of SpecDiff objects for the contained 
                         SpecObjects.
+
+    If a and b are lists, they are treated as files specifications, and 
+    self.collection is a list of (fname_a, fname_b) tuples.
+    TODO: give files and file collections their own specobjects
     """
 
     def __init__(self, a, b):
-        if not isinstance(a, (SpecObject, type(None))) \
-            or not isinstance(b, (SpecObject, type(None))):
+        if not isinstance(a, (SpecObject, list, type(None))) \
+            or not isinstance(b, (SpecObject, list, type(None))):
             raise TypeError('objects must be SpecObjects or None')
         if not a and not b:
             raise TypeError('objects cannot both be None')
@@ -465,19 +469,32 @@ class SpecDiff:
         self.cls = type(a) if a is not None else type(b)
         self.a = a
         self.b = b
-        if self.cls._diff_cmp_fields:
-            if a and b and a._diff_cmp_id != b._diff_cmp_id:
-                raise ValueError('objects\' _diff_cmp_id differ')
-            self.diff_vals_a = a._diff_vals if a else None
-            self.diff_vals_b = b._diff_vals if b else None
-            self.diff_cmp_id = a._diff_cmp_id if a else b._diff_cmp_id
-        if hasattr(a, '_collection_attribute'):
+        if self.cls == list:
+            a_collection = set(a)
+            b_collection = set(b)
             self.collection = []
-            a_collection = { c._diff_cmp_id: c for c in a.collection } if a else {}
-            b_collection = { c._diff_cmp_id: c for c in b.collection } if b else {}
-            all_cmp_ids = set(a_collection).union(b_collection)
-            for cmp_id in all_cmp_ids:
-                ac = a_collection[cmp_id] if cmp_id in a_collection else None
-                bc = b_collection[cmp_id] if cmp_id in b_collection else None
-                self.collection.append(SpecDiff(ac, bc))
+            for fname in set(a_collection).union(b_collection):
+                if fname not in a_collection:
+                    self.collection.append((None, fname))
+                elif fname not in b_collection:
+                    self.collection.append((fname, None))
+                else:
+                    self.collection.append((fname, fname))
+            pass
+        else:
+            if self.cls._diff_cmp_fields:
+                if a and b and a._diff_cmp_id != b._diff_cmp_id:
+                    raise ValueError('objects\' _diff_cmp_id differ')
+                self.diff_vals_a = a._diff_vals if a else None
+                self.diff_vals_b = b._diff_vals if b else None
+                self.diff_cmp_id = a._diff_cmp_id if a else b._diff_cmp_id
+            if hasattr(a, '_collection_attribute'):
+                self.collection = []
+                a_collection = { c._diff_cmp_id: c for c in a.collection } if a else {}
+                b_collection = { c._diff_cmp_id: c for c in b.collection } if b else {}
+                all_cmp_ids = set(a_collection).union(b_collection)
+                for cmp_id in all_cmp_ids:
+                    ac = a_collection[cmp_id] if cmp_id in a_collection else None
+                    bc = b_collection[cmp_id] if cmp_id in b_collection else None
+                    self.collection.append(SpecDiff(ac, bc))
         return
