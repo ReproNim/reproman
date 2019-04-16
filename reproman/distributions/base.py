@@ -488,7 +488,7 @@ class SpecDiff:
                 self.diff_vals_a = a._diff_vals if a else None
                 self.diff_vals_b = b._diff_vals if b else None
                 self.diff_cmp_id = a._diff_cmp_id if a else b._diff_cmp_id
-            if hasattr(a, '_collection_attribute'):
+            if hasattr(self.cls, '_collection_attribute'):
                 self.collection = []
                 a_collection = { c._diff_cmp_id: c for c in a.collection } if a else {}
                 b_collection = { c._diff_cmp_id: c for c in b.collection } if b else {}
