@@ -38,6 +38,8 @@ class VenvPackage(Package):
     location = attrib()
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))
+    _diff_cmp_fields = ('name', )
+    _diff_fields = ('version', )
 
 
 @attr.s
@@ -46,6 +48,7 @@ class VenvEnvironment(SpecObject):
     python_version = attrib()
     packages = TypedList(VenvPackage)
     _diff_cmp_fields = ('path', 'python_version')
+    _collection_attribute = 'packages'
 
 
 @attr.s

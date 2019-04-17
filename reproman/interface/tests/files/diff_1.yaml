@@ -73,6 +73,25 @@ distributions:
       - lib/python2.7/site-packages/six-1.12.0.dist-info/METADATA
       - lib/python2.7/site-packages/six.pyc
       - lib/python2.7/site-packages/six.py
+  - path: /home/user/venvs/test/bth_2
+    python_version: 2.7.15+
+    packages:
+    - name: one_only
+      version: 1.12.0
+      local: true
+      location: /home/user/venvs/test/lib/python2.7/site-packages
+      files:
+      - lib/python2.7/site-packages/six-1.12.0.dist-info/METADATA
+      - lib/python2.7/site-packages/six.pyc
+      - lib/python2.7/site-packages/six.py
+    - name: version_mismatch
+      version: 1.1.0
+      local: true
+      location: /home/user/venvs/test/lib/python2.7/site-packages
+      files:
+      - lib/python2.7/site-packages/six-1.12.0.dist-info/METADATA
+      - lib/python2.7/site-packages/six.pyc
+      - lib/python2.7/site-packages/six.py
   - path: /home/user/venvs/test/1_only
     python_version: 2.7.15+
     packages:

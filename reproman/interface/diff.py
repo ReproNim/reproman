@@ -187,12 +187,30 @@ class Diff(Interface):
                 print('> %s' % pkg_diff.b.diff_identity_string)
 
             for pkg_diff in diff.a_and_b:
-                if pkg_diff.diff_vals_a != pkg_diff.diff_vals_b:
-                    print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
-                    print('< %s' % pkg_diff.a.diff_subidentity_string)
-                    print('---')
-                    print('> %s' % pkg_diff.b.diff_subidentity_string)
-                    status = 3
+                if not hasattr(pkg_diff, 'collection'):
+                    if pkg_diff.diff_vals_a != pkg_diff.diff_vals_b:
+                        print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
+                        print('< %s' % pkg_diff.a.diff_subidentity_string)
+                        print('---')
+                        print('> %s' % pkg_diff.b.diff_subidentity_string)
+                        status = 3
+                else:
+                    a_only = [ pd.a for pd in pkg_diff.a_only ]
+                    b_only = [ pd.b for pd in pkg_diff.b_only ]
+                    ab = [ pd for pd in pkg_diff.a_and_b 
+                            if pd.diff_vals_a != pd.diff_vals_b ]
+                    if a_only or b_only or ab:
+                        print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
+                        for pkg in a_only:
+                            print('< %s' % pkg.diff_identity_string)
+                        for pd in ab:
+                            print('< %s %s' % (pd.a.diff_identity_string, pd.a.diff_subidentity_string))
+                        if (a_only and b_only) or ab:
+                            print('---')
+                        for pkg in b_only:
+                            print('> %s' % pkg.diff_identity_string)
+                        for pd in ab:
+                            print('> %s %s' % (pd.b.diff_identity_string, pd.b.diff_subidentity_string))
 
         files_1_only = [ t[0] for t in files_diff.collection if t[1] is None ]
         files_2_only = [ t[1] for t in files_diff.collection if t[0] is None ]
