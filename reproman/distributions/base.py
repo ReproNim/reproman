@@ -453,14 +453,14 @@ class SpecDiff:
             collection: a list of SpecDiff objects for the contained 
                         SpecObjects.
 
-            a_only: SpecObjects from collection that only appear in the first 
-                    passed SpecObject
+            a_only: SpecDiff objects from collection that only appear in the 
+                    first passed SpecObject
 
-            b_only: SpecObjects from collection that only appear in the second 
-                    passed SpecObject
+            b_only: SpecDiff objects from collection that only appear in the 
+                    second passed SpecObject
 
-            diffs: SpecDiff objects in collection that appear in both 
-                    passed SpecObject
+            a_and_b: SpecDiff objects in collection that appear in both 
+                     passed SpecObjects
 
     If a and b are lists, they are treated as files specifications, and 
     self.collection is a list of (fname_a, fname_b) tuples.
@@ -508,7 +508,7 @@ class SpecDiff:
         if hasattr(self, 'collection'):
             self.a_only = []
             self.b_only = []
-            self.diffs = []
+            self.a_and_b = []
             for pkg_diff in self.collection:
                 if isinstance(pkg_diff, tuple):
                     (a, b) = pkg_diff
@@ -516,9 +516,9 @@ class SpecDiff:
                     a = pkg_diff.a
                     b = pkg_diff.b
                 if not a:
-                    self.b_only.append(b)
+                    self.b_only.append(pkg_diff)
                 elif not b:
-                    self.a_only.append(a)
-                elif not isinstance(pkg_diff, tuple) and pkg_diff.diff_vals_a != pkg_diff.diff_vals_b:
-                    self.diffs.append(pkg_diff)
+                    self.a_only.append(pkg_diff)
+                else:
+                    self.a_and_b.append(pkg_diff)
         return

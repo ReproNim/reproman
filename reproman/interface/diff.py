@@ -179,19 +179,20 @@ class Diff(Interface):
             if diff.a_only or diff.b_only:
                 print(_make_plural(pkg_type) + ':')
                 status = 3
-            for package in diff.a_only:
-                print('< %s' % package.diff_identity_string)
+            for pkg_diff in diff.a_only:
+                print('< %s' % pkg_diff.a.diff_identity_string)
             if diff.a_only and diff.b_only:
                 print('---')
-            for package in diff.b_only:
-                print('> %s' % package.diff_identity_string)
+            for pkg_diff in diff.b_only:
+                print('> %s' % pkg_diff.b.diff_identity_string)
 
-            for pkg_diff in diff.diffs:
-                print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
-                print('< %s' % pkg_diff.a.diff_subidentity_string)
-                print('---')
-                print('> %s' % pkg_diff.b.diff_subidentity_string)
-                status = 3
+            for pkg_diff in diff.a_and_b:
+                if pkg_diff.diff_vals_a != pkg_diff.diff_vals_b:
+                    print('%s %s:' % (pkg_type, ' '.join(pkg_diff.diff_cmp_id)))
+                    print('< %s' % pkg_diff.a.diff_subidentity_string)
+                    print('---')
+                    print('> %s' % pkg_diff.b.diff_subidentity_string)
+                    status = 3
 
         files_1_only = [ t[0] for t in files_diff.collection if t[1] is None ]
         files_2_only = [ t[1] for t in files_diff.collection if t[0] is None ]
