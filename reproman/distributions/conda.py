@@ -361,7 +361,7 @@ class CondaTracer(DistributionTracer):
                 '%s/bin/conda-env export -p %s'
                 % (root_prefix, conda_path)
             )
-            export = yaml.load(out)
+            export = yaml.safe_load(out)
         except Exception as exc:
             if "unrecognized arguments: -p" in exc_str(exc):
                 lgr.warning("Could not retrieve conda environment "

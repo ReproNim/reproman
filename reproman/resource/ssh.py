@@ -57,6 +57,15 @@ class SSH(Resource):
     status = attrib()
     _connection = attrib()
 
+    def _connection_open(self):
+        try:
+            self.status = "CONNECTING"
+            self._connection.open()
+            self.status = "ONLINE"
+        except:
+            self.status = "CONNECTION ERROR"
+            raise
+
     def connect(self, password=None):
         """Open a connection to the environment resource.
 
@@ -97,7 +106,7 @@ class SSH(Resource):
                   self._connection.port,  # Fabric defaults to 22.
                   auth)
         try:
-            self._connection.open()
+            self._connection_open()
         except AuthenticationException:
             password = getpass.getpass(
                 prompt="Password for {}: ".format(self.name))
@@ -107,7 +116,7 @@ class SSH(Resource):
                 port=self.port,
                 connect_kwargs={'password': password}
             )
-            self._connection.open()
+            self._connection_open()
 
     def create(self):
         """
