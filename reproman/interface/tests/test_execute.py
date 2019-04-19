@@ -25,7 +25,7 @@ from reproman.utils import swallow_outputs
 from reproman.interface.execute import TracedCommand
 from ...resource.base import ResourceManager
 from ...support.exceptions import CommandError
-from ...tests.utils import assert_is_subset_recur, assert_in
+from ...tests.utils import assert_is_subset_recur, assert_in, assert_in_in
 from ...tests.skip import mark
 from ...tests.fixtures import get_docker_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
@@ -185,4 +185,4 @@ def test_docker_shim():
     with swallow_logs(new_level=logging.DEBUG) as log:
         with pytest.raises(CommandError):
             Runner().run(command, env=env)
-        assert "executable file not found" in log.lines[-3]
+        assert_in_in("executable file not found", log.lines)
