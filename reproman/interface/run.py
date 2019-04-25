@@ -64,6 +64,25 @@ def _combine_job_specs(specs):
     return initial
 
 
+def _resolve_batch_parameters(spec_file):
+    """Determine batch parameters based on user input.
+
+    Parameters
+    ----------
+    spec_file : str or None
+        Name of YAML file the defines records of parameters.
+
+    Returns
+    -------
+    List of records or None if `spec_file` is not specified.
+    """
+    resolved = None
+    if spec_file:
+        with open(spec_file) as pf:
+            resolved = yaml.safe_load(pf)
+    return resolved
+
+
 JOB_PARAMETERS = collections.OrderedDict(
     [
         ("root_directory", Orchestrator.root_directory),
@@ -79,6 +98,11 @@ JOB_PARAMETERS = collections.OrderedDict(
          """Name of orchestrator. The orchestrator performs pre- and
          post-command steps like setting up the directory for command execution
          and storing the results."""),
+        ("batch_spec",
+         """YAML file that defines a series of records with parameters for
+         commands. A command will be constructed for each record, with record
+         values available in the command as well as the inputs and outputs as
+         `{p[KEY]}`."""),
         ("inputs, outputs",
          """Input and output files (list) to the command."""),
         ("message",
@@ -129,6 +153,11 @@ class Run(Interface):
             metavar="NAME",
             doc=(JOB_PARAMETERS["orchestrator"] +
                  "[CMD:  Use --list to see available orchestrators CMD]")),
+        batch_spec=Parameter(
+            args=("--batch-spec", "--bs"),
+            dest="batch_spec",
+            metavar="PATH",
+            doc=JOB_PARAMETERS["batch_spec"]),
         job_specs=Parameter(
             args=("--job-spec", "--js"),
             dest="job_specs",
@@ -187,6 +216,7 @@ class Run(Interface):
     def __call__(command=None, message=None,
                  resref=None, resref_type="auto",
                  list_=None, submitter=None, orchestrator=None,
+                 batch_spec=None,
                  job_specs=None, job_parameters=None,
                  inputs=None, outputs=None,
                  follow=False):
@@ -231,6 +261,7 @@ class Run(Interface):
                 "message": message,
                 "submitter": submitter,
                 "orchestrator": orchestrator,
+                "batch_spec": batch_spec,
                 "inputs": inputs,
                 "outputs": outputs,
             }.items()
@@ -242,6 +273,9 @@ class Run(Interface):
         # Precedence: CLI option > CLI job parameter > spec file
         spec = _combine_job_specs(_load_specs(job_specs or []) +
                                   [job_parameters, cli_spec])
+
+        spec["batch_parameters"] = _resolve_batch_parameters(
+            spec.get("batch_spec"))
 
         # Treat "command" as a special case because it's a list and the
         # template expects a string.
