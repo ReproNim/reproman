@@ -127,7 +127,8 @@ def base_dataset(tmpdir_factory):
     ds = dl.Dataset(path).create(force=True)
 
     create_tree(ds.path, {"foo": "foo",
-                          "bar": "bar"})
+                          "bar": "bar",
+                          "in": "content\n"})
     ds.add(".")
     ds.repo.tag("root")
     return ds
@@ -155,9 +156,6 @@ def dataset(base_dataset):
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
 def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
         orc.prepare_remote()
@@ -171,9 +169,6 @@ def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
 
 @pytest.mark.integration
 def test_orc_datalad_run_change_head(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc = orcs.DataladLocalRunOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -214,9 +209,6 @@ def test_orc_datalad_run_failed(job_spec, dataset, shell):
 @pytest.mark.integration
 def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
     ds = dataset
-    create_tree(ds.path, {"in": "content\n"})
-    ds.add(".")
-
     js0 = job_spec
     js1 = dict(job_spec, command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
@@ -251,9 +243,6 @@ def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
 
 @pytest.mark.integration
 def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc = orcs.DataladLocalRunOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -268,9 +257,6 @@ def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
 
 @pytest.mark.integration
 def test_orc_datalad_pair(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -286,9 +272,6 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
 
 @pytest.mark.integration
 def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc0 = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
