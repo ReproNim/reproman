@@ -147,6 +147,23 @@ def dataset(base_dataset):
     return base_dataset
 
 
+@pytest.fixture(scope="module")
+def container_dataset(tmpdir_factory):
+    skipif.no_datalad()
+    skipif.no_network()
+
+    if "datalad_container" not in external_versions:
+        pytest.skip("datalad-container not installed")
+
+    import datalad.api as dl
+    path = str(tmpdir_factory.mktemp("container_dataset"))
+    ds = dl.Dataset(path).create(force=True)
+    ds.containers_add(
+        "dc",
+        url="shub://datalad/datalad-container:testhelper")
+    return ds
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
@@ -254,6 +271,37 @@ def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
                           "{}.tar.gz".format(orc.jobid)))
         with pytest.raises(OrchestratorError):
             orc.fetch()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("orc_class",
+                         [orcs.DataladPairRunOrchestrator,
+                          orcs.DataladLocalRunOrchestrator],
+                         ids=["orc:pair", "orc:local"])
+def test_orc_datalad_run_container(tmpdir, container_dataset, shell,
+                                   orc_class):
+    import datalad.api as dl
+    # Avoid the dataset fixture because the subdataset will make its simplistic
+    # cleanup fail.
+    ds = dl.Dataset(op.join(str(tmpdir), "ds")).create()
+    ds.install(path="subds", source=container_dataset)
+    if orc_class == orcs.DataladLocalRunOrchestrator:
+        # We need to have the image locally in order to copy it to the
+        # non-dataset remote.
+        ds.get(op.join("subds", ".datalad", "environments"))
+    with chpwd(ds.path):
+        orc = orc_class(
+            shell, submission_type="local",
+            job_spec={"root_directory": op.join(str(tmpdir), "nm-run"),
+                      "outputs": ["out"],
+                      "container": "subds/dc",
+                      "command_str": 'sh -c "ls / >out"'})
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
+        assert ds.repo.file_has_content("out")
+        assert "singularity" in open("out").read()
 
 
 @pytest.mark.integration
