@@ -247,6 +247,7 @@ def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
         # The other one is a side-branch.
         assert not ds.repo.is_ancestor(ref1, "HEAD")
         assert ds.repo.get_hexsha(ref0) == ds.repo.get_hexsha("master")
+        assert ds.repo.get_active_branch() == "master"
 
 
 @pytest.mark.integration
