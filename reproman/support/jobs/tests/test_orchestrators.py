@@ -349,10 +349,10 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
     with chpwd(dataset.path):
         orc1 = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
-    create_tree(orc1.working_directory, {"dirty": ""})
-    with pytest.raises(OrchestratorError) as exc:
-        orc1.prepare_remote()
-    assert "dirty" in str(exc)
+        create_tree(orc1.working_directory, {"dirty": ""})
+        with pytest.raises(OrchestratorError) as exc:
+            orc1.prepare_remote()
+        assert "dirty" in str(exc)
 
 
 def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
