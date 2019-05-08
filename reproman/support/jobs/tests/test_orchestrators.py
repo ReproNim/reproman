@@ -212,7 +212,14 @@ def test_orc_datalad_run_failed(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
+def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
+    # Start two orchestrators from the same point:
+    #
+    #   orc 0, master
+    #   |
+    #   | orc 1
+    #   |/
+    #   o
     ds = dataset
     create_tree(ds.path, {"in": "content\n"})
     ds.add(".")
