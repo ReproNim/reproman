@@ -614,10 +614,10 @@ class PrepareRemoteDataladMixin(object):
             if not session.exists(self.working_directory):
                 dl.install(self.working_directory, source=self.ds.path)
 
-            self._checkout_target()
             self.session.execute_command(
                 "git push '{}' HEAD:{}-base"
                 .format(self.working_directory, self.job_refname))
+            self._checkout_target()
 
             if inputs:
                 installed_ds = dl.Dataset(self.working_directory)

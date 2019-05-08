@@ -258,6 +258,47 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
+def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
+    # Run one orchestrator and fetch, then run another and fetch:
+    #
+    #   orc 1, master
+    #   |
+    #   o orc 0
+    #   |
+    #   o
+    ds = dataset
+    create_tree(ds.path, {"in": "content\n"})
+    ds.add(".")
+
+    js0 = job_spec
+    js1 = dict(job_spec, command_str='bash -c "echo other >other"')
+    with chpwd(ds.path):
+        def do(js):
+            orc = orcs.DataladPairRunOrchestrator(
+                shell, submission_type="local", job_spec=js)
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+            orc.fetch()
+            return orc
+
+        orc0 = do(js0)
+        orc1 = do(js1)
+
+        # Ran on top, so both exist in working tree.
+        assert op.exists(op.join(orc0.meta_directory, "status"))
+        assert op.exists(op.join(orc1.meta_directory, "status"))
+
+        ref0 = "refs/reproman/{}".format(orc0.jobid)
+        ref1 = "refs/reproman/{}".format(orc1.jobid)
+
+        assert ds.repo.is_ancestor(ref0, ref1)
+        assert ds.repo.get_hexsha(ref0) != ds.repo.get_hexsha(ref1)
+        assert ds.repo.get_hexsha(ref1) == ds.repo.get_hexsha("master")
+        assert ds.repo.get_active_branch() == "master"
+
+
+@pytest.mark.integration
 def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
     create_tree(dataset.path, {"in": "content\n"})
     dataset.add(".")
