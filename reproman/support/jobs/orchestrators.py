@@ -464,7 +464,8 @@ class PrepareRemotePlainMixin(object):
             return
 
         for i in inputs:
-            session.put(i, op.join(self.working_directory, op.basename(i)))
+            session.put(i, op.join(self.working_directory,
+                                   op.relpath(i, self.local_directory)))
 
 
 def _format_ssh_url(user, host, port, path):

@@ -63,9 +63,9 @@ def test_orc_root_directory_error(shell, value):
 @pytest.fixture()
 def job_spec(tmpdir):
     return {"root_directory": op.join(str(tmpdir), "nm-run"),
-            "inputs": ["in"],
+            "inputs": [op.join("d", "in")],
             "outputs": ["out"],
-            "command_str": 'bash -c "cat in >out && echo more >>out"'}
+            "command_str": 'bash -c "cat d/in >out && echo more >>out"'}
 
 
 @pytest.fixture()
@@ -73,12 +73,13 @@ def check_orc_plain(tmpdir):
     local_dir = str(tmpdir)
 
     def fn(resource, jspec):
-        create_tree(local_dir, {"in": "content\n"})
+        create_tree(local_dir, {"d": {"in": "content\n"}})
         with chpwd(local_dir):
             orc = orcs.PlainOrchestrator(resource, submission_type="local",
                                          job_spec=jspec)
             orc.prepare_remote()
-            assert orc.session.exists(op.join(orc.working_directory, "in"))
+            assert orc.session.exists(
+                op.join(orc.working_directory, "d", "in"))
 
             orc.submit()
             orc.follow()
@@ -128,7 +129,7 @@ def base_dataset(tmpdir_factory):
 
     create_tree(ds.path, {"foo": "foo",
                           "bar": "bar",
-                          "in": "content\n"})
+                          "d": {"in": "content\n"}})
     ds.add(".")
     ds.repo.tag("root")
     return ds
