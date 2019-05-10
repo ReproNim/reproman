@@ -79,7 +79,7 @@ def no_condor():
 
 def no_datalad():
     return ("datalad not available",
-            not external_versions["cmd:datalad"])
+            not external_versions["datalad"])
 
 
 def no_docker_dependencies():
