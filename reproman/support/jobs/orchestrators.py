@@ -176,10 +176,22 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         """Prepare remote for run.
         """
 
-    def _put_as_executable(self, text, target):
+    def _put_text(self, text, target, executable=False):
+        """Put file with content `text` at `target`.
+
+        Parameters
+        ----------
+        text : str
+            Content for file.
+        target : str
+            Path on resource (passed as destination to `session.put`).
+        executable : boolean, optional
+            Whether to mark file as executable.
+        """
         with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
             tfh.write(text)
-        os.chmod(tfh.name, 0o755)
+        if executable:
+            os.chmod(tfh.name, 0o755)
         self.session.put(tfh.name, target)
         os.unlink(tfh.name)
 
@@ -193,15 +205,17 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                                 working_directory=self.working_directory,
                                 meta_directory=self.meta_directory))
         self.template = templ
-        self._put_as_executable(
+        self._put_text(
             templ.render_runscript("{}.template.sh".format(
                 self.template_name or self.name)),
-            op.join(self.meta_directory, "runscript"))
+            op.join(self.meta_directory, "runscript"),
+            executable=True)
 
         submission_file = op.join(self.meta_directory, "submit")
-        self._put_as_executable(
+        self._put_text(
             templ.render_submission("{}.template".format(self.submitter.name)),
-            submission_file)
+            submission_file,
+            executable=True)
 
         subm_id = self.submitter.submit(submission_file)
         if subm_id is None:
