@@ -1,4 +1,5 @@
 #!/bin/sh
-{{ meta_directory }}/runscript 1>{{ meta_directory }}/stdout 2>{{ meta_directory }}/stderr &
+metadir={{ shlex_quote(meta_directory) }}
+"$metadir/runscript" 1>"$metadir/stdout" 2>"$metadir/stderr" &
 RUNSCRIPT_PID=$!
 printf "%d" $RUNSCRIPT_PID
