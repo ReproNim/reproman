@@ -250,15 +250,19 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                 subm_id,
                 op.join(self.meta_directory, "idmap")))
 
-    @property
-    def status(self):
-        """Get information from job status file.
-        """
-        status_file = op.join(self.meta_directory, "status.0")
+    def get_status(self, subjob=0):
+        status_file = op.join(self.meta_directory,
+                              "status.{:d}".format(subjob))
         status = "unknown"
         if self.session.exists(status_file):
             status = self.session.read(status_file).strip()
         return status
+
+    @property
+    def status(self):
+        """Get information from job status file.
+        """
+        return self.get_status()
 
     @property
     def has_completed(self):
