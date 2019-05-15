@@ -15,6 +15,7 @@ import os
 import os.path as op
 import pytest
 import logging
+from shutil import copyfile
 import tempfile
 
 import attr
@@ -153,17 +154,18 @@ def test_trace_local(trace_info):
 @mark.skipif_no_network
 @mark.skipif_no_docker_engine
 def test_docker_shim():
-    shim = op.join(op.dirname(op.realpath(__file__)),
-            "../docker.shim")
-
+    tempdir = tempfile.mkdtemp()
+    shim = op.join(tempdir, "docker")
+    copyfile(op.join(op.dirname(op.realpath(__file__)), "../docker.shim"),
+            shim)
+    os.chmod(shim, 0o755)
     image_digest = 'debian@sha256:a94839ed73dff831b2382b087b1008877d796946cc716afd4fc72150e082d1b8'
     command = shim + " --debug run --rm {} cat /etc/debian_version".format(
         image_digest)
 
-    tempdir = tempfile.mkdtemp()
-
     env = {
-        "REPROMAN_TRACERS_DIR": tempdir,
+        "PATH": "{}:{}".format(tempdir, os.environ['PATH']),
+        "REPROMAN_TRACER_DIR": tempdir,
         "REPROMAN_EXTRA_TRACE_FILE": op.join(tempdir, "trace.extra.out")
     }
 

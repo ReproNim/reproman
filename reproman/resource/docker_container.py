@@ -224,11 +224,7 @@ class DockerSession(POSIXSession):
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None):
-        #command_env = self.get_updated_env(env)
         command = self._prefix_command(command, env=env, cwd=cwd)
-        # if command_env:
-            # TODO: might not work - not tested it
-            # command = ['export %s=%s' % k for k in command_env.items()] + command
 
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.

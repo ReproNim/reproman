@@ -533,7 +533,7 @@ class POSIXSession(Session):
         env : dict
             ENV vars to prefix to command
         cwd : string
-            working directory to cd into befoe the command is executed
+            working directory to cd into before the command is executed
         with_shell : boolean
             if True, a "/bin/sh -c" call will wrap the cwd, env and command
 
