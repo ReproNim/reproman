@@ -505,3 +505,42 @@ def test_dataset_as_dict(shell, dataset, job_spec):
     # OrchestratorError.asdict() with.
     assert "head" in d
     assert "dataset_id" in d
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("orc_class",
+                         [orcs.DataladLocalRunOrchestrator,
+                          orcs.DataladPairOrchestrator,
+                          orcs.DataladPairRunOrchestrator],
+                         ids=["orc:local-run", "orc:pair-run", "orc-pair"])
+@pytest.mark.parametrize("sub_type",
+                         ["local",
+                          pytest.param("condor", marks=mark.skipif_no_condor)],
+                         ids=["sub:local", "sub:condor"])
+def test_orc_datalad_concurrent(job_spec, dataset, shell, orc_class, sub_type):
+    names = ["paul", "rosa"]
+
+    job_spec["inputs"] = ["{p[name]}.in"]
+    job_spec["outputs"] = ["{p[name]}.out"]
+    job_spec["command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
+    job_spec["batch_parameters"] = [{"name": n} for n in names]
+
+    in_files = [n + ".in" for n in names]
+    for fname in in_files:
+        with open(op.join(dataset.path, fname), "w") as fh:
+            fh.write(fname[0])
+    dataset.save(path=in_files)
+
+    with chpwd(dataset.path):
+        orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+
+        orc.fetch()
+
+        out_files = [n + ".out" for n in names]
+        for ofile in out_files:
+            assert dataset.repo.file_has_content(ofile)
+            with open(ofile) as ofh:
+                assert ofh.read() == ofile[0] * 2

@@ -175,18 +175,23 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def _prepare_spec(self):
         """Prepare the spec for the run.
 
-        At the moment, this means the "inputs" and "outputs" keys in `spec` are
-        replaced and the original are moved under the `*_unexpanded` key.
+        At the moment, this involves constructing the "command_array",
+        "inputs_array", and "outputs_array" keys.
         """
         from reproman.support.globbedpaths import GlobbedPaths
 
         spec = self.job_spec
+        if spec.get("batch_parameters"):
+            raise OrchestratorError(
+                "Batch parameters are currently only supported "
+                "in DataLad orchestrators")
+
         for key in ["inputs", "outputs"]:
             if key in spec:
-                spec["{}_unexpanded".format(key)] = spec[key]
                 gp = GlobbedPaths(spec[key])
-                spec["{}".format(key)] = gp.expand(dot=False)
-
+                spec["{}_array".format(key)] = [gp.expand(dot=False)]
+        if "command_str" in spec:
+            spec["command_array"] = [spec["command_str"]]
         # Note: This doesn't adjust the command. We currently don't support any
         # datalad-run-like command formatting.
 
@@ -221,7 +226,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         templ = Template(
             **dict(self.job_spec,
                    jobid=self.jobid,
-                   num_subjobs=1,
+                   num_subjobs=len(self.job_spec["command_array"]),
                    root_directory=self.root_directory,
                    working_directory=self.working_directory,
                    meta_directory=self.meta_directory,
@@ -239,6 +244,10 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             templ.render_submission("{}.template".format(self.submitter.name)),
             submission_file,
             executable=True)
+
+        self._put_text(
+            "\0".join(self.job_spec["command_array"]),
+            op.join(self.meta_directory, "command-array"))
 
         subm_id = self.submitter.submit(
             submission_file,
@@ -264,6 +273,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def status(self):
         """Get information from job status file.
         """
+        # FIXME: How to handle subjobs?
         return self.get_status()
 
     @property
@@ -304,6 +314,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         else:
             stderr_suffix = "{{{}}}".format(
                 ",".join(str(i) for i in failed))
+        # FIXME: This will be inaccurate for PBS. Uses "-" rather than ".".
         lgr.info("%s stderr: %s",
                  jobid,
                  op.join(metadir, "stderr." + stderr_suffix))
@@ -339,28 +350,44 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                 "Post-processing failed for {} [status: {}] ({})"
                 .format(self.jobid, self.status, self.working_directory))
 
-    def _get_io_set(self, which):
+    def _get_io_set(self, which, subjobs):
         spec = self.job_spec
-        return {fname for fname in spec.get(which, [])}
+        if subjobs is None:
+            subjobs = range(len(spec["command_array"]))
+        key = which + "_array"
+        values = spec.get(key)
+        if not values:
+            return set()
+        return {fname for i in subjobs for fname in values[i]}
 
-    def get_inputs(self):
+    def get_inputs(self, subjobs=None):
         """Return input files.
 
+        Parameters
+        ----------
+        subjobs : iterable of int or None
+            Restrict results to these subjobs.
+
         Returns
         -------
         Set of str
         """
-        return self._get_io_set("inputs").union(
-            self._get_io_set("extra_inputs"))
+        return self._get_io_set("inputs", subjobs).union(
+            self._get_io_set("extra_inputs", subjobs))
 
-    def get_outputs(self):
+    def get_outputs(self, subjobs=None):
         """Return output files.
 
+        Parameters
+        ----------
+        subjobs : iterable of int or None
+            Restrict results to these subjobs.
+
         Returns
         -------
         Set of str
         """
-        return self._get_io_set("outputs")
+        return self._get_io_set("outputs", subjobs)
 
     @abc.abstractmethod
     def fetch(self):
@@ -399,25 +426,31 @@ def _datalad_check_container(ds, spec):
 def _datalad_format_command(ds, spec):
     """Adjust `spec` to use `datalad run`-style formatting.
 
-    The "inputs", "outputs", and "command_str" keys in `spec` are replaced and
-    the original are moved under the `*_unexpanded` key.
+    Create "*_array" keys and format commands with DataLad's `format_command`.
     """
     from datalad.interface.run import format_command
     # DataLad's GlobbedPaths _should_ be the same as ours, but let's use
     # DataLad's to avoid potential discrepancies with datalad-run's behavior.
     from datalad.interface.run import GlobbedPaths
 
-    fmt_kwds = {}
-    for key in ["inputs", "outputs"]:
-        if key in spec:
-            spec["{}_unexpanded".format(key)] = spec[key]
-            gp = GlobbedPaths(spec[key])
-            spec[key] = gp.expand(dot=False)
-            fmt_kwds[key] = gp
+    batch_parameters = spec.get("batch_parameters") or [{}]
+    spec["command_array"] = []
+    spec["inputs_array"] = []
+    spec["outputs_array"] = []
+    for cp in batch_parameters:
+        fmt_kwds = {}
+        for key in ["inputs", "outputs"]:
+            if key in spec:
+                parametrized = [io.format(p=cp) for io in spec[key]]
+                gp = GlobbedPaths(parametrized)
+                spec["{}_array".format(key)].append(gp.expand(dot=False))
+                fmt_kwds[key] = gp
+        fmt_kwds["p"] = cp
+        spec["command_array"].append(format_command(ds, spec["command_str"],
+                                                    **fmt_kwds))
 
-    cmd_expanded = format_command(ds, spec["command_str"], **fmt_kwds)
-    spec["command_str_unexpanded"] = spec["command_str"]
-    spec["command_str"] = cmd_expanded
+    exinputs = spec.get("extra_inputs", [])
+    spec["extra_inputs_array"] = [exinputs] * len(batch_parameters)
 
 
 class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
@@ -592,6 +625,7 @@ class PrepareRemoteDataladMixin(object):
             status_from_ref = self._execute_in_wdir(
                 "git cat-file -p {}:{}"
                 .format(self.job_refname,
+                        # FIXME: How to handle subjobs?
                         op.relpath(op.join(self.meta_directory, "status.0"),
                                    self.working_directory)))
             status = status_from_ref.strip() or status
@@ -889,14 +923,26 @@ class FetchDataladRunMixin(object):
 
                 from datalad.interface.run import run_command
                 lgr.info("Creating run commit in %s", self.ds.path)
+
+                cmds = self.job_spec["command_array"]
+                if len(cmds) == 1:
+                    cmd = cmds[0]
+                else:
+                    # FIXME: Can't use unexpanded command because of unknown
+                    # placeholders.
+                    cmd = self.jobid
+
                 for res in run_command(
-                        inputs=self.job_spec.get("inputs_unexpanded"),
+                        # FIXME: How to represent inputs and outputs given that
+                        # they are formatted per subjob and then expanded by
+                        # glob?
+                        inputs=self.job_spec.get("inputs"),
                         extra_inputs=self.job_spec.get("extra_inputs"),
-                        outputs=self.job_spec.get("outputs_unexpanded"),
+                        outputs=self.job_spec.get("outputs"),
                         inject=True,
                         extra_info={"reproman_jobid": self.jobid},
                         message=self.job_spec.get("message"),
-                        cmd=self.job_spec["command_str_unexpanded"]):
+                        cmd=cmd):
                     # Oh, if only I were a datalad extension.
                     if res["status"] in ["impossible", "error"]:
                         raise OrchestratorError(
