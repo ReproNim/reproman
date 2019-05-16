@@ -471,7 +471,7 @@ class SpecDiff:
         if not isinstance(a, (SpecObject, list, type(None))) \
             or not isinstance(b, (SpecObject, list, type(None))):
             raise TypeError('objects must be SpecObjects or None')
-        if not a and not b:
+        if a is None and b is None:
             raise TypeError('objects cannot both be None')
         if a and b and type(a) != type(b):
             raise TypeError('objects must be of the same type')
