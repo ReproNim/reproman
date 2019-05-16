@@ -42,7 +42,8 @@ class SpecObject(object):
     # needed (or make sure the trivial case is handled)
 
     # Fields used to establish the "identity" of the specobject for the 
-    # purposes of diff
+    # purposes of finding the one and diff
+    # TODO: rename to e.g.  _id_fields?
     _diff_cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
@@ -186,6 +187,113 @@ class SpecObject(object):
             return False
         return all(sv==ov for sv, ov in zip(self._cmp_id, other._cmp_id))
 
+    def _find_attr(self, child):
+        """Find an attribute among TypedList attrs which might contain the child
+
+        Checks are done based on the type.  Returns None if no appropriate
+        attribute is found
+        """
+        child_class = child.__class__
+        assert issubclass(child_class, SpecObject)  # only those are supported ATM
+        compatible_attrs = []
+
+        # For paranoids - do exhaustive search
+        for attr in self.__attrs_attrs__:
+            metadata_type = attr.metadata.get('type', None)
+            if metadata_type \
+                and issubclass(child_class, metadata_type) \
+                and issubclass(attr.default.factory, list):  # TODO: fragile
+                # we got our hit for a possible container containing our
+                # classes
+                # TODO: cache mapping from child_class to known types
+                compatible_attrs.append(attr)
+
+        if not compatible_attrs:
+            return
+
+        # If multiple provide list of the same class -- blow for now?
+        if len(compatible_attrs) > 1:
+            raise ValueError(
+                "Multiple attributes seems to contain instances of %s: %s "
+                "ATM we are not supporting that."
+                % (child_class, compatible_attrs)
+            )
+        return compatible_attrs[0]
+
+    def _find_in_attr(self, child, attr):
+        """Given an attribute (should be containing an iterable) find a child
+
+        No checks for attribute appropriateness (type check etc) for the child
+        is carried out
+        """
+
+        if not attr:
+            return  # Found no attribute which might have contained it
+
+        child_id = child._diff_cmp_id
+        values = getattr(self, attr.name)  # TODO: isn't there a better way?
+        hits = [
+            v for v in values
+            if v._diff_cmp_id == child_id
+        ]
+
+        # checks
+        # TODO: parametrize etc to generate/allow for multiple hits?
+        if not hits:
+            return None
+        elif len(hits) > 1:
+            raise RuntimeError(
+                "Found multiple hits for %s in %s: %s . ATM we expect only a "
+                "single one",
+                child, attr.name, hits
+            )
+        return hits[0]
+
+    def find(self, child):
+        """Find an object among TypedList attrs which matches (identity vice)
+        """
+        attr = self._find_attr(child)
+        if not attr:
+            return None
+        return self._find_in_attr(child, attr)
+
+    def __iadd__(self, other):
+        """Add information from another object into this one"""
+        # Check the other one is of the same kind
+        assert isinstance(other, self.__class__)
+        # TEMP -- to decide what to do when subclass. For now take only
+        #   exactly the same
+        assert other.__class__ is self.__class__
+        # go through attrs, and if the other one defines a single attr which
+        # is not defined here -- blow
+        # For the lists - add those which aren't found, and found should get
+        # += 'ed if spec objects, appended otherwise
+        for a in self.__attrs_attrs__:
+            a_self = getattr(self, a.name)
+            a_other = getattr(other, a.name)
+            if a_self == a_other:
+                # All good and nothing for us to do here
+                continue
+            if isinstance(a.default, attr.Factory) and a.default.factory is list:
+                # we have a list of things...
+                if issubclass(a.metadata['type'], SpecObject):
+                    # we might know what to do
+                    for a_other_value in a_other:
+                        a_self_value = self._find_in_attr(a_other_value, a)
+                        if a_self_value is None:
+                            # a new one!
+                            a.append(a_other_value)
+                        else:
+                            # Delegate doing the right thing to the child's __iadd__
+                            a_self_value += a_other_value
+                else:
+                    raise NotImplementedError(
+                        "For now joining only lists of our own spec objects"
+                    )
+            # import pdb; pdb.set_trace()
+            pass
+
+
 
 def _register_with_representer(cls):
     # TODO: check if we could/should just inherit from  yaml.YAMLObject
@@ -210,6 +318,13 @@ class Distribution(SpecObject, metaclass=abc.ABCMeta):
     # Actually might want/need to go away since somewhat duplicates the class
     # name and looks awkward
     name = attrib(default=attr.NOTHING)
+
+    # Distributions are typically a singular entity on a system, although
+    # in some cases there could be multiple (e.g. conda installations) which
+    # managed to get used.
+    # So their identification by default will be done just based on the name
+    _diff_cmp_fields = ('name',)
+
 
     @staticmethod
     def factory(distribution_type, provenance=None):

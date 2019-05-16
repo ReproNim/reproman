@@ -169,7 +169,11 @@ def identify_distributions(files, session=None, tracer_classes=None):
     # as they identify files beloning to them
     files_to_consider = set(files)
 
-    distibutions = []
+    from reproman.distributions.base import EnvironmentSpec
+    environment_spec = EnvironmentSpec(
+        distributions=[]
+    )
+
     files_processed = set()
     files_to_trace = files_to_consider
 
@@ -207,16 +211,23 @@ def identify_distributions(files, session=None, tracer_classes=None):
             #     files_to_trace
             if files_to_trace:
                 remaining_files_to_trace = files_to_trace
-                nenvs = 0
-                for env, remaining_files_to_trace in tracer.identify_distributions(
+                nnewdists, nolddists = 0, 0
+                for dist, remaining_files_to_trace in tracer.identify_distributions(
                         files_to_trace):
-                    distibutions.append(env)
-                    nenvs += 1
+                    old_dist = environment_spec.find(dist)
+                    if not old_dist:
+                        nnewdists += 1
+                        environment_spec.distributions.append(dist)
+                    else:
+                        nolddists += 1
+                        old_dist += dist
+                    nnewdists += 1
                 files_processed |= files_to_trace - remaining_files_to_trace
                 files_to_trace = remaining_files_to_trace
-                lgr.info("%s: %d envs with %d other files remaining",
+                lgr.info("%s: %d new and %d old distributions with %d other files remaining",
                          Tracer.__name__,
-                         nenvs,
+                         nnewdists,
+                         nolddists,
                          len(files_to_trace))
 
             # Re-combine any files that were skipped
@@ -230,7 +241,8 @@ def identify_distributions(files, session=None, tracer_classes=None):
             lgr.info("No more changes or files to track.  Exiting the loop")
             break
 
-    return distibutions, files_to_consider
+    # TODO: -- return environment_spec itself?
+    return environment_spec.distributions, files_to_consider
 
 
 def get_tracer_classes():

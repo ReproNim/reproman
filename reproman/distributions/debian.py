@@ -66,6 +66,10 @@ class APTSource(SpecObject):
     site = attrib()
     archive_uri = attrib()
     date = attrib()
+
+    # name contains a suffix so we probably should not use it
+    _diff_cmp_fields = ('origin', 'codename', 'component', 'architecture')
+
 _register_with_representer(APTSource)
 
 
