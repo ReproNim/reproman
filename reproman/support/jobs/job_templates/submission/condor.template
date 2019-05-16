@@ -1,3 +1,7 @@
+{#
+  FIXME: How to handle spaces in file names?
+#}
+
 Universe     = vanilla
 Executable   = {{ meta_directory }}/runscript
 environment  = ""
