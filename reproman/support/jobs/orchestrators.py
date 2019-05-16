@@ -218,11 +218,14 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         """Submit the job with `submitter`.
         """
         lgr.info("Submitting %s", self.jobid)
-        templ = Template(**dict(self.job_spec,
-                                jobid=self.jobid,
-                                root_directory=self.root_directory,
-                                working_directory=self.working_directory,
-                                meta_directory=self.meta_directory))
+        templ = Template(
+            **dict(self.job_spec,
+                   jobid=self.jobid,
+                   root_directory=self.root_directory,
+                   working_directory=self.working_directory,
+                   meta_directory=self.meta_directory,
+                   meta_directory_rel=op.relpath(self.meta_directory,
+                                                 self.working_directory)))
         self.template = templ
         self._put_text(
             templ.render_runscript("{}.template.sh".format(
