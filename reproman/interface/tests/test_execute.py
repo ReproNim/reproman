@@ -153,9 +153,9 @@ def test_trace_local(trace_info):
 
 @mark.skipif_no_network
 @mark.skipif_no_docker_engine
-def test_docker_shim():
-    tempdir = tempfile.mkdtemp()
-    shim = op.join(tempdir, "docker")
+def test_docker_shim(tmpdir):
+    tmpdir = str(tmpdir)
+    shim = op.join(tmpdir, "docker")
     copyfile(op.join(op.dirname(op.realpath(__file__)), "../docker.shim"),
             shim)
     os.chmod(shim, 0o755)
@@ -164,18 +164,18 @@ def test_docker_shim():
         image_digest)
 
     env = {
-        "PATH": "{}:{}".format(tempdir, os.environ['PATH']),
-        "REPROMAN_TRACER_DIR": tempdir,
-        "REPROMAN_EXTRA_TRACE_FILE": op.join(tempdir, "trace.extra.out")
+        "PATH": "{}:{}".format(tmpdir, os.environ['PATH']),
+        "REPROMAN_TRACER_DIR": tmpdir,
+        "REPROMAN_EXTRA_TRACE_FILE": op.join(tmpdir, "trace.extra.out")
     }
 
     # Test with theoretically successful docker run
     with swallow_logs(new_level=logging.DEBUG) as log:
         Runner().run(command, env=env)
-        assert_in('buster/sid', log.lines)
-        assert_in('[DEBUG DOCKER SHIM] Found docker executable: /usr/bin/docker', log.lines)
-        assert_in('[DEBUG DOCKER SHIM] Found digest ID: {}'.format(image_digest), log.lines)
-        assert op.exists(op.join(tempdir, env['REPROMAN_EXTRA_TRACE_FILE']))
+        assert 'buster/sid' in log.out
+        assert '[DEBUG DOCKER SHIM] Found docker executable: /usr/bin/docker' in log.out
+        assert '[DEBUG DOCKER SHIM] Found digest ID: {}'.format(image_digest) in log.out
+        assert op.exists(op.join(tmpdir, env['REPROMAN_EXTRA_TRACE_FILE']))
 
     # Test with missing ENV variables
     with pytest.raises(CommandError):
@@ -187,4 +187,4 @@ def test_docker_shim():
     with swallow_logs(new_level=logging.DEBUG) as log:
         with pytest.raises(CommandError):
             Runner().run(command, env=env)
-        assert_in_in("executable file not found", log.lines)
+        assert "executable file not found" in log.out
