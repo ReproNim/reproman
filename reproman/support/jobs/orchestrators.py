@@ -312,8 +312,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         Parameters
         ----------
         func : callable or None, optional
-            If a failed status is detected, call this function with one
-            argument, the local metadata directory.
+            If a failed status is detected, call this function with two
+            arguments, the local metadata directory and a list of failed
+            subjobs.
         """
         failed = self.failed_subjobs
         if failed:
@@ -324,7 +325,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                 "")
             self._log_failed(self.jobid, local_metadir, failed)
             if func:
-                func(local_metadir)
+                func(local_metadir, failed)
 
     def follow(self):
         """Follow command, exiting when post-command processing completes."""
@@ -755,14 +756,18 @@ class FetchPlainMixin(object):
                 # Make sure directory has trailing slash so that get doesn't
                 # treat it as the file.
                 op.join(self.local_directory, ""))
-        for f in ["status.0", "stdout.0", "stderr.0"]:
-            self.session.get(
-                op.join(self.meta_directory, f),
-                op.join(self.local_directory,
-                        op.relpath(self.meta_directory,
-                                   self.working_directory),
-                        ""))
-        self.log_failed()
+
+        def get_failed_meta(mdir, failed):
+            for idx in failed:
+                for f in ["status", "stdout", "stderr"]:
+                    self.session.get(
+                        op.join(self.meta_directory,
+                                "{}.{:d}".format(f, idx)),
+                        op.join(self.local_directory,
+                                op.relpath(self.meta_directory,
+                                           self.working_directory),
+                                ""))
+        self.log_failed(get_failed_meta)
 
 
 @contextmanager
@@ -843,7 +848,7 @@ class FetchDataladPairMixin(object):
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
 
-        def get_metadir(mdir):
+        def get_metadir(mdir, _):
             if self.resource.type == "ssh":
                 self.ds.get(path=mdir)
 
