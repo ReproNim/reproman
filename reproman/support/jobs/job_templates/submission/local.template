@@ -2,6 +2,6 @@
 set -eu
 
 metadir={{ shlex_quote(meta_directory) }}
-"$metadir/runscript" 1>"$metadir/stdout" 2>"$metadir/stderr" &
+"$metadir/runscript" 0 1>"$metadir/stdout.0" 2>"$metadir/stderr.0" &
 RUNSCRIPT_PID=$!
 printf "%d" $RUNSCRIPT_PID

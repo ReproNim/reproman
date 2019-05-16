@@ -248,7 +248,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
             orc.follow()
 
         # The status for the first one is now out-of-tree ...
-        assert not op.exists(op.join(orc0.meta_directory, "status"))
+        assert not op.exists(op.join(orc0.meta_directory, "status.0"))
         # but we can still get it.
         assert orc0.status == "succeeded"
 
@@ -296,8 +296,8 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
         orc1 = do(js1)
 
         # Ran on top, so both exist in working tree.
-        assert op.exists(op.join(orc0.meta_directory, "status"))
-        assert op.exists(op.join(orc1.meta_directory, "status"))
+        assert op.exists(op.join(orc0.meta_directory, "status.0"))
+        assert op.exists(op.join(orc1.meta_directory, "status.0"))
 
         ref0 = "refs/reproman/{}".format(orc0.jobid)
         ref1 = "refs/reproman/{}".format(orc1.jobid)

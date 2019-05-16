@@ -6,9 +6,9 @@ Universe     = vanilla
 Executable   = {{ meta_directory }}/runscript
 environment  = ""
 
-Output  = {{ meta_directory }}/stdout
-Error   = {{ meta_directory }}/stderr
-Log     = {{ meta_directory }}/log
+Output  = {{ meta_directory }}/stdout.0
+Error   = {{ meta_directory }}/stderr.0
+Log     = {{ meta_directory }}/log.0
 
 
 {#
@@ -25,5 +25,5 @@ request_cpus = {{ num_processes }}
 {% endif %}
 
 getenv = True
-arguments = ""
+arguments = "0"
 queue

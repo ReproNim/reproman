@@ -221,6 +221,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         templ = Template(
             **dict(self.job_spec,
                    jobid=self.jobid,
+                   num_subjobs=1,
                    root_directory=self.root_directory,
                    working_directory=self.working_directory,
                    meta_directory=self.meta_directory,
@@ -253,7 +254,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def status(self):
         """Get information from job status file.
         """
-        status_file = op.join(self.meta_directory, "status")
+        status_file = op.join(self.meta_directory, "status.0")
         status = "unknown"
         if self.session.exists(status_file):
             status = self.session.read(status_file).strip()
@@ -430,14 +431,14 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
             gitignore,
             ("# Automatically created by ReproMan.\n"
              "# Do not change manually.\n"
-             "log\n"))
+             "log.*\n"))
 
         gitattrs = op.join(self.ds.path, ".reproman", "jobs", ".gitattributes")
         write_update(
             gitattrs,
             ("# Automatically created by ReproMan.\n"
              "# Do not change manually.\n"
-             "status annex.largefiles=nothing\n"
+             "status.[0-9]* annex.largefiles=nothing\n"
              "idmap annex.largefiles=nothing\n"))
 
         self.ds.add([gitignore, gitattrs],
@@ -542,7 +543,7 @@ class PrepareRemoteDataladMixin(object):
             status_from_ref = self._execute_in_wdir(
                 "git cat-file -p {}:{}"
                 .format(self.job_refname,
-                        op.relpath(op.join(self.meta_directory, "status"),
+                        op.relpath(op.join(self.meta_directory, "status.0"),
                                    self.working_directory)))
             status = status_from_ref.strip() or status
         return status
@@ -692,7 +693,7 @@ class FetchPlainMixin(object):
                 # Make sure directory has trailing slash so that get doesn't
                 # treat it as the file.
                 op.join(self.local_directory, ""))
-        for f in ["status", "stdout", "stderr"]:
+        for f in ["status.0", "stdout.0", "stderr.0"]:
             self.session.get(
                 op.join(self.meta_directory, f),
                 op.join(self.local_directory,
