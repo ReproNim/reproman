@@ -267,12 +267,40 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self.session.exists(
             op.join(self.root_directory, "completed", self.jobid))
 
+    @property
+    def failed_subjobs(self):
+        """List of failed subjobs (represented by index, starting with 0).
+        """
+        failed_dir = op.join(self.meta_directory, "failed")
+        try:
+            stdout, _ = self.session.execute_command(["ls", failed_dir])
+        except CommandError:
+            if self.session.exists(failed_dir):
+                # This shouldn't have failed.
+                raise OrchestratorError(CommandError)
+            return []
+        return list(map(int, stdout.strip().split()))
+
     @staticmethod
-    def _log_failed(jobid, metadir, status):
-        lgr.warning("Job status: %r. Check files in %s",
-                    status, metadir)
+    def _log_failed(jobid, metadir, failed):
+        failed = list(sorted(failed))
+        num_failed = len(failed)
+        lgr.warning("%d subjob%s failed. Check files in %s",
+                    num_failed,
+                    "" if num_failed == 1 else "s",
+                    metadir)
+
+        if num_failed == 1:
+            stderr_suffix = str(failed[0])
+        elif num_failed > 6:
+            # Arbitrary cut-off to avoid listing excessively long.
+            stderr_suffix = "*"
+        else:
+            stderr_suffix = "{{{}}}".format(
+                ",".join(str(i) for i in failed))
         lgr.info("%s stderr: %s",
-                 jobid, op.join(metadir, "stderr"))
+                 jobid,
+                 op.join(metadir, "stderr." + stderr_suffix))
 
     def log_failed(self, func=None):
         """Display a log message about failed status.
@@ -283,14 +311,14 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             If a failed status is detected, call this function with one
             argument, the local metadata directory.
         """
-        status = self.status
-        if status.startswith("failed"):
+        failed = self.failed_subjobs
+        if failed:
             local_metadir = op.join(
                 self.local_directory,
                 op.relpath(op.join(self.meta_directory),
                            self.working_directory),
                 "")
-            self._log_failed(self.jobid, local_metadir, status)
+            self._log_failed(self.jobid, local_metadir, failed)
             if func:
                 func(local_metadir)
 
@@ -443,6 +471,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
             ("# Automatically created by ReproMan.\n"
              "# Do not change manually.\n"
              "status.[0-9]* annex.largefiles=nothing\n"
+             "**/failed/* annex.largefiles=nothing\n"
              "idmap annex.largefiles=nothing\n"))
 
         self.ds.add([gitignore, gitattrs],
@@ -551,6 +580,31 @@ class PrepareRemoteDataladMixin(object):
                                    self.working_directory)))
             status = status_from_ref.strip() or status
         return status
+
+    @property
+    def failed_subjobs(self):
+        """Like Orchestrator.failed_subjobs, but inspect the job's git ref if needed.
+        """
+        failed = super(DataladOrchestrator, self).failed_subjobs
+        if not failed:
+            meta_tree = "{}:{}".format(
+                self.job_refname,
+                op.relpath(self.meta_directory, self.working_directory))
+            try:
+                failed_ref = self._execute_in_wdir(
+                    "git ls-tree {}".format(op.join(meta_tree, "failed")))
+            except OrchestratorError as exc:
+                # Most likely, there were no failed subjobs and the "failed"
+                # tree just doesn't exist. Let's see if we can find the meta
+                # directory, which should always be there.
+                try:
+                    self._execute_in_wdir("git ls-tree {}".format(meta_tree))
+                except OrchestratorError:
+                    # All right, something looks off.
+                    raise exc
+            else:
+                failed = list(map(int, failed_ref.strip().split())) or failed
+        return failed
 
     def _assert_clean_repo(self):
         if self._execute_in_wdir("git status --porcelain"):

@@ -207,11 +207,25 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
             assert open("out").read() == "content\nmore\n"
 
 
-def test_orc_log_failed():
+@pytest.mark.parametrize("failed",
+                         [[0],
+                          [0, 10],
+                          list(range(10))],
+                         # ATTN: The id function needs to return a string until
+                         # pytest v4.2.1 (specifically 4c7ddb8d9).
+                         ids=lambda x: str(len(x)))
+def test_orc_log_failed(failed):
+    nfailed = len(failed)
     with swallow_logs(new_level=logging.INFO) as log:
-        orcs.Orchestrator._log_failed("jid", "metadir", "failed")
-        assert "Job status: 'failed'" in log.out
+        orcs.Orchestrator._log_failed("jid", "metadir", failed)
+        assert "{} subjob".format(nfailed) in log.out
         assert "jid stderr:" in log.out
+        if nfailed > 6:
+            assert "stderr.*" in log.out
+        elif nfailed == 1:
+            assert "stderr.{}".format(failed[0]) in log.out
+        else:
+            assert "stderr.{" in log.out
 
 
 @pytest.mark.integration
@@ -227,7 +241,7 @@ def test_orc_datalad_run_failed(job_spec, dataset, shell):
         orc.follow()
         with swallow_logs(new_level=logging.INFO) as log:
             orc.fetch()
-            assert "Job status" in log.out
+            assert "1 subjob failed" in log.out
             assert "stderr:" in log.out
 
 

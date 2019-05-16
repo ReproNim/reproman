@@ -24,7 +24,8 @@ echo "[ReproMan] executing command within $PWD..."
 {% block command %}
 /bin/sh -c {{ shlex_quote(command_str) }} && \
     echo "succeeded" >"$metadir/status.$subjob" || \
-    echo "failed: $?" >"$metadir/status.$subjob"
+    (echo "failed: $?" >"$metadir/status.$subjob";
+     mkdir -p "$metadir/failed" && touch "$metadir/failed/$subjob")
 {% endblock %}
 
 
