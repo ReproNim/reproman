@@ -183,34 +183,6 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         self.session.put(tfh.name, target)
         os.unlink(tfh.name)
 
-    def _execute_in_wdir(self, command, err_msg=None):
-        """Helper to run command in remote working directory.
-
-        TODO: Adjust (or perhaps remove entirely) once
-        `SSHSession.execute_command` supports the `cwd` argument.
-
-        Parameters
-        ----------
-        command : str
-        err_msg : optional
-            Message to use if an OrchestratorError is raised.
-
-        Returns
-        -------
-        standard output
-
-        Raises
-        ------
-        OrchestratorError if command fails.
-        """
-        prefix = "cd '{}' && ".format(self.working_directory)
-        try:
-            out, _ = self.session.execute_command(prefix + command)
-        except CommandError as exc:
-            raise OrchestratorError(
-                str(exc) if err_msg is None else err_msg)
-        return out
-
     def submit(self):
         """Submit the job with `submitter`.
         """
@@ -408,22 +380,6 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         d["head"] = self.head
         return d
 
-    @property
-    def status(self):
-        """Like Orchestrator.status, but inspect the job's git ref if needed.
-        """
-        status = super(DataladOrchestrator, self).status
-        if status == "unknown":
-            # The local tree might be different because of another just. Check
-            # the ref for the status.
-            status_from_ref = self._execute_in_wdir(
-                "git cat-file -p {}:{}"
-                .format(self.job_refname,
-                        op.relpath(op.join(self.meta_directory, "status"),
-                                   self.working_directory)))
-            status = status_from_ref.strip() or status
-        return status
-
     def _configure_repo(self):
         gitignore = op.join(self.ds.path, ".reproman", "jobs", ".gitignore")
         write_update(
@@ -502,6 +458,50 @@ def _format_ssh_url(user, host, port, path):
 
 
 class PrepareRemoteDataladMixin(object):
+
+    def _execute_in_wdir(self, command, err_msg=None):
+        """Helper to run command in remote working directory.
+
+        TODO: Adjust (or perhaps remove entirely) once
+        `SSHSession.execute_command` supports the `cwd` argument.
+
+        Parameters
+        ----------
+        command : str
+        err_msg : optional
+            Message to use if an OrchestratorError is raised.
+
+        Returns
+        -------
+        standard output
+
+        Raises
+        ------
+        OrchestratorError if command fails.
+        """
+        prefix = "cd '{}' && ".format(self.working_directory)
+        try:
+            out, _ = self.session.execute_command(prefix + command)
+        except CommandError as exc:
+            raise OrchestratorError(
+                str(exc) if err_msg is None else err_msg)
+        return out
+
+    @property
+    def status(self):
+        """Like Orchestrator.status, but inspect the job's git ref if needed.
+        """
+        status = super(DataladOrchestrator, self).status
+        if status == "unknown":
+            # The local tree might be different because of another just. Check
+            # the ref for the status.
+            status_from_ref = self._execute_in_wdir(
+                "git cat-file -p {}:{}"
+                .format(self.job_refname,
+                        op.relpath(op.join(self.meta_directory, "status"),
+                                   self.working_directory)))
+            status = status_from_ref.strip() or status
+        return status
 
     def _assert_clean_repo(self):
         if self._execute_in_wdir("git status --porcelain"):
