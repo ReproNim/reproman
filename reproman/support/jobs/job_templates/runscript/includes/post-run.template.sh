@@ -1,7 +1,12 @@
 {# Inspired by and modified from dataladh-htcondor. #}
 
-prep_stamp="$metadir/pre-finished"
+oldest_stamp () {
+    find "$metadir" \
+         -regex '.*/pre-finished\.[0-9]+' -printf '@%T@\n' | \
+        sort | head -n1
+}
 
+prep_stamp=$(oldest_stamp)
 
 {#
   Hmm, hard to use placeholders because those are absolute paths, but we want
@@ -10,10 +15,11 @@ prep_stamp="$metadir/pre-finished"
 find ./.reproman \( -type f -o -type l \) | \
     grep $jobid  >"$metadir/togethome"
 
-if [ -f "$prep_stamp" ]; then
+if test -n "$prep_stamp"
+then
   find . \
      \( -type f -o -type l \) \
-    -newer "$prep_stamp" \
+    -newermt "$prep_stamp" \
     -not -wholename "./.reproman/*" \
     >>"$metadir/togethome"
 fi
