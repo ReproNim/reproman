@@ -212,6 +212,12 @@ def identify_distributions(files, session=None, tracer_classes=None):
             if files_to_trace:
                 remaining_files_to_trace = files_to_trace
                 nnewdists, nolddists = 0, 0
+                # TODO: note that here we start with the full list, but then
+                # do not shrink it (use remaining_files_to_trace) while looping
+                # The issue https://github.com/ReproNim/reproman/issues/417
+                # TODO:
+                #   refactor to return a list of dists, and a single remaining_files_to_trace
+                #   Closes #417 when done ;)
                 for dist, remaining_files_to_trace in tracer.identify_distributions(
                         files_to_trace):
                     old_dist = environment_spec.find(dist)

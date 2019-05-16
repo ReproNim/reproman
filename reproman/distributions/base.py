@@ -264,6 +264,10 @@ class SpecObject(object):
         # TEMP -- to decide what to do when subclass. For now take only
         #   exactly the same
         assert other.__class__ is self.__class__
+        # TODO: consider being able to add objects this class knows about.
+        #    e.g. Adding DebianPackage's to .packages, or DebianDistribution
+        #    to .distributions.  That might eliminate if/then/else logic in
+        #    retrace
         # go through attrs, and if the other one defines a single attr which
         # is not defined here -- blow
         # For the lists - add those which aren't found, and found should get
