@@ -1,4 +1,6 @@
 #!/bin/sh
+set -eu
+
 metadir={{ shlex_quote(meta_directory) }}
 "$metadir/runscript" 1>"$metadir/stdout" 2>"$metadir/stderr" &
 RUNSCRIPT_PID=$!
