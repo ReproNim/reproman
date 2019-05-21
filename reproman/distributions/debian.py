@@ -100,10 +100,20 @@ class DebianDistribution(Distribution):
     """
 
     apt_sources = TypedList(APTSource)
-    packages = TypedList(DEBPackage)
+    _packages = TypedList(DEBPackage)
     version = attrib()  # version as depicted by /etc/debian_version
 
     _collection_attribute = 'packages'
+
+
+    @property
+    def packages(self):
+        return self._packages
+
+
+    @packages.setter
+    def packages(self, value):
+        self._packages = value
 
 
     def initiate(self, session):
