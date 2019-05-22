@@ -207,6 +207,13 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
             assert open("out").read() == "content\nmore\n"
 
 
+def test_orc_log_failed():
+    with swallow_logs(new_level=logging.INFO) as log:
+        orcs.Orchestrator._log_failed("jid", "metadir", "failed")
+        assert "Job status: 'failed'" in log.out
+        assert "jid stderr:" in log.out
+
+
 @pytest.mark.integration
 def test_orc_datalad_run_failed(job_spec, dataset, shell):
     job_spec["command_str"] = "iwillfail"

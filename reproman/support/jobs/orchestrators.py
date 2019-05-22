@@ -267,6 +267,13 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self.session.exists(
             op.join(self.root_directory, "completed", self.jobid))
 
+    @staticmethod
+    def _log_failed(jobid, metadir, status):
+        lgr.warning("Job status: %r. Check files in %s",
+                    status, metadir)
+        lgr.info("%s stderr: %s",
+                 jobid, op.join(metadir, "stderr"))
+
     def log_failed(self, func=None):
         """Display a log message about failed status.
 
@@ -283,10 +290,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                 op.relpath(op.join(self.meta_directory),
                            self.working_directory),
                 "")
-            lgr.warning("Job status: %r. Check files in %s",
-                        status, local_metadir)
-            lgr.info("%s stderr: %s",
-                     self.jobid, op.join(local_metadir, "stderr"))
+            self._log_failed(self.jobid, local_metadir, status)
             if func:
                 func(local_metadir)
 
