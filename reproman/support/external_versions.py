@@ -49,6 +49,15 @@ def _get_annex_version():
     return _runner.run('git annex version --raw'.split())[0]
 
 
+def _get_ed_version():
+    """Return version of available Ed."""
+    # Example output:
+    #
+    # GNU Ed 1.10
+    # [...]
+    return _runner.run(["ed", "--version"])[0].split()[2]
+
+
 def _get_git_version():
     """Return version of available git"""
     return _runner.run('git version'.split())[0].split()[-1]
@@ -116,6 +125,7 @@ class ExternalVersions(object):
 
     CUSTOM = {
         'cmd:annex': _get_annex_version,
+        'cmd:ed': _get_ed_version,
         'cmd:git': _get_git_version,
         'cmd:singularity': _get_singularity_version,
         'cmd:system-ssh': _get_system_ssh_version,
