@@ -229,6 +229,21 @@ def test_orc_log_failed(failed):
 
 
 @pytest.mark.integration
+def test_orc_plain_failure(tmpdir, job_spec, shell):
+    job_spec["command_str"] = "iwillfail"
+    job_spec["inputs"] = []
+    local_dir = str(tmpdir)
+    with chpwd(local_dir):
+        orc = orcs.PlainOrchestrator(shell, submission_type="local",
+                                     job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+    for fname in "status", "stderr", "stdout":
+        assert op.exists(op.join(orc.meta_directory, fname + ".0"))
+
+
+@pytest.mark.integration
 def test_orc_datalad_run_failed(job_spec, dataset, shell):
     job_spec["command_str"] = "iwillfail"
     job_spec["inputs"] = []
