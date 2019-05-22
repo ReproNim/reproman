@@ -6,14 +6,11 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-import json
 import os
 from os.path import islink
 from os.path import join, isfile
 
 import logging
-
-import attr
 
 from reproman.distributions.debian import DebTracer
 from reproman.distributions.debian import DEBPackage
