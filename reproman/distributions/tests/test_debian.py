@@ -15,6 +15,7 @@ import logging
 from reproman.distributions.debian import DebTracer
 from reproman.distributions.debian import DEBPackage
 from reproman.distributions.debian import DebianDistribution
+from reproman.support.external_versions import external_versions
 
 import pytest
 
@@ -25,6 +26,8 @@ from reproman.tests.skip import mark
 
 
 @mark.skipif_no_apt_cache
+@pytest.mark.skipif("cmd:ed" not in external_versions,
+                    reason="Ed is not installed")
 def test_dpkg_manager_identify_packages():
     files = ["/bin/ed"]
     tracer = DebTracer()
