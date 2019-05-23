@@ -103,6 +103,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         else:
             self.jobid = "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                         str(uuid.uuid4())[:4])
+            self._prepare_spec()
 
         self.template = None
 
@@ -170,6 +171,24 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "submitter": self.submitter.name,
                    "submission_id": self.submitter.submission_id}
         return dict(to_dump, **(self.template.kwds if self.template else {}))
+
+    def _prepare_spec(self):
+        """Prepare the spec for the run.
+
+        At the moment, this means the "inputs" and "outputs" keys in `spec` are
+        replaced and the original are moved under the `*_unexpanded` key.
+        """
+        from reproman.support.globbedpaths import GlobbedPaths
+
+        spec = self.job_spec
+        for key in ["inputs", "outputs"]:
+            if key in spec:
+                spec["{}_unexpanded".format(key)] = spec[key]
+                gp = GlobbedPaths(spec[key])
+                spec["{}".format(key)] = gp.expand(dot=False)
+
+        # Note: This doesn't adjust the command. We currently don't support any
+        # datalad-run-like command formatting.
 
     @abc.abstractmethod
     def prepare_remote(self):
@@ -328,6 +347,8 @@ def _datalad_format_command(ds, spec):
     the original are moved under the `*_unexpanded` key.
     """
     from datalad.interface.run import format_command
+    # DataLad's GlobbedPaths _should_ be the same as ours, but let's use
+    # DataLad's to avoid potential discrepancies with datalad-run's behavior.
     from datalad.interface.run import GlobbedPaths
 
     fmt_kwds = {}
@@ -393,6 +414,12 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         d["dataset_id"] = self.ds.id
         d["head"] = self.head
         return d
+
+    def _prepare_spec(self):
+        # Disable. _datalad_format_command() and _datalad_format_command()
+        # handle this in __init__(). We can't just call those here because the
+        # self.ds wouldn't be defined yet.
+        pass
 
     def _configure_repo(self):
         gitignore = op.join(self.ds.path, ".reproman", "jobs", ".gitignore")
