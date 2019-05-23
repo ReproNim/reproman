@@ -12,7 +12,10 @@ from reproman.formats import Provenance
 import logging
 
 from reproman.utils import swallow_logs, swallow_outputs, make_tempfile
-from reproman.tests.utils import assert_in
+from reproman.tests.utils import (
+    assert_in,
+    COMMON_SYSTEM_PATH,
+)
 from reproman.tests.skip import mark
 
 from ..retrace import identify_distributions
@@ -46,7 +49,7 @@ def test_retrace_to_output_file(reprozip_spec2):
 def test_retrace_normalize_paths():
     # Retrace should normalize paths before passing them to tracers.
     with swallow_outputs() as cm:
-        main(["retrace", "/sbin/../sbin/iptables"])
+        main(["retrace", "/bin/.." + COMMON_SYSTEM_PATH])
         assert "name: debian" in cm.out
 
 

@@ -25,19 +25,23 @@ from unittest import mock
 
 from reproman.utils import swallow_logs
 from reproman.tests.skip import mark
+from reproman.tests.utils import (
+    COMMON_SYSTEM_PATH,
+    COMMON_SYSTEM_PACKAGE,
+)
 
 
 @mark.skipif_no_apt_cache
 def test_dpkg_manager_identify_packages():
-    files = ["/bin/ed"]
+    files = [COMMON_SYSTEM_PATH]
     tracer = DebTracer()
     (packages, unknown_files) = \
         tracer.identify_packages_from_files(files)
-    # Make sure that iptables was identified
-    assert (not unknown_files), "/bin/ed should be identified"
+    # Make sure that our common path was identified
+    assert (not unknown_files), "%s should be identified" % COMMON_SYSTEM_PATH
     assert len(packages) == 1
     pkg = packages[0]
-    assert pkg.name == 'ed'
+    assert pkg.name == COMMON_SYSTEM_PACKAGE
     # Make sure apt_sources are identified, but then we should ask the entire
     # distribution
     distributions = list(tracer.identify_distributions(files))

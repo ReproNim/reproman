@@ -21,6 +21,7 @@ from reproman.support.exceptions import CommandError
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
 from reproman.tests.utils import assert_is_subset_recur
+from reproman.tests.utils import COMMON_SYSTEM_PATH
 from reproman.tests.utils import create_tree
 from reproman.tests.utils import with_tree
 from reproman.tests.fixtures import git_repo_fixture, svn_repo_fixture
@@ -100,11 +101,11 @@ def test_git_repo(git_repo):
     tracer = VCSTracer()
 
     with chpwd(git_repo):
-        dists = list(tracer.identify_distributions(paths + ["/sbin/iptables"]))
+        dists = list(tracer.identify_distributions(paths + [COMMON_SYSTEM_PATH]))
         assert_distributions(
             dists,
             expected_length=1,
-            expected_unknown={"/sbin/iptables"},
+            expected_unknown={COMMON_SYSTEM_PATH},
             expected_subset={
                 "name": "git",
                 "packages": [{"files": [op.relpath(p) for p in paths],
