@@ -6,11 +6,14 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import attr
+
 from reproman.cmdline.main import main
 from reproman.formats import Provenance
 
 import logging
 
+from reproman.distributions import Distribution
 from reproman.utils import swallow_logs, swallow_outputs, make_tempfile
 from reproman.tests.utils import assert_in
 from reproman.tests.skip import mark
@@ -48,6 +51,20 @@ def test_retrace_normalize_paths():
     with swallow_outputs() as cm:
         main(["retrace", "/sbin/../sbin/iptables"])
         assert "name: debian" in cm.out
+
+
+@attr.s(cmp=False)
+class FakeDistribution(Distribution):
+    # Allow to compare by name
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.name == other
+        return super().__eq__(other)
+
+    def initiate(self):
+        pass
+    def install_packages(self):
+        pass
 
 
 def get_tracer_session(protocols):
@@ -95,12 +112,12 @@ def test_retrace_loop_over_tracers():
         [  # Tracers
             [  # Tracer passes
                 [  # what to yield
-                    ("Env1", {"thefile"})
+                    (FakeDistribution("Dist1"), {"thefile"})
                 ]
             ]
         ],
         files=["thefile"],
-        tenvs=['Env1'],
+        tenvs=['Dist1'],
         tfiles={"thefile"})
 
     # The 2nd tracer consumes everything
@@ -108,17 +125,17 @@ def test_retrace_loop_over_tracers():
         [  # Tracers
             [  # Tracer passes
                 [  # what to yield
-                    ("Env1", {"thefile"})
+                    (FakeDistribution("Dist1"), {"thefile"})
                 ],
             ],
             [  # Tracer passes
                 [  # what to yield
-                    ("Env2", set())
+                    (FakeDistribution("Dist2"), set())
                 ],
             ]
         ],
         files=["thefile"],
-        tenvs=['Env1', 'Env2'],
+        tenvs=['Dist1', 'Dist2'],
         tfiles=set())
 
     # The fancy multi-yield and producing stuff
@@ -126,17 +143,17 @@ def test_retrace_loop_over_tracers():
         [  # Tracers
             [  # Tracer passes
                 [  # what to yield
-                    ("Env1", {"file2", "file3"}),
+                    (FakeDistribution("Dist1"), {"file2", "file3"}),
                 ],
                 [
-                    ("Env3", {"file3"})  # consume file4
+                    (FakeDistribution("Dist3"), {"file3"})  # consume file4
                 ],
                 []  # finale
             ],
             [  # Tracer passes
                 [  # what to yield
-                    ("Env2", {"file3", "file4", "file5"}),
-                    ("Env2.1", {"file3", "file4"})
+                    (FakeDistribution("Dist2"), {"file3", "file4", "file5"}),
+                    (FakeDistribution("Dist2.1"), {"file3", "file4"})
                 ],
                 [
 
@@ -145,5 +162,5 @@ def test_retrace_loop_over_tracers():
             ]
         ],
         files=["file1", "file2"],
-        tenvs=['Env1', 'Env2', 'Env2.1', 'Env3'],
+        tenvs=['Dist1', 'Dist2', 'Dist2.1', 'Dist3'],
         tfiles={'file3'})
