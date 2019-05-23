@@ -223,9 +223,10 @@ class DockerSession(POSIXSession):
     container = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
-    def _execute_command(self, command, env=None, cwd=None):
-        command = self._prefix_command(command, env=env, cwd=cwd)
-
+    def _execute_command(self, command, env=None, cwd=None, with_shell=True):
+        command = self._prefix_command(utils.command_as_string(command),
+                                        env=env, cwd=cwd,
+                                        with_shell=with_shell)
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
         lgr.debug('Running command %r', command)

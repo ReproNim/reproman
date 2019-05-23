@@ -34,7 +34,7 @@ def test_dockercontainer_class():
 
     with patch('docker.Client') as client, \
         patch('dockerpty.start') as dockerpty, \
-        swallow_logs(new_level=logging.DEBUG) as log:
+            swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
             containers=lambda all: [
@@ -61,7 +61,7 @@ def test_dockercontainer_class():
             create_container=lambda name, image, stdin_open, tty, command: {
                 'Id': '18b31b30e3a5'
             },
-            exec_inspect=lambda id: { 'ExitCode': 0 },
+            exec_inspect=lambda id: {'ExitCode': 0},
             exec_start=lambda exec_id, stream: [
                 b'stdout line 1',
                 b'stdout line 2',
@@ -131,8 +131,8 @@ def test_dockercontainer_class():
         command = ['apt-get', 'install', 'xeyes']
         resource.add_command(command)
         resource.execute_command_buffer()
-        assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
-        assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
+        assert_in("Running command 'apt-get install bc'", log.lines)
+        assert_in("Running command 'apt-get install xeyes'", log.lines)
 
         # Test starting resource.
         resource.start()
@@ -143,7 +143,7 @@ def test_dockercontainer_class():
 
         # Test logging into the container.
         with resource.get_session(pty=True):
-            pass # we do nothing really
+            pass  # we do nothing really
         assert dockerpty.called
 
         # Test stopping resource.

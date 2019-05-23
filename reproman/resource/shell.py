@@ -44,7 +44,7 @@ class ShellSession(POSIXSession):
         self._runner = None
 
     @borrowdoc(Session)
-    def _execute_command(self, command, env=None, cwd=None):
+    def _execute_command(self, command, env=None, cwd=None, with_shell=False):
         # XXX should it be a generic behavior to auto-start?
         if self._runner is None:
             self.open()
@@ -92,6 +92,7 @@ class ShellSession(POSIXSession):
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         # put is the same as get for the shell resource
         self.get(src_path, dest_path, uid, gid)
+
 
 @attr.s
 class Shell(Resource):

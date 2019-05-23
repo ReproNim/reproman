@@ -176,15 +176,15 @@ class SSHSession(POSIXSession):
     connection = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
-    def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
+    def _execute_command(self, command, env=None, cwd=None, with_shell=False,
+                        handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
         from invoke.exceptions import UnexpectedExit
-        command = self._prefix_command(command, env=env, cwd=cwd,
-            with_shell=False)
-
+        command = self._prefix_command(command_as_string(command), env=env,
+                                        cwd=cwd, with_shell=with_shell)
         try:
-            result = self.connection.run(command_as_string(command), hide=True)
+            result = self.connection.run(command, hide=True)
         except UnexpectedExit as e:
             if 'permission denied' in e.result.stderr.lower() and handle_permission_denied:
                 # Issue warning once

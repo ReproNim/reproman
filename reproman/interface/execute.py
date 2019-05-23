@@ -222,7 +222,8 @@ class TracedCommand(CommandAdapter):
                 PATH="{}:$PATH".format(remote_tracer_dir),
                 REPROMAN_TRACER_DIR=remote_tracer_dir,
                 REPROMAN_EXTRA_TRACE_FILE=remote_extra_trace_path
-            )
+            ),
+            with_shell=True
         )
 
     def post_command(self):

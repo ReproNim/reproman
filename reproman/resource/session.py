@@ -22,7 +22,7 @@ from reproman.support.exceptions import SessionRuntimeError
 from reproman.cmd import Runner
 from reproman.dochelpers import exc_str, borrowdoc
 from reproman.support.exceptions import CommandError
-from reproman.utils import updated, command_as_string, to_unicode
+from reproman.utils import updated, to_unicode
 
 import logging
 lgr = logging.getLogger('reproman.session')
@@ -165,7 +165,7 @@ class Session(object):
     # TODO: move logic/handling of batched commands defined in
     # Resource  and probably env vars handling
 
-    def execute_command(self, command, env=None, cwd=None):
+    def execute_command(self, command, env=None, cwd=None, with_shell=False):
         """
         Execute the given command in the environment.
 
@@ -180,6 +180,8 @@ class Session(object):
             removed
         cwd : string, optional
             Path of directory in which to run the command
+        with_shell: boolean, optional
+            Wrap the command with "/bin/sh -c" if the command is a string
 
         Returns
         -------
@@ -194,10 +196,10 @@ class Session(object):
         return self._execute_command(
             command,
             cwd=cwd,
-            **run_kw
-        )  # , shell=True)
+            with_shell=with_shell,
+            **run_kw)
 
-    def _execute_command(self, command, env=None, cwd=None):
+    def _execute_command(self, command, env=None, cwd=None, with_shell=False):
         """
         Execute the given command in the environment.
 
@@ -212,6 +214,8 @@ class Session(object):
             removed
         cwd : string, optional
             Path of directory in which to run the command
+        with_shell: boolean, optional
+            Wrap the command with "/bin/sh -c" if the command is a string
 
         Returns
         -------
@@ -521,7 +525,7 @@ class POSIXSession(Session):
             output[split[0]] = split[1]
         return output
 
-    def _prefix_command(self, command, env=None, cwd=None, with_shell=True):
+    def _prefix_command(self, command, env=None, cwd=None, with_shell=False):
         """Wrap the command in a shell call with ENV vars and CWD prefixed
         statment to command. Will pass through the command unchanged if env
         and cwd are None
@@ -529,30 +533,39 @@ class POSIXSession(Session):
         Parameters
         ----------
         command : string or list
-            shell command to be run
+            Shell command to be run. No shell is used if command is a list
         env : dict
             ENV vars to prefix to command
         cwd : string
-            working directory to cd into before the command is executed
+            Working directory to cd into before the command is executed
         with_shell : boolean
-            if True, a "/bin/sh -c" call will wrap the cwd, env and command
+            if True and command is a string, a "/bin/sh -c" call will wrap the
+            cwd, env and command
 
         Returns
         -------
-        string
-            command with env and cwd settings prefixed
+        string or list
+            command with env, cwd, and/or with_shell settings prefixed
         """
-        prefix = ""
+        prefix = []
         if env:
-            prefix = " ".join(['export %s=%s &&' % k for k in env.items()])
+            prefix = ["export"]
+            prefix += ["{}={}".format(shlex_quote(k[0]), shlex_quote(k[1]))
+                        for k in env.items()]
+            prefix += ["&&"]
         if cwd:
-            prefix += " cd {} &&".format(cwd)
-        if env or cwd:
-            if with_shell:
-                command = "/bin/sh -c '{} {}'".format(prefix,
-                    command_as_string(command))
+            prefix += ["cd", cwd, "&&"]
+        if with_shell and isinstance(command, str):
+            if prefix:
+                cmd = "{} {}".format(" ".join(prefix), command)
             else:
-                command = ' '.join([prefix, command_as_string(command)])
+                cmd = "{}".format(command)
+            command = "/bin/sh -c '{}'".format(cmd)
+        elif prefix:
+            if isinstance(command, str):
+                command = " ".join(prefix) + " " + command
+            else:
+                command = prefix + command
         return command
 
     @borrowdoc(Session)
@@ -620,7 +633,8 @@ class POSIXSession(Session):
     def exists(self, path):
         """Return if file exists"""
         try:
-            out, err = self.execute_command(self.exists_command(path))
+            out, err = self.execute_command(self.exists_command(path),
+                                            with_shell=False)
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for file presence failed: %s", exc_str(exc))
             return False

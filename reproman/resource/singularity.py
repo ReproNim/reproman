@@ -167,12 +167,12 @@ class SingularitySession(POSIXSession):
     _runner = Runner()
 
     @borrowdoc(Session)
-    def _execute_command(self, command, env=None, cwd=None):
-        command = self._prefix_command(command, env=env, cwd=cwd)
+    def _execute_command(self, command, env=None, cwd=None, with_shell=True):
+        command = self._prefix_command(command_as_string(command), env=env,
+                                        cwd=cwd, with_shell=with_shell)
         lgr.debug('Running command %r', command)
         stdout, stderr = self._runner.run(
-            "singularity exec instance://{} {}".format(
-                self.name, command_as_string(command)),
+            "singularity exec instance://{} {}".format(self.name, command),
             expect_fail=True)
 
         return (stdout, stderr)
