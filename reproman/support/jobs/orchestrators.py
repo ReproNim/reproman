@@ -309,17 +309,20 @@ def _datalad_check_container(ds, spec):
     """
     container = spec.get("container")
     if container is not None:
+        try:
+            from datalad_container.find_container import find_container
+        except ImportError:
+            raise OrchestratorError(
+                "Specified container '{}' "
+                "but datalad-container extension is not installed"
+                .format(container))
+        try:
+            cinfo = find_container(ds, container)
+        except ValueError as exc:
+            raise OrchestratorError(exc)
 
-        def cfg_get(key):
-            full_key = "datalad.containers.{}.{}".format(container, key)
-            value = ds.config.get(full_key)
-            if value is None:
-                raise OrchestratorError(
-                    "No value configured for {}".format(full_key))
-            return value
-
-        cmdexec = cfg_get("cmdexec")
-        image = cfg_get("image")
+        cmdexec = cinfo["cmdexec"]
+        image = op.relpath(cinfo["path"], ds.path)
 
         command_str = spec["command_str"]
         spec["commmand_str_nocontainer"] = command_str
@@ -464,7 +467,8 @@ class PrepareRemotePlainMixin(object):
             return
 
         for i in inputs:
-            session.put(i, op.join(self.working_directory, op.basename(i)))
+            session.put(i, op.join(self.working_directory,
+                                   op.relpath(i, self.local_directory)))
 
 
 def _format_ssh_url(user, host, port, path):

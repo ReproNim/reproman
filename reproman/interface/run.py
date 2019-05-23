@@ -84,6 +84,10 @@ JOB_PARAMETERS = collections.OrderedDict(
         ("message",
          """Message to use when saving the run. The details depend on the orchestator,
          but in general this message will be used in the commit message."""),
+        ("container",
+         """Container to use for execution. This should match the name of a container
+         registered with the datalad-container extension. This option is valid
+         only for DataLad run orchestrators."""),
         # TODO: Add more information for the rest of these.
         ("memory, num_processes",
          """Supported by Condor and PBS submitters."""),
