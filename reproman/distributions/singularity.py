@@ -150,7 +150,6 @@ class SingularityTracer(DistributionTracer):
             except Exception as exc:
                 lgr.debug("Probably %s is not a Singularity image: %s",
                     file_path, exc_str(exc))
-                lgr.debug(exc)
                 remaining_files.add(file_path)
 
         if not images:
