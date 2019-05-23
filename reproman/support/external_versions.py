@@ -77,8 +77,11 @@ def _get_system_ssh_version():
 
 def _get_singularity_version():
     """Return version of available singularity."""
-    # example output: "2.6.1-dist"
-    return _runner.run(["singularity", "--version"])[0].split("-")[0]
+    # example output:
+    #  "singularity version 3.0.3+ds"
+    #  "2.6.1-dist"
+    out = _runner.run(["singularity", "--version"])[0]
+    return out.split(' ')[-1].split("-")[0].split("+")[0]
 
 
 def _get_svn_version():
