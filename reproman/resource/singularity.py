@@ -65,6 +65,16 @@ class Singularity(Resource):
             self.id = None
             self.status = None
 
+    def _run_instance_command(self, cmd, args=[], **kwargs):
+        """Singularity 3.x changed from "instance.cmd" to just "instance cmd"
+        This is a helper to centralize execution
+        """
+        cmd = ['instance.%s' % cmd] \
+            if external_versions['cmd:singularity'] < '3' \
+            else ['instance', cmd]
+        return self._runner.run(['singularity'] + cmd + args, **kwargs)
+
+
     def create(self):
         """
         Create a container instance.
@@ -81,8 +91,8 @@ class Singularity(Resource):
             # Start the container instance.
             # NOTE: Logging stdout and stderr hangs the run call, so we
             # disable the logging in the run call below.
-            self._runner.run(['singularity', 'instance.start', self.image,
-                self.name], log_stdout=False, log_stderr=False)
+            self._run_instance_command('start', [self.image, self.name],
+                log_stdout=False, log_stderr=False)
             info = self.get_instance_info()
 
         # Update status
@@ -102,7 +112,7 @@ class Singularity(Resource):
             return
 
         # Stop the container.
-        self._runner.run(['singularity', 'instance.stop', self.name])
+        self._run_instance_command('stop', [self.name])
 
         # Update status
         self.id = None
@@ -142,8 +152,7 @@ class Singularity(Resource):
         dict : instance info
         """
         try:
-            stdout, _ = self._runner.run(['singularity', 'instance.list'],
-                expect_fail=True)
+            stdout, _ = self._run_instance_command('list', expect_fail=True)
         except CommandError:
             return None
 
