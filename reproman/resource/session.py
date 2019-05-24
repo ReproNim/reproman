@@ -42,7 +42,7 @@ class Session(object):
         to make it available for sessions beyond the current one.
         """
         self._env = {}           # environment which would be in-effect only for this session
-        self._env_permanent = {} # environment variables which would be in-effect in future sessions if resource is persistent
+        self._env_permanent = {}  # environment variables which would be in-effect in future sessions if resource is persistent
 
     def __enter__(self):
         self.open()
@@ -766,10 +766,8 @@ def get_updated_env(env, update):
         if k not in env or not isinstance(update[k], str) or \
                 not isinstance(env[k], str):
             continue
-        token = "${}".format(k)
-        if token in update[k]:
-            update[k] = update[k].replace(token, env[k])
-
+        update[k] = re.sub(r"\${?" + k + r"}?(:|\s|$)", env[k] + r"\1",
+                            update[k])
     env_ = updated(env, update)
     # pop those explicitly set to None
     for e in list(env_):

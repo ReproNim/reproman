@@ -96,6 +96,10 @@ def test_get_updated_env():
     assert get_updated_env({'a': 1, 'b': 2}, {'a': None, 'b': 3}) == {'b': 3}
     assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:$a', 'b': 3}) \
         == {'a': '/bar:/foo', 'b': 3}
+    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:$ab', 'b': 3}) \
+        == {'a': '/bar:$ab', 'b': 3}
+    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:${a}:/blee', 'b': 3}) \
+        == {'a': '/bar:/foo:/blee', 'b': 3}
 
 
 def test_get_local_session():
