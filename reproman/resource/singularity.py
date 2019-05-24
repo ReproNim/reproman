@@ -7,9 +7,11 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Environment sub-class to provide management of a Singularity environment."""
 
-import attr
 import os
+import logging
 from shlex import quote as shlex_quote
+
+import attr
 
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
@@ -20,8 +22,7 @@ from .base import Resource
 from ..utils import attrib
 from ..utils import command_as_string
 
-import logging
-lgr = logging.getLogger('reproman.resource.singularity')
+lgr = logging.getLogger('reproman.resource.singularity')  # pylint: disable=C0103
 
 
 @attr.s
@@ -58,12 +59,21 @@ class Singularity(Resource):
             if not self.name:
                 self.name = info['name']
             if not self.id:
-                self.id = "{name}-{pid}".format(**info)
+                self.id = "{name}-{pid}".format(**info)  # pylint: disable=C0103
             self.image = info['image']
             self.status = 'running'
         else:
             self.id = None
             self.status = None
+
+    def _run_instance_command(self, cmd, args=None, **kwargs):
+        """Singularity 3.x changed from "instance.cmd" to just "instance cmd"
+        This is a helper to centralize execution
+        """
+        cmd = ['instance.%s' % cmd] \
+            if external_versions['cmd:singularity'] < '3' \
+            else ['instance', cmd]
+        return self._runner.run(['singularity'] + cmd + (args or []), **kwargs)
 
     def create(self):
         """
@@ -76,13 +86,15 @@ class Singularity(Resource):
         # Check to see if the container is already running.
         info = self.get_instance_info()
         if info:
-            lgr.info('Resource {} already exists.'.format(self.name))
+            lgr.info("Resource '%s' already exists.", self.name)
         else:
             # Start the container instance.
             # NOTE: Logging stdout and stderr hangs the run call, so we
             # disable the logging in the run call below.
-            self._runner.run(['singularity', 'instance.start', self.image,
-                self.name], log_stdout=False, log_stderr=False)
+            self._run_instance_command(
+                'start', [self.image, self.name],
+                log_stdout=False, log_stderr=False
+            )
             info = self.get_instance_info()
 
         # Update status
@@ -102,7 +114,7 @@ class Singularity(Resource):
             return
 
         # Stop the container.
-        self._runner.run(['singularity', 'instance.stop', self.name])
+        self._run_instance_command('stop', [self.name])
 
         # Update status
         self.id = None
@@ -139,11 +151,11 @@ class Singularity(Resource):
 
         Returns
         -------
-        dict : instance info
+        None or dict
+          instance info
         """
         try:
-            stdout, _ = self._runner.run(['singularity', 'instance.list'],
-                expect_fail=True)
+            stdout, _ = self._run_instance_command('list', expect_fail=True)
         except CommandError:
             return None
 
@@ -159,10 +171,13 @@ class Singularity(Resource):
                     'pid': items[1],   # daemon process id
                     'image': items[2]  # container image file
                 }
+        return None
 
 
 @attr.s
 class SingularitySession(POSIXSession):
+    """Non-interactive Singularity session"""
+
     name = attrib(default=attr.NOTHING)
     _runner = Runner()
 
