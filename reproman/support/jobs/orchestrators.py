@@ -337,6 +337,28 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                 "Post-processing failed for {} [status: {}] ({})"
                 .format(self.jobid, self.status, self.working_directory))
 
+    def _get_io_set(self, which):
+        spec = self.job_spec
+        return {fname for fname in spec[which]}
+
+    def get_inputs(self):
+        """Return input files.
+
+        Returns
+        -------
+        Set of str
+        """
+        return self._get_io_set("inputs")
+
+    def get_outputs(self):
+        """Return output files.
+
+        Returns
+        -------
+        Set of str
+        """
+        return self._get_io_set("outputs")
+
     @abc.abstractmethod
     def fetch(self):
         """Fetch the submission result.
@@ -501,11 +523,7 @@ class PrepareRemotePlainMixin(object):
         if not session.exists(self.root_directory):
             session.mkdir(self.root_directory, parents=True)
 
-        inputs = self.job_spec.get("inputs")
-        if not inputs:
-            return
-
-        for i in inputs:
+        for i in self.get_inputs():
             session.put(i, op.join(self.working_directory,
                                    op.relpath(i, self.local_directory)))
 
@@ -648,7 +666,7 @@ class PrepareRemoteDataladMixin(object):
         resource = self.resource
         session = self.session
 
-        inputs = self.job_spec.get("inputs")
+        inputs = list(self.get_inputs())
         if isinstance(session, SSHSession):
             if resource.key_filename:
                 dl_version = external_versions["datalad"]
@@ -749,8 +767,7 @@ class FetchPlainMixin(object):
     def fetch(self):
         """Get outputs from remote.
         """
-        outputs = self.job_spec.get("outputs", [])
-        for o in outputs:
+        for o in self.get_outputs():
             self.session.get(
                 o if op.isabs(o) else op.join(self.working_directory, o),
                 # Make sure directory has trailing slash so that get doesn't
@@ -830,7 +847,7 @@ class FetchDataladPairMixin(object):
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
             with head_at(self.ds, ref):
-                outputs = self.job_spec.get("outputs")
+                outputs = list(self.get_outputs())
                 if outputs:
                     self.ds.get(path=outputs)
             if not self.ds.repo.is_ancestor(ref, "HEAD"):
