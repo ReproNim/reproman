@@ -21,6 +21,7 @@ from reproman.utils import on_linux
 from reproman.utils import swallow_logs
 from reproman.tests.utils import create_pymodule
 from reproman.tests.utils import assert_is_subset_recur
+from reproman.tests.utils import COMMON_SYSTEM_PATH
 from reproman.tests.skip import skipif
 from reproman.distributions.venv import VenvDistribution
 from reproman.distributions.venv import VenvEnvironment
@@ -77,7 +78,7 @@ def test_venv_identify_distributions(venv_test_dir):
             # or in a directory that is a link to the outside world.
             os.path.join("venv1", libpaths["machinery.py"])
         ]
-        path_args.append("/sbin/iptables")
+        path_args.append(COMMON_SYSTEM_PATH)
 
         tracer = VenvTracer()
 
@@ -89,7 +90,7 @@ def test_venv_identify_distributions(venv_test_dir):
         # another path within venv0, but they do include the link to the system
         # abc.py.
         assert unknown_files == {
-            "/sbin/iptables",
+            COMMON_SYSTEM_PATH,
             op.realpath(os.path.join("venv1", libpaths["abc.py"])),
             op.realpath(os.path.join("venv1", libpaths["machinery.py"])),
             # The editable package was added by VenvTracer as an unknown file.

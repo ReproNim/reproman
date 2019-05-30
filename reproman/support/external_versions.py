@@ -77,8 +77,11 @@ def _get_system_ssh_version():
 
 def _get_singularity_version():
     """Return version of available singularity."""
-    # example output: "2.6.1-dist"
-    return _runner.run(["singularity", "--version"])[0].split("-")[0]
+    # example output:
+    #  "singularity version 3.0.3+ds"
+    #  "2.6.1-dist"
+    out = _runner.run(["singularity", "--version"])[0]
+    return out.split(' ')[-1].split("-")[0].split("+")[0]
 
 
 def _get_svn_version():
@@ -96,12 +99,6 @@ def _get_condor_version():
     #
     # $CondorVersion: 8.6.8 Nov 30 2017 BuildID: [...]
     return _runner.run(['condor_version'])[0].split()[1]
-
-
-def _get_datalad_version():
-    """Return version of available datalad"""
-    # Example output: datalad 0.11.3.dev17
-    return _runner.run(['datalad', '--version'])[0].split()[1]
 
 
 class ExternalVersions(object):
@@ -127,7 +124,6 @@ class ExternalVersions(object):
         'cmd:system-ssh': _get_system_ssh_version,
         'cmd:svn': _get_svn_version,
         'cmd:condor': _get_condor_version,
-        'cmd:datalad': _get_datalad_version,
         'cmd:apt-cache': _get_apt_cache_version
     }
     INTERESTING = (

@@ -53,7 +53,7 @@ def test_singularity_resource_class():
         assert resource_duplicate.id.startswith('foo-')
         assert resource_duplicate.status == 'running'
         list(resource_duplicate.create())
-        assert_in('Resource foo already exists.', log.lines)
+        assert_in("Resource 'foo' already exists.", log.lines)
 
         # Test retrieving instance info.
         info = resource.get_instance_info()
