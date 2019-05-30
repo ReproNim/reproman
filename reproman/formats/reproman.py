@@ -12,6 +12,7 @@ Plugin support for provenance YAML files following ReproMan spec.
 from __future__ import absolute_import
 
 import collections
+import copy
 import datetime
 import logging
 from collections import OrderedDict
@@ -25,7 +26,10 @@ from reproman.distributions.base import SpecObject
 from reproman.utils import instantiate_attr_object
 from .base import Provenance
 from .utils import write_config
-from .. import utils
+from .. import (
+    cfg,
+    utils,
+)
 from ..distributions import Distribution
 from ..dochelpers import exc_str
 
@@ -283,9 +287,40 @@ class RepromanProvenance(Provenance):
 
         out = OrderedDict()
         out['version'] = __version__
+        if cfg.getboolean('retrace', 'only_with_files', False):
+            spec = copy.deepcopy(spec)
+            filter_spec(spec, packages_only_with_files=True)
         out.update(spec_to_dict(spec))
         write_config(output, out)
         return out
+
+
+def filter_spec(spec, packages_only_with_files=False):
+    """Filter out spec
+
+    Parameters
+    ----------
+    packages_only_with_files: bool, optional
+      Will return a spec with packages which have no files associated removed
+    """
+    if not hasattr(spec, '__attrs_attrs__'):
+        return  # nothing for us to do with this one
+    spec_attrs = spec.__attrs_attrs__  # as is -- list of them
+    for attr in spec_attrs:
+        value_in = getattr(spec, attr.name, None)
+        if attr.name.lower() == 'packages' and value_in and packages_only_with_files:
+            # go through them
+            assert isinstance(value_in, list)
+            value_out = [
+                p for p in value_in
+                if getattr(p, 'files', None)
+            ]
+            setattr(spec, attr.name, value_out)
+        # we might need to recurse if it is a list
+        if isinstance(value_in, (list, dict, tuple)):
+            # might be specs too, recurse
+            for v in (value_in.values() if isinstance(value_in, dict) else value_in):
+                filter_spec(v, packages_only_with_files=packages_only_with_files)
 
 
 # TODO: RF into SpecObject._as_dict()
