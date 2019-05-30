@@ -80,7 +80,7 @@ def get_tracer_session(protocols):
         def isdir(self, _):
             return False  # TODO: make it parametric
 
-    tracer_classes = []
+    tracer_classes = {}
     for itracer, protocol in enumerate(protocols):
         # Test the loop logic
         class FakeTracer(object):
@@ -97,7 +97,7 @@ def get_tracer_session(protocols):
                 for item in self._current_protocol:
                     yield item
         FakeTracer.__name__ = "FakeTracer%d" % itracer
-        tracer_classes.append(FakeTracer)
+        tracer_classes['fake'] = FakeTracer
     return tracer_classes, FakeSession()
 
 

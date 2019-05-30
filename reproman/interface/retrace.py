@@ -11,6 +11,8 @@
 
 from __future__ import unicode_literals
 
+# Since 3.7 shouldn't be needed
+from collections import OrderedDict
 from os.path import normpath
 import sys
 import time
@@ -75,13 +77,22 @@ class Retrace(Interface):
             instance can be passed as the value for `resref`.  PY]""",
             constraints=EnsureStr() | EnsureNone()),
         resref_type=resref_type_opt,
+        tracers=Parameter(
+            args=("-t", "--tracer"),
+            dest="tracers",
+            doc="Tracer(s) to use. Could be specified multiple times. "
+                "They will be used in the order specified.",
+            metavar='TRACER',
+            action='append',
+            constraints=EnsureStr() | EnsureNone(),
+        ),
     )
 
     # TODO: add a session/resource so we could trace within
     # arbitrary sessions
     @staticmethod
     def __call__(path=None, spec=None, output_file=None,
-                 resref=None, resref_type="auto"):
+                 resref=None, resref_type="auto", tracers=None):
         # heavy import -- should be delayed until actually used
 
         if not (spec or path):
@@ -119,9 +130,24 @@ class Retrace(Interface):
         #       Generalize
         # TODO: RF so that only the above portion is reprozip specific.
         # If we are to reuse their layout largely -- the rest should stay as is
+        if tracers:
+            # specific ones asked for
+            all_tracer_classes = get_tracer_classes()
+
+            tracer_classes = OrderedDict()
+            for t in tracers:
+                if t not in all_tracer_classes:
+                    raise ValueError(
+                        "Do not know tracer type '%s'. Known are %s"
+                        % (t, ', '.join(all_tracer_classes)))
+                tracer_classes[t] = all_tracer_classes[t]
+        else:
+            tracer_classes = None
+
         (distributions, files) = identify_distributions(
             paths,
-            session=session
+            session=session,
+            tracer_classes=tracer_classes,
         )
         from reproman.distributions.base import EnvironmentSpec
         spec = EnvironmentSpec(
@@ -148,6 +174,8 @@ def identify_distributions(files, session=None, tracer_classes=None):
     ----------
     files : iterable
       Files to consider
+    tracer_classes: dict, optional
+      a dict with tracers (name: class)
 
     Returns
     -------
@@ -190,7 +218,7 @@ def identify_distributions(files, session=None, tracer_classes=None):
                 % max_niter)
             break
 
-        for Tracer in tracer_classes:
+        for Tracer in tracer_classes.values():
             lgr.debug("Tracing using %s", Tracer.__name__)
             # TODO: memoize across all loops
             # Identify directories from the files_to_consider
@@ -252,7 +280,7 @@ def identify_distributions(files, session=None, tracer_classes=None):
 
 
 def get_tracer_classes():
-    """A helper which returns a list of all available Tracers
+    """A helper which returns a dict (name: class) of all available Tracers
 
     The order should not but does matter and ATM is magically provided
     """
@@ -264,6 +292,12 @@ def get_tracer_classes():
     from reproman.distributions.vcs import VCSTracer
     from reproman.distributions.docker import DockerTracer
     from reproman.distributions.singularity import SingularityTracer
-    Tracers = [DebTracer, RPMTracer, CondaTracer, VenvTracer, VCSTracer,
-        DockerTracer, SingularityTracer]
-    return Tracers
+    tracers = OrderedDict()
+    tracers['deb'] = DebTracer
+    tracers['rpm'] = RPMTracer
+    tracers['conda'] = CondaTracer
+    tracers['venv'] = VenvTracer
+    tracers['vcs'] = VCSTracer
+    tracers['docker'] = DockerTracer
+    tracers['singularity'] = SingularityTracer
+    return tracers
