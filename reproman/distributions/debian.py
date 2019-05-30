@@ -52,7 +52,7 @@ from ..support.exceptions import CommandError
 # TODO: flyweight/singleton ?
 # To make them hashable we need to freeze them... not sure if we are ready:
 #@attr.s(cmp=True, hash=True, frozen=True)
-@attr.s(cmp=True)
+@attr.s
 class APTSource(SpecObject):
     """APT origin information
     """
@@ -69,7 +69,7 @@ class APTSource(SpecObject):
 _register_with_representer(APTSource)
 
 
-@attr.s(slots=True, frozen=True, cmp=False, hash=True)
+@attr.s(slots=True, frozen=True, hash=True)
 class DEBPackage(Package):
     """Debian package information"""
     name = attrib(default=attr.NOTHING)
