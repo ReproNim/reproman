@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
+from reproman.tests.skip import Mark
 from reproman.tests.skip import mark
 from reproman.tests.skip import skipif
 
@@ -47,3 +48,18 @@ def test_skipif_unknown_attribute():
 def test_mark_skipif_unknown_attribute():
     with pytest.raises(AttributeError):
         mark.skipif_youdontknowme
+
+
+def test_other_attribute_error():
+    # If a condition function raises an AttributeError, Mark doesn't mistake it
+    # for an unknown condition function.
+
+    def no_confusion():
+        raise AttributeError("don't get confused")
+
+    with patch("reproman.tests.skip.Namespace.fns",
+               {"no_confusion": no_confusion}):
+        with pytest.raises(AttributeError) as exc:
+            m = Mark()
+            m.skipif_no_confusion
+        assert "don't get confused" in str(exc)
