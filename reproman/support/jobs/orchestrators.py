@@ -339,7 +339,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
     def _get_io_set(self, which):
         spec = self.job_spec
-        return {fname for fname in spec[which]}
+        return {fname for fname in spec.get(which, [])}
 
     def get_inputs(self):
         """Return input files.
@@ -348,7 +348,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         -------
         Set of str
         """
-        return self._get_io_set("inputs")
+        return self._get_io_set("inputs").union(
+            self._get_io_set("extra_inputs"))
 
     def get_outputs(self):
         """Return output files.
@@ -377,13 +378,8 @@ def _datalad_check_container(ds, spec):
     """
     container = spec.get("container")
     if container is not None:
-        try:
-            from datalad_container.find_container import find_container
-        except ImportError:
-            raise OrchestratorError(
-                "Specified container '{}' "
-                "but datalad-container extension is not installed"
-                .format(container))
+        external_versions.check("datalad_container", min_version="0.4.0")
+        from datalad_container.find_container import find_container
         try:
             cinfo = find_container(ds, container)
         except ValueError as exc:
@@ -395,12 +391,7 @@ def _datalad_check_container(ds, spec):
         command_str = spec["command_str"]
         spec["commmand_str_nocontainer"] = command_str
         spec["command_str"] = cmdexec.format(img=image, cmd=command_str)
-
-        # TODO: When datalad-container starts passing the image as
-        # extra_inputs, we should handle that here (and in fetch below).
-        inputs = spec.get("inputs", [])
-        if image not in inputs:
-            spec["inputs"] = inputs + [image]
+        spec["extra_inputs"] = [image]
 
 
 def _datalad_format_command(ds, spec):
@@ -898,6 +889,7 @@ class FetchDataladRunMixin(object):
                 lgr.info("Creating run commit in %s", self.ds.path)
                 for res in run_command(
                         inputs=self.job_spec.get("inputs_unexpanded"),
+                        extra_inputs=self.job_spec.get("extra_inputs"),
                         outputs=self.job_spec.get("outputs_unexpanded"),
                         inject=True,
                         extra_info={"reproman_jobid": self.jobid},
