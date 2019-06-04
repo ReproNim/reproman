@@ -643,6 +643,7 @@ class PrepareRemoteDataladMixin(object):
             self._checkout_target()
 
             if inputs:
+                lgr.info("Making inputs available")
                 try:
                     # TODO: Whether we try this `get` should be configurable.
                     self._execute_in_wdir("datalad get {}".format(
