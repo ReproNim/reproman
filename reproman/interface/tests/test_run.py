@@ -13,6 +13,7 @@ import logging
 from unittest.mock import patch
 import os
 import os.path as op
+import time
 
 import pytest
 
@@ -27,6 +28,7 @@ from reproman.support.exceptions import ResourceNotFoundError
 from reproman.tests import fixtures
 from reproman.tests.utils import create_tree
 
+lgr = logging.getLogger("reproman.interface.tests.test_run")
 
 # Tests that do not require a resource, registry, or orchestrator.
 
@@ -156,6 +158,27 @@ def test_run_resource_specification(context):
     assert "fromcli" in str(exc)
 
 
+def try_fetch(fetch_fn, ntimes=5):
+    """Helper to test asynchronous fetch.
+    """
+    def try_():
+        with swallow_logs(new_level=logging.INFO) as log:
+            fetch_fn()
+            return "Not fetching incomplete job" not in log.out
+
+    for i in range(1, ntimes + 1):
+        succeeded = try_()
+        if succeeded:
+            break
+        else:
+            sleep_for = (2 ** i) / 2
+            lgr.info("Job is incomplete. Sleeping for %s seconds",
+                     sleep_for)
+            time.sleep(sleep_for)
+    else:
+        raise RuntimeError("All fetch attempts failed")
+
+
 def test_run_and_fetch(context):
     path = context["directory"]
     run = context["run_fn"]
@@ -170,15 +193,12 @@ def test_run_and_fetch(context):
 
     run(job_specs=["js0.yaml"])
 
-    with swallow_logs(new_level=logging.INFO) as log:
-        with swallow_outputs() as output:
-            jobs(queries=[], status=True)
-            assert "myshell" in output.out
-            assert len(registry.find_job_files()) == 1
-            jobs(queries=[], action="fetch", all_=True)
-            assert len(registry.find_job_files()) == 0
-            jobs(queries=[], status=True)
-            assert "No jobs" in log.out
+    with swallow_outputs() as output:
+        jobs(queries=[], status=True)
+        assert "myshell" in output.out
+        assert len(registry.find_job_files()) == 1
+        try_fetch(lambda: jobs(queries=[], action="fetch", all_=True))
+        assert len(registry.find_job_files()) == 0
 
     assert op.exists(op.join(path, "ok"))
 
@@ -212,7 +232,7 @@ def test_jobs_auto_fetch_with_query(context):
     assert len(jobfiles) == 1
     jobid = list(jobfiles.keys())[0]
     with swallow_outputs():
-        jobs(queries=[jobid[3:]])
+        try_fetch(lambda: jobs(queries=[jobid[3:]]))
     assert len(registry.find_job_files()) == 0
     assert op.exists(op.join(path, "ok"))
 
