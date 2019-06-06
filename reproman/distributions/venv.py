@@ -44,6 +44,9 @@ class VenvPackage(Package):
 class VenvEnvironment(SpecObject):
     path = attrib()
     python_version = attrib()
+    system_site_packages = attrib(
+        default=False,
+        doc="Are any non-local packages present in the environment?")
     packages = TypedList(VenvPackage)
 
 
@@ -181,9 +184,11 @@ class VenvTracer(DistributionTracer):
             found_package_count += len(packages)
 
             venvs.append(
-                VenvEnvironment(path=venv_path,
-                                python_version=self._python_version(venv_path),
-                                packages=packages))
+                VenvEnvironment(
+                    path=venv_path,
+                    python_version=self._python_version(venv_path),
+                    system_site_packages=any(not p.local for p in packages),
+                    packages=packages))
 
         if venvs:
             yield (VenvDistribution(name="venv",

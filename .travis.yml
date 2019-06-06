@@ -21,6 +21,11 @@ matrix:
     env:
     - REPROMAN_TESTS_SSH=1
     - REPROMAN_TESTS_DEPS=core
+    - REPROMAN_TESTS_ASSUME_SSP=1
+    # Set this to test tracing virtual environments created with
+    # --system-site-packages.
+    virtualenv:
+      system_site_packages: true
   - python: 3.5
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
