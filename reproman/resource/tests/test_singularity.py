@@ -49,44 +49,49 @@ def test_singularity_resource_class(tmpdir):
         assert resource.id is None
         assert resource.status is None
         list(resource.create())
-        assert resource.id.startswith(name + "-")
-        assert resource.status == 'running'
+        to_delete = [resource]
+        try:
+            assert resource.id.startswith(name + "-")
+            assert resource.status == 'running'
 
-        # Test trying to create an already running instance.
-        resource_duplicate = Singularity(name=name, image=image)
-        resource_duplicate.connect()
-        assert resource_duplicate.id.startswith(name + "-")
-        assert resource_duplicate.status == 'running'
-        list(resource_duplicate.create())
-        assert "Resource '{}' already exists".format(name) in log.out
+            # Test trying to create an already running instance.
+            resource_duplicate = Singularity(name=name, image=image)
+            resource_duplicate.connect()
+            assert resource_duplicate.id.startswith(name + "-")
+            assert resource_duplicate.status == 'running'
+            list(resource_duplicate.create())
+            assert "Resource '{}' already exists".format(name) in log.out
 
-        # But using a different name with the same image would work.
-        resource_nondup = Singularity(name=name + "_nondup", image=image)
-        resource_nondup.connect()
-        resource_nondup.name = name + "_nondup"
-        resource_nondup.delete()
+            # But using a different name with the same image would work.
+            resource_nondup = Singularity(name=name + "_nondup", image=image)
+            resource_nondup.connect()
+            resource_nondup.name = name + "_nondup"
+            to_delete.append(resource_nondup)
 
-        # Test retrieving instance info.
-        info = resource.get_instance_info()
-        assert info['name'] == name
-        assert re.match(r'^\d+$', info['pid'])
+            # Test retrieving instance info.
+            info = resource.get_instance_info()
+            assert info['name'] == name
+            assert re.match(r'^\d+$', info['pid'])
 
-        info["image"] = image
+            info["image"] = image
 
-        # Test starting an instance.
-        with pytest.raises(NotImplementedError):
-            resource.start()
+            # Test starting an instance.
+            with pytest.raises(NotImplementedError):
+                resource.start()
 
-        # Test stopping an instance.
-        with pytest.raises(NotImplementedError):
-            resource.stop()
+            # Test stopping an instance.
+            with pytest.raises(NotImplementedError):
+                resource.stop()
 
-        # Test getting a resource session.
-        session = resource.get_session()
-        assert isinstance(session, SingularitySession)
+            # Test getting a resource session.
+            session = resource.get_session()
+            assert isinstance(session, SingularitySession)
+        finally:
+            # Test deleting an instance, but do it here to try to
+            # unregister the test instance even if a check above fails.
+            for res in to_delete:
+                res.delete()
 
-        # Test deleting an instance.
-        resource.delete()
         assert resource.id is None
         assert resource.status is None
 
