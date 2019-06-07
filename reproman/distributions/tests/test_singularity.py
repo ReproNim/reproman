@@ -26,8 +26,8 @@ def test_singularity_trace(tmpdir):
     tmpdir = str(tmpdir)
     # Download and set up singularity image file
     runner = Runner(cwd=tmpdir)
-    expected_md5sum = "ed9755a0871f04db3e14971bec56a33f"
-    location = 'vsoch/hello-world@' + expected_md5sum
+    expected_md5sum = "96563a1ee2a3d9dbd082efb8d263fc09"
+    location = "singularityhub/busybox@{}" + expected_md5sum
     runner.run(['singularity', 'pull', '--name', 'img', 'shub://' + location])
 
     # Test tracer class
@@ -39,11 +39,11 @@ def test_singularity_trace(tmpdir):
         img_info = dist.images[0]
         assert img_info.md5 == expected_md5sum
         assert img_info.bootstrap == 'docker'
-        assert img_info.maintainer == 'vanessasaur'
+        assert img_info.maintainer is None
         assert img_info.deffile == 'Singularity'
         assert img_info.schema_version == '1.0'
-        assert img_info.build_date == '2017-10-15T12:52:56+00:00'
-        assert img_info.build_size == '333MB'
-        assert img_info.singularity_version == '2.4-feature-squashbuild-secbuild.g780c84d'
-        assert img_info.base_image == 'ubuntu:14.04'
+        assert img_info.build_date == '2017-10-18T16:52:17+00:00'
+        assert img_info.build_size == '180MB'
+        assert img_info.singularity_version == '2.4-feature-squashbuild-secbuild.g217367c'
+        assert img_info.base_image == "busybox"
         assert 'non-existent-image' in remaining_files
