@@ -157,7 +157,7 @@ class Singularity(Resource):
         # The output of instance.list is a table with columns:
         #   DAEMON NAME, PID, and CONTAINER IMAGE
         # Daemon names are unique on each server.
-        for row in stdout.splitlines()[1:]:
+        for row in stdout.strip().splitlines()[1:]:
             items = row.split()
             if self.name == items[0] or self.id == "{0}-{1}".format(*items):
                 return {

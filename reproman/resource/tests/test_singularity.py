@@ -57,6 +57,12 @@ def test_singularity_resource_class(tmpdir):
         list(resource_duplicate.create())
         assert_in("Resource 'foo' already exists.", log.lines)
 
+        # But using a different name with the same image would work.
+        resource_nondup = Singularity(name="foo_nondup", image=image)
+        resource_nondup.connect()
+        resource_nondup.name = "foo_nondup"
+        resource_nondup.delete()
+
         # Test retrieving instance info.
         info = resource.get_instance_info()
         assert info['name'] == 'foo'
