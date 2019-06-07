@@ -29,7 +29,7 @@ def test_singularity_trace():
     # Test tracer class
     tracer = SingularityTracer()
 
-    files = [image_file, 'non-existant-image']
+    files = [image_file, 'non-existent-image']
     dist, remaining_files = next(tracer.identify_distributions(files))
 
     assert dist.images[0].md5 == 'ed9755a0871f04db3e14971bec56a33f'
@@ -41,7 +41,7 @@ def test_singularity_trace():
     assert dist.images[0].build_size == '333MB'
     assert dist.images[0].singularity_version == '2.4-feature-squashbuild-secbuild.g780c84d'
     assert dist.images[0].base_image == 'ubuntu:14.04'
-    assert 'non-existant-image' in remaining_files
+    assert 'non-existent-image' in remaining_files
 
     # Clean up test files
     os.remove(image_file)
