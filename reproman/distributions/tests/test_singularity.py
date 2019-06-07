@@ -26,7 +26,8 @@ def test_singularity_trace(tmpdir):
     tmpdir = str(tmpdir)
     # Download and set up singularity image file
     runner = Runner(cwd=tmpdir)
-    location = 'vsoch/hello-world@42e1f04ed80217895f8c960bdde6bef4d34fab59'
+    expected_md5sum = "ed9755a0871f04db3e14971bec56a33f"
+    location = 'vsoch/hello-world@' + expected_md5sum
     runner.run(['singularity', 'pull', '--name', 'img', 'shub://' + location])
 
     # Test tracer class
@@ -36,7 +37,7 @@ def test_singularity_trace(tmpdir):
         files = [path, 'non-existent-image']
         dist, remaining_files = next(tracer.identify_distributions(files))
         img_info = dist.images[0]
-        assert img_info.md5 == 'ed9755a0871f04db3e14971bec56a33f'
+        assert img_info.md5 == expected_md5sum
         assert img_info.bootstrap == 'docker'
         assert img_info.maintainer == 'vanessasaur'
         assert img_info.deffile == 'Singularity'
