@@ -35,14 +35,14 @@ def test_singularity_trace(tmpdir):
     for path in [op.join(tmpdir, "img"), "shub:/" + location]:
         files = [path, 'non-existent-image']
         dist, remaining_files = next(tracer.identify_distributions(files))
-
-        assert dist.images[0].md5 == 'ed9755a0871f04db3e14971bec56a33f'
-        assert dist.images[0].bootstrap == 'docker'
-        assert dist.images[0].maintainer == 'vanessasaur'
-        assert dist.images[0].deffile == 'Singularity'
-        assert dist.images[0].schema_version == '1.0'
-        assert dist.images[0].build_date == '2017-10-15T12:52:56+00:00'
-        assert dist.images[0].build_size == '333MB'
-        assert dist.images[0].singularity_version == '2.4-feature-squashbuild-secbuild.g780c84d'
-        assert dist.images[0].base_image == 'ubuntu:14.04'
+        img_info = dist.images[0]
+        assert img_info.md5 == 'ed9755a0871f04db3e14971bec56a33f'
+        assert img_info.bootstrap == 'docker'
+        assert img_info.maintainer == 'vanessasaur'
+        assert img_info.deffile == 'Singularity'
+        assert img_info.schema_version == '1.0'
+        assert img_info.build_date == '2017-10-15T12:52:56+00:00'
+        assert img_info.build_size == '333MB'
+        assert img_info.singularity_version == '2.4-feature-squashbuild-secbuild.g780c84d'
+        assert img_info.base_image == 'ubuntu:14.04'
         assert 'non-existent-image' in remaining_files
