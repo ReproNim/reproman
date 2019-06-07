@@ -10,13 +10,14 @@
 # NOTE: The singularity classes SingularitySession and PTYSingularitySession
 # are tested in test_session.test_session_abstract_methods()
 
-import os
+import os.path as op
+
 import pytest
-import tempfile
 
 import logging
 import re
 from ..singularity import Singularity, SingularitySession
+from ...cmd import Runner
 from ...tests.utils import assert_in
 from ...tests.skip import mark
 from ...utils import swallow_logs
@@ -29,21 +30,18 @@ def test_singularity_resource_image_required():
 
 @mark.skipif_no_network
 @mark.skipif_no_singularity
-def test_singularity_resource_class():
-
-    # Set working directory to a scratch directory since we will be creating
-    # Singularity image files during testing.
-    orig_cwd = os.getcwd()
-    tempdir = tempfile.mkdtemp()
-    os.chdir(tempdir)
-
+def test_singularity_resource_class(tmpdir):
+    tmpdir = str(tmpdir)
     with swallow_logs(new_level=logging.DEBUG) as log:
+        Runner(cwd=tmpdir).run(
+            ['singularity', 'pull', '--name', 'img',
+             'shub://truatpasteurdotfr/singularity-alpine'])
 
+        image = op.join(tmpdir, 'img')
         # Test creating a new singularity container instance.
-        resource = Singularity(name='foo',
-            image='shub://truatpasteurdotfr/singularity-alpine')
+        resource = Singularity(name='foo', image=image)
         assert resource.name == 'foo'
-        assert resource.image == 'shub://truatpasteurdotfr/singularity-alpine'
+        assert resource.image == image
         resource.connect()
         assert resource.id is None
         assert resource.status is None
@@ -52,8 +50,7 @@ def test_singularity_resource_class():
         assert resource.status == 'running'
 
         # Test trying to create an already running instance.
-        resource_duplicate = Singularity(name='foo',
-            image='shub://truatpasteurdotfr/singularity-alpine')
+        resource_duplicate = Singularity(name='foo', image=image)
         resource_duplicate.connect()
         assert resource_duplicate.id.startswith('foo-')
         assert resource_duplicate.status == 'running'
@@ -64,6 +61,8 @@ def test_singularity_resource_class():
         info = resource.get_instance_info()
         assert info['name'] == 'foo'
         assert re.match(r'^\d+$', info['pid'])
+
+        info["image"] = image
 
         # Test starting an instance.
         with pytest.raises(NotImplementedError):
@@ -85,6 +84,3 @@ def test_singularity_resource_class():
         # Test retrieving info from a non-existent instance.
         info = resource.get_instance_info()
         assert info is None
-
-    # Return to original working directory
-    os.chdir(orig_cwd)
