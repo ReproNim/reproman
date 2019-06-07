@@ -9,13 +9,19 @@
 
 import os.path as op
 
+import pytest
+
 from ...cmd import Runner
 from ...distributions.singularity import SingularityTracer
+from ...support.external_versions import external_versions
 from ...tests.skip import mark
 
 
 @mark.skipif_no_network
 @mark.skipif_no_singularity
+@pytest.mark.xfail(
+    external_versions["cmd:singularity"] >= '3',
+    reason="Pulling with @hash fails with Singularity v3 (gh-406)")
 def test_singularity_trace(tmpdir):
     tmpdir = str(tmpdir)
     # Download and set up singularity image file
