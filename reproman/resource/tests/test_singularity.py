@@ -64,7 +64,6 @@ def test_singularity_resource_class():
         info = resource.get_instance_info()
         assert info['name'] == 'foo'
         assert re.match(r'^\d+$', info['pid'])
-        assert info['image'].endswith('.simg')
 
         # Test starting an instance.
         with pytest.raises(NotImplementedError):
