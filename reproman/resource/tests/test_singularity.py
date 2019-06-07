@@ -22,6 +22,11 @@ from ...tests.skip import mark
 from ...utils import swallow_logs
 
 
+def test_singularity_resource_image_required():
+    with pytest.raises(TypeError):
+        Singularity(name='foo')
+
+
 @mark.skipif_no_network
 @mark.skipif_no_singularity
 def test_singularity_resource_class():

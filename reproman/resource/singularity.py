@@ -32,11 +32,11 @@ class Singularity(Resource):
     """
 
     # Generic properties of any Resource
-    name = attrib()
+    name = attrib(default=attr.NOTHING)
+    image = attrib(doc="Base image filename or url", default=attr.NOTHING)
 
     # Container properties
     id = attrib()
-    image = attrib(doc="Base image filename or url")
     type = attrib(default='singularity')
 
     status = attrib()
