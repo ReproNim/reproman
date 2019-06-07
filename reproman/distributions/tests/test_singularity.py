@@ -11,8 +11,6 @@ import os
 import tempfile
 
 from ...cmd import Runner
-# from ...distributions.singularity import SingularityDistribution
-# from ...distributions.singularity import SingularityImage
 from ...distributions.singularity import SingularityTracer
 from ...tests.skip import mark
 
