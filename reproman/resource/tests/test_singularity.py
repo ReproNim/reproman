@@ -15,10 +15,11 @@ import os.path as op
 import pytest
 
 import logging
+import uuid
 import re
+
 from ..singularity import Singularity, SingularitySession
 from ...cmd import Runner
-from ...tests.utils import assert_in
 from ...tests.skip import mark
 from ...utils import swallow_logs
 
@@ -37,35 +38,37 @@ def test_singularity_resource_class(tmpdir):
             ['singularity', 'pull', '--name', 'img',
              'shub://truatpasteurdotfr/singularity-alpine'])
 
+        # ATTN: Apparently an instance name can't contain a hyphen.
+        name = "reproman_test_{}".format(str(uuid.uuid4())[:4])
         image = op.join(tmpdir, 'img')
         # Test creating a new singularity container instance.
-        resource = Singularity(name='foo', image=image)
-        assert resource.name == 'foo'
+        resource = Singularity(name=name, image=image)
+        assert resource.name == name
         assert resource.image == image
         resource.connect()
         assert resource.id is None
         assert resource.status is None
         list(resource.create())
-        assert resource.id.startswith('foo-')
+        assert resource.id.startswith(name + "-")
         assert resource.status == 'running'
 
         # Test trying to create an already running instance.
-        resource_duplicate = Singularity(name='foo', image=image)
+        resource_duplicate = Singularity(name=name, image=image)
         resource_duplicate.connect()
-        assert resource_duplicate.id.startswith('foo-')
+        assert resource_duplicate.id.startswith(name + "-")
         assert resource_duplicate.status == 'running'
         list(resource_duplicate.create())
-        assert_in("Resource 'foo' already exists.", log.lines)
+        assert "Resource '{}' already exists".format(name) in log.out
 
         # But using a different name with the same image would work.
-        resource_nondup = Singularity(name="foo_nondup", image=image)
+        resource_nondup = Singularity(name=name + "_nondup", image=image)
         resource_nondup.connect()
-        resource_nondup.name = "foo_nondup"
+        resource_nondup.name = name + "_nondup"
         resource_nondup.delete()
 
         # Test retrieving instance info.
         info = resource.get_instance_info()
-        assert info['name'] == 'foo'
+        assert info['name'] == name
         assert re.match(r'^\d+$', info['pid'])
 
         info["image"] = image
