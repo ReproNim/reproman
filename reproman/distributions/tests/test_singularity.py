@@ -19,11 +19,10 @@ from ...tests.skip import mark
 def test_singularity_trace(tmpdir):
     tmpdir = str(tmpdir)
     # Download and set up singularity image file
-    runner = Runner()
-    runner.run(['singularity', 'pull',
+    runner = Runner(cwd=tmpdir)
+    runner.run(['singularity', 'pull', '--name', 'img',
         'shub://vsoch/hello-world@42e1f04ed80217895f8c960bdde6bef4d34fab59'])
     image_file = op.join(tmpdir, "img")
-    os.rename('vsoch-hello-world-master-latest.simg', image_file)
 
     # Test tracer class
     tracer = SingularityTracer()
