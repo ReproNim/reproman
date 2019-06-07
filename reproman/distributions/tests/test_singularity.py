@@ -7,8 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-import os
-import tempfile
+import os.path as op
 
 from ...cmd import Runner
 from ...distributions.singularity import SingularityTracer
@@ -17,13 +16,13 @@ from ...tests.skip import mark
 
 @mark.skipif_no_network
 @mark.skipif_no_singularity
-def test_singularity_trace():
-
+def test_singularity_trace(tmpdir):
+    tmpdir = str(tmpdir)
     # Download and set up singularity image file
     runner = Runner()
     runner.run(['singularity', 'pull',
         'shub://vsoch/hello-world@42e1f04ed80217895f8c960bdde6bef4d34fab59'])
-    image_file = tempfile.mktemp()
+    image_file = op.join(tmpdir, "img")
     os.rename('vsoch-hello-world-master-latest.simg', image_file)
 
     # Test tracer class
@@ -42,9 +41,6 @@ def test_singularity_trace():
     assert dist.images[0].singularity_version == '2.4-feature-squashbuild-secbuild.g780c84d'
     assert dist.images[0].base_image == 'ubuntu:14.04'
     assert 'non-existent-image' in remaining_files
-
-    # Clean up test files
-    os.remove(image_file)
 
     # Run tracer against a Singularity Hub url
     files = ['shub:/GodloveD/lolcow@a59d8de3121579fe9c95ab8af0297c2e3aefd827']
