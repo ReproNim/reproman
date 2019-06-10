@@ -896,7 +896,11 @@ class FetchDataladRunMixin(object):
                         message=self.job_spec.get("message"),
                         cmd=self.job_spec["command_str_unexpanded"]):
                     # Oh, if only I were a datalad extension.
-                    pass
+                    if res["status"] in ["impossible", "error"]:
+                        raise OrchestratorError(
+                            "Making datalad-run commit failed: {}"
+                            .format(res["message"]))
+
                 ref = self.job_refname
                 if moved:
                     lgr.info("Results stored on %s. "
