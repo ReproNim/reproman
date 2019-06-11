@@ -198,9 +198,9 @@ class TracedCommand(CommandAdapter):
         #       we could avoid retracing session establishing bits themselves
 
         # Upload Docker shim
-        self.remote_docker_shim = op.join(remote_tracer_dir, "docker")
-        if not self.session.exists(self.remote_docker_shim):
-            self.session.put(self.local_docker_shim, self.remote_docker_shim)
+        remote_shims_dir = op.join(remote_reproman_dir, 'shims')
+        self.remote_docker_shim = op.join(remote_shims_dir, "docker")
+        self.session.put(self.local_docker_shim, self.remote_docker_shim)
 
     def pre_command(self):
         self._prepare_local()
