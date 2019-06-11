@@ -19,7 +19,9 @@ import pytest
 
 from reproman.api import jobs
 from reproman.api import run
+from reproman.interface.run import _combine_batch_params
 from reproman.interface.run import _combine_job_specs
+from reproman.interface.run import _resolve_batch_parameters
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
 from reproman.utils import swallow_outputs
@@ -74,6 +76,73 @@ def test_run_list(arg, expected):
          "mapping-to-atom", "atom-to-mapping"])
 def test_combine_specs(specs, expected):
     assert _combine_job_specs(specs) == expected
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    [([], []),
+     (["a=1,2"],
+      [{"a": "1"}, {"a": "2"}]),
+     (["a=1,2", "b=3"],
+      [{"a": "1", "b": "3"},
+       {"a": "2", "b": "3"}]),
+     (["a=1,2", "b=3,4"],
+      [{"a": "1", "b": "3"},
+       {"a": "1", "b": "4"},
+       {"a": "2", "b": "3"},
+       {"a": "2", "b": "4"}]),
+     (["a=1,2=3"],
+      [{"a": "1"},
+       {"a": "2=3"}]),
+     (["a= 1 spaces are preserved   , 2"],
+      [{"a": " 1 spaces are preserved   "},
+       {"a": " 2"}])],
+    ids=["empty", "one", "two, one varying", "two varying", "= in value",
+         "spaces"])
+def test_combine_batch_params(params, expected):
+    actual = list(sorted(_combine_batch_params(params),
+                         key=lambda d: (d.get("a"), d.get("b"))))
+    assert len(actual) == len(expected)
+    assert actual == expected
+
+
+def test_combine_batch_params_repeat_key():
+    with pytest.raises(ValueError):
+        list(_combine_batch_params(["a=1", "a=2"]))
+
+
+def test_combine_batch_params_no_equal():
+    with pytest.raises(ValueError):
+        list(_combine_batch_params(["a"]))
+
+
+def test_run_batch_spec_and_params():
+    with pytest.raises(ValueError):
+        run(command="blahbert",
+            batch_spec="anything", batch_parameters="anything")
+
+
+@pytest.mark.parametrize(
+    "params,spec",
+    [([], ""),
+     (["a=1,2"],
+      """\
+- a: '1'
+- a: '2'"""),
+     (["a=1,2", "b=3"],
+      """\
+- a: '1'
+  b: '3'
+- a: '2'
+  b: '3'""")],
+    ids=["empty", "one", "two, one varying"])
+def test_resolve_batch_params_eq(tmpdir, params, spec):
+    fname = op.join(str(tmpdir), "spec.yml")
+    with open(fname, "w") as fh:
+        fh.write(spec)
+    from_param_str = _resolve_batch_parameters(spec_file=None, params=params)
+    from_spec = _resolve_batch_parameters(spec_file=fname, params=None)
+    assert from_param_str == from_spec
 
 
 # Tests that require `context`.

@@ -12,6 +12,7 @@
 from argparse import REMAINDER
 import collections
 import logging
+import itertools
 import textwrap
 import yaml
 
@@ -64,22 +65,86 @@ def _combine_job_specs(specs):
     return initial
 
 
-def _resolve_batch_parameters(spec_file):
+def _parse_batch_params(params):
+    """Transform batch parameter strings into lists of tuples.
+
+    Parameters
+    ----------
+    params : list of str
+        The string should have the form "key=val1,val2,val3".
+
+    Returns
+    -------
+    A generator that, for each key, yields a list of key-value tuple pairs.
+    """
+    seen_keys = set()
+    for param in params:
+        if "=" not in param:
+            raise ValueError(
+                "param value should be formatted as 'key=value,...'")
+        key, value_str = param.split("=", maxsplit=1)
+        if key in seen_keys:
+            raise ValueError("Key '{}' was given more than once".format(key))
+        seen_keys.add(key)
+        yield [(key, v) for v in value_str.split(",")]
+
+
+def _combine_batch_params(params):
+    """Transform batch parameter strings into records.
+
+    Parameters
+    ----------
+    params : list of str
+        The string should have the form "key=val1,val2,val3".
+
+    Returns
+    -------
+    A generator that yields a record, computing the product from the values.
+
+    >>> from pprint import pprint
+    >>> params = ["k0=val1,val2,val3", "k1=val4,val5"]
+    >>> pprint(list(_combine_batch_params(params)))
+    [{'k0': 'val1', 'k1': 'val4'},
+     {'k0': 'val1', 'k1': 'val5'},
+     {'k0': 'val2', 'k1': 'val4'},
+     {'k0': 'val2', 'k1': 'val5'},
+     {'k0': 'val3', 'k1': 'val4'},
+     {'k0': 'val3', 'k1': 'val5'}]
+    """
+    if not params:
+        return
+    # Note: If we want to support pairing the ith elements rather than taking
+    # the product, we could add a parameter that signals to use zip() rather
+    # than product(). If we do that, we'll also want to check that the values
+    # for each key are the same length, probably in _parse_batch_params().
+    for i in itertools.product(*_parse_batch_params(params)):
+        yield dict(i)
+
+
+def _resolve_batch_parameters(spec_file, params):
     """Determine batch parameters based on user input.
 
     Parameters
     ----------
     spec_file : str or None
         Name of YAML file the defines records of parameters.
+    params : list of str or None
+        The string should have the form "key=val1,val2,val3".
 
     Returns
     -------
-    List of records or None if `spec_file` is not specified.
+    List of records or None if neither `spec_file` or `params` is specified.
     """
+    if spec_file and params:
+        raise ValueError(
+            "Batch parameters cannot be provided with a batch spec")
+
     resolved = None
     if spec_file:
         with open(spec_file) as pf:
             resolved = yaml.safe_load(pf)
+    elif params:
+        resolved = list(_combine_batch_params(params))
     return resolved
 
 
@@ -103,6 +168,11 @@ JOB_PARAMETERS = collections.OrderedDict(
          commands. A command will be constructed for each record, with record
          values available in the command as well as the inputs and outputs as
          `{p[KEY]}`."""),
+        ("batch_parameters",
+         """Define batch parameters with 'KEY=val1,val2,...'. Different keys
+         can be specified by giving multiple values, in which case the product
+         of the values are taken. For example, 'subj=mei,satsuki' and 'day=1,2'
+         would expand to four records, pairing each subj with each day."""),
         ("inputs, outputs",
          """Input and output files (list) to the command."""),
         ("message",
@@ -157,7 +227,17 @@ class Run(Interface):
             args=("--batch-spec", "--bs"),
             dest="batch_spec",
             metavar="PATH",
-            doc=JOB_PARAMETERS["batch_spec"]),
+            doc=(JOB_PARAMETERS["batch_spec"] +
+                 " See [CMD: --batch-parameter CMD][PY: `batch_parameters` PY]"
+                 " for an alternative method for simple combinations.")),
+        batch_parameters=Parameter(
+            args=("--batch-parameter", "--bp"),
+            dest="batch_parameters",
+            action="append",
+            metavar="PATH",
+            doc=(JOB_PARAMETERS["batch_parameters"] +
+                 " See [CMD: --batch-spec CMD][PY: `batch_spec` PY]"
+                 " for specifying more complex records.")),
         job_specs=Parameter(
             args=("--job-spec", "--js"),
             dest="job_specs",
@@ -216,7 +296,7 @@ class Run(Interface):
     def __call__(command=None, message=None,
                  resref=None, resref_type="auto",
                  list_=None, submitter=None, orchestrator=None,
-                 batch_spec=None,
+                 batch_spec=None, batch_parameters=None,
                  job_specs=None, job_parameters=None,
                  inputs=None, outputs=None,
                  follow=False):
@@ -262,6 +342,7 @@ class Run(Interface):
                 "submitter": submitter,
                 "orchestrator": orchestrator,
                 "batch_spec": batch_spec,
+                "batch_parameters": batch_parameters,
                 "inputs": inputs,
                 "outputs": outputs,
             }.items()
@@ -275,7 +356,7 @@ class Run(Interface):
                                   [job_parameters, cli_spec])
 
         spec["batch_parameters"] = _resolve_batch_parameters(
-            spec.get("batch_spec"))
+            spec.get("batch_spec"), spec.get("batch_parameters"))
 
         # Treat "command" as a special case because it's a list and the
         # template expects a string.
