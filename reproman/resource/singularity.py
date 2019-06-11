@@ -32,11 +32,11 @@ class Singularity(Resource):
     """
 
     # Generic properties of any Resource
-    name = attrib()
+    name = attrib(default=attr.NOTHING)
+    image = attrib(doc="Base image filename or url", default=attr.NOTHING)
 
     # Container properties
     id = attrib()
-    image = attrib(doc="Base image filename or url")
     type = attrib(default='singularity')
 
     status = attrib()
@@ -46,13 +46,7 @@ class Singularity(Resource):
         """
         Open a connection to the environment.
         """
-        version = external_versions["cmd:singularity"]
-        if version is None or version < "2.4":
-            msg = "Found version {}".format(version) if version else ""
-            # Running singularity instances and managing them didn't happen
-            # until version 2.4. See: https://singularity.lbl.gov/archive/
-            raise CommandError(msg="Singularity version >= 2.4 required." + msg)
-
+        external_versions.check("cmd:singularity", min_version="2.4")
         # Get instance info if we have one running.
         info = self.get_instance_info()
         if info:
@@ -163,7 +157,7 @@ class Singularity(Resource):
         # The output of instance.list is a table with columns:
         #   DAEMON NAME, PID, and CONTAINER IMAGE
         # Daemon names are unique on each server.
-        for row in stdout.splitlines()[1:]:
+        for row in stdout.strip().splitlines()[1:]:
             items = row.split()
             if self.name == items[0] or self.id == "{0}-{1}".format(*items):
                 return {

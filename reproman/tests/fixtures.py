@@ -110,14 +110,18 @@ def get_singularity_fixture(name=None, image="docker://python:2.7",
         A scope for the fixture according to `pytest.fixture` docs
     """
     @pytest.fixture(scope=scope)
-    def fixture():
+    def fixture(tmpdir_factory):
         skipif.no_network()
         skipif.no_singularity()
-        from reproman.resource.singularity import Singularity
-        resource = Singularity(name=name or str(uuid.uuid4().hex)[:11],
-                               image=image)
-        resource.connect()
-        list(resource.create())
+
+        # Change to a temporary directory so that we don't pollute the current
+        # directory with image files.
+        with chpwd(str(tmpdir_factory.mktemp("singularity-resource"))):
+            from reproman.resource.singularity import Singularity
+            resource = Singularity(name=name or str(uuid.uuid4().hex)[:11],
+                                   image=image)
+            resource.connect()
+            list(resource.create())
         yield resource
         resource.delete()
     return fixture
