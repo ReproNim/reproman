@@ -21,6 +21,7 @@ from reproman.utils import on_linux
 from reproman.utils import swallow_logs
 from reproman.tests.utils import create_pymodule
 from reproman.tests.utils import assert_is_subset_recur
+from reproman.tests.utils import COMMON_SYSTEM_PATH
 from reproman.tests.skip import skipif
 from reproman.distributions.venv import VenvDistribution
 from reproman.distributions.venv import VenvEnvironment
@@ -34,7 +35,12 @@ PY_VERSION = "python{v.major}.{v.minor}".format(v=sys.version_info)
 def venv_test_dir():
     skipif.no_network()
     dirs = AppDirs('reproman')
-    test_dir = os.path.join(dirs.user_cache_dir, 'venv_test')
+
+    ssp = os.getenv("REPROMAN_TESTS_ASSUME_SSP")
+    # Encode the SSP value in the directory name so that the caller doesn't
+    # have to worry about deleting the cached venvs before setting the flag..
+    test_dir = os.path.join(dirs.user_cache_dir,
+                            'venv_test{}'.format("_ssp" if ssp else ""))
     if os.path.exists(test_dir):
         return test_dir
 
@@ -52,6 +58,14 @@ def venv_test_dir():
     runner.run([pip1, "install", "attrs"])
     # Make sure we're compatible with older pips.
     runner.run([pip1, "install", "pip==9.0.3"])
+
+    if ssp:
+        # The testing environment supports --system_site_packages.
+        pip2 = op.join("venv-nonlocal", "bin", "pip")
+        runner.run(["virtualenv", "--python", PY_VERSION,
+                    "--system-site-packages", "venv-nonlocal"])
+        runner.run([pip2, "install", "attrs"])
+
     return test_dir
 
 
@@ -77,7 +91,7 @@ def test_venv_identify_distributions(venv_test_dir):
             # or in a directory that is a link to the outside world.
             os.path.join("venv1", libpaths["machinery.py"])
         ]
-        path_args.append("/sbin/iptables")
+        path_args.append(COMMON_SYSTEM_PATH)
 
         tracer = VenvTracer()
 
@@ -89,7 +103,7 @@ def test_venv_identify_distributions(venv_test_dir):
         # another path within venv0, but they do include the link to the system
         # abc.py.
         assert unknown_files == {
-            "/sbin/iptables",
+            COMMON_SYSTEM_PATH,
             op.realpath(os.path.join("venv1", libpaths["abc.py"])),
             op.realpath(os.path.join("venv1", libpaths["machinery.py"])),
             # The editable package was added by VenvTracer as an unknown file.
@@ -102,11 +116,35 @@ def test_venv_identify_distributions(venv_test_dir):
                                   "name": "PyYAML",
                                   "editable": False},
                                  {"files": [], "name": "nmtest",
-                                  "editable": True}]},
+                                  "editable": True}],
+                    "system_site_packages": False},
                    {"packages": [{"files": [libpaths["filters.py"]],
                                   "name": "attrs",
-                                  "editable": False}]}]}
+                                  "editable": False}],
+                    "system_site_packages": False}]}
         assert_is_subset_recur(expect, attr.asdict(distributions), [dict, list])
+
+
+@pytest.mark.skipif(not os.getenv("REPROMAN_TESTS_ASSUME_SSP"),
+                    reason=("Will not assume system site packages "
+                            "unless REPROMAN_TESTS_ASSUME_SSP is set"))
+@pytest.mark.integration
+def test_venv_system_site_packages(venv_test_dir):
+    with chpwd(venv_test_dir):
+        tracer = VenvTracer()
+        libpath = op.join("lib", PY_VERSION,
+                          "site-packages", "attr", "filters.py")
+        dists = list(
+            tracer.identify_distributions([op.join("venv-nonlocal", libpath)]))
+        assert len(dists) == 1
+        vdist = dists[0][0]
+        # We won't do detailed inspection of this because its structure depends
+        # on a system we don't control, but we still want to make sure that
+        # VenvEnvironment's system_site_packages attribute is set correctly.
+        expect = {"environments": [{"packages": [{"files": [libpath],
+                                                  "name": "attrs"}],
+                                    "system_site_packages": True}]}
+        assert_is_subset_recur(expect, attr.asdict(vdist), [dict, list])
 
 
 @pytest.mark.integration
@@ -141,9 +179,11 @@ def test_venv_install(venv_test_dir, tmpdir):
 
     expect = {"environments":
               [{"packages": [{"name": "PyYAML",
-                              "editable": False}]},
+                              "editable": False}],
+                "system_site_packages": False},
                {"packages": [{"name": "attrs",
-                              "editable": False}]}]}
+                              "editable": False}],
+                "system_site_packages": False}]}
     assert_is_subset_recur(expect, attr.asdict(dist_installed), [dict, list])
 
     # We don't yet handle editable packages.

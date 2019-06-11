@@ -148,6 +148,15 @@ CONDITION_FNS = [
 # Entry points: skipif and mark
 
 
+class NamespaceAttributeError(AttributeError):
+    """Namespace-specific AttributeError.
+
+    Raised by Namespace when it cannot find the specified condition function.
+    Using a derived class allows us to distinguish an unknown condition
+    function from a condition function that raises an AttributeError.
+    """
+
+
 class Namespace(object, metaclass=abc.ABCMeta):
     """Provide namespace skip conditions in CONDITION_FNS.
     """
@@ -163,7 +172,7 @@ class Namespace(object, metaclass=abc.ABCMeta):
         try:
             condfn = self.fns[item]
         except KeyError:
-            raise AttributeError(item) from None
+            raise NamespaceAttributeError(item) from None
         return self.attr_value(condfn)
 
 
@@ -200,7 +209,7 @@ class Mark(Namespace):
         if item.startswith("skipif_"):
             try:
                 return super(Mark, self).__getattr__(item[len("skipif_"):])
-            except AttributeError:
+            except NamespaceAttributeError:
                 # Fall back to the original item name so that the attribute
                 # error message doesn't confusingly drop "skipif_".
                 pass

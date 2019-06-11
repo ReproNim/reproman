@@ -21,6 +21,11 @@ matrix:
     env:
     - REPROMAN_TESTS_SSH=1
     - REPROMAN_TESTS_DEPS=core
+    - REPROMAN_TESTS_ASSUME_SSP=1
+    # Set this to test tracing virtual environments created with
+    # --system-site-packages.
+    virtualenv:
+      system_site_packages: true
   - python: 3.5
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
@@ -80,10 +85,8 @@ install:
 script:
   # Verify that setup.py build doesn't puke
   - python setup.py build
-  - if [ ! -z "$REPROMAN_TESTS_NONETWORK" ]; then sudo route add -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # - $NOSE_WRAPPER `which nosetests` -s -v --with-doctest --doctest-tests --with-cov --cover-package reproman --logging-level=INFO
   - coverage run `which py.test` -s -rs --integration reproman
-  - if [ ! -z "$REPROMAN_TESTS_NONETWORK" ]; then sudo route del -net 0.0.0.0 netmask 0.0.0.0 dev lo; fi
   # Generate documentation and run doctests
   - PYTHONPATH=$PWD make -C docs html doctest
 

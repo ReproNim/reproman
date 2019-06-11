@@ -63,9 +63,9 @@ def test_orc_root_directory_error(shell, value):
 @pytest.fixture()
 def job_spec(tmpdir):
     return {"root_directory": op.join(str(tmpdir), "nm-run"),
-            "inputs": ["in"],
+            "inputs": [op.join("d", "in")],
             "outputs": ["out"],
-            "command_str": 'bash -c "cat in >out && echo more >>out"'}
+            "command_str": 'bash -c "cat d/in >out && echo more >>out"'}
 
 
 @pytest.fixture()
@@ -73,12 +73,13 @@ def check_orc_plain(tmpdir):
     local_dir = str(tmpdir)
 
     def fn(resource, jspec):
-        create_tree(local_dir, {"in": "content\n"})
+        create_tree(local_dir, {"d": {"in": "content\n"}})
         with chpwd(local_dir):
             orc = orcs.PlainOrchestrator(resource, submission_type="local",
                                          job_spec=jspec)
             orc.prepare_remote()
-            assert orc.session.exists(op.join(orc.working_directory, "in"))
+            assert orc.session.exists(
+                op.join(orc.working_directory, "d", "in"))
 
             orc.submit()
             orc.follow()
@@ -127,7 +128,8 @@ def base_dataset(tmpdir_factory):
     ds = dl.Dataset(path).create(force=True)
 
     create_tree(ds.path, {"foo": "foo",
-                          "bar": "bar"})
+                          "bar": "bar",
+                          "d": {"in": "content\n"}})
     ds.add(".")
     ds.repo.tag("root")
     return ds
@@ -145,6 +147,23 @@ def dataset(base_dataset):
     return base_dataset
 
 
+@pytest.fixture(scope="module")
+def container_dataset(tmpdir_factory):
+    skipif.no_datalad()
+    skipif.no_network()
+
+    if "datalad_container" not in external_versions:
+        pytest.skip("datalad-container not installed")
+
+    import datalad.api as dl
+    path = str(tmpdir_factory.mktemp("container_dataset"))
+    ds = dl.Dataset(path).create(force=True)
+    ds.containers_add(
+        "dc",
+        url="shub://datalad/datalad-container:testhelper")
+    return ds
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
@@ -155,9 +174,6 @@ def dataset(base_dataset):
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
 def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
         orc.prepare_remote()
@@ -171,9 +187,6 @@ def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
 
 @pytest.mark.integration
 def test_orc_datalad_run_change_head(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc = orcs.DataladLocalRunOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -212,11 +225,15 @@ def test_orc_datalad_run_failed(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
+def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
+    # Start two orchestrators from the same point:
+    #
+    #   orc 0, master
+    #   |
+    #   | orc 1
+    #   |/
+    #   o
     ds = dataset
-    create_tree(ds.path, {"in": "content\n"})
-    ds.add(".")
-
     js0 = job_spec
     js1 = dict(job_spec, command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
@@ -247,13 +264,52 @@ def test_orc_datalad_pair_run_multiple(job_spec, dataset, shell):
         # The other one is a side-branch.
         assert not ds.repo.is_ancestor(ref1, "HEAD")
         assert ds.repo.get_hexsha(ref0) == ds.repo.get_hexsha("master")
+        assert ds.repo.get_active_branch() == "master"
+
+
+@pytest.mark.integration
+def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
+    # Run one orchestrator and fetch, then run another and fetch:
+    #
+    #   orc 1, master
+    #   |
+    #   o orc 0
+    #   |
+    #   o
+    ds = dataset
+    create_tree(ds.path, {"in": "content\n"})
+    ds.add(".")
+
+    js0 = job_spec
+    js1 = dict(job_spec, command_str='bash -c "echo other >other"')
+    with chpwd(ds.path):
+        def do(js):
+            orc = orcs.DataladPairRunOrchestrator(
+                shell, submission_type="local", job_spec=js)
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+            orc.fetch()
+            return orc
+
+        orc0 = do(js0)
+        orc1 = do(js1)
+
+        # Ran on top, so both exist in working tree.
+        assert op.exists(op.join(orc0.meta_directory, "status"))
+        assert op.exists(op.join(orc1.meta_directory, "status"))
+
+        ref0 = "refs/reproman/{}".format(orc0.jobid)
+        ref1 = "refs/reproman/{}".format(orc1.jobid)
+
+        assert ds.repo.is_ancestor(ref0, ref1)
+        assert ds.repo.get_hexsha(ref0) != ds.repo.get_hexsha(ref1)
+        assert ds.repo.get_hexsha(ref1) == ds.repo.get_hexsha("master")
+        assert ds.repo.get_active_branch() == "master"
 
 
 @pytest.mark.integration
 def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc = orcs.DataladLocalRunOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -267,10 +323,38 @@ def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
+@pytest.mark.parametrize("orc_class",
+                         [orcs.DataladPairRunOrchestrator,
+                          orcs.DataladLocalRunOrchestrator],
+                         ids=["orc:pair", "orc:local"])
+def test_orc_datalad_run_container(tmpdir, container_dataset, shell,
+                                   orc_class):
+    import datalad.api as dl
+    # Avoid the dataset fixture because the subdataset will make its simplistic
+    # cleanup fail.
+    ds = dl.Dataset(op.join(str(tmpdir), "ds")).create()
+    ds.install(path="subds", source=container_dataset)
+    if orc_class == orcs.DataladLocalRunOrchestrator:
+        # We need to have the image locally in order to copy it to the
+        # non-dataset remote.
+        ds.get(op.join("subds", ".datalad", "environments"))
+    with chpwd(ds.path):
+        orc = orc_class(
+            shell, submission_type="local",
+            job_spec={"root_directory": op.join(str(tmpdir), "nm-run"),
+                      "outputs": ["out"],
+                      "container": "subds/dc",
+                      "command_str": 'sh -c "ls / >out"'})
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
+        assert ds.repo.file_has_content("out")
+        assert "singularity" in open("out").read()
 
+
+@pytest.mark.integration
+def test_orc_datalad_pair(job_spec, dataset, shell):
     with chpwd(dataset.path):
         orc = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -286,9 +370,6 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
 
 @pytest.mark.integration
 def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
-    create_tree(dataset.path, {"in": "content\n"})
-    dataset.add(".")
-
     with chpwd(dataset.path):
         orc0 = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -300,10 +381,10 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
     with chpwd(dataset.path):
         orc1 = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
-    create_tree(orc1.working_directory, {"dirty": ""})
-    with pytest.raises(OrchestratorError) as exc:
-        orc1.prepare_remote()
-    assert "dirty" in str(exc)
+        create_tree(orc1.working_directory, {"dirty": ""})
+        with pytest.raises(OrchestratorError) as exc:
+            orc1.prepare_remote()
+        assert "dirty" in str(exc)
 
 
 def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
