@@ -170,7 +170,7 @@ class Run(Interface):
         job_parameters=Parameter(
             metavar="PARAM",
             dest="job_parameters",
-            args=("-p", "--job-parameter"),
+            args=("--job-parameter", "--jp"),
             # TODO: Use nargs=+ like create's --backend-parameters?  I'd rather
             # use 'append' there.
             action="append",
