@@ -17,7 +17,7 @@ matrix:
     - REPROMAN_TESTS_SSH=1
     - INSTALL_DATALAD=1
     - INSTALL_CONDOR=1
-  - python: 3.4
+  - python: 3.5
     env:
     - REPROMAN_TESTS_SSH=1
     - REPROMAN_TESTS_DEPS=core
@@ -35,7 +35,7 @@ matrix:
     env:
     - REPROMAN_LOGLEVEL=2
     - REPROMAN_LOGTARGET=/dev/null
-  - python: 3.6
+  - python: 3.4
     # Note: This this no network run appears to hang or otherwise
     # behave oddly on 3.5.
     env:
