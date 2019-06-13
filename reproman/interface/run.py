@@ -11,6 +11,7 @@
 
 from argparse import REMAINDER
 import collections
+import glob
 import logging
 import itertools
 import textwrap
@@ -77,6 +78,9 @@ def _parse_batch_params(params):
     -------
     A generator that, for each key, yields a list of key-value tuple pairs.
     """
+    def maybe_glob(x):
+        return glob.glob(x) if glob.has_magic(x) else [x]
+
     seen_keys = set()
     for param in params:
         if "=" not in param:
@@ -86,7 +90,9 @@ def _parse_batch_params(params):
         if key in seen_keys:
             raise ValueError("Key '{}' was given more than once".format(key))
         seen_keys.add(key)
-        yield [(key, v) for v in value_str.split(",")]
+        yield [(key, v)
+               for v_unexpanded in value_str.split(",")
+               for v in maybe_glob(v_unexpanded)]
 
 
 def _combine_batch_params(params):
@@ -172,7 +178,9 @@ JOB_PARAMETERS = collections.OrderedDict(
          """Define batch parameters with 'KEY=val1,val2,...'. Different keys
          can be specified by giving multiple values, in which case the product
          of the values are taken. For example, 'subj=mei,satsuki' and 'day=1,2'
-         would expand to four records, pairing each subj with each day."""),
+         would expand to four records, pairing each subj with each day. Values
+         can be a glob pattern to match against the current working
+         directory."""),
         ("inputs, outputs",
          """Input and output files (list) to the command."""),
         ("message",

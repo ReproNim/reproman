@@ -106,6 +106,20 @@ def test_combine_batch_params(params, expected):
     assert actual == expected
 
 
+def test_combine_batch_params_glob(tmpdir):
+    tmpdir = str(tmpdir)
+    create_tree(tmpdir, {"aaa": "a",
+                         "subdir": {"b": "b", "c": "c"}})
+    with chpwd(tmpdir):
+        res = sorted(_combine_batch_params(["foo=a*,subdir/*,other"]),
+                     key=lambda d: d["foo"])
+        assert list(res) == [
+            {"foo": "aaa"},
+            {"foo": "other"},
+            {"foo": "subdir/b"},
+            {"foo": "subdir/c"}]
+
+
 def test_combine_batch_params_repeat_key():
     with pytest.raises(ValueError):
         list(_combine_batch_params(["a=1", "a=2"]))
