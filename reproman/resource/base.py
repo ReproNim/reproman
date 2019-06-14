@@ -47,6 +47,13 @@ def discover_types():
 
 
 def get_resource_class(name):
+    if '_' in name:
+        known = discover_types()
+        hyph_name = name.replace('_', '-')
+        if name not in known and hyph_name in known:
+            raise ResourceError(
+                "'{}' not a known backend. Did you mean '{}'?"
+                .format(name, hyph_name))
     module_name = name.replace('-', '_')
     try:
         module = import_module('reproman.resource.{}'.format(module_name))

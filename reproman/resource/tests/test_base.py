@@ -229,3 +229,9 @@ def test_get_resource_class():
     with pytest.raises(ResourceError) as exc:
         get_resource_class("base")
     assert "Failed to find" in str(exc)
+
+    # We recognize when s/_/-/ would give an existing class and provide an
+    # informative error.
+    with pytest.raises(ResourceError) as exc:
+        get_resource_class("docker_container")
+    assert "docker-container" in str(exc)
