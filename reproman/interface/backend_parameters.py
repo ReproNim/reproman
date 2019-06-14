@@ -17,7 +17,7 @@ from logging import getLogger
 from reproman.dochelpers import exc_str
 from reproman.interface.base import Interface
 from reproman.resource import Resource
-from reproman.resource.base import ResourceManager
+from reproman.resource.base import discover_types
 from reproman.resource.base import get_resource_backends
 from reproman.support.constraints import EnsureStr
 from reproman.support.param import Parameter
@@ -27,12 +27,12 @@ lgr = getLogger('reproman.api.backend_parameters')
 
 
 def get_resource_classes(names=None):
-    for name in names or ResourceManager._discover_types():
+    for name in names or discover_types():
         try:
             module = import_module('reproman.resource.{}'.format(name))
         except ImportError as exc:
             import difflib
-            known = ResourceManager._discover_types()
+            known = discover_types()
             suggestions = difflib.get_close_matches(name, known)
             lgr.warning(
                 "Failed to import resource %s: %s. %s: %s",
@@ -67,7 +67,7 @@ class BackendParameters(Interface):
 
     @staticmethod
     def __call__(backends=None):
-        backends = backends or ResourceManager._discover_types()
+        backends = backends or discover_types()
         for backend, cls in get_resource_classes(backends):
             param_doc = "\n".join(
                 ["  {}: {}".format(p, pdoc)
