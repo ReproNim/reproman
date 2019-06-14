@@ -46,6 +46,39 @@ def discover_types():
     return sorted(l)
 
 
+def get_resource_class(name):
+    module_name = name.replace('-', '_')
+    try:
+        module = import_module('reproman.resource.{}'.format(module_name))
+    except Exception as exc:
+        # Typically it should be an ImportError, but let's catch and recast
+        # anything just in case.
+        import difflib
+        try:
+            msg = exc_str(exc)
+            known = discover_types()
+            suggestions = difflib.get_close_matches(name, known)
+            if module_name not in known:
+                msg += (
+                    ". {}: {}"
+                    .format("Similar backends" if suggestions else "Known backends",
+                            ', '.join(suggestions or known)))
+        except Exception as exc2:
+            msg += ".  Failed to discover resource types: " + exc_str(exc2)
+        raise ResourceError(
+            "Failed to import resource: {}".format(msg)
+        )
+
+    class_name = ''.join([token.capitalize() for token in name.split('-')])
+    try:
+        cls = getattr(module, class_name)
+    except AttributeError as exc:
+        raise ResourceError(
+            "Failed to find {} in {}: {}"
+            .format(class_name, module, exc_str(exc)))
+    return cls
+
+
 def get_required_fields(cls):
     """Return the mandatory fields for a resource class.
     """
@@ -146,24 +179,7 @@ class ResourceManager(object):
             raise MissingConfigError("Resource 'type' parameter missing for resource.")
 
         type_ = config['type']
-        module_name = type_.replace('-', '_')
-        class_name = ''.join([token.capitalize() for token in type_.split('-')])
-        try:
-            module = import_module('reproman.resource.{}'.format(module_name))
-        except Exception as exc:
-            # Typically it should be an ImportError, but let's catch and recast
-            # anything just in case.
-            try:
-                msg = exc_str(exc)
-                known = discover_types()
-                if module_name not in known:
-                    msg += ". Known ones are: {}".format(", ".join(known))
-            except Exception as exc2:
-                msg += ".  Failed to discover resource types: " + exc_str(exc2)
-            raise ResourceError(
-                "Failed to import resource: {}".format(msg)
-            )
-        cls = getattr(module, class_name)
+        cls = get_resource_class(type_)
         try:
             instance = cls(**config)
         except TypeError:
