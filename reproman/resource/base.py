@@ -42,7 +42,7 @@ def discover_types():
         f_ = op.basename(f)
         if f_ in ('base.py',) or f_.startswith('_'):
             continue
-        l.append(f_[:-3])
+        l.append(f_[:-3].replace('_', '-'))
     return sorted(l)
 
 
