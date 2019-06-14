@@ -146,7 +146,7 @@ class ResourceManager(object):
             raise MissingConfigError("Resource 'type' parameter missing for resource.")
 
         type_ = config['type']
-        module_name = '_'.join(type_.split('-'))
+        module_name = type_.replace('-', '_')
         class_name = ''.join([token.capitalize() for token in type_.split('-')])
         try:
             module = import_module('reproman.resource.{}'.format(module_name))
