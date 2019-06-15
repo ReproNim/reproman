@@ -34,6 +34,6 @@ def test_backend_parameters_all():
         backend_parameters()
     assert "host:" in out.getvalue()
     if "boto3" in external_versions:
-        assert "aws_ec2" in out.getvalue()
+        assert "aws-ec2" in out.getvalue()
     else:
-        assert "aws_ec2" not in out.getvalue()
+        assert "aws-ec2" not in out.getvalue()

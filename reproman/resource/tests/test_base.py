@@ -12,6 +12,7 @@ import pytest
 from reproman.config import ConfigManager
 from reproman.resource.base import ResourceManager
 from reproman.resource.base import backend_check_parameters
+from reproman.resource.base import get_resource_class
 from reproman.resource.shell import Shell
 from reproman.support.exceptions import MissingConfigError
 from reproman.support.exceptions import MultipleResourceMatches
@@ -202,3 +203,35 @@ def test_create_includes_config(tmpdir):
             manager.create("myssh", "ssh")
             factory.assert_called_with(
                 {"host": "myhost", "name": "myssh", "type": "ssh"})
+
+
+def test_get_resource_class():
+    from reproman.resource.shell import Shell
+    assert get_resource_class("shell") == Shell
+
+    # If we can't find the resource, we suggest near-hits.
+    with pytest.raises(ResourceError) as exc:
+        get_resource_class("shll")
+    assert "shell" in str(exc.value)
+
+    # We raise a resource error if some other failure happens while trying to
+    # discover resource types.
+    with pytest.raises(ResourceError) as exc:
+        def fail():
+            raise Exception("some failure")
+        with patch("reproman.resource.base.discover_types",
+                   fail):
+            get_resource_class("shll")
+    assert "Failed to discover" in str(exc.value)
+
+    # We raise a resource error if we can find a module in reproman/resource/
+    # but it doesn't have a corresponding resource class.
+    with pytest.raises(ResourceError) as exc:
+        get_resource_class("base")
+    assert "Failed to find" in str(exc)
+
+    # We recognize when s/_/-/ would give an existing class and provide an
+    # informative error.
+    with pytest.raises(ResourceError) as exc:
+        get_resource_class("docker_container")
+    assert "docker-container" in str(exc)
