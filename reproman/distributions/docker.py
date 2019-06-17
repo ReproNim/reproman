@@ -23,7 +23,7 @@ from ..support.exceptions import CommandError
 from ..utils import attrib
 
 
-@attr.s(slots=True, frozen=True, hash=True)
+@attr.s(slots=True, frozen=True)
 class DockerImage(Package):
     """Docker image information"""
     id = attrib(default=attr.NOTHING)
