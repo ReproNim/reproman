@@ -22,8 +22,7 @@ from reproman.support.exceptions import SessionRuntimeError
 from reproman.cmd import Runner
 from reproman.dochelpers import exc_str, borrowdoc
 from reproman.support.exceptions import CommandError
-from reproman.utils import updated
-from reproman.utils import to_unicode
+from reproman.utils import updated, to_unicode
 
 import logging
 lgr = logging.getLogger('reproman.session')
@@ -35,7 +34,6 @@ class Session(object):
 
     INTERNAL_COMMANDS = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
 
-
     def __attrs_post_init__(self):
         """
         Maintain both current and future session environments.
@@ -44,7 +42,7 @@ class Session(object):
         to make it available for sessions beyond the current one.
         """
         self._env = {}           # environment which would be in-effect only for this session
-        self._env_permanent = {} # environment variables which would be in-effect in future sessions if resource is persistent
+        self._env_permanent = {}  # environment variables which would be in-effect in future sessions if resource is persistent
 
     def __enter__(self):
         self.open()
@@ -167,7 +165,7 @@ class Session(object):
     # TODO: move logic/handling of batched commands defined in
     # Resource  and probably env vars handling
 
-    def execute_command(self, command, env=None, cwd=None):
+    def execute_command(self, command, env=None, cwd=None, with_shell=False):
         """
         Execute the given command in the environment.
 
@@ -182,6 +180,8 @@ class Session(object):
             removed
         cwd : string, optional
             Path of directory in which to run the command
+        with_shell: boolean, optional
+            Wrap the command with "/bin/sh -c" if the command is a string
 
         Returns
         -------
@@ -196,10 +196,10 @@ class Session(object):
         return self._execute_command(
             command,
             cwd=cwd,
-            **run_kw
-        )  # , shell=True)
+            with_shell=with_shell,
+            **run_kw)
 
-    def _execute_command(self, command, env=None, cwd=None):
+    def _execute_command(self, command, env=None, cwd=None, with_shell=False):
         """
         Execute the given command in the environment.
 
@@ -214,6 +214,8 @@ class Session(object):
             removed
         cwd : string, optional
             Path of directory in which to run the command
+        with_shell: boolean, optional
+            Wrap the command with "/bin/sh -c" if the command is a string
 
         Returns
         -------
@@ -523,6 +525,49 @@ class POSIXSession(Session):
             output[split[0]] = split[1]
         return output
 
+    def _prefix_command(self, command, env=None, cwd=None, with_shell=False):
+        """Wrap the command in a shell call with ENV vars and CWD prefixed
+        statment to command. Will pass through the command unchanged if env
+        and cwd are None
+
+        Parameters
+        ----------
+        command : string or list
+            Shell command to be run. No shell is used if command is a list
+        env : dict
+            ENV vars to prefix to command
+        cwd : string
+            Working directory to cd into before the command is executed
+        with_shell : boolean
+            if True and command is a string, a "/bin/sh -c" call will wrap the
+            cwd, env and command
+
+        Returns
+        -------
+        string or list
+            command with env, cwd, and/or with_shell settings prefixed
+        """
+        prefix = []
+        if env:
+            prefix = ["export"]
+            prefix += ["{}={}".format(shlex_quote(k[0]), shlex_quote(k[1]))
+                        for k in env.items()]
+            prefix += ["&&"]
+        if cwd:
+            prefix += ["cd", cwd, "&&"]
+        if with_shell and isinstance(command, str):
+            if prefix:
+                cmd = "{} {}".format(" ".join(prefix), command)
+            else:
+                cmd = "{}".format(command)
+            command = "/bin/sh -c '{}'".format(cmd)
+        elif prefix:
+            if isinstance(command, str):
+                command = " ".join(prefix) + " " + command
+            else:
+                command = prefix + command
+        return command
+
     @borrowdoc(Session)
     def source_script(self, command, permanent=False, diff=True, shell=None):
         orig_env = self.query_envvars()
@@ -588,7 +633,8 @@ class POSIXSession(Session):
     def exists(self, path):
         """Return if file exists"""
         try:
-            out, err = self.execute_command(self.exists_command(path))
+            out, err = self.execute_command(self.exists_command(path),
+                                            with_shell=False)
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for file presence failed: %s", exc_str(exc))
             return False
@@ -707,11 +753,21 @@ def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
         session.set_envvar(env)
     return session
 
+
 def get_updated_env(env, update):
     """Given an environment and set of updates, return updated one
 
     Special handling -- keys with None for the value, will be removed
     """
+    # If an update env var references itself, merge the original env value
+    # into the update value.
+    # (This is to somewhat generalize the "PATH=/foo:$PATH" special case.)
+    for k in update:
+        if k not in env or not isinstance(update[k], str) or \
+                not isinstance(env[k], str):
+            continue
+        update[k] = re.sub(r"\${?" + k + r"}?(:|\s|$)", env[k] + r"\1",
+                            update[k])
     env_ = updated(env, update)
     # pop those explicitly set to None
     for e in list(env_):

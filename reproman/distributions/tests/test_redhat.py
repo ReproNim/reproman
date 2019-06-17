@@ -208,13 +208,13 @@ def test_distribution(docker_container, centos_spec):
 
     with swallow_logs(new_level=logging.DEBUG) as log:
         dist.initiate(session)
-        assert "Running command ['yum', 'repolist']" in log.lines
-        assert "Running command ['yum', 'install', '-y', 'epel-release']" in \
+        assert "Running command 'yum repolist'" in log.lines
+        assert "Running command 'yum install -y epel-release'" in \
             log.lines
 
         dist.install_packages(session)
         assert "Installing fido-1.1.2-1.el7.x86_64" in log.lines
-        assert "Running command ['yum', 'install', '-y', 'fido-1.1.2-1.el7.x86_64']" \
+        assert "Running command 'yum install -y fido-1.1.2-1.el7.x86_64'" \
             in log.lines
 
 

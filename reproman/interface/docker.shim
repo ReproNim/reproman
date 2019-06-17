@@ -1,0 +1,136 @@
+#!/usr/bin/perl
+#emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*-
+#ex: set sts=4 ts=4 sw=4 noet:
+#
+#
+# This script is a shim for the docker executable. The shim intercepts
+# calls to the docker executable, runs an image id discovery process, and
+# then proceeds with the original call to the original docker executable.
+#
+require 5.002;
+use strict;
+use warnings;
+use List::Util qw(first);
+
+# Parse docker switches and run command parameters.
+my ($run_token_index) = first { $ARGV[$_] eq 'run' } (0..$#ARGV);
+die("No 'run' command found in docker arguments") if (!defined $run_token_index);
+my ($DEBUG) = first { $ARGV[$_] eq '--debug' or $ARGV[$_] eq '-D' } (0..$run_token_index-1);
+my $orig_run_args = join(" ", @ARGV[($run_token_index+1)..$#ARGV]);
+
+# Print debug output
+# 
+# Parameters
+# ----------
+# $output
+#     string : Text to print to the screen.
+# 
+sub debug {
+    return if (!defined $DEBUG);
+    foreach my $line (@_) {
+        print "[DEBUG DOCKER SHIM] ${line}";
+        print "\n" if (!($line =~ /\n$/));
+    }
+}
+
+# Run commands in shell
+# 
+# Parameters
+# ----------
+# $command
+#     string : Command to execute in the shell
+# $default_message
+#     string : Message to send if nothing is found in command stderr
+#
+# Returns
+# -------
+# string : stdout of the executed command
+# 
+sub exec_handler {
+
+	my $command = shift;
+	my $default_message = shift;
+
+	my $output = qx/$command 2>&1/;
+	if ($? != 0) {
+		die $output ? $output : $default_message;
+	}
+	return $output
+}
+
+# Gather ENV info
+my $TRACER_DIR = $ENV{"REPROMAN_TRACER_DIR"};
+if (!$TRACER_DIR) {
+	die "ENV variable REPROMAN_TRACER_DIR not found";
+}
+debug("TRACER_DIR: ${TRACER_DIR}");
+my $EXTRA_TRACE_FILE = $ENV{"REPROMAN_EXTRA_TRACE_FILE"};
+if (!$EXTRA_TRACE_FILE) {
+	die "ENV variable REPROMAN_EXTRA_TRACE_FILE not found";
+}
+debug("EXTRA_TRACE_FILE: ${EXTRA_TRACE_FILE}");
+my $WAIT_SCRIPT = "wait.sh";
+
+# Locate original Docker executable (Most likely in /usr/bin)
+# The path of the original executable will appear second to our shim
+# as we add the shim to the front of the path in interface/execute.py
+my $stdout = exec_handler("which -a docker", "Unable to execute system 'which' command");
+my @docker_paths = split(/\s+/, $stdout);
+my $original_docker_exec = $docker_paths[1];
+if (!$original_docker_exec) {
+  die "Original docker executable not found";
+}
+debug("Found docker executable: ${original_docker_exec}");
+
+# Create the script that will be the entrypoint of the container needed to
+# figure out the image RepoDigest value. The container will be removed when no
+# longer needed or, if the shim fails, will remove itself after the sleep
+# command completes.
+open(my $fh, '>', "${TRACER_DIR}/${WAIT_SCRIPT}")
+  or die "Could not open file '${TRACER_DIR}/${WAIT_SCRIPT}' $!";
+print $fh <<'EOF';
+#!/bin/sh
+sleep 30
+EOF
+close($fh);
+chmod(0755, "${TRACER_DIR}/${WAIT_SCRIPT}");
+
+# Pre-run the docker container in detached mode to get its id
+my $cmd = "${original_docker_exec} run -d --rm ";
+$cmd .= "-v ${TRACER_DIR}/${WAIT_SCRIPT}:/opt/${WAIT_SCRIPT} ";
+$cmd .= "--entrypoint /opt/${WAIT_SCRIPT} ${orig_run_args}";
+debug("PRE-RUN COMMAND: ${cmd}");
+$stdout = exec_handler($cmd, "Failed running command: ${cmd}");
+my @output = split("\n", $stdout);
+my $container_id = $output[@output - 1];
+debug("Found container id: ${container_id}");
+
+# Look up the docker image id by inspecting the container
+$cmd = "${original_docker_exec} container inspect ${container_id}";
+$stdout = exec_handler($cmd, "Failed to inspect container ${container_id}");
+$stdout =~ /"Image": "(\S+)"/;
+my $image_id = $1;
+debug("Found image id: ${image_id}");
+
+# Look up the image RepoDigest by inspecting the image
+$cmd = "${original_docker_exec} image inspect ${image_id}";
+$stdout = exec_handler($cmd, "Failed to inspect image ${image_id}");
+$stdout =~ /"RepoDigests": \[\s+"(\S+)"\s+\]/;
+my $digest_id = $1;
+debug("Found digest ID: ${digest_id}");
+open($fh, '>>', "${EXTRA_TRACE_FILE}")
+  or die "Could not open file '${EXTRA_TRACE_FILE}' $!";
+if ($digest_id) {
+  print $fh "- ${digest_id}\n";
+}
+close($fh);
+
+# Clean up the temp directory and the pre-run docker container
+$cmd = "${original_docker_exec} stop ${container_id}";
+exec_handler($cmd, "Failed to stop container ${container_id}");
+unlink("${TRACER_DIR}/${WAIT_SCRIPT}");
+
+# Run the original Docker command
+$cmd = "${original_docker_exec} " . join(" ", @ARGV);
+$stdout = exec_handler($cmd, "Failed to execute docker command: ${cmd}");
+print($stdout);

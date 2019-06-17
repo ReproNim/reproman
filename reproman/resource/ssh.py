@@ -176,18 +176,13 @@ class SSHSession(POSIXSession):
     connection = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
-    def _execute_command(self, command, env=None, cwd=None, handle_permission_denied=True):
+    def _execute_command(self, command, env=None, cwd=None, with_shell=False,
+                        handle_permission_denied=True):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
         from invoke.exceptions import UnexpectedExit
-        command = command_as_string(command)
-        if env:
-            command = ' '.join(['%s=%s' % k for k in env.items()]) \
-                      + ' ' + command
-
-        if cwd:
-            raise NotImplementedError("implement cwd support")
-
+        command = self._prefix_command(command_as_string(command), env=env,
+                                        cwd=cwd, with_shell=with_shell)
         try:
             result = self.connection.run(command, hide=True)
         except UnexpectedExit as e:
