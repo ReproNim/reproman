@@ -45,7 +45,7 @@ class RPMSource(SpecObject):
 _register_with_representer(RPMSource)
 
 
-@attr.s(slots=True, frozen=True, cmp=False, hash=True)
+@attr.s(slots=True, frozen=True)
 class RPMPackage(Package):
     """Redhat package information"""
     name = attrib(default=attr.NOTHING)

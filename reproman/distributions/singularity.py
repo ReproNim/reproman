@@ -26,7 +26,7 @@ from ..dochelpers import borrowdoc, exc_str
 from ..utils import attrib, md5sum, chpwd
 
 
-@attr.s(slots=True, frozen=True, cmp=False, hash=True)
+@attr.s(slots=True, frozen=True)
 class SingularityImage(Package):
     """Singularity image information"""
     md5 = attrib(default=attr.NOTHING)
