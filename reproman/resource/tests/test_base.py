@@ -21,14 +21,14 @@ from reproman.support.exceptions import ResourceError
 from reproman.tests.skip import mark
 
 
-def test_resource_manager_factory_missing_type():
+def test_resource_manager_factory_missing_type(resman):
     with pytest.raises(MissingConfigError):
-        ResourceManager.factory({})
+        resman.factory({})
 
 
-def test_resource_manager_factory_unkown():
+def test_resource_manager_factory_unkown(resman):
     with pytest.raises(ResourceError):
-        ResourceManager.factory({"type": "not really a type"})
+        resman.factory({"type": "not really a type"})
 
 
 def test_backend_check_parameters_no_known():
