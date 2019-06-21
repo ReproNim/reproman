@@ -11,6 +11,7 @@ import pytest
 
 from reproman.config import ConfigManager
 from reproman.resource.base import ResourceManager
+from reproman.resource.base import Resource
 from reproman.resource.base import backend_check_parameters
 from reproman.resource.base import get_resource_class
 from reproman.resource.shell import Shell
@@ -49,6 +50,9 @@ def test_resource_manager_factory_invalid_param(resman, type_):
 
     with pytest.raises(ResourceError):
         resman.factory(config)
+
+    res = resman.factory(config, strict=False)
+    assert isinstance(res, Resource)
 
 
 def test_backend_check_parameters_no_known():

@@ -221,14 +221,44 @@ class ResourceManager(object):
         for r in self.inventory:
             yield r
 
-    @staticmethod
-    def factory(config):
+    def _filter_config(self, cls, config):
+        """Modify `config` to drop invalid parameters for `cls`.
+
+        Parameters
+        ----------
+        cls : Resource object
+        config : dict
+             Configuration parameters for a resource.
+
+        Returns
+        -------
+        A filtered (copy of) config or `config` itself if no modifications were
+        needed.
+        """
+        unknown = classify_keys(cls, config)["unknown"]
+        if unknown:
+            config = config.copy()
+            inv_config = self.inventory.get(config["name"], {})
+            for unk_param in unknown:
+                msg_extra = ""
+                if unk_param in inv_config:
+                    msg_extra = (". Consider removing it from {}"
+                                 .format(self._inventory_path))
+                lgr.warning("%s is not a known %s parameter%s",
+                            unk_param, config["type"], msg_extra)
+                config.pop(unk_param)
+        return config
+
+    def factory(self, config, strict=True):
         """Factory method for creating the appropriate Container sub-class.
 
         Parameters
         ----------
         config : dict
             Configuration parameters for the resource.
+        strict : optional
+            When set to false, drop unknown keys from `config`, after issuing a
+            warning, rather than raising a ResourceError.
 
         Returns
         -------
@@ -239,12 +269,20 @@ class ResourceManager(object):
 
         type_ = config['type']
         cls = get_resource_class(type_)
+
+        if not strict:
+            config = self._filter_config(cls, config)
+
         try:
             instance = cls(**config)
         except TypeError:
-            backend_check_parameters(cls, config)
-            # The check didn't raise an exception, so this wasn't related to an
-            # unknown backend parameter.
+            if strict:
+                # In strict mode, the exception may be due to an unknown
+                # backend paraemter. Call backend_check_parameters() to get a
+                # more meaningful ResourceError.
+                backend_check_parameters(cls, config)
+                # Never mind. The check didn't raise an exception, so this
+                # wasn't related to an unknown backend parameter.
             raise
         return instance
 
@@ -324,7 +362,8 @@ class ResourceManager(object):
         -------
         A Resource object
         """
-        return self.factory(self._get_resource_config(resref, resref_type))
+        return self.factory(self._get_resource_config(resref, resref_type),
+                            strict=False)
 
     def _get_inventory(self):
         """Return a dict with the config information for all resources.
