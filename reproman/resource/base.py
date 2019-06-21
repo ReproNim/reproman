@@ -99,6 +99,62 @@ def get_resource_backends(cls):
             if "doc" in b.metadata}
 
 
+def classify_keys(cls, keys):
+    """Classify `keys` according to the parameters of resource `cls`.
+
+    Parameters
+    ----------
+    cls : Resource object
+    keys : iterable
+       Keys to classify.
+
+    Returns
+    -------
+    A dictionary where each of `keys` is classified into one of the following
+    categories:
+      - required
+        a parameter that must be specified when instantiating the class (either
+        by us or the user)
+      - opt_user
+        a optional parameter that is exposed to the user (i.e. a field that has
+        a default value and "doc" metadata)
+      - opt_internal
+        a unexposed optional parameter (i.e. a field with a default value but
+        with no "doc" metadata) that should not be set by the user (e.g.,
+        status)
+      - unknown
+        a parameter that doesn't fall into any of the above categories
+
+    Raises
+    ------
+    A ResourceError if a required parameter isn't included in `keys`.
+    """
+    all_fields = {f.name for f in attr.fields(cls)}
+    required_params = get_required_fields(cls)
+    required_seen = set()
+    known = get_resource_backends(cls)
+    cats = {"required": [], "opt_user": [], "opt_internal": [], "unknown": []}
+    for key in keys:
+        if key in required_params:
+            required_seen.add(key)
+            cat = "required"
+        elif key in known:
+            cat = "opt_user"
+        elif key in all_fields:
+            # These are attributes like id and status.
+            cat = "opt_internal"
+        else:
+            cat = "unknown"
+        cats[cat].append(key)
+
+    required_missing = required_params.difference(required_seen)
+    if required_missing:
+        raise ResourceError("Missing required backend parameters: {}"
+                            .format(",".join(required_missing)))
+
+    return cats
+
+
 def backend_check_parameters(cls, keys):
     """Check whether any backend parameter keys are unknown.
 
@@ -112,14 +168,10 @@ def backend_check_parameters(cls, keys):
     ------
     ResourceError on the first unknown key encountered.
     """
-    required_params = get_required_fields(cls)
-    for req_param in required_params:
-        if req_param not in keys:
-            raise ResourceError(
-                "Missing required backend parameter: " + req_param)
-    known = get_resource_backends(cls)
-    for key in keys:
-        if key not in known and key not in required_params:
+    unknown = classify_keys(cls, keys)["unknown"]
+    if unknown:
+        known = get_resource_backends(cls)
+        for key in unknown:
             if known:
                 import difflib
 
