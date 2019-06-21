@@ -31,6 +31,26 @@ def test_resource_manager_factory_unkown(resman):
         resman.factory({"type": "not really a type"})
 
 
+def test_resource_manager_factory_missing_required(resman):
+    with pytest.raises(ResourceError):
+        resman.factory({"type": "shell"})
+
+
+@pytest.mark.parametrize("type_", ["shell", "ssh"])
+def test_resource_manager_factory_invalid_param(resman, type_):
+    config = {"type": type_,
+              "id": "id",
+              "name": "name",
+              # All of the below are invalid in the case of shell. For ssh,
+              # "other" is invalid.
+              "host": "host",
+              "port": "port",
+              "other": "doesntmatter"}
+
+    with pytest.raises(ResourceError):
+        resman.factory(config)
+
+
 def test_backend_check_parameters_no_known():
     with pytest.raises(ResourceError) as exc:
         backend_check_parameters(Shell,
