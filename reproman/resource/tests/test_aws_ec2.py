@@ -12,13 +12,12 @@ from unittest.mock import patch, call, MagicMock
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ...tests.skip import mark
-from ..base import ResourceManager
 from ..ssh import SSH
 
 pytestmark = mark.skipif_no_aws_dependencies
 
 
-def test_awsec2_class():
+def test_awsec2_class(resman):
 
     with patch('boto3.resource') as client, \
             patch.object(SSH, 'get_session', return_value='started_session'), \
@@ -34,7 +33,7 @@ def test_awsec2_class():
             'access_key_id': 'my-aws-access-key-id',
             'secret_access_key': 'my-aws-secret-access-key-id'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         assert resource.id is None
         assert resource.status is None
@@ -58,7 +57,7 @@ def test_awsec2_class():
             'access_key_id': 'my-aws-access-key-id',
             'secret_access_key': 'my-aws-secret-access-key-id'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         try:
             resource.connect()
         except Exception as e:
@@ -80,7 +79,7 @@ def test_awsec2_class():
             'key_name': 'my-ssh-key',
             'key_filename': '/home/me/.ssh/id_rsa'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         assert resource.image == 'ami-c8580bdf'
         assert resource.id == 'i-00002777d52482d9c'
@@ -117,7 +116,7 @@ def test_awsec2_class():
             'key_name': 'my-ssh-key',
             'key_filename': '/home/me/.ssh/id_rsa'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         # Test retrieving more than one yield from the create method
         create_generator = resource.create()

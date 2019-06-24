@@ -13,7 +13,6 @@ from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ...tests.skip import mark
-from ..base import ResourceManager
 from ...support.exceptions import ResourceError
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
@@ -30,7 +29,7 @@ setup_ubuntu = get_docker_fixture(
 
 
 @mark.skipif_no_docker_dependencies
-def test_dockercontainer_class():
+def test_dockercontainer_class(resman):
 
     with patch('docker.Client') as client, \
         patch('dockerpty.start') as dockerpty, \
@@ -74,7 +73,7 @@ def test_dockercontainer_class():
             'name': 'non-existent-resource',
             'type': 'docker-container'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         assert resource.id is None
         assert resource.status is None
@@ -84,7 +83,7 @@ def test_dockercontainer_class():
             'name': 'duplicate-resource-name',
             'type': 'docker-container'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         with raises(ResourceError) as ecm:
             resource.connect()
         assert ecm.value.args[0].startswith("Multiple container matches found")
@@ -96,7 +95,7 @@ def test_dockercontainer_class():
             'engine_url': 'tcp://127.0.0.1:2375',
             'seccomp_unconfined': True
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         assert resource.image == 'ubuntu:latest'
         assert resource.engine_url == 'tcp://127.0.0.1:2375'
@@ -117,7 +116,7 @@ def test_dockercontainer_class():
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         results = merge_dicts(resource.create())
         assert results['id'] == '18b31b30e3a5'

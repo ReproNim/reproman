@@ -17,13 +17,12 @@ from unittest.mock import patch, call
 from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
-from ..base import ResourceManager
 from ...cmd import Runner
 from ..shell import Shell, ShellSession
 from .test_session import check_session_passing_envvars
 
 
-def test_shell_class():
+def test_shell_class(resman):
 
     with patch.object(Runner, 'run', return_value='installed package') as runner, \
             swallow_logs(new_level=logging.DEBUG) as log:
@@ -33,7 +32,7 @@ def test_shell_class():
             'name': 'my-shell',
             'type': 'shell'
         }
-        shell = ResourceManager.factory(config)
+        shell = resman.factory(config)
 
         command = ['apt-get', 'install', 'bc']
         shell.add_command(command)
@@ -127,13 +126,13 @@ def test_session_passing_envvars():
     check_session_passing_envvars(ShellSession())
 
 
-def test_shell_resource():
+def test_shell_resource(resman):
 
     config = {
         'name': 'test-ssh-resource',
         'type': 'shell'
     }
-    resource = ResourceManager.factory(config)
+    resource = resman.factory(config)
 
     status = merge_dicts(resource.create())
     assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
