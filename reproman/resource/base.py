@@ -150,7 +150,7 @@ def classify_keys(cls, keys):
     required_missing = required_params.difference(required_seen)
     if required_missing:
         raise ResourceError("Missing required backend parameters: {}"
-                            .format(",".join(required_missing)))
+                            .format(", ".join(sorted(required_missing))))
 
     return cats
 
