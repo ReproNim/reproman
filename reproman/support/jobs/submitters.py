@@ -53,13 +53,15 @@ class Submitter(object, metaclass=abc.ABCMeta):
         """A list the defines the command used to submit the job.
         """
 
-    def submit(self, script):
+    def submit(self, script, submit_command=None):
         """Submit `script`.
 
         Parameters
         ----------
         script : str
             Submission script.
+        submit_command : list or None, optional
+            If specified, use this instead of `.submit_command`.
 
         Returns
         -------
@@ -67,7 +69,7 @@ class Submitter(object, metaclass=abc.ABCMeta):
         """
         lgr.info("Submitting %s", script)
         out, _ = self.session.execute_command(
-            self.submit_command + [script])
+            (submit_command or self.submit_command) + [script])
         subm_id = out.rstrip()
         if subm_id:
             self.submission_id = subm_id
@@ -156,10 +158,10 @@ class CondorSubmitter(Submitter):
         return ["condor_submit", "-terse"]
 
     @borrowdoc(Submitter)
-    def submit(self, script):
+    def submit(self, script, submit_command=None):
         # Discard return value, which isn't submission ID for the current
         # condor_submit form.
-        out = super(CondorSubmitter, self).submit(script)
+        out = super(CondorSubmitter, self).submit(script, submit_command)
         # We only handle single jobs at this point.
         job_id, job_id0 = out.strip().split(" - ")
         assert job_id == job_id0, "bug in job ID extraction logic"
@@ -247,8 +249,8 @@ class LocalSubmitter(Submitter):
         return ["sh"]
 
     @borrowdoc(Submitter)
-    def submit(self, script):
-        out = super(LocalSubmitter, self).submit(script)
+    def submit(self, script, submit_command=None):
+        out = super(LocalSubmitter, self).submit(script, submit_command)
         pid = None
         if out:
             pid = out.strip() or None

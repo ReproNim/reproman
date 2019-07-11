@@ -240,7 +240,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             submission_file,
             executable=True)
 
-        subm_id = self.submitter.submit(submission_file)
+        subm_id = self.submitter.submit(
+            submission_file,
+            submit_command=self.job_spec.get("submit_command"))
         if subm_id is None:
             lgr.warning("No submission ID obtained for %s", self.jobid)
         else:
