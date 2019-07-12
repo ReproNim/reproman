@@ -29,6 +29,7 @@ def test_singularity_resource_image_required():
         Singularity(name='foo')
 
 
+@pytest.mark.xfail(reason="Singularity Hub is down")
 @mark.skipif_no_network
 @mark.skipif_no_singularity
 def test_singularity_resource_class(tmpdir):
