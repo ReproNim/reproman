@@ -322,7 +322,7 @@ def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
             orc.fetch()
 
 
-@pytest.mark.xfail(reason="Singularity Hub is down")
+@pytest.mark.xfail(reason="Singularity Hub is down", run=False)
 @pytest.mark.integration
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladPairRunOrchestrator,
