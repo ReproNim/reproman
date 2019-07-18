@@ -141,6 +141,18 @@ RM_SUB=condor
 
 # Q/TODO: Is there a way to execute/reference the container?
 #   for now doing manually
+datalad create -d . data/mriqc
+
+# Sample run without any parallelization, and doing both levels (participant and group)
+reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
+		 --jp container=containers/bids-mriqc data/bids data/mriqc participant,group
+
+# ultimately we should be able to parallelize across subjects. Here is the sample invocation for subj 02
+# singularity run containers/images/bids/bids-mriqc--0.15.0.sing  \
+#			data/bids/ data/mriqc/ participant --participant_label 02
+# and at the "group" level should have no --participant_label option
+
+
 reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
   --bp 'thing=thing-*' \
   --input '{p[thing]}' \
