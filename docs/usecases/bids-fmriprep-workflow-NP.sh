@@ -2,6 +2,10 @@
 #emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*- 
 #ex: set sts=4 ts=4 sw=4 noet:
 #
+#  This script is intended to demonstrate a sample workflow on a BIDS
+#  dataset using mriqc, fmriprep, and custom analysis pipeline, mimicing the
+#  steps presented in an fmriprep paper currently under review but using
+#  DataLad, ReproNim/containers, and ReproNim.
 #
 # COPYRIGHT: Yaroslav Halchenko 2019
 #
@@ -135,6 +139,8 @@ RM_SUB=condor
 
 # 1. bids-mriqc -- QA
 
+# Q/TODO: Is there a way to execute/reference the container?
+#   for now doing manually
 reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
   --bp 'thing=thing-*' \
   --input '{p[thing]}' \
