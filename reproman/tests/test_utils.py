@@ -572,7 +572,7 @@ def test_merge_dicts():
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
 
 
-def test_parse_backend_parameters():
+def test_parse_kv_list():
     for value, expected in [(["a=b"], {"a": "b"}),
                             (["a="], {"a": ""}),
                             (["a=c=d"], {"a": "c=d"}),
