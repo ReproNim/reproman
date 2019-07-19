@@ -572,6 +572,13 @@ def test_merge_dicts():
     assert merge_dicts([{1: 1}, {2: 2}, {1: 3}]) == {1: 3, 2: 2}
 
 
+@pytest.mark.parametrize("value", [["ab"], ["a=b", "c"]])
+def test_parse_kv_list_invalid(value):
+    with pytest.raises(ValueError) as exc:
+        assert parse_kv_list(value)
+    assert "key=value" in str(exc.value)
+
+
 def test_parse_kv_list():
     for value, expected in [(["a=b"], {"a": "b"}),
                             (["a="], {"a": ""}),
