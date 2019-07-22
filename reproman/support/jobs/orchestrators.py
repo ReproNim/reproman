@@ -407,8 +407,12 @@ def _datalad_check_container(ds, spec):
     """
     container = spec.get("container")
     if container is not None:
+        # TODO: This is repeating too much logic from containers-run. Consider
+        # reworking datalad-container to enable outside use.
         external_versions.check("datalad_container", min_version="0.4.0")
+        from datalad_container.containers_run import get_command_pwds
         from datalad_container.find_container import find_container
+
         try:
             cinfo = find_container(ds, container)
         except ValueError as exc:
@@ -417,9 +421,13 @@ def _datalad_check_container(ds, spec):
         cmdexec = cinfo["cmdexec"]
         image = op.relpath(cinfo["path"], ds.path)
 
+        pwd, _ = get_command_pwds(ds)
+        image_dspath = op.relpath(cinfo.get('parentds', ds.path), pwd)
+
         command_str = spec["command_str"]
         spec["commmand_str_nocontainer"] = command_str
-        spec["command_str"] = cmdexec.format(img=image, cmd=command_str)
+        spec["command_str"] = cmdexec.format(
+            img=image, cmd=command_str, img_dspath=image_dspath)
         spec["extra_inputs"] = [image]
 
 
