@@ -27,7 +27,7 @@ fi
 mkdir -p "$rootdir/outputs"
 
 tar \
+  -C "$workdir" \
   --files-from "$metadir/togethome" \
   -cz \
-  -C "$workdir" \
   -f "$rootdir/outputs/$jobid.tar.gz"
