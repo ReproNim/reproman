@@ -1426,11 +1426,22 @@ def parse_kv_list(params):
     Returns
     -------
     A mapping from backend key to value.
+
+    Raises
+    ------
+    ValueError if item in `params` does not match expected "key=value" format.
     """
     if isinstance(params, collections.Mapping):
         res = params
     elif params:
-        res = dict(p.split("=", 1) for p in params)
+        def check_fmt(item):
+            if "=" not in item:
+                raise ValueError(
+                    "Expected 'key=value' format but got '{}'"
+                    .format(item))
+            return item
+
+        res = dict(p.split("=", 1) for p in map(check_fmt, params))
     else:
         res = {}
     return res
