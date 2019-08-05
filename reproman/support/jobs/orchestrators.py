@@ -597,12 +597,9 @@ class PrepareRemoteDataladMixin(object):
     def _execute_in_wdir(self, command, err_msg=None):
         """Helper to run command in remote working directory.
 
-        TODO: Adjust (or perhaps remove entirely) once
-        `SSHSession.execute_command` supports the `cwd` argument.
-
         Parameters
         ----------
-        command : str
+        command : list of str or str
         err_msg : optional
             Message to use if an OrchestratorError is raised.
 
@@ -614,9 +611,10 @@ class PrepareRemoteDataladMixin(object):
         ------
         OrchestratorError if command fails.
         """
-        prefix = "cd '{}' && ".format(self.working_directory)
         try:
-            out, _ = self.session.execute_command(prefix + command)
+            out, _ = self.session.execute_command(
+                command,
+                cwd=self.working_directory)
         except CommandError as exc:
             raise OrchestratorError(
                 str(exc) if err_msg is None else err_msg)
