@@ -22,6 +22,7 @@ This module has three main parts:
 import abc
 import collections
 from contextlib import contextmanager
+import json
 import logging
 import os
 import os.path as op
@@ -619,6 +620,10 @@ class PrepareRemoteDataladMixin(object):
             raise OrchestratorError(
                 str(exc) if err_msg is None else err_msg)
         return out
+
+    def _execute_datalad_json_command(self, subcommand):
+        out = self._execute_in_wdir(["datalad", "-f", "json"] + subcommand)
+        return map(json.loads, out.splitlines())
 
     @property
     def status(self):
