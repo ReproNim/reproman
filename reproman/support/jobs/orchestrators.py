@@ -704,9 +704,11 @@ class PrepareRemoteDataladMixin(object):
         # autoenabling. Temporarily work around this issue, though this
         # should very likely be addressed in DataLad. And if this is here
         # to stay, we should avoid this call for non-annex datasets.
+        lgr.info("Adjusting state of remote dataset")
         self._execute_in_wdir(["git", "annex", "init"])
         for res in self._execute_datalad_json_command(
                 ["subdatasets", "--fulfilled=true", "--recursive"]):
+            lgr.debug("Adjusting state of %s", res["path"])
             cmds = [["git", "checkout", res["revision"]],
                     ["git", "annex", "init"]]
             for cmd in cmds:
