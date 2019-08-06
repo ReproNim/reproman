@@ -690,6 +690,27 @@ class PrepareRemoteDataladMixin(object):
                      target_commit, self.working_directory)
             self._execute_in_wdir("git checkout {}".format(target_commit))
 
+    def _fix_up_dataset(self):
+        """Try to get datataset and subdatasets into the correct state.
+        """
+        self._checkout_target()
+        # 'datalad publish' does not autoenable remotes, and 'datalad
+        # create-sibling' calls 'git annex init' too early to trigger
+        # autoenabling. Temporarily work around this issue, though this
+        # should very likely be addressed in DataLad. And if this is here
+        # to stay, we should avoid this call for non-annex datasets.
+        self._execute_in_wdir(["git", "annex", "init"])
+        for res in self._execute_datalad_json_command(
+                ["subdatasets", "--fulfilled=true", "--recursive"]):
+            try:
+                out, _ = self.session.execute_command(
+                    ["git", "annex", "init"],
+                    cwd=res["path"])
+            except CommandError as exc:
+                raise OrchestratorError(str(exc))
+
+
+
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
         """
@@ -763,22 +784,7 @@ class PrepareRemoteDataladMixin(object):
                     "'datalad update -s {} --merge --recursive' first"
                     .format(resource.name))
 
-            self._checkout_target()
-
-            # 'datalad publish' does not autoenable remotes, and 'datalad
-            # create-sibling' calls 'git annex init' too early to trigger
-            # autoenabling. Temporarily work around this issue, though this
-            # should very likely be addressed in DataLad. And if this is here
-            # to stay, we should avoid this call for non-annex datasets.
-            self._execute_in_wdir(["git", "annex", "init"])
-            for res in self._execute_datalad_json_command(
-                    ["subdatasets", "--fulfilled=true", "--recursive"]):
-                try:
-                    out, _ = self.session.execute_command(
-                        ["git", "annex", "init"],
-                        cwd=res["path"])
-                except CommandError as exc:
-                    raise OrchestratorError(str(exc))
+            self._fix_up_dataset()
 
             if inputs:
                 lgr.info("Making inputs available")
