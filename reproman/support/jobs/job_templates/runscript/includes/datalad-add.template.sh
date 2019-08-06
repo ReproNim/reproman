@@ -10,4 +10,4 @@ msg={{ shlex_quote(message) }}
 {% else %}
 msg="[ReproMan] save results for $jobid"
 {% endif %}
-datalad add -m"$msg" . .reproman >/dev/null 2>&1
+datalad add --recursive -m"$msg" . .reproman >/dev/null 2>&1
