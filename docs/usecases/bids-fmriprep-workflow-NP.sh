@@ -159,7 +159,7 @@ RM_SUB=condor
 
 # Q/TODO: Is there a way to execute/reference the container?
 #   for now doing manually
-datalad create -d . data/mriqc
+datalad create -d . -c text2git data/mriqc
 
 : ${RUNNER:=reproman}
 
