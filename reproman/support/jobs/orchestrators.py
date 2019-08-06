@@ -694,6 +694,11 @@ class PrepareRemoteDataladMixin(object):
         """Try to get datataset and subdatasets into the correct state.
         """
         self._checkout_target()
+        # fixup 1: Check out target commit in subdatasets. This should later be
+        # replaced the planned Datalad functionality to get an entire dataset
+        # hierarchy to a recorded state.
+        #
+        # fixup 2: Autoenable remotes:
         # 'datalad publish' does not autoenable remotes, and 'datalad
         # create-sibling' calls 'git annex init' too early to trigger
         # autoenabling. Temporarily work around this issue, though this
@@ -702,14 +707,14 @@ class PrepareRemoteDataladMixin(object):
         self._execute_in_wdir(["git", "annex", "init"])
         for res in self._execute_datalad_json_command(
                 ["subdatasets", "--fulfilled=true", "--recursive"]):
-            try:
-                out, _ = self.session.execute_command(
-                    ["git", "annex", "init"],
-                    cwd=res["path"])
-            except CommandError as exc:
-                raise OrchestratorError(str(exc))
-
-
+            cmds = [["git", "checkout", res["revision"]],
+                    ["git", "annex", "init"]]
+            for cmd in cmds:
+                try:
+                    out, _ = self.session.execute_command(
+                        cmd, cwd=res["path"])
+                except CommandError as exc:
+                    raise OrchestratorError(str(exc))
 
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
