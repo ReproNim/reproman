@@ -29,6 +29,21 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #  THE SOFTWARE.
 #
+#  Description
+#
+#  Environment variables
+#   - RUNNER - datalad or reproman
+#   - CONTAINERS_REPO - an alternative (could be local) location for containers
+#                       repository
+#   - INPUT_DATASET_REPO - an alternative (could be local) location for input
+#                       BIDS dataset
+#
+#  Sample invocations
+#   - Pointing to the existing local clones of input repositories for faster
+#     "get"
+#     RUNNER=datalad CONTAINERS_REPO=~/proj/repronim/containers \
+#       INPUT_DATASET_REPO=$PWD/bids-fmriprep-workflow-NP/ds000003-demo \
+#       ./bids-fmriprep-workflow-NP.sh bids-fmriprep-workflow-NP/out2
 
 set -eu
 
@@ -44,7 +59,10 @@ cd "$STUDY"
 # and datalad containers-run
 #
 # TODO: specific version, TODO - reference datalad issue
-datalad install -d . ///repronim/containers
+
+# Local copy to avoid heavy network traffic while testing locally could be
+# referenced in CONTAINERS_REPO env var
+datalad install -d . -s ${CONTAINERS_REPO:-///repronim/containers}
 
 # possibly downgrade versions to match the ones used in the "paper"
 # TODO see  https://github.com/ReproNim/containers/issues/8 for relevant discussion
@@ -71,7 +89,7 @@ mkdir data
 
 # For now we will work with minimized version with only 2 subjects
 # datalad install -d . -s ///openneuro/ds000003 data/bids
-datalad install -d . -s https://github.com/ReproNim/ds000003-demo data/bids
+datalad install -d . -s ${INPUT_DATASET_REPO:-https://github.com/ReproNim/ds000003-demo} data/bids
 
 
 #
@@ -143,9 +161,27 @@ RM_SUB=condor
 #   for now doing manually
 datalad create -d . data/mriqc
 
+: ${RUNNER:=reproman}
+
+unknown_runner () {
+    echo "ERROR: Unknown runner $RUNNER.  Known reproman and datalad" >&2
+    exit 1
+}
+
 # Sample run without any parallelization, and doing both levels (participant and group)
-reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
-		 --jp container=containers/bids-mriqc data/bids data/mriqc participant,group
+RUNNER_ARGS=( --input 'data/bids' --output data/mriqc )
+MRIQC_ARGS=( "{inputs}" "{outputs}" participant group )
+case "$RUNNER" in
+    reproman)
+        reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
+	    	 --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}";;
+	datalad)
+        datalad containers-run -n containers/bids-mriqc \
+            "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}";;
+    *) unknown_runner;;
+esac
+
+exit 0  # done for now
 
 # ultimately we should be able to parallelize across subjects. Here is the sample invocation for subj 02
 # singularity run containers/images/bids/bids-mriqc--0.15.0.sing  \
