@@ -695,8 +695,8 @@ class PrepareRemoteDataladMixin(object):
         """
         self._checkout_target()
         # fixup 1: Check out target commit in subdatasets. This should later be
-        # replaced the planned Datalad functionality to get an entire dataset
-        # hierarchy to a recorded state.
+        # replaced by the planned Datalad functionality to get an entire
+        # dataset hierarchy to a recorded state.
         #
         # fixup 2: Autoenable remotes:
         # 'datalad publish' does not autoenable remotes, and 'datalad
