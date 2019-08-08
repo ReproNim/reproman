@@ -80,18 +80,17 @@ class SSH(Resource):
         # See: https://github.com/ReproNim/reproman/commit/3807f1287c39ea2393bae26803e6da8122ac5cff
         from fabric import Connection
         from paramiko import AuthenticationException
-        key_filename = None
+        connect_kwargs = {}
         if self.key_filename:
-            key_filename = [self.key_filename]
+            connect_kwargs["key_filename"] = [self.key_filename]
+        if password:
+            connect_kwargs["password"] = password
 
         self._connection = Connection(
             self.host,
             user=self.user,
             port=self.port,
-            connect_kwargs={
-                'key_filename': key_filename,
-                'password': password
-            }
+            connect_kwargs=connect_kwargs
         )
 
         if self.key_filename:
