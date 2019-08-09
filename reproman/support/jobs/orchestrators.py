@@ -22,6 +22,7 @@ This module has three main parts:
 import abc
 import collections
 from contextlib import contextmanager
+import json
 import logging
 import os
 import os.path as op
@@ -103,6 +104,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         else:
             self.jobid = "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                         str(uuid.uuid4())[:4])
+            self._prepare_spec()
 
         self.template = None
 
@@ -171,67 +173,86 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "submission_id": self.submitter.submission_id}
         return dict(to_dump, **(self.template.kwds if self.template else {}))
 
+    def _prepare_spec(self):
+        """Prepare the spec for the run.
+
+        At the moment, this involves constructing the "command_array",
+        "inputs_array", and "outputs_array" keys.
+        """
+        from reproman.support.globbedpaths import GlobbedPaths
+
+        spec = self.job_spec
+        if spec.get("batch_parameters"):
+            raise OrchestratorError(
+                "Batch parameters are currently only supported "
+                "in DataLad orchestrators")
+
+        for key in ["inputs", "outputs"]:
+            if key in spec:
+                gp = GlobbedPaths(spec[key])
+                spec["{}_array".format(key)] = [gp.expand(dot=False)]
+        if "command_str" in spec:
+            spec["command_array"] = [spec["command_str"]]
+        # Note: This doesn't adjust the command. We currently don't support any
+        # datalad-run-like command formatting.
+
     @abc.abstractmethod
     def prepare_remote(self):
         """Prepare remote for run.
         """
 
-    def _put_as_executable(self, text, target):
-        with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
-            tfh.write(text)
-        os.chmod(tfh.name, 0o755)
-        self.session.put(tfh.name, target)
-        os.unlink(tfh.name)
-
-    def _execute_in_wdir(self, command, err_msg=None):
-        """Helper to run command in remote working directory.
-
-        TODO: Adjust (or perhaps remove entirely) once
-        `SSHSession.execute_command` supports the `cwd` argument.
+    def _put_text(self, text, target, executable=False):
+        """Put file with content `text` at `target`.
 
         Parameters
         ----------
-        command : str
-        err_msg : optional
-            Message to use if an OrchestratorError is raised.
-
-        Returns
-        -------
-        standard output
-
-        Raises
-        ------
-        OrchestratorError if command fails.
+        text : str
+            Content for file.
+        target : str
+            Path on resource (passed as destination to `session.put`).
+        executable : boolean, optional
+            Whether to mark file as executable.
         """
-        prefix = "cd '{}' && ".format(self.working_directory)
-        try:
-            out, _ = self.session.execute_command(prefix + command)
-        except CommandError as exc:
-            raise OrchestratorError(
-                str(exc) if err_msg is None else err_msg)
-        return out
+        with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
+            tfh.write(text)
+        if executable:
+            os.chmod(tfh.name, 0o755)
+        self.session.put(tfh.name, target)
+        os.unlink(tfh.name)
 
     def submit(self):
         """Submit the job with `submitter`.
         """
         lgr.info("Submitting %s", self.jobid)
-        templ = Template(**dict(self.job_spec,
-                                jobid=self.jobid,
-                                root_directory=self.root_directory,
-                                working_directory=self.working_directory,
-                                meta_directory=self.meta_directory))
+        templ = Template(
+            **dict(self.job_spec,
+                   jobid=self.jobid,
+                   num_subjobs=len(self.job_spec["command_array"]),
+                   root_directory=self.root_directory,
+                   working_directory=self.working_directory,
+                   meta_directory=self.meta_directory,
+                   meta_directory_rel=op.relpath(self.meta_directory,
+                                                 self.working_directory)))
         self.template = templ
-        self._put_as_executable(
+        self._put_text(
             templ.render_runscript("{}.template.sh".format(
                 self.template_name or self.name)),
-            op.join(self.meta_directory, "runscript"))
+            op.join(self.meta_directory, "runscript"),
+            executable=True)
 
         submission_file = op.join(self.meta_directory, "submit")
-        self._put_as_executable(
+        self._put_text(
             templ.render_submission("{}.template".format(self.submitter.name)),
-            submission_file)
+            submission_file,
+            executable=True)
 
-        subm_id = self.submitter.submit(submission_file)
+        self._put_text(
+            "\0".join(self.job_spec["command_array"]),
+            op.join(self.meta_directory, "command-array"))
+
+        subm_id = self.submitter.submit(
+            submission_file,
+            submit_command=self.job_spec.get("submit_command"))
         if subm_id is None:
             lgr.warning("No submission ID obtained for %s", self.jobid)
         else:
@@ -241,15 +262,20 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                 subm_id,
                 op.join(self.meta_directory, "idmap")))
 
-    @property
-    def status(self):
-        """Get information from job status file.
-        """
-        status_file = op.join(self.meta_directory, "status")
+    def get_status(self, subjob=0):
+        status_file = op.join(self.meta_directory,
+                              "status.{:d}".format(subjob))
         status = "unknown"
         if self.session.exists(status_file):
             status = self.session.read(status_file).strip()
         return status
+
+    @property
+    def status(self):
+        """Get information from job status file.
+        """
+        # FIXME: How to handle subjobs?
+        return self.get_status()
 
     @property
     def has_completed(self):
@@ -258,28 +284,62 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self.session.exists(
             op.join(self.root_directory, "completed", self.jobid))
 
+    @property
+    def failed_subjobs(self):
+        """List of failed subjobs (represented by index, starting with 0).
+        """
+        failed_dir = op.join(self.meta_directory, "failed")
+        try:
+            stdout, _ = self.session.execute_command(["ls", failed_dir])
+        except CommandError:
+            if self.session.exists(failed_dir):
+                # This shouldn't have failed.
+                raise OrchestratorError(CommandError)
+            return []
+        return list(map(int, stdout.strip().split()))
+
+    @staticmethod
+    def _log_failed(jobid, metadir, failed):
+        failed = list(sorted(failed))
+        num_failed = len(failed)
+        lgr.warning("%d subjob%s failed. Check files in %s",
+                    num_failed,
+                    "" if num_failed == 1 else "s",
+                    metadir)
+
+        if num_failed == 1:
+            stderr_suffix = str(failed[0])
+        elif num_failed > 6:
+            # Arbitrary cut-off to avoid listing excessively long.
+            stderr_suffix = "*"
+        else:
+            stderr_suffix = "{{{}}}".format(
+                ",".join(str(i) for i in failed))
+        # FIXME: This will be inaccurate for PBS. Uses "-" rather than ".".
+        lgr.info("%s stderr: %s",
+                 jobid,
+                 op.join(metadir, "stderr." + stderr_suffix))
+
     def log_failed(self, func=None):
         """Display a log message about failed status.
 
         Parameters
         ----------
         func : callable or None, optional
-            If a failed status is detected, call this function with one
-            argument, the local metadata directory.
+            If a failed status is detected, call this function with two
+            arguments, the local metadata directory and a list of failed
+            subjobs.
         """
-        status = self.status
-        if status.startswith("failed"):
+        failed = self.failed_subjobs
+        if failed:
             local_metadir = op.join(
                 self.local_directory,
                 op.relpath(op.join(self.meta_directory),
                            self.working_directory),
                 "")
-            lgr.warning("Job status: %r. Check files in %s",
-                        status, local_metadir)
-            lgr.info("%s stderr: %s",
-                     self.jobid, op.join(local_metadir, "stderr"))
+            self._log_failed(self.jobid, local_metadir, failed)
             if func:
-                func(local_metadir)
+                func(local_metadir, failed)
 
     def follow(self):
         """Follow command, exiting when post-command processing completes."""
@@ -290,6 +350,45 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             raise OrchestratorError(
                 "Post-processing failed for {} [status: {}] ({})"
                 .format(self.jobid, self.status, self.working_directory))
+
+    def _get_io_set(self, which, subjobs):
+        spec = self.job_spec
+        if subjobs is None:
+            subjobs = range(len(spec["command_array"]))
+        key = which + "_array"
+        values = spec.get(key)
+        if not values:
+            return set()
+        return {fname for i in subjobs for fname in values[i]}
+
+    def get_inputs(self, subjobs=None):
+        """Return input files.
+
+        Parameters
+        ----------
+        subjobs : iterable of int or None
+            Restrict results to these subjobs.
+
+        Returns
+        -------
+        Set of str
+        """
+        return self._get_io_set("inputs", subjobs).union(
+            self._get_io_set("extra_inputs", subjobs))
+
+    def get_outputs(self, subjobs=None):
+        """Return output files.
+
+        Parameters
+        ----------
+        subjobs : iterable of int or None
+            Restrict results to these subjobs.
+
+        Returns
+        -------
+        Set of str
+        """
+        return self._get_io_set("outputs", subjobs)
 
     @abc.abstractmethod
     def fetch(self):
@@ -309,13 +408,12 @@ def _datalad_check_container(ds, spec):
     """
     container = spec.get("container")
     if container is not None:
-        try:
-            from datalad_container.find_container import find_container
-        except ImportError:
-            raise OrchestratorError(
-                "Specified container '{}' "
-                "but datalad-container extension is not installed"
-                .format(container))
+        # TODO: This is repeating too much logic from containers-run. Consider
+        # reworking datalad-container to enable outside use.
+        external_versions.check("datalad_container", min_version="0.4.0")
+        from datalad_container.containers_run import get_command_pwds
+        from datalad_container.find_container import find_container
+
         try:
             cinfo = find_container(ds, container)
         except ValueError as exc:
@@ -324,37 +422,44 @@ def _datalad_check_container(ds, spec):
         cmdexec = cinfo["cmdexec"]
         image = op.relpath(cinfo["path"], ds.path)
 
+        pwd, _ = get_command_pwds(ds)
+        image_dspath = op.relpath(cinfo.get('parentds', ds.path), pwd)
+
         command_str = spec["command_str"]
         spec["commmand_str_nocontainer"] = command_str
-        spec["command_str"] = cmdexec.format(img=image, cmd=command_str)
-
-        # TODO: When datalad-container starts passing the image as
-        # extra_inputs, we should handle that here (and in fetch below).
-        inputs = spec.get("inputs", [])
-        if image not in inputs:
-            spec["inputs"] = inputs + [image]
+        spec["command_str"] = cmdexec.format(
+            img=image, cmd=command_str, img_dspath=image_dspath)
+        spec["extra_inputs"] = [image]
 
 
 def _datalad_format_command(ds, spec):
     """Adjust `spec` to use `datalad run`-style formatting.
 
-    The "inputs", "outputs", and "command_str" keys in `spec` are replaced and
-    the original are moved under the `*_unexpanded` key.
+    Create "*_array" keys and format commands with DataLad's `format_command`.
     """
     from datalad.interface.run import format_command
+    # DataLad's GlobbedPaths _should_ be the same as ours, but let's use
+    # DataLad's to avoid potential discrepancies with datalad-run's behavior.
     from datalad.interface.run import GlobbedPaths
 
-    fmt_kwds = {}
-    for key in ["inputs", "outputs"]:
-        if key in spec:
-            spec["{}_unexpanded".format(key)] = spec[key]
-            gp = GlobbedPaths(spec[key])
-            spec[key] = gp.expand(dot=False)
-            fmt_kwds[key] = gp
+    batch_parameters = spec.get("batch_parameters") or [{}]
+    spec["command_array"] = []
+    spec["inputs_array"] = []
+    spec["outputs_array"] = []
+    for cp in batch_parameters:
+        fmt_kwds = {}
+        for key in ["inputs", "outputs"]:
+            if key in spec:
+                parametrized = [io.format(p=cp) for io in spec[key]]
+                gp = GlobbedPaths(parametrized)
+                spec["{}_array".format(key)].append(gp.expand(dot=False))
+                fmt_kwds[key] = gp
+        fmt_kwds["p"] = cp
+        spec["command_array"].append(format_command(ds, spec["command_str"],
+                                                    **fmt_kwds))
 
-    cmd_expanded = format_command(ds, spec["command_str"], **fmt_kwds)
-    spec["command_str_unexpanded"] = spec["command_str"]
-    spec["command_str"] = cmd_expanded
+    exinputs = spec.get("extra_inputs", [])
+    spec["extra_inputs_array"] = [exinputs] * len(batch_parameters)
 
 
 class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
@@ -408,21 +513,11 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         d["head"] = self.head
         return d
 
-    @property
-    def status(self):
-        """Like Orchestrator.status, but inspect the job's git ref if needed.
-        """
-        status = super(DataladOrchestrator, self).status
-        if status == "unknown":
-            # The local tree might be different because of another just. Check
-            # the ref for the status.
-            status_from_ref = self._execute_in_wdir(
-                "git cat-file -p {}:{}"
-                .format(self.job_refname,
-                        op.relpath(op.join(self.meta_directory, "status"),
-                                   self.working_directory)))
-            status = status_from_ref.strip() or status
-        return status
+    def _prepare_spec(self):
+        # Disable. _datalad_format_command() and _datalad_format_command()
+        # handle this in __init__(). We can't just call those here because the
+        # self.ds wouldn't be defined yet.
+        pass
 
     def _configure_repo(self):
         gitignore = op.join(self.ds.path, ".reproman", "jobs", ".gitignore")
@@ -430,14 +525,15 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
             gitignore,
             ("# Automatically created by ReproMan.\n"
              "# Do not change manually.\n"
-             "log\n"))
+             "log.*\n"))
 
         gitattrs = op.join(self.ds.path, ".reproman", "jobs", ".gitattributes")
         write_update(
             gitattrs,
             ("# Automatically created by ReproMan.\n"
              "# Do not change manually.\n"
-             "status annex.largefiles=nothing\n"
+             "status.[0-9]* annex.largefiles=nothing\n"
+             "**/failed/* annex.largefiles=nothing\n"
              "idmap annex.largefiles=nothing\n"))
 
         self.ds.add([gitignore, gitattrs],
@@ -462,11 +558,7 @@ class PrepareRemotePlainMixin(object):
         if not session.exists(self.root_directory):
             session.mkdir(self.root_directory, parents=True)
 
-        inputs = self.job_spec.get("inputs")
-        if not inputs:
-            return
-
-        for i in inputs:
+        for i in self.get_inputs():
             session.put(i, op.join(self.working_directory,
                                    op.relpath(i, self.local_directory)))
 
@@ -503,6 +595,78 @@ def _format_ssh_url(user, host, port, path):
 
 class PrepareRemoteDataladMixin(object):
 
+    def _execute_in_wdir(self, command, err_msg=None):
+        """Helper to run command in remote working directory.
+
+        Parameters
+        ----------
+        command : list of str or str
+        err_msg : optional
+            Message to use if an OrchestratorError is raised.
+
+        Returns
+        -------
+        standard output
+
+        Raises
+        ------
+        OrchestratorError if command fails.
+        """
+        try:
+            out, _ = self.session.execute_command(
+                command,
+                cwd=self.working_directory)
+        except CommandError as exc:
+            raise OrchestratorError(
+                str(exc) if err_msg is None else err_msg)
+        return out
+
+    def _execute_datalad_json_command(self, subcommand):
+        out = self._execute_in_wdir(["datalad", "-f", "json"] + subcommand)
+        return map(json.loads, out.splitlines())
+
+    @property
+    def status(self):
+        """Like Orchestrator.status, but inspect the job's git ref if needed.
+        """
+        status = super(DataladOrchestrator, self).status
+        if status == "unknown":
+            # The local tree might be different because of another just. Check
+            # the ref for the status.
+            status_from_ref = self._execute_in_wdir(
+                "git cat-file -p {}:{}"
+                .format(self.job_refname,
+                        # FIXME: How to handle subjobs?
+                        op.relpath(op.join(self.meta_directory, "status.0"),
+                                   self.working_directory)))
+            status = status_from_ref.strip() or status
+        return status
+
+    @property
+    def failed_subjobs(self):
+        """Like Orchestrator.failed_subjobs, but inspect the job's git ref if needed.
+        """
+        failed = super(DataladOrchestrator, self).failed_subjobs
+        if not failed:
+            meta_tree = "{}:{}".format(
+                self.job_refname,
+                op.relpath(self.meta_directory, self.working_directory))
+            try:
+                failed_ref = self._execute_in_wdir(
+                    "git ls-tree {}".format(op.join(meta_tree, "failed")))
+            except OrchestratorError as exc:
+                # Most likely, there were no failed subjobs and the "failed"
+                # tree just doesn't exist. Let's see if we can find the meta
+                # directory, which should always be there.
+                try:
+                    self._execute_in_wdir("git ls-tree {}".format(meta_tree))
+                except OrchestratorError:
+                    # All right, something looks off.
+                    raise exc
+            else:
+                failed = list(map(int, failed_ref.strip().split())) or failed
+        return failed
+
     def _assert_clean_repo(self):
         if self._execute_in_wdir("git status --porcelain"):
             raise OrchestratorError("Remote repository {} is dirty"
@@ -526,6 +690,34 @@ class PrepareRemoteDataladMixin(object):
                      target_commit, self.working_directory)
             self._execute_in_wdir("git checkout {}".format(target_commit))
 
+    def _fix_up_dataset(self):
+        """Try to get datataset and subdatasets into the correct state.
+        """
+        self._checkout_target()
+        # fixup 1: Check out target commit in subdatasets. This should later be
+        # replaced by the planned Datalad functionality to get an entire
+        # dataset hierarchy to a recorded state.
+        #
+        # fixup 2: Autoenable remotes:
+        # 'datalad publish' does not autoenable remotes, and 'datalad
+        # create-sibling' calls 'git annex init' too early to trigger
+        # autoenabling. Temporarily work around this issue, though this
+        # should very likely be addressed in DataLad. And if this is here
+        # to stay, we should avoid this call for non-annex datasets.
+        lgr.info("Adjusting state of remote dataset")
+        self._execute_in_wdir(["git", "annex", "init"])
+        for res in self._execute_datalad_json_command(
+                ["subdatasets", "--fulfilled=true", "--recursive"]):
+            lgr.debug("Adjusting state of %s", res["path"])
+            cmds = [["git", "checkout", res["revision"]],
+                    ["git", "annex", "init"]]
+            for cmd in cmds:
+                try:
+                    out, _ = self.session.execute_command(
+                        cmd, cwd=res["path"])
+                except CommandError as exc:
+                    raise OrchestratorError(str(exc))
+
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
         """
@@ -540,7 +732,7 @@ class PrepareRemoteDataladMixin(object):
         resource = self.resource
         session = self.session
 
-        inputs = self.job_spec.get("inputs")
+        inputs = list(self.get_inputs())
         if isinstance(session, SSHSession):
             if resource.key_filename:
                 dl_version = external_versions["datalad"]
@@ -599,9 +791,10 @@ class PrepareRemoteDataladMixin(object):
                     "'datalad update -s {} --merge --recursive' first"
                     .format(resource.name))
 
-            self._checkout_target()
+            self._fix_up_dataset()
 
             if inputs:
+                lgr.info("Making inputs available")
                 try:
                     # TODO: Whether we try this `get` should be configurable.
                     self._execute_in_wdir("datalad get {}".format(
@@ -640,21 +833,24 @@ class FetchPlainMixin(object):
     def fetch(self):
         """Get outputs from remote.
         """
-        outputs = self.job_spec.get("outputs", [])
-        for o in outputs:
+        for o in self.get_outputs():
             self.session.get(
                 o if op.isabs(o) else op.join(self.working_directory, o),
                 # Make sure directory has trailing slash so that get doesn't
                 # treat it as the file.
                 op.join(self.local_directory, ""))
-        for f in ["status", "stdout", "stderr"]:
-            self.session.get(
-                op.join(self.meta_directory, f),
-                op.join(self.local_directory,
-                        op.relpath(self.meta_directory,
-                                   self.working_directory),
-                        ""))
-        self.log_failed()
+
+        def get_failed_meta(mdir, failed):
+            for idx in failed:
+                for f in ["status", "stdout", "stderr"]:
+                    self.session.get(
+                        op.join(self.meta_directory,
+                                "{}.{:d}".format(f, idx)),
+                        op.join(self.local_directory,
+                                op.relpath(self.meta_directory,
+                                           self.working_directory),
+                                ""))
+        self.log_failed(get_failed_meta)
 
 
 @contextmanager
@@ -717,7 +913,7 @@ class FetchDataladPairMixin(object):
             self.ds.update(sibling=self.resource.name,
                            merge=True, recursive=True)
             with head_at(self.ds, ref):
-                outputs = self.job_spec.get("outputs")
+                outputs = list(self.get_outputs())
                 if outputs:
                     self.ds.get(path=outputs)
             if not self.ds.repo.is_ancestor(ref, "HEAD"):
@@ -735,7 +931,7 @@ class FetchDataladPairMixin(object):
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
 
-        def get_metadir(mdir):
+        def get_metadir(mdir, _):
             if self.resource.type == "ssh":
                 self.ds.get(path=mdir)
 
@@ -766,15 +962,32 @@ class FetchDataladRunMixin(object):
 
                 from datalad.interface.run import run_command
                 lgr.info("Creating run commit in %s", self.ds.path)
+
+                cmds = self.job_spec["command_array"]
+                if len(cmds) == 1:
+                    cmd = cmds[0]
+                else:
+                    # FIXME: Can't use unexpanded command because of unknown
+                    # placeholders.
+                    cmd = self.jobid
+
                 for res in run_command(
-                        inputs=self.job_spec.get("inputs_unexpanded"),
-                        outputs=self.job_spec.get("outputs_unexpanded"),
+                        # FIXME: How to represent inputs and outputs given that
+                        # they are formatted per subjob and then expanded by
+                        # glob?
+                        inputs=self.job_spec.get("inputs"),
+                        extra_inputs=self.job_spec.get("extra_inputs"),
+                        outputs=self.job_spec.get("outputs"),
                         inject=True,
                         extra_info={"reproman_jobid": self.jobid},
                         message=self.job_spec.get("message"),
-                        cmd=self.job_spec["command_str_unexpanded"]):
+                        cmd=cmd):
                     # Oh, if only I were a datalad extension.
-                    pass
+                    if res["status"] in ["impossible", "error"]:
+                        raise OrchestratorError(
+                            "Making datalad-run commit failed: {}"
+                            .format(res["message"]))
+
                 ref = self.job_refname
                 if moved:
                     lgr.info("Results stored on %s. "

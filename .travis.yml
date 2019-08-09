@@ -85,6 +85,7 @@ install:
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
   # for SVN tests (SVNRepoShim._ls_files_command())
   - sudo apt-get install sqlite3
+  - sudo apt-get install moreutils  # for concurrent jobs with local orchestrator
   - travis_retry sudo eatmydata apt-get install singularity-container
   - if [ ! -z "${INSTALL_DATALAD:-}" ]; then tools/ci/install_datalad; fi
   - if [ ! -z "${INSTALL_CONDOR:-}" ]; then tools/ci/install_condor; fi

@@ -1,1 +1,1 @@
-git update-ref refs/reproman/{{ jobid }} HEAD
+git update-ref refs/reproman/$jobid HEAD

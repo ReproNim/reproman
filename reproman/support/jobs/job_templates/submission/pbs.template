@@ -1,7 +1,7 @@
 #!/bin/sh
 
-#PBS -o {{ meta_directory }}/stdout
-#PBS -e {{ meta_directory }}/stderr
+#PBS -o {{ shlex_quote(meta_directory) }}/stdout
+#PBS -e {{ shlex_quote(meta_directory) }}/stderr
 {% if walltime is defined %}
 #PBS -l walltime={{ walltime }}
 {% endif %}
@@ -11,5 +11,10 @@
 {% if num_nodes is defined or num_processes is defined %}
 #PBS -l nodes={{ num_nodes|default(1, true) }}:ppn={{ num_processes|default(1, true) }}
 {% endif %}
+{% if num_subjobs == 1 %}
+#PBS -t 0
+{% else %}
+#PBS -t 0-{{ num_subjobs - 1}}
+{% endif %}
 
-{{ meta_directory }}/runscript
+{{ shlex_quote(meta_directory) }}/runscript ${PBS_ARRAYID}

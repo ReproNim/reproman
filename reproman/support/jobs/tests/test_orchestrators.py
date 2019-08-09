@@ -207,6 +207,42 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
             assert open("out").read() == "content\nmore\n"
 
 
+@pytest.mark.parametrize("failed",
+                         [[0],
+                          [0, 10],
+                          list(range(10))],
+                         # ATTN: The id function needs to return a string until
+                         # pytest v4.2.1 (specifically 4c7ddb8d9).
+                         ids=lambda x: str(len(x)))
+def test_orc_log_failed(failed):
+    nfailed = len(failed)
+    with swallow_logs(new_level=logging.INFO) as log:
+        orcs.Orchestrator._log_failed("jid", "metadir", failed)
+        assert "{} subjob".format(nfailed) in log.out
+        assert "jid stderr:" in log.out
+        if nfailed > 6:
+            assert "stderr.*" in log.out
+        elif nfailed == 1:
+            assert "stderr.{}".format(failed[0]) in log.out
+        else:
+            assert "stderr.{" in log.out
+
+
+@pytest.mark.integration
+def test_orc_plain_failure(tmpdir, job_spec, shell):
+    job_spec["command_str"] = "iwillfail"
+    job_spec["inputs"] = []
+    local_dir = str(tmpdir)
+    with chpwd(local_dir):
+        orc = orcs.PlainOrchestrator(shell, submission_type="local",
+                                     job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+    for fname in "status", "stderr", "stdout":
+        assert op.exists(op.join(orc.meta_directory, fname + ".0"))
+
+
 @pytest.mark.integration
 def test_orc_datalad_run_failed(job_spec, dataset, shell):
     job_spec["command_str"] = "iwillfail"
@@ -220,7 +256,7 @@ def test_orc_datalad_run_failed(job_spec, dataset, shell):
         orc.follow()
         with swallow_logs(new_level=logging.INFO) as log:
             orc.fetch()
-            assert "Job status" in log.out
+            assert "1 subjob failed" in log.out
             assert "stderr:" in log.out
 
 
@@ -248,7 +284,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
             orc.follow()
 
         # The status for the first one is now out-of-tree ...
-        assert not op.exists(op.join(orc0.meta_directory, "status"))
+        assert not op.exists(op.join(orc0.meta_directory, "status.0"))
         # but we can still get it.
         assert orc0.status == "succeeded"
 
@@ -296,8 +332,8 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
         orc1 = do(js1)
 
         # Ran on top, so both exist in working tree.
-        assert op.exists(op.join(orc0.meta_directory, "status"))
-        assert op.exists(op.join(orc1.meta_directory, "status"))
+        assert op.exists(op.join(orc0.meta_directory, "status.0"))
+        assert op.exists(op.join(orc1.meta_directory, "status.0"))
 
         ref0 = "refs/reproman/{}".format(orc0.jobid)
         ref1 = "refs/reproman/{}".format(orc1.jobid)
@@ -470,3 +506,42 @@ def test_dataset_as_dict(shell, dataset, job_spec):
     # OrchestratorError.asdict() with.
     assert "head" in d
     assert "dataset_id" in d
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("orc_class",
+                         [orcs.DataladLocalRunOrchestrator,
+                          orcs.DataladPairOrchestrator,
+                          orcs.DataladPairRunOrchestrator],
+                         ids=["orc:local-run", "orc:pair-run", "orc-pair"])
+@pytest.mark.parametrize("sub_type",
+                         ["local",
+                          pytest.param("condor", marks=mark.skipif_no_condor)],
+                         ids=["sub:local", "sub:condor"])
+def test_orc_datalad_concurrent(job_spec, dataset, shell, orc_class, sub_type):
+    names = ["paul", "rosa"]
+
+    job_spec["inputs"] = ["{p[name]}.in"]
+    job_spec["outputs"] = ["{p[name]}.out"]
+    job_spec["command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
+    job_spec["batch_parameters"] = [{"name": n} for n in names]
+
+    in_files = [n + ".in" for n in names]
+    for fname in in_files:
+        with open(op.join(dataset.path, fname), "w") as fh:
+            fh.write(fname[0])
+    dataset.save(path=in_files)
+
+    with chpwd(dataset.path):
+        orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+
+        orc.fetch()
+
+        out_files = [n + ".out" for n in names]
+        for ofile in out_files:
+            assert dataset.repo.file_has_content(ofile)
+            with open(ofile) as ofh:
+                assert ofh.read() == ofile[0] * 2

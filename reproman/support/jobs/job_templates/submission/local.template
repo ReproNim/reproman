@@ -1,4 +1,32 @@
 #!/bin/sh
-{{ meta_directory }}/runscript 1>{{ meta_directory }}/stdout 2>{{ meta_directory }}/stderr &
+set -eu
+
+metadir={{ shlex_quote(meta_directory) }}
+num_subjobs={{ num_subjobs }}
+
+if test $num_subjobs -eq 1
+then
+    "$metadir/runscript" 0 1>"$metadir/stdout.0" 2>"$metadir/stderr.0" &
+else
+    if test -z $(which parallel)
+    then
+       echo "parallel (moreutils) is required to concurrent jobs locally" >&2
+       exit 1
+    fi
+
+    # Use relative path to meta directory because that doesn't need any special
+    # quoting, and the parallel call below wouldn't handle quoting properly.
+    metadir_rel={{ shlex_quote(meta_directory_rel) }}
+    workdir={{ shlex_quote(working_directory) }}
+
+    cd "$workdir"
+    parallel \
+        -i \
+        sh -c \
+        "$metadir_rel/runscript {} 1>$metadir_rel/stdout.{} 2>$metadir_rel/stderr.{}" \
+        -- $(seq 0 $(($num_subjobs - 1))) \
+        1>"$metadir_rel/stdout" 2>"$metadir_rel/stderr" &
+fi
+
 RUNSCRIPT_PID=$!
 printf "%d" $RUNSCRIPT_PID

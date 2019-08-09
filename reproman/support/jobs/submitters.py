@@ -53,13 +53,15 @@ class Submitter(object, metaclass=abc.ABCMeta):
         """A list the defines the command used to submit the job.
         """
 
-    def submit(self, script):
+    def submit(self, script, submit_command=None):
         """Submit `script`.
 
         Parameters
         ----------
         script : str
             Submission script.
+        submit_command : list or None, optional
+            If specified, use this instead of `.submit_command`.
 
         Returns
         -------
@@ -67,7 +69,7 @@ class Submitter(object, metaclass=abc.ABCMeta):
         """
         lgr.info("Submitting %s", script)
         out, _ = self.session.execute_command(
-            self.submit_command + [script])
+            (submit_command or self.submit_command) + [script])
         subm_id = out.rstrip()
         if subm_id:
             self.submission_id = subm_id
@@ -118,6 +120,15 @@ class PbsSubmitter(Submitter):
     @assert_submission_id
     @borrowdoc(Submitter)
     def status(self):
+        # FIXME: One problem is that Torque PBS may not represent the array
+        # consistently between versions (or perhaps configuration?). One system
+        # I try has [] in the name and allows qstat querying of the commands as
+        # a whole, while the other explodes them all out into individual jobs
+        # with no way AFAICS to query individual jobs. Going through DRMAA
+        # might help in many cases (and is probably something we should
+        # provide), but it's not a complete solution because a PBS system we
+        # want to support doesn't have DRMAA support.
+
         # FIXME: Is there a reliable, long-lived way to see a job after it's
         # completed?  (tracejob can fail with permission issues.)
         try:
@@ -156,13 +167,12 @@ class CondorSubmitter(Submitter):
         return ["condor_submit", "-terse"]
 
     @borrowdoc(Submitter)
-    def submit(self, script):
+    def submit(self, script, submit_command=None):
         # Discard return value, which isn't submission ID for the current
         # condor_submit form.
-        out = super(CondorSubmitter, self).submit(script)
-        # We only handle single jobs at this point.
-        job_id, job_id0 = out.strip().split(" - ")
-        assert job_id == job_id0, "bug in job ID extraction logic"
+        out = super(CondorSubmitter, self).submit(script, submit_command)
+        # Output example (3 subjobs): 199.0 - 199.2
+        job_id = out.strip().split(" - ")[0].split(".")[0]
         self.submission_id = job_id
         return job_id
 
@@ -190,9 +200,6 @@ class CondorSubmitter(Submitter):
             return "unknown", None
 
         stat_json = json.loads(stat_out)
-        if len(stat_json) != 1:
-            lgr.warning("Expected a single status line, but got %s", stat_json)
-            return "unknown", None
 
         # http://pages.cs.wisc.edu/~adesmet/status.html
         condor_states = {0: "unexpanded",
@@ -203,14 +210,17 @@ class CondorSubmitter(Submitter):
                          5: "held",
                          6: "submission error"}
 
-        code = stat_json[0].get("JobStatus")
-        if code in [0, 1, 2, 5]:
+        codes = [sj.get("JobStatus") for sj in stat_json]
+        waiting_states = [0, 1, 2, 5]
+        if any(c in waiting_states for c in codes):
             our_status = "waiting"
-        elif code == 4:
+        elif all(c == 4 for c in codes):
             our_status = "completed"
         else:
             our_status = "unknown"
-        return our_status, condor_states.get(code)
+        # FIXME: their status should represent all subjobs, but right now we're
+        # just taking the first code.
+        return our_status, condor_states.get(codes[0])
 
     def _status_no_json(self):
         """Unclever status for older condor versions without 'condor_q -json'.
@@ -220,16 +230,29 @@ class CondorSubmitter(Submitter):
         stat_out, _ = self.session.execute_command(
             "condor_q {}".format(self.submission_id))
         last_line = stat_out.strip().splitlines()[-1]
-        # Try to match our json matching above. This leaves some out from both
-        # lists. I don't know what the exact map is.
-        for theirs, ours in [("completed", "completed"),
-                             ("removed", "unknown"),
-                             ("idle", "waiting"),
-                             ("running", "waiting"),
-                             ("held", "waiting")]:
-            if "1 {}".format(theirs) in last_line:
-                return ours, theirs
-        return "unknown", None
+
+        ours, theirs = "unknown", None
+        match_njobs = re.match(r"([1-9][0-9]*) jobs;", last_line.strip())
+        if match_njobs:
+            njobs = int(match_njobs.group(1))
+
+            # Try to match our json matching above. This leaves some out from
+            # both lists. I don't know what the exact map is.
+            to_ours = [(r"[1-9][0-9]* (idle|running|held)", "waiting"),
+                       (r"[1-9][0-9]* (removed)", "unknown"),
+                       # Only consider completed if we don't have a hit for
+                       # anything else and its number matches the total
+                       # reported number of jobs.
+                       (r"{} (completed)".format(njobs), "completed")]
+            for regexp, ours_ in to_ours:
+                match_stat = re.search(regexp, last_line)
+                if match_stat:
+                    theirs = match_stat.group(1)
+                    ours = ours_
+                    break
+        # FIXME: their status should represent all subjobs, but right now we're
+        # just taking the first hit from the list above.
+        return ours, theirs
 
 
 class LocalSubmitter(Submitter):
@@ -247,8 +270,8 @@ class LocalSubmitter(Submitter):
         return ["sh"]
 
     @borrowdoc(Submitter)
-    def submit(self, script):
-        out = super(LocalSubmitter, self).submit(script)
+    def submit(self, script, submit_command=None):
+        out = super(LocalSubmitter, self).submit(script, submit_command)
         pid = None
         if out:
             pid = out.strip() or None
