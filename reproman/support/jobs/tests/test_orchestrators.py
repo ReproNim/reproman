@@ -421,7 +421,7 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
         create_tree(orc1.working_directory, {"dirty": ""})
         with pytest.raises(OrchestratorError) as exc:
             orc1.prepare_remote()
-        assert "dirty" in str(exc)
+        assert "dirty" in str(exc.value)
 
 
 def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
@@ -457,7 +457,7 @@ def test_head_at_unknown_ref(dataset):
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "youdontknowme"):
             pass
-    assert "youdontknowme" in str(exc)
+    assert "youdontknowme" in str(exc.value)
 
 
 def test_head_at_empty_branch(dataset):
@@ -468,7 +468,7 @@ def test_head_at_empty_branch(dataset):
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "master"):
             pass
-    assert "No commit" in str(exc)
+    assert "No commit" in str(exc.value)
 
 
 def test_head_at_no_move(dataset):

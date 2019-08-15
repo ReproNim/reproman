@@ -71,7 +71,7 @@ def test_param():
     with pytest.raises(ValueError) as cmr:
         Parameter(unknown_arg=123)
     assert_in('Detected unknown argument(s) for the Parameter: unknown_arg',
-              str(cmr))
+              str(cmr.value))
 
 
 def test_interface():

@@ -40,13 +40,13 @@ lgr = logging.getLogger("reproman.interface.tests.test_run")
 def test_run_no_command(command):
     with pytest.raises(ValueError) as exc:
         run(command=command)
-    assert "No command" in str(exc)
+    assert "No command" in str(exc.value)
 
 
 def test_run_no_resource():
     with pytest.raises(ValueError) as exc:
         run(command="blahbert")
-    assert "No resource" in str(exc)
+    assert "No resource" in str(exc.value)
 
 
 @pytest.mark.parametrize("arg,expected",
@@ -226,19 +226,19 @@ def test_run_resource_specification(context):
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"],
             job_specs=["js0.yaml"])
-    assert "name-via-js" in str(exc)
+    assert "name-via-js" in str(exc.value)
 
     # If job spec as name and ID, ID takes precedence.
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"],
             job_specs=["js1.yaml"])
-    assert "id-via-js" in str(exc)
+    assert "id-via-js" in str(exc.value)
 
     # Command-line overrides job spec.
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"], resref="fromcli",
             job_specs=["js1.yaml"])
-    assert "fromcli" in str(exc)
+    assert "fromcli" in str(exc.value)
 
 
 def try_fetch(fetch_fn, ntimes=5):
@@ -398,7 +398,7 @@ def test_jobs_ambig_id_match(context):
 
     with pytest.raises(ValueError) as exc:
         jobs(queries=[jobid0[0], jobid1[0]])
-    assert "matches multiple jobs" in str(exc)
+    assert "matches multiple jobs" in str(exc.value)
 
 
 def test_jobs_deleted_resource(context):
