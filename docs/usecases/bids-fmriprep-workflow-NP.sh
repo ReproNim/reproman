@@ -1,6 +1,6 @@
 #!/bin/bash
-#emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*- 
-#ex: set sts=4 ts=4 sw=4 noet:
+#emacs: -*- mode: shell-script; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: nil -*- 
+#ex: set sts=4 ts=4 sw=4 et:
 #
 #  This script is intended to demonstrate a sample workflow on a BIDS
 #  dataset using mriqc, fmriprep, and custom analysis pipeline, mimicing the
@@ -46,6 +46,7 @@
 #       ./bids-fmriprep-workflow-NP.sh bids-fmriprep-workflow-NP/out2
 
 set -eu
+set -x
 
 # $STUDY is a variable used in a paper this workflow mimics
 STUDY="$1"
@@ -155,12 +156,6 @@ RM_SUB=condor
 #   "smaug-condor" which would link smaug physical resource with those parameters
 # TODO: point to the issue in ReproMan
 
-# 1. bids-mriqc -- QA
-
-# Q/TODO: Is there a way to execute/reference the container?
-#   for now doing manually
-datalad create -d . -c text2git data/mriqc
-
 : ${RUNNER:=reproman}
 
 unknown_runner () {
@@ -168,18 +163,55 @@ unknown_runner () {
     exit 1
 }
 
+# Common invocation of ReproMan
+# TODO: just make it configurable per project/env?
+reproman_run () {
+    reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" "$@"
+}
+
+get_participant_ids () {
+    # Would go through provided paths and current directory to find participants.tsv
+    # and return participant ids, comma-separated
+    for p in "$@" .; do
+        f="$p/participants.tsv"
+        if [ -e "$f" ]; then
+            sed -n -e '/^sub-/s/sub-\([^\t]*\)\t.*/\1/gp' < "$f" \
+                | tr '\n' ',' \
+                | sed -e 's/,$//g'
+            break
+        fi
+    done
+}
+
+# 1. bids-mriqc -- QA
+
+# Q/TODO: Is there a way to execute/reference the container?
+#   for now doing manually
+datalad create -d . -c text2git data/mriqc
+datalad save -d . -m "Due to https://github.com/datalad/datalad/issues/3591" data/mriqc
+
 # Sample run without any parallelization, and doing both levels (participant and group)
 RUNNER_ARGS=( --input 'data/bids' --output data/mriqc )
 MRIQC_ARGS=( "{inputs}" "{outputs}" participant group )
+
 case "$RUNNER" in
     reproman)
-        reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
-	    	 --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}";;
+        # Serial run
+        # reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}"
+        # Parallel requires two runs -- parallel across participants:
+        reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" \
+             --bp "pl=$(get_participant_ids data/bids)" \
+             '{inputs}' '{outputs}' participant --participant_label '{p[pl]}'
+        # serial for the group
+        reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" \
+            '{inputs}' '{outputs}' group
+	;;
 	datalad)
         datalad containers-run -n containers/bids-mriqc \
             "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}";;
     *) unknown_runner;;
 esac
+
 
 exit 0  # done for now
 
