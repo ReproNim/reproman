@@ -408,6 +408,14 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
 @pytest.mark.integration
 def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
     with chpwd(dataset.path):
+        # We abort if the local dataset is dirty.
+        create_tree(dataset.path, {"local-dirt": ""})
+        with pytest.raises(OrchestratorError) as exc:
+            orcs.DataladPairOrchestrator(
+                shell, submission_type="local", job_spec=job_spec)
+        assert "dirty" in str(exc.value)
+        os.unlink("local-dirt")
+
         orc0 = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
         # Run one job so that we create the remote repository.
