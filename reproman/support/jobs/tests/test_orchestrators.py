@@ -405,6 +405,13 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
             ssh, submission_type="local", job_spec=job_spec)
 
     with chpwd(dataset.path):
+        # We abort if the local dataset is dirty.
+        create_tree(dataset.path, {"local-dirt": ""})
+        with pytest.raises(OrchestratorError) as exc:
+            get_orc()
+        assert "dirty" in str(exc.value)
+        os.unlink("local-dirt")
+
         orc0 = get_orc()
         # Run one job so that we create the remote repository.
         orc0.prepare_remote()

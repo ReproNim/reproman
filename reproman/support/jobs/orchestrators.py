@@ -484,6 +484,10 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         if self._resurrection:
             self.head = self.job_spec.get("head")
         else:
+            if self.ds.repo.dirty:
+                raise OrchestratorError("Local dataset {} is dirty. "
+                                        "Save or discard uncommitted changes"
+                                        .format(self.ds.path))
             self._configure_repo()
             self.head = self.ds.repo.get_hexsha()
             _datalad_check_container(self.ds, self.job_spec)
