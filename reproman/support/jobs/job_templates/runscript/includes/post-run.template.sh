@@ -29,5 +29,6 @@ mkdir -p "$rootdir/outputs"
 tar \
   -C "$workdir" \
   --files-from "$metadir/togethome" \
+  --ignore-failed-read \
   -cz \
   -f "$rootdir/outputs/$jobid.tar.gz"
