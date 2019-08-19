@@ -674,7 +674,8 @@ class PrepareRemoteDataladMixin(object):
         return failed
 
     def _assert_clean_repo(self):
-        cmd = ["git", "status", "--porcelain"]
+        cmd = ["git", "status", "--porcelain",
+               "--ignore-submodules=none", "--untracked-files=normal"]
         if self._execute_in_wdir(cmd):
             raise OrchestratorError("Remote repository {} is dirty"
                                     .format(self.working_directory))
