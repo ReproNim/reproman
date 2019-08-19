@@ -9,8 +9,6 @@
 """Analyze existing spec or session file system to gather more detailed information
 """
 
-from __future__ import unicode_literals
-
 from os.path import normpath
 import sys
 import time

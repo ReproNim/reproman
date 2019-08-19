@@ -8,8 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Classes to identify VCS repos for files"""
 
-from __future__ import unicode_literals
-
 import abc
 import attr
 import os
