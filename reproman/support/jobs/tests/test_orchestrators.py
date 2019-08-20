@@ -331,10 +331,6 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
         orc0 = do(js0)
         orc1 = do(js1)
 
-        # Ran on top, so both exist in working tree.
-        assert op.exists(op.join(orc0.meta_directory, "status.0"))
-        assert op.exists(op.join(orc1.meta_directory, "status.0"))
-
         ref0 = "refs/reproman/{}".format(orc0.jobid)
         ref1 = "refs/reproman/{}".format(orc1.jobid)
 
