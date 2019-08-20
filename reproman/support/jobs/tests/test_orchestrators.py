@@ -46,6 +46,13 @@ def shell():
     return Shell("localshell")
 
 
+@pytest.fixture(scope="module")
+def ssh():
+    skipif.no_ssh()
+    from reproman.resource.ssh import SSH
+    return SSH("testssh", host="reproman-test")
+
+
 def test_orc_root_directory(shell):
     orc = orcs.PlainOrchestrator(shell, submission_type="local")
     assert orc.root_directory == op.expanduser("~/.reproman/run-root")
