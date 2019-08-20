@@ -46,6 +46,13 @@ def shell():
     return Shell("localshell")
 
 
+@pytest.fixture(scope="module")
+def ssh():
+    skipif.no_ssh()
+    from reproman.resource.ssh import SSH
+    return SSH("testssh", host="reproman-test")
+
+
 def test_orc_root_directory(shell):
     orc = orcs.PlainOrchestrator(shell, submission_type="local")
     assert orc.root_directory == op.expanduser("~/.reproman/run-root")
@@ -104,6 +111,11 @@ def test_orc_resurrection_invalid_job_spec(check_orc_plain, shell):
 def test_orc_plain_docker(check_orc_plain, docker_resource, job_spec):
     job_spec["root_directory"] = "/root/nm-run"
     check_orc_plain(docker_resource, job_spec)
+
+
+@pytest.mark.integration
+def test_orc_plain_ssh(check_orc_plain, ssh, job_spec):
+    check_orc_plain(ssh, job_spec)
 
 
 @pytest.mark.skipif(external_versions["datalad"], reason="DataLad found")
