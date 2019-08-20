@@ -113,6 +113,11 @@ def test_orc_plain_docker(check_orc_plain, docker_resource, job_spec):
     check_orc_plain(docker_resource, job_spec)
 
 
+@pytest.mark.integration
+def test_orc_plain_ssh(check_orc_plain, ssh, job_spec):
+    check_orc_plain(ssh, job_spec)
+
+
 @pytest.mark.skipif(external_versions["datalad"], reason="DataLad found")
 def test_orc_no_datalad(tmpdir, shell):
     with chpwd(str(tmpdir)):
