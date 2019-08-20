@@ -261,7 +261,7 @@ def test_orc_datalad_run_failed(job_spec, dataset, ssh):
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
+def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     # Start two orchestrators from the same point:
     #
     #   orc 0, master
@@ -274,7 +274,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
     js1 = dict(job_spec, command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
         orc0, orc1 = [
-            orcs.DataladPairRunOrchestrator(shell, submission_type="local",
+            orcs.DataladPairRunOrchestrator(ssh, submission_type="local",
                                             job_spec=js)
             for js in [js0, js1]]
 
@@ -304,7 +304,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
+def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     # Run one orchestrator and fetch, then run another and fetch:
     #
     #   orc 1, master
@@ -321,7 +321,7 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
     with chpwd(ds.path):
         def do(js):
             orc = orcs.DataladPairRunOrchestrator(
-                shell, submission_type="local", job_spec=js)
+                ssh, submission_type="local", job_spec=js)
             orc.prepare_remote()
             orc.submit()
             orc.follow()
@@ -399,10 +399,10 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
+def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     def get_orc():
         return orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+            ssh, submission_type="local", job_spec=job_spec)
 
     with chpwd(dataset.path):
         # We abort if the local dataset is dirty.
@@ -520,7 +520,7 @@ def test_dataset_as_dict(shell, dataset, job_spec):
                          ["local",
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
-def test_orc_datalad_concurrent(job_spec, dataset, shell, orc_class, sub_type):
+def test_orc_datalad_concurrent(job_spec, dataset, ssh, orc_class, sub_type):
     names = ["paul", "rosa"]
 
     job_spec["inputs"] = ["{p[name]}.in"]
@@ -535,7 +535,7 @@ def test_orc_datalad_concurrent(job_spec, dataset, shell, orc_class, sub_type):
     dataset.save(path=in_files)
 
     with chpwd(dataset.path):
-        orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
+        orc = orc_class(ssh, submission_type=sub_type, job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
