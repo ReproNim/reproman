@@ -244,13 +244,13 @@ def test_orc_plain_failure(tmpdir, job_spec, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_run_failed(job_spec, dataset, shell):
+def test_orc_datalad_run_failed(job_spec, dataset, ssh):
     job_spec["command_str"] = "iwillfail"
     job_spec["inputs"] = []
 
     with chpwd(dataset.path):
-        orc = orcs.DataladLocalRunOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairRunOrchestrator(
+            ssh, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()

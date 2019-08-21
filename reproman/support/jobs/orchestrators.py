@@ -668,7 +668,9 @@ class PrepareRemoteDataladMixin(object):
                     # All right, something looks off.
                     raise exc
             else:
-                failed = list(map(int, failed_ref.strip().split())) or failed
+                # Line format: mode type object filename
+                failed = [int(ln.split()[3])
+                          for ln in failed_ref.strip().splitlines()]
         return failed
 
     def _assert_clean_repo(self):
