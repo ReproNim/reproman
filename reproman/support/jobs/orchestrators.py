@@ -673,12 +673,14 @@ class PrepareRemoteDataladMixin(object):
                           for ln in failed_ref.strip().splitlines()]
         return failed
 
-    def _assert_clean_repo(self):
+    def _assert_clean_repo(self, cwd=None):
         cmd = ["git", "status", "--porcelain",
                "--ignore-submodules=none", "--untracked-files=normal"]
-        if self._execute_in_wdir(cmd):
+        out, _ = self.session.execute_command(
+            cmd, cwd=cwd or self.working_directory)
+        if out:
             raise OrchestratorError("Remote repository {} is dirty"
-                                    .format(self.working_directory))
+                                    .format(cwd or self.working_directory))
 
     def _checkout_target(self):
         self._assert_clean_repo()
