@@ -132,8 +132,8 @@ def test_orc_no_dataset(tmpdir, shell):
             orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
-@pytest.fixture(scope="module")
-def base_dataset(tmpdir_factory):
+@pytest.fixture()
+def dataset(tmpdir_factory):
     skipif.no_datalad()
     import datalad.api as dl
     path = str(tmpdir_factory.mktemp("dataset"))
@@ -145,18 +145,6 @@ def base_dataset(tmpdir_factory):
     ds.add(".")
     ds.repo.tag("root")
     return ds
-
-
-@pytest.fixture()
-def dataset(base_dataset):
-    base_dataset.repo.checkout("master")
-    # FIXME: Use expose method once available.
-    base_dataset.repo._git_custom_command([],
-                                          ["git", "reset", "--hard", "root"])
-    for f in base_dataset.repo.untracked_files:
-        os.unlink(op.join(base_dataset.path, f))
-    assert not base_dataset.repo.dirty
-    return base_dataset
 
 
 @pytest.fixture(scope="module")
@@ -376,12 +364,9 @@ def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
                          [orcs.DataladPairRunOrchestrator,
                           orcs.DataladLocalRunOrchestrator],
                          ids=["orc:pair", "orc:local"])
-def test_orc_datalad_run_container(tmpdir, container_dataset, shell,
-                                   orc_class):
-    import datalad.api as dl
-    # Avoid the dataset fixture because the subdataset will make its simplistic
-    # cleanup fail.
-    ds = dl.Dataset(op.join(str(tmpdir), "ds")).create()
+def test_orc_datalad_run_container(tmpdir, dataset,
+                                   container_dataset, shell, orc_class):
+    ds = dataset
     ds.install(path="subds", source=container_dataset)
     if orc_class == orcs.DataladLocalRunOrchestrator:
         # We need to have the image locally in order to copy it to the
