@@ -675,7 +675,7 @@ class PrepareRemoteDataladMixin(object):
 
     def _assert_clean_repo(self, cwd=None):
         cmd = ["git", "status", "--porcelain",
-               "--ignore-submodules=none", "--untracked-files=normal"]
+               "--ignore-submodules=all", "--untracked-files=normal"]
         out, _ = self.session.execute_command(
             cmd, cwd=cwd or self.working_directory)
         if out:
@@ -718,13 +718,15 @@ class PrepareRemoteDataladMixin(object):
         self._execute_in_wdir(["git", "annex", "init"])
         for res in self._execute_datalad_json_command(
                 ["subdatasets", "--fulfilled=true", "--recursive"]):
-            lgr.debug("Adjusting state of %s", res["path"])
+            cwd = res["path"]
+            self._assert_clean_repo(cwd=cwd)
+            lgr.debug("Adjusting state of %s", cwd)
             cmds = [["git", "checkout", res["revision"]],
                     ["git", "annex", "init"]]
             for cmd in cmds:
                 try:
                     out, _ = self.session.execute_command(
-                        cmd, cwd=res["path"])
+                        cmd, cwd=cwd)
                 except CommandError as exc:
                     raise OrchestratorError(str(exc))
 
