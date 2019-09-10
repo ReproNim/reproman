@@ -664,7 +664,9 @@ class PrepareRemoteDataladMixin(object):
                     # All right, something looks off.
                     raise exc
             else:
-                failed = list(map(int, failed_ref.strip().split())) or failed
+                # Line format: mode<SP>type<SP>object<TAB>filename
+                failed = [int(ln.split("\t")[1])
+                          for ln in failed_ref.strip().splitlines()]
         return failed
 
     def _assert_clean_repo(self):
