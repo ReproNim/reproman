@@ -484,6 +484,10 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         if self._resurrection:
             self.head = self.job_spec.get("head")
         else:
+            if self.ds.repo.dirty:
+                raise OrchestratorError("Local dataset {} is dirty. "
+                                        "Save or discard uncommitted changes"
+                                        .format(self.ds.path))
             self._configure_repo()
             self.head = self.ds.repo.get_hexsha()
             _datalad_check_container(self.ds, self.job_spec)
@@ -669,10 +673,14 @@ class PrepareRemoteDataladMixin(object):
                           for ln in failed_ref.strip().splitlines()]
         return failed
 
-    def _assert_clean_repo(self):
-        if self._execute_in_wdir("git status --porcelain"):
+    def _assert_clean_repo(self, cwd=None):
+        cmd = ["git", "status", "--porcelain",
+               "--ignore-submodules=all", "--untracked-files=normal"]
+        out, _ = self.session.execute_command(
+            cmd, cwd=cwd or self.working_directory)
+        if out:
             raise OrchestratorError("Remote repository {} is dirty"
-                                    .format(self.working_directory))
+                                    .format(cwd or self.working_directory))
 
     def _checkout_target(self):
         self._assert_clean_repo()
@@ -710,13 +718,15 @@ class PrepareRemoteDataladMixin(object):
         self._execute_in_wdir(["git", "annex", "init"])
         for res in self._execute_datalad_json_command(
                 ["subdatasets", "--fulfilled=true", "--recursive"]):
-            lgr.debug("Adjusting state of %s", res["path"])
+            cwd = res["path"]
+            self._assert_clean_repo(cwd=cwd)
+            lgr.debug("Adjusting state of %s", cwd)
             cmds = [["git", "checkout", res["revision"]],
                     ["git", "annex", "init"]]
             for cmd in cmds:
                 try:
                     out, _ = self.session.execute_command(
-                        cmd, cwd=res["path"])
+                        cmd, cwd=cwd)
                 except CommandError as exc:
                     raise OrchestratorError(str(exc))
 

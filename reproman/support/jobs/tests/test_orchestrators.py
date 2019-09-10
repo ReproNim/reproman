@@ -400,16 +400,39 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
 
 @pytest.mark.integration
 def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
-    def get_orc():
-        return orcs.DataladPairOrchestrator(
-            ssh, submission_type="local", job_spec=job_spec)
+    subds = dataset.create(path="sub")
+    subds.create(path="subsub")
+    dataset.save()
+
+    job_spec["inputs"] = []
+    job_spec["outputs"] = []
+
+    def get_orc(jspec=None):
+        return orcs.DataladPairRunOrchestrator(
+            ssh, submission_type="local",
+            job_spec=jspec or job_spec)
+
+    def run(**spec_kwds):
+        jspec = dict(job_spec, **spec_kwds)
+        with chpwd(dataset.path):
+            orc = get_orc(jspec)
+            # Run one job so that we create the remote repository.
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+            orc.fetch()
+            return orc
 
     with chpwd(dataset.path):
-        orc0 = get_orc()
-        # Run one job so that we create the remote repository.
-        orc0.prepare_remote()
-        orc0.submit()
-        orc0.follow()
+        # We abort if the local dataset is dirty.
+        create_tree(dataset.path, {"local-dirt": ""})
+        with pytest.raises(OrchestratorError) as exc:
+            get_orc()
+        assert "dirty" in str(exc.value)
+        os.unlink("local-dirt")
+
+    # Run one job so that we create the remote repository.
+    run(command_str="echo one >one")
 
     with chpwd(dataset.path):
         orc1 = get_orc()
@@ -417,6 +440,25 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
         with pytest.raises(OrchestratorError) as exc:
             orc1.prepare_remote()
         assert "dirty" in str(exc.value)
+    os.unlink(op.join(orc1.working_directory, "dirty"))
+
+    # We can run if the submodule simply has a different commit checked out.
+    run(command_str="echo two >two")
+
+    create_tree(op.join(dataset.path, "sub"), {"for-local-commit": ""})
+    dataset.add(".", recursive=True)
+
+    run(command_str="echo three >three")
+
+    # But we abort if subdataset is actually dirty.
+    with chpwd(dataset.path):
+        orc2 = get_orc()
+        create_tree(orc2.working_directory,
+                    {"sub": {"subsub": {"subdirt": ""}}})
+        with pytest.raises(OrchestratorError) as exc:
+            orc2.prepare_remote()
+        assert "dirty" in str(exc.value)
+    os.unlink(op.join(orc2.working_directory, "sub", "subsub", "subdirt"))
 
 
 def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
