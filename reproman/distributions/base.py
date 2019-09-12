@@ -286,7 +286,7 @@ class SpecObject(object):
                         a_self_value = self._find_in_attr(a_other_value, a)
                         if a_self_value is None:
                             # a new one!
-                            a.append(a_other_value)
+                            setattr(self, a.name, [a_other_value])
                         else:
                             # Delegate doing the right thing to the child's __iadd__
                             a_self_value += a_other_value
@@ -294,6 +294,8 @@ class SpecObject(object):
                     raise NotImplementedError(
                         "For now joining only lists of our own spec objects"
                     )
+            else:
+                raise NotImplementedError("I think")
             # import pdb; pdb.set_trace()
             pass
 
