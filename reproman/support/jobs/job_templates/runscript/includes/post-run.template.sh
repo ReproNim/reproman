@@ -1,27 +1,33 @@
 {# Inspired by and modified from dataladh-htcondor. #}
 
-prep_stamp="{{ meta_directory }}/pre-finished"
+oldest_stamp () {
+    find "$metadir" \
+         -regex '.*/pre-finished\.[0-9]+' -printf '@%T@\n' | \
+        sort | head -n1
+}
 
+prep_stamp=$(oldest_stamp)
 
 {#
   Hmm, hard to use placeholders because those are absolute paths, but we want
   the archive to be relative to this working directory.
 #}
 find ./.reproman \( -type f -o -type l \) | \
-    grep {{ jobid }}  >"{{ meta_directory }}/togethome"
+    grep $jobid  >"$metadir/togethome"
 
-if [ -f "$prep_stamp" ]; then
+if test -n "$prep_stamp"
+then
   find . \
      \( -type f -o -type l \) \
-    -newer "$prep_stamp" \
+    -newermt "$prep_stamp" \
     -not -wholename "./.reproman/*" \
-    >>"{{ meta_directory }}/togethome"
+    >>"$metadir/togethome"
 fi
 
-mkdir -p "{{ root_directory }}/outputs"
+mkdir -p "$rootdir/outputs"
 
 tar \
-  --files-from "{{ meta_directory }}/togethome" \
+  -C "$workdir" \
+  --files-from "$metadir/togethome" \
   -cz \
-  -C "{{ working_directory }}" \
-  -f "{{ root_directory }}/outputs/{{ jobid }}.tar.gz"
+  -f "$rootdir/outputs/$jobid.tar.gz"

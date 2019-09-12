@@ -13,12 +13,15 @@ import logging
 from unittest.mock import patch
 import os
 import os.path as op
+import time
 
 import pytest
 
 from reproman.api import jobs
 from reproman.api import run
+from reproman.interface.run import _combine_batch_params
 from reproman.interface.run import _combine_job_specs
+from reproman.interface.run import _resolve_batch_parameters
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
 from reproman.utils import swallow_outputs
@@ -27,6 +30,7 @@ from reproman.support.exceptions import ResourceNotFoundError
 from reproman.tests import fixtures
 from reproman.tests.utils import create_tree
 
+lgr = logging.getLogger("reproman.interface.tests.test_run")
 
 # Tests that do not require a resource, registry, or orchestrator.
 
@@ -36,13 +40,13 @@ from reproman.tests.utils import create_tree
 def test_run_no_command(command):
     with pytest.raises(ValueError) as exc:
         run(command=command)
-    assert "No command" in str(exc)
+    assert "No command" in str(exc.value)
 
 
 def test_run_no_resource():
     with pytest.raises(ValueError) as exc:
         run(command="blahbert")
-    assert "No resource" in str(exc)
+    assert "No resource" in str(exc.value)
 
 
 @pytest.mark.parametrize("arg,expected",
@@ -72,6 +76,87 @@ def test_run_list(arg, expected):
          "mapping-to-atom", "atom-to-mapping"])
 def test_combine_specs(specs, expected):
     assert _combine_job_specs(specs) == expected
+
+
+@pytest.mark.parametrize(
+    "params,expected",
+    [([], []),
+     (["a=1,2"],
+      [{"a": "1"}, {"a": "2"}]),
+     (["a=1,2", "b=3"],
+      [{"a": "1", "b": "3"},
+       {"a": "2", "b": "3"}]),
+     (["a=1,2", "b=3,4"],
+      [{"a": "1", "b": "3"},
+       {"a": "1", "b": "4"},
+       {"a": "2", "b": "3"},
+       {"a": "2", "b": "4"}]),
+     (["a=1,2=3"],
+      [{"a": "1"},
+       {"a": "2=3"}]),
+     (["a= 1 spaces are preserved   , 2"],
+      [{"a": " 1 spaces are preserved   "},
+       {"a": " 2"}])],
+    ids=["empty", "one", "two, one varying", "two varying", "= in value",
+         "spaces"])
+def test_combine_batch_params(params, expected):
+    actual = list(sorted(_combine_batch_params(params),
+                         key=lambda d: (d.get("a"), d.get("b"))))
+    assert len(actual) == len(expected)
+    assert actual == expected
+
+
+def test_combine_batch_params_glob(tmpdir):
+    tmpdir = str(tmpdir)
+    create_tree(tmpdir, {"aaa": "a",
+                         "subdir": {"b": "b", "c": "c"}})
+    with chpwd(tmpdir):
+        res = sorted(_combine_batch_params(["foo=a*,subdir/*,other"]),
+                     key=lambda d: d["foo"])
+        assert list(res) == [
+            {"foo": "aaa"},
+            {"foo": "other"},
+            {"foo": "subdir/b"},
+            {"foo": "subdir/c"}]
+
+
+def test_combine_batch_params_repeat_key():
+    with pytest.raises(ValueError):
+        list(_combine_batch_params(["a=1", "a=2"]))
+
+
+def test_combine_batch_params_no_equal():
+    with pytest.raises(ValueError):
+        list(_combine_batch_params(["a"]))
+
+
+def test_run_batch_spec_and_params():
+    with pytest.raises(ValueError):
+        run(command="blahbert",
+            batch_spec="anything", batch_parameters="anything")
+
+
+@pytest.mark.parametrize(
+    "params,spec",
+    [([], ""),
+     (["a=1,2"],
+      """\
+- a: '1'
+- a: '2'"""),
+     (["a=1,2", "b=3"],
+      """\
+- a: '1'
+  b: '3'
+- a: '2'
+  b: '3'""")],
+    ids=["empty", "one", "two, one varying"])
+def test_resolve_batch_params_eq(tmpdir, params, spec):
+    fname = op.join(str(tmpdir), "spec.yml")
+    with open(fname, "w") as fh:
+        fh.write(spec)
+    from_param_str = _resolve_batch_parameters(spec_file=None, params=params)
+    from_spec = _resolve_batch_parameters(spec_file=fname, params=None)
+    assert from_param_str == from_spec
 
 
 # Tests that require `context`.
@@ -141,19 +226,40 @@ def test_run_resource_specification(context):
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"],
             job_specs=["js0.yaml"])
-    assert "name-via-js" in str(exc)
+    assert "name-via-js" in str(exc.value)
 
     # If job spec as name and ID, ID takes precedence.
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"],
             job_specs=["js1.yaml"])
-    assert "id-via-js" in str(exc)
+    assert "id-via-js" in str(exc.value)
 
     # Command-line overrides job spec.
     with pytest.raises(ResourceNotFoundError) as exc:
         run(command=["doesnt", "matter"], resref="fromcli",
             job_specs=["js1.yaml"])
-    assert "fromcli" in str(exc)
+    assert "fromcli" in str(exc.value)
+
+
+def try_fetch(fetch_fn, ntimes=5):
+    """Helper to test asynchronous fetch.
+    """
+    def try_():
+        with swallow_logs(new_level=logging.INFO) as log:
+            fetch_fn()
+            return "Not fetching incomplete job" not in log.out
+
+    for i in range(1, ntimes + 1):
+        succeeded = try_()
+        if succeeded:
+            break
+        else:
+            sleep_for = (2 ** i) / 2
+            lgr.info("Job is incomplete. Sleeping for %s seconds",
+                     sleep_for)
+            time.sleep(sleep_for)
+    else:
+        raise RuntimeError("All fetch attempts failed")
 
 
 def test_run_and_fetch(context):
@@ -170,15 +276,12 @@ def test_run_and_fetch(context):
 
     run(job_specs=["js0.yaml"])
 
-    with swallow_logs(new_level=logging.INFO) as log:
-        with swallow_outputs() as output:
-            jobs(queries=[], status=True)
-            assert "myshell" in output.out
-            assert len(registry.find_job_files()) == 1
-            jobs(queries=[], action="fetch", all_=True)
-            assert len(registry.find_job_files()) == 0
-            jobs(queries=[], status=True)
-            assert "No jobs" in log.out
+    with swallow_outputs() as output:
+        jobs(queries=[], status=True)
+        assert "myshell" in output.out
+        assert len(registry.find_job_files()) == 1
+        try_fetch(lambda: jobs(queries=[], action="fetch", all_=True))
+        assert len(registry.find_job_files()) == 0
 
     assert op.exists(op.join(path, "ok"))
 
@@ -212,7 +315,7 @@ def test_jobs_auto_fetch_with_query(context):
     assert len(jobfiles) == 1
     jobid = list(jobfiles.keys())[0]
     with swallow_outputs():
-        jobs(queries=[jobid[3:]])
+        try_fetch(lambda: jobs(queries=[jobid[3:]]))
     assert len(registry.find_job_files()) == 0
     assert op.exists(op.join(path, "ok"))
 
@@ -295,7 +398,7 @@ def test_jobs_ambig_id_match(context):
 
     with pytest.raises(ValueError) as exc:
         jobs(queries=[jobid0[0], jobid1[0]])
-    assert "matches multiple jobs" in str(exc)
+    assert "matches multiple jobs" in str(exc.value)
 
 
 def test_jobs_deleted_resource(context):

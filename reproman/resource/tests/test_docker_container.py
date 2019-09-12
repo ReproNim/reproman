@@ -13,7 +13,6 @@ from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ...tests.skip import mark
-from ..base import ResourceManager
 from ...support.exceptions import ResourceError
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
@@ -30,11 +29,11 @@ setup_ubuntu = get_docker_fixture(
 
 
 @mark.skipif_no_docker_dependencies
-def test_dockercontainer_class():
+def test_dockercontainer_class(resman):
 
     with patch('docker.Client') as client, \
         patch('dockerpty.start') as dockerpty, \
-        swallow_logs(new_level=logging.DEBUG) as log:
+            swallow_logs(new_level=logging.DEBUG) as log:
 
         client.return_value = MagicMock(
             containers=lambda all: [
@@ -61,7 +60,7 @@ def test_dockercontainer_class():
             create_container=lambda name, image, stdin_open, tty, command: {
                 'Id': '18b31b30e3a5'
             },
-            exec_inspect=lambda id: { 'ExitCode': 0 },
+            exec_inspect=lambda id: {'ExitCode': 0},
             exec_start=lambda exec_id, stream: [
                 b'stdout line 1',
                 b'stdout line 2',
@@ -74,7 +73,7 @@ def test_dockercontainer_class():
             'name': 'non-existent-resource',
             'type': 'docker-container'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         assert resource.id is None
         assert resource.status is None
@@ -84,7 +83,7 @@ def test_dockercontainer_class():
             'name': 'duplicate-resource-name',
             'type': 'docker-container'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         with raises(ResourceError) as ecm:
             resource.connect()
         assert ecm.value.args[0].startswith("Multiple container matches found")
@@ -96,7 +95,7 @@ def test_dockercontainer_class():
             'engine_url': 'tcp://127.0.0.1:2375',
             'seccomp_unconfined': True
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         assert resource.image == 'ubuntu:latest'
         assert resource.engine_url == 'tcp://127.0.0.1:2375'
@@ -117,7 +116,7 @@ def test_dockercontainer_class():
             'type': 'docker-container',
             'engine_url': 'tcp://127.0.0.1:2375'
         }
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         resource.connect()
         results = merge_dicts(resource.create())
         assert results['id'] == '18b31b30e3a5'
@@ -131,8 +130,8 @@ def test_dockercontainer_class():
         command = ['apt-get', 'install', 'xeyes']
         resource.add_command(command)
         resource.execute_command_buffer()
-        assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
-        assert_in("Running command '['apt-get', 'install', 'xeyes']'", log.lines)
+        assert_in("Running command 'apt-get install bc'", log.lines)
+        assert_in("Running command 'apt-get install xeyes'", log.lines)
 
         # Test starting resource.
         resource.start()
@@ -143,7 +142,7 @@ def test_dockercontainer_class():
 
         # Test logging into the container.
         with resource.get_session(pty=True):
-            pass # we do nothing really
+            pass  # we do nothing really
         assert dockerpty.called
 
         # Test stopping resource.

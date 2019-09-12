@@ -11,15 +11,16 @@
 
 __docformat__ = 'restructuredtext'
 
-from importlib import import_module
 from logging import getLogger
 
 from reproman.dochelpers import exc_str
 from reproman.interface.base import Interface
 from reproman.resource import Resource
-from reproman.resource.base import ResourceManager
+from reproman.resource.base import discover_types
 from reproman.resource.base import get_resource_backends
+from reproman.resource.base import get_resource_class
 from reproman.support.constraints import EnsureStr
+from reproman.support.exceptions import ResourceError
 from reproman.support.param import Parameter
 
 
@@ -27,29 +28,19 @@ lgr = getLogger('reproman.api.backend_parameters')
 
 
 def get_resource_classes(names=None):
-    for name in names or ResourceManager._discover_types():
+    for name in names or discover_types():
         try:
-            module = import_module('reproman.resource.{}'.format(name))
-        except ImportError as exc:
-            import difflib
-            known = ResourceManager._discover_types()
-            suggestions = difflib.get_close_matches(name, known)
-            lgr.warning(
-                "Failed to import resource %s: %s. %s: %s",
-                name,
-                exc_str(exc),
-                "Similar backends" if suggestions else "Known backends",
-                ', '.join(suggestions or known))
+            cls = get_resource_class(name)
+        except ResourceError as exc:
+            lgr.warning(exc_str(exc))
             continue
 
-        class_name = ''.join([token.capitalize() for token in name.split('_')])
-        cls = getattr(module, class_name)
         if issubclass(cls, Resource):
             yield name, cls
         else:
-            lgr.debug("Skipping %s.%s because it is not a Resource. "
+            lgr.debug("Skipping %s because it is not a Resource. "
                       "Consider moving away",
-                      module, class_name)
+                      cls)
 
 
 class BackendParameters(Interface):
@@ -67,7 +58,7 @@ class BackendParameters(Interface):
 
     @staticmethod
     def __call__(backends=None):
-        backends = backends or ResourceManager._discover_types()
+        backends = backends or discover_types()
         for backend, cls in get_resource_classes(backends):
             param_doc = "\n".join(
                 ["  {}: {}".format(p, pdoc)

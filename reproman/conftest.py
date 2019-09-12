@@ -11,6 +11,7 @@
 # Some commonly used fixtures
 
 from reproman.formats.tests.fixtures import demo1_spec, reprozip_spec2
+from reproman.tests.fixtures import resource_manager_fixture
 
 import pytest
 
@@ -29,3 +30,9 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "integration" in item.keywords:
             item.add_marker(skip_integration)
+
+
+# This is useful for tests that need a ResourceManager instance but do not need
+# any resources and don't plan on modifying the on-disk inventory. If you do
+# need to modify the resources, use `resource_manager_fixture` directly.
+resman = resource_manager_fixture(resources={}, scope="session")

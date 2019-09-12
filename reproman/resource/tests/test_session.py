@@ -94,6 +94,12 @@ def test_get_updated_env():
     assert get_updated_env({'a': 1}, {'a': None}) == {}
     assert get_updated_env({'a': 1, 'b': 2}, {'a': None}) == {'b': 2}
     assert get_updated_env({'a': 1, 'b': 2}, {'a': None, 'b': 3}) == {'b': 3}
+    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:$a', 'b': 3}) \
+        == {'a': '/bar:/foo', 'b': 3}
+    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:$ab', 'b': 3}) \
+        == {'a': '/bar:$ab', 'b': 3}
+    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:${a}:/blee', 'b': 3}) \
+        == {'a': '/bar:/foo:/blee', 'b': 3}
 
 
 def test_get_local_session():
@@ -226,22 +232,14 @@ def check_methods(resource_test_dir):
             session._execute_command(['cat', '/no/such/file'])
 
         # Check _execute_command with env set
-        # TODO: Implement env parameter for _execute_command()
-        if cls_name not in ["ShellSession", "SSHSession", "PTYSSHSession"]:
-            with pytest.raises(NotImplementedError):
-                out, err = session._execute_command(['cat', '/etc/hosts'],
-                    env={'NEW_VAR': 'NEW_VAR_VALUE'})
+        out, err = session._execute_command(['env'],
+            env={'NEW_VAR': 'NEW_VAR_VALUE'})
+        assert 'NEW_VAR=NEW_VAR_VALUE' in out
 
         # Check _execute_command with cwd set
-        # TODO: Implement cwd parameter for _execute_command()
-        if "Docker"in cls_name:
-            with swallow_logs(new_level=logging.WARN) as log:
-                session._execute_command(['cat', '/etc/hosts'], cwd='/tmp')
-                assert "cwd is not handled in docker yet" in log.out
-        elif cls_name != 'ShellSession':
-            with pytest.raises(NotImplementedError):
-                out, err = session._execute_command(['cat', '/etc/hosts'],
-                    cwd='/tmp')
+        out, err = session._execute_command(['pwd'],
+            cwd='/var')
+        assert '/var' == out.rstrip("\n")
 
         # Check exists() method
         result = session.exists('/etc')

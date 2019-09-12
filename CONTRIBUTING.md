@@ -347,6 +347,13 @@ Refer reproman/config.py for information on how to add these environment variabl
 - *REPROMAN_TESTS_SSH*: 
   Skips SSH tests if this flag is **not** set
 - *REPROMAN_LOGTRACEBACK*: 
+- *REPROMAN_TESTS_ASSUME_SSP*:
+  Set this to indicate that tests can assume that Python system site
+  packages are exposed in the testing environment (i.e., an
+  environment created with `virtualenv --system-site-packages ...`
+  would include system packages) and that there is at least one system
+  package present.  This is currently only relevant for the virtualenv
+  distribution tests.
   Runs TraceBack function with collide set to True, if this flag is set to 'collide'.
   This replaces any common prefix between current traceback log and previous invocation with "..."
 - *REPROMAN_TESTS_NOTEARDOWN*: 

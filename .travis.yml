@@ -17,10 +17,18 @@ matrix:
     - REPROMAN_TESTS_SSH=1
     - INSTALL_DATALAD=1
     - INSTALL_CONDOR=1
-  - python: 3.4
+  - python: 3.5
     env:
     - REPROMAN_TESTS_SSH=1
     - REPROMAN_TESTS_DEPS=core
+    - REPROMAN_TESTS_ASSUME_SSP=1
+    # Set this to test tracing virtual environments created with
+    # --system-site-packages.
+    virtualenv:
+      system_site_packages: true
+    # We're assuming a system python version.  Pin the dist so that
+    # this run doesn't break when the default distribution changes.
+    dist: xenial
   - python: 3.5
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
@@ -30,7 +38,7 @@ matrix:
     env:
     - REPROMAN_LOGLEVEL=2
     - REPROMAN_LOGTARGET=/dev/null
-  - python: 3.6
+  - python: 3.4
     # Note: This this no network run appears to hang or otherwise
     # behave oddly on 3.5.
     env:
@@ -54,6 +62,10 @@ before_install:
   # The ultimate one-liner setup for NeuroDebian repository
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
   - travis_retry sudo apt-get update -qq
+  - if [ ! -z "${REPROMAN_TESTS_SSH:-}" ]; then
+      sudo eatmydata tools/ci/prep-travis-forssh-sudo.sh;
+      tools/ci/prep-travis-forssh.sh;
+    fi
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
 
@@ -73,6 +85,7 @@ install:
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
   # for SVN tests (SVNRepoShim._ls_files_command())
   - sudo apt-get install sqlite3
+  - sudo apt-get install moreutils  # for concurrent jobs with local orchestrator
   - travis_retry sudo eatmydata apt-get install singularity-container
   - if [ ! -z "${INSTALL_DATALAD:-}" ]; then tools/ci/install_datalad; fi
   - if [ ! -z "${INSTALL_CONDOR:-}" ]; then tools/ci/install_condor; fi

@@ -9,8 +9,6 @@
 """Analyze existing spec or session file system to gather more detailed information
 """
 
-from __future__ import unicode_literals
-
 # Since 3.7 shouldn't be needed
 from collections import OrderedDict
 from os.path import normpath

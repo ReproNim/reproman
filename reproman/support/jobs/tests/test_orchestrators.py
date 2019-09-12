@@ -46,6 +46,13 @@ def shell():
     return Shell("localshell")
 
 
+@pytest.fixture(scope="module")
+def ssh():
+    skipif.no_ssh()
+    from reproman.resource.ssh import SSH
+    return SSH("testssh", host="reproman-test")
+
+
 def test_orc_root_directory(shell):
     orc = orcs.PlainOrchestrator(shell, submission_type="local")
     assert orc.root_directory == op.expanduser("~/.reproman/run-root")
@@ -106,6 +113,11 @@ def test_orc_plain_docker(check_orc_plain, docker_resource, job_spec):
     check_orc_plain(docker_resource, job_spec)
 
 
+@pytest.mark.integration
+def test_orc_plain_ssh(check_orc_plain, ssh, job_spec):
+    check_orc_plain(ssh, job_spec)
+
+
 @pytest.mark.skipif(external_versions["datalad"], reason="DataLad found")
 def test_orc_no_datalad(tmpdir, shell):
     with chpwd(str(tmpdir)):
@@ -120,8 +132,8 @@ def test_orc_no_dataset(tmpdir, shell):
             orcs.DataladLocalRunOrchestrator(shell, submission_type="local")
 
 
-@pytest.fixture(scope="module")
-def base_dataset(tmpdir_factory):
+@pytest.fixture()
+def dataset(tmpdir_factory):
     skipif.no_datalad()
     import datalad.api as dl
     path = str(tmpdir_factory.mktemp("dataset"))
@@ -133,18 +145,6 @@ def base_dataset(tmpdir_factory):
     ds.add(".")
     ds.repo.tag("root")
     return ds
-
-
-@pytest.fixture()
-def dataset(base_dataset):
-    base_dataset.repo.checkout("master")
-    # FIXME: Use expose method once available.
-    base_dataset.repo._git_custom_command([],
-                                          ["git", "reset", "--hard", "root"])
-    for f in base_dataset.repo.untracked_files:
-        os.unlink(op.join(base_dataset.path, f))
-    assert not base_dataset.repo.dirty
-    return base_dataset
 
 
 @pytest.fixture(scope="module")
@@ -207,25 +207,61 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
             assert open("out").read() == "content\nmore\n"
 
 
+@pytest.mark.parametrize("failed",
+                         [[0],
+                          [0, 10],
+                          list(range(10))],
+                         # ATTN: The id function needs to return a string until
+                         # pytest v4.2.1 (specifically 4c7ddb8d9).
+                         ids=lambda x: str(len(x)))
+def test_orc_log_failed(failed):
+    nfailed = len(failed)
+    with swallow_logs(new_level=logging.INFO) as log:
+        orcs.Orchestrator._log_failed("jid", "metadir", failed)
+        assert "{} subjob".format(nfailed) in log.out
+        assert "jid stderr:" in log.out
+        if nfailed > 6:
+            assert "stderr.*" in log.out
+        elif nfailed == 1:
+            assert "stderr.{}".format(failed[0]) in log.out
+        else:
+            assert "stderr.{" in log.out
+
+
 @pytest.mark.integration
-def test_orc_datalad_run_failed(job_spec, dataset, shell):
+def test_orc_plain_failure(tmpdir, job_spec, shell):
+    job_spec["command_str"] = "iwillfail"
+    job_spec["inputs"] = []
+    local_dir = str(tmpdir)
+    with chpwd(local_dir):
+        orc = orcs.PlainOrchestrator(shell, submission_type="local",
+                                     job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+    for fname in "status", "stderr", "stdout":
+        assert op.exists(op.join(orc.meta_directory, fname + ".0"))
+
+
+@pytest.mark.integration
+def test_orc_datalad_run_failed(job_spec, dataset, ssh):
     job_spec["command_str"] = "iwillfail"
     job_spec["inputs"] = []
 
     with chpwd(dataset.path):
-        orc = orcs.DataladLocalRunOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairRunOrchestrator(
+            ssh, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
         with swallow_logs(new_level=logging.INFO) as log:
             orc.fetch()
-            assert "Job status" in log.out
+            assert "1 subjob failed" in log.out
             assert "stderr:" in log.out
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
+def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     # Start two orchestrators from the same point:
     #
     #   orc 0, master
@@ -238,7 +274,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
     js1 = dict(job_spec, command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
         orc0, orc1 = [
-            orcs.DataladPairRunOrchestrator(shell, submission_type="local",
+            orcs.DataladPairRunOrchestrator(ssh, submission_type="local",
                                             job_spec=js)
             for js in [js0, js1]]
 
@@ -248,7 +284,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
             orc.follow()
 
         # The status for the first one is now out-of-tree ...
-        assert not op.exists(op.join(orc0.meta_directory, "status"))
+        assert not op.exists(op.join(orc0.meta_directory, "status.0"))
         # but we can still get it.
         assert orc0.status == "succeeded"
 
@@ -268,7 +304,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
+def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     # Run one orchestrator and fetch, then run another and fetch:
     #
     #   orc 1, master
@@ -285,7 +321,7 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
     with chpwd(ds.path):
         def do(js):
             orc = orcs.DataladPairRunOrchestrator(
-                shell, submission_type="local", job_spec=js)
+                ssh, submission_type="local", job_spec=js)
             orc.prepare_remote()
             orc.submit()
             orc.follow()
@@ -294,10 +330,6 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, shell):
 
         orc0 = do(js0)
         orc1 = do(js1)
-
-        # Ran on top, so both exist in working tree.
-        assert op.exists(op.join(orc0.meta_directory, "status"))
-        assert op.exists(op.join(orc1.meta_directory, "status"))
 
         ref0 = "refs/reproman/{}".format(orc0.jobid)
         ref1 = "refs/reproman/{}".format(orc1.jobid)
@@ -322,17 +354,15 @@ def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
             orc.fetch()
 
 
+@pytest.mark.xfail(reason="Singularity Hub is down", run=False)
 @pytest.mark.integration
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladPairRunOrchestrator,
                           orcs.DataladLocalRunOrchestrator],
                          ids=["orc:pair", "orc:local"])
-def test_orc_datalad_run_container(tmpdir, container_dataset, shell,
-                                   orc_class):
-    import datalad.api as dl
-    # Avoid the dataset fixture because the subdataset will make its simplistic
-    # cleanup fail.
-    ds = dl.Dataset(op.join(str(tmpdir), "ds")).create()
+def test_orc_datalad_run_container(tmpdir, dataset,
+                                   container_dataset, shell, orc_class):
+    ds = dataset
     ds.install(path="subds", source=container_dataset)
     if orc_class == orcs.DataladLocalRunOrchestrator:
         # We need to have the image locally in order to copy it to the
@@ -369,22 +399,66 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
 
 
 @pytest.mark.integration
-def test_orc_datalad_abort_if_dirty(job_spec, dataset, shell):
-    with chpwd(dataset.path):
-        orc0 = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
-        # Run one job so that we create the remote repository.
-        orc0.prepare_remote()
-        orc0.submit()
-        orc0.follow()
+def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
+    subds = dataset.create(path="sub")
+    subds.create(path="subsub")
+    dataset.save()
+
+    job_spec["inputs"] = []
+    job_spec["outputs"] = []
+
+    def get_orc(jspec=None):
+        return orcs.DataladPairRunOrchestrator(
+            ssh, submission_type="local",
+            job_spec=jspec or job_spec)
+
+    def run(**spec_kwds):
+        jspec = dict(job_spec, **spec_kwds)
+        with chpwd(dataset.path):
+            orc = get_orc(jspec)
+            # Run one job so that we create the remote repository.
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+            orc.fetch()
+            return orc
 
     with chpwd(dataset.path):
-        orc1 = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        # We abort if the local dataset is dirty.
+        create_tree(dataset.path, {"local-dirt": ""})
+        with pytest.raises(OrchestratorError) as exc:
+            get_orc()
+        assert "dirty" in str(exc.value)
+        os.unlink("local-dirt")
+
+    # Run one job so that we create the remote repository.
+    run(command_str="echo one >one")
+
+    with chpwd(dataset.path):
+        orc1 = get_orc()
         create_tree(orc1.working_directory, {"dirty": ""})
         with pytest.raises(OrchestratorError) as exc:
             orc1.prepare_remote()
-        assert "dirty" in str(exc)
+        assert "dirty" in str(exc.value)
+    os.unlink(op.join(orc1.working_directory, "dirty"))
+
+    # We can run if the submodule simply has a different commit checked out.
+    run(command_str="echo two >two")
+
+    create_tree(op.join(dataset.path, "sub"), {"for-local-commit": ""})
+    dataset.add(".", recursive=True)
+
+    run(command_str="echo three >three")
+
+    # But we abort if subdataset is actually dirty.
+    with chpwd(dataset.path):
+        orc2 = get_orc()
+        create_tree(orc2.working_directory,
+                    {"sub": {"subsub": {"subdirt": ""}}})
+        with pytest.raises(OrchestratorError) as exc:
+            orc2.prepare_remote()
+        assert "dirty" in str(exc.value)
+    os.unlink(op.join(orc2.working_directory, "sub", "subsub", "subdirt"))
 
 
 def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
@@ -420,7 +494,7 @@ def test_head_at_unknown_ref(dataset):
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "youdontknowme"):
             pass
-    assert "youdontknowme" in str(exc)
+    assert "youdontknowme" in str(exc.value)
 
 
 def test_head_at_empty_branch(dataset):
@@ -431,7 +505,7 @@ def test_head_at_empty_branch(dataset):
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "master"):
             pass
-    assert "No commit" in str(exc)
+    assert "No commit" in str(exc.value)
 
 
 def test_head_at_no_move(dataset):
@@ -469,3 +543,42 @@ def test_dataset_as_dict(shell, dataset, job_spec):
     # OrchestratorError.asdict() with.
     assert "head" in d
     assert "dataset_id" in d
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("orc_class",
+                         [orcs.DataladLocalRunOrchestrator,
+                          orcs.DataladPairOrchestrator,
+                          orcs.DataladPairRunOrchestrator],
+                         ids=["orc:local-run", "orc:pair-run", "orc-pair"])
+@pytest.mark.parametrize("sub_type",
+                         ["local",
+                          pytest.param("condor", marks=mark.skipif_no_condor)],
+                         ids=["sub:local", "sub:condor"])
+def test_orc_datalad_concurrent(job_spec, dataset, ssh, orc_class, sub_type):
+    names = ["paul", "rosa"]
+
+    job_spec["inputs"] = ["{p[name]}.in"]
+    job_spec["outputs"] = ["{p[name]}.out"]
+    job_spec["command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
+    job_spec["batch_parameters"] = [{"name": n} for n in names]
+
+    in_files = [n + ".in" for n in names]
+    for fname in in_files:
+        with open(op.join(dataset.path, fname), "w") as fh:
+            fh.write(fname[0])
+    dataset.save(path=in_files)
+
+    with chpwd(dataset.path):
+        orc = orc_class(ssh, submission_type=sub_type, job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+
+        orc.fetch()
+
+        out_files = [n + ".out" for n in names]
+        for ofile in out_files:
+            assert dataset.repo.file_has_content(ofile)
+            with open(ofile) as ofh:
+                assert ofh.read() == ofile[0] * 2

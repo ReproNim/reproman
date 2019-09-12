@@ -12,12 +12,9 @@
 __docformat__ = 'restructuredtext'
 
 from .base import Interface
-import reproman.interface.base # Needed for test patching
 from ..support.param import Parameter
 from ..support.constraints import EnsureStr
-from ..support.exceptions import ResourceError
 from ..resource import get_manager
-from ..dochelpers import exc_str
 from ..utils import parse_kv_list
 
 

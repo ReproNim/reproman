@@ -11,7 +11,9 @@ import pytest
 
 from reproman.config import ConfigManager
 from reproman.resource.base import ResourceManager
+from reproman.resource.base import Resource
 from reproman.resource.base import backend_check_parameters
+from reproman.resource.base import get_resource_class
 from reproman.resource.shell import Shell
 from reproman.support.exceptions import MissingConfigError
 from reproman.support.exceptions import MultipleResourceMatches
@@ -20,14 +22,37 @@ from reproman.support.exceptions import ResourceError
 from reproman.tests.skip import mark
 
 
-def test_resource_manager_factory_missing_type():
+def test_resource_manager_factory_missing_type(resman):
     with pytest.raises(MissingConfigError):
-        ResourceManager.factory({})
+        resman.factory({})
 
 
-def test_resource_manager_factory_unkown():
+def test_resource_manager_factory_unkown(resman):
     with pytest.raises(ResourceError):
-        ResourceManager.factory({"type": "not really a type"})
+        resman.factory({"type": "not really a type"})
+
+
+def test_resource_manager_factory_missing_required(resman):
+    with pytest.raises(ResourceError):
+        resman.factory({"type": "shell"})
+
+
+@pytest.mark.parametrize("type_", ["shell", "ssh"])
+def test_resource_manager_factory_invalid_param(resman, type_):
+    config = {"type": type_,
+              "id": "id",
+              "name": "name",
+              # All of the below are invalid in the case of shell. For ssh,
+              # "other" is invalid.
+              "host": "host",
+              "port": "port",
+              "other": "doesntmatter"}
+
+    with pytest.raises(ResourceError):
+        resman.factory(config)
+
+    res = resman.factory(config, strict=False)
+    assert isinstance(res, Resource)
 
 
 def test_backend_check_parameters_no_known():
@@ -202,3 +227,35 @@ def test_create_includes_config(tmpdir):
             manager.create("myssh", "ssh")
             factory.assert_called_with(
                 {"host": "myhost", "name": "myssh", "type": "ssh"})
+
+
+def test_get_resource_class():
+    from reproman.resource.shell import Shell
+    assert get_resource_class("shell") == Shell
+
+    # If we can't find the resource, we suggest near-hits.
+    with pytest.raises(ResourceError) as exc:
+        get_resource_class("shll")
+    assert "shell" in str(exc.value)
+
+    # We raise a resource error if some other failure happens while trying to
+    # discover resource types.
+    with pytest.raises(ResourceError) as exc:
+        def fail():
+            raise Exception("some failure")
+        with patch("reproman.resource.base.discover_types",
+                   fail):
+            get_resource_class("shll")
+    assert "Failed to discover" in str(exc.value)
+
+    # We raise a resource error if we can find a module in reproman/resource/
+    # but it doesn't have a corresponding resource class.
+    with pytest.raises(ResourceError) as exc:
+        get_resource_class("base")
+    assert "Failed to find" in str(exc.value)
+
+    # We recognize when s/_/-/ would give an existing class and provide an
+    # informative error.
+    with pytest.raises(ResourceError) as exc:
+        get_resource_class("docker_container")
+    assert "docker-container" in str(exc.value)

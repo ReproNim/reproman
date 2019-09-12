@@ -15,11 +15,11 @@ import re
 import uuid
 from pytest import raises
 
+from ...support.exceptions import CommandError
 from ...utils import merge_dicts
 from ...utils import swallow_logs
 from ...tests.utils import assert_in
 from ...tests.skip import mark
-from ..base import ResourceManager
 from reproman.tests.fixtures import get_docker_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
@@ -47,7 +47,7 @@ def test_setup_ssh(setup_ssh):
     assert setup_ssh['custom']['host'] == 'localhost'
 
 
-def test_ssh_class(setup_ssh, resource_test_dir):
+def test_ssh_class(setup_ssh, resource_test_dir, resman):
     with swallow_logs(new_level=logging.DEBUG) as log:
 
         # Test connecting to test SSH server.
@@ -57,7 +57,7 @@ def test_ssh_class(setup_ssh, resource_test_dir):
             type='ssh',
             **setup_ssh['custom']
         )
-        resource = ResourceManager.factory(config)
+        resource = resman.factory(config)
         updated_config = merge_dicts(resource.create())
         config.update(updated_config)
         assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$',
@@ -111,11 +111,11 @@ def test_ssh_class(setup_ssh, resource_test_dir):
         assert not session.isdir('not-a-dir')
         assert not session.isdir('/etc/hosts')
 
-        with raises(NotImplementedError):
+        with raises(CommandError):
             session._execute_command('non-existent-command', cwd='/path')
 
 
-def test_ssh_resource(setup_ssh):
+def test_ssh_resource(setup_ssh, resman):
 
     config = {
         'name': 'ssh-test-resource',
@@ -124,7 +124,7 @@ def test_ssh_resource(setup_ssh):
         'user': 'root',
         'port': 49000
     }
-    resource = ResourceManager.factory(config)
+    resource = resman.factory(config)
     resource.connect(password='root')
 
     with pytest.raises(NotImplementedError):
