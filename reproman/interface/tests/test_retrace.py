@@ -105,7 +105,7 @@ def _check_loop_protocol(protocols, files, tenvs, tfiles):
     tracer_classes, session = get_tracer_session(protocols)
     dists, unknown_files = identify_distributions(
         files, session, tracer_classes=tracer_classes)
-    assert not any(t._protocol for t in tracer_classes), "we exhausted the protocol"
+    assert not any(t._protocol for t in tracer_classes.values()), "we exhausted the protocol"
     assert dists == tenvs
     assert unknown_files == tfiles
 
