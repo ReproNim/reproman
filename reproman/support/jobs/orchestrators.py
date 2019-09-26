@@ -29,6 +29,7 @@ import os.path as op
 import uuid
 from tempfile import NamedTemporaryFile
 import time
+import yaml
 
 from shlex import quote as shlex_quote
 
@@ -250,6 +251,10 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         self._put_text(
             "\0".join(self.job_spec["command_array"]),
             op.join(self.meta_directory, "command-array"))
+
+        self._put_text(
+            yaml.safe_dump(self.as_dict()),
+            op.join(self.meta_directory, "spec.yaml"))
 
         subm_id = self.submitter.submit(
             submission_file,
