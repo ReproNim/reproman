@@ -363,7 +363,7 @@ class Run(Interface):
         spec = _combine_job_specs(_load_specs(job_specs or []) +
                                   [job_parameters, cli_spec])
 
-        spec["batch_parameters"] = _resolve_batch_parameters(
+        spec["_resolved_batch_parameters"] = _resolve_batch_parameters(
             spec.get("batch_spec"), spec.get("batch_parameters"))
 
         # Treat "command" as a special case because it's a list and the

@@ -561,7 +561,7 @@ def test_orc_datalad_concurrent(job_spec, dataset, ssh, orc_class, sub_type):
     job_spec["inputs"] = ["{p[name]}.in"]
     job_spec["outputs"] = ["{p[name]}.out"]
     job_spec["command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
-    job_spec["batch_parameters"] = [{"name": n} for n in names]
+    job_spec["_resolved_batch_parameters"] = [{"name": n} for n in names]
 
     in_files = [n + ".in" for n in names]
     for fname in in_files:

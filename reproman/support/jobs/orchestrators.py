@@ -184,7 +184,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         from reproman.support.globbedpaths import GlobbedPaths
 
         spec = self.job_spec
-        if spec.get("batch_parameters"):
+        if spec.get("_resolved_batch_parameters"):
             raise OrchestratorError(
                 "Batch parameters are currently only supported "
                 "in DataLad orchestrators")
@@ -448,7 +448,7 @@ def _datalad_format_command(ds, spec):
     # DataLad's to avoid potential discrepancies with datalad-run's behavior.
     from datalad.interface.run import GlobbedPaths
 
-    batch_parameters = spec.get("batch_parameters") or [{}]
+    batch_parameters = spec.get("_resolved_batch_parameters") or [{}]
     spec["command_array"] = []
     spec["inputs_array"] = []
     spec["outputs_array"] = []
