@@ -192,9 +192,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         for key in ["inputs", "outputs"]:
             if key in spec:
                 gp = GlobbedPaths(spec[key])
-                spec["{}_array".format(key)] = [gp.expand(dot=False)]
-        if "command_str" in spec:
-            spec["command_array"] = [spec["command_str"]]
+                spec["_{}_array".format(key)] = [gp.expand(dot=False)]
+        if "_resolved_command_str" in spec:
+            spec["_command_array"] = [spec["_resolved_command_str"]]
         # Note: This doesn't adjust the command. We currently don't support any
         # datalad-run-like command formatting.
 
@@ -408,9 +408,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 def _datalad_check_container(ds, spec):
     """Adjust spec for `datalad-container`-configured container.
 
-    If a "container" key is found, "command_str" will be replaced, and the
-    previous "command_str" value will be placed under
-    "command_str_nocontainer".
+    If a "container" key is found, a new key "_container_command_str" will be
+    added with the container-formatted command.
     """
     container = spec.get("container")
     if container is not None:
@@ -431,10 +430,10 @@ def _datalad_check_container(ds, spec):
         pwd, _ = get_command_pwds(ds)
         image_dspath = op.relpath(cinfo.get('parentds', ds.path), pwd)
 
-        command_str = spec["command_str"]
-        spec["commmand_str_nocontainer"] = command_str
-        spec["command_str"] = cmdexec.format(
-            img=image, cmd=command_str, img_dspath=image_dspath)
+        spec["_container_command_str"] = cmdexec.format(
+            img=image,
+            cmd=spec["_resolved_command_str"],
+            img_dspath=image_dspath)
         spec["extra_inputs"] = [image]
 
 
@@ -461,8 +460,9 @@ def _datalad_format_command(ds, spec):
                 spec["{}_array".format(key)].append(gp.expand(dot=False))
                 fmt_kwds[key] = gp
         fmt_kwds["p"] = cp
-        spec["command_array"].append(format_command(ds, spec["command_str"],
-                                                    **fmt_kwds))
+        cmd_str = spec.get("_container_command_str",
+                           spec["_resolved_command_str"])
+        spec["command_array"].append(format_command(ds, cmd_str, **fmt_kwds))
 
     exinputs = spec.get("extra_inputs", [])
     spec["extra_inputs_array"] = [exinputs] * len(batch_parameters)

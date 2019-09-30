@@ -72,7 +72,7 @@ def job_spec(tmpdir):
     return {"root_directory": op.join(str(tmpdir), "nm-run"),
             "inputs": [op.join("d", "in")],
             "outputs": ["out"],
-            "command_str": 'bash -c "cat d/in >out && echo more >>out"'}
+            "_resolved_command_str": 'bash -c "cat d/in >out && echo more >>out"'}
 
 
 @pytest.fixture()
@@ -230,7 +230,7 @@ def test_orc_log_failed(failed):
 
 @pytest.mark.integration
 def test_orc_plain_failure(tmpdir, job_spec, shell):
-    job_spec["command_str"] = "iwillfail"
+    job_spec["_resolved_command_str"] = "iwillfail"
     job_spec["inputs"] = []
     local_dir = str(tmpdir)
     with chpwd(local_dir):
@@ -245,7 +245,7 @@ def test_orc_plain_failure(tmpdir, job_spec, shell):
 
 @pytest.mark.integration
 def test_orc_datalad_run_failed(job_spec, dataset, ssh):
-    job_spec["command_str"] = "iwillfail"
+    job_spec["_resolved_command_str"] = "iwillfail"
     job_spec["inputs"] = []
 
     with chpwd(dataset.path):
@@ -271,7 +271,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     #   o
     ds = dataset
     js0 = job_spec
-    js1 = dict(job_spec, command_str='bash -c "echo other >other"')
+    js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
         orc0, orc1 = [
             orcs.DataladPairRunOrchestrator(ssh, submission_type="local",
@@ -317,7 +317,7 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     ds.add(".")
 
     js0 = job_spec
-    js1 = dict(job_spec, command_str='bash -c "echo other >other"')
+    js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
         def do(js):
             orc = orcs.DataladPairRunOrchestrator(
@@ -374,7 +374,7 @@ def test_orc_datalad_run_container(tmpdir, dataset,
             job_spec={"root_directory": op.join(str(tmpdir), "nm-run"),
                       "outputs": ["out"],
                       "container": "subds/dc",
-                      "command_str": 'sh -c "ls / >out"'})
+                      "_resolved_command_str": 'sh -c "ls / >out"'})
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -432,7 +432,7 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
         os.unlink("local-dirt")
 
     # Run one job so that we create the remote repository.
-    run(command_str="echo one >one")
+    run(_resolved_command_str="echo one >one")
 
     with chpwd(dataset.path):
         orc1 = get_orc()
@@ -443,12 +443,12 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     os.unlink(op.join(orc1.working_directory, "dirty"))
 
     # We can run if the submodule simply has a different commit checked out.
-    run(command_str="echo two >two")
+    run(_resolved_command_str="echo two >two")
 
     create_tree(op.join(dataset.path, "sub"), {"for-local-commit": ""})
     dataset.add(".", recursive=True)
 
-    run(command_str="echo three >three")
+    run(_resolved_command_str="echo three >three")
 
     # But we abort if subdataset is actually dirty.
     with chpwd(dataset.path):
@@ -560,7 +560,7 @@ def test_orc_datalad_concurrent(job_spec, dataset, ssh, orc_class, sub_type):
 
     job_spec["inputs"] = ["{p[name]}.in"]
     job_spec["outputs"] = ["{p[name]}.out"]
-    job_spec["command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
+    job_spec["_resolved_command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
     job_spec["_resolved_batch_parameters"] = [{"name": n} for n in names]
 
     in_files = [n + ".in" for n in names]
