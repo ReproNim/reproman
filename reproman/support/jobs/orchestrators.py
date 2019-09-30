@@ -171,7 +171,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "orchestrator": self.name,
                    "submitter": self.submitter.name,
                    "submission_id": self.submitter.submission_id}
-        return dict(to_dump, **(self.template.kwds if self.template else {}))
+        return dict(self.template.kwds if self.template else {},
+                    **to_dump)
 
     def _prepare_spec(self):
         """Prepare the spec for the run.
