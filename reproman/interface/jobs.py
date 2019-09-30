@@ -76,7 +76,7 @@ def _resurrect_orc(job):
         orchestrator_class = ORCHESTRATORS[job["orchestrator"]]
         orc = orchestrator_class(resource, job["submitter"], job,
                                  resurrection=True)
-        orc.submitter.submission_id = job.get("submission_id")
+        orc.submitter.submission_id = job.get("_submission_id")
     return orc
 
 
@@ -86,7 +86,7 @@ def _resurrect_orc(job):
 def show_oneline(job, status=False):
     """Display `job` as a single summary line.
     """
-    fmt = "{status}{j[jobid]} on {j[resource_name]} via {j[submitter]}$ {cmd}"
+    fmt = "{status}{j[_jobid]} on {j[resource_name]} via {j[submitter]}$ {cmd}"
     if status:
         orc = _resurrect_orc(job)
         orc_status = orc.status
@@ -126,7 +126,7 @@ def fetch(job):
         LREG.unregister(orc.jobid)
     else:
         lgr.warning("Not fetching incomplete job %s [status: %s]",
-                    job["jobid"],
+                    job["_jobid"],
                     orc.status or "unknown")
 
 

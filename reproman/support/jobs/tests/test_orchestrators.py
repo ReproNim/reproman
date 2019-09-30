@@ -472,10 +472,10 @@ def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
 
 
 def test_orc_datalad_resurrect(job_spec, dataset, shell):
-    for k in ["jobid",
+    for k in ["_jobid",
               "working_directory", "root_directory", "local_directory"]:
         job_spec[k] = "doesn't matter"
-    job_spec["head"] = "deadbee"
+    job_spec["_head"] = "deadbee"
     with chpwd(dataset.path):
         orc = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec,
@@ -541,8 +541,8 @@ def test_dataset_as_dict(shell, dataset, job_spec):
     d = orc.as_dict()
     # Check for keys that DataladOrchestrator should extend
     # OrchestratorError.asdict() with.
-    assert "head" in d
-    assert "dataset_id" in d
+    assert "_head" in d
+    assert "_dataset_id" in d
 
 
 @pytest.mark.integration

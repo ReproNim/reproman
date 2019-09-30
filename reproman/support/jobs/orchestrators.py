@@ -69,7 +69,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         these items are exposed as keywords to the runscript and submit
         templates, (2) the orchestrator looks here for optional values like
         "working_directory" and "inputs", and (3) on resurrection, the
-        orchestrator looks here for other required values, like "jobid".
+        orchestrator looks here for other required values, like "_jobid".
 
         The details around the job_spec are somewhat loose and poorly defined
         at the moment.
@@ -93,7 +93,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         self.job_spec = job_spec or {}
 
         if resurrection:
-            important_keys = ["jobid", "root_directory", "working_directory",
+            important_keys = ["_jobid", "root_directory", "working_directory",
                               "local_directory"]
             for key in important_keys:
                 if key not in self.job_spec:
@@ -101,7 +101,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                         "Job spec must have key '{}' to resurrect orchestrator"
                         .format(key))
 
-            self.jobid = self.job_spec["jobid"]
+            self.jobid = self.job_spec["_jobid"]
         else:
             self.jobid = "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                         str(uuid.uuid4())[:4])
@@ -171,15 +171,15 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "local_directory": self.local_directory,
                    "orchestrator": self.name,
                    "submitter": self.submitter.name,
-                   "submission_id": self.submitter.submission_id}
+                   "_submission_id": self.submitter.submission_id}
         return dict(self.template.kwds if self.template else {},
                     **to_dump)
 
     def _prepare_spec(self):
         """Prepare the spec for the run.
 
-        At the moment, this involves constructing the "command_array",
-        "inputs_array", and "outputs_array" keys.
+        At the moment, this involves constructing the "_command_array",
+        "_inputs_array", and "_outputs_array" keys.
         """
         from reproman.support.globbedpaths import GlobbedPaths
 
@@ -228,13 +228,13 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         lgr.info("Submitting %s", self.jobid)
         templ = Template(
             **dict(self.job_spec,
-                   jobid=self.jobid,
-                   num_subjobs=len(self.job_spec["command_array"]),
+                   _jobid=self.jobid,
+                   _num_subjobs=len(self.job_spec["_command_array"]),
                    root_directory=self.root_directory,
                    working_directory=self.working_directory,
-                   meta_directory=self.meta_directory,
-                   meta_directory_rel=op.relpath(self.meta_directory,
-                                                 self.working_directory)))
+                   _meta_directory=self.meta_directory,
+                   _meta_directory_rel=op.relpath(self.meta_directory,
+                                                  self.working_directory)))
         self.template = templ
         self._put_text(
             templ.render_runscript("{}.template.sh".format(
@@ -249,7 +249,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             executable=True)
 
         self._put_text(
-            "\0".join(self.job_spec["command_array"]),
+            "\0".join(self.job_spec["_command_array"]),
             op.join(self.meta_directory, "command-array"))
 
         self._put_text(
@@ -360,8 +360,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def _get_io_set(self, which, subjobs):
         spec = self.job_spec
         if subjobs is None:
-            subjobs = range(len(spec["command_array"]))
-        key = which + "_array"
+            subjobs = range(len(spec["_command_array"]))
+        key = "_{}_array".format(which)
         values = spec.get(key)
         if not values:
             return set()
@@ -434,7 +434,7 @@ def _datalad_check_container(ds, spec):
             img=image,
             cmd=spec["_resolved_command_str"],
             img_dspath=image_dspath)
-        spec["extra_inputs"] = [image]
+        spec["_extra_inputs"] = [image]
 
 
 def _datalad_format_command(ds, spec):
@@ -448,24 +448,24 @@ def _datalad_format_command(ds, spec):
     from datalad.interface.run import GlobbedPaths
 
     batch_parameters = spec.get("_resolved_batch_parameters") or [{}]
-    spec["command_array"] = []
-    spec["inputs_array"] = []
-    spec["outputs_array"] = []
+    spec["_command_array"] = []
+    spec["_inputs_array"] = []
+    spec["_outputs_array"] = []
     for cp in batch_parameters:
         fmt_kwds = {}
         for key in ["inputs", "outputs"]:
             if key in spec:
                 parametrized = [io.format(p=cp) for io in spec[key]]
                 gp = GlobbedPaths(parametrized)
-                spec["{}_array".format(key)].append(gp.expand(dot=False))
+                spec["_{}_array".format(key)].append(gp.expand(dot=False))
                 fmt_kwds[key] = gp
         fmt_kwds["p"] = cp
         cmd_str = spec.get("_container_command_str",
                            spec["_resolved_command_str"])
-        spec["command_array"].append(format_command(ds, cmd_str, **fmt_kwds))
+        spec["_command_array"].append(format_command(ds, cmd_str, **fmt_kwds))
 
-    exinputs = spec.get("extra_inputs", [])
-    spec["extra_inputs_array"] = [exinputs] * len(batch_parameters)
+    exinputs = spec.get("_extra_inputs", [])
+    spec["_extra_inputs_array"] = [exinputs] * len(batch_parameters)
 
 
 class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
@@ -488,7 +488,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
                                     .format(self.name))
 
         if self._resurrection:
-            self.head = self.job_spec.get("head")
+            self.head = self.job_spec.get("_head")
         else:
             if self.ds.repo.dirty:
                 raise OrchestratorError("Local dataset {} is dirty. "
@@ -519,8 +519,8 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     @borrowdoc(Orchestrator)
     def as_dict(self):
         d = super(DataladOrchestrator, self).as_dict()
-        d["dataset_id"] = self.ds.id
-        d["head"] = self.head
+        d["_dataset_id"] = self.ds.id
+        d["_head"] = self.head
         return d
 
     def _prepare_spec(self):
@@ -981,7 +981,7 @@ class FetchDataladRunMixin(object):
                 from datalad.interface.run import run_command
                 lgr.info("Creating run commit in %s", self.ds.path)
 
-                cmds = self.job_spec["command_array"]
+                cmds = self.job_spec["_command_array"]
                 if len(cmds) == 1:
                     cmd = cmds[0]
                 else:
@@ -994,7 +994,7 @@ class FetchDataladRunMixin(object):
                         # they are formatted per subjob and then expanded by
                         # glob?
                         inputs=self.job_spec.get("inputs"),
-                        extra_inputs=self.job_spec.get("extra_inputs"),
+                        extra_inputs=self.job_spec.get("_extra_inputs"),
                         outputs=self.job_spec.get("outputs"),
                         inject=True,
                         extra_info={"reproman_jobid": self.jobid},
