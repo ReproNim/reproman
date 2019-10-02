@@ -10,6 +10,7 @@
 import logging
 import os
 import os.path as op
+import yaml
 
 from unittest.mock import patch
 import pytest
@@ -174,6 +175,8 @@ def container_dataset(tmpdir_factory):
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
 def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
+    dataset.repo.tag("start-pt")
+
     def run_and_check(spec):
         with chpwd(dataset.path):
             orc = orc_class(shell, submission_type=sub_type, job_spec=spec)
@@ -187,6 +190,25 @@ def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
             return orc
 
     orc = run_and_check(job_spec)
+
+    # Perform another run based on the dumped job spec from the first.
+    assert dataset.repo.get_active_branch() == "master"
+    metadir = op.relpath(orc.meta_directory, orc.working_directory)
+    with open(op.join(dataset.path, metadir, "spec.yaml")) as f:
+        dumped_spec = yaml.safe_load(f)
+    if orc.name == "datalad-local-run":
+        # Our reproman-based copying of data doesn't isn't (yet) OK with data
+        # files that already exist.
+        dumped_spec["inputs"] = []
+    # FIXME: Use exposed method once available.
+    dataset.repo._git_custom_command(
+        [], ["git", "reset", "--hard", "start-pt"])
+    if dataset.repo.dirty:
+        # The submitter log file is ignored (currently only relevant for
+        # condor; see b9277ebc0 for more details). Add the directory to get to
+        # a clean state.
+        dataset.add(".reproman")
+    orc = run_and_check(dumped_spec)
 
 
 @pytest.mark.integration
