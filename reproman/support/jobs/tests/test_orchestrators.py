@@ -174,15 +174,19 @@ def container_dataset(tmpdir_factory):
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
 def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
-    with chpwd(dataset.path):
-        orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
-        orc.prepare_remote()
-        orc.submit()
-        orc.follow()
+    def run_and_check(spec):
+        with chpwd(dataset.path):
+            orc = orc_class(shell, submission_type=sub_type, job_spec=spec)
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
 
-        orc.fetch()
-        assert dataset.repo.file_has_content("out")
-        assert open("out").read() == "content\nmore\n"
+            orc.fetch()
+            assert dataset.repo.file_has_content("out")
+            assert open("out").read() == "content\nmore\n"
+            return orc
+
+    orc = run_and_check(job_spec)
 
 
 @pytest.mark.integration
