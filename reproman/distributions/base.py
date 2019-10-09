@@ -58,27 +58,15 @@ class SpecObject(object):
         return tuple(getattr(self, a) for a in self._diff_cmp_fields)
 
     @property
-    def _cmp_id(self):
-        if not self._diff_cmp_fields:
-            # Might need to be gone or some custom exception
-            raise RuntimeError(
-                "Cannot establish identity of %r since _diff_cmp_fields "
-                "are not defined" % self)
-        if not self._diff_fields:
-            # Might need to be gone or some custom exception
-            raise RuntimeError(
-                "Cannot establish identity of %r since _diff_fields "
-                "are not defined" % self)
-        vals = [ getattr(self, a) for a in self._diff_cmp_fields ]
-        vals.extend([ getattr(self, a) for a in self._diff_fields ])
-        return tuple(vals)
+    def _diff_id(self):
+        return self._diff_cmp_id + self._diff_vals
 
     @property
     def _diff_vals(self):
         """gives the values of the attributes defined by _diff_fields (like 
         _diff_cmp_id for _diff_cmp_fields)
         """
-        return tuple(str(getattr(self, a)) for a in self._diff_fields)
+        return tuple(getattr(self, a) for a in self._diff_fields)
 
     @property
     def diff_identity_string(self):
@@ -103,7 +91,7 @@ class SpecObject(object):
         """like diff_identity_string, but for both _diff_cmp_fields and 
         _diff_fields (used in satisfied_by comparisons)
         """
-        return " ".join(str(el) for el in self._cmp_id if el is not None)
+        return " ".join(str(el) for el in self._diff_id if el is not None)
 
     # TODO: make it "lazy" or may be there is already a helper in attrs?
     @property
@@ -168,7 +156,7 @@ class SpecObject(object):
             raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
-        for (self_value, other_value) in zip(self._cmp_id, other._cmp_id):
+        for (self_value, other_value) in zip(self._diff_id, other._diff_id):
             if self_value is None:
                 continue
             if self_value != other_value:
@@ -181,11 +169,11 @@ class SpecObject(object):
 
         We require that the objects are of the same type and that the 
         values of the attributes given by _diff_cmp_fields and _diff_fields 
-        (dereferenced in _cmp_id) are the same.
+        (dereferenced in _diff_id) are the same.
         """
         if not isinstance(other, self.__class__):
             return False
-        return all(sv==ov for sv, ov in zip(self._cmp_id, other._cmp_id))
+        return all(sv==ov for sv, ov in zip(self._diff_id, other._diff_id))
 
     def _find_attr(self, child):
         """Find an attribute among TypedList attrs which might contain the child
