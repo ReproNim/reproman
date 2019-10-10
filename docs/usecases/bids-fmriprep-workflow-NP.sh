@@ -46,14 +46,45 @@
 #       ./bids-fmriprep-workflow-NP.sh bids-fmriprep-workflow-NP/out2
 
 set -eu
-set -x
+# set -x
 
 # $STUDY is a variable used in a paper this workflow mimics
 STUDY="$1"
 
+
+#
+# Check asap for licenses since fmriprep needs one for FreeSurfer
+#
+
+if [ -z "${FS_LICENSE:-}" ]; then
+    if [ -e "${FREESURFER_HOME:-/XXXX}/.license" ]; then
+        FS_LICENSE="${FREESURFER_HOME}/.license"
+    else
+        cat >&2 <<EOF
+Error: No FreeSurfer license found!
+    Either define FREESURFER_HOME environment variable pointing to a directory
+    with .license file for FreeSurfer or define FS_LICENSE environment variable
+    which would either point to the license file or contain the license
+    (with "\\n" for new lines) to be used for FreeSurfer
+EOF
+        exit 1
+    fi
+fi
+
 # Create study dataset
 datalad create -c text2git "$STUDY"
 cd "$STUDY"
+
+if [ -e "$FS_LICENSE" ]; then
+    cp "$FS_LICENSE" containers/licenses/freesurfer
+else
+    echo -n "$FS_LICENSE" >| containers/licenses/freesurfer
+fi
+echo "* annex.largefiles=(anything)" >| containers/licenses/.gitattributes
+rm containers/licences/.gitignore  # we will store them
+datalad save -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
+( cd containers; git annex metadata licenses/freesurfer -s distribution-restrictions=sensitive; )
+
 
 #
 # Install containers dataset for guaranteed/unambigous containers versioning
@@ -63,21 +94,22 @@ cd "$STUDY"
 
 # Local copy to avoid heavy network traffic while testing locally could be
 # referenced in CONTAINERS_REPO env var
-datalad install -d . -s ${CONTAINERS_REPO:-///repronim/containers}
+datalad install -d . -s "${CONTAINERS_REPO:-///repronim/containers}"
 
 # possibly downgrade versions to match the ones used in the "paper"
 # TODO see  https://github.com/ReproNim/containers/issues/8 for relevant discussion
 # and possibly providing some helper to accomplish that more easily
-cd containers
-echo -n "\
-poldracklab-ds003-example	0.0.3
-bids-mriqc					0.15.0
-bids-fmriprep				1.4.1
-"| while read img ver; do
-	git config -f .datalad/config --replace-all datalad.containers.$img.image images/${img%%-*}/${img}--${ver}.sing;
-done
-datalad save -d^ -m "Possibly downgraded containers versions to the ones in the paper" $PWD/.datalad/config
-cd ..
+(
+    cd containers
+    echo -n "\
+    poldracklab-ds003-example	0.0.3
+    bids-mriqc					0.15.0
+    bids-fmriprep				1.4.1
+    "| while read -r img ver; do
+        git config -f .datalad/config --replace-all "datalad.containers.$img.image" "images/${img%%-*}/${img}--${ver}.sing";
+    done
+    datalad save -d^ -m "Possibly downgraded containers versions to the ones in the paper" "$PWD/.datalad/config"
+)
 
 #
 # Install dataset to be analyzed (no data - analysis might run in the cloud or on HPC)
@@ -90,29 +122,7 @@ mkdir data
 
 # For now we will work with minimized version with only 2 subjects
 # datalad install -d . -s ///openneuro/ds000003 data/bids
-datalad install -d . -s ${INPUT_DATASET_REPO:-https://github.com/ReproNim/ds000003-demo} data/bids
-
-
-#
-# Licenses
-#
-
-# we will not prepopulate this one
-mkdir licenses/
-echo freesurfer.txt > licenses/.gitignore
-
-cat > licenses/README.md <<EOF
-
-Freesurfer
-----------
-
-Place your FreeSurfer license into freesurfer.txt file in this directory.
-Visit https://surfer.nmr.mgh.harvard.edu/registration.html to obtain one if
-you don't have it yet - it is free.
-
-EOF
-datalad save -m "DOC: licenses/ directory stub" licenses/
-
+datalad install -d . -s "${INPUT_DATASET_REPO:-https://github.com/ReproNim/ds000003-demo}" data/bids
 
 #
 # Execution.
@@ -156,7 +166,7 @@ RM_SUB=condor
 #   "smaug-condor" which would link smaug physical resource with those parameters
 # TODO: point to the issue in ReproMan
 
-: ${RUNNER:=reproman}
+: "${RUNNER:=reproman}"
 
 unknown_runner () {
     echo "ERROR: Unknown runner $RUNNER.  Known reproman and datalad" >&2
@@ -184,41 +194,72 @@ get_participant_ids () {
 }
 
 # 1. bids-mriqc -- QA
+# datalad save -d . -m "Due to https://github.com/datalad/datalad/issues/3591" data/mriqc
 
-# Q/TODO: Is there a way to execute/reference the container?
-#   for now doing manually
-datalad create -d . -c text2git data/mriqc
-datalad save -d . -m "Due to https://github.com/datalad/datalad/issues/3591" data/mriqc
+PARTICIPANT_LABELS="$(get_participant_ids data/bids)"
 
-# Sample run without any parallelization, and doing both levels (participant and group)
-RUNNER_ARGS=( --input 'data/bids' --output data/mriqc )
-MRIQC_ARGS=( "{inputs}" "{outputs}" participant group )
+function run_bids_app() {
+    app="$1"; shift
+    do_group="$1"; shift
+    app_args=( "$@" -w work )
 
-case "$RUNNER" in
-    reproman)
-        # Serial run
-        # reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}"
-        # Parallel requires two runs -- parallel across participants:
-        reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" \
-             --bp "pl=$(get_participant_ids data/bids)" \
-             '{inputs}' '{outputs}' participant --participant_label '{p[pl]}'
-        # serial for the group
-        reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" \
-            '{inputs}' '{outputs}' group
-	;;
-	datalad)
-        datalad containers-run -n containers/bids-mriqc \
-            "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}";;
-    *) unknown_runner;;
-esac
+    outds=data/$app
+    container=containers/bids-$app
+    app_runner_args=( --input 'data/bids' --output "$outds" )
+
+    mkdir -p work
+    grep -e '^work$' .gitignore \
+    || { echo "work" >> .gitignore; datalad save -m "Ignore work directory"; }
+
+
+    # Create target output dataset
+    datalad create -d . -c text2git "$outds"
+
+    case "$RUNNER" in
+        reproman)
+            # Serial run
+            # reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}"
+            # Parallel requires two runs -- parallel across participants:
+            reproman_run --jp "container=$container" "${app_runner_args[@]}" \
+                 --bp "pl=$PARTICIPANT_LABELS" \
+                 '{inputs}' '{outputs}' participant --participant_label '{p[pl]}' "${app_args[@]}"
+            case "$do_group" in
+                1|yes)
+                    # serial for the group
+                    reproman_run --jp "container=$container" "${app_runner_args[@]}" \
+                        '{inputs}' '{outputs}' group "${app_args[@]}"
+                    ;;
+                0|no)
+                    ;;
+                *)
+                    echo "Unknown value APP_GROUP=$do_group" >&2
+                    exit 1
+                    ;;
+            esac
+        ;;
+        datalad)
+            case "$do_group" in
+                1|yes) app_args=( group "${app_args[@]}" ) ;;
+                0|no) ;;
+                *) exit 1 ;;
+            esac
+            datalad containers-run -n "$container" "${app_runner_args[@]}" \
+                '{inputs}' '{outputs}' participant "${app_args[@]}"
+            ;;
+        *) unknown_runner;;
+    esac
+}
+
+# mriqc
+app=mriqc
+do_group=yes
+run_bids_app mriqc yes
+
+fmriprep no --fs-license-file=licenses/freesurfer
+run_bids_app
 
 
 exit 0  # done for now
-
-# ultimately we should be able to parallelize across subjects. Here is the sample invocation for subj 02
-# singularity run containers/images/bids/bids-mriqc--0.15.0.sing  \
-#			data/bids/ data/mriqc/ participant --participant_label 02
-# and at the "group" level should have no --participant_label option
 
 
 reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
