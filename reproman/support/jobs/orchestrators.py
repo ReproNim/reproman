@@ -33,6 +33,7 @@ import yaml
 
 from shlex import quote as shlex_quote
 
+import reproman
 from reproman.dochelpers import borrowdoc
 from reproman.utils import cached_property
 from reproman.utils import chpwd
@@ -171,7 +172,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "local_directory": self.local_directory,
                    "orchestrator": self.name,
                    "submitter": self.submitter.name,
-                   "_submission_id": self.submitter.submission_id}
+                   "_submission_id": self.submitter.submission_id,
+                   "_reproman_version": reproman.__version__}
         return dict(self.template.kwds if self.template else {},
                     **to_dump)
 
