@@ -197,6 +197,7 @@ def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
     with open(op.join(dataset.path, metadir, "spec.yaml")) as f:
         dumped_spec = yaml.safe_load(f)
         assert "_reproman_version" in dumped_spec
+        assert "_spec_version" in dumped_spec
     if orc.name == "datalad-local-run":
         # Our reproman-based copying of data doesn't isn't (yet) OK with data
         # files that already exist.

@@ -173,7 +173,12 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "orchestrator": self.name,
                    "submitter": self.submitter.name,
                    "_submission_id": self.submitter.submission_id,
-                   "_reproman_version": reproman.__version__}
+                   "_reproman_version": reproman.__version__,
+                   # For spec version X.Y, X should be incremented if there is
+                   # a incompatible change to the format. Y may optionally be
+                   # incremented to signal a compatible change (e.g., a new
+                   # field is added, but the code doesn't require it).
+                   "_spec_version": "1.0"}
         return dict(self.template.kwds if self.template else {},
                     **to_dump)
 
