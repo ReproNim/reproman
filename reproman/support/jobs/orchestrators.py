@@ -332,17 +332,19 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                  jobid,
                  op.join(metadir, "stderr." + stderr_suffix))
 
-    def log_failed(self, func=None):
+    def log_failed(self, failed=None, func=None):
         """Display a log message about failed status.
 
         Parameters
         ----------
+        failed : list of int, optional
+            Failed subjobs.
         func : callable or None, optional
             If a failed status is detected, call this function with two
             arguments, the local metadata directory and a list of failed
             subjobs.
         """
-        failed = self.get_failed_subjobs()
+        failed = failed or self.get_failed_subjobs()
         if failed:
             local_metadir = op.join(
                 self.local_directory,
@@ -875,7 +877,7 @@ class FetchPlainMixin(object):
                                 op.relpath(self.meta_directory,
                                            self.working_directory),
                                 ""))
-        self.log_failed(get_failed_meta)
+        self.log_failed(func=get_failed_meta)
 
         lgr.info("Outputs fetched. Finished with remote resource '%s'",
                  self.resource.name)
@@ -949,7 +951,7 @@ class FetchDataladPairMixin(object):
                 if outputs:
                     self.ds.get(path=outputs)
 
-            self.log_failed(lambda mdir, _: self.ds.get(path=mdir))
+            self.log_failed(func=lambda mdir, _: self.ds.get(path=mdir))
 
             lgr.info("Finished with remote resource '%s'", resource_name)
             if not self.ds.repo.is_ancestor(ref, "HEAD"):
