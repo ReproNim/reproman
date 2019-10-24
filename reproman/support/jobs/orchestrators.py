@@ -405,12 +405,13 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self._get_io_set("outputs", subjobs)
 
     @abc.abstractmethod
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Fetch the submission result.
 
         In addition to doing whatever is need to fetch the results, this method
         should call `self.log_failed` right before it's finished working with
-        the resource.
+        the resource. Once finished with the resource, it should call
+        `on_remote_finish`.
         """
 
 
@@ -856,8 +857,15 @@ class PrepareRemoteDataladMixin(object):
 
 class FetchPlainMixin(object):
 
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Get outputs from remote.
+
+        Parameters
+        ----------
+        on_remote_finish : callable, optional
+            Function to be called when work with the resource is finished. It
+            will be passed two arguments, the resource and the failed subjobs
+            (list of ints).
         """
         lgr.info("Fetching results for %s", self.jobid)
         for o in self.get_outputs():
@@ -877,10 +885,14 @@ class FetchPlainMixin(object):
                                 op.relpath(self.meta_directory,
                                            self.working_directory),
                                 ""))
-        self.log_failed(func=get_failed_meta)
+
+        failed = self.get_failed_subjobs()
+        self.log_failed(failed, func=get_failed_meta)
 
         lgr.info("Outputs fetched. Finished with remote resource '%s'",
                  self.resource.name)
+        if on_remote_finish:
+            on_remote_finish(self.resource, failed)
 
 
 @contextmanager
@@ -933,10 +945,18 @@ def head_at(dataset, commit):
 
 class FetchDataladPairMixin(object):
 
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Fetch the results from the remote dataset sibling.
+
+        Parameters
+        ----------
+        on_remote_finish : callable, optional
+            Function to be called when work with the resource is finished. It
+            will be passed two arguments, the resource and the failed subjobs
+            (list of ints).
         """
         lgr.info("Fetching results for %s", self.jobid)
+        failed = self.get_failed_subjobs()
         if self.resource.type == "ssh":
             resource_name = self.resource.name
             ref = self.job_refname
@@ -951,9 +971,12 @@ class FetchDataladPairMixin(object):
                 if outputs:
                     self.ds.get(path=outputs)
 
-            self.log_failed(func=lambda mdir, _: self.ds.get(path=mdir))
+            self.log_failed(failed,
+                            func=lambda mdir, _: self.ds.get(path=mdir))
 
             lgr.info("Finished with remote resource '%s'", resource_name)
+            if on_remote_finish:
+                on_remote_finish(self.resource, failed)
             if not self.ds.repo.is_ancestor(ref, "HEAD"):
                 lgr.info("Results stored on %s. "
                          "Bring them into this branch with "
@@ -968,13 +991,18 @@ class FetchDataladPairMixin(object):
                      "{0}:{0}".format(self.job_refname)])
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
-            self.log_failed()
+            self.log_failed(failed)
 
 
 class FetchDataladRunMixin(object):
 
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Fetch results tarball and inject run record into the local dataset.
+
+        on_remote_finish : callable, optional
+            Function to be called when work with the resource is finished. It
+            will be passed two arguments, the resource and the failed subjobs
+            (list of ints).
         """
         lgr.info("Fetching results for %s", self.jobid)
         import tarfile
@@ -985,6 +1013,7 @@ class FetchDataladRunMixin(object):
             raise OrchestratorError("Expected output file does not exist: {}"
                                     .format(remote_tfile))
 
+        failed = self.get_failed_subjobs()
         with head_at(self.ds, self.head) as moved:
             with chpwd(self.ds.path):
                 resource_name = self.resource.name
@@ -994,9 +1023,11 @@ class FetchDataladRunMixin(object):
                 # until the tarball extraction below, but we do call
                 # log_failed() now because it might need the remote resource
                 # and we want to finish up with remote operations.
-                self.log_failed()
+                self.log_failed(failed)
 
                 lgr.info("Finished with remote resource '%s'", resource_name)
+                if on_remote_finish:
+                    on_remote_finish(self.resource, failed)
                 lgr.info("Extracting output tarball into local dataset '%s'",
                          self.ds.path)
                 with tarfile.open(tfile, mode="r:gz") as tar:

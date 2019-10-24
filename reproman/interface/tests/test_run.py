@@ -303,6 +303,32 @@ def test_run_and_follow(context):
     assert op.exists(op.join(path, "ok"))
 
 
+@pytest.mark.parametrize("action",
+                         ["stop", "stop-if-success",
+                          "delete", "delete-if-success"])
+def test_run_and_follow_action(context, action):
+    run = context["run_fn"]
+    expect = "does not support the 'stop' feature"
+    with swallow_logs(new_level=logging.INFO) as log:
+        run(command=["false"], resref="myshell",
+            follow=action)
+        if action.endswith("-if-success"):
+            assert expect not in log.out
+        else:
+            assert expect in log.out
+
+    if action != "delete":
+        with swallow_logs(new_level=logging.INFO) as log:
+            run(command=["true"], resref="myshell",
+                follow=action)
+            assert expect in log.out
+
+    if action.startswith("delete"):
+        resman = context["resource_manager"]
+        with pytest.raises(ResourceNotFoundError):
+            resman.get_resource("myshell", resref_type="name")
+
+
 def test_jobs_auto_fetch_with_query(context):
     path = context["directory"]
     run = context["run_fn"]
