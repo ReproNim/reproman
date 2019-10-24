@@ -408,7 +408,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         """Fetch the submission result.
 
         In addition to doing whatever is need to fetch the results, this method
-        should call `self.log_failed` at the end.
+        should call `self.log_failed` right before it's finished working with
+        the resource.
         """
 
 
@@ -941,6 +942,9 @@ class FetchDataladPairMixin(object):
                 outputs = list(self.get_outputs())
                 if outputs:
                     self.ds.get(path=outputs)
+
+            self.log_failed(lambda mdir, _: self.ds.get(path=mdir))
+
             if not self.ds.repo.is_ancestor(ref, "HEAD"):
                 lgr.info("Results stored on %s. "
                          "Bring them into this branch with "
@@ -955,12 +959,7 @@ class FetchDataladPairMixin(object):
                      "{0}:{0}".format(self.job_refname)])
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
-
-        def get_metadir(mdir, _):
-            if self.resource.type == "ssh":
-                self.ds.get(path=mdir)
-
-        self.log_failed(get_metadir)
+            self.log_failed()
 
 
 class FetchDataladRunMixin(object):
@@ -980,6 +979,12 @@ class FetchDataladRunMixin(object):
         with head_at(self.ds, self.head) as moved:
             with chpwd(self.ds.path):
                 self.session.get(remote_tfile)
+                # This log_failed() may mention files that won't be around
+                # until the tarball extraction below, but we do call
+                # log_failed() now because it might need the remote resource
+                # and we want to finish up with remote operations.
+                self.log_failed()
+
                 with tarfile.open(tfile, mode="r:gz") as tar:
                     tar.extractall(path=".")
                 os.unlink(tfile)
@@ -1020,8 +1025,6 @@ class FetchDataladRunMixin(object):
                              "'git merge %s'",
                              ref, ref)
                 self.ds.repo.update_ref(ref, "HEAD")
-
-        self.log_failed()
 
 
 # Concrete orchestrators
