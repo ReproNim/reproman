@@ -297,8 +297,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self.session.exists(
             op.join(self.root_directory, "completed", self.jobid))
 
-    @property
-    def failed_subjobs(self):
+    def get_failed_subjobs(self):
         """List of failed subjobs (represented by index, starting with 0).
         """
         failed_dir = op.join(self.meta_directory, "failed")
@@ -343,7 +342,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             arguments, the local metadata directory and a list of failed
             subjobs.
         """
-        failed = self.failed_subjobs
+        failed = self.get_failed_subjobs()
         if failed:
             local_metadir = op.join(
                 self.local_directory,
@@ -660,11 +659,10 @@ class PrepareRemoteDataladMixin(object):
             status = status_from_ref.strip() or status
         return status
 
-    @property
-    def failed_subjobs(self):
-        """Like Orchestrator.failed_subjobs, but inspect the job's git ref if needed.
+    def get_failed_subjobs(self):
+        """Like Orchestrator.get_failed_subjobs, but inspect the job's git ref if needed.
         """
-        failed = super(DataladOrchestrator, self).failed_subjobs
+        failed = super(DataladOrchestrator, self).get_failed_subjobs()
         if not failed:
             meta_tree = "{}:{}".format(
                 self.job_refname,
