@@ -859,6 +859,7 @@ class FetchPlainMixin(object):
     def fetch(self):
         """Get outputs from remote.
         """
+        lgr.info("Fetching results for %s", self.jobid)
         for o in self.get_outputs():
             self.session.get(
                 o if op.isabs(o) else op.join(self.working_directory, o),
@@ -877,6 +878,9 @@ class FetchPlainMixin(object):
                                            self.working_directory),
                                 ""))
         self.log_failed(get_failed_meta)
+
+        lgr.info("Outputs fetched. Finished with remote resource '%s'",
+                 self.resource.name)
 
 
 @contextmanager
@@ -934,10 +938,14 @@ class FetchDataladPairMixin(object):
         """
         lgr.info("Fetching results for %s", self.jobid)
         if self.resource.type == "ssh":
+            resource_name = self.resource.name
             ref = self.job_refname
-            self.ds.repo.fetch(self.resource.name, "{0}:{0}".format(ref))
-            self.ds.update(sibling=self.resource.name,
+            lgr.info("Updating local dataset with changes from '%s'",
+                     resource_name)
+            self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref))
+            self.ds.update(sibling=resource_name,
                            merge=True, recursive=True)
+            lgr.info("Getting outputs from '%s'", resource_name)
             with head_at(self.ds, ref):
                 outputs = list(self.get_outputs())
                 if outputs:
@@ -945,6 +953,7 @@ class FetchDataladPairMixin(object):
 
             self.log_failed(lambda mdir, _: self.ds.get(path=mdir))
 
+            lgr.info("Finished with remote resource '%s'", resource_name)
             if not self.ds.repo.is_ancestor(ref, "HEAD"):
                 lgr.info("Results stored on %s. "
                          "Bring them into this branch with "
@@ -978,6 +987,8 @@ class FetchDataladRunMixin(object):
 
         with head_at(self.ds, self.head) as moved:
             with chpwd(self.ds.path):
+                resource_name = self.resource.name
+                lgr.info("Fetching output tarball from '%s'", resource_name)
                 self.session.get(remote_tfile)
                 # This log_failed() may mention files that won't be around
                 # until the tarball extraction below, but we do call
@@ -985,6 +996,9 @@ class FetchDataladRunMixin(object):
                 # and we want to finish up with remote operations.
                 self.log_failed()
 
+                lgr.info("Finished with remote resource '%s'", resource_name)
+                lgr.info("Extracting output tarball into local dataset '%s'",
+                         self.ds.path)
                 with tarfile.open(tfile, mode="r:gz") as tar:
                     tar.extractall(path=".")
                 os.unlink(tfile)
