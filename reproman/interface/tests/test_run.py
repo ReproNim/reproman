@@ -163,7 +163,7 @@ def test_resolve_batch_params_eq(tmpdir, params, spec):
 
 
 job_registry = fixtures.job_registry_fixture()
-resource_manager = fixtures.resource_manager_fixture(scope="module")
+resource_manager = fixtures.resource_manager_fixture(scope="function")
 
 
 @pytest.fixture(scope="function")
