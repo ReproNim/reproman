@@ -10,6 +10,7 @@
 import logging
 import os
 import os.path as op
+import yaml
 
 from unittest.mock import patch
 import pytest
@@ -72,7 +73,7 @@ def job_spec(tmpdir):
     return {"root_directory": op.join(str(tmpdir), "nm-run"),
             "inputs": [op.join("d", "in")],
             "outputs": ["out"],
-            "command_str": 'bash -c "cat d/in >out && echo more >>out"'}
+            "_resolved_command_str": 'bash -c "cat d/in >out && echo more >>out"'}
 
 
 @pytest.fixture()
@@ -174,15 +175,42 @@ def container_dataset(tmpdir_factory):
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
 def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
-    with chpwd(dataset.path):
-        orc = orc_class(shell, submission_type=sub_type, job_spec=job_spec)
-        orc.prepare_remote()
-        orc.submit()
-        orc.follow()
+    dataset.repo.tag("start-pt")
 
-        orc.fetch()
-        assert dataset.repo.file_has_content("out")
-        assert open("out").read() == "content\nmore\n"
+    def run_and_check(spec):
+        with chpwd(dataset.path):
+            orc = orc_class(shell, submission_type=sub_type, job_spec=spec)
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+
+            orc.fetch()
+            assert dataset.repo.file_has_content("out")
+            assert open("out").read() == "content\nmore\n"
+            return orc
+
+    orc = run_and_check(job_spec)
+
+    # Perform another run based on the dumped job spec from the first.
+    assert dataset.repo.get_active_branch() == "master"
+    metadir = op.relpath(orc.meta_directory, orc.working_directory)
+    with open(op.join(dataset.path, metadir, "spec.yaml")) as f:
+        dumped_spec = yaml.safe_load(f)
+        assert "_reproman_version" in dumped_spec
+        assert "_spec_version" in dumped_spec
+    if orc.name == "datalad-local-run":
+        # Our reproman-based copying of data doesn't isn't (yet) OK with data
+        # files that already exist.
+        dumped_spec["inputs"] = []
+    # FIXME: Use exposed method once available.
+    dataset.repo._git_custom_command(
+        [], ["git", "reset", "--hard", "start-pt"])
+    if dataset.repo.dirty:
+        # The submitter log file is ignored (currently only relevant for
+        # condor; see b9277ebc0 for more details). Add the directory to get to
+        # a clean state.
+        dataset.add(".reproman")
+    orc = run_and_check(dumped_spec)
 
 
 @pytest.mark.integration
@@ -230,7 +258,7 @@ def test_orc_log_failed(failed):
 
 @pytest.mark.integration
 def test_orc_plain_failure(tmpdir, job_spec, shell):
-    job_spec["command_str"] = "iwillfail"
+    job_spec["_resolved_command_str"] = "iwillfail"
     job_spec["inputs"] = []
     local_dir = str(tmpdir)
     with chpwd(local_dir):
@@ -245,7 +273,7 @@ def test_orc_plain_failure(tmpdir, job_spec, shell):
 
 @pytest.mark.integration
 def test_orc_datalad_run_failed(job_spec, dataset, ssh):
-    job_spec["command_str"] = "iwillfail"
+    job_spec["_resolved_command_str"] = "iwillfail"
     job_spec["inputs"] = []
 
     with chpwd(dataset.path):
@@ -271,7 +299,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     #   o
     ds = dataset
     js0 = job_spec
-    js1 = dict(job_spec, command_str='bash -c "echo other >other"')
+    js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
         orc0, orc1 = [
             orcs.DataladPairRunOrchestrator(ssh, submission_type="local",
@@ -317,7 +345,7 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     ds.add(".")
 
     js0 = job_spec
-    js1 = dict(job_spec, command_str='bash -c "echo other >other"')
+    js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
         def do(js):
             orc = orcs.DataladPairRunOrchestrator(
@@ -374,7 +402,7 @@ def test_orc_datalad_run_container(tmpdir, dataset,
             job_spec={"root_directory": op.join(str(tmpdir), "nm-run"),
                       "outputs": ["out"],
                       "container": "subds/dc",
-                      "command_str": 'sh -c "ls / >out"'})
+                      "_resolved_command_str": 'sh -c "ls / >out"'})
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -432,7 +460,7 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
         os.unlink("local-dirt")
 
     # Run one job so that we create the remote repository.
-    run(command_str="echo one >one")
+    run(_resolved_command_str="echo one >one")
 
     with chpwd(dataset.path):
         orc1 = get_orc()
@@ -443,12 +471,12 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     os.unlink(op.join(orc1.working_directory, "dirty"))
 
     # We can run if the submodule simply has a different commit checked out.
-    run(command_str="echo two >two")
+    run(_resolved_command_str="echo two >two")
 
     create_tree(op.join(dataset.path, "sub"), {"for-local-commit": ""})
     dataset.add(".", recursive=True)
 
-    run(command_str="echo three >three")
+    run(_resolved_command_str="echo three >three")
 
     # But we abort if subdataset is actually dirty.
     with chpwd(dataset.path):
@@ -472,10 +500,10 @@ def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
 
 
 def test_orc_datalad_resurrect(job_spec, dataset, shell):
-    for k in ["jobid",
+    for k in ["_jobid",
               "working_directory", "root_directory", "local_directory"]:
         job_spec[k] = "doesn't matter"
-    job_spec["head"] = "deadbee"
+    job_spec["_head"] = "deadbee"
     with chpwd(dataset.path):
         orc = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec,
@@ -541,8 +569,8 @@ def test_dataset_as_dict(shell, dataset, job_spec):
     d = orc.as_dict()
     # Check for keys that DataladOrchestrator should extend
     # OrchestratorError.asdict() with.
-    assert "head" in d
-    assert "dataset_id" in d
+    assert "_head" in d
+    assert "_dataset_id" in d
 
 
 @pytest.mark.integration
@@ -560,8 +588,8 @@ def test_orc_datalad_concurrent(job_spec, dataset, ssh, orc_class, sub_type):
 
     job_spec["inputs"] = ["{p[name]}.in"]
     job_spec["outputs"] = ["{p[name]}.out"]
-    job_spec["command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
-    job_spec["batch_parameters"] = [{"name": n} for n in names]
+    job_spec["_resolved_command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
+    job_spec["_resolved_batch_parameters"] = [{"name": n} for n in names]
 
     in_files = [n + ".in" for n in names]
     for fname in in_files:

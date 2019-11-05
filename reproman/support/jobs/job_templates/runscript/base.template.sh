@@ -4,11 +4,11 @@
 
 set -eu
 
-jobid={{ jobid }}
+jobid={{ _jobid }}
 subjob=$1
-num_subjobs={{ num_subjobs }}
+num_subjobs={{ _num_subjobs }}
 
-metadir={{ shlex_quote(meta_directory) }}
+metadir={{ shlex_quote(_meta_directory) }}
 rootdir={{ shlex_quote(root_directory) }}
 workdir={{ shlex_quote(working_directory) }}
 

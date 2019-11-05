@@ -363,21 +363,20 @@ class Run(Interface):
         spec = _combine_job_specs(_load_specs(job_specs or []) +
                                   [job_parameters, cli_spec])
 
-        spec["batch_parameters"] = _resolve_batch_parameters(
+        spec["_resolved_batch_parameters"] = _resolve_batch_parameters(
             spec.get("batch_spec"), spec.get("batch_parameters"))
 
         # Treat "command" as a special case because it's a list and the
         # template expects a string.
         if not command and "command_str" in spec:
-            pass
+            spec["_resolved_command_str"] = spec["command_str"]
         elif not command and "command" not in spec:
             raise ValueError("No command specified via CLI or job spec")
         else:
             command = command or spec["command"]
             # Unlike datalad run, we're only accepting a list form for now.
-            command_str = " ".join(map(shlex_quote, command))
             spec["command"] = command
-            spec["command_str"] = command_str
+            spec["_resolved_command_str"] = " ".join(map(shlex_quote, command))
 
         if resref is None:
             if "resource_id" in spec:
