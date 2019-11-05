@@ -62,7 +62,7 @@ def test_delete_interface():
     Test deleting a resource.
     """
 
-    with patch('docker.Client', new_callable=mock_docker_client) as client, \
+    with patch('docker.APIClient', new_callable=mock_docker_client) as client, \
             patch('reproman.interface.delete.get_manager',
                 new=mock_get_manager), \
             swallow_logs(new_level=logging.DEBUG) as log:

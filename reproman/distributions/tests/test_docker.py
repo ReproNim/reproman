@@ -22,7 +22,7 @@ from ...tests.skip import mark
 @mark.skipif_no_network
 @mark.skipif_no_docker_engine
 def test_docker_trace_tag():
-    client = docker.Client()
+    client = docker.APIClient()
     client.pull('alpine:3.6')
 
     tracer = DockerTracer()
@@ -40,7 +40,7 @@ def test_docker_trace_tag():
 @mark.skipif_no_network
 @mark.skipif_no_docker_engine
 def test_docker_trace_id():
-    client = docker.Client()
+    client = docker.APIClient()
     repo_id = 'sha256:f625bd3ff910ad2c68a405ccc5e294d2714fc8cfe7b5d80a8331c72ad5cc7630'
     name = 'alpine@' + repo_id
     client.pull(name)
@@ -62,7 +62,7 @@ def test_docker_trace_id():
 @mark.skipif_no_network
 @mark.skipif_no_docker_engine
 def test_docker_trace_local_image():
-    client = docker.Client()
+    client = docker.APIClient()
     client.pull('alpine:3.6')
     tracer = DockerTracer()
     # Test tracing a local image not saved in a repository
@@ -85,7 +85,7 @@ def test_docker_trace_local_image():
 @mark.skipif_no_docker_engine
 def test_docker_distribution():
 
-    client = docker.Client()
+    client = docker.APIClient()
     session = get_local_session()
 
     # Verify alpine:3.5 image is not stored locally
