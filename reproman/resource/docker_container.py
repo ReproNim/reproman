@@ -71,7 +71,7 @@ class DockerContainer(Resource):
         """
         from requests.exceptions import ConnectionError
         try:
-            session = docker.Client(base_url=base_url)
+            session = docker.APIClient(base_url=base_url)
             session.info()
         except docker.errors.InvalidConfigFile as exc:
             lgr.error(
@@ -108,7 +108,7 @@ class DockerContainer(Resource):
         Open a connection to the environment.
         """
         # Open a client connection to the Docker engine.
-        self._client = docker.Client(base_url=self.engine_url)
+        self._client = docker.APIClient(base_url=self.engine_url)
 
         containers = []
         for container in self._client.containers(all=True):
@@ -280,7 +280,10 @@ class DockerSession(POSIXSession):
         dest_path = self._prepare_dest_path(src_path, dest_path)
         dest_dir = os.path.dirname(dest_path)
         stream, stat = self.client.get_archive(self.container, src_path)
-        tarball = tarfile.open(fileobj=io.BytesIO(stream.read()))
+        # get_archive() returns a generator with the content (in 2 MB chunks by
+        # default). Consider exposing those chunks as a stream rather than
+        # joining them.
+        tarball = tarfile.open(fileobj=io.BytesIO(b"".join(stream)))
         tarball.extractall(path=dest_dir)
         os.rename(os.path.join(dest_dir, src_basename), dest_path)
 
