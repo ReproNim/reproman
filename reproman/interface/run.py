@@ -22,6 +22,7 @@ from shlex import quote as shlex_quote
 from reproman.interface.base import Interface
 from reproman.interface.common_opts import resref_opt
 from reproman.interface.common_opts import resref_type_opt
+from reproman.support.constraints import EnsureChoice
 from reproman.support.jobs.local_registry import LocalRegistry
 from reproman.support.jobs.orchestrators import Orchestrator
 from reproman.support.jobs.orchestrators import ORCHESTRATORS
@@ -286,7 +287,12 @@ class Run(Interface):
             depends on the orchestrator."""),
         follow=Parameter(
             args=("--follow",),
-            action="store_true",
+            metavar="ACTION",
+            const=True,
+            nargs="?",
+            constraints=EnsureChoice(False, True,
+                                     "stop", "stop-if-success",
+                                     "delete", "delete-if-success"),
             doc="""Continue to follow the submitted command instead of
             submitting it and detaching."""),
         command=Parameter(
@@ -387,7 +393,8 @@ class Run(Interface):
                 resref_type = "name"
             else:
                 raise ValueError("No resource specified")
-        resource = get_manager().get_resource(resref, resref_type)
+        manager = get_manager()
+        resource = manager.get_resource(resref, resref_type)
 
         if "orchestrator" not in spec:
             # TODO: We could just set this as the default for the Parameter,
@@ -407,5 +414,25 @@ class Run(Interface):
 
         if follow:
             orc.follow()
-            orc.fetch()
+            if follow is True:
+                remote_fn = None
+            else:
+                only_on_success = follow.endswith("-if-success")
+                do_delete = follow.split("-")[0] == "delete"
+
+                def remote_fn(res, failed):
+                    if failed and only_on_success:
+                        lgr.info("Not stopping%s resource '%s' "
+                                 "because there were failed jobs",
+                                 " or deleting" if do_delete else "",
+                                 res.name)
+                    else:
+                        lgr.info("Stopping%s resource '%s' after %s run",
+                                 " and deleting" if do_delete else "",
+                                 res.name,
+                                 "failed" if failed else "successful")
+                        manager.stop(res)
+                        if do_delete:
+                            manager.delete(res)
+            orc.fetch(on_remote_finish=remote_fn)
             lreg.unregister(orc.jobid)
