@@ -18,6 +18,16 @@ Concepts and technologies
    glossary
    sandbox/packages
 
+
+Managing resources
+==================
+
+.. toctree::
+   :maxdepth: 1
+
+   manage
+
+
 Commands and API
 ================
 
