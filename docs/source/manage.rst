@@ -31,14 +31,15 @@ The output above includes an entry for the SSH resource create above,
 "foo", along with a resource for a Docker container.
 
 While most of the ReproMan subcommands have an argument that specifies
-which resource to operate on, there are only few more dedicated
-subcommands for managing resources: :ref:`stop <man_reproman-stop>`,
-:ref:`start <man_reproman-start>`, and :ref:`delete
-<man_reproman-delete>`. Together ``stop`` and ``start`` provide a way to
-suspend and restart a resource such as a Docker container or an AWS EC2
-instance. For resource types where suspending the resource doesn't make
-sense (e.g., for an ``ssh`` resource), calling ``start`` or ``stop``
-will simply tell you the action isn't supported.
+which resource to operate on (e.g., the resource to :ref:`execute
+<execute>` a command on), there are only few more dedicated subcommands
+for managing resources: :ref:`stop <man_reproman-stop>`, :ref:`start
+<man_reproman-start>`, and :ref:`delete <man_reproman-delete>`. Together
+``stop`` and ``start`` provide a way to suspend and restart a resource
+such as a Docker container or an AWS EC2 instance. For resource types
+where suspending the resource doesn't make sense (e.g., for an ``ssh``
+resource), calling ``start`` or ``stop`` will simply tell you the action
+isn't supported.
 
 ``delete`` is the opposite of ``create``. Calling ``reproman delete
 foo`` would delete the remove the resource created above from ReproMan's

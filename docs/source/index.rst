@@ -28,6 +28,15 @@ Managing resources
    manage
 
 
+Executing commands on resources
+===============================
+
+.. toctree::
+   :maxdepth: 1
+
+   execute
+
+
 Commands and API
 ================
 
