@@ -15,8 +15,8 @@ Main command
 
    generated/man/reproman
 
-Environments operations
-=======================
+Environment operations
+======================
 
 .. toctree::
    :maxdepth: 1
