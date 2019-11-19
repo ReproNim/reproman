@@ -11,6 +11,7 @@
 
 from argparse import REMAINDER
 import collections
+from collections.abc import Mapping
 import glob
 import logging
 import itertools
@@ -56,7 +57,7 @@ def _combine_job_specs(specs):
         Taken from https://stackoverflow.com/a/3233356
         """
         for k, v in u.items():
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 d[k] = update(d.get(k, {}), v)
             else:
                 d[k] = v
