@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-metadir={{ shlex_quote(meta_directory) }}
-num_subjobs={{ num_subjobs }}
+metadir={{ shlex_quote(_meta_directory) }}
+num_subjobs={{ _num_subjobs }}
 
 if test $num_subjobs -eq 1
 then
@@ -16,7 +16,7 @@ else
 
     # Use relative path to meta directory because that doesn't need any special
     # quoting, and the parallel call below wouldn't handle quoting properly.
-    metadir_rel={{ shlex_quote(meta_directory_rel) }}
+    metadir_rel={{ shlex_quote(_meta_directory_rel) }}
     workdir={{ shlex_quote(working_directory) }}
 
     cd "$workdir"

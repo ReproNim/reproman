@@ -28,9 +28,11 @@ import os
 import os.path as op
 import uuid
 import time
+import yaml
 
 from shlex import quote as shlex_quote
 
+import reproman
 from reproman.dochelpers import borrowdoc
 from reproman.utils import cached_property
 from reproman.utils import chpwd
@@ -67,7 +69,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         these items are exposed as keywords to the runscript and submit
         templates, (2) the orchestrator looks here for optional values like
         "working_directory" and "inputs", and (3) on resurrection, the
-        orchestrator looks here for other required values, like "jobid".
+        orchestrator looks here for other required values, like "_jobid".
 
         The details around the job_spec are somewhat loose and poorly defined
         at the moment.
@@ -91,7 +93,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         self.job_spec = job_spec or {}
 
         if resurrection:
-            important_keys = ["jobid", "root_directory", "working_directory",
+            important_keys = ["_jobid", "root_directory", "working_directory",
                               "local_directory"]
             for key in important_keys:
                 if key not in self.job_spec:
@@ -99,7 +101,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                         "Job spec must have key '{}' to resurrect orchestrator"
                         .format(key))
 
-            self.jobid = self.job_spec["jobid"]
+            self.jobid = self.job_spec["_jobid"]
         else:
             self.jobid = "{}-{}".format(time.strftime("%Y%m%d-%H%M%S"),
                                         str(uuid.uuid4())[:4])
@@ -169,19 +171,26 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    "local_directory": self.local_directory,
                    "orchestrator": self.name,
                    "submitter": self.submitter.name,
-                   "submission_id": self.submitter.submission_id}
-        return dict(to_dump, **(self.template.kwds if self.template else {}))
+                   "_submission_id": self.submitter.submission_id,
+                   "_reproman_version": reproman.__version__,
+                   # For spec version X.Y, X should be incremented if there is
+                   # a incompatible change to the format. Y may optionally be
+                   # incremented to signal a compatible change (e.g., a new
+                   # field is added, but the code doesn't require it).
+                   "_spec_version": "1.0"}
+        return dict(self.template.kwds if self.template else {},
+                    **to_dump)
 
     def _prepare_spec(self):
         """Prepare the spec for the run.
 
-        At the moment, this involves constructing the "command_array",
-        "inputs_array", and "outputs_array" keys.
+        At the moment, this involves constructing the "_command_array",
+        "_inputs_array", and "_outputs_array" keys.
         """
         from reproman.support.globbedpaths import GlobbedPaths
 
         spec = self.job_spec
-        if spec.get("batch_parameters"):
+        if spec.get("_resolved_batch_parameters"):
             raise OrchestratorError(
                 "Batch parameters are currently only supported "
                 "in DataLad orchestrators")
@@ -189,9 +198,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         for key in ["inputs", "outputs"]:
             if key in spec:
                 gp = GlobbedPaths(spec[key])
-                spec["{}_array".format(key)] = [gp.expand(dot=False)]
-        if "command_str" in spec:
-            spec["command_array"] = [spec["command_str"]]
+                spec["_{}_array".format(key)] = [gp.expand(dot=False)]
+        if "_resolved_command_str" in spec:
+            spec["_command_array"] = [spec["_resolved_command_str"]]
         # Note: This doesn't adjust the command. We currently don't support any
         # datalad-run-like command formatting.
 
@@ -206,13 +215,13 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         lgr.info("Submitting %s", self.jobid)
         templ = Template(
             **dict(self.job_spec,
-                   jobid=self.jobid,
-                   num_subjobs=len(self.job_spec["command_array"]),
+                   _jobid=self.jobid,
+                   _num_subjobs=len(self.job_spec["_command_array"]),
                    root_directory=self.root_directory,
                    working_directory=self.working_directory,
-                   meta_directory=self.meta_directory,
-                   meta_directory_rel=op.relpath(self.meta_directory,
-                                                 self.working_directory)))
+                   _meta_directory=self.meta_directory,
+                   _meta_directory_rel=op.relpath(self.meta_directory,
+                                                  self.working_directory)))
         self.template = templ
         self.session.put_text(
             templ.render_runscript("{}.template.sh".format(
@@ -227,8 +236,12 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             executable=True)
 
         self.session.put_text(
-            "\0".join(self.job_spec["command_array"]),
+            "\0".join(self.job_spec["_command_array"]),
             op.join(self.meta_directory, "command-array"))
+
+        self._put_text(
+            yaml.safe_dump(self.as_dict()),
+            op.join(self.meta_directory, "spec.yaml"))
 
         subm_id = self.submitter.submit(
             submission_file,
@@ -264,8 +277,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self.session.exists(
             op.join(self.root_directory, "completed", self.jobid))
 
-    @property
-    def failed_subjobs(self):
+    def get_failed_subjobs(self):
         """List of failed subjobs (represented by index, starting with 0).
         """
         failed_dir = op.join(self.meta_directory, "failed")
@@ -300,17 +312,19 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                  jobid,
                  op.join(metadir, "stderr." + stderr_suffix))
 
-    def log_failed(self, func=None):
+    def log_failed(self, failed=None, func=None):
         """Display a log message about failed status.
 
         Parameters
         ----------
+        failed : list of int, optional
+            Failed subjobs.
         func : callable or None, optional
             If a failed status is detected, call this function with two
             arguments, the local metadata directory and a list of failed
             subjobs.
         """
-        failed = self.failed_subjobs
+        failed = failed or self.get_failed_subjobs()
         if failed:
             local_metadir = op.join(
                 self.local_directory,
@@ -334,8 +348,8 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def _get_io_set(self, which, subjobs):
         spec = self.job_spec
         if subjobs is None:
-            subjobs = range(len(spec["command_array"]))
-        key = which + "_array"
+            subjobs = range(len(spec["_command_array"]))
+        key = "_{}_array".format(which)
         values = spec.get(key)
         if not values:
             return set()
@@ -371,20 +385,21 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         return self._get_io_set("outputs", subjobs)
 
     @abc.abstractmethod
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Fetch the submission result.
 
         In addition to doing whatever is need to fetch the results, this method
-        should call `self.log_failed` at the end.
+        should call `self.log_failed` right before it's finished working with
+        the resource. Once finished with the resource, it should call
+        `on_remote_finish`.
         """
 
 
 def _datalad_check_container(ds, spec):
     """Adjust spec for `datalad-container`-configured container.
 
-    If a "container" key is found, "command_str" will be replaced, and the
-    previous "command_str" value will be placed under
-    "command_str_nocontainer".
+    If a "container" key is found, a new key "_container_command_str" will be
+    added with the container-formatted command.
     """
     container = spec.get("container")
     if container is not None:
@@ -405,11 +420,11 @@ def _datalad_check_container(ds, spec):
         pwd, _ = get_command_pwds(ds)
         image_dspath = op.relpath(cinfo.get('parentds', ds.path), pwd)
 
-        command_str = spec["command_str"]
-        spec["commmand_str_nocontainer"] = command_str
-        spec["command_str"] = cmdexec.format(
-            img=image, cmd=command_str, img_dspath=image_dspath)
-        spec["extra_inputs"] = [image]
+        spec["_container_command_str"] = cmdexec.format(
+            img=image,
+            cmd=spec["_resolved_command_str"],
+            img_dspath=image_dspath)
+        spec["_extra_inputs"] = [image]
 
 
 def _datalad_format_command(ds, spec):
@@ -422,24 +437,25 @@ def _datalad_format_command(ds, spec):
     # DataLad's to avoid potential discrepancies with datalad-run's behavior.
     from datalad.interface.run import GlobbedPaths
 
-    batch_parameters = spec.get("batch_parameters") or [{}]
-    spec["command_array"] = []
-    spec["inputs_array"] = []
-    spec["outputs_array"] = []
+    batch_parameters = spec.get("_resolved_batch_parameters") or [{}]
+    spec["_command_array"] = []
+    spec["_inputs_array"] = []
+    spec["_outputs_array"] = []
     for cp in batch_parameters:
         fmt_kwds = {}
         for key in ["inputs", "outputs"]:
             if key in spec:
                 parametrized = [io.format(p=cp) for io in spec[key]]
                 gp = GlobbedPaths(parametrized)
-                spec["{}_array".format(key)].append(gp.expand(dot=False))
+                spec["_{}_array".format(key)].append(gp.expand(dot=False))
                 fmt_kwds[key] = gp
         fmt_kwds["p"] = cp
-        spec["command_array"].append(format_command(ds, spec["command_str"],
-                                                    **fmt_kwds))
+        cmd_str = spec.get("_container_command_str",
+                           spec["_resolved_command_str"])
+        spec["_command_array"].append(format_command(ds, cmd_str, **fmt_kwds))
 
-    exinputs = spec.get("extra_inputs", [])
-    spec["extra_inputs_array"] = [exinputs] * len(batch_parameters)
+    exinputs = spec.get("_extra_inputs", [])
+    spec["_extra_inputs_array"] = [exinputs] * len(batch_parameters)
 
 
 class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
@@ -462,7 +478,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
                                     .format(self.name))
 
         if self._resurrection:
-            self.head = self.job_spec.get("head")
+            self.head = self.job_spec.get("_head")
         else:
             if self.ds.repo.dirty:
                 raise OrchestratorError("Local dataset {} is dirty. "
@@ -493,8 +509,8 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     @borrowdoc(Orchestrator)
     def as_dict(self):
         d = super(DataladOrchestrator, self).as_dict()
-        d["dataset_id"] = self.ds.id
-        d["head"] = self.head
+        d["_dataset_id"] = self.ds.id
+        d["_head"] = self.head
         return d
 
     def _prepare_spec(self):
@@ -626,11 +642,10 @@ class PrepareRemoteDataladMixin(object):
             status = status_from_ref.strip() or status
         return status
 
-    @property
-    def failed_subjobs(self):
-        """Like Orchestrator.failed_subjobs, but inspect the job's git ref if needed.
+    def get_failed_subjobs(self):
+        """Like Orchestrator.get_failed_subjobs, but inspect the job's git ref if needed.
         """
-        failed = super(DataladOrchestrator, self).failed_subjobs
+        failed = super(DataladOrchestrator, self).get_failed_subjobs()
         if not failed:
             meta_tree = "{}:{}".format(
                 self.job_refname,
@@ -822,9 +837,17 @@ class PrepareRemoteDataladMixin(object):
 
 class FetchPlainMixin(object):
 
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Get outputs from remote.
+
+        Parameters
+        ----------
+        on_remote_finish : callable, optional
+            Function to be called when work with the resource is finished. It
+            will be passed two arguments, the resource and the failed subjobs
+            (list of ints).
         """
+        lgr.info("Fetching results for %s", self.jobid)
         for o in self.get_outputs():
             self.session.get(
                 o if op.isabs(o) else op.join(self.working_directory, o),
@@ -842,7 +865,14 @@ class FetchPlainMixin(object):
                                 op.relpath(self.meta_directory,
                                            self.working_directory),
                                 ""))
-        self.log_failed(get_failed_meta)
+
+        failed = self.get_failed_subjobs()
+        self.log_failed(failed, func=get_failed_meta)
+
+        lgr.info("Outputs fetched. Finished with remote resource '%s'",
+                 self.resource.name)
+        if on_remote_finish:
+            on_remote_finish(self.resource, failed)
 
 
 @contextmanager
@@ -895,19 +925,38 @@ def head_at(dataset, commit):
 
 class FetchDataladPairMixin(object):
 
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Fetch the results from the remote dataset sibling.
+
+        Parameters
+        ----------
+        on_remote_finish : callable, optional
+            Function to be called when work with the resource is finished. It
+            will be passed two arguments, the resource and the failed subjobs
+            (list of ints).
         """
         lgr.info("Fetching results for %s", self.jobid)
+        failed = self.get_failed_subjobs()
         if self.resource.type == "ssh":
+            resource_name = self.resource.name
             ref = self.job_refname
-            self.ds.repo.fetch(self.resource.name, "{0}:{0}".format(ref))
-            self.ds.update(sibling=self.resource.name,
+            lgr.info("Updating local dataset with changes from '%s'",
+                     resource_name)
+            self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref))
+            self.ds.update(sibling=resource_name,
                            merge=True, recursive=True)
+            lgr.info("Getting outputs from '%s'", resource_name)
             with head_at(self.ds, ref):
                 outputs = list(self.get_outputs())
                 if outputs:
                     self.ds.get(path=outputs)
+
+            self.log_failed(failed,
+                            func=lambda mdir, _: self.ds.get(path=mdir))
+
+            lgr.info("Finished with remote resource '%s'", resource_name)
+            if on_remote_finish:
+                on_remote_finish(self.resource, failed)
             if not self.ds.repo.is_ancestor(ref, "HEAD"):
                 lgr.info("Results stored on %s. "
                          "Bring them into this branch with "
@@ -922,18 +971,18 @@ class FetchDataladPairMixin(object):
                      "{0}:{0}".format(self.job_refname)])
                 self.session.execute_command(
                     ["git", "merge", "FETCH_HEAD"])
-
-        def get_metadir(mdir, _):
-            if self.resource.type == "ssh":
-                self.ds.get(path=mdir)
-
-        self.log_failed(get_metadir)
+            self.log_failed(failed)
 
 
 class FetchDataladRunMixin(object):
 
-    def fetch(self):
+    def fetch(self, on_remote_finish=None):
         """Fetch results tarball and inject run record into the local dataset.
+
+        on_remote_finish : callable, optional
+            Function to be called when work with the resource is finished. It
+            will be passed two arguments, the resource and the failed subjobs
+            (list of ints).
         """
         lgr.info("Fetching results for %s", self.jobid)
         import tarfile
@@ -944,9 +993,23 @@ class FetchDataladRunMixin(object):
             raise OrchestratorError("Expected output file does not exist: {}"
                                     .format(remote_tfile))
 
+        failed = self.get_failed_subjobs()
         with head_at(self.ds, self.head) as moved:
             with chpwd(self.ds.path):
+                resource_name = self.resource.name
+                lgr.info("Fetching output tarball from '%s'", resource_name)
                 self.session.get(remote_tfile)
+                # This log_failed() may mention files that won't be around
+                # until the tarball extraction below, but we do call
+                # log_failed() now because it might need the remote resource
+                # and we want to finish up with remote operations.
+                self.log_failed(failed)
+
+                lgr.info("Finished with remote resource '%s'", resource_name)
+                if on_remote_finish:
+                    on_remote_finish(self.resource, failed)
+                lgr.info("Extracting output tarball into local dataset '%s'",
+                         self.ds.path)
                 with tarfile.open(tfile, mode="r:gz") as tar:
                     tar.extractall(path=".")
                 os.unlink(tfile)
@@ -955,7 +1018,7 @@ class FetchDataladRunMixin(object):
                 from datalad.interface.run import run_command
                 lgr.info("Creating run commit in %s", self.ds.path)
 
-                cmds = self.job_spec["command_array"]
+                cmds = self.job_spec["_command_array"]
                 if len(cmds) == 1:
                     cmd = cmds[0]
                 else:
@@ -968,7 +1031,7 @@ class FetchDataladRunMixin(object):
                         # they are formatted per subjob and then expanded by
                         # glob?
                         inputs=self.job_spec.get("inputs"),
-                        extra_inputs=self.job_spec.get("extra_inputs"),
+                        extra_inputs=self.job_spec.get("_extra_inputs"),
                         outputs=self.job_spec.get("outputs"),
                         inject=True,
                         extra_info={"reproman_jobid": self.jobid},
@@ -987,8 +1050,6 @@ class FetchDataladRunMixin(object):
                              "'git merge %s'",
                              ref, ref)
                 self.ds.repo.update_ref(ref, "HEAD")
-
-        self.log_failed()
 
 
 # Concrete orchestrators

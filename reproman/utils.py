@@ -7,6 +7,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import collections
+from collections.abc import Mapping
 import re
 
 import builtins
@@ -1431,7 +1432,7 @@ def parse_kv_list(params):
     ------
     ValueError if item in `params` does not match expected "key=value" format.
     """
-    if isinstance(params, collections.Mapping):
+    if isinstance(params, Mapping):
         res = params
     elif params:
         def check_fmt(item):

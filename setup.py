@@ -69,7 +69,7 @@ requires = {
         'chardet',  # python-debian misses dependency on it
     ],
     'docker': [
-        'docker-py>=0.3.2',
+        'docker>=3.0.0',
         'dockerpty',
     ],
     'aws': [

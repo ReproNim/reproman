@@ -418,7 +418,7 @@ def test_session_container(location, testing_container, check_methods):
     """
     cls = import_resource(*location)
     import docker
-    client = docker.Client()
+    client = docker.APIClient()
     container = next(c for c in client.containers()
                      if '/testing-container' in c['Names'])
     assert container

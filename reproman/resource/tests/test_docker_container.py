@@ -31,7 +31,7 @@ setup_ubuntu = get_docker_fixture(
 @mark.skipif_no_docker_dependencies
 def test_dockercontainer_class(resman):
 
-    with patch('docker.Client') as client, \
+    with patch('docker.APIClient') as client, \
         patch('dockerpty.start') as dockerpty, \
             swallow_logs(new_level=logging.DEBUG) as log:
 

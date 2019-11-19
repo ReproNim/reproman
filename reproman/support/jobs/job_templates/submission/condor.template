@@ -3,12 +3,12 @@
 #}
 
 Universe     = vanilla
-Executable   = {{ meta_directory }}/runscript
+Executable   = {{ _meta_directory }}/runscript
 environment  = ""
 
-Output  = {{ meta_directory }}/stdout.$(Process)
-Error   = {{ meta_directory }}/stderr.$(Process)
-Log     = {{ meta_directory }}/log.$(Process)
+Output  = {{ _meta_directory }}/stdout.$(Process)
+Error   = {{ _meta_directory }}/stderr.$(Process)
+Log     = {{ _meta_directory }}/log.$(Process)
 
 {#
   TODO: Need to check spec form compatibility between different batch
@@ -25,4 +25,4 @@ request_cpus = {{ num_processes }}
 
 getenv = True
 arguments = "$(Process)"
-queue {{ num_subjobs }}
+queue {{ _num_subjobs }}
