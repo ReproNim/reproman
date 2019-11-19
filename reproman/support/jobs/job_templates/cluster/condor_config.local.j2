@@ -1,0 +1,56 @@
+# THIS FILE IS CONTROLLED BY ELASTICLUSTER
+# local modifications will be overwritten
+# the next time `elasticluster setup` is run!
+#
+
+
+##  What machine is your central manager?
+
+CONDOR_HOST = {{ central_manager_ip }}
+
+## Pool's short description
+
+COLLECTOR_NAME = ElastiCluster NITRC-CE at {{ central_manager_ip }}
+
+##  When is this machine willing to start a job?
+
+START = TRUE
+
+
+##  When to suspend a job?
+
+SUSPEND = FALSE
+
+
+##  When to nicely stop a job?
+##  (as opposed to killing it instantaneously)
+
+PREEMPT = FALSE
+
+
+##  When to instantaneously kill a preempting job
+##  (e.g. if a job is in the pre-empting stage for too long)
+
+KILL = FALSE
+
+##  This macro determines what daemons the nitrcce_master will start and keep its watchful eyes on.
+##  The list is a comma or space separated list of subsystem names
+
+{% if is_central_manager %}
+use ROLE: CentralManager
+use ROLE: Submit
+use ROLE: Execute
+{% else %}
+use ROLE: Execute
+{% endif %}
+
+## For a simple personal condor setup there are issues
+## with default AUTH.
+
+{% if is_central_manager %}
+SEC_DEFAULT_AUTHENTICATION_METHODS = CLAIMTOBE
+{% else %}
+SEC_CLIENT_AUTHENTICATION_METHODS = CLAIMTOBE
+{% endif %}
+
+ALLOW_WRITE = $(ALLOW_WRITE), {% for worker_node in worker_nodes %} {{ worker_node._ec2_instance.private_ip_address }}, {% endfor %} $(CONDOR_HOST)

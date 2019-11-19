@@ -75,3 +75,17 @@ class Template(object):
         Rendered submission file (str).
         """
         return self._render(template_name, "submission")
+
+    def render_cluster(self, template_name):
+        """Generate the cluster file from `template_name`.
+
+        Parameters
+        ----------
+        template_name : str
+            Name of template to use instead of the default one for this class.
+
+        Returns
+        -------
+        Rendered submission file (str).
+        """
+        return self._render(template_name, "cluster")
