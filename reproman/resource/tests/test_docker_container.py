@@ -175,3 +175,12 @@ def test_container_exists(setup_ubuntu):
     from ..docker_container import DockerContainer
     assert DockerContainer.is_container_running(setup_ubuntu['name'])
     assert not DockerContainer.is_container_running('foo')
+
+
+@mark.skipif_no_docker_dependencies
+def test_image_name_latest_default():
+    from ..docker_container import DockerContainer
+    for img, expected in [("debian:buster", "debian:buster"),
+                          ("busybox@ddeeaa", "busybox@ddeeaa"),
+                          ("busybox", "busybox:latest")]:
+        assert DockerContainer(name="cname", image=img).image == expected
