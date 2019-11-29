@@ -7,7 +7,7 @@ utility in other fields as well.
 
 # Status
 
-ReproMan is under initial rapid development to establish core functionality.  While
+ReproMan is under rapid development. While
 the code base is still growing the focus is increasingly shifting towards
 robust and safe operation with a sensible API. There has been no major public
 release yet, as organization and configuration are still subject of
