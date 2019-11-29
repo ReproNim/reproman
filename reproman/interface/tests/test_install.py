@@ -20,7 +20,7 @@ from ...tests.utils import assert_in
 @mark.skipif_no_docker_dependencies
 def test_install_interface(demo1_spec):
 
-    with patch('docker.Client') as client, \
+    with patch('docker.APIClient') as client, \
         patch('reproman.distributions.debian.DebianDistribution.install_packages'), \
         patch('reproman.resource.ResourceManager._get_inventory') as get_inventory, \
         patch('requests.get') as requests, \

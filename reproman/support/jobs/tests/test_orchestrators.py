@@ -12,6 +12,7 @@ import os
 import os.path as op
 import yaml
 
+from unittest.mock import MagicMock
 from unittest.mock import patch
 import pytest
 
@@ -602,8 +603,11 @@ def test_orc_datalad_concurrent(job_spec, dataset, ssh, orc_class, sub_type):
         orc.prepare_remote()
         orc.submit()
         orc.follow()
-
-        orc.fetch()
+        # Just make sure each fetch() seems to have wired up on_remote_finish.
+        # test_run.py tests the actual --follow actions.
+        remote_fn = MagicMock()
+        orc.fetch(on_remote_finish=remote_fn)
+        remote_fn.assert_called_once_with(orc.resource, [])
 
         out_files = [n + ".out" for n in names]
         for ofile in out_files:
