@@ -100,10 +100,10 @@ specify that the ``datalad-pair-run`` orchestrator should be used::
     ./clean.py data/f0.csv cleaned/f0.csv
 
 Notice that in addition to the orchestrator, we specify the input file
-that needs to be available on the remote. If this file was tracked by
-Git rather than by git-annex, we could get by without declaring it as an
-input because the same revision of the dataset is checked out on the
-remote.
+that needs to be available on the remote. This is only necessary for
+files that are tracked by git-annex. Files tracked by Git do not need to
+be declared as inputs because the same revision of the dataset is
+checked out on the remote.
 
 .. warning::
 
