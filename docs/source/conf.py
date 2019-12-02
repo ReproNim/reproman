@@ -75,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'reproman'
-copyright = u'2016, ReproMan team (in parts DataLad Team)'
+copyright = u'2016-2019, ReproMan team (in parts DataLad Team)'
 author = u'ReproMan team'
 
 # The version info for the project you're documenting, acts as replacement for
