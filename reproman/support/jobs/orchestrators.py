@@ -239,7 +239,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             "\0".join(self.job_spec["_command_array"]),
             op.join(self.meta_directory, "command-array"))
 
-        self._put_text(
+        self.session.put_text(
             yaml.safe_dump(self.as_dict()),
             op.join(self.meta_directory, "spec.yaml"))
 
