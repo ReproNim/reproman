@@ -9,7 +9,7 @@ SPHINXOPTS    =
 # use /usr/bin/python3 instead of /usr/bin/env python3, so it would not
 # find our module installed under virtualenv
 SPHINXCMD     = $(shell which sphinx-build)
-SPHINXBUILD   = python3 $(SPHINXCMD)
+SPHINXBUILD   = python $(SPHINXCMD)
 PAPER         =
 BUILDDIR      = build
 
