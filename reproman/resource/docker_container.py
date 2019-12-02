@@ -30,6 +30,16 @@ import logging
 lgr = logging.getLogger('reproman.resource.docker_container')
 
 
+def _image_latest_default(image):
+    # Given the restricted character set for names, the presence of ":" or "@"
+    # should be a reliable indication of a tag or digest, respectively. See
+    # - https://docs.docker.com/engine/reference/commandline/tag/#extended-description
+    # - vendor/github.com/docker/distribution/reference/regexp.go
+    if ":" not in image and "@" not in image:
+        image += ":latest"
+    return image
+
+
 @attr.s
 class DockerContainer(Resource):
     """
@@ -43,8 +53,10 @@ class DockerContainer(Resource):
     id = attrib()
     type = attrib(default='docker-container')
 
-    image = attrib(default='ubuntu:latest',
-        doc="Docker base image ID from which to create the running instance")
+    image = attrib(
+        default='ubuntu:latest',
+        doc="Docker base image ID from which to create the running instance",
+        converter=_image_latest_default)
     engine_url = attrib(default='unix:///var/run/docker.sock',
         doc="Docker server URL where engine is listening for connections")
     seccomp_unconfined = attrib(default=False,
