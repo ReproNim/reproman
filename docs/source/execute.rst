@@ -50,7 +50,7 @@ where the working tree looks like this::
       |-- f0.csv -> ../.git/annex/objects/[...]
       `-- f1.csv -> ../.git/annex/objects/[...]
 
-The clean.py script takes two positional arguments (e.g., ``./clean.py
+The ``clean.py`` script takes two positional arguments (e.g., ``./clean.py
 data/f0.csv cleaned/f0.csv``), where the first is a data file to process
 and the second is a path to write the output (creating directories if
 necessary).
@@ -74,7 +74,7 @@ calling ``reproman run --list=orchestrators``.
 
 The main orchestrator choices are ``datalad-pair``,
 ``datalad-pair-run``, and ``datalad-local-run``. If the remote has
-DataLad available, you should go with one of the ``pair`` orchestrators.
+DataLad available, you should go with one of the ``datalad-pair*`` orchestrators.
 These will sync your local dataset with a dataset on the remote machine
 (using `datalad publish`_), creating one if it doesn't already exist
 (using `datalad create-sibling`_).
@@ -100,7 +100,7 @@ specify that the ``datalad-pair-run`` orchestrator should be used::
     ./clean.py data/f0.csv cleaned/f0.csv
 
 Notice that in addition to the orchestrator, we specify the input file
-that needs to be available on the remote. If this file were tracked by
+that needs to be available on the remote. If this file was tracked by
 Git rather than by git-annex, we could get by without declaring it as an
 input because the same revision of the dataset is checked out on the
 remote.
@@ -134,7 +134,7 @@ Our last example invocation could be extended to use Condor like so::
 Note that which batch systems are currently supported is mostly a matter
 of which systems ReproMan developers currently have at their disposal.
 If you would like to add support for your system (or have experience
-with more general approach like DRMAA), we'd welcome help in this area.
+with more general approach like DRMAA_), we'd welcome help in this area.
 
 
 Detached jobs
@@ -181,7 +181,7 @@ The ``--batch-spec`` option is the more cumbersome but more flexible
 counterpart to ``--batch-parameter``. Its value should point to a YAML
 file that defines a series of records, each one with all of the
 parameters for a single subjob command. The equivalent of
-``--batch-parameters=f0,f1`` would be a YAML file with the following
+``--batch-parameter name=f0,f1`` would be a YAML file with the following
 content::
 
    - name: f0
@@ -275,3 +275,5 @@ spec.yaml
 .. _datalad run: http://docs.datalad.org/en/latest/generated/man/datalad-run.html
 .. _datalad update: https://datalad.readthedocs.io/en/latest/generated/man/datalad-update.html
 .. _datalad-htcondor: https://github.com/datalad/datalad-htcondor
+
+.. _DRMAA: https://en.wikipedia.org/wiki/DRMAA
