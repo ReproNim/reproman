@@ -15,8 +15,8 @@ Main command
 
    generated/man/reproman
 
-Environments operations
-=======================
+Environment operations
+======================
 
 .. toctree::
    :maxdepth: 1
@@ -29,11 +29,25 @@ Environments operations
    generated/man/reproman-stop
    generated/man/reproman-login
 
+
+Command execution
+=================
+
+.. toctree::
+   :maxdepth: 1
+
+   generated/man/reproman-execute
+   generated/man/reproman-run
+   generated/man/reproman-jobs
+
+
 Miscellaneous commands
 ======================
 
 .. toctree::
    :maxdepth: 1
 
+   generated/man/reproman-backend-parameters
+   generated/man/reproman-diff
    generated/man/reproman-retrace
    generated/man/reproman-test

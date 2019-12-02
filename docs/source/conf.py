@@ -75,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'reproman'
-copyright = u'2016, ReproMan team (in parts DataLad Team)'
+copyright = u'2016-2019, ReproMan team (in parts DataLad Team)'
 author = u'ReproMan team'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -102,7 +102,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ["sandbox/hierarchy.rst"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
