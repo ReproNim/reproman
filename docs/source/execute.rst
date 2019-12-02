@@ -157,7 +157,7 @@ Concurrent subjobs
 If you're submitting a job to a batch system, it's likely that you want
 to submit concurrent subjobs. To continue with the :ref:`toy example
 <rr-refex>` from above, you'd want to have two jobs, each one running
-clean.py on a different input file.
+``clean.py`` on a different input file.
 
 ``reproman run`` has two options for specifying subjobs:
 ``--batch-parameter`` and ``--batch-spec``. The first can work for
