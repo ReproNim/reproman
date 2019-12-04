@@ -847,6 +847,57 @@ def setup_exceptionhook(ipython=False):
         sys.excepthook = _reproman_pdb_excepthook
 
 
+_available_version_checked = False
+
+
+def check_available_version(project='ReproNim/reproman'):
+    """A helper to check (and report) if newer version of project is available
+
+    Should be ok to execute multiple times, it will be checked only one time
+
+    Parameters
+    ----------
+    project: str
+      as on GitHub. Releases will be checked
+    """
+    global _available_version_checked
+    if _available_version_checked:
+        return
+    _available_version_checked = True
+
+    # TODO: run in a separate thread
+    try:
+        import etelemetry
+    except ImportError as exc:
+        lgr.debug(
+            "Cannot check latest available version for %s: %s",
+            project, exc
+        )
+        return
+
+    from distutils.version import LooseVersion
+    from . import __version__
+
+    try:
+        ret = etelemetry.get_project(project)
+        version = ret['version']
+        if version.lower() == 'Unknown':
+            version = None
+        assert version  # if not -- .debug below will inform
+        version = LooseVersion(version)
+        if version > __version__:
+            lgr.info("A newer version (%s) of %s is available", version, project)
+        elif version < __version__:
+            lgr.debug("Running a newer version (%s) of %s than available (%s)",
+                     __version__, project, version)
+        else:  # ==
+            lgr.debug("No newer (than %s) version of %s found available",
+                      __version__, project)
+    except Exception as e:
+        lgr.debug("Could not check %s for version updates: %s", project, e)
+        return None
+
+
 def assure_dir(*args):
     """Make sure directory exists.
 

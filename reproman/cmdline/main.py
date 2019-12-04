@@ -23,7 +23,7 @@ import reproman
 
 from reproman.cmdline import helpers
 from reproman.support.exceptions import InsufficientArgumentsError, MissingConfigFileError
-from ..utils import setup_exceptionhook, chpwd
+from ..utils import setup_exceptionhook, check_available_version, chpwd
 from ..dochelpers import exc_str
 
 
@@ -242,6 +242,8 @@ def main(args=None):
     if not hasattr(cmdlineargs, 'func'):
         lgr.info("No command given, returning")
         return
+
+    check_available_version()
 
     ret = None
     if cmdlineargs.common_debug or cmdlineargs.common_idebug:

@@ -17,6 +17,9 @@ def _generate_func_api():
     from .interface.base import get_interface_groups
     from .interface.base import get_api_name
     from .interface.base import alter_interface_docs_for_api
+    from .utils import check_available_version
+
+    check_available_version()
 
     for grp_name, grp_descr, interfaces in get_interface_groups():
         for intfspec in interfaces:

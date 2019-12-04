@@ -46,6 +46,7 @@ requires = {
         'appdirs',
         'attrs>=16.3.0',
         'humanize',
+        'etelemetry',
         'pyyaml',
         'tqdm',
         'fabric>=2.3.1',
