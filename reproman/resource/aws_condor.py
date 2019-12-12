@@ -27,12 +27,13 @@ class AwsCondor(Resource):
     # Configurable options
     size = attrib(
         default=2,
-        doc="Number of EC2 instances in the HTCondor cluster"
+        doc="Number of EC2 instances in the HTCondor cluster.",
+        converter=int
     )
     access_key_id = attrib(
         doc="AWS access key for remote access to your Amazon subscription.")
     secret_access_key = attrib(
-        doc="AWS secret access key for remote access to your Amazon subscription")
+        doc="AWS secret access key for remote access to your Amazon subscription.")
     instance_type = attrib(default="t2.medium",
         doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)")  # EC2 instance type
     security_group = attrib(default="default",
@@ -44,7 +45,7 @@ class AwsCondor(Resource):
     key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter.")  # SSH private key filename on local machine.
     image = attrib(default="ami-080483fe6f1382eab",
-        doc="AWS image ID from which to create the running instance")  # NITRC-CE v0.50.0
+        doc="AWS image ID from which to create the running instance.")  # NITRC-CE v0.50.0
 
     id = attrib()
     nodes = attrib()  # Node 0 is the master node
@@ -65,7 +66,7 @@ class AwsCondor(Resource):
         if not self.nodes:
             self.nodes = []
             node_configs = []
-            for i in range(int(self.size)):
+            for i in range(self.size):
                 node_configs.append({
                     "type": "aws-ec2",
                     "name": self.name + "_{}".format(i),
@@ -83,7 +84,7 @@ class AwsCondor(Resource):
             self.nodes = []
 
         # Create a connection for each node in the cluster.
-        for i in range(int(self.size)):
+        for i in range(self.size):
             node = resource_manager.factory(node_configs[i])
             node.connect()
             self.nodes.append(node)
@@ -108,17 +109,13 @@ class AwsCondor(Resource):
             "key_name": self.key_name,
             "key_filename": self.key_filename,
             "image": self.image,
-            "nodes": []
-        }
-        for i, node in enumerate(self.nodes):
-            inventory["nodes"].append({
+            "nodes": [{
                 "type": "aws-ec2",
                 "name": "{}_{}".format(self.name, i)
-            })
-        yield inventory
+            } for i in range(len(self.nodes))]
+        }
 
-        if not self.size:
-            raise ValueError("Missing --size switch when creating cluster")
+        yield inventory
 
         def create_ec2(node):
             node_inventory = {}
@@ -140,7 +137,7 @@ class AwsCondor(Resource):
                 central_manager_ip=self.nodes[0]._ec2_instance.private_ip_address,
                 is_central_manager=(i == 0),
                 worker_nodes=self.nodes[1:]
-            ).render_cluster("condor_config.local.j2")
+            ).render_cluster("condor_config.local.template")
             session = node.get_session()
             session.execute_command(["sudo", "chmod", "0777", "/etc/condor/config.d"])
             session.put_text(condor_config, "/etc/condor/config.d/00-nitrcce-cluster")
@@ -167,7 +164,7 @@ class AwsCondor(Resource):
 
     def stop(self):
         """
-        Stop all the EC2 instances in the AWS subscription.
+        Stop all the EC2 instances in the cluster.
         """
         for node in self.nodes:
             node.stop()

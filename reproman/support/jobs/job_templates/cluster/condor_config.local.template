@@ -1,35 +1,12 @@
-# THIS FILE IS CONTROLLED BY ELASTICLUSTER
-# local modifications will be overwritten
-# the next time `elasticluster setup` is run!
-#
-
-
-##  What machine is your central manager?
-
 CONDOR_HOST = {{ central_manager_ip }}
-
-## Pool's short description
 
 COLLECTOR_NAME = ElastiCluster NITRC-CE at {{ central_manager_ip }}
 
-##  When is this machine willing to start a job?
-
 START = TRUE
-
-
-##  When to suspend a job?
 
 SUSPEND = FALSE
 
-
-##  When to nicely stop a job?
-##  (as opposed to killing it instantaneously)
-
 PREEMPT = FALSE
-
-
-##  When to instantaneously kill a preempting job
-##  (e.g. if a job is in the pre-empting stage for too long)
 
 KILL = FALSE
 
