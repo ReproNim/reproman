@@ -1,5 +1,5 @@
-Environments management use cases
-=================================
+Environment management use cases
+================================
 
 .. TODO migrate use cases from the google doc
 
