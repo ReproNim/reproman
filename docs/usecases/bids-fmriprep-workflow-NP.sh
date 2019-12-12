@@ -75,17 +75,6 @@ fi
 datalad create -c text2git "$STUDY"
 cd "$STUDY"
 
-if [ -e "$FS_LICENSE" ]; then
-    cp "$FS_LICENSE" containers/licenses/freesurfer
-else
-    echo -n "$FS_LICENSE" >| containers/licenses/freesurfer
-fi
-echo "* annex.largefiles=(anything)" >| containers/licenses/.gitattributes
-rm containers/licences/.gitignore  # we will store them
-datalad save -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
-( cd containers; git annex metadata licenses/freesurfer -s distribution-restrictions=sensitive; )
-
-
 #
 # Install containers dataset for guaranteed/unambigous containers versioning
 # and datalad containers-run
@@ -95,6 +84,17 @@ datalad save -m "Added licenses/freesurfer (needed for fmriprep)" containers/lic
 # Local copy to avoid heavy network traffic while testing locally could be
 # referenced in CONTAINERS_REPO env var
 datalad install -d . -s "${CONTAINERS_REPO:-///repronim/containers}"
+
+if [ -e "$FS_LICENSE" ]; then
+    cp "$FS_LICENSE" containers/licenses/freesurfer
+else
+    echo -n "$FS_LICENSE" >| containers/licenses/freesurfer
+fi
+echo "* annex.largefiles=(anything)" >| containers/licenses/.gitattributes
+rm containers/licenses/.gitignore  # we will store them
+datalad save -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
+( cd containers; git annex metadata licenses/freesurfer -s distribution-restrictions=sensitive; )
+
 
 # possibly downgrade versions to match the ones used in the "paper"
 # TODO see  https://github.com/ReproNim/containers/issues/8 for relevant discussion
