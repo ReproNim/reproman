@@ -815,7 +815,8 @@ def swallow_logs(new_level=None):
     try:
         yield adapter
     finally:
-        lgr.handlers, lgr.level = old_handlers, old_level
+        lgr.handlers = old_handlers
+        lgr.setLevel(old_level)
         adapter.cleanup()
 
 
