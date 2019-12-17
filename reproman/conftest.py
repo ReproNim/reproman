@@ -21,6 +21,11 @@ def pytest_addoption(parser):
                      default=False, help="run integration tests")
 
 
+def pytest_configure(config):
+    config.addinivalue_line("markers",
+                            "integration: mark test as integration test")
+
+
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--integration"):
         # --integration given in cli: do not skip integration tests

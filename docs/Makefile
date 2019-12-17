@@ -5,7 +5,11 @@
 # Treat warnings as errors.... hierarchy.rst is just a dump of notes ATM
 # SPHINXOPTS    = -W
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+# sphinx-build might be coming from system-wide install, and would
+# use /usr/bin/python3 instead of /usr/bin/env python3, so it would not
+# find our module installed under virtualenv
+SPHINXCMD     = $(shell which sphinx-build)
+SPHINXBUILD   = python $(SPHINXCMD)
 PAPER         =
 BUILDDIR      = build
 

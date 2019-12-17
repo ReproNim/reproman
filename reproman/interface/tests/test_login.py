@@ -23,7 +23,7 @@ def test_login_interface():
     Test logging into an environment
     """
 
-    with patch('docker.Client') as client, \
+    with patch('docker.APIClient') as client, \
         patch('reproman.resource.ResourceManager._get_inventory') as get_inventory, \
         patch('dockerpty.start'), \
         swallow_logs(new_level=logging.DEBUG) as log:

@@ -11,7 +11,10 @@
 
 from argparse import REMAINDER
 import collections
+from collections.abc import Mapping
+import glob
 import logging
+import itertools
 import textwrap
 import yaml
 
@@ -20,6 +23,7 @@ from shlex import quote as shlex_quote
 from reproman.interface.base import Interface
 from reproman.interface.common_opts import resref_opt
 from reproman.interface.common_opts import resref_type_opt
+from reproman.support.constraints import EnsureChoice
 from reproman.support.jobs.local_registry import LocalRegistry
 from reproman.support.jobs.orchestrators import Orchestrator
 from reproman.support.jobs.orchestrators import ORCHESTRATORS
@@ -53,7 +57,7 @@ def _combine_job_specs(specs):
         Taken from https://stackoverflow.com/a/3233356
         """
         for k, v in u.items():
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 d[k] = update(d.get(k, {}), v)
             else:
                 d[k] = v
@@ -62,6 +66,94 @@ def _combine_job_specs(specs):
     for spec in specs[1:]:
         update(initial, spec)
     return initial
+
+
+def _parse_batch_params(params):
+    """Transform batch parameter strings into lists of tuples.
+
+    Parameters
+    ----------
+    params : list of str
+        The string should have the form "key=val1,val2,val3".
+
+    Returns
+    -------
+    A generator that, for each key, yields a list of key-value tuple pairs.
+    """
+    def maybe_glob(x):
+        return glob.glob(x) if glob.has_magic(x) else [x]
+
+    seen_keys = set()
+    for param in params:
+        if "=" not in param:
+            raise ValueError(
+                "param value should be formatted as 'key=value,...'")
+        key, value_str = param.split("=", maxsplit=1)
+        if key in seen_keys:
+            raise ValueError("Key '{}' was given more than once".format(key))
+        seen_keys.add(key)
+        yield [(key, v)
+               for v_unexpanded in value_str.split(",")
+               for v in maybe_glob(v_unexpanded)]
+
+
+def _combine_batch_params(params):
+    """Transform batch parameter strings into records.
+
+    Parameters
+    ----------
+    params : list of str
+        The string should have the form "key=val1,val2,val3".
+
+    Returns
+    -------
+    A generator that yields a record, computing the product from the values.
+
+    >>> from pprint import pprint
+    >>> params = ["k0=val1,val2,val3", "k1=val4,val5"]
+    >>> pprint(list(_combine_batch_params(params)))
+    [{'k0': 'val1', 'k1': 'val4'},
+     {'k0': 'val1', 'k1': 'val5'},
+     {'k0': 'val2', 'k1': 'val4'},
+     {'k0': 'val2', 'k1': 'val5'},
+     {'k0': 'val3', 'k1': 'val4'},
+     {'k0': 'val3', 'k1': 'val5'}]
+    """
+    if not params:
+        return
+    # Note: If we want to support pairing the ith elements rather than taking
+    # the product, we could add a parameter that signals to use zip() rather
+    # than product(). If we do that, we'll also want to check that the values
+    # for each key are the same length, probably in _parse_batch_params().
+    for i in itertools.product(*_parse_batch_params(params)):
+        yield dict(i)
+
+
+def _resolve_batch_parameters(spec_file, params):
+    """Determine batch parameters based on user input.
+
+    Parameters
+    ----------
+    spec_file : str or None
+        Name of YAML file the defines records of parameters.
+    params : list of str or None
+        The string should have the form "key=val1,val2,val3".
+
+    Returns
+    -------
+    List of records or None if neither `spec_file` or `params` is specified.
+    """
+    if spec_file and params:
+        raise ValueError(
+            "Batch parameters cannot be provided with a batch spec")
+
+    resolved = None
+    if spec_file:
+        with open(spec_file) as pf:
+            resolved = yaml.safe_load(pf)
+    elif params:
+        resolved = list(_combine_batch_params(params))
+    return resolved
 
 
 JOB_PARAMETERS = collections.OrderedDict(
@@ -79,6 +171,18 @@ JOB_PARAMETERS = collections.OrderedDict(
          """Name of orchestrator. The orchestrator performs pre- and
          post-command steps like setting up the directory for command execution
          and storing the results."""),
+        ("batch_spec",
+         """YAML file that defines a series of records with parameters for
+         commands. A command will be constructed for each record, with record
+         values available in the command as well as the inputs and outputs as
+         `{p[KEY]}`."""),
+        ("batch_parameters",
+         """Define batch parameters with 'KEY=val1,val2,...'. Different keys
+         can be specified by giving multiple values, in which case the product
+         of the values are taken. For example, 'subj=mei,satsuki' and 'day=1,2'
+         would expand to four records, pairing each subj with each day. Values
+         can be a glob pattern to match against the current working
+         directory."""),
         ("inputs, outputs",
          """Input and output files (list) to the command."""),
         ("message",
@@ -129,6 +233,21 @@ class Run(Interface):
             metavar="NAME",
             doc=(JOB_PARAMETERS["orchestrator"] +
                  "[CMD:  Use --list to see available orchestrators CMD]")),
+        batch_spec=Parameter(
+            args=("--batch-spec", "--bs"),
+            dest="batch_spec",
+            metavar="PATH",
+            doc=(JOB_PARAMETERS["batch_spec"] +
+                 " See [CMD: --batch-parameter CMD][PY: `batch_parameters` PY]"
+                 " for an alternative method for simple combinations.")),
+        batch_parameters=Parameter(
+            args=("--batch-parameter", "--bp"),
+            dest="batch_parameters",
+            action="append",
+            metavar="PATH",
+            doc=(JOB_PARAMETERS["batch_parameters"] +
+                 " See [CMD: --batch-spec CMD][PY: `batch_spec` PY]"
+                 " for specifying more complex records.")),
         job_specs=Parameter(
             args=("--job-spec", "--js"),
             dest="job_specs",
@@ -141,7 +260,7 @@ class Run(Interface):
         job_parameters=Parameter(
             metavar="PARAM",
             dest="job_parameters",
-            args=("-p", "--job-parameter"),
+            args=("--job-parameter", "--jp"),
             # TODO: Use nargs=+ like create's --backend-parameters?  I'd rather
             # use 'append' there.
             action="append",
@@ -169,7 +288,12 @@ class Run(Interface):
             depends on the orchestrator."""),
         follow=Parameter(
             args=("--follow",),
-            action="store_true",
+            metavar="ACTION",
+            const=True,
+            nargs="?",
+            constraints=EnsureChoice(False, True,
+                                     "stop", "stop-if-success",
+                                     "delete", "delete-if-success"),
             doc="""Continue to follow the submitted command instead of
             submitting it and detaching."""),
         command=Parameter(
@@ -187,6 +311,7 @@ class Run(Interface):
     def __call__(command=None, message=None,
                  resref=None, resref_type="auto",
                  list_=None, submitter=None, orchestrator=None,
+                 batch_spec=None, batch_parameters=None,
                  job_specs=None, job_parameters=None,
                  inputs=None, outputs=None,
                  follow=False):
@@ -231,6 +356,8 @@ class Run(Interface):
                 "message": message,
                 "submitter": submitter,
                 "orchestrator": orchestrator,
+                "batch_spec": batch_spec,
+                "batch_parameters": batch_parameters,
                 "inputs": inputs,
                 "outputs": outputs,
             }.items()
@@ -243,18 +370,20 @@ class Run(Interface):
         spec = _combine_job_specs(_load_specs(job_specs or []) +
                                   [job_parameters, cli_spec])
 
+        spec["_resolved_batch_parameters"] = _resolve_batch_parameters(
+            spec.get("batch_spec"), spec.get("batch_parameters"))
+
         # Treat "command" as a special case because it's a list and the
         # template expects a string.
         if not command and "command_str" in spec:
-            pass
+            spec["_resolved_command_str"] = spec["command_str"]
         elif not command and "command" not in spec:
             raise ValueError("No command specified via CLI or job spec")
         else:
             command = command or spec["command"]
             # Unlike datalad run, we're only accepting a list form for now.
-            command_str = " ".join(map(shlex_quote, command))
             spec["command"] = command
-            spec["command_str"] = command_str
+            spec["_resolved_command_str"] = " ".join(map(shlex_quote, command))
 
         if resref is None:
             if "resource_id" in spec:
@@ -265,7 +394,8 @@ class Run(Interface):
                 resref_type = "name"
             else:
                 raise ValueError("No resource specified")
-        resource = get_manager().get_resource(resref, resref_type)
+        manager = get_manager()
+        resource = manager.get_resource(resref, resref_type)
 
         if "orchestrator" not in spec:
             # TODO: We could just set this as the default for the Parameter,
@@ -285,5 +415,25 @@ class Run(Interface):
 
         if follow:
             orc.follow()
-            orc.fetch()
+            if follow is True:
+                remote_fn = None
+            else:
+                only_on_success = follow.endswith("-if-success")
+                do_delete = follow.split("-")[0] == "delete"
+
+                def remote_fn(res, failed):
+                    if failed and only_on_success:
+                        lgr.info("Not stopping%s resource '%s' "
+                                 "because there were failed jobs",
+                                 " or deleting" if do_delete else "",
+                                 res.name)
+                    else:
+                        lgr.info("Stopping%s resource '%s' after %s run",
+                                 " and deleting" if do_delete else "",
+                                 res.name,
+                                 "failed" if failed else "successful")
+                        manager.stop(res)
+                        if do_delete:
+                            manager.delete(res)
+            orc.fetch(on_remote_finish=remote_fn)
             lreg.unregister(orc.jobid)
