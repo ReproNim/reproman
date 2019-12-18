@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#SBATCH --output={{ shlex_quote(_meta_directory) }}/stdout.%a
+#SBATCH --error={{ shlex_quote(_meta_directory) }}/stderr.%a
+{#
+  TODO: We need to assess how we treat batch parameters across different
+  submitters---things like whether we should try to expose common names and, if
+  so, what are the discrepancies in the behavior, and how should we deal with
+  that. We should also revisit the goal of making it possible for the caller to
+  extend the submit file template to add stuff like parameters we do not expose
+  and environment modules.
+#}
+{% if memory is defined %}
+#SBATCH --mem={{ memory }}
+{% endif %}
+{% if num_processes is defined %}
+#SBATCH --cpus-per-task={{ num_processes }}
+{% endif %}
+{% if _num_subjobs == 1 %}
+#SBATCH --array=0
+{% else %}
+#SBATCH --array=0-{{ _num_subjobs - 1}}
+{% endif %}
+
+{{ shlex_quote(_meta_directory) }}/runscript $SLURM_ARRAY_TASK_ID

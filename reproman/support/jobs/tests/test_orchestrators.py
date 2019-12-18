@@ -55,6 +55,14 @@ def ssh():
     return SSH("testssh", host="reproman-test")
 
 
+@pytest.fixture(scope="module")
+def ssh_slurm():
+    skipif.no_ssh()
+    skipif.no_slurm()
+    from reproman.resource.ssh import SSH
+    return SSH("slurm-res", host="slurm")
+
+
 def test_orc_root_directory(shell):
     orc = orcs.PlainOrchestrator(shell, submission_type="local")
     assert orc.root_directory == op.expanduser("~/.reproman/run-root")
@@ -220,6 +228,11 @@ def check_orc_datalad(job_spec, dataset):
                          ids=["sub:local", "sub:condor"])
 def test_orc_datalad_run(check_orc_datalad, shell, orc_class, sub_type):
     check_orc_datalad(shell, orc_class, sub_type)
+
+
+@pytest.mark.integration
+def test_orc_datalad_slurm(check_orc_datalad, ssh_slurm):
+    check_orc_datalad(ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm")
 
 
 @pytest.mark.integration
@@ -630,3 +643,10 @@ def check_orc_datalad_concurrent(job_spec, dataset):
 def test_orc_datalad_concurrent(check_orc_datalad_concurrent,
                                 ssh, orc_class, sub_type):
     check_orc_datalad_concurrent(ssh, orc_class, sub_type)
+
+
+@pytest.mark.integration
+def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm):
+    check_orc_datalad_concurrent(ssh_slurm,
+                                 orcs.DataladLocalRunOrchestrator,
+                                 "slurm")
