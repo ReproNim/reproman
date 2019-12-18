@@ -166,6 +166,49 @@ def container_dataset(tmpdir_factory):
     return ds
 
 
+@pytest.fixture()
+def check_orc_datalad(job_spec, dataset):
+    def fn(resource, orc_class, sub_type):
+        dataset.repo.tag("start-pt")
+
+        def run_and_check(spec):
+            with chpwd(dataset.path):
+                orc = orc_class(resource,
+                                submission_type=sub_type, job_spec=spec)
+                orc.prepare_remote()
+                orc.submit()
+                orc.follow()
+
+                orc.fetch()
+                assert dataset.repo.file_has_content("out")
+                assert open("out").read() == "content\nmore\n"
+                return orc
+
+        orc = run_and_check(job_spec)
+
+        # Perform another run based on the dumped job spec from the first.
+        assert dataset.repo.get_active_branch() == "master"
+        metadir = op.relpath(orc.meta_directory, orc.working_directory)
+        with open(op.join(dataset.path, metadir, "spec.yaml")) as f:
+            dumped_spec = yaml.safe_load(f)
+            assert "_reproman_version" in dumped_spec
+            assert "_spec_version" in dumped_spec
+        if orc.name == "datalad-local-run":
+            # Our reproman-based copying of data doesn't isn't (yet) OK with
+            # data files that already exist.
+            dumped_spec["inputs"] = []
+        # FIXME: Use exposed method once available.
+        dataset.repo._git_custom_command(
+            [], ["git", "reset", "--hard", "start-pt"])
+        if dataset.repo.dirty:
+            # The submitter log file is ignored (currently only relevant for
+            # condor; see b9277ebc0 for more details). Add the directory to get
+            # to a clean state.
+            dataset.add(".reproman")
+        orc = run_and_check(dumped_spec)
+    return fn
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
@@ -175,43 +218,8 @@ def container_dataset(tmpdir_factory):
                          ["local",
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
-def test_orc_datalad_run(job_spec, dataset, shell, orc_class, sub_type):
-    dataset.repo.tag("start-pt")
-
-    def run_and_check(spec):
-        with chpwd(dataset.path):
-            orc = orc_class(shell, submission_type=sub_type, job_spec=spec)
-            orc.prepare_remote()
-            orc.submit()
-            orc.follow()
-
-            orc.fetch()
-            assert dataset.repo.file_has_content("out")
-            assert open("out").read() == "content\nmore\n"
-            return orc
-
-    orc = run_and_check(job_spec)
-
-    # Perform another run based on the dumped job spec from the first.
-    assert dataset.repo.get_active_branch() == "master"
-    metadir = op.relpath(orc.meta_directory, orc.working_directory)
-    with open(op.join(dataset.path, metadir, "spec.yaml")) as f:
-        dumped_spec = yaml.safe_load(f)
-        assert "_reproman_version" in dumped_spec
-        assert "_spec_version" in dumped_spec
-    if orc.name == "datalad-local-run":
-        # Our reproman-based copying of data doesn't isn't (yet) OK with data
-        # files that already exist.
-        dumped_spec["inputs"] = []
-    # FIXME: Use exposed method once available.
-    dataset.repo._git_custom_command(
-        [], ["git", "reset", "--hard", "start-pt"])
-    if dataset.repo.dirty:
-        # The submitter log file is ignored (currently only relevant for
-        # condor; see b9277ebc0 for more details). Add the directory to get to
-        # a clean state.
-        dataset.add(".reproman")
-    orc = run_and_check(dumped_spec)
+def test_orc_datalad_run(check_orc_datalad, shell, orc_class, sub_type):
+    check_orc_datalad(shell, orc_class, sub_type)
 
 
 @pytest.mark.integration
@@ -574,6 +582,41 @@ def test_dataset_as_dict(shell, dataset, job_spec):
     assert "_dataset_id" in d
 
 
+@pytest.fixture()
+def check_orc_datalad_concurrent(job_spec, dataset):
+    def fn(ssh, orc_class, sub_type):
+        names = ["paul", "rosa"]
+
+        job_spec["inputs"] = ["{p[name]}.in"]
+        job_spec["outputs"] = ["{p[name]}.out"]
+        job_spec["_resolved_command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
+        job_spec["_resolved_batch_parameters"] = [{"name": n} for n in names]
+
+        in_files = [n + ".in" for n in names]
+        for fname in in_files:
+            with open(op.join(dataset.path, fname), "w") as fh:
+                fh.write(fname[0])
+        dataset.save(path=in_files)
+
+        with chpwd(dataset.path):
+            orc = orc_class(ssh, submission_type=sub_type, job_spec=job_spec)
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+            # Just make sure each fetch() seems to have wired up
+            # on_remote_finish. test_run.py tests the actual --follow actions.
+            remote_fn = MagicMock()
+            orc.fetch(on_remote_finish=remote_fn)
+            remote_fn.assert_called_once_with(orc.resource, [])
+
+            out_files = [n + ".out" for n in names]
+            for ofile in out_files:
+                assert dataset.repo.file_has_content(ofile)
+                with open(ofile) as ofh:
+                    assert ofh.read() == ofile[0] * 2
+    return fn
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
@@ -584,33 +627,6 @@ def test_dataset_as_dict(shell, dataset, job_spec):
                          ["local",
                           pytest.param("condor", marks=mark.skipif_no_condor)],
                          ids=["sub:local", "sub:condor"])
-def test_orc_datalad_concurrent(job_spec, dataset, ssh, orc_class, sub_type):
-    names = ["paul", "rosa"]
-
-    job_spec["inputs"] = ["{p[name]}.in"]
-    job_spec["outputs"] = ["{p[name]}.out"]
-    job_spec["_resolved_command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
-    job_spec["_resolved_batch_parameters"] = [{"name": n} for n in names]
-
-    in_files = [n + ".in" for n in names]
-    for fname in in_files:
-        with open(op.join(dataset.path, fname), "w") as fh:
-            fh.write(fname[0])
-    dataset.save(path=in_files)
-
-    with chpwd(dataset.path):
-        orc = orc_class(ssh, submission_type=sub_type, job_spec=job_spec)
-        orc.prepare_remote()
-        orc.submit()
-        orc.follow()
-        # Just make sure each fetch() seems to have wired up on_remote_finish.
-        # test_run.py tests the actual --follow actions.
-        remote_fn = MagicMock()
-        orc.fetch(on_remote_finish=remote_fn)
-        remote_fn.assert_called_once_with(orc.resource, [])
-
-        out_files = [n + ".out" for n in names]
-        for ofile in out_files:
-            assert dataset.repo.file_has_content(ofile)
-            with open(ofile) as ofh:
-                assert ofh.read() == ofile[0] * 2
+def test_orc_datalad_concurrent(check_orc_datalad_concurrent,
+                                ssh, orc_class, sub_type):
+    check_orc_datalad_concurrent(ssh, orc_class, sub_type)
