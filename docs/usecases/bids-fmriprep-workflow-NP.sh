@@ -41,7 +41,9 @@
 #  Sample invocations
 #   - Pointing to the existing local clones of input repositories for faster
 #     "get"
-#     RUNNER=datalad CONTAINERS_REPO=~/proj/repronim/containers \
+#     RUNNER=datalad \
+#       FS_LICENSE=~/.freesurfer-license \
+#       CONTAINERS_REPO=~/proj/repronim/containers \
 #       INPUT_DATASET_REPO=$PWD/bids-fmriprep-workflow-NP/ds000003-demo \
 #       ./bids-fmriprep-workflow-NP.sh bids-fmriprep-workflow-NP/out2
 
@@ -196,8 +198,6 @@ get_participant_ids () {
 # 1. bids-mriqc -- QA
 # datalad save -d . -m "Due to https://github.com/datalad/datalad/issues/3591" data/mriqc
 
-PARTICIPANT_LABELS="$(get_participant_ids data/bids)"
-
 function run_bids_app() {
     app="$1"; shift
     do_group="$1"; shift
@@ -221,7 +221,7 @@ function run_bids_app() {
             # reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}"
             # Parallel requires two runs -- parallel across participants:
             reproman_run --jp "container=$container" "${app_runner_args[@]}" \
-                 --bp "pl=$PARTICIPANT_LABELS" \
+                 --bp "pl=$(get_participant_ids data/bids)" \
                  '{inputs}' '{outputs}' participant --participant_label '{p[pl]}' "${app_args[@]}"
             case "$do_group" in
                 1|yes)
@@ -250,13 +250,13 @@ function run_bids_app() {
     esac
 }
 
-# mriqc
-app=mriqc
-do_group=yes
 run_bids_app mriqc yes
 
-fmriprep no --fs-license-file=licenses/freesurfer
-run_bids_app
+run_bids_app fmriprep no --fs-license-file=licenses/freesurfer
+
+# 3. poldracklab-ds003-example -- analysis
+
+# X. Later? visualization etc - used nilearn
 
 
 exit 0  # done for now
@@ -267,8 +267,4 @@ reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" \
   --input '{p[thing]}' \
   sh -c 'cat {p[thing]} {p[thing]} >doubled-{p[thing]}'
 
-# 2. bids-fmriprep -- preprocessing
 
-# 3. poldracklab-ds003-example -- analysis
-
-# X. Later? visualization etc - used nilearn
