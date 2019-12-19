@@ -53,26 +53,6 @@ set -eu
 # $STUDY is a variable used in a paper this workflow mimics
 STUDY="$1"
 
-
-#
-# Check asap for licenses since fmriprep needs one for FreeSurfer
-#
-
-if [ -z "${FS_LICENSE:-}" ]; then
-    if [ -e "${FREESURFER_HOME:-/XXXX}/.license" ]; then
-        FS_LICENSE="${FREESURFER_HOME}/.license"
-    else
-        cat >&2 <<EOF
-Error: No FreeSurfer license found!
-    Either define FREESURFER_HOME environment variable pointing to a directory
-    with .license file for FreeSurfer or define FS_LICENSE environment variable
-    which would either point to the license file or contain the license
-    (with "\\n" for new lines) to be used for FreeSurfer
-EOF
-        exit 1
-    fi
-fi
-
 # Define common parameters for the reproman run
 
 # ReproMan orchestrator to be used - determines how data/results would be
@@ -120,6 +100,9 @@ reproman_run () {
     reproman run --follow -r "${RM_RESOURCE}" --sub "${RM_SUB}" --orc "${RM_ORC}" "$@"
 }
 
+
+# TODO: see where such functionality could be provided within reproman, so could
+# be easily reused
 get_participant_ids () {
     # Would go through provided paths and current directory to find participants.tsv
     # and return participant ids, comma-separated
@@ -133,9 +116,6 @@ get_participant_ids () {
         fi
     done
 }
-
-# 1. bids-mriqc -- QA
-# datalad save -d . -m "Due to https://github.com/datalad/datalad/issues/3591" data/mriqc
 
 function run_bids_app() {
     app="$1"; shift
@@ -152,6 +132,8 @@ function run_bids_app() {
 
     set -x
     # Create target output dataset
+    # TODO: per app specific configuration?  some might have too heavy xml etc
+    # files
     datalad create -d . -c text2git "$outds"
 
     case "$RUNNER" in
@@ -190,6 +172,26 @@ function run_bids_app() {
     set +x
 }
 
+#
+# Check asap for licenses since fmriprep needs one for FreeSurfer
+#
+
+if [ -z "${FS_LICENSE:-}" ]; then
+    if [ -e "${FREESURFER_HOME:-/XXXX}/.license" ]; then
+        FS_LICENSE="${FREESURFER_HOME}/.license"
+    else
+        cat >&2 <<EOF
+Error: No FreeSurfer license found!
+    Either define FREESURFER_HOME environment variable pointing to a directory
+    with .license file for FreeSurfer or define FS_LICENSE environment variable
+    which would either point to the license file or contain the license
+    (with "\\n" for new lines) to be used for FreeSurfer
+EOF
+        exit 1
+    fi
+fi
+
+
 # Create study dataset
 datalad create -c text2git "$STUDY"
 cd "$STUDY"
@@ -204,25 +206,22 @@ cd "$STUDY"
 # referenced in CONTAINERS_REPO env var
 datalad install -d . -s "${CONTAINERS_REPO:-///repronim/containers}"
 
+# TODO: shift that into some helper script in the containers
+CONTAINERS_FS_LICENSE=containers/licenses/freesurfer
 if [ -e "$FS_LICENSE" ]; then
-    cp "$FS_LICENSE" containers/licenses/freesurfer
+    cp "$FS_LICENSE" "$CONTAINERS_FS_LICENSE"
 else
-    echo -n "$FS_LICENSE" >| containers/licenses/freesurfer
+    echo -n "$FS_LICENSE" >| "$CONTAINERS_FS_LICENSE"
 fi
-datalad save -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
+datalad save -d . -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
 ( cd containers; git annex metadata licenses/freesurfer -s distribution-restrictions=sensitive; )
 
 
 # possibly downgrade versions to match the ones used in the "paper"
-# TODO see  https://github.com/ReproNim/containers/issues/8 for relevant discussion
-# and possibly providing some helper to accomplish that more easily
-(
-    cd containers
-    scripts/freeze_versions --save-dataset=^ \
-        poldracklab-ds003-example=0.0.3 \
-        bids-mriqc=0.15.0 \
-        bids-fmriprep=1.4.1
-)
+containers/scripts/freeze_versions --save-dataset=^ \
+    poldracklab-ds003-example=0.0.3 \
+    bids-mriqc=0.15.0 \
+    bids-fmriprep=1.4.1
 
 #
 # Install dataset to be analyzed (no data - analysis might run in the cloud or on HPC)
@@ -245,9 +244,12 @@ datalad install -d . -s "${INPUT_DATASET_REPO:-https://github.com/ReproNim/ds000
 #
 #
 
-run_bids_app mriqc yes
+# datalad save -d . -m "Due to https://github.com/datalad/datalad/issues/3591" data/mriqc
 
-run_bids_app fmriprep no --fs-license-file=licenses/freesurfer
+
+run_bids_app mriqc yes
+# note: not using $CONTAINERS_FS_LICENSE just to make things a bit more explicit
+run_bids_app fmriprep no --fs-license-file=containers/licenses/freesurfer
 
 # 3. poldracklab-ds003-example -- analysis
 
