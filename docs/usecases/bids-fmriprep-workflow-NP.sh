@@ -73,67 +73,6 @@ EOF
     fi
 fi
 
-# Create study dataset
-datalad create -c text2git "$STUDY"
-cd "$STUDY"
-
-#
-# Install containers dataset for guaranteed/unambigous containers versioning
-# and datalad containers-run
-#
-# TODO: specific version, TODO - reference datalad issue
-
-# Local copy to avoid heavy network traffic while testing locally could be
-# referenced in CONTAINERS_REPO env var
-datalad install -d . -s "${CONTAINERS_REPO:-///repronim/containers}"
-
-if [ -e "$FS_LICENSE" ]; then
-    cp "$FS_LICENSE" containers/licenses/freesurfer
-else
-    echo -n "$FS_LICENSE" >| containers/licenses/freesurfer
-fi
-echo "* annex.largefiles=(anything)" >| containers/licenses/.gitattributes
-rm containers/licenses/.gitignore  # we will store them
-datalad save -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
-( cd containers; git annex metadata licenses/freesurfer -s distribution-restrictions=sensitive; )
-
-
-# possibly downgrade versions to match the ones used in the "paper"
-# TODO see  https://github.com/ReproNim/containers/issues/8 for relevant discussion
-# and possibly providing some helper to accomplish that more easily
-(
-    cd containers
-    echo -n "\
-    poldracklab-ds003-example	0.0.3
-    bids-mriqc					0.15.0
-    bids-fmriprep				1.4.1
-    "| while read -r img ver; do
-        git config -f .datalad/config --replace-all "datalad.containers.$img.image" "images/${img%%-*}/${img}--${ver}.sing";
-    done
-    datalad save -d^ -m "Possibly downgraded containers versions to the ones in the paper" "$PWD/.datalad/config"
-)
-
-#
-# Install dataset to be analyzed (no data - analysis might run in the cloud or on HPC)
-#
-# In original paper name for the dataset was used as is, and placed at the
-# top level.  Here, to make this demo easier to apply to other studies,
-# and also check on other datasets, we install input dataset under a generic
-# "data/bids" path.  "data/" will also collect all other derivatives etc
-mkdir data
-
-# For now we will work with minimized version with only 2 subjects
-# datalad install -d . -s ///openneuro/ds000003 data/bids
-datalad install -d . -s "${INPUT_DATASET_REPO:-https://github.com/ReproNim/ds000003-demo}" data/bids
-
-#
-# Execution.
-#
-# That is where access to the powerful resource (HPC) etc would be useful.
-# Every of those containerized apps might need custom options to be added.
-#
-#
-
 # Define common parameters for the reproman run
 
 # ReproMan orchestrator to be used - determines how data/results would be
@@ -211,7 +150,7 @@ function run_bids_app() {
     grep -e '^work$' .gitignore \
     || { echo "work" >> .gitignore; datalad save -m "Ignore work directory"; }
 
-
+    set -x
     # Create target output dataset
     datalad create -d . -c text2git "$outds"
 
@@ -248,7 +187,63 @@ function run_bids_app() {
             ;;
         *) unknown_runner;;
     esac
+    set +x
 }
+
+# Create study dataset
+datalad create -c text2git "$STUDY"
+cd "$STUDY"
+
+#
+# Install containers dataset for guaranteed/unambigous containers versioning
+# and datalad containers-run
+#
+# TODO: specific version, TODO - reference datalad issue
+
+# Local copy to avoid heavy network traffic while testing locally could be
+# referenced in CONTAINERS_REPO env var
+datalad install -d . -s "${CONTAINERS_REPO:-///repronim/containers}"
+
+if [ -e "$FS_LICENSE" ]; then
+    cp "$FS_LICENSE" containers/licenses/freesurfer
+else
+    echo -n "$FS_LICENSE" >| containers/licenses/freesurfer
+fi
+datalad save -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
+( cd containers; git annex metadata licenses/freesurfer -s distribution-restrictions=sensitive; )
+
+
+# possibly downgrade versions to match the ones used in the "paper"
+# TODO see  https://github.com/ReproNim/containers/issues/8 for relevant discussion
+# and possibly providing some helper to accomplish that more easily
+(
+    cd containers
+    scripts/freeze_versions --save-dataset=^ \
+        poldracklab-ds003-example=0.0.3 \
+        bids-mriqc=0.15.0 \
+        bids-fmriprep=1.4.1
+)
+
+#
+# Install dataset to be analyzed (no data - analysis might run in the cloud or on HPC)
+#
+# In original paper name for the dataset was used as is, and placed at the
+# top level.  Here, to make this demo easier to apply to other studies,
+# and also check on other datasets, we install input dataset under a generic
+# "data/bids" path.  "data/" will also collect all other derivatives etc
+mkdir data
+
+# For now we will work with minimized version with only 2 subjects
+# datalad install -d . -s ///openneuro/ds000003 data/bids
+datalad install -d . -s "${INPUT_DATASET_REPO:-https://github.com/ReproNim/ds000003-demo}" data/bids
+
+#
+# Execution.
+#
+# That is where access to the powerful resource (HPC) etc would be useful.
+# Every of those containerized apps might need custom options to be added.
+#
+#
 
 run_bids_app mriqc yes
 
