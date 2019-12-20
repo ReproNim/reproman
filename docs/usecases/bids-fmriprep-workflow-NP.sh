@@ -134,7 +134,7 @@ function run_bids_app() {
     # Create target output dataset
     # TODO: per app specific configuration?  some might have too heavy xml etc
     # files
-    datalad create -d . -c text2git "$outds"
+    [ -e "$outds" ] || datalad create -d . -c text2git "$outds"
 
     case "$RUNNER" in
         reproman)
