@@ -38,6 +38,8 @@ class VenvPackage(Package):
     location = attrib()
     editable = attrib(default=False)
     files = attrib(default=attr.Factory(list))
+    _diff_cmp_fields = ('name', )
+    _diff_fields = ('version', )
 
 
 @attr.s
@@ -48,6 +50,8 @@ class VenvEnvironment(SpecObject):
         default=False,
         doc="Are any non-local packages present in the environment?")
     packages = TypedList(VenvPackage)
+    _diff_cmp_fields = ('path', 'python_version')
+    _collection_attribute = 'packages'
 
 
 @attr.s
@@ -57,6 +61,7 @@ class VenvDistribution(Distribution):
     path = attrib()
     venv_version = attrib()
     environments = TypedList(VenvEnvironment)
+    _collection_attribute = 'environments'
 
     def initiate(self, _):
         return

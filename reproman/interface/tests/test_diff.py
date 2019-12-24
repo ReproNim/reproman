@@ -152,6 +152,18 @@ def test_diff_svn():
         assert_not_in('(/path/2/to/common/svn/repo)', outputs.out)
 
 
+def test_diff_venv():
+    with swallow_outputs() as outputs:
+        args = ['diff', diff_1_yaml, diff_2_yaml]
+        rv = main(args)
+        assert_equal(rv, 3)
+        assert_equal(outputs.err, '')
+        assert_in('Venv environments:', outputs.out)
+        assert_in('< /home/user/venvs/test/1_only 2.7.15+', outputs.out)
+        assert_in('> /home/user/venvs/test/2_only 2.7.15+', outputs.out)
+        assert_not_in('/home/user/venvs/test/both', outputs.out)
+
+
 def test_diff_satisfies_unsupported_distribution():
     # using subprocess.call() here because we're looking for a condition 
     # that raises an exception in main(), so it doesn't return and we 

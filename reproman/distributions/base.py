@@ -42,12 +42,11 @@ class SpecObject(object):
     # needed (or make sure the trivial case is handled)
 
     # Fields used to establish the "identity" of the specobject for the 
-    # purposes of diff
+    # purposes of finding the one and diff
+    # TODO: rename to e.g.  _id_fields?
     _diff_cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
-    # Fields used in determination of comparison (satisfied_by and identical_to)
-    _comparison_fields = tuple()
 
     @property
     def _diff_cmp_id(self):
@@ -59,20 +58,15 @@ class SpecObject(object):
         return tuple(getattr(self, a) for a in self._diff_cmp_fields)
 
     @property
-    def _cmp_id(self):
-        if not self._comparison_fields:
-            # Might need to be gone or some custom exception
-            raise RuntimeError(
-                "Cannot establish identity of %r since _comaprison_fields "
-                "are not defined" % self)
-        return tuple(getattr(self, a) for a in self._comparison_fields)
+    def _diff_id(self):
+        return self._diff_cmp_id + self._diff_vals
 
     @property
     def _diff_vals(self):
         """gives the values of the attributes defined by _diff_fields (like 
         _diff_cmp_id for _diff_cmp_fields)
         """
-        return tuple(str(getattr(self, a)) for a in self._diff_fields)
+        return tuple(getattr(self, a) for a in self._diff_fields)
 
     @property
     def diff_identity_string(self):
@@ -94,10 +88,10 @@ class SpecObject(object):
 
     @property
     def identity_string(self):
-        """like diff_identity_string, but for _comparison_fields (used in 
-        satisfied_by comparisons)
+        """like diff_identity_string, but for both _diff_cmp_fields and 
+        _diff_fields (used in satisfied_by comparisons)
         """
-        return " ".join(str(el) for el in self._cmp_id if el is not None)
+        return " ".join(str(el) for el in self._diff_id if el is not None)
 
     # TODO: make it "lazy" or may be there is already a helper in attrs?
     @property
@@ -137,15 +131,15 @@ class SpecObject(object):
         spec object.
 
         We require that the values of the attributes given by 
-        _comparison_fields are the same.  A specobject with a value of None 
-        for one of these attributes is less specific than one with 
-        a specific value; the former cannot satisfy the latter, 
-        but the latter can satisfy the former.
+        _diff_cmp_fields and _diff_fields are the same.  A specobject 
+        with a value of None for one of these attributes is less specific 
+        than one with a specific value; the former cannot satisfy the 
+        latter, but the latter can satisfy the former.
 
         TODO: Ensure we don't encounter the case where self is completely 
         unspecified (all values are None), in which case satisfied_by() 
         returns True by default.  Perhaps this is done by making 
-        sure that at least one of the _comparison_fields cannot be None.
+        sure that at least one of the _diff_cmp_fields cannot be None.
 
         TODO: derive _collection_type directly from _collection.  This isn't 
         possible at the moment because DebianDistribution.packages is 
@@ -162,9 +156,7 @@ class SpecObject(object):
             raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
-        for attr_name in self._comparison_fields:
-            self_value = getattr(self, attr_name)
-            other_value = getattr(other, attr_name)
+        for (self_value, other_value) in zip(self._diff_id, other._diff_id):
             if self_value is None:
                 continue
             if self_value != other_value:
@@ -176,14 +168,125 @@ class SpecObject(object):
         """Determine if the other object is identical to the spec object.
 
         We require that the objects are of the same type and that the 
-        values of the attributes given by _comparison_fields are the same.
+        values of the attributes given by _diff_cmp_fields and _diff_fields 
+        (dereferenced in _diff_id) are the same.
         """
         if not isinstance(other, self.__class__):
             return False
-        for attr_name in self._comparison_fields:
-            if getattr(self, attr_name) != getattr(other, attr_name):
-                return False
-        return True
+        return all(sv==ov for sv, ov in zip(self._diff_id, other._diff_id))
+
+    def _find_attr(self, child):
+        """Find an attribute among TypedList attrs which might contain the child
+
+        Checks are done based on the type.  Returns None if no appropriate
+        attribute is found
+        """
+        child_class = child.__class__
+        assert issubclass(child_class, SpecObject)  # only those are supported ATM
+        compatible_attrs = []
+
+        # For paranoids - do exhaustive search
+        for attr in self.__attrs_attrs__:
+            metadata_type = attr.metadata.get('type', None)
+            if metadata_type \
+                and issubclass(child_class, metadata_type) \
+                and issubclass(attr.default.factory, list):  # TODO: fragile
+                # we got our hit for a possible container containing our
+                # classes
+                # TODO: cache mapping from child_class to known types
+                compatible_attrs.append(attr)
+
+        if not compatible_attrs:
+            return
+
+        # If multiple provide list of the same class -- blow for now?
+        if len(compatible_attrs) > 1:
+            raise ValueError(
+                "Multiple attributes seems to contain instances of %s: %s "
+                "ATM we are not supporting that."
+                % (child_class, compatible_attrs)
+            )
+        return compatible_attrs[0]
+
+    def _find_in_attr(self, child, attr):
+        """Given an attribute (should be containing an iterable) find a child
+
+        No checks for attribute appropriateness (type check etc) for the child
+        is carried out
+        """
+
+        if not attr:
+            return  # Found no attribute which might have contained it
+
+        child_id = child._diff_cmp_id
+        values = getattr(self, attr.name)  # TODO: isn't there a better way?
+        hits = [
+            v for v in values
+            if v._diff_cmp_id == child_id
+        ]
+
+        # checks
+        # TODO: parametrize etc to generate/allow for multiple hits?
+        if not hits:
+            return None
+        elif len(hits) > 1:
+            raise RuntimeError(
+                "Found multiple hits for %s in %s: %s . ATM we expect only a "
+                "single one",
+                child, attr.name, hits
+            )
+        return hits[0]
+
+    def find(self, child):
+        """Find an object among TypedList attrs which matches (identity vice)
+        """
+        attr = self._find_attr(child)
+        if not attr:
+            return None
+        return self._find_in_attr(child, attr)
+
+    def __iadd__(self, other):
+        """Add information from another object into this one"""
+        # Check the other one is of the same kind
+        assert isinstance(other, self.__class__)
+        # TEMP -- to decide what to do when subclass. For now take only
+        #   exactly the same
+        assert other.__class__ is self.__class__
+        # TODO: consider being able to add objects this class knows about.
+        #    e.g. Adding DebianPackage's to .packages, or DebianDistribution
+        #    to .distributions.  That might eliminate if/then/else logic in
+        #    retrace
+        # go through attrs, and if the other one defines a single attr which
+        # is not defined here -- blow
+        # For the lists - add those which aren't found, and found should get
+        # += 'ed if spec objects, appended otherwise
+        for a in self.__attrs_attrs__:
+            a_self = getattr(self, a.name)
+            a_other = getattr(other, a.name)
+            if a_self == a_other:
+                # All good and nothing for us to do here
+                continue
+            if isinstance(a.default, attr.Factory) and a.default.factory is list:
+                # we have a list of things...
+                if issubclass(a.metadata['type'], SpecObject):
+                    # we might know what to do
+                    for a_other_value in a_other:
+                        a_self_value = self._find_in_attr(a_other_value, a)
+                        if a_self_value is None:
+                            # a new one!
+                            setattr(self, a.name, [a_other_value])
+                        else:
+                            # Delegate doing the right thing to the child's __iadd__
+                            a_self_value += a_other_value
+                else:
+                    raise NotImplementedError(
+                        "For now joining only lists of our own spec objects"
+                    )
+            else:
+                raise NotImplementedError("I think")
+            # import pdb; pdb.set_trace()
+            pass
+
 
 
 def _register_with_representer(cls):
@@ -209,6 +312,13 @@ class Distribution(SpecObject, metaclass=abc.ABCMeta):
     # Actually might want/need to go away since somewhat duplicates the class
     # name and looks awkward
     name = attrib(default=attr.NOTHING)
+
+    # Distributions are typically a singular entity on a system, although
+    # in some cases there could be multiple (e.g. conda installations) which
+    # managed to get used.
+    # So their identification by default will be done just based on the name
+    _diff_cmp_fields = ('name',)
+
 
     @staticmethod
     def factory(distribution_type, provenance=None):
@@ -422,4 +532,102 @@ class DistributionTracer(object, metaclass=abc.ABCMeta):
         """Creates implementation-specific Package object using fields
         provided by _get_packagefields_for_files
         """
+        return
+
+
+class SpecDiff:
+
+    """Difference object for SpecObjects.
+
+    Instantiate with SpecDiff(a, b).  a and b must be of the same type 
+    or TypeError is raised.  Either (but not both) may be None.
+
+    Attributes:
+
+        a, b: The two objects being compared.
+
+        If _diff_cmp_fields is defined for the SpecObjects:
+
+            diff_cmp_id: The _diff_cmp_id of the two objects.  If 
+                        _diff_cmp_id are different for the two objects, 
+                        they cannot be compared and ValueError is raised.
+
+            diff_vals_a, diff_vals_b: _diff_vals for a and b, respectively, 
+                                    or None if a or b is None.
+
+        For collection SpecObjects (e.g. DebianDistribution, containing 
+        DEBPackages; these have _collection_attribute defined), we also 
+        have:
+
+            collection: a list of SpecDiff objects for the contained 
+                        SpecObjects.
+
+            a_only: SpecDiff objects from collection that only appear in the 
+                    first passed SpecObject
+
+            b_only: SpecDiff objects from collection that only appear in the 
+                    second passed SpecObject
+
+            a_and_b: SpecDiff objects in collection that appear in both 
+                     passed SpecObjects
+
+    If a and b are lists, they are treated as files specifications, and 
+    self.collection is a list of (fname_a, fname_b) tuples.
+    TODO: give files and file collections their own specobjects
+    """
+
+    def __init__(self, a, b):
+        if not isinstance(a, (SpecObject, list, type(None))) \
+            or not isinstance(b, (SpecObject, list, type(None))):
+            raise TypeError('objects must be SpecObjects or None')
+        if not a and not b:
+            raise TypeError('objects cannot both be None')
+        if a and b and type(a) != type(b):
+            raise TypeError('objects must be of the same type')
+        self.cls = type(a) if a is not None else type(b)
+        self.a = a
+        self.b = b
+        if self.cls == list:
+            a_collection = set(a)
+            b_collection = set(b)
+            self.collection = []
+            for fname in set(a_collection).union(b_collection):
+                if fname not in a_collection:
+                    self.collection.append((None, fname))
+                elif fname not in b_collection:
+                    self.collection.append((fname, None))
+                else:
+                    self.collection.append((fname, fname))
+        else:
+            if self.cls._diff_cmp_fields:
+                if a and b and a._diff_cmp_id != b._diff_cmp_id:
+                    raise ValueError('objects\' _diff_cmp_id differ')
+                self.diff_vals_a = a._diff_vals if a else None
+                self.diff_vals_b = b._diff_vals if b else None
+                self.diff_cmp_id = a._diff_cmp_id if a else b._diff_cmp_id
+            if hasattr(self.cls, '_collection_attribute'):
+                self.collection = []
+                a_collection = { c._diff_cmp_id: c for c in a.collection } if a else {}
+                b_collection = { c._diff_cmp_id: c for c in b.collection } if b else {}
+                all_cmp_ids = set(a_collection).union(b_collection)
+                for cmp_id in all_cmp_ids:
+                    ac = a_collection[cmp_id] if cmp_id in a_collection else None
+                    bc = b_collection[cmp_id] if cmp_id in b_collection else None
+                    self.collection.append(SpecDiff(ac, bc))
+        if hasattr(self, 'collection'):
+            self.a_only = []
+            self.b_only = []
+            self.a_and_b = []
+            for pkg_diff in self.collection:
+                if isinstance(pkg_diff, tuple):
+                    (a, b) = pkg_diff
+                else:
+                    a = pkg_diff.a
+                    b = pkg_diff.b
+                if not a:
+                    self.b_only.append(pkg_diff)
+                elif not b:
+                    self.a_only.append(pkg_diff)
+                else:
+                    self.a_and_b.append(pkg_diff)
         return

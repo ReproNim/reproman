@@ -6,11 +6,16 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
+import attr
+
+from collections import OrderedDict
+
 from reproman.cmdline.main import main
 from reproman.formats import Provenance
 
 import logging
 
+from reproman.distributions import Distribution
 from reproman.utils import swallow_logs, swallow_outputs, make_tempfile
 from reproman.tests.utils import (
     assert_in,
@@ -53,6 +58,20 @@ def test_retrace_normalize_paths():
         assert "name: debian" in cm.out
 
 
+@attr.s(cmp=False)
+class FakeDistribution(Distribution):
+    # Allow to compare by name
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.name == other
+        return super().__eq__(other)
+
+    def initiate(self):
+        pass
+    def install_packages(self):
+        pass
+
+
 def get_tracer_session(protocols):
     class FakeSession(object):
         """A fake session attributes and methods of which should not
@@ -63,7 +82,7 @@ def get_tracer_session(protocols):
         def isdir(self, _):
             return False  # TODO: make it parametric
 
-    tracer_classes = []
+    tracer_classes = OrderedDict()
     for itracer, protocol in enumerate(protocols):
         # Test the loop logic
         class FakeTracer(object):
@@ -80,7 +99,7 @@ def get_tracer_session(protocols):
                 for item in self._current_protocol:
                     yield item
         FakeTracer.__name__ = "FakeTracer%d" % itracer
-        tracer_classes.append(FakeTracer)
+        tracer_classes['fake%d' % itracer] = FakeTracer
     return tracer_classes, FakeSession()
 
 
@@ -88,7 +107,7 @@ def _check_loop_protocol(protocols, files, tenvs, tfiles):
     tracer_classes, session = get_tracer_session(protocols)
     dists, unknown_files = identify_distributions(
         files, session, tracer_classes=tracer_classes)
-    assert not any(t._protocol for t in tracer_classes), "we exhausted the protocol"
+    assert not any(t._protocol for t in tracer_classes.values()), "we exhausted the protocol"
     assert dists == tenvs
     assert unknown_files == tfiles
 
@@ -98,12 +117,12 @@ def test_retrace_loop_over_tracers():
         [  # Tracers
             [  # Tracer passes
                 [  # what to yield
-                    ("Env1", {"thefile"})
+                    (FakeDistribution("Dist1"), {"thefile"})
                 ]
             ]
         ],
         files=["thefile"],
-        tenvs=['Env1'],
+        tenvs=['Dist1'],
         tfiles={"thefile"})
 
     # The 2nd tracer consumes everything
@@ -111,17 +130,17 @@ def test_retrace_loop_over_tracers():
         [  # Tracers
             [  # Tracer passes
                 [  # what to yield
-                    ("Env1", {"thefile"})
+                    (FakeDistribution("Dist1"), {"thefile"})
                 ],
             ],
             [  # Tracer passes
                 [  # what to yield
-                    ("Env2", set())
+                    (FakeDistribution("Dist2"), set())
                 ],
             ]
         ],
         files=["thefile"],
-        tenvs=['Env1', 'Env2'],
+        tenvs=['Dist1', 'Dist2'],
         tfiles=set())
 
     # The fancy multi-yield and producing stuff
@@ -129,17 +148,17 @@ def test_retrace_loop_over_tracers():
         [  # Tracers
             [  # Tracer passes
                 [  # what to yield
-                    ("Env1", {"file2", "file3"}),
+                    (FakeDistribution("Dist1"), {"file2", "file3"}),
                 ],
                 [
-                    ("Env3", {"file3"})  # consume file4
+                    (FakeDistribution("Dist3"), {"file3"})  # consume file4
                 ],
                 []  # finale
             ],
             [  # Tracer passes
                 [  # what to yield
-                    ("Env2", {"file3", "file4", "file5"}),
-                    ("Env2.1", {"file3", "file4"})
+                    (FakeDistribution("Dist2"), {"file3", "file4", "file5"}),
+                    (FakeDistribution("Dist2.1"), {"file3", "file4"})
                 ],
                 [
 
@@ -148,5 +167,5 @@ def test_retrace_loop_over_tracers():
             ]
         ],
         files=["file1", "file2"],
-        tenvs=['Env1', 'Env2', 'Env2.1', 'Env3'],
+        tenvs=['Dist1', 'Dist2', 'Dist2.1', 'Dist3'],
         tfiles={'file3'})
