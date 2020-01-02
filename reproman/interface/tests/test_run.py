@@ -183,14 +183,16 @@ def context(tmpdir, resource_manager, job_registry):
     - directory: temporary path that is the current directory when run_fn is
       called.
     """
-    path = str(tmpdir)
+    home = str(tmpdir)
+    path = op.join(home, "local")
+    os.makedirs(path, exist_ok=True)
 
     def run_fn(*args, **kwargs):
         with contextlib.ExitStack() as stack:
             stack.enter_context(chpwd(path))
             # Patch home to avoid populating testing machine with jobs when
             # using local shell.
-            stack.enter_context(patch.dict(os.environ, {"HOME": path}))
+            stack.enter_context(patch.dict(os.environ, {"HOME": home}))
             stack.enter_context(patch("reproman.interface.run.get_manager",
                                       return_value=resource_manager))
             stack.enter_context(patch("reproman.interface.run.LocalRegistry",
