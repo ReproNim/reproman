@@ -216,7 +216,7 @@ class Jobs(Interface):
                 try:
                     fn(job)
                 except OrchestratorError as exc:
-                    lgr.error("job %s failed: %s", job, exc_str(exc))
+                    lgr.error("job %s failed: %s", job["_jobid"], exc_str(exc))
                 except ResourceNotFoundError:
                     lgr.error("Resource %s (%s) no longer exists",
                               job["resource_id"], job["resource_name"])
