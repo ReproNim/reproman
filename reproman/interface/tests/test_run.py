@@ -13,6 +13,7 @@ import logging
 from unittest.mock import patch
 import os
 import os.path as op
+import shutil
 import time
 
 import pytest
@@ -453,6 +454,18 @@ def test_jobs_deleted_resource(context):
             assert "todelete" not in output.out
             # ... but the alive one will.
             assert "myshell" in output.out
+
+
+def test_jobs_deleted_local_directory(context):
+    path = context["directory"]
+    run = context["run_fn"]
+    jobs = context["jobs_fn"]
+
+    run(command=["touch", "ok"], outputs=["ok"], resref="myshell")
+    shutil.rmtree(path)
+    with swallow_logs(new_level=logging.ERROR) as log:
+        jobs(queries=[], status=True)
+        assert "no longer exists" in log.out
 
 
 def test_jobs_orc_error(context):
