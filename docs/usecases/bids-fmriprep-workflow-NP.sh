@@ -79,8 +79,8 @@ RM_ORC=datalad-pair-run  # ,plain,datalad-pair,datalad-local-run
 #  - datalad (0.11.6, TODO: release first)
 #  - datalad-container
 
-RM_RESOURCE=smaug
-RM_SUB=condor
+: ${RM_RESOURCE:=local}
+: ${RM_SUB:=local}
 
 # TODO: at reproman level allow to specify ORC and SUB for a resource, so there would
 #   be no need to specify for each invocation.  Could be a new (meta) resource such as
