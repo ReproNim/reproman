@@ -222,6 +222,7 @@ containers/scripts/freeze_versions --save-dataset=^ \
     poldracklab-ds003-example=0.0.3 \
     bids-mriqc=0.15.0 \
     bids-fmriprep=1.4.1
+( cd containers/ ; git clean -dfx ; )
 
 #
 # Install dataset to be analyzed (no data - analysis might run in the cloud or on HPC)
