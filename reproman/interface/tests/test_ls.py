@@ -7,11 +7,17 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import contextlib
+from functools import partial
+from io import StringIO
+import logging
 from unittest.mock import patch
 
 import pytest
 
+from pyout import Tabular
+
 from ...api import ls
+from ...utils import swallow_logs
 from ...resource.base import ResourceManager
 from ...tests.skip import skipif
 
@@ -54,13 +60,17 @@ def resource_manager():
 
 @pytest.fixture(scope="function")
 def ls_fn(resource_manager):
+    stream = StringIO()
+    TestTabular = partial(Tabular, stream=stream)
+
     def fn(*args, **kwargs):
         skipif.no_docker_dependencies()
         with contextlib.ExitStack() as stack:
             stack.enter_context(patch("docker.APIClient"))
             stack.enter_context(patch("reproman.interface.ls.get_manager",
                                       return_value=resource_manager))
-            return ls(*args, **kwargs)
+            stack.enter_context(patch("pyout.Tabular", TestTabular))
+            return ls(*args, **kwargs), stream.getvalue()
     return fn
 
 
@@ -68,22 +78,31 @@ def test_ls_interface(ls_fn):
     """
     Test listing the resources.
     """
-    results = ls_fn()
-    assert "running" in results["326b0fdfbf838"]
-    assert "docker-container" in results["326b0fdfbf838"]
-    assert "i-22221ddf096c22bb0" in results
-    assert "stopped" in results["i-3333f40de2b9b8967"]
-    assert "aws-ec2" in results["i-3333f40de2b9b8967"]
+    table, _ = ls_fn()
+    dr1 = table[("docker-resource-1",)]
+    assert dr1["status"] == "running"
+    assert dr1["type"] == "docker-container"
+    assert table[("ec2-resource-1",)]["id"] == "i-22221ddf096c22bb0"
+    er2 = table[("ec2-resource-2",)]
+    assert er2["status"] == "stopped"
+    assert er2["type"] == "aws-ec2"
 
     # Test --refresh output
-    results = ls_fn(refresh=True)
-    assert "NOT FOUND" in results["326b0fdfbf838"]
-    assert "CONNECTION ERROR" in results["i-22221ddf096c22bb0"]
-    assert "CONNECTION ERROR" in results["i-3333f40de2b9b8967"]
+    table, _ = ls_fn(refresh=True)
+    assert table[("docker-resource-1",)]["status"] == "NOT FOUND"
+    assert table[("ec2-resource-1",)]["status"] == "CONNECTION ERROR"
+    assert table[("ec2-resource-2",)]["status"] == "CONNECTION ERROR"
 
 
 def test_ls_interface_limited(ls_fn):
-    results = ls_fn(resrefs=["326", "i-33"])
-    assert "326b0fdfbf838" in results
-    assert "i-22221ddf096c22bb0" not in results
-    assert "i-3333f40de2b9b8967" in results
+    _, stdout = ls_fn(resrefs=["326", "i-33"])
+    assert "326b0fdfbf838" in stdout
+    assert "i-22221ddf096c22bb0" not in stdout
+    assert "i-3333f40de2b9b8967" in stdout
+
+
+def test_ls_interface_missing(ls_fn):
+    with swallow_logs(new_level=logging.WARNING) as log:
+        _, stdout = ls_fn(resrefs=["idonotexist"])
+        assert "idonotexist" not in stdout
+        assert "idonotexist" in log.out
