@@ -265,7 +265,7 @@ class CondaDistribution(Distribution):
         # Collect pip-installed dependencies
         pip_deps = [CondaDistribution.format_pip_package(p.name, p.version)
                     for p in env.packages
-                    if p.installer is "pip"]
+                    if p.installer == "pip"]
         if (pip_deps):
             d["dependencies"].append({"pip": pip_deps})
         # Add the prefix
