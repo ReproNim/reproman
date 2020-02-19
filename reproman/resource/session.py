@@ -17,6 +17,7 @@ import os
 import os.path as op
 import re
 from shlex import quote as shlex_quote
+import subprocess
 
 from reproman.support.exceptions import SessionRuntimeError
 from reproman.cmd import Runner
@@ -492,6 +493,12 @@ class POSIXSession(Session):
     # -0 is not provided by busybox's env command.  So if we decide to make it
     # even more portable - something to be done
     _GET_ENVIRON_CMD = ['env', '-0']
+    try:
+        subprocess.check_call(_GET_ENVIRON_CMD, 
+                              stdout=subprocess.DEVNULL, 
+                              stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        _GET_ENVIRON_CMD = ['perl', '-e', r'foreach (keys %ENV) {print "$_=$ENV{$_}\0";}']
 
     @borrowdoc(Session)
     def query_envvars(self):
@@ -577,7 +584,7 @@ class POSIXSession(Session):
         # just run it and be done
         marker = "== =ReproMan == ="  # unique marker to be able to split away
         # possible output from the sourced script
-        get_env_command = " ".join('"%s"' % s for s in self._GET_ENVIRON_CMD)
+        get_env_command = " ".join("'%s'" % s for s in self._GET_ENVIRON_CMD)
         shell = shell or self.query_envvars().get('SHELL', None)
         if not isinstance(command, list):
             command = [command]
