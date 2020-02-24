@@ -72,7 +72,16 @@ def match(query_id, jobids):
 
 def _resurrect_orc(job):
     resource = get_manager().get_resource(job["resource_id"], "id")
-    with chpwd(job["local_directory"]):
+    try:
+        # Create chpwd separately so that this try-except block doesn't cover
+        # the context manager suite below.
+        cd = chpwd(job["local_directory"])
+    except FileNotFoundError:
+        raise OrchestratorError(
+            "local directory for job {} no longer exists: {}"
+            .format(job["_jobid"], job["local_directory"]))
+
+    with cd:
         orchestrator_class = ORCHESTRATORS[job["orchestrator"]]
         orc = orchestrator_class(resource, job["submitter"], job,
                                  resurrection=True)
@@ -216,7 +225,7 @@ class Jobs(Interface):
                 try:
                     fn(job)
                 except OrchestratorError as exc:
-                    lgr.error("job %s failed: %s", job, exc_str(exc))
-                except ResourceNotFoundError as exc:
+                    lgr.error("job %s failed: %s", job["_jobid"], exc_str(exc))
+                except ResourceNotFoundError:
                     lgr.error("Resource %s (%s) no longer exists",
                               job["resource_id"], job["resource_name"])
