@@ -83,6 +83,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def __init__(self, resource, submission_type, job_spec=None,
                  resurrection=False):
         self.resource = resource
+        self.resource.connect()
         self.session = resource.get_session()
         self._resurrection = resurrection
 

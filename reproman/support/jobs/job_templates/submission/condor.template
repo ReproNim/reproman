@@ -9,6 +9,8 @@ environment  = ""
 Output  = {{ _meta_directory }}/stdout.$(Process)
 Error   = {{ _meta_directory }}/stderr.$(Process)
 Log     = {{ _meta_directory }}/log.$(Process)
+should_transfer_files   = Yes
+when_to_transfer_output = ON_EXIT
 
 {#
   TODO: Need to check spec form compatibility between different batch

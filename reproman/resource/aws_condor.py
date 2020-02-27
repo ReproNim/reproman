@@ -44,8 +44,10 @@ class AwsCondor(Resource):
         doc="AWS subscription name of SSH key-pair registered.")  # Name of SSH key registered on AWS.
     key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter.")  # SSH private key filename on local machine.
-    image = attrib(default="ami-080483fe6f1382eab",
-        doc="AWS image ID from which to create the running instance.")  # NITRC-CE v0.50.0
+    image = attrib(default="ami-07ae3592c03add705",
+        doc="AWS image ID from which to create the running instance.")  # NITRC-CE v0.51.0
+    user = attrib(default='ubuntu',
+        doc="Login account to EC2 instance.")
 
     id = attrib()
     nodes = attrib()  # Node 0 is the master node
