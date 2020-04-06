@@ -44,8 +44,8 @@ class AwsCondor(Resource):
         doc="AWS subscription name of SSH key-pair registered.")  # Name of SSH key registered on AWS.
     key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter.")  # SSH private key filename on local machine.
-    image = attrib(default="ami-07ae3592c03add705",
-        doc="AWS image ID from which to create the running instance.")  # NITRC-CE v0.51.0
+    image = attrib(default="ami-0399c674414cb6007",
+        doc="AWS image ID from which to create the running instance.")  # NITRC-CE v0.52.0-LITE
     user = attrib(default='ubuntu',
         doc="Login account to EC2 instance.")
 
@@ -132,11 +132,12 @@ class AwsCondor(Resource):
 
         lgr.info("Cluster %s is up and running!", self.name)
 
+        central_manager_ip = self.nodes[0]._ec2_instance.private_ip_address
         for i, node in enumerate(self.nodes):
             if not node._ec2_instance.public_ip_address:
                 node._ec2_instance = node._ec2_resource.Instance(node.id)
             condor_config = Template(
-                central_manager_ip=self.nodes[0]._ec2_instance.private_ip_address,
+                central_manager_ip=central_manager_ip,
                 is_central_manager=(i == 0),
                 worker_nodes=self.nodes[1:]
             ).render_cluster("condor_config.local.template")
@@ -145,6 +146,14 @@ class AwsCondor(Resource):
             session.put_text(condor_config, "/etc/condor/config.d/00-nitrcce-cluster")
             session.execute_command(["sudo", "rm", "/etc/condor/config.d/00-minicondor"])
             session.execute_command(["sudo", "systemctl", "restart", "condor"])
+            if i == 0:
+                session.execute_command(["sudo",
+                    "/home/{}/bin/nfs-mount-server.sh".format(self.user),
+                    central_manager_ip])
+            else:
+                session.execute_command(["sudo",
+                    "/home/{}/bin/nfs-mount-client.sh".format(self.user),
+                    central_manager_ip])
 
         yield {
             'status': "Running"
