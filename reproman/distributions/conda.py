@@ -184,8 +184,10 @@ class CondaDistribution(Distribution):
                 # TODO: Determine if we can detect miniconda vs anaconad
                 miniconda_url = get_miniconda_url(self.platform,
                                                   self.python_version)
-                session.execute_command("curl %s -o %s/miniconda.sh" %
-                                        (miniconda_url, tmp_dir))
+                session.execute_command(
+                    "curl --fail --silent --show-error --location "
+                    "--output {}/miniconda.sh {}"
+                    .format(tmp_dir, miniconda_url))
                 # NOTE: miniconda.sh makes parent directories automatically
                 session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
                                         (tmp_dir, self.path))
