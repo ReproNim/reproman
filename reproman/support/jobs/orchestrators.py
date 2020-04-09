@@ -694,6 +694,10 @@ class PrepareRemoteDataladMixin(object):
         """Try to get datataset and subdatasets into the correct state.
         """
         self._checkout_target()
+        # fixup 0: 'datalad create-sibling --recursive' leaves the subdataset
+        # uninitialized (see DataLad's 78e00dcd2).
+        self._execute_in_wdir(["git", "submodule", "update", "--init"])
+
         # fixup 1: Check out target commit in subdatasets. This should later be
         # replaced by the planned Datalad functionality to get an entire
         # dataset hierarchy to a recorded state.
