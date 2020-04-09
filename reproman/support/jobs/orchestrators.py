@@ -921,7 +921,8 @@ class FetchDataladPairMixin(object):
         ref = self.job_refname
         lgr.info("Updating local dataset with changes from '%s'",
                  resource_name)
-        self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref))
+        self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref),
+                           recurse_submodules="no")
         self.ds.update(sibling=resource_name,
                        merge=True, recursive=True)
         lgr.info("Getting outputs from '%s'", resource_name)

@@ -647,3 +647,21 @@ def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm):
     check_orc_datalad_concurrent(ssh_slurm,
                                  orcs.DataladLocalRunOrchestrator,
                                  "slurm")
+
+
+def test_orc_datalad_pair_submodule(job_spec, dataset, shell):
+    # Smoke test that triggers the failure from gh-499
+    with chpwd(dataset.path):
+        dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo foo >sub/foo'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
