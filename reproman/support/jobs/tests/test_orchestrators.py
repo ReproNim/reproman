@@ -205,7 +205,7 @@ def check_orc_datalad(job_spec, dataset):
             # Our reproman-based copying of data doesn't isn't (yet) OK with
             # data files that already exist.
             dumped_spec["inputs"] = []
-        dataset.repo.call_git(["reset", "--hard", "start-pt"])
+        dataset.repo.call_git(["checkout", "-b", "other", "start-pt"])
         if dataset.repo.dirty:
             # The submitter log file is ignored (currently only relevant for
             # condor; see b9277ebc0 for more details). Add the directory to get

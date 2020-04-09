@@ -38,6 +38,7 @@ from reproman.dochelpers import borrowdoc
 from reproman.utils import cached_property
 from reproman.utils import chpwd
 from reproman.utils import write_update
+from reproman.resource.shell import ShellSession
 from reproman.resource.ssh import SSHSession
 from reproman.support.jobs.submitters import SUBMITTERS
 from reproman.support.jobs.template import Template
@@ -734,21 +735,24 @@ class PrepareRemoteDataladMixin(object):
         session = self.session
 
         inputs = list(self.get_inputs())
-        if isinstance(session, SSHSession):
-            if resource.key_filename:
-                # Make the identity file available to 'datalad sshrun' even if
-                # it is not configured in .ssh/config. This is particularly
-                # important for AWS keys.
-                os.environ["DATALAD_SSH_IDENTITYFILE"] = resource.key_filename
-                from datalad import cfg
-                cfg.reload(force=True)
+        if isinstance(session, (SSHSession, ShellSession)):
+            if isinstance(session, SSHSession):
+                if resource.key_filename:
+                    # Make the identity file available to 'datalad sshrun' even
+                    # if it is not configured in .ssh/config. This is
+                    # particularly important for AWS keys.
+                    os.environ["DATALAD_SSH_IDENTITYFILE"] = resource.key_filename
+                    from datalad import cfg
+                    cfg.reload(force=True)
 
-            sshurl = _format_ssh_url(
-                resource.user,
-                # AWS resource does not have host attribute.
-                getattr(resource, "host", None) or session.connection.host,
-                getattr(resource, "port", None),
-                self.working_directory)
+                target_path = _format_ssh_url(
+                    resource.user,
+                    # AWS resource does not have host attribute.
+                    getattr(resource, "host", None) or session.connection.host,
+                    getattr(resource, "port", None),
+                    self.working_directory)
+            else:
+                target_path = self.working_directory
 
             # TODO: Add one level deeper with reckless clone per job to deal
             # with concurrent jobs?
@@ -760,7 +764,7 @@ class PrepareRemoteDataladMixin(object):
                         "Either delete remote or rename resource."
                         .format(resource.name))
 
-                self.ds.create_sibling(sshurl, name=resource.name,
+                self.ds.create_sibling(target_path, name=resource.name,
                                        recursive=True)
                 since = None  # Avoid since="" for non-existing repo.
             else:
@@ -798,19 +802,6 @@ class PrepareRemoteDataladMixin(object):
                     # to sync wrt content.
                     self.ds.publish(to=resource.name, path=inputs,
                                     recursive=True)
-        elif resource.type == "shell":
-            import datalad.api as dl
-            if not session.exists(self.working_directory):
-                dl.install(self.working_directory, source=self.ds.path)
-
-            self.session.execute_command(
-                "git push '{}' HEAD:{}-base"
-                .format(self.working_directory, self.job_refname))
-            self._checkout_target()
-
-            if inputs:
-                installed_ds = dl.Dataset(self.working_directory)
-                installed_ds.get(inputs)
         else:
             # TODO: Handle more types?
             raise OrchestratorError("Unsupported resource type {}"
@@ -922,41 +913,30 @@ class FetchDataladPairMixin(object):
         """
         lgr.info("Fetching results for %s", self.jobid)
         failed = self.get_failed_subjobs()
-        if self.resource.type == "ssh":
-            resource_name = self.resource.name
-            ref = self.job_refname
-            lgr.info("Updating local dataset with changes from '%s'",
-                     resource_name)
-            self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref))
-            self.ds.update(sibling=resource_name,
-                           merge=True, recursive=True)
-            lgr.info("Getting outputs from '%s'", resource_name)
-            with head_at(self.ds, ref):
-                outputs = list(self.get_outputs())
-                if outputs:
-                    self.ds.get(path=outputs)
+        resource_name = self.resource.name
+        ref = self.job_refname
+        lgr.info("Updating local dataset with changes from '%s'",
+                 resource_name)
+        self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref))
+        self.ds.update(sibling=resource_name,
+                       merge=True, recursive=True)
+        lgr.info("Getting outputs from '%s'", resource_name)
+        with head_at(self.ds, ref):
+            outputs = list(self.get_outputs())
+            if outputs:
+                self.ds.get(path=outputs)
 
-            self.log_failed(failed,
-                            func=lambda mdir, _: self.ds.get(path=mdir))
+        self.log_failed(failed,
+                        func=lambda mdir, _: self.ds.get(path=mdir))
 
-            lgr.info("Finished with remote resource '%s'", resource_name)
-            if on_remote_finish:
-                on_remote_finish(self.resource, failed)
-            if not self.ds.repo.is_ancestor(ref, "HEAD"):
-                lgr.info("Results stored on %s. "
-                         "Bring them into this branch with "
-                         "'git merge %s'",
-                         ref, ref)
-        elif self.resource.type == "shell":
-            # Below is just for local testing.  It doesn't support actually
-            # getting the content.
-            with chpwd(self.ds.path):
-                self.session.execute_command(
-                    ["git", "fetch", self.working_directory,
-                     "{0}:{0}".format(self.job_refname)])
-                self.session.execute_command(
-                    ["git", "merge", "FETCH_HEAD"])
-            self.log_failed(failed)
+        lgr.info("Finished with remote resource '%s'", resource_name)
+        if on_remote_finish:
+            on_remote_finish(self.resource, failed)
+        if not self.ds.repo.is_ancestor(ref, "HEAD"):
+            lgr.info("Results stored on %s. "
+                     "Bring them into this branch with "
+                     "'git merge %s'",
+                     ref, ref)
 
 
 class FetchDataladRunMixin(object):
