@@ -19,6 +19,7 @@ import pytest
 from reproman.consts import TEST_SSH_DOCKER_DIGEST
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
+from reproman.utils import swallow_outputs
 from reproman.resource.shell import Shell
 from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
@@ -665,3 +666,98 @@ def test_orc_datalad_pair_submodule(job_spec, dataset, shell):
         orc.submit()
         orc.follow()
         orc.fetch()
+
+
+def test_orc_datalad_pair_need_follow_parent(job_spec, dataset, shell):
+    # An example of a scenario that fails without DataLad's --follow=parentds
+    with chpwd(dataset.path):
+        dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo baz >baz'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc0 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc0.prepare_remote()
+        orc0.submit()
+        orc0.follow()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo bar >sub/bar'"
+        output = op.join("sub", "bar")
+        job_spec["outputs"] = [output]
+        orc1 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc1.prepare_remote()
+        orc1.submit()
+        orc1.follow()
+        orc1.fetch()
+        assert op.exists(output)
+
+
+def test_orc_datalad_pair_submodule_conflict(caplog, job_spec, dataset, shell):
+    # In this scenario, one job modifies a submodule, and before that change,
+    # another job is launched that modifies the same submodule. This creates a
+    # change that can't be brought in with `datalad update` because, even with
+    # --follow=parentds, the top-level repo still brings in changes from the
+    # remote, whose master branch points to the first job. In a diagram, the
+    # remote state is:
+    #
+    #         ---- job 1 (master)
+    #  base --|
+    #         ---- job 2 (detached)
+    #
+    # On fetch of job 2, we merge the job 2 ref. The `datalad update` call
+    # fails trying to merge in master.
+    #
+    # If this scenario ends up being common enough, we could consider modifying
+    # `datalad update` to optionally not try to merge the remote state of the
+    # top-level repo.
+    with chpwd(dataset.path):
+        dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo baz >sub/baz'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc0 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc0.prepare_remote()
+        orc0.submit()
+        orc0.follow()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo bar >sub/bar'"
+        orc1 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc1.prepare_remote()
+        orc1.submit()
+        orc1.follow()
+        # swallow_logs() won't work here because it hard codes the logger and
+        # the log message being checked is bubbled up by DataLad.
+        caplog.clear()
+        with caplog.at_level(logging.ERROR):
+            orc1.fetch()
+        assert "CONFLICT" in caplog.text
+        assert dataset.repo.call_git(["ls-files", "--unmerged"]).strip()
+
+
+def test_orc_datalad_pair_merge_conflict(job_spec, dataset, shell):
+    with chpwd(dataset.path):
+        job_spec["_resolved_command_str"] = "sh -c 'echo baz >baz'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc0 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc0.prepare_remote()
+        orc0.submit()
+        orc0.follow()
+        # Introduce a conflict.
+        (dataset.pathobj / "baz").write_text("different")
+        dataset.save()
+        with swallow_logs(new_level=logging.WARNING) as logs:
+            orc0.fetch()
+            assert "Failed to merge in changes" in logs.out
+        assert dataset.repo.call_git(["ls-files", "--unmerged"]).strip()

@@ -35,6 +35,7 @@ from shlex import quote as shlex_quote
 
 import reproman
 from reproman.dochelpers import borrowdoc
+from reproman.dochelpers import exc_str
 from reproman.utils import cached_property
 from reproman.utils import chpwd
 from reproman.utils import write_update
@@ -922,6 +923,8 @@ class FetchDataladPairMixin(object):
             will be passed two arguments, the resource and the failed subjobs
             (list of ints).
         """
+        from datalad.support.exceptions import CommandError as DCError
+
         lgr.info("Fetching results for %s", self.jobid)
         failed = self.get_failed_subjobs()
         resource_name = self.resource.name
@@ -930,10 +933,28 @@ class FetchDataladPairMixin(object):
                  resource_name)
         self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref),
                            recurse_submodules="no")
-        self.ds.update(sibling=resource_name,
-                       merge=True, recursive=True)
-        lgr.info("Getting outputs from '%s'", resource_name)
-        with head_at(self.ds, ref):
+        failure = False
+        try:
+            self.ds.repo.merge(ref)
+        except DCError as exc:
+            lgr.warning(
+                "Failed to merge in changes from %s. "
+                "Check %s for merge conflicts. %s",
+                ref, self.ds.path, exc_str(exc))
+        else:
+            # Handle any subdataset updates. We could avoid this if we knew
+            # there were no subdataset changes, but it's probably simplest to
+            # just unconditionally call update().
+            for res in self.ds.update(
+                    sibling=resource_name,
+                    merge=True, follow="parentds", recursive=True,
+                    on_failure="ignore"):
+                if res["status"] == "error":
+                    # DataLad will log failure.
+                    failure = True
+
+        if not failure:
+            lgr.info("Getting outputs from '%s'", resource_name)
             outputs = list(self.get_outputs())
             if outputs:
                 self.ds.get(path=outputs)
@@ -944,11 +965,6 @@ class FetchDataladPairMixin(object):
         lgr.info("Finished with remote resource '%s'", resource_name)
         if on_remote_finish:
             on_remote_finish(self.resource, failed)
-        if not self.ds.repo.is_ancestor(ref, "HEAD"):
-            lgr.info("Results stored on %s. "
-                     "Bring them into this branch with "
-                     "'git merge %s'",
-                     ref, ref)
 
 
 class FetchDataladRunMixin(object):
