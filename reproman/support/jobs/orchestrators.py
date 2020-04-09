@@ -580,33 +580,11 @@ class PrepareRemotePlainMixin(object):
 
 
 def _format_ssh_url(user, host, port, path):
-    """Format an SSH URL for DataLad, considering installed version.
-    """
-    if external_versions["datalad"] >= "0.11.2":
-        fmt = "ssh://{user}{host}{port}{path}"
-        warn = False
-    else:
-        # Stick to git scp-like syntax because create-sibling will fail with
-        # something like
-        #
-        #   stderr: 'fatal: ssh variant 'simple' does not support setting port'
-        #   [cmd.py:wait:415] (GitCommandError)
-        #
-        # with the default value of ssh.variant. For non-standard ports, this
-        # relies on the user setting up their ssh config.
-        fmt = "{user}{host}:{path}"
-        warn = port is not None
-        port = None
-    sshurl = fmt.format(user=user + "@" if user else "",
-                        host=host,
-                        port=":" + str(port) if port is not None else "",
-                        path=path)
-
-    if warn:
-        lgr.warning("Using SSH url %s; "
-                    "port should be specified in SSH config",
-                    sshurl)
-    return sshurl
+    return "ssh://{user}{host}{port}{path}".format(
+        user=user + "@" if user else "",
+        host=host,
+        port=":" + str(port) if port is not None else "",
+        path=path)
 
 
 class PrepareRemoteDataladMixin(object):
