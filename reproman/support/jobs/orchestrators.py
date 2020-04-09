@@ -451,10 +451,10 @@ def _datalad_format_command(ds, spec):
 
     Create "*_array" keys and format commands with DataLad's `format_command`.
     """
-    from datalad.interface.run import format_command
+    from datalad.core.local.run import format_command
     # DataLad's GlobbedPaths _should_ be the same as ours, but let's use
     # DataLad's to avoid potential discrepancies with datalad-run's behavior.
-    from datalad.interface.run import GlobbedPaths
+    from datalad.core.local.run import GlobbedPaths
 
     batch_parameters = spec.get("_resolved_batch_parameters") or [{}]
     spec["_command_array"] = []
@@ -1009,7 +1009,7 @@ class FetchDataladRunMixin(object):
                 os.unlink(tfile)
                 # TODO: How to handle output cleanup on the remote?
 
-                from datalad.interface.run import run_command
+                from datalad.core.local.run import run_command
                 lgr.info("Creating run commit in %s", self.ds.path)
 
                 cmds = self.job_spec["_command_array"]
