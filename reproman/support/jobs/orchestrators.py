@@ -42,7 +42,6 @@ from reproman.resource.ssh import SSHSession
 from reproman.support.jobs.submitters import SUBMITTERS
 from reproman.support.jobs.template import Template
 from reproman.support.exceptions import CommandError
-from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
 from reproman.support.external_versions import external_versions
 
@@ -484,10 +483,7 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
 
     def __init__(self, resource, submission_type, job_spec=None,
                  resurrection=False):
-        if not external_versions["datalad"]:
-            raise MissingExternalDependency(
-                "DataLad is required for orchestrator '{}'".format(self.name))
-
+        external_versions.check("datalad", min_version="0.13")
         super(DataladOrchestrator, self).__init__(
             resource, submission_type, job_spec, resurrection=resurrection)
 
