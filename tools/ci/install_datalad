@@ -7,5 +7,5 @@ sudo apt-get install git-annex-standalone
 # Install datalad system-wide for use with localhost ssh
 sudo apt-get install datalad
 # ... and install it into the virtualenv.
-pip install datalad
+pip install git+https://github.com/datalad/datalad.git
 pip install datalad-container
