@@ -736,15 +736,6 @@ class PrepareRemoteDataladMixin(object):
         inputs = list(self.get_inputs())
         if isinstance(session, SSHSession):
             if resource.key_filename:
-                dl_version = external_versions["datalad"]
-                if dl_version < "0.11.3":
-                    # Connecting will probably fail because `key_filename` is
-                    # set, but we have no way to tell DataLad about it.
-                    lgr.warning(
-                        "DataLad version %s detected. "
-                        "0.11.3 or greater is required to use an "
-                        "identity file not specified in ~/.ssh/config",
-                        dl_version)
                 # Make the identity file available to 'datalad sshrun' even if
                 # it is not configured in .ssh/config. This is particularly
                 # important for AWS keys.
