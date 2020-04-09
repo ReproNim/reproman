@@ -87,7 +87,7 @@ def get_miniconda_url(conda_platform, python_version):
     platform += "-x86_64" if ("64" in conda_platform) else "-x86"
     # FIXME: We need to update this our conda tracer to work with conda's newer
     # than 4.6.14. See gh-443.
-    return "https://repo.continuum.io/miniconda/Miniconda%s-4.6.14-%s.sh" \
+    return "https://repo.anaconda.com/miniconda/Miniconda%s-4.6.14-%s.sh" \
                     % (python_version[0], platform)
 
 
