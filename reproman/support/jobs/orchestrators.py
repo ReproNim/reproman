@@ -552,8 +552,8 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
              "**/failed/* annex.largefiles=nothing\n"
              "idmap annex.largefiles=nothing\n"))
 
-        self.ds.add([gitignore, gitattrs],
-                    message="[ReproMan] Configure jobs directory")
+        self.ds.save([gitignore, gitattrs],
+                     message="[ReproMan] Configure jobs directory")
 
 
 # Orchestrator method mixins

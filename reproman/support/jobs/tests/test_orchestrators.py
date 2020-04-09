@@ -152,7 +152,7 @@ def dataset(tmpdir_factory):
     create_tree(ds.path, {"foo": "foo",
                           "bar": "bar",
                           "d": {"in": "content\n"}})
-    ds.add(".")
+    ds.save()
     ds.repo.tag("root")
     return ds
 
@@ -212,7 +212,7 @@ def check_orc_datalad(job_spec, dataset):
             # The submitter log file is ignored (currently only relevant for
             # condor; see b9277ebc0 for more details). Add the directory to get
             # to a clean state.
-            dataset.add(".reproman")
+            dataset.save(".reproman")
         orc = run_and_check(dumped_spec)
     return fn
 
@@ -246,7 +246,7 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
 
         create_tree(dataset.path, {"sinceyouvebeengone":
                                    "imsomovingon,yeahyeah"})
-        dataset.add(".")
+        dataset.save()
 
         orc.fetch()
         ref = "refs/reproman/{}".format(orc.jobid)
@@ -364,7 +364,7 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     #   o
     ds = dataset
     create_tree(ds.path, {"in": "content\n"})
-    ds.add(".")
+    ds.save()
 
     js0 = job_spec
     js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
@@ -496,7 +496,7 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     run(_resolved_command_str="echo two >two")
 
     create_tree(op.join(dataset.path, "sub"), {"for-local-commit": ""})
-    dataset.add(".", recursive=True)
+    dataset.save(recursive=True)
 
     run(_resolved_command_str="echo three >three")
 
@@ -562,7 +562,7 @@ def test_head_at_no_move(dataset):
     with orcs.head_at(dataset, "master") as moved:
         assert not moved
         create_tree(dataset.path, {"on-master": "on-maser"})
-        dataset.add("on-master", message="advance master")
+        dataset.save("on-master", message="advance master")
         assert dataset.repo.get_active_branch() == "master"
     assert dataset.repo.get_active_branch() == "master"
 
@@ -572,13 +572,13 @@ def test_head_at_move(dataset):
         return op.exists(op.join(dataset.path, path))
 
     create_tree(dataset.path, {"pre": "pre"})
-    dataset.add("pre")
+    dataset.save("pre")
     with orcs.head_at(dataset, "master~1") as moved:
         assert moved
         assert dataset.repo.get_active_branch() is None
         assert not dataset_path_exists("pre")
         create_tree(dataset.path, {"at-head": "at-head"})
-        dataset.add("at-head", message="advance head (not master)")
+        dataset.save("at-head", message="advance head (not master)")
     assert dataset_path_exists("pre")
     assert not dataset_path_exists("at-head")
     assert dataset.repo.get_active_branch() == "master"
