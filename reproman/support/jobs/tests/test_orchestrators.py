@@ -205,9 +205,7 @@ def check_orc_datalad(job_spec, dataset):
             # Our reproman-based copying of data doesn't isn't (yet) OK with
             # data files that already exist.
             dumped_spec["inputs"] = []
-        # FIXME: Use exposed method once available.
-        dataset.repo._git_custom_command(
-            [], ["git", "reset", "--hard", "start-pt"])
+        dataset.repo.call_git(["reset", "--hard", "start-pt"])
         if dataset.repo.dirty:
             # The submitter log file is ignored (currently only relevant for
             # condor; see b9277ebc0 for more details). Add the directory to get
@@ -549,8 +547,7 @@ def test_head_at_unknown_ref(dataset):
 
 def test_head_at_empty_branch(dataset):
     dataset.repo.checkout("orph", options=["--orphan"])
-    # FIXME: Use expose method once available.
-    dataset.repo._git_custom_command([], ["git", "reset", "--hard"])
+    dataset.repo.call_git(["reset", "--hard"])
     assert not dataset.repo.dirty
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "master"):
