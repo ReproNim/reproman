@@ -282,6 +282,7 @@ class CondaTracer(DistributionTracer):
 
     def _init(self):
         self._get_conda_env_path = PathRoot(self._is_conda_env_path)
+        self._get_conda_dist_path = PathRoot(self._is_conda_dist_path)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -393,6 +394,10 @@ class CondaTracer(DistributionTracer):
     def _is_conda_env_path(self, path):
         return self._session.exists('%s/conda-meta' % path)
 
+    def _is_conda_dist_path(self, path):
+        return (self._session.exists(path + "/envs")
+                and self._is_conda_env_path(path))
+
     def identify_distributions(self, paths):
         conda_paths = set()
         root_to_envs = defaultdict(list)
@@ -419,8 +424,7 @@ class CondaTracer(DistributionTracer):
             # Find the root path for the environment
             # TODO: cache/memoize for those paths which have been considered
             # since will be asked again below
-            conda_info = self._get_conda_info(conda_path)
-            root_path = conda_info.get('root_prefix')
+            root_path = self._get_conda_dist_path(conda_path)
             if not root_path:
                 lgr.warning("Could not find root path for conda environment %s"
                             % conda_path)
