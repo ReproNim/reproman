@@ -33,11 +33,11 @@ def test_get_conda_platform_from_python():
 
 def test_get_miniconda_url():
     assert get_miniconda_url("linux-64", "2.7") == \
-           "https://repo.anaconda.com/miniconda/Miniconda2-4.6.14-Linux-x86_64.sh"
+           "https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh"
     assert get_miniconda_url("linux-32", "3.4") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-4.6.14-Linux-x86.sh"
+           "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86.sh"
     assert get_miniconda_url("osx-64", "3.5.1") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-4.6.14-MacOSX-x86_64.sh"
+           "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
 
 
 def test_get_simple_python_version():
