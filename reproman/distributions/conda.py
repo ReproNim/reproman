@@ -358,7 +358,7 @@ class CondaTracer(DistributionTracer):
             return {}, {}
 
         packages, file_to_package_map = piputils.get_package_details(
-            self._session, pip, pip_pkgs)
+            self._session, pip, pip_pkgs, editable_packages=pkgs_editable)
         for entry in packages.values():
             entry["installer"] = "pip"
         return packages, file_to_package_map
