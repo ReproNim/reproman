@@ -191,14 +191,12 @@ class CondaDistribution(Distribution):
                 # NOTE: miniconda.sh makes parent directories automatically
                 session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
                                         (tmp_dir, self.path))
-            ## Update root version of conda
-            session.execute_command(
-               "%s/bin/conda install -y conda=%s python=%s" %
-               (self.path, self.conda_version,
-                self.get_simple_python_version(self.python_version)))
-
-            # Loop through non-root packages, creating the conda-env config
-            for env in self.environments:
+            envs = sorted(
+                self.environments,
+                # Create/update the root environment before handling anything
+                # else.
+                key=lambda x: "_" if x.name == "root" else "_" + x.name)
+            for env in envs:
                 export_contents = self.create_conda_export(env)
                 with make_tempfile(export_contents) as local_config:
                     remote_config = os.path.join(tmp_dir, env.name + ".yaml")
