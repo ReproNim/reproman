@@ -338,18 +338,25 @@ class CondaTracer(DistributionTracer):
 
         # If there are pip dependencies, they'll be listed under a
         # {"pip": [...]} entry.
-        pip_pkgs = []
+        pip_pkgs = set()
         for dep in dependencies:
             if isinstance(dep, dict) and "pip" in dep:
                 # Pip packages are recorded in conda exports as "name (loc)",
                 # "name==version" or "name (loc)==version".
-                pip_pkgs = [p.split("=")[0].split(" ")[0] for p in dep["pip"]]
+                pip_pkgs = {p.split("=")[0].split(" ")[0] for p in dep["pip"]}
                 break
+
+        pip = conda_path + "/bin/pip"
+        if not self._session.exists(pip):
+            return {}, {}
+
+        pkgs_editable = set(piputils.get_pip_packages(
+            self._session, pip, restriction="editable"))
+        pip_pkgs.update(pkgs_editable)
 
         if not pip_pkgs:
             return {}, {}
 
-        pip = conda_path + "/bin/pip"
         packages, file_to_package_map = piputils.get_package_details(
             self._session, pip, pip_pkgs)
         for entry in packages.values():
