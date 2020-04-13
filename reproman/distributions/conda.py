@@ -201,7 +201,7 @@ class CondaDistribution(Distribution):
             for env in self.environments:
                 export_contents = self.create_conda_export(env)
                 with make_tempfile(export_contents) as local_config:
-                    remote_config = os.path.join(tmp_dir, env.name)
+                    remote_config = os.path.join(tmp_dir, env.name + ".yaml")
                     session.put(local_config, remote_config)
                     if not session.isdir(env.path):
                         try:
