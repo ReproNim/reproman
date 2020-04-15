@@ -87,7 +87,7 @@ def get_miniconda_url(conda_platform, python_version):
     platform += "-x86_64" if ("64" in conda_platform) else "-x86"
     # FIXME: We need to update this our conda tracer to work with conda's newer
     # than 4.6.14. See gh-443.
-    return "https://repo.continuum.io/miniconda/Miniconda%s-4.6.14-%s.sh" \
+    return "https://repo.anaconda.com/miniconda/Miniconda%s-4.6.14-%s.sh" \
                     % (python_version[0], platform)
 
 
@@ -184,8 +184,10 @@ class CondaDistribution(Distribution):
                 # TODO: Determine if we can detect miniconda vs anaconad
                 miniconda_url = get_miniconda_url(self.platform,
                                                   self.python_version)
-                session.execute_command("curl %s -o %s/miniconda.sh" %
-                                        (miniconda_url, tmp_dir))
+                session.execute_command(
+                    "curl --fail --silent --show-error --location "
+                    "--output {}/miniconda.sh {}"
+                    .format(tmp_dir, miniconda_url))
                 # NOTE: miniconda.sh makes parent directories automatically
                 session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
                                         (tmp_dir, self.path))
