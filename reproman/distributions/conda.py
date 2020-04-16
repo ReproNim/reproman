@@ -85,9 +85,7 @@ def get_miniconda_url(conda_platform, python_version):
         raise ValueError("Unsupported platform %s for conda installation" %
                          conda_platform)
     platform += "-x86_64" if ("64" in conda_platform) else "-x86"
-    # FIXME: We need to update this our conda tracer to work with conda's newer
-    # than 4.6.14. See gh-443.
-    return "https://repo.anaconda.com/miniconda/Miniconda%s-4.6.14-%s.sh" \
+    return "https://repo.anaconda.com/miniconda/Miniconda%s-latest-%s.sh" \
                     % (python_version[0], platform)
 
 
@@ -191,17 +189,15 @@ class CondaDistribution(Distribution):
                 # NOTE: miniconda.sh makes parent directories automatically
                 session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
                                         (tmp_dir, self.path))
-            ## Update root version of conda
-            session.execute_command(
-               "%s/bin/conda install -y conda=%s python=%s" %
-               (self.path, self.conda_version,
-                self.get_simple_python_version(self.python_version)))
-
-            # Loop through non-root packages, creating the conda-env config
-            for env in self.environments:
+            envs = sorted(
+                self.environments,
+                # Create/update the root environment before handling anything
+                # else.
+                key=lambda x: "_" if x.name == "root" else "_" + x.name)
+            for env in envs:
                 export_contents = self.create_conda_export(env)
                 with make_tempfile(export_contents) as local_config:
-                    remote_config = os.path.join(tmp_dir, env.name)
+                    remote_config = os.path.join(tmp_dir, env.name + ".yaml")
                     session.put(local_config, remote_config)
                     if not session.isdir(env.path):
                         try:
@@ -282,6 +278,7 @@ class CondaTracer(DistributionTracer):
 
     def _init(self):
         self._get_conda_env_path = PathRoot(self._is_conda_env_path)
+        self._get_conda_dist_path = PathRoot(self._is_conda_dist_path)
 
     def _get_packagefields_for_files(self, files):
         raise NotImplementedError("TODO")
@@ -337,20 +334,27 @@ class CondaTracer(DistributionTracer):
 
         # If there are pip dependencies, they'll be listed under a
         # {"pip": [...]} entry.
-        pip_pkgs = []
+        pip_pkgs = set()
         for dep in dependencies:
             if isinstance(dep, dict) and "pip" in dep:
                 # Pip packages are recorded in conda exports as "name (loc)",
                 # "name==version" or "name (loc)==version".
-                pip_pkgs = [p.split("=")[0].split(" ")[0] for p in dep["pip"]]
+                pip_pkgs = {p.split("=")[0].split(" ")[0] for p in dep["pip"]}
                 break
+
+        pip = conda_path + "/bin/pip"
+        if not self._session.exists(pip):
+            return {}, {}
+
+        pkgs_editable = set(piputils.get_pip_packages(
+            self._session, pip, restriction="editable"))
+        pip_pkgs.update(pkgs_editable)
 
         if not pip_pkgs:
             return {}, {}
 
-        pip = conda_path + "/bin/pip"
         packages, file_to_package_map = piputils.get_package_details(
-            self._session, pip, pip_pkgs)
+            self._session, pip, pip_pkgs, editable_packages=pkgs_editable)
         for entry in packages.values():
             entry["installer"] = "pip"
         return packages, file_to_package_map
@@ -393,6 +397,10 @@ class CondaTracer(DistributionTracer):
     def _is_conda_env_path(self, path):
         return self._session.exists('%s/conda-meta' % path)
 
+    def _is_conda_dist_path(self, path):
+        return (self._session.exists(path + "/envs")
+                and self._is_conda_env_path(path))
+
     def identify_distributions(self, paths):
         conda_paths = set()
         root_to_envs = defaultdict(list)
@@ -419,8 +427,7 @@ class CondaTracer(DistributionTracer):
             # Find the root path for the environment
             # TODO: cache/memoize for those paths which have been considered
             # since will be asked again below
-            conda_info = self._get_conda_info(conda_path)
-            root_path = conda_info.get('root_prefix')
+            root_path = self._get_conda_dist_path(conda_path)
             if not root_path:
                 lgr.warning("Could not find root path for conda environment %s"
                             % conda_path)
