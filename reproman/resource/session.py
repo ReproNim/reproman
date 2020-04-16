@@ -364,7 +364,9 @@ class Session(object):
         with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
             tfh.write(text)
         if executable:
-            os.chmod(tfh.name, 0o755)
+            os.chmod(tfh.name, 0o775)
+        else:
+            os.chmod(tfh.name, 0o664)
         self.put(tfh.name, target)
         os.unlink(tfh.name)
 

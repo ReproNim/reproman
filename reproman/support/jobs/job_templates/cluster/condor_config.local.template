@@ -31,3 +31,8 @@ SEC_CLIENT_AUTHENTICATION_METHODS = CLAIMTOBE
 {% endif %}
 
 ALLOW_WRITE = $(ALLOW_WRITE), {% for worker_node in worker_nodes %} {{ worker_node._ec2_instance.private_ip_address }}, {% endfor %} $(CONDOR_HOST)
+
+UID_DOMAIN = nitrcce
+TRUST_UID_DOMAIN = TRUE
+STARTER_ALLOW_RUNAS_OWNER = TRUE
+SOFT_UID_DOMAIN = TRUE
