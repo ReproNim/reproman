@@ -113,6 +113,18 @@ def no_singularity():
             not external_versions["cmd:singularity"])
 
 
+def no_slurm():
+    def is_running():
+        # Does it look like tools/ci/setup-slurm-container.sh was called?
+        try:
+            out, _ = Runner().run(
+                ["docker", "port", "reproman-slurm-container"])
+        except CommandError:
+            return False
+        return out.strip()
+    return "slurm container is not running", not is_running()
+
+
 def no_ssh():
     if _on_windows:
         reason = "no ssh on windows"
@@ -140,6 +152,7 @@ CONDITION_FNS = [
     no_docker_engine,
     no_network,
     no_singularity,
+    no_slurm,
     no_ssh,
     no_svn,
     on_windows,
