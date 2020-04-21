@@ -68,7 +68,8 @@ def no_aws_dependencies():
 def no_condor():
     def is_running():
         try:
-            Runner().run(["condor_status"])
+            Runner().run(["condor_status"],
+                         expect_fail=True, expect_stderr=True)
         except CommandError as exc:
             return False
         return True
@@ -118,7 +119,8 @@ def no_slurm():
         # Does it look like tools/ci/setup-slurm-container.sh was called?
         try:
             out, _ = Runner().run(
-                ["docker", "port", "reproman-slurm-container"])
+                ["docker", "port", "reproman-slurm-container"],
+                expect_fail=True, expect_stderr=True)
         except CommandError:
             return False
         return out.strip()
