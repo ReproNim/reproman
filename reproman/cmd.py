@@ -249,8 +249,12 @@ class Runner(object):
 
             except Exception as e:
                 prot_exc = e
-                lgr.error("Failed to start %r%r: %s" %
-                          (cmd, " under %r" % cwd if cwd else '', exc_str(e)))
+                if isinstance(e, FileNotFoundError) and expect_fail:
+                    logfn = lgr.debug
+                else:
+                    logfn = lgr.error
+                logfn("Failed to start %r%r: %s" %
+                      (cmd, " under %r" % cwd if cwd else '', exc_str(e)))
                 raise
 
             finally:
