@@ -46,24 +46,24 @@ _runner = Runner()
 
 def _get_annex_version():
     """Return version of available git-annex"""
-    return _runner.run('git annex version --raw'.split())[0]
+    return _runner.run(['git', 'annex', 'version', '--raw'])[0]
 
 
 def _get_git_version():
     """Return version of available git"""
-    return _runner.run('git version'.split())[0].split()[-1]
+    return _runner.run(['git', 'version'])[0].split()[-1]
 
 
 def _get_apt_cache_version():
     """Return version of available apt-cache."""
-    return _runner.run('apt-cache -v'.split())[0].split()[1]
+    return _runner.run(['apt-cache', '-v'])[0].split()[1]
 
 
 def _get_system_ssh_version():
     """Return version of ssh available system-wide
     """
     try:
-        out, err = _runner.run('ssh -V'.split(),
+        out, err = _runner.run(['ssh', '-V'],
                                expect_fail=True, expect_stderr=True)
         # apparently spits out to err but I wouldn't trust it blindly
         if err.startswith('OpenSSH'):
