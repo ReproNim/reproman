@@ -70,7 +70,7 @@ def no_condor():
         try:
             Runner().run(["condor_status"],
                          expect_fail=True, expect_stderr=True)
-        except CommandError as exc:
+        except (CommandError, FileNotFoundError):
             return False
         return True
 
@@ -121,7 +121,7 @@ def no_slurm():
             out, _ = Runner().run(
                 ["docker", "port", "reproman-slurm-container"],
                 expect_fail=True, expect_stderr=True)
-        except CommandError:
+        except (CommandError, FileNotFoundError):
             return False
         return out.strip()
     return "slurm container is not running", not is_running()
