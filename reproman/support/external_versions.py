@@ -44,23 +44,24 @@ from reproman.support.exceptions import (
 _runner = Runner()
 
 
+def _try_run(cmd):
+    return _runner.run(cmd, expect_fail=True, expect_stderr=True)
+
+
 def _get_annex_version():
     """Return version of available git-annex"""
-    return _runner.run(['git', 'annex', 'version', '--raw'],
-                       expect_fail=True, expect_stderr=True)[0]
+    return _try_run(['git', 'annex', 'version', '--raw'])[0]
 
 
 def _get_git_version():
     """Return version of available git"""
-    out = _runner.run(['git', 'version'],
-                      expect_fail=True, expect_stderr=True)[0]
+    out = _try_run(['git', 'version'])[0]
     return out.split()[-1]
 
 
 def _get_apt_cache_version():
     """Return version of available apt-cache."""
-    out = _runner.run(['apt-cache', '-v'],
-                      expect_fail=True, expect_stderr=True)[0]
+    out = _try_run(['apt-cache', '-v'])[0]
     return out.split()[1]
 
 
@@ -68,8 +69,7 @@ def _get_system_ssh_version():
     """Return version of ssh available system-wide
     """
     try:
-        out, err = _runner.run(['ssh', '-V'],
-                               expect_fail=True, expect_stderr=True)
+        out, err = _try_run(['ssh', '-V'])
         # apparently spits out to err but I wouldn't trust it blindly
         if err.startswith('OpenSSH'):
             out = err
@@ -85,8 +85,7 @@ def _get_singularity_version():
     # example output:
     #  "singularity version 3.0.3+ds"
     #  "2.6.1-dist"
-    out = _runner.run(["singularity", "--version"],
-                      expect_fail=True, expect_stderr=True)[0]
+    out = _try_run(["singularity", "--version"])[0]
     return out.split(' ')[-1].split("-")[0].split("+")[0]
 
 
@@ -96,8 +95,7 @@ def _get_svn_version():
     #
     # svn, version 1.9.5 (r1770682)
     # [...]
-    out = _runner.run(["svn", "--version"],
-                      expect_fail=True, expect_stderr=True)[0]
+    out = _try_run(["svn", "--version"])[0]
     return out.split()[2]
 
 
@@ -106,8 +104,7 @@ def _get_condor_version():
     # Example output:
     #
     # $CondorVersion: 8.6.8 Nov 30 2017 BuildID: [...]
-    out = _runner.run(['condor_version'],
-                      expect_fail=True, expect_stderr=True)[0]
+    out = _try_run(['condor_version'])[0]
     return out.split()[1]
 
 
