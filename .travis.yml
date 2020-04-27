@@ -17,6 +17,7 @@ matrix:
     - REPROMAN_TESTS_SSH=1
     - INSTALL_DATALAD=1
     - INSTALL_CONDOR=1
+    - SETUP_SLURM=1
   - python: 3.5
     env:
     - REPROMAN_TESTS_SSH=1
@@ -38,7 +39,7 @@ matrix:
     env:
     - REPROMAN_LOGLEVEL=2
     - REPROMAN_LOGTARGET=/dev/null
-  - python: 3.4
+  - python: 3.6
     # Note: This this no network run appears to hang or otherwise
     # behave oddly on 3.5.
     env:
@@ -65,6 +66,9 @@ before_install:
   - if [ ! -z "${REPROMAN_TESTS_SSH:-}" ]; then
       sudo eatmydata tools/ci/prep-travis-forssh-sudo.sh;
       tools/ci/prep-travis-forssh.sh;
+    fi
+  - if [ ! -z "${SETUP_SLURM:-}" ]; then
+      tools/ci/setup-slurm-container.sh;
     fi
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
