@@ -53,7 +53,7 @@ then
 # least for now, below is a brittle solution were the last job waits until it
 # sees that all other jobs have exited and then runs the post-command stuff.
 nstatus () {
-    find "$metadir" -regex '.*/status\.[0-9]+' | wc -l
+    find "$metadir" -regex '.*/status\.[0-9][0-9]*' | wc -l
 }
 
 # Ugly, but this sleep makes it less likely for the post-command tar to fail
