@@ -895,6 +895,13 @@ def head_at(dataset, commit):
         lgr.info("Checking out %s", commit)
         try:
             dataset.repo.checkout(commit)
+            # Note: It's tempting try to use --recurse-submodules here, but
+            # that will absorb submodule's .git/ directories, and DataLad
+            # relies on plain .git/ directories.
+            if dataset.repo.dirty:
+                raise OrchestratorError(
+                    "Refusing to move HEAD due to submodule state change "
+                    "within {}".format(dataset.path))
             yield moved
         finally:
             lgr.info("Restoring checkout of %s", to_restore)
