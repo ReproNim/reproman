@@ -20,12 +20,12 @@ from shlex import quote as shlex_quote
 import subprocess
 from tempfile import NamedTemporaryFile
 
-from ..support.exceptions import CommandError
-
-from reproman.support.exceptions import SessionRuntimeError
 from reproman.cmd import Runner
 from reproman.dochelpers import exc_str, borrowdoc
-from reproman.support.exceptions import CommandError
+from reproman.support.exceptions import (
+    CommandError,
+    SessionRuntimeError,
+)
 from reproman.utils import updated, to_unicode
 
 import logging
