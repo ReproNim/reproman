@@ -33,11 +33,11 @@ def test_get_conda_platform_from_python():
 
 def test_get_miniconda_url():
     assert get_miniconda_url("linux-64", "2.7") == \
-           "https://repo.anaconda.com/miniconda/Miniconda2-4.6.14-Linux-x86_64.sh"
+           "https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh"
     assert get_miniconda_url("linux-32", "3.4") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-4.6.14-Linux-x86.sh"
+           "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86.sh"
     assert get_miniconda_url("osx-64", "3.5.1") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-4.6.14-MacOSX-x86_64.sh"
+           "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
 
 
 def test_get_simple_python_version():
@@ -83,7 +83,7 @@ def test_create_conda_export():
                 md5=None,
                 size=None,
                 url=None,
-                files=["lib/python2.7/site-packages/rpaths.py"])],
+                files=["lib/python3.7/site-packages/rpaths.py"])],
         channels=[
             CondaChannel(
                 name="conda-forge",
@@ -107,8 +107,8 @@ def test_conda_init_install_and_detect(tmpdir):
     dist = CondaDistribution(
         name="conda",
         path=test_dir,
-        conda_version="4.3.31",
-        python_version="2.7.14.final.0",
+        conda_version="4.8.2",
+        python_version="3.8.2",
         platform=get_conda_platform_from_python(sys.platform) + "-64",
         environments=[
             CondaEnvironment(
@@ -118,7 +118,7 @@ def test_conda_init_install_and_detect(tmpdir):
                     CondaPackage(
                         name="conda",
                         installer=None,
-                        version="4.3.31",
+                        version="4.8.2",
                         build=None,
                         channel_name=None,
                         md5=None,
@@ -128,7 +128,7 @@ def test_conda_init_install_and_detect(tmpdir):
                     CondaPackage(
                         name="pip",
                         installer=None,
-                        version="9.0.1",
+                        version="20.0.2",
                         build=None,
                         channel_name=None,
                         md5=None,
@@ -159,7 +159,7 @@ def test_conda_init_install_and_detect(tmpdir):
                     CondaPackage(
                         name="pip",
                         installer=None,
-                        version="9.0.1",
+                        version="20.0.2",
                         build=None,
                         channel_name=None,
                         md5=None,
@@ -185,7 +185,7 @@ def test_conda_init_install_and_detect(tmpdir):
                         md5=None,
                         size=None,
                         url=None,
-                        files=["lib/python2.7/site-packages/rpaths.py"])],
+                        files=["lib/python3.8/site-packages/rpaths.py"])],
                 channels=[
                     CondaChannel(
                         name="conda-forge",

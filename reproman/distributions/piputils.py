@@ -117,7 +117,8 @@ def get_pip_packages(session, which_pip, restriction=None):
     return (p["name"] for p in json.loads(out))
 
 
-def get_package_details(session, which_pip, packages=None):
+def get_package_details(session, which_pip, packages=None,
+                        editable_packages=None):
     """Get package details from `pip show` and `pip list`.
 
     This is similar to `pip_show`, but it uses `pip list` to get information
@@ -132,6 +133,9 @@ def get_package_details(session, which_pip, packages=None):
     packages : list of str, optional
         Package names.  If not given, all packages returned by `pip list` are
         used.
+    editable_packages : collection of str
+        If a package name is in this collection, mark it as editable. Passing
+        this saves a call to `which_pip`.
 
     Returns
     -------
@@ -140,8 +144,9 @@ def get_package_details(session, which_pip, packages=None):
     """
     if packages is None:
         packages = list(get_pip_packages(session, which_pip))
-    editable_packages = set(
-        get_pip_packages(session, which_pip, restriction="editable"))
+    if editable_packages is None:
+        editable_packages = set(
+            get_pip_packages(session, which_pip, restriction="editable"))
     details, file_to_pkg = pip_show(session, which_pip, packages)
 
     for pkg in details:

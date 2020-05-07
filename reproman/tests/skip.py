@@ -68,8 +68,9 @@ def no_aws_dependencies():
 def no_condor():
     def is_running():
         try:
-            Runner().run(["condor_status"])
-        except CommandError as exc:
+            Runner().run(["condor_status"],
+                         expect_fail=True, expect_stderr=True)
+        except (CommandError, FileNotFoundError):
             return False
         return True
 
@@ -113,6 +114,19 @@ def no_singularity():
             not external_versions["cmd:singularity"])
 
 
+def no_slurm():
+    def is_running():
+        # Does it look like tools/ci/setup-slurm-container.sh was called?
+        try:
+            out, _ = Runner().run(
+                ["docker", "port", "reproman-slurm-container"],
+                expect_fail=True, expect_stderr=True)
+        except (CommandError, FileNotFoundError):
+            return False
+        return out.strip()
+    return "slurm container is not running", not is_running()
+
+
 def no_ssh():
     if _on_windows:
         reason = "no ssh on windows"
@@ -140,6 +154,7 @@ CONDITION_FNS = [
     no_docker_engine,
     no_network,
     no_singularity,
+    no_slurm,
     no_ssh,
     no_svn,
     on_windows,
