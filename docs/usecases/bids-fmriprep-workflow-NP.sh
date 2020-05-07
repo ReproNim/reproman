@@ -176,22 +176,6 @@ function run_bids_app() {
 # Check asap for licenses since fmriprep needs one for FreeSurfer
 #
 
-if [ -z "${FS_LICENSE:-}" ]; then
-    if [ -e "${FREESURFER_HOME:-/XXXX}/.license" ]; then
-        FS_LICENSE="${FREESURFER_HOME}/.license"
-    else
-        cat >&2 <<EOF
-Error: No FreeSurfer license found!
-    Either define FREESURFER_HOME environment variable pointing to a directory
-    with .license file for FreeSurfer or define FS_LICENSE environment variable
-    which would either point to the license file or contain the license
-    (with "\\n" for new lines) to be used for FreeSurfer
-EOF
-        exit 1
-    fi
-fi
-
-
 # Create study dataset
 datalad create -c text2git "$STUDY"
 cd "$STUDY"
@@ -207,12 +191,8 @@ cd "$STUDY"
 datalad install -d . -s "${CONTAINERS_REPO:-///repronim/containers}"
 
 # TODO: shift that into some helper script in the containers
-CONTAINERS_FS_LICENSE=containers/licenses/freesurfer
-if [ -e "$FS_LICENSE" ]; then
-    cp "$FS_LICENSE" "$CONTAINERS_FS_LICENSE"
-else
-    echo -n "$FS_LICENSE" >| "$CONTAINERS_FS_LICENSE"
-fi
+touch containers/licenses/freesurfer
+
 datalad save -d . -m "Added licenses/freesurfer (needed for fmriprep)" containers/licenses/
 ( cd containers; git annex metadata licenses/freesurfer -s distribution-restrictions=sensitive; )
 
