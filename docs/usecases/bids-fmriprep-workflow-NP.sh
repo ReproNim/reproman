@@ -58,7 +58,7 @@ STUDY="$1"
 # ReproMan orchestrator to be used - determines how data/results would be
 # transferred and execution protocoled
 # Use  reproman run --list orchestrators  to get an updated list
-RM_ORC=datalad-pair-run  # ,plain,datalad-pair,datalad-local-run
+RM_ORC=datalad-pair  # ,plain,datalad-pair,datalad-local-run
 
 # Which batch processing system supported by ReproMan will be used
 # Use  reproman run --list submitters  to get an updated list
