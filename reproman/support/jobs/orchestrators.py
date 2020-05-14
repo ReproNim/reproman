@@ -783,14 +783,13 @@ class PrepareRemoteDataladMixin(object):
                     # with since="".
                     since = None
 
-            from datalad.support.exceptions import IncompleteResultsError
-            try:
-                self.ds.publish(to=resource.name, since=since, recursive=True)
-            except IncompleteResultsError:
-                raise OrchestratorError(
-                    "'datalad publish' failed. Try running "
-                    "'datalad update -s {} --merge --recursive' first"
-                    .format(resource.name))
+            for res in self.ds.publish(to=resource.name, since=since,
+                                       recursive=True, on_failure="ignore"):
+                lgr.debug("datalad publish result: %s", res)
+                if res["status"] == "error":
+                    raise OrchestratorError(
+                        "'datalad publish' failed: {}"
+                        .format(res))
 
             self._fix_up_dataset()
 
