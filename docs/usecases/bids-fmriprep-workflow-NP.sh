@@ -62,7 +62,7 @@ RM_ORC=datalad-pair  # ,plain,datalad-pair,datalad-local-run
 
 # Which batch processing system supported by ReproMan will be used
 # Use  reproman run --list submitters  to get an updated list
-# RM_SUB=condor,pbs,local
+RM_SUB=condor
 
 # Which resource to use
 # It would require (if was not done before) to configure
