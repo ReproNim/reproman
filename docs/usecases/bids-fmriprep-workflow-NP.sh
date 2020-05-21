@@ -32,11 +32,24 @@
 #  Description
 #
 #  Environment variables
-#   - RUNNER - datalad or reproman
+#   - RUNNER - datalad or reproman (default: reproman)
+#   - Options to  reproman run  invocation
+#     - RM_ORC - orchestrator to use (default: datalad-pair-run)
+#     - RM_RESOURCE - resource to use (default: local)
+#     - RM_SUBMITTED - submitter to use (default: local)
+#   - BIDS_APPS - if set -- ,-separated list of apps to consider (out of
+#     mriqc and fmriprep ATM)
+#   - FS_LICENSE - filename or content of the license for freesurfer
 #   - CONTAINERS_REPO - an alternative (could be local) location for containers
 #                       repository
 #   - INPUT_DATASET_REPO - an alternative (could be local) location for input
 #                       BIDS dataset
+#
+#  Note that if FS_LICENSE does not point to a file and is not empty, it would
+#  assume to contain the license content.  If you are not interested in running
+#  only MRIQC, just set it to some bogus value.
+#  So to run only mriqc if you don't have freesurfer license, do
+#  BIDS_APPS=mriqc FS_LICENSE=bogus ...
 #
 #  Sample invocations
 #   - Pointing to the existing local clones of input repositories for faster
@@ -46,19 +59,24 @@
 #       CONTAINERS_REPO=~/proj/repronim/containers \
 #       INPUT_DATASET_REPO=$PWD/bids-fmriprep-workflow-NP/ds000003-demo \
 #       ./bids-fmriprep-workflow-NP.sh bids-fmriprep-workflow-NP/out2
+#
 
 set -eu
-# set -x
+export PS4='ex:$? > '
+set -x
 
 # $STUDY is a variable used in a paper this workflow mimics
 STUDY="$1"
+
+#  Which runner - reproman or datalad
+: "${RUNNER:=reproman}"
 
 # Define common parameters for the reproman run
 
 # ReproMan orchestrator to be used - determines how data/results would be
 # transferred and execution protocoled
 # Use  reproman run --list orchestrators  to get an updated list
-RM_ORC=datalad-pair-run  # ,plain,datalad-pair,datalad-local-run
+: "${RM_ORC:=datalad-pair-run}"  # ,plain,datalad-pair,datalad-local-run
 
 # Which batch processing system supported by ReproMan will be used
 # Use  reproman run --list submitters  to get an updated list
@@ -68,26 +86,22 @@ RM_ORC=datalad-pair-run  # ,plain,datalad-pair,datalad-local-run
 # It would require (if was not done before) to configure
 # a resource where execution will happen.  For now will just use smaug below.
 # TODO: provide pointers to doc ( ;-) )
-# RM_RESOURCE=
 
-#RM_RESOURCE=discovery
-#RM_SUB=PBS
-#
+# On discovery resource use PBS, and
 # Necessary modules to be loaded in that session:
 #  - singularity/2.4.2
 # Necessary installations/upgrades to be done (TODO: contact John)
 #  - datalad (0.11.6, TODO: release first)
 #  - datalad-container
 
-: ${RM_RESOURCE:=local}
-: ${RM_SUB:=local}
+: "${RM_RESOURCE:=local}"
+: "${RM_SUB:=local}"
 
 # TODO: at reproman level allow to specify ORC and SUB for a resource, so there would
 #   be no need to specify for each invocation.  Could be a new (meta) resource such as
 #   "smaug-condor" which would link smaug physical resource with those parameters
 # TODO: point to the issue in ReproMan
 
-: "${RUNNER:=reproman}"
 
 unknown_runner () {
     echo "ERROR: Unknown runner $RUNNER.  Known reproman and datalad" >&2
@@ -118,10 +132,15 @@ get_participant_ids () {
 }
 
 function run_bids_app() {
+    set -eu
     app="$1"; shift
     do_group="$1"; shift
     app_args=( "$@" -w work )
 
+    if [ -n "$BIDS_APPS" ] && ! echo "$BIDS_APPS" | grep -q "\<$app\>" ; then
+      echo "I: skipping $app since BIDS_APPS=$BIDS_APPS"
+      return
+    fi
     outds=data/$app
     container=containers/bids-$app
     app_runner_args=( --input 'data/bids' --output "$outds" )
@@ -130,7 +149,7 @@ function run_bids_app() {
     grep -e '^work$' .gitignore \
     || { echo "work" >> .gitignore; datalad save -m "Ignore work directory"; }
 
-    set -x
+    # set -x
     # Create target output dataset
     # TODO: per app specific configuration?  some might have too heavy xml etc
     # files
@@ -169,7 +188,7 @@ function run_bids_app() {
             ;;
         *) unknown_runner;;
     esac
-    set +x
+    # set +x
 }
 
 #
