@@ -4,6 +4,9 @@
 
 set -eu
 
+export PS4='> $(date +%T.%N) [$$] '
+set -x
+
 jobid={{ _jobid }}
 subjob=$1
 num_subjobs={{ _num_subjobs }}
@@ -66,6 +69,9 @@ do
 done
 
 echo "[ReproMan] post-command..."
+
+# PS4 goes to stderr which we might be saving in the post_command, so we must stop
+set +x
 
 {% block post_command %}
 {% endblock %}
