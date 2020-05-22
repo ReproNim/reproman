@@ -41,7 +41,10 @@
 #     mriqc and fmriprep ATM)
 #   - FS_LICENSE - filename or content of the license for freesurfer
 #   - CONTAINERS_REPO - an alternative (could be local) location for containers
-#                       repository
+#                       repository.
+#     Make sure that you have got the images for specific versions we freeze to below:
+#       datalad get images/bids/bids-mriqc--0.15.0.sing images/bids/bids-fmriprep--1.4.1.sing
+#
 #   - INPUT_DATASET_REPO - an alternative (could be local) location for input
 #                       BIDS dataset
 #
@@ -132,7 +135,6 @@ get_participant_ids () {
 }
 
 function run_bids_app() {
-    set -eu
     app="$1"; shift
     do_group="$1"; shift
     app_args=( "$@" -w work )
