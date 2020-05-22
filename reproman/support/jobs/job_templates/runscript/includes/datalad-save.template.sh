@@ -4,7 +4,7 @@
    the leading path includes a hidden directory.
 #}
 
-echo "Using DataLad version $(datalad --version)"  # for debugging
+printf_nobuff "Using DataLad version %s\n" "$(datalad --version)"  # for debugging
 {% if message is defined %}
 msg={{ shlex_quote(message) }}
 {% else %}

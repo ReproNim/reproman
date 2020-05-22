@@ -15,8 +15,12 @@ workdir={{ shlex_quote(working_directory) }}
 _reproman_cmd_idx=$(($subjob + 1))
 export _reproman_cmd_idx
 
-echo "submitted" >"$metadir/status.$subjob"
-echo "[ReproMan] pre-command..."
+printf_nobuff () {
+    stdbuf -o0 printf "$@"
+}
+
+printf_nobuff "submitted\n" >"$metadir/status.$subjob"
+printf_nobuff "[ReproMan] pre-command...\n"
 
 {% block pre_command %}
 cd "$workdir"
@@ -31,18 +35,18 @@ get_command () {
 cmd=$(get_command)
 if test -z "$cmd"
 then
-    echo "[ReproMan] failed getting command at position $_reproman_cmd_idx" >&2
-    echo "pre-command failure" >"$metadir/status.$subjob"
+    printf_nobuff "[ReproMan] failed getting command at position $_reproman_cmd_idx\n" >&2
+    printf_nobuff "pre-command failure\n" >"$metadir/status.$subjob"
     exit 1
 fi
 
-echo "running" >"$metadir/status.$subjob"
-echo "[ReproMan] executing command $cmd"
-echo "[ReproMan] ... within $PWD"
+printf_nobuff "running\n" >"$metadir/status.$subjob"
+printf_nobuff "[ReproMan] executing command %s" "$cmd"
+printf_nobuff "[ReproMan] ... within %s" "$PWD"
 {% block command %}
 /bin/sh -c "$cmd" && \
-    echo "succeeded" >"$metadir/status.$subjob" || \
-    (echo "failed: $?" >"$metadir/status.$subjob";
+    printf_nobuff "succeeded\n" >"$metadir/status.$subjob" || \
+    (printf_nobuff "failed: $?\n" >"$metadir/status.$subjob";
      mkdir -p "$metadir/failed" && touch "$metadir/failed/$subjob")
 {% endblock %}
 
@@ -61,11 +65,11 @@ nstatus () {
 sleep 1
 while test $(nstatus) -lt $num_subjobs
 do
-    echo "[ReproMan] Waiting for all jobs to complete before running post-command..."
+    printf_nobuff "[ReproMan] Waiting for all jobs to complete before running post-command...\n"
     sleep 3
 done
 
-echo "[ReproMan] post-command..."
+printf_nobuff "[ReproMan] post-command...\n"
 
 {% block post_command %}
 {% endblock %}

@@ -13,7 +13,7 @@ if test -z "$(git status --untracked-files=normal --ignore-submodules=none --por
 then
     git reset --hard $prev_commit
 else
-    echo "[ReproMan] Remote repository is unexpectedly dirty" >&2
+    printf_nobuff "[ReproMan] Remote repository is unexpectedly dirty\n" >&2
     git status
 fi
 
