@@ -1,8 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 {% block header %}
 {% endblock %}
 
 set -eu
+
+export PS4='> $(date +%T.%N) [$$] '
+set -x
 
 jobid={{ _jobid }}
 subjob=$1
@@ -70,6 +73,9 @@ do
 done
 
 printf_nobuff "[ReproMan] post-command...\n"
+
+# PS4 goes to stderr which we might be saving in the post_command, so we must stop
+set +x
 
 {% block post_command %}
 {% endblock %}
