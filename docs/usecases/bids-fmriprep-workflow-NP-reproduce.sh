@@ -28,6 +28,11 @@ case "$setup" in
   # with unbuffered io:
   #pip install git+http://github.com/ReproNim/reproman@4f05f3aa96c7ab550aa218d5de705ea3cfe5f600
   ;;
+ kyle1-ps4)
+  # Like above but for reproman have #513 merged for PS4 details
+  pip install git+http://github.com/datalad/datalad@53765be03838ee8b07d4b44a2a27bbbe259fe160
+  pip install git+http://github.com/ReproNim/reproman@setup-kyle1-ps4
+  ;;
  debug1) # the "default
   # Current master of datalad
   pip install git+http://github.com/datalad/datalad@0.13.0rc1-109-g7f24491b2
