@@ -761,3 +761,30 @@ def test_orc_datalad_pair_merge_conflict(job_spec, dataset, shell):
             orc0.fetch()
             assert "Failed to merge in changes" in logs.out
         assert dataset.repo.call_git(["ls-files", "--unmerged"]).strip()
+
+
+def test_orc_datalad_pair_new_submodule(job_spec, dataset, shell):
+    with chpwd(dataset.path):
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
+
+        # prepare_remote() doesn't fail when a new subdataset is added after
+        # the first run.
+        sub = dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo a >sub/a'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
+        assert sub.repo.is_under_annex("a")

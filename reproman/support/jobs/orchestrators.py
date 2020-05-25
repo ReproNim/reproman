@@ -769,8 +769,6 @@ class PrepareRemoteDataladMixin(object):
                         "Either delete remote or rename resource."
                         .format(resource.name))
 
-                self.ds.create_sibling(target_path, name=resource.name,
-                                       recursive=True)
                 since = None  # Avoid since="" for non-existing repo.
             else:
                 remote_branch = "{}/{}".format(
@@ -782,6 +780,9 @@ class PrepareRemoteDataladMixin(object):
                     # If the remote branch doesn't exist yet, publish will fail
                     # with since="".
                     since = None
+
+            self.ds.create_sibling(target_path, name=resource.name,
+                                   recursive=True, existing="skip")
 
             for res in self.ds.publish(to=resource.name, since=since,
                                        recursive=True, on_failure="ignore"):
