@@ -226,11 +226,13 @@ class Run(Interface):
         submitter=Parameter(
             args=("--submitter", "--sub"),
             metavar="NAME",
+            constraints=EnsureChoice(None, *SUBMITTERS),
             doc=(JOB_PARAMETERS["submitter"] +
                  "[CMD:  Use --list to see available submitters CMD]")),
         orchestrator=Parameter(
             args=("--orchestrator", "--orc"),
             metavar="NAME",
+            constraints=EnsureChoice(None, *ORCHESTRATORS),
             doc=(JOB_PARAMETERS["orchestrator"] +
                  "[CMD:  Use --list to see available orchestrators CMD]")),
         batch_spec=Parameter(
