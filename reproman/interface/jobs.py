@@ -16,6 +16,7 @@ import yaml
 
 from reproman.dochelpers import exc_str
 from reproman.interface.base import Interface
+from reproman.support.external_versions import MissingExternalDependency
 from reproman.support.jobs.local_registry import LocalRegistry
 from reproman.support.jobs.orchestrators import ORCHESTRATORS
 from reproman.resource import get_manager
@@ -97,11 +98,15 @@ def show_oneline(job, status=False):
     """
     fmt = "{status}{j[_jobid]} on {j[resource_name]} via {j[submitter]}$ {cmd}"
     if status:
-        orc = _resurrect_orc(job)
-        orc_status = orc.status
-        _, queried_status = orc.submitter.status
-        if orc_status == queried_status:
-            # Drop repeated status (e.g., our and condor's "running").
+        try:
+            orc = _resurrect_orc(job)
+            orc_status = orc.status
+            _, queried_status = orc.submitter.status
+            if orc_status == queried_status:
+                # Drop repeated status (e.g., our and condor's "running").
+                queried_status = None
+        except MissingExternalDependency as exc:
+            orc_status = "N/A - needs {}".format(exc.name)
             queried_status = None
         stat = "[status: {}{}] ".format(
             orc_status,
