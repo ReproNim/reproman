@@ -56,10 +56,10 @@ nstatus () {
     grep -E '^(succeed|fail)' "$metadir"/status.* | wc -l
 }
 
+echo "[ReproMan] waiting for all jobs to complete before running post-command..."
 while test $(nstatus) -lt $num_subjobs
 do
-    echo "[ReproMan] Waiting for all jobs to complete before running post-command..."
-    sleep 3
+    sleep 1
 done
 
 echo "[ReproMan] post-command..."
