@@ -486,7 +486,8 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
                  resurrection=False):
         if not external_versions["datalad"]:
             raise MissingExternalDependency(
-                "DataLad is required for orchestrator '{}'".format(self.name))
+                "datalad",
+                msg="Required for orchestrator '{}'".format(self.name))
 
         super(DataladOrchestrator, self).__init__(
             resource, submission_type, job_spec, resurrection=resurrection)
