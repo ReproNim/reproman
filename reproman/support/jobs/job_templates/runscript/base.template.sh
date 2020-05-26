@@ -56,9 +56,6 @@ nstatus () {
     grep -E '^(succeed|fail)' "$metadir"/status.* | wc -l
 }
 
-# Ugly, but this sleep makes it less likely for the post-command tar to fail
-# complaining about a log from another run is changing.
-sleep 1
 while test $(nstatus) -lt $num_subjobs
 do
     echo "[ReproMan] Waiting for all jobs to complete before running post-command..."
