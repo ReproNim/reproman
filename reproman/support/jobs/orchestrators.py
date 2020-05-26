@@ -39,6 +39,7 @@ from reproman.utils import cached_property
 from reproman.utils import chpwd
 from reproman.utils import write_update
 from reproman.resource.ssh import SSHSession
+from reproman.support.collections import KnownKeysDict
 from reproman.support.jobs.submitters import SUBMITTERS
 from reproman.support.jobs.template import Template
 from reproman.support.exceptions import CommandError
@@ -1158,7 +1159,7 @@ class DataladLocalRunOrchestrator(
     name = "datalad-local-run"
 
 
-ORCHESTRATORS = collections.OrderedDict(
+ORCHESTRATORS = KnownKeysDict(
     (o.name, o) for o in [
         PlainOrchestrator,
         DataladPairOrchestrator,
