@@ -105,8 +105,9 @@ def show_oneline(job, status=False):
             if orc_status == queried_status:
                 # Drop repeated status (e.g., our and condor's "running").
                 queried_status = None
-        except MissingExternalDependency as exc:
-            orc_status = "N/A - needs {}".format(exc.name)
+        except Exception as exc:
+            lgr.warning(exc_str(exc))
+            orc_status = "N/A"
             queried_status = None
         stat = "[status: {}{}] ".format(
             orc_status,
