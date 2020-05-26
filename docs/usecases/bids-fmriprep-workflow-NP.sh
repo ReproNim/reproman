@@ -139,7 +139,7 @@ function run_bids_app() {
     do_group="$1"; shift
     app_args=( "$@" -w work )
 
-    if [ -n "$BIDS_APPS" ] && ! echo "$BIDS_APPS" | grep -q "\<$app\>" ; then
+    if [ -n "${BIDS_APPS:=}" ] && ! echo "$BIDS_APPS" | grep -q "\<$app\>" ; then
       echo "I: skipping $app since BIDS_APPS=$BIDS_APPS"
       return
     fi
