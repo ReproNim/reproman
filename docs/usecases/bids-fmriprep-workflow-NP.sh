@@ -126,7 +126,8 @@ get_participant_ids () {
     for p in "$@" .; do
         f="$p/participants.tsv"
         if [ -e "$f" ]; then
-            sed -n -e '/^sub-/s/sub-\([^\t]*\)\t.*/\1/gp' < "$f" \
+            awk -F'\t' '/^sub-/{print $1}' "$f" \
+                | sed 's/sub-//' \
                 | tr '\n' ',' \
                 | sed -e 's/,$//g'
             break
