@@ -10,7 +10,8 @@ then
 else
     if test -z $(which parallel)
     then
-       echo "parallel (moreutils) is required to concurrent jobs locally" >&2
+       echo "parallel is required to concurrent jobs locally" >&2
+       echo "install parallel on Debian from moreutils or on macOS using MacPorts or Homebrew" >&2
        exit 1
     fi
 
