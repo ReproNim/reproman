@@ -24,6 +24,7 @@ from reproman.interface.base import Interface
 from reproman.interface.common_opts import resref_opt
 from reproman.interface.common_opts import resref_type_opt
 from reproman.support.constraints import EnsureChoice
+from reproman.support.exceptions import JobError
 from reproman.support.jobs.local_registry import LocalRegistry
 from reproman.support.jobs.orchestrators import Orchestrator
 from reproman.support.jobs.orchestrators import ORCHESTRATORS
@@ -439,3 +440,9 @@ class Run(Interface):
                             manager.delete(res)
             orc.fetch(on_remote_finish=remote_fn)
             lreg.unregister(orc.jobid)
+            # TODO: this would duplicate what is done in each .fetch
+            # implementation above anyways.  We might want to make
+            # fetch return a record with fetched content and failed subjobs
+            failed = orc.get_failed_subjobs()
+            if failed:
+                raise JobError(failed=failed)
