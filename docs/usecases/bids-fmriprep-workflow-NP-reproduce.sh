@@ -2,6 +2,7 @@
 
 set -eu
 
+export PS1="$ "
 export PS4="> "
 
 set -x
