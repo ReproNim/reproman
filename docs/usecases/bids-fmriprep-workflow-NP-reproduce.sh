@@ -9,6 +9,12 @@ set -x
 setup=${1:-pip}
 cd "$(mktemp -d ${TMPDIR:-/tmp}/rm-XXXXXXX)"
 
+mkdir HOME
+cp ~/.gitconfig HOME/  # needed by datalad et al
+cp ~/.freesurfer-license HOME/ 2>&1 || echo "No FreeSurfer license copied"
+
+export HOME=$PWD/HOME
+
 trap "echo Finished for setup=$setup under PWD=`pwd`" SIGINT SIGHUP SIGABRT EXIT
 
 py=3
@@ -54,7 +60,13 @@ pip install datalad-container
 # Actual script to run from the current state of the PR
 # https://github.com/ReproNim/reproman/pull/438
 wget https://raw.githubusercontent.com/ReproNim/reproman/b70144e993660c271831e4ea8d2f4bb436bb7eeb/docs/usecases/bids-fmriprep-workflow-NP.sh
+
+# Ensure that we have local resource for default execution
 ) 2>&1 | tee install.log
+
+(
+    reproman create -t shell local
+) 2>&1 | tee configure.log
 
 (
     BIDS_APPS=mriqc FS_LICENSE=bogus RM_ORC=datalad-pair bash ./bids-fmriprep-workflow-NP.sh output
