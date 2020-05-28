@@ -180,6 +180,7 @@ function run_bids_app() {
             esac
         ;;
         datalad)
+            # Note: this is not in effect!  TODO
             case "$do_group" in
                 1|yes) app_args=( group "${app_args[@]}" ) ;;
                 0|no) ;;
