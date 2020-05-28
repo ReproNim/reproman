@@ -19,6 +19,7 @@ import pytest
 from reproman.consts import TEST_SSH_DOCKER_DIGEST
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
+from reproman.utils import swallow_outputs
 from reproman.resource.shell import Shell
 from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
@@ -152,7 +153,7 @@ def dataset(tmpdir_factory):
     create_tree(ds.path, {"foo": "foo",
                           "bar": "bar",
                           "d": {"in": "content\n"}})
-    ds.add(".")
+    ds.save()
     ds.repo.tag("root")
     return ds
 
@@ -205,14 +206,12 @@ def check_orc_datalad(job_spec, dataset):
             # Our reproman-based copying of data doesn't isn't (yet) OK with
             # data files that already exist.
             dumped_spec["inputs"] = []
-        # FIXME: Use exposed method once available.
-        dataset.repo._git_custom_command(
-            [], ["git", "reset", "--hard", "start-pt"])
+        dataset.repo.call_git(["checkout", "-b", "other", "start-pt"])
         if dataset.repo.dirty:
             # The submitter log file is ignored (currently only relevant for
             # condor; see b9277ebc0 for more details). Add the directory to get
             # to a clean state.
-            dataset.add(".reproman")
+            dataset.save(".reproman")
         orc = run_and_check(dumped_spec)
     return fn
 
@@ -246,7 +245,7 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
 
         create_tree(dataset.path, {"sinceyouvebeengone":
                                    "imsomovingon,yeahyeah"})
-        dataset.add(".")
+        dataset.save()
 
         orc.fetch()
         ref = "refs/reproman/{}".format(orc.jobid)
@@ -364,7 +363,7 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     #   o
     ds = dataset
     create_tree(ds.path, {"in": "content\n"})
-    ds.add(".")
+    ds.save()
 
     js0 = job_spec
     js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
@@ -496,7 +495,7 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     run(_resolved_command_str="echo two >two")
 
     create_tree(op.join(dataset.path, "sub"), {"for-local-commit": ""})
-    dataset.add(".", recursive=True)
+    dataset.save(recursive=True)
 
     run(_resolved_command_str="echo three >three")
 
@@ -549,8 +548,7 @@ def test_head_at_unknown_ref(dataset):
 
 def test_head_at_empty_branch(dataset):
     dataset.repo.checkout("orph", options=["--orphan"])
-    # FIXME: Use expose method once available.
-    dataset.repo._git_custom_command([], ["git", "reset", "--hard"])
+    dataset.repo.call_git(["reset", "--hard"])
     assert not dataset.repo.dirty
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "master"):
@@ -562,7 +560,7 @@ def test_head_at_no_move(dataset):
     with orcs.head_at(dataset, "master") as moved:
         assert not moved
         create_tree(dataset.path, {"on-master": "on-maser"})
-        dataset.add("on-master", message="advance master")
+        dataset.save("on-master", message="advance master")
         assert dataset.repo.get_active_branch() == "master"
     assert dataset.repo.get_active_branch() == "master"
 
@@ -572,13 +570,13 @@ def test_head_at_move(dataset):
         return op.exists(op.join(dataset.path, path))
 
     create_tree(dataset.path, {"pre": "pre"})
-    dataset.add("pre")
+    dataset.save("pre")
     with orcs.head_at(dataset, "master~1") as moved:
         assert moved
         assert dataset.repo.get_active_branch() is None
         assert not dataset_path_exists("pre")
         create_tree(dataset.path, {"at-head": "at-head"})
-        dataset.add("at-head", message="advance head (not master)")
+        dataset.save("at-head", message="advance head (not master)")
     assert dataset_path_exists("pre")
     assert not dataset_path_exists("at-head")
     assert dataset.repo.get_active_branch() == "master"
@@ -650,3 +648,143 @@ def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm):
     check_orc_datalad_concurrent(ssh_slurm,
                                  orcs.DataladLocalRunOrchestrator,
                                  "slurm")
+
+
+def test_orc_datalad_pair_submodule(job_spec, dataset, shell):
+    # Smoke test that triggers the failure from gh-499
+    with chpwd(dataset.path):
+        dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo foo >sub/foo'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
+
+
+def test_orc_datalad_pair_need_follow_parent(job_spec, dataset, shell):
+    # An example of a scenario that fails without DataLad's --follow=parentds
+    with chpwd(dataset.path):
+        dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo baz >baz'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc0 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc0.prepare_remote()
+        orc0.submit()
+        orc0.follow()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo bar >sub/bar'"
+        output = op.join("sub", "bar")
+        job_spec["outputs"] = [output]
+        orc1 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc1.prepare_remote()
+        orc1.submit()
+        orc1.follow()
+        orc1.fetch()
+        assert op.exists(output)
+
+
+def test_orc_datalad_pair_submodule_conflict(caplog, job_spec, dataset, shell):
+    # In this scenario, one job modifies a submodule, and before that change,
+    # another job is launched that modifies the same submodule. This creates a
+    # change that can't be brought in with `datalad update` because, even with
+    # --follow=parentds, the top-level repo still brings in changes from the
+    # remote, whose master branch points to the first job. In a diagram, the
+    # remote state is:
+    #
+    #         ---- job 1 (master)
+    #  base --|
+    #         ---- job 2 (detached)
+    #
+    # On fetch of job 2, we merge the job 2 ref. The `datalad update` call
+    # fails trying to merge in master.
+    #
+    # If this scenario ends up being common enough, we could consider modifying
+    # `datalad update` to optionally not try to merge the remote state of the
+    # top-level repo.
+    with chpwd(dataset.path):
+        dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo baz >sub/baz'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc0 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc0.prepare_remote()
+        orc0.submit()
+        orc0.follow()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo bar >sub/bar'"
+        orc1 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc1.prepare_remote()
+        orc1.submit()
+        orc1.follow()
+        # swallow_logs() won't work here because it hard codes the logger and
+        # the log message being checked is bubbled up by DataLad.
+        caplog.clear()
+        with caplog.at_level(logging.ERROR):
+            orc1.fetch()
+        assert "CONFLICT" in caplog.text
+        assert dataset.repo.call_git(["ls-files", "--unmerged"]).strip()
+
+
+def test_orc_datalad_pair_merge_conflict(job_spec, dataset, shell):
+    with chpwd(dataset.path):
+        job_spec["_resolved_command_str"] = "sh -c 'echo baz >baz'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc0 = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc0.prepare_remote()
+        orc0.submit()
+        orc0.follow()
+        # Introduce a conflict.
+        (dataset.pathobj / "baz").write_text("different")
+        dataset.save()
+        with swallow_logs(new_level=logging.WARNING) as logs:
+            orc0.fetch()
+            assert "Failed to merge in changes" in logs.out
+        assert dataset.repo.call_git(["ls-files", "--unmerged"]).strip()
+
+
+def test_orc_datalad_pair_new_submodule(job_spec, dataset, shell):
+    with chpwd(dataset.path):
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
+
+        # prepare_remote() doesn't fail when a new subdataset is added after
+        # the first run.
+        sub = dataset.create("sub")
+        dataset.save()
+
+        job_spec["_resolved_command_str"] = "sh -c 'echo a >sub/a'"
+        job_spec["inputs"] = []
+        job_spec["outputs"] = []
+
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        orc.prepare_remote()
+        orc.submit()
+        orc.follow()
+        orc.fetch()
+        assert sub.repo.is_under_annex("a")

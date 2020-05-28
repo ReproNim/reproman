@@ -5,7 +5,7 @@
 
 prev_commit=$(git rev-parse HEAD)
 
-{% include "includes/datalad-add.template.sh" %}
+{% include "includes/datalad-save.template.sh" %}
 
 {% include "includes/create-ref.template.sh" %}
 
