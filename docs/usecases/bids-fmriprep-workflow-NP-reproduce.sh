@@ -46,12 +46,11 @@ case "$setup" in
   # ReproMan PR https://github.com/ReproNim/reproman/pull/506 with support of datalad master
   pip install git+http://github.com/kyleam/niceman@v0.2.1-80-g45baab0
   ;;
- reproman-master)  # master of reproman with default datalad (min 0.12.7)
-   # 0.12.7 just to ensure we are not using outdated system wide
-   pip install 'datalad>=0.12.7'
-   pip install git+http://github.com/ReproNim/reproman@master
+ reproman-master)
+   pip install 'git+http://github.com/ReproNim/reproman.git#egg=reproman[datalad]'
    ;;
  pip)  # should be our target -- install via pip everything and it must be working
+   # until we release reproman with [datalad] - do manually
    pip install 'datalad>=0.12.7' reproman;;
  *)
    echo "Unknown setup $setup" >&2
