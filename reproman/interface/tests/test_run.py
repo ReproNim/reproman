@@ -26,8 +26,11 @@ from reproman.interface.run import _resolve_batch_parameters
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
 from reproman.utils import swallow_outputs
-from reproman.support.exceptions import OrchestratorError
-from reproman.support.exceptions import ResourceNotFoundError
+from reproman.support.exceptions import (
+    OrchestratorError,
+    ResourceNotFoundError,
+    JobError,
+)
 from reproman.tests import fixtures
 from reproman.tests.utils import create_tree
 
@@ -313,8 +316,10 @@ def test_run_and_follow_action(context, action):
     run = context["run_fn"]
     expect = "does not support the 'stop' feature"
     with swallow_logs(new_level=logging.INFO) as log:
-        run(command=["false"], resref="myshell",
-            follow=action)
+        with pytest.raises(JobError) as ecm:
+            run(command=["false"], resref="myshell",
+                follow=action)
+        assert ecm.value.failed == [0]
         if action.endswith("-if-success"):
             assert expect not in log.out
         else:

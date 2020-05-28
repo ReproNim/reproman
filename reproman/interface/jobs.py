@@ -108,10 +108,16 @@ def show_oneline(job, status=False):
             ", " + queried_status if queried_status else "")
     else:
         stat = ""
-    cmd = job["_resolved_command_str"]
-    print(fmt
-          .format(status=stat, j=job,
-                  cmd=cmd[:47] + "..." if len(cmd) > 50 else cmd))
+    try:
+        cmd = job["_resolved_command_str"]
+        print(fmt
+              .format(status=stat, j=job,
+                      cmd=cmd[:47] + "..." if len(cmd) > 50 else cmd))
+    except KeyError as exc:
+        lgr.warning(
+            "Skipping following job record missing %s: %s",
+            exc, job
+        )
 
 
 def show(job, status=False):
