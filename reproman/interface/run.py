@@ -278,7 +278,7 @@ class Run(Interface):
             dest="inputs",
             metavar="PATH",
             action="append",
-            doc="""An input file to the command. How input files are used
+            doc="""An input path to the command. How input paths are used
             depends on the orchestrator, but, at the very least, the
             orchestrator should try to make these paths available on the
             resource."""),
@@ -287,7 +287,7 @@ class Run(Interface):
             dest="outputs",
             metavar="PATH",
             action="append",
-            doc="""An output file to the command. How output files are handled
+            doc="""An output path to the command. How output paths are handled
             depends on the orchestrator."""),
         follow=Parameter(
             args=("--follow",),
