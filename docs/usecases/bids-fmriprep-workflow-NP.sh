@@ -145,7 +145,7 @@ function run_bids_app() {
     fi
     outds=data/$app
     container=containers/bids-$app
-    app_runner_args=( --input containers/licenses --input 'data/bids' --output "$outds" )
+    app_runner_args=( --input containers/licenses --output "$outds" )
 
     mkdir -p work
     grep -e '^work$' .gitignore \
@@ -163,12 +163,14 @@ function run_bids_app() {
             # reproman_run --jp container=containers/bids-mriqc "${RUNNER_ARGS[@]}" "${MRIQC_ARGS[@]}"
             # Parallel requires two runs -- parallel across participants:
             reproman_run --jp "container=$container" "${app_runner_args[@]}" \
+                 --input "data/bids/sub-{p[pl]}" \
                  --bp "pl=$(get_participant_ids data/bids)" \
                  data/bids '{outputs}' participant --participant_label '{p[pl]}' "${app_args[@]}"
             case "$do_group" in
                 1|yes)
                     # serial for the group
                     reproman_run --jp "container=$container" "${app_runner_args[@]}" \
+                        --input "data/bids" \
                         '{inputs}' '{outputs}' group "${app_args[@]}"
                     ;;
                 0|no)
