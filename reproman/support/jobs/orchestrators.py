@@ -1101,6 +1101,46 @@ class DataladPairOrchestrator(
     name = "datalad-pair"
 
 
+class DataladNoRemoteOrchestrator(DataladOrchestrator):
+    """Execute a command in the current local dataset.
+
+    Conceptually this behaves like datalad-pair. However, the working directory
+    for execution is set to the local dataset. It is available for local shell
+    resources only.
+    """
+
+    name = "datalad-no-remote"
+    template_name = "datalad-pair"
+
+    @property
+    @cached_property
+    @borrowdoc(Orchestrator)
+    def working_directory(self):
+        return self.local_directory
+
+    def prepare_remote(self):
+        if not isinstance(self.session, ShellSession):
+            raise OrchestratorError(
+                "The {} orchestrator must be used with a local session, "
+                "but session for resource {} is {}"
+                .format(self.name, self.resource.name,
+                        type(self.session).__name__))
+
+        inputs = list(self.get_inputs())
+        if inputs:
+            lgr.info("Making inputs available")
+            for res in self.ds.get(inputs, on_failure="ignore"):
+                if res["status"] in ["error", "impossible"]:
+                    raise OrchestratorError(
+                        "'datalad get' failed: {}".format(res))
+
+    def fetch(self, on_remote_finish=None):
+        failed = self.get_failed_subjobs()
+        self.log_failed(failed)
+        if on_remote_finish:
+            on_remote_finish(self.resource, failed)
+
+
 class DataladPairRunOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
     """Execute command in remote dataset sibling and capture results locally as
@@ -1135,6 +1175,7 @@ ORCHESTRATORS = collections.OrderedDict(
     (o.name, o) for o in [
         PlainOrchestrator,
         DataladPairOrchestrator,
+        DataladNoRemoteOrchestrator,
         DataladPairRunOrchestrator,
         DataladLocalRunOrchestrator,
     ]

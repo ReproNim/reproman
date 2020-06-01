@@ -433,10 +433,13 @@ def test_orc_datalad_run_container(tmpdir, dataset,
 
 
 @pytest.mark.integration
-def test_orc_datalad_pair(job_spec, dataset, shell):
+@pytest.mark.parametrize("orc_class",
+                         [orcs.DataladPairOrchestrator,
+                          orcs.DataladNoRemoteOrchestrator],
+                         ids=["orc:pair", "orc:no-remote"])
+def test_orc_datalad_nonrun(job_spec, dataset, shell, orc_class):
     with chpwd(dataset.path):
-        orc = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orc_class(shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -444,6 +447,51 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
         orc.fetch()
         assert dataset.repo.is_under_annex("out")
         assert (dataset.pathobj / "out").exists()
+
+
+@mark.skipif_no_datalad
+@pytest.mark.integration
+@pytest.mark.parametrize("should_pass", [True, False], ids=["success", "failure"])
+def test_orc_datalad_no_remote_get(tmpdir, shell, should_pass):
+    import datalad.api as dl
+
+    topdir = str(tmpdir)
+    ds_a = dl.create(op.join(topdir, "a"))
+    if should_pass:
+        (ds_a.pathobj / "foo").write_text("data")
+        ds_a.save()
+
+    ds_b = dl.clone(ds_a.path, op.join(topdir, "b"))
+    assert not ds_b.repo.file_has_content("foo")
+    with chpwd(ds_b.path):
+        orc = orcs.DataladNoRemoteOrchestrator(
+            shell, submission_type="local",
+            job_spec={"root_directory": op.join(topdir, "nm-run"),
+                      "inputs": ["foo"],
+                      "outputs": ["out"],
+                      "_resolved_command_str": 'sh -c "cat foo foo >out"'})
+        if should_pass:
+            orc.prepare_remote()
+            orc.submit()
+            orc.follow()
+
+            finish_fn = MagicMock()
+            orc.fetch(on_remote_finish=finish_fn)
+            finish_fn.assert_called_once_with(orc.resource, [])
+            assert (ds_b.pathobj / "out").read_text() == "datadata"
+        else:
+            with pytest.raises(OrchestratorError):
+                orc.prepare_remote()
+
+
+@mark.skipif_no_datalad
+@pytest.mark.integration
+def test_orc_datalad_no_remote_only_local(dataset, job_spec, ssh):
+    with chpwd(dataset.path):
+        orc = orcs.DataladNoRemoteOrchestrator(
+            ssh, submission_type="local", job_spec=job_spec)
+        with pytest.raises(OrchestratorError):
+            orc.prepare_remote()
 
 
 @pytest.mark.integration
