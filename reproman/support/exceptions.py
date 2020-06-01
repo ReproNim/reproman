@@ -159,6 +159,23 @@ class OrchestratorError(RuntimeError):
     pass
 
 
+# Job errors
+class JobError(RuntimeError):
+    """`reproman run` execution related error.
+    """
+    def __init__(self, *args, failed=None):
+        super().__init__(*args)
+        self.failed = failed
+
+    def __str__(self):
+        s = super().__str__()
+        if self.failed:
+            if s:
+                s += ' '
+            s += 'Failed subjobs: %s' % ', '.join(map(str, self.failed))
+        return s
+
+
 #
 # SSH support errors, largely adopted from starcluster
 #

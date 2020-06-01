@@ -68,6 +68,12 @@ requires = {
         #'http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.9.3.5.tar.xz'
         'chardet',  # python-debian misses dependency on it
     ],
+    'datalad': [
+        # Drop the rc as soon as we can to avoid installing future
+        # rcs. See https://github.com/datalad/datalad-container/pull/74.
+        'datalad>=0.13.0rc2',
+        'datalad-container',
+    ],
     'docker': [
         'docker>=3.0.0',
         'dockerpty',
@@ -83,7 +89,11 @@ requires = {
     ]
 }
 
+# Target to ease testing installation.
+requires['full-except-datalad'] = [v for k, vs in requires.items()
+                                   for v in vs if k != "datalad"]
 requires['full'] = sum(list(requires.values()), [])
+
 
 # Now add additional ones useful for development
 requires.update({

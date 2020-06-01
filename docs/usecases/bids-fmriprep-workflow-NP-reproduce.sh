@@ -2,11 +2,18 @@
 
 set -eu
 
+export PS1="$ "
 export PS4="> "
 
 set -x
 setup=${1:-pip}
 cd "$(mktemp -d ${TMPDIR:-/tmp}/rm-XXXXXXX)"
+
+mkdir HOME
+cp ~/.gitconfig HOME/  # needed by datalad et al
+cp ~/.freesurfer-license HOME/ 2>&1 || echo "No FreeSurfer license copied"
+
+export HOME=$PWD/HOME
 
 trap "echo Finished for setup=$setup under PWD=`pwd`" SIGINT SIGHUP SIGABRT EXIT
 
@@ -39,8 +46,12 @@ case "$setup" in
   # ReproMan PR https://github.com/ReproNim/reproman/pull/506 with support of datalad master
   pip install git+http://github.com/kyleam/niceman@v0.2.1-80-g45baab0
   ;;
+ reproman-master)
+   pip install 'git+http://github.com/ReproNim/reproman.git#egg=reproman[datalad]'
+   ;;
  pip)  # should be our target -- install via pip everything and it must be working
-   pip install datalad reproman;;
+   # until we release reproman with [datalad] - do manually
+   pip install 'datalad>=0.12.7' reproman;;
  *)
    echo "Unknown setup $setup" >&2
    exit 1
@@ -53,7 +64,13 @@ pip install datalad-container
 # Actual script to run from the current state of the PR
 # https://github.com/ReproNim/reproman/pull/438
 wget https://raw.githubusercontent.com/ReproNim/reproman/b70144e993660c271831e4ea8d2f4bb436bb7eeb/docs/usecases/bids-fmriprep-workflow-NP.sh
+
+# Ensure that we have local resource for default execution
 ) 2>&1 | tee install.log
+
+(
+    reproman create -t shell local
+) 2>&1 | tee configure.log
 
 (
     BIDS_APPS=mriqc FS_LICENSE=bogus RM_ORC=datalad-pair bash ./bids-fmriprep-workflow-NP.sh output
