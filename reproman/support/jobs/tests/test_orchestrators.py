@@ -442,9 +442,8 @@ def test_orc_datalad_pair(job_spec, dataset, shell):
         orc.follow()
 
         orc.fetch()
-        # The local fetch variant doesn't currently get the content, so just
-        # check that the file is under annex.
         assert dataset.repo.is_under_annex("out")
+        assert (dataset.pathobj / "out").exists()
 
 
 @pytest.mark.integration
