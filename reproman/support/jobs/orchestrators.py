@@ -479,6 +479,28 @@ def _datalad_format_command(ds, spec):
     spec["_extra_inputs_array"] = [exinputs] * len(batch_parameters)
 
 
+def call_check_dl_results(fn, failure_msg, *args, **kwds):
+    """Call function, checking status of DataLad-style results.
+
+    Parameters
+    ----------
+    fn : callable
+        Function that yields results.
+    failure_msg : str
+        Message to show on failure. The result dict is appended to this text.
+    *args, **kwds
+        Arguments passed to `fn`.
+
+    Raises
+    ------
+    An OrchestratorError if a failure is encountered.
+    """
+    for res in fn(*args, **kwds):
+        lgr.debug("datalad publish result: %s", res)
+        if res["status"] in ["error", "impossible"]:
+            raise OrchestratorError("{}: {}".format(failure_msg, res))
+
+
 class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     """Execute command assuming (at least) a local dataset.
     """
@@ -784,13 +806,10 @@ class PrepareRemoteDataladMixin(object):
             self.ds.create_sibling(target_path, name=resource.name,
                                    recursive=True, existing="skip")
 
-            for res in self.ds.publish(to=resource.name, since=since,
-                                       recursive=True, on_failure="ignore"):
-                lgr.debug("datalad publish result: %s", res)
-                if res["status"] == "error":
-                    raise OrchestratorError(
-                        "'datalad publish' failed: {}"
-                        .format(res))
+            call_check_dl_results(
+                self.ds.publish, "'datalad publish' failed",
+                to=resource.name, since=since,
+                recursive=True, on_failure="ignore")
 
             self._fix_up_dataset()
 
@@ -945,13 +964,16 @@ class FetchDataladPairMixin(object):
             # Handle any subdataset updates. We could avoid this if we knew
             # there were no subdataset changes, but it's probably simplest to
             # just unconditionally call update().
-            for res in self.ds.update(
+            failure = False
+            try:
+                call_check_dl_results(
+                    self.ds.update,
+                    "'datalad update' failed",
                     sibling=resource_name,
                     merge=True, follow="parentds", recursive=True,
-                    on_failure="ignore"):
-                if res["status"] == "error":
-                    # DataLad will log failure.
-                    failure = True
+                    on_failure="ignore")
+            except OrchestratorError:
+                failure = True
 
         if not failure:
             lgr.info("Getting outputs from '%s'", resource_name)
@@ -1019,22 +1041,18 @@ class FetchDataladRunMixin(object):
                     # placeholders.
                     cmd = self.jobid
 
-                for res in run_command(
-                        # FIXME: How to represent inputs and outputs given that
-                        # they are formatted per subjob and then expanded by
-                        # glob?
-                        inputs=self.job_spec.get("inputs"),
-                        extra_inputs=self.job_spec.get("_extra_inputs"),
-                        outputs=self.job_spec.get("outputs"),
-                        inject=True,
-                        extra_info={"reproman_jobid": self.jobid},
-                        message=self.job_spec.get("message"),
-                        cmd=cmd):
-                    # Oh, if only I were a datalad extension.
-                    if res["status"] in ["impossible", "error"]:
-                        raise OrchestratorError(
-                            "Making datalad-run commit failed: {}"
-                            .format(res["message"]))
+                call_check_dl_results(
+                    run_command,
+                    "Making datalad-run commit failed",
+                    # FIXME: How to represent inputs and outputs given that
+                    # they are formatted per subjob and then expanded by glob?
+                    inputs=self.job_spec.get("inputs"),
+                    extra_inputs=self.job_spec.get("_extra_inputs"),
+                    outputs=self.job_spec.get("outputs"),
+                    inject=True,
+                    extra_info={"reproman_jobid": self.jobid},
+                    message=self.job_spec.get("message"),
+                    cmd=cmd)
 
                 ref = self.job_refname
                 if moved:
@@ -1129,10 +1147,9 @@ class DataladNoRemoteOrchestrator(DataladOrchestrator):
         inputs = list(self.get_inputs())
         if inputs:
             lgr.info("Making inputs available")
-            for res in self.ds.get(inputs, on_failure="ignore"):
-                if res["status"] in ["error", "impossible"]:
-                    raise OrchestratorError(
-                        "'datalad get' failed: {}".format(res))
+            call_check_dl_results(
+                self.ds.get, "'datalad get' failed",
+                inputs, on_failure="ignore")
 
     def fetch(self, on_remote_finish=None):
         failed = self.get_failed_subjobs()
