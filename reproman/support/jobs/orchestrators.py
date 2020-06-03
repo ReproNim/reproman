@@ -728,7 +728,8 @@ class PrepareRemoteDataladMixin(object):
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
         """
-        if not self.ds.repo.get_active_branch():
+        repo = self.ds.repo
+        if not repo.get_active_branch():
             # publish() fails when HEAD is detached.
             raise OrchestratorError(
                 "You must be on a branch to use the {} orchestrator"
@@ -762,7 +763,7 @@ class PrepareRemoteDataladMixin(object):
             # TODO: Add one level deeper with reckless clone per job to deal
             # with concurrent jobs?
             if not session.exists(self.working_directory):
-                remotes = self.ds.repo.get_remotes()
+                remotes = repo.get_remotes()
                 if resource.name in remotes:
                     raise OrchestratorError(
                         "Remote '{}' unexpectedly exists. "
@@ -773,8 +774,8 @@ class PrepareRemoteDataladMixin(object):
             else:
                 remote_branch = "{}/{}".format(
                     resource.name,
-                    self.ds.repo.get_active_branch())
-                if self.ds.repo.commit_exists(remote_branch):
+                    repo.get_active_branch())
+                if repo.commit_exists(remote_branch):
                     since = ""
                 else:
                     # If the remote branch doesn't exist yet, publish will fail
@@ -931,11 +932,12 @@ class FetchDataladPairMixin(object):
         ref = self.job_refname
         lgr.info("Updating local dataset with changes from '%s'",
                  resource_name)
-        self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref),
-                           recurse_submodules="no")
+        repo = self.ds.repo
+        repo.fetch(resource_name, "{0}:{0}".format(ref),
+                   recurse_submodules="no")
         failure = False
         try:
-            self.ds.repo.merge(ref)
+            repo.merge(ref)
         except DCError as exc:
             lgr.warning(
                 "Failed to merge in changes from %s. "
