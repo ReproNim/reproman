@@ -765,10 +765,19 @@ class PrepareRemoteDataladMixin(object):
             if not session.exists(self.working_directory):
                 remotes = repo.get_remotes()
                 if resource.name in remotes:
-                    raise OrchestratorError(
-                        "Remote '{}' unexpectedly exists. "
-                        "Either delete remote or rename resource."
-                        .format(resource.name))
+                    if repo.get_remote_url(resource.name) != target_path:
+                        raise OrchestratorError(
+                            "Remote '{}' already exists with another URL. "
+                            "Either delete remote or rename resource."
+                            .format(resource.name))
+                    else:
+                        lgr.debug(
+                            "Remote '%s' matches resource name "
+                            "and points to the expected target, "
+                            "which doesn't exist.  "
+                            "Removing remote and recreating",
+                            resource.name)
+                        repo.remove_remote(resource.name)
 
                 since = None  # Avoid since="" for non-existing repo.
             else:
