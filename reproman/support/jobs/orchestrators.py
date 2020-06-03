@@ -762,23 +762,8 @@ class PrepareRemoteDataladMixin(object):
 
             # TODO: Add one level deeper with reckless clone per job to deal
             # with concurrent jobs?
-            if not session.exists(self.working_directory):
-                remotes = repo.get_remotes()
-                if resource.name in remotes:
-                    if repo.get_remote_url(resource.name) != target_path:
-                        raise OrchestratorError(
-                            "Remote '{}' already exists with another URL. "
-                            "Either delete remote or rename resource."
-                            .format(resource.name))
-                    else:
-                        lgr.debug(
-                            "Remote '%s' matches resource name "
-                            "and points to the expected target, "
-                            "which doesn't exist.  "
-                            "Removing remote and recreating",
-                            resource.name)
-                        repo.remove_remote(resource.name)
-
+            target_exists = session.exists(self.working_directory)
+            if not target_exists:
                 since = None  # Avoid since="" for non-existing repo.
             else:
                 remote_branch = "{}/{}".format(
@@ -790,6 +775,22 @@ class PrepareRemoteDataladMixin(object):
                     # If the remote branch doesn't exist yet, publish will fail
                     # with since="".
                     since = None
+
+            remotes = repo.get_remotes()
+            if resource.name in remotes:
+                if repo.get_remote_url(resource.name) != target_path:
+                    raise OrchestratorError(
+                        "Remote '{}' already exists with another URL. "
+                        "Either delete remote or rename resource."
+                        .format(resource.name))
+                elif not target_exists:
+                    lgr.debug(
+                        "Remote '%s' matches resource name "
+                        "and points to the expected target, "
+                        "which doesn't exist.  "
+                        "Removing remote and recreating",
+                        resource.name)
+                    repo.remove_remote(resource.name)
 
             self.ds.create_sibling(target_path, name=resource.name,
                                    recursive=True, existing="skip")
