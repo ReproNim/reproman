@@ -14,6 +14,7 @@ __docformat__ = 'restructuredtext'
 from collections import OrderedDict
 
 from .base import Interface
+from .common_opts import resref_type_opt
 # import reproman.interface.base  # Needed for test patching
 from ..support.param import Parameter
 from ..resource import get_manager
@@ -51,10 +52,12 @@ class Ls(Interface):
             nargs="*",
             doc="Restrict the output to this resource name or ID"
         ),
+        resref_type=resref_type_opt,
     )
 
     @staticmethod
-    def __call__(resrefs=None, verbose=False, refresh=False):
+    def __call__(resrefs=None, resref_type="auto", verbose=False,
+                 refresh=False):
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {!s:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
@@ -68,7 +71,7 @@ class Ls(Interface):
 
         for resref in resrefs:
             try:
-                resource = manager.get_resource(resref)
+                resource = manager.get_resource(resref, resref_type)
                 name = resource.name
             except ResourceError as e:
                 lgr.warning("Manager did not return a resource for %s: %s",
