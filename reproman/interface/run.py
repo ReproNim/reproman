@@ -24,6 +24,7 @@ from reproman.interface.base import Interface
 from reproman.interface.common_opts import resref_opt
 from reproman.interface.common_opts import resref_type_opt
 from reproman.support.constraints import EnsureChoice
+from reproman.support.exceptions import InsufficientArgumentsError
 from reproman.support.exceptions import JobError
 from reproman.support.jobs.local_registry import LocalRegistry
 from reproman.support.jobs.orchestrators import Orchestrator
@@ -384,7 +385,8 @@ class Run(Interface):
         if not command and "command_str" in spec:
             spec["_resolved_command_str"] = spec["command_str"]
         elif not command and "command" not in spec:
-            raise ValueError("No command specified via CLI or job spec")
+            raise InsufficientArgumentsError(
+                "No command specified via CLI or job spec")
         else:
             command = command or spec["command"]
             # Unlike datalad run, we're only accepting a list form for now.
@@ -399,7 +401,7 @@ class Run(Interface):
                 resref = spec["resource_name"]
                 resref_type = "name"
             else:
-                raise ValueError("No resource specified")
+                raise InsufficientArgumentsError("No resource specified")
         manager = get_manager()
         resource = manager.get_resource(resref, resref_type)
 
