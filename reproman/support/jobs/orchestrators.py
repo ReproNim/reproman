@@ -363,8 +363,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         # post-processing. Make sure it looks like it passed.
         if not self.has_completed:
             raise OrchestratorError(
-                "Post-processing failed for {} [status: {}] ({})"
-                .format(self.jobid, self.status, self.working_directory))
+                "Runscript handling failed for {} [status: {}]\n"
+                "Check error logs in {}"
+                .format(self.jobid, self.status, self.meta_directory))
 
     def _get_io_set(self, which, subjobs):
         spec = self.job_spec
