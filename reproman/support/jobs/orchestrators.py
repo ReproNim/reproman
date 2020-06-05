@@ -239,11 +239,20 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def submit(self):
         """Submit the job with `submitter`.
         """
+        njobs = len(self.job_spec["_command_array"])
+        if njobs > 1 and self.submitter.name == "local":
+            will_cite = op.join(self.home, ".parallel", "will-cite")
+            if not self.session.exists(will_cite):
+                lgr.info(
+                    "Submitter will use GNU Parallel.\n"
+                    "Its author asks that you cite it. "
+                    "Please run `parallel --citation` on the resource '%s'",
+                    self.resource.name)
         lgr.info("Submitting %s", self.jobid)
         templ = Template(
             **dict(self.job_spec,
                    _jobid=self.jobid,
-                   _num_subjobs=len(self.job_spec["_command_array"]),
+                   _num_subjobs=njobs,
                    root_directory=self.root_directory,
                    working_directory=self.working_directory,
                    _meta_directory=self.meta_directory,

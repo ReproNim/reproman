@@ -10,7 +10,7 @@ then
 else
     if test -z $(which parallel)
     then
-       echo "parallel (moreutils) is required to run concurrent jobs locally" >&2
+       echo "GNU parallel is required to run concurrent jobs locally" >&2
        exit 1
     fi
 
@@ -19,13 +19,16 @@ else
     metadir_rel={{ shlex_quote(_meta_directory_rel) }}
     workdir={{ shlex_quote(working_directory) }}
 
+    # Note: Orchestrator.submit() notifies the caller about the expectation to
+    # cite GNU Parallel.
     cd "$workdir"
-    parallel \
-        -i \
-        sh -c \
-        "$metadir_rel/runscript {} 1>$metadir_rel/stdout.{} 2>$metadir_rel/stderr.{}" \
-        -- $(seq 0 $(($num_subjobs - 1))) \
-        1>"$metadir_rel/stdout" 2>"$metadir_rel/stderr" &
+    seq 0 $(($num_subjobs - 1)) |
+        parallel \
+            --will-cite \
+            -q \
+            sh -c \
+            "$metadir_rel/runscript {} 1>$metadir_rel/stdout.{} 2>$metadir_rel/stderr.{}" \
+            1>"$metadir_rel/stdout" 2>"$metadir_rel/stderr" &
 fi
 
 RUNSCRIPT_PID=$!
