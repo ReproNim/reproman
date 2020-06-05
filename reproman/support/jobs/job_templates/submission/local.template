@@ -8,9 +8,17 @@ if test $num_subjobs -eq 1
 then
     "$metadir/runscript" 0 1>"$metadir/stdout.0" 2>"$metadir/stderr.0" &
 else
-    if test -z $(which parallel)
+    dryerr=0
+    echo '' | parallel --will-cite echo >/dev/null 2>&1 || dryerr=$?
+
+    if test $dryerr -ne 0
     then
-       echo "GNU parallel is required to run concurrent jobs locally" >&2
+       err="GNU parallel is required to run concurrent jobs locally"
+       if test $dryerr -ne 127
+       then
+           err="$err. An incompatible 'parallel' program (likely from moreutils) is installed."
+       fi
+       echo "$err" >&2
        exit 1
     fi
 
