@@ -111,11 +111,17 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
         self.template = None
 
-    def _find_root(self):
+    @property
+    @cached_property
+    def home(self):
+        "$HOME directory on resource."
         home = self.session.query_envvars().get("HOME")
         if not home:
             raise OrchestratorError("Could not determine $HOME on remote")
-        root_directory = op.join(home, ".reproman", "run-root")
+        return home
+
+    def _find_root(self):
+        root_directory = op.join(self.home, ".reproman", "run-root")
         lgr.info("No root directory supplied for %s; using '%s'",
                  self.resource.name, root_directory)
         if not op.isabs(root_directory):
