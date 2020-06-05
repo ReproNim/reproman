@@ -630,13 +630,20 @@ class PrepareRemoteDataladMixin(object):
         if status == "unknown":
             # The local tree might be different because of another just. Check
             # the ref for the status.
-            status_from_ref = self._execute_in_wdir(
-                "git cat-file -p {}:{}"
-                .format(self.job_refname,
-                        # FIXME: How to handle subjobs?
-                        op.relpath(op.join(self.meta_directory, "status.0"),
-                                   self.working_directory)))
-            status = status_from_ref.strip() or status
+            try:
+                status_from_ref = self._execute_in_wdir(
+                    "git cat-file -p {}:{}"
+                    .format(self.job_refname,
+                            # FIXME: How to handle subjobs?
+                            op.relpath(op.join(self.meta_directory, "status.0"),
+                                       self.working_directory)))
+            except OrchestratorError as exc:
+                # Most likely the ref was never created because the runscript
+                # failed. Let follow() signal the error.
+                lgr.debug("Failed to get status from %s tree: %s",
+                          self.job_refname, exc_str(exc))
+            else:
+                status = status_from_ref.strip() or status
         return status
 
     def get_failed_subjobs(self):
