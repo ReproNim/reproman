@@ -8,9 +8,17 @@ if test $num_subjobs -eq 1
 then
     "$metadir/runscript" 0 1>"$metadir/stdout.0" 2>"$metadir/stderr.0" &
 else
-    if test -z $(which parallel)
+    dryerr=0
+    echo '' | parallel --will-cite echo >/dev/null 2>&1 || dryerr=$?
+
+    if test $dryerr -ne 0
     then
-       echo "parallel (moreutils) is required to concurrent jobs locally" >&2
+       err="GNU parallel is required to run concurrent jobs locally"
+       if test $dryerr -ne 127
+       then
+           err="$err. An incompatible 'parallel' program (likely from moreutils) is installed."
+       fi
+       echo "$err" >&2
        exit 1
     fi
 
@@ -19,13 +27,16 @@ else
     metadir_rel={{ shlex_quote(_meta_directory_rel) }}
     workdir={{ shlex_quote(working_directory) }}
 
+    # Note: Orchestrator.submit() notifies the caller about the expectation to
+    # cite GNU Parallel.
     cd "$workdir"
-    parallel \
-        -i \
-        sh -c \
-        "$metadir_rel/runscript {} 1>$metadir_rel/stdout.{} 2>$metadir_rel/stderr.{}" \
-        -- $(seq 0 $(($num_subjobs - 1))) \
-        1>"$metadir_rel/stdout" 2>"$metadir_rel/stderr" &
+    seq 0 $(($num_subjobs - 1)) |
+        parallel \
+            --will-cite \
+            -q \
+            sh -c \
+            "$metadir_rel/runscript {} 1>$metadir_rel/stdout.{} 2>$metadir_rel/stderr.{}" \
+            1>"$metadir_rel/stdout" 2>"$metadir_rel/stderr" &
 fi
 
 RUNSCRIPT_PID=$!

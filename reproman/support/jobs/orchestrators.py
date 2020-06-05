@@ -111,11 +111,17 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
         self.template = None
 
-    def _find_root(self):
+    @property
+    @cached_property
+    def home(self):
+        "$HOME directory on resource."
         home = self.session.query_envvars().get("HOME")
         if not home:
             raise OrchestratorError("Could not determine $HOME on remote")
-        root_directory = op.join(home, ".reproman", "run-root")
+        return home
+
+    def _find_root(self):
+        root_directory = op.join(self.home, ".reproman", "run-root")
         lgr.info("No root directory supplied for %s; using '%s'",
                  self.resource.name, root_directory)
         if not op.isabs(root_directory):
@@ -233,11 +239,20 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def submit(self):
         """Submit the job with `submitter`.
         """
+        njobs = len(self.job_spec["_command_array"])
+        if njobs > 1 and self.submitter.name == "local":
+            will_cite = op.join(self.home, ".parallel", "will-cite")
+            if not self.session.exists(will_cite):
+                lgr.info(
+                    "Submitter will use GNU Parallel.\n"
+                    "Its author asks that you cite it. "
+                    "Please run `parallel --citation` on the resource '%s'",
+                    self.resource.name)
         lgr.info("Submitting %s", self.jobid)
         templ = Template(
             **dict(self.job_spec,
                    _jobid=self.jobid,
-                   _num_subjobs=len(self.job_spec["_command_array"]),
+                   _num_subjobs=njobs,
                    root_directory=self.root_directory,
                    working_directory=self.working_directory,
                    _meta_directory=self.meta_directory,
@@ -363,8 +378,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         # post-processing. Make sure it looks like it passed.
         if not self.has_completed:
             raise OrchestratorError(
-                "Post-processing failed for {} [status: {}] ({})"
-                .format(self.jobid, self.status, self.working_directory))
+                "Runscript handling failed for {} [status: {}]\n"
+                "Check error logs in {}"
+                .format(self.jobid, self.status, self.meta_directory))
 
     def _get_io_set(self, which, subjobs):
         spec = self.job_spec
@@ -629,13 +645,20 @@ class PrepareRemoteDataladMixin(object):
         if status == "unknown":
             # The local tree might be different because of another just. Check
             # the ref for the status.
-            status_from_ref = self._execute_in_wdir(
-                "git cat-file -p {}:{}"
-                .format(self.job_refname,
-                        # FIXME: How to handle subjobs?
-                        op.relpath(op.join(self.meta_directory, "status.0"),
-                                   self.working_directory)))
-            status = status_from_ref.strip() or status
+            try:
+                status_from_ref = self._execute_in_wdir(
+                    "git cat-file -p {}:{}"
+                    .format(self.job_refname,
+                            # FIXME: How to handle subjobs?
+                            op.relpath(op.join(self.meta_directory, "status.0"),
+                                       self.working_directory)))
+            except OrchestratorError as exc:
+                # Most likely the ref was never created because the runscript
+                # failed. Let follow() signal the error.
+                lgr.debug("Failed to get status from %s tree: %s",
+                          self.job_refname, exc_str(exc))
+            else:
+                status = status_from_ref.strip() or status
         return status
 
     def get_failed_subjobs(self):
