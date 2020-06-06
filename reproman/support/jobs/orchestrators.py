@@ -964,6 +964,7 @@ class FetchDataladPairMixin(object):
                 "Failed to merge in changes from %s. "
                 "Check %s for merge conflicts. %s",
                 ref, self.ds.path, exc_str(exc))
+            failure = True
         else:
             # Handle any subdataset updates. We could avoid this if we knew
             # there were no subdataset changes, but it's probably simplest to
