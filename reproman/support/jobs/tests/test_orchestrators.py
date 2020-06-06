@@ -788,3 +788,18 @@ def test_orc_datalad_pair_new_submodule(job_spec, dataset, shell):
         orc.follow()
         orc.fetch()
         assert sub.repo.is_under_annex("a")
+
+
+def test_orc_datalad_pair_existing_remote(job_spec, dataset, shell):
+    root_directory = job_spec["root_directory"]
+    dataset.repo.add_remote("localshell", "i-dont-match")
+    with chpwd(dataset.path):
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec)
+        # If a remote with the resource name exists, we abort if the
+        # URL doesn't match the expected target...
+        with pytest.raises(OrchestratorError):
+            orc.prepare_remote()
+        # ... and continue if it does.
+        dataset.repo.set_remote_url("localshell", orc.working_directory)
+        orc.prepare_remote()
