@@ -14,11 +14,13 @@ __docformat__ = 'restructuredtext'
 from collections import OrderedDict
 
 from .base import Interface
+from .common_opts import resref_type_opt
 # import reproman.interface.base  # Needed for test patching
 from ..support.param import Parameter
 from ..resource import get_manager
 from ..ui import ui
 from ..support.exceptions import ResourceError
+from ..support.exceptions import ResourceNotFoundError
 from ..dochelpers import exc_str
 
 from logging import getLogger
@@ -51,10 +53,12 @@ class Ls(Interface):
             nargs="*",
             doc="Restrict the output to this resource name or ID"
         ),
+        resref_type=resref_type_opt,
     )
 
     @staticmethod
-    def __call__(resrefs=None, verbose=False, refresh=False):
+    def __call__(resrefs=None, resref_type="auto", verbose=False,
+                 refresh=False):
         id_length = 19  # todo: make it possible to output them long
         template = '{:<20} {:<20} {:<%(id_length)s} {!s:<10}' % locals()
         ui.message(template.format('RESOURCE NAME', 'TYPE', 'ID', 'STATUS'))
@@ -66,10 +70,15 @@ class Ls(Interface):
             resrefs = (manager.inventory[n]["id"] for n in sorted(manager)
                        if not n.startswith("_"))
 
+        unknown_resrefs = []
         for resref in resrefs:
             try:
-                resource = manager.get_resource(resref)
+                resource = manager.get_resource(resref, resref_type)
                 name = resource.name
+            except ResourceNotFoundError as e:
+                lgr.debug("Resource %s not found: %s", resref, exc_str(e))
+                unknown_resrefs.append(resref)
+                continue
             except ResourceError as e:
                 lgr.warning("Manager did not return a resource for %s: %s",
                             resref, exc_str(e))
@@ -100,4 +109,9 @@ class Ls(Interface):
             manager.save_inventory()
         else:
             ui.message('Use --refresh option to view updated status.')
+
+        if unknown_resrefs:
+            raise ResourceNotFoundError(
+                "Could not find the following resources: {}"
+                .format(", ".join(unknown_resrefs)))
         return results

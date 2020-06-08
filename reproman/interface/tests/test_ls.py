@@ -13,6 +13,7 @@ import pytest
 
 from ...api import ls
 from ...resource.base import ResourceManager
+from ...support.exceptions import ResourceNotFoundError
 from ...tests.skip import skipif
 
 
@@ -87,3 +88,10 @@ def test_ls_interface_limited(ls_fn):
     assert "326b0fdfbf838" in results
     assert "i-22221ddf096c22bb0" not in results
     assert "i-3333f40de2b9b8967" in results
+
+
+def test_ls_unknown(resource_manager):
+    with patch("reproman.interface.ls.get_manager",
+               return_value=resource_manager):
+        with pytest.raises(ResourceNotFoundError):
+            ls(resrefs=["unknown"], resref_type="name")
