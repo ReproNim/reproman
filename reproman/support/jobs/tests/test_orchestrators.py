@@ -466,7 +466,7 @@ def test_orc_datalad_no_remote_get(tmpdir, shell, should_pass):
     with chpwd(ds_b.path):
         orc = orcs.DataladNoRemoteOrchestrator(
             shell, submission_type="local",
-            job_spec={"root_directory": op.join(topdir, "nm-run"),
+            job_spec={"root_directory": op.join(topdir, "run-root"),
                       "inputs": ["foo"],
                       "outputs": ["out"],
                       "_resolved_command_str": 'sh -c "cat foo foo >out"'})
