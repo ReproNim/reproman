@@ -497,7 +497,8 @@ def call_check_dl_results(fn, failure_msg, *args, **kwds):
     """
     for res in fn(*args, **kwds):
         lgr.debug("datalad publish result: %s", res)
-        if res["status"] in ["error", "impossible"]:
+        if res["status"] not in ["ok", "notneeded"]:
+
             raise OrchestratorError("{}: {}".format(failure_msg, res))
 
 
