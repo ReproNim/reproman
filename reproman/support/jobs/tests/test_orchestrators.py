@@ -19,7 +19,6 @@ import pytest
 from reproman.consts import TEST_SSH_DOCKER_DIGEST
 from reproman.utils import chpwd
 from reproman.utils import swallow_logs
-from reproman.utils import swallow_outputs
 from reproman.resource.shell import Shell
 from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
