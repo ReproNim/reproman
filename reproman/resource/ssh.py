@@ -41,7 +41,8 @@ class SSH(Resource):
     name = attrib(default=attr.NOTHING)
 
     # Configurable options for each "instance"
-    host = attrib(default=attr.NOTHING, doc="DNS or IP address of server")
+    host = attrib(default=attr.NOTHING,
+                  doc="DNS or IP address of server or ssh_config nickname")
     port = attrib(
         doc="Port to connect to on remote host")
     key_filename = attrib(
