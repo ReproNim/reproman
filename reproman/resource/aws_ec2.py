@@ -65,6 +65,12 @@ class AwsEc2(Resource):
     _ec2_resource = attrib()
     _ec2_instance = attrib()
 
+    @property
+    def ec2_name(self):
+        if self.name:
+            return 'reproman-' + self.name
+        return self.name
+
     def connect(self):
         """
         Open a connection to the environment resource.
@@ -83,7 +89,7 @@ class AwsEc2(Resource):
             instances = self._ec2_resource.instances.filter(
                 Filters=[{
                         'Name': 'tag:Name',
-                        'Values': [self.name]
+                        'Values': [self.ec2_name]
                     },
                     {
                         'Name': 'instance-state-name',
@@ -162,7 +168,7 @@ class AwsEc2(Resource):
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
             Resources=[instances[0].id],
-            Tags=[{'Key': 'Name', 'Value': self.name}]
+            Tags=[{'Key': 'Name', 'Value': self.ec2_name}]
         )
 
         # Save the EC2 Instance object.
