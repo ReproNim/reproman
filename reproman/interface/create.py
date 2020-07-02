@@ -65,7 +65,7 @@ class Create(Interface):
         backend_parameters=Parameter(
             metavar="PARAM",
             args=("-b", "--backend-parameters"),
-            nargs="+",
+            action="append", 
             doc="""One or more backend parameters in the form KEY=VALUE. Use
             the command `reproman backend-parameters` to see the list of
             available backend parameters."""
