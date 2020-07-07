@@ -24,6 +24,8 @@ from reproman.interface.base import Interface
 from reproman.interface.common_opts import resref_opt
 from reproman.interface.common_opts import resref_type_opt
 from reproman.support.constraints import EnsureChoice
+from reproman.support.exceptions import InsufficientArgumentsError
+from reproman.support.exceptions import JobError
 from reproman.support.jobs.local_registry import LocalRegistry
 from reproman.support.jobs.orchestrators import Orchestrator
 from reproman.support.jobs.orchestrators import ORCHESTRATORS
@@ -201,6 +203,9 @@ JOB_PARAMETERS = collections.OrderedDict(
 )
 
 
+_more_than_once_doc = " [CMD: This option can be given more than once. CMD]"
+
+
 class Run(Interface):
     """Run a command on the specified resource.
 
@@ -226,11 +231,13 @@ class Run(Interface):
         submitter=Parameter(
             args=("--submitter", "--sub"),
             metavar="NAME",
+            constraints=EnsureChoice(None, *SUBMITTERS),
             doc=(JOB_PARAMETERS["submitter"] +
                  "[CMD:  Use --list to see available submitters CMD]")),
         orchestrator=Parameter(
             args=("--orchestrator", "--orc"),
             metavar="NAME",
+            constraints=EnsureChoice(None, *ORCHESTRATORS),
             doc=(JOB_PARAMETERS["orchestrator"] +
                  "[CMD:  Use --list to see available orchestrators CMD]")),
         batch_spec=Parameter(
@@ -247,7 +254,7 @@ class Run(Interface):
             metavar="PATH",
             doc=(JOB_PARAMETERS["batch_parameters"] +
                  " See [CMD: --batch-spec CMD][PY: `batch_spec` PY]"
-                 " for specifying more complex records.")),
+                 " for specifying more complex records." + _more_than_once_doc)),
         job_specs=Parameter(
             args=("--job-spec", "--js"),
             dest="job_specs",
@@ -256,7 +263,7 @@ class Run(Interface):
             doc="""YAML files that define job parameters. Multiple paths can be
             given. If a parameter is defined in multiple specs, the value from
             the last path that defines it is used[CMD: . Use --list to see
-            available parameters for the built-in templates CMD]."""),
+            available parameters for the built-in templates CMD].""" + _more_than_once_doc),
         job_parameters=Parameter(
             metavar="PARAM",
             dest="job_parameters",
@@ -269,23 +276,23 @@ class Run(Interface):
             The values are available as fields in the templates used to
             generate both the run script and submission script[CMD: . Use
             --list to see available parameters for the built-in templates
-            CMD]."""),
+            CMD].""" + _more_than_once_doc),
         inputs=Parameter(
             args=("-i", "--input"),
             dest="inputs",
             metavar="PATH",
             action="append",
-            doc="""An input file to the command. How input files are used
+            doc="""An input path to the command. How input paths are used
             depends on the orchestrator, but, at the very least, the
             orchestrator should try to make these paths available on the
-            resource."""),
+            resource.""" + _more_than_once_doc),
         outputs=Parameter(
             args=("-o", "--output"),
             dest="outputs",
             metavar="PATH",
             action="append",
-            doc="""An output file to the command. How output files are handled
-            depends on the orchestrator."""),
+            doc="""An output path to the command. How output paths are handled
+            depends on the orchestrator.""" + _more_than_once_doc),
         follow=Parameter(
             args=("--follow",),
             metavar="ACTION",
@@ -378,7 +385,8 @@ class Run(Interface):
         if not command and "command_str" in spec:
             spec["_resolved_command_str"] = spec["command_str"]
         elif not command and "command" not in spec:
-            raise ValueError("No command specified via CLI or job spec")
+            raise InsufficientArgumentsError(
+                "No command specified via CLI or job spec")
         else:
             command = command or spec["command"]
             # Unlike datalad run, we're only accepting a list form for now.
@@ -393,7 +401,7 @@ class Run(Interface):
                 resref = spec["resource_name"]
                 resref_type = "name"
             else:
-                raise ValueError("No resource specified")
+                raise InsufficientArgumentsError("No resource specified")
         manager = get_manager()
         resource = manager.get_resource(resref, resref_type)
 
@@ -437,3 +445,9 @@ class Run(Interface):
                             manager.delete(res)
             orc.fetch(on_remote_finish=remote_fn)
             lreg.unregister(orc.jobid)
+            # TODO: this would duplicate what is done in each .fetch
+            # implementation above anyways.  We might want to make
+            # fetch return a record with fetched content and failed subjobs
+            failed = orc.get_failed_subjobs()
+            if failed:
+                raise JobError(failed=failed)

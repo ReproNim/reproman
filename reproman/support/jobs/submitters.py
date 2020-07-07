@@ -14,6 +14,7 @@ import collections
 from functools import wraps
 import json
 import logging
+import math
 import re
 import time
 
@@ -90,6 +91,13 @@ class Submitter(object, metaclass=abc.ABCMeta):
     def follow(self):
         """Follow submitted command, exiting once it is finished.
         """
+        # Sleeping and announcement to the user would follow different
+        # time interval.  We will not re-announce unless at least 10 seconds or
+        # 10% of the overall waiting time has passed. At the same time
+        # we will keep increasing sleep time according to the log of the past
+        # time but no longer than 10 sec
+        t0 = time.time()
+        next_announce = t0
         while True:
             our_status, their_status = self.status
             if our_status != "waiting":
@@ -97,9 +105,16 @@ class Submitter(object, metaclass=abc.ABCMeta):
                     lgr.info("Final state of job %s: %s",
                              self.submission_id, their_status)
                 break
-            lgr.info("Waiting on job %s: %s",
-                     self.submission_id, their_status)
-            time.sleep(10)  # TODO: pull out/make configurable
+            t = time.time()
+            dt = (t - t0)
+            if t >= next_announce:
+                next_announce = t + max(5, dt*1.1)
+                lgr.info("Waiting on job %s: %s. Next heartbeat in %d seconds",
+                         self.submission_id, their_status, next_announce - t)
+            # for dt=0sec, no sleep at all but then grows
+            sleep_time = min(10, math.log2(1 + dt))
+            lgr.debug("Sleeping for %.2f sec before next check", sleep_time)
+            time.sleep(sleep_time)
 
 
 class PbsSubmitter(Submitter):

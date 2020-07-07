@@ -53,16 +53,13 @@ then
 # least for now, below is a brittle solution were the last job waits until it
 # sees that all other jobs have exited and then runs the post-command stuff.
 nstatus () {
-    find "$metadir" -regex '.*/status\.[0-9]+' | wc -l
+    grep -E '^(succeed|fail)' "$metadir"/status.* | wc -l
 }
 
-# Ugly, but this sleep makes it less likely for the post-command tar to fail
-# complaining about a log from another run is changing.
-sleep 1
+echo "[ReproMan] waiting for all jobs to complete before running post-command..."
 while test $(nstatus) -lt $num_subjobs
 do
-    echo "[ReproMan] Waiting for all jobs to complete before running post-command..."
-    sleep 3
+    sleep 1
 done
 
 echo "[ReproMan] post-command..."

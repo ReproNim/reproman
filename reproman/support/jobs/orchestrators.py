@@ -34,14 +34,15 @@ from shlex import quote as shlex_quote
 
 import reproman
 from reproman.dochelpers import borrowdoc
+from reproman.dochelpers import exc_str
 from reproman.utils import cached_property
 from reproman.utils import chpwd
 from reproman.utils import write_update
+from reproman.resource.shell import ShellSession
 from reproman.resource.ssh import SSHSession
 from reproman.support.jobs.submitters import SUBMITTERS
 from reproman.support.jobs.template import Template
 from reproman.support.exceptions import CommandError
-from reproman.support.exceptions import MissingExternalDependency
 from reproman.support.exceptions import OrchestratorError
 from reproman.support.external_versions import external_versions
 
@@ -110,11 +111,17 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
         self.template = None
 
-    def _find_root(self):
+    @property
+    @cached_property
+    def home(self):
+        "$HOME directory on resource."
         home = self.session.query_envvars().get("HOME")
         if not home:
             raise OrchestratorError("Could not determine $HOME on remote")
-        root_directory = op.join(home, ".reproman", "run-root")
+        return home
+
+    def _find_root(self):
+        root_directory = op.join(self.home, ".reproman", "run-root")
         lgr.info("No root directory supplied for %s; using '%s'",
                  self.resource.name, root_directory)
         if not op.isabs(root_directory):
@@ -213,11 +220,20 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def submit(self):
         """Submit the job with `submitter`.
         """
+        njobs = len(self.job_spec["_command_array"])
+        if njobs > 1 and self.submitter.name == "local":
+            will_cite = op.join(self.home, ".parallel", "will-cite")
+            if not self.session.exists(will_cite):
+                lgr.info(
+                    "Submitter will use GNU Parallel.\n"
+                    "Its author asks that you cite it. "
+                    "Please run `parallel --citation` on the resource '%s'",
+                    self.resource.name)
         lgr.info("Submitting %s", self.jobid)
         templ = Template(
             **dict(self.job_spec,
                    _jobid=self.jobid,
-                   _num_subjobs=len(self.job_spec["_command_array"]),
+                   _num_subjobs=njobs,
                    root_directory=self.root_directory,
                    working_directory=self.working_directory,
                    _meta_directory=self.meta_directory,
@@ -343,8 +359,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         # post-processing. Make sure it looks like it passed.
         if not self.has_completed:
             raise OrchestratorError(
-                "Post-processing failed for {} [status: {}] ({})"
-                .format(self.jobid, self.status, self.working_directory))
+                "Runscript handling failed for {} [status: {}]\n"
+                "Check error logs in {}"
+                .format(self.jobid, self.status, self.meta_directory))
 
     def _get_io_set(self, which, subjobs):
         spec = self.job_spec
@@ -433,10 +450,10 @@ def _datalad_format_command(ds, spec):
 
     Create "*_array" keys and format commands with DataLad's `format_command`.
     """
-    from datalad.interface.run import format_command
+    from datalad.core.local.run import format_command
     # DataLad's GlobbedPaths _should_ be the same as ours, but let's use
     # DataLad's to avoid potential discrepancies with datalad-run's behavior.
-    from datalad.interface.run import GlobbedPaths
+    from datalad.core.local.run import GlobbedPaths
 
     batch_parameters = spec.get("_resolved_batch_parameters") or [{}]
     spec["_command_array"] = []
@@ -459,16 +476,36 @@ def _datalad_format_command(ds, spec):
     spec["_extra_inputs_array"] = [exinputs] * len(batch_parameters)
 
 
+def call_check_dl_results(fn, failure_msg, *args, **kwds):
+    """Call function, checking status of DataLad-style results.
+
+    Parameters
+    ----------
+    fn : callable
+        Function that yields results.
+    failure_msg : str
+        Message to show on failure. The result dict is appended to this text.
+    *args, **kwds
+        Arguments passed to `fn`.
+
+    Raises
+    ------
+    An OrchestratorError if a failure is encountered.
+    """
+    for res in fn(*args, **kwds):
+        lgr.debug("datalad publish result: %s", res)
+        if res["status"] not in ["ok", "notneeded"]:
+
+            raise OrchestratorError("{}: {}".format(failure_msg, res))
+
+
 class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
     """Execute command assuming (at least) a local dataset.
     """
 
     def __init__(self, resource, submission_type, job_spec=None,
                  resurrection=False):
-        if not external_versions["datalad"]:
-            raise MissingExternalDependency(
-                "DataLad is required for orchestrator '{}'".format(self.name))
-
+        external_versions.check("datalad", min_version="0.13")
         super(DataladOrchestrator, self).__init__(
             resource, submission_type, job_spec, resurrection=resurrection)
 
@@ -537,8 +574,8 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
              "**/failed/* annex.largefiles=nothing\n"
              "idmap annex.largefiles=nothing\n"))
 
-        self.ds.add([gitignore, gitattrs],
-                    message="[ReproMan] Configure jobs directory")
+        self.ds.save([gitignore, gitattrs],
+                     message="[ReproMan] Configure jobs directory")
 
 
 # Orchestrator method mixins
@@ -565,33 +602,11 @@ class PrepareRemotePlainMixin(object):
 
 
 def _format_ssh_url(user, host, port, path):
-    """Format an SSH URL for DataLad, considering installed version.
-    """
-    if external_versions["datalad"] >= "0.11.2":
-        fmt = "ssh://{user}{host}{port}{path}"
-        warn = False
-    else:
-        # Stick to git scp-like syntax because create-sibling will fail with
-        # something like
-        #
-        #   stderr: 'fatal: ssh variant 'simple' does not support setting port'
-        #   [cmd.py:wait:415] (GitCommandError)
-        #
-        # with the default value of ssh.variant. For non-standard ports, this
-        # relies on the user setting up their ssh config.
-        fmt = "{user}{host}:{path}"
-        warn = port is not None
-        port = None
-    sshurl = fmt.format(user=user + "@" if user else "",
-                        host=host,
-                        port=":" + str(port) if port is not None else "",
-                        path=path)
-
-    if warn:
-        lgr.warning("Using SSH url %s; "
-                    "port should be specified in SSH config",
-                    sshurl)
-    return sshurl
+    return "ssh://{user}{host}{port}{path}".format(
+        user=user + "@" if user else "",
+        host=host,
+        port=":" + str(port) if port is not None else "",
+        path=path)
 
 
 class PrepareRemoteDataladMixin(object):
@@ -634,13 +649,20 @@ class PrepareRemoteDataladMixin(object):
         if status == "unknown":
             # The local tree might be different because of another just. Check
             # the ref for the status.
-            status_from_ref = self._execute_in_wdir(
-                "git cat-file -p {}:{}"
-                .format(self.job_refname,
-                        # FIXME: How to handle subjobs?
-                        op.relpath(op.join(self.meta_directory, "status.0"),
-                                   self.working_directory)))
-            status = status_from_ref.strip() or status
+            try:
+                status_from_ref = self._execute_in_wdir(
+                    "git cat-file -p {}:{}"
+                    .format(self.job_refname,
+                            # FIXME: How to handle subjobs?
+                            op.relpath(op.join(self.meta_directory, "status.0"),
+                                       self.working_directory)))
+            except OrchestratorError as exc:
+                # Most likely the ref was never created because the runscript
+                # failed. Let follow() signal the error.
+                lgr.debug("Failed to get status from %s tree: %s",
+                          self.job_refname, exc_str(exc))
+            else:
+                status = status_from_ref.strip() or status
         return status
 
     def get_failed_subjobs(self):
@@ -700,6 +722,10 @@ class PrepareRemoteDataladMixin(object):
         """Try to get datataset and subdatasets into the correct state.
         """
         self._checkout_target()
+        # fixup 0: 'datalad create-sibling --recursive' leaves the subdataset
+        # uninitialized (see DataLad's 78e00dcd2).
+        self._execute_in_wdir(["git", "submodule", "update", "--init"])
+
         # fixup 1: Check out target commit in subdatasets. This should later be
         # replaced by the planned Datalad functionality to get an entire
         # dataset hierarchy to a recorded state.
@@ -729,7 +755,8 @@ class PrepareRemoteDataladMixin(object):
     def prepare_remote(self):
         """Prepare dataset sibling on remote.
         """
-        if not self.ds.repo.get_active_branch():
+        repo = self.ds.repo
+        if not repo.get_active_branch():
             # publish() fails when HEAD is detached.
             raise OrchestratorError(
                 "You must be on a branch to use the {} orchestrator"
@@ -741,63 +768,64 @@ class PrepareRemoteDataladMixin(object):
         session = self.session
 
         inputs = list(self.get_inputs())
-        if isinstance(session, SSHSession):
-            if resource.key_filename:
-                dl_version = external_versions["datalad"]
-                if dl_version < "0.11.3":
-                    # Connecting will probably fail because `key_filename` is
-                    # set, but we have no way to tell DataLad about it.
-                    lgr.warning(
-                        "DataLad version %s detected. "
-                        "0.11.3 or greater is required to use an "
-                        "identity file not specified in ~/.ssh/config",
-                        dl_version)
-                # Make the identity file available to 'datalad sshrun' even if
-                # it is not configured in .ssh/config. This is particularly
-                # important for AWS keys.
-                os.environ["DATALAD_SSH_IDENTITYFILE"] = resource.key_filename
-                from datalad import cfg
-                cfg.reload(force=True)
+        if isinstance(session, (SSHSession, ShellSession)):
+            if isinstance(session, SSHSession):
+                if resource.key_filename:
+                    # Make the identity file available to 'datalad sshrun' even
+                    # if it is not configured in .ssh/config. This is
+                    # particularly important for AWS keys.
+                    os.environ["DATALAD_SSH_IDENTITYFILE"] = resource.key_filename
+                    from datalad import cfg
+                    cfg.reload(force=True)
 
-            sshurl = _format_ssh_url(
-                resource.user,
-                # AWS resource does not have host attribute.
-                getattr(resource, "host", None) or session.connection.host,
-                getattr(resource, "port", None),
-                self.working_directory)
+                target_path = _format_ssh_url(
+                    resource.user,
+                    # AWS resource does not have host attribute.
+                    getattr(resource, "host", None) or session.connection.host,
+                    getattr(resource, "port", None),
+                    self.working_directory)
+            else:
+                target_path = self.working_directory
 
             # TODO: Add one level deeper with reckless clone per job to deal
             # with concurrent jobs?
-            if not session.exists(self.working_directory):
-                remotes = self.ds.repo.get_remotes()
-                if resource.name in remotes:
-                    raise OrchestratorError(
-                        "Remote '{}' unexpectedly exists. "
-                        "Either delete remote or rename resource."
-                        .format(resource.name))
-
-                self.ds.create_sibling(sshurl, name=resource.name,
-                                       recursive=True)
+            target_exists = session.exists(self.working_directory)
+            if not target_exists:
                 since = None  # Avoid since="" for non-existing repo.
             else:
                 remote_branch = "{}/{}".format(
                     resource.name,
-                    self.ds.repo.get_active_branch())
-                if self.ds.repo.commit_exists(remote_branch):
+                    repo.get_active_branch())
+                if repo.commit_exists(remote_branch):
                     since = ""
                 else:
                     # If the remote branch doesn't exist yet, publish will fail
                     # with since="".
                     since = None
 
-            from datalad.support.exceptions import IncompleteResultsError
-            try:
-                self.ds.publish(to=resource.name, since=since, recursive=True)
-            except IncompleteResultsError:
-                raise OrchestratorError(
-                    "'datalad publish' failed. Try running "
-                    "'datalad update -s {} --merge --recursive' first"
-                    .format(resource.name))
+            remotes = repo.get_remotes()
+            if resource.name in remotes:
+                if repo.get_remote_url(resource.name) != target_path:
+                    raise OrchestratorError(
+                        "Remote '{}' already exists with another URL. "
+                        "Either delete remote or rename resource."
+                        .format(resource.name))
+                elif not target_exists:
+                    lgr.debug(
+                        "Remote '%s' matches resource name "
+                        "and points to the expected target, "
+                        "which doesn't exist.  "
+                        "Removing remote and recreating",
+                        resource.name)
+                    repo.remove_remote(resource.name)
+
+            self.ds.create_sibling(target_path, name=resource.name,
+                                   recursive=True, existing="skip")
+
+            call_check_dl_results(
+                self.ds.publish, "'datalad publish' failed",
+                to=resource.name, since=since,
+                recursive=True, on_failure="ignore")
 
             self._fix_up_dataset()
 
@@ -814,19 +842,6 @@ class PrepareRemoteDataladMixin(object):
                     # to sync wrt content.
                     self.ds.publish(to=resource.name, path=inputs,
                                     recursive=True)
-        elif resource.type == "shell":
-            import datalad.api as dl
-            if not session.exists(self.working_directory):
-                dl.install(self.working_directory, source=self.ds.path)
-
-            self.session.execute_command(
-                "git push '{}' HEAD:{}-base"
-                .format(self.working_directory, self.job_refname))
-            self._checkout_target()
-
-            if inputs:
-                installed_ds = dl.Dataset(self.working_directory)
-                installed_ds.get(inputs)
         else:
             # TODO: Handle more types?
             raise OrchestratorError("Unsupported resource type {}"
@@ -916,6 +931,13 @@ def head_at(dataset, commit):
         lgr.info("Checking out %s", commit)
         try:
             dataset.repo.checkout(commit)
+            # Note: It's tempting try to use --recurse-submodules here, but
+            # that will absorb submodule's .git/ directories, and DataLad
+            # relies on plain .git/ directories.
+            if dataset.repo.dirty:
+                raise OrchestratorError(
+                    "Refusing to move HEAD due to submodule state change "
+                    "within {}".format(dataset.path))
             yield moved
         finally:
             lgr.info("Restoring checkout of %s", to_restore)
@@ -936,43 +958,53 @@ class FetchDataladPairMixin(object):
             will be passed two arguments, the resource and the failed subjobs
             (list of ints).
         """
+        from datalad.support.exceptions import CommandError as DCError
+
         lgr.info("Fetching results for %s", self.jobid)
         failed = self.get_failed_subjobs()
-        if self.resource.type == "ssh":
-            resource_name = self.resource.name
-            ref = self.job_refname
-            lgr.info("Updating local dataset with changes from '%s'",
-                     resource_name)
-            self.ds.repo.fetch(resource_name, "{0}:{0}".format(ref))
-            self.ds.update(sibling=resource_name,
-                           merge=True, recursive=True)
+        resource_name = self.resource.name
+        ref = self.job_refname
+        lgr.info("Updating local dataset with changes from '%s'",
+                 resource_name)
+        repo = self.ds.repo
+        repo.fetch(resource_name, "{0}:{0}".format(ref),
+                   recurse_submodules="no")
+        failure = False
+        try:
+            repo.merge(ref)
+        except DCError as exc:
+            lgr.warning(
+                "Failed to merge in changes from %s. "
+                "Check %s for merge conflicts. %s",
+                ref, self.ds.path, exc_str(exc))
+            failure = True
+        else:
+            # Handle any subdataset updates. We could avoid this if we knew
+            # there were no subdataset changes, but it's probably simplest to
+            # just unconditionally call update().
+            failure = False
+            try:
+                call_check_dl_results(
+                    self.ds.update,
+                    "'datalad update' failed",
+                    sibling=resource_name,
+                    merge=True, follow="parentds", recursive=True,
+                    on_failure="ignore")
+            except OrchestratorError:
+                failure = True
+
+        if not failure:
             lgr.info("Getting outputs from '%s'", resource_name)
-            with head_at(self.ds, ref):
-                outputs = list(self.get_outputs())
-                if outputs:
-                    self.ds.get(path=outputs)
+            outputs = list(self.get_outputs())
+            if outputs:
+                self.ds.get(path=outputs)
 
-            self.log_failed(failed,
-                            func=lambda mdir, _: self.ds.get(path=mdir))
+        self.log_failed(failed,
+                        func=lambda mdir, _: self.ds.get(path=mdir))
 
-            lgr.info("Finished with remote resource '%s'", resource_name)
-            if on_remote_finish:
-                on_remote_finish(self.resource, failed)
-            if not self.ds.repo.is_ancestor(ref, "HEAD"):
-                lgr.info("Results stored on %s. "
-                         "Bring them into this branch with "
-                         "'git merge %s'",
-                         ref, ref)
-        elif self.resource.type == "shell":
-            # Below is just for local testing.  It doesn't support actually
-            # getting the content.
-            with chpwd(self.ds.path):
-                self.session.execute_command(
-                    ["git", "fetch", self.working_directory,
-                     "{0}:{0}".format(self.job_refname)])
-                self.session.execute_command(
-                    ["git", "merge", "FETCH_HEAD"])
-            self.log_failed(failed)
+        lgr.info("Finished with remote resource '%s'", resource_name)
+        if on_remote_finish:
+            on_remote_finish(self.resource, failed)
 
 
 class FetchDataladRunMixin(object):
@@ -1016,7 +1048,7 @@ class FetchDataladRunMixin(object):
                 os.unlink(tfile)
                 # TODO: How to handle output cleanup on the remote?
 
-                from datalad.interface.run import run_command
+                from datalad.core.local.run import run_command
                 lgr.info("Creating run commit in %s", self.ds.path)
 
                 cmds = self.job_spec["_command_array"]
@@ -1027,22 +1059,18 @@ class FetchDataladRunMixin(object):
                     # placeholders.
                     cmd = self.jobid
 
-                for res in run_command(
-                        # FIXME: How to represent inputs and outputs given that
-                        # they are formatted per subjob and then expanded by
-                        # glob?
-                        inputs=self.job_spec.get("inputs"),
-                        extra_inputs=self.job_spec.get("_extra_inputs"),
-                        outputs=self.job_spec.get("outputs"),
-                        inject=True,
-                        extra_info={"reproman_jobid": self.jobid},
-                        message=self.job_spec.get("message"),
-                        cmd=cmd):
-                    # Oh, if only I were a datalad extension.
-                    if res["status"] in ["impossible", "error"]:
-                        raise OrchestratorError(
-                            "Making datalad-run commit failed: {}"
-                            .format(res["message"]))
+                call_check_dl_results(
+                    run_command,
+                    "Making datalad-run commit failed",
+                    # FIXME: How to represent inputs and outputs given that
+                    # they are formatted per subjob and then expanded by glob?
+                    inputs=self.job_spec.get("inputs"),
+                    extra_inputs=self.job_spec.get("_extra_inputs"),
+                    outputs=self.job_spec.get("outputs"),
+                    inject=True,
+                    extra_info={"reproman_jobid": self.jobid},
+                    message=self.job_spec.get("message"),
+                    cmd=cmd)
 
                 ref = self.job_refname
                 if moved:
@@ -1109,6 +1137,45 @@ class DataladPairOrchestrator(
     name = "datalad-pair"
 
 
+class DataladNoRemoteOrchestrator(DataladOrchestrator):
+    """Execute a command in the current local dataset.
+
+    Conceptually this behaves like datalad-pair. However, the working directory
+    for execution is set to the local dataset. It is available for local shell
+    resources only.
+    """
+
+    name = "datalad-no-remote"
+    template_name = "datalad-pair"
+
+    @property
+    @cached_property
+    @borrowdoc(Orchestrator)
+    def working_directory(self):
+        return self.local_directory
+
+    def prepare_remote(self):
+        if not isinstance(self.session, ShellSession):
+            raise OrchestratorError(
+                "The {} orchestrator must be used with a local session, "
+                "but session for resource {} is {}"
+                .format(self.name, self.resource.name,
+                        type(self.session).__name__))
+
+        inputs = list(self.get_inputs())
+        if inputs:
+            lgr.info("Making inputs available")
+            call_check_dl_results(
+                self.ds.get, "'datalad get' failed",
+                inputs, on_failure="ignore")
+
+    def fetch(self, on_remote_finish=None):
+        failed = self.get_failed_subjobs()
+        self.log_failed(failed)
+        if on_remote_finish:
+            on_remote_finish(self.resource, failed)
+
+
 class DataladPairRunOrchestrator(
         PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
     """Execute command in remote dataset sibling and capture results locally as
@@ -1143,6 +1210,7 @@ ORCHESTRATORS = collections.OrderedDict(
     (o.name, o) for o in [
         PlainOrchestrator,
         DataladPairOrchestrator,
+        DataladNoRemoteOrchestrator,
         DataladPairRunOrchestrator,
         DataladLocalRunOrchestrator,
     ]

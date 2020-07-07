@@ -91,6 +91,11 @@ packages these files in a tarball. (This approach is inspired by
 `datalad-htcondor`_.) On fetch, this tarball is downloaded locally and
 used to create a `datalad run`_ commit in the *local* repository.
 
+There is one more orchestrator, ``datalad-no-remote``, that is designed
+to work only with a local shell resource. It is similar to
+``datalad-pair``, except that the command is executed in the same
+directory from which ``reproman run`` is invoked.
+
 Revisiting :ref:`our concrete example <rr-refex>` and assuming we have
 an SSH resource named "foo" in our inventory, here's how we could
 specify that the ``datalad-pair-run`` orchestrator should be used::

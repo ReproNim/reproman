@@ -24,7 +24,7 @@ from ..distributions.vcs import GitDistribution, SVNDistribution
 __docformat__ = 'restructuredtext'
 
 from logging import getLogger
-lgr = getLogger('reproman.api.retrace')
+lgr = getLogger('reproman.api.diff')
 
 
 class MultipleDistributionsError(Exception):
