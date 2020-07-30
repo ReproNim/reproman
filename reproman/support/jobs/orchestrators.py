@@ -890,19 +890,18 @@ class FetchPlainMixin(object):
                 # treat it as the file.
                 op.join(self.local_directory, ""))
 
-        def get_failed_meta(mdir, failed):
-            for idx in failed:
-                for f in ["status", "stdout", "stderr"]:
-                    self.session.get(
-                        op.join(self.meta_directory,
-                                "{}.{:d}".format(f, idx)),
-                        op.join(self.local_directory,
-                                op.relpath(self.meta_directory,
-                                           self.working_directory),
-                                ""))
+        for idx in range(len(self.job_spec["_command_array"])):
+            for f in ["status", "stdout", "stderr"]:
+                self.session.get(
+                    op.join(self.meta_directory,
+                            "{}.{:d}".format(f, idx)),
+                    op.join(self.local_directory,
+                            op.relpath(self.meta_directory,
+                                       self.working_directory),
+                            ""))
 
         failed = self.get_failed_subjobs()
-        self.log_failed(failed, func=get_failed_meta)
+        self.log_failed(failed)
 
         lgr.info("Outputs fetched. Finished with remote resource '%s'",
                  self.resource.name)

@@ -104,6 +104,11 @@ def check_orc_plain(tmpdir):
 
             orc.fetch()
             assert open("out").read() == "content\nmore\n"
+
+            metadir_local = op.relpath(orc.meta_directory,
+                                       orc.working_directory)
+            for fname in "status", "stderr", "stdout":
+                assert op.exists(op.join(metadir_local, fname + ".0"))
     return fn
 
 
