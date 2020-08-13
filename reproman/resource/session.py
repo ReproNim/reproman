@@ -18,12 +18,14 @@ import os.path as op
 import re
 from shlex import quote as shlex_quote
 import subprocess
-from ..support.exceptions import CommandError
+from tempfile import NamedTemporaryFile
 
-from reproman.support.exceptions import SessionRuntimeError
 from reproman.cmd import Runner
 from reproman.dochelpers import exc_str, borrowdoc
-from reproman.support.exceptions import CommandError
+from reproman.support.exceptions import (
+    CommandError,
+    SessionRuntimeError,
+)
 from reproman.utils import updated, to_unicode
 
 import logging
@@ -349,6 +351,27 @@ class Session(object):
             default is -1, which will preserve the group id of the local file)
         """
         raise NotImplementedError
+
+    def put_text(self, text, target, executable=False):
+        """Put file with content `text` at `target`.
+
+        Parameters
+        ----------
+        text : str
+            Content for file.
+        target : str
+            Path on resource (passed as destination to `session.put`).
+        executable : boolean, optional
+            Whether to mark file as executable.
+        """
+        with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
+            tfh.write(text)
+        if executable:
+            os.chmod(tfh.name, 0o775)
+        else:
+            os.chmod(tfh.name, 0o664)
+        self.put(tfh.name, target)
+        os.unlink(tfh.name)
 
     def get(self, src_path, dest_path=None, uid=-1, gid=-1):
         """Take file on the resource and copy over into the local system

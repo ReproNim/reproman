@@ -27,7 +27,6 @@ import logging
 import os
 import os.path as op
 import uuid
-from tempfile import NamedTemporaryFile
 import time
 import yaml
 
@@ -85,6 +84,7 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def __init__(self, resource, submission_type, job_spec=None,
                  resurrection=False):
         self.resource = resource
+        self.resource.connect()
         self.session = resource.get_session()
         self._resurrection = resurrection
 
@@ -217,25 +217,6 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         """Prepare remote for run.
         """
 
-    def _put_text(self, text, target, executable=False):
-        """Put file with content `text` at `target`.
-
-        Parameters
-        ----------
-        text : str
-            Content for file.
-        target : str
-            Path on resource (passed as destination to `session.put`).
-        executable : boolean, optional
-            Whether to mark file as executable.
-        """
-        with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
-            tfh.write(text)
-        if executable:
-            os.chmod(tfh.name, 0o755)
-        self.session.put(tfh.name, target)
-        os.unlink(tfh.name)
-
     def submit(self):
         """Submit the job with `submitter`.
         """
@@ -259,23 +240,23 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
                    _meta_directory_rel=op.relpath(self.meta_directory,
                                                   self.working_directory)))
         self.template = templ
-        self._put_text(
+        self.session.put_text(
             templ.render_runscript("{}.template.sh".format(
                 self.template_name or self.name)),
             op.join(self.meta_directory, "runscript"),
             executable=True)
 
         submission_file = op.join(self.meta_directory, "submit")
-        self._put_text(
+        self.session.put_text(
             templ.render_submission("{}.template".format(self.submitter.name)),
             submission_file,
             executable=True)
 
-        self._put_text(
+        self.session.put_text(
             "\0".join(self.job_spec["_command_array"]),
             op.join(self.meta_directory, "command-array"))
 
-        self._put_text(
+        self.session.put_text(
             yaml.safe_dump(self.as_dict()),
             op.join(self.meta_directory, "spec.yaml"))
 

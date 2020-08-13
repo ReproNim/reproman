@@ -177,6 +177,8 @@ setup(
                      {"sh"}) +
             findsome(opj("support", "jobs", "job_templates", "submission"),
                      {"template"}) +
+            findsome(opj("support", "jobs", "job_templates", "cluster"),
+                     {"template"}) +
             findsome(opj("tests", "files"), {"cfg"})
     }
 )
