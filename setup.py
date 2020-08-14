@@ -49,7 +49,7 @@ requires = {
         'pyyaml',
         'tqdm',
         'fabric>=2.3.1',
-        'cryptography>=1.5',
+        'cryptography>=2.5',
         'pytz',
         'scp',
         'pycrypto',

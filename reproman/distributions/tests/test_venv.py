@@ -64,7 +64,7 @@ def venv_test_dir():
         pip2 = op.join("venv-nonlocal", "bin", "pip")
         runner.run(["virtualenv", "--python", PY_VERSION,
                     "--system-site-packages", "venv-nonlocal"])
-        runner.run([pip2, "install", "attrs"])
+        runner.run([pip2, "install", pymod_dir])
 
     return test_dir
 
@@ -132,8 +132,7 @@ def test_venv_identify_distributions(venv_test_dir):
 def test_venv_system_site_packages(venv_test_dir):
     with chpwd(venv_test_dir):
         tracer = VenvTracer()
-        libpath = op.join("lib", PY_VERSION,
-                          "site-packages", "attr", "filters.py")
+        libpath = op.join("lib", PY_VERSION, "site-packages")
         dists = list(
             tracer.identify_distributions([op.join("venv-nonlocal", libpath)]))
         assert len(dists) == 1
@@ -141,8 +140,8 @@ def test_venv_system_site_packages(venv_test_dir):
         # We won't do detailed inspection of this because its structure depends
         # on a system we don't control, but we still want to make sure that
         # VenvEnvironment's system_site_packages attribute is set correctly.
-        expect = {"environments": [{"packages": [{"files": [libpath],
-                                                  "name": "attrs"}],
+        expect = {"environments": [{"packages": [{"files": [],
+                                                  "name": "nmtest"}],
                                     "system_site_packages": True}]}
         assert_is_subset_recur(expect, attr.asdict(vdist), [dict, list])
 
