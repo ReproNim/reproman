@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 
 import os
 import os.path as op
+from shlex import quote as shlex_quote
 import sys
 import time
 import uuid
@@ -191,8 +192,11 @@ class TracedCommand(CommandAdapter):
             # The gz file might already exist (e.g., a localshell session).
             if not self.session.exists(remote_tracer_gz):
                 self.session.put(self.local_tracer_gz, remote_tracer_gz)
+
             self.session.execute_command(
-                ["gunzip", "--keep", remote_tracer_gz])
+                "zcat {} >{}".format(shlex_quote(remote_tracer_gz),
+                                     shlex_quote(self.remote_tracer)),
+                with_shell=True)
             self.session.chmod(self.remote_tracer, "755")
         # TODO: might want to add also a "marker" so within the trace
         #       we could avoid retracing session establishing bits themselves
