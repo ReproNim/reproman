@@ -508,14 +508,14 @@ class Session(object):
         raise NotImplementedError
 
 
-    def transfer_recursive(self, src_path, dest_path, stat_fct, listdir_fct, mkdir_fct, cp_fct):
+    def transfer_recursive(self, src_path, dest_path, isdir_fct, listdir_fct, mkdir_fct, cp_fct):
         """Recursively transfer files and directories.
 
         Traversing the source tree contains a lot of the same logic whether 
         we're putting or getting, so we abstract that out here.  The cost is 
         that we need to pass the functions needed for the operation:
 
-            stat_fct(src_path)
+            isdir_fct(src_path)
 
             listdir_fct(src_path)
 
@@ -528,7 +528,7 @@ class Session(object):
         """
 
         # a simple copy now if the source is a file...
-        if not stat.S_ISDIR(stat_fct(src_path).st_mode):
+        if not isdir_fct(src_path):
             cp_fct(src_path, dest_path)
             return
         # ...otherwise we src_path for relative paths
@@ -538,7 +538,7 @@ class Session(object):
             path = stack.pop()
             src_relpath = os.path.relpath(path, src_path)
             dest_fullpath = os.path.join(dest_path, src_relpath)
-            if stat.S_ISDIR(stat_fct(path).st_mode):
+            if isdir_fct(path):
                 # For src_path, relpath() gives '.', so dest_fullpath ends 
                 # with "/.".  mkdir doesn't like this, so we handle src_path 
                 # as a special case.

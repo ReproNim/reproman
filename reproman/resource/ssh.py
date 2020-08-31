@@ -224,7 +224,7 @@ class SSHSession(POSIXSession):
         self.transfer_recursive(
             src_path, 
             dest_path, 
-            os.stat, 
+            os.path.isdir, 
             os.listdir, 
             sftp.mkdir, 
             self.connection.put
@@ -240,7 +240,7 @@ class SSHSession(POSIXSession):
         self.transfer_recursive(
             src_path, 
             dest_path, 
-            sftp.stat, 
+            lambda f: stat.S_ISIDIR(sftp.stat(f).st_mode), 
             sftp.listdir, 
             os.mkdir, 
             self.connection.get
