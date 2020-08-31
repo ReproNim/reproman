@@ -508,6 +508,50 @@ class Session(object):
         raise NotImplementedError
 
 
+    def transfer_recursive(self, src_path, dest_path, stat_fct, listdir_fct, mkdir_fct, cp_fct):
+        """Recursively transfer files and directories.
+
+        Traversing the source tree contains a lot of the same logic whether 
+        we're putting or getting, so we abstract that out here.  The cost is 
+        that we need to pass the functions needed for the operation:
+
+            stat_fct(src_path)
+
+            listdir_fct(src_path)
+
+            mkdir_fct(dest_path)
+
+            cp_fct(src_path, dest_path)
+
+        We unwrap the recursion so we can calculate the relative path names 
+        from the base source path.
+        """
+
+        # a simple copy now if the source is a file...
+        if not stat.S_ISDIR(stat_fct(src_path).st_mode):
+            cp_fct(src_path, dest_path)
+            return
+        # ...otherwise we src_path for relative paths
+
+        stack = [src_path]
+        while stack:
+            path = stack.pop()
+            src_relpath = os.path.relpath(path, src_path)
+            dest_fullpath = os.path.join(dest_path, src_relpath)
+            if stat.S_ISDIR(stat_fct(path).st_mode):
+                # For src_path, relpath() gives '.', so dest_fullpath ends 
+                # with "/.".  mkdir doesn't like this, so we handle src_path 
+                # as a special case.
+                if path == src_path:
+                    mkdir_fct(dest_path)
+                else:
+                    mkdir_fct(dest_fullpath)
+                stack.extend(os.path.join(path, p) for p in listdir_fct(path))
+            else:
+                cp_fct(path, dest_fullpath)
+        return
+
+
 @attr.s
 class POSIXSession(Session):
     """A Session which relies on commands present in any POSIX-compliant env
