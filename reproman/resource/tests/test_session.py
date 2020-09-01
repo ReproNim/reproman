@@ -330,6 +330,14 @@ def check_methods(resource_test_dir):
         result = session.isdir(test_dir)
         assert result
 
+        # Check listdir() method
+        if hasattr(session, 'listdir'):
+            subdir = uuid.uuid4().hex
+            subfile = uuid.uuid4().hex
+            session.mkdir(os.path.join(test_dir, subdir))
+            session.put('/etc/hosts', os.path.join(test_dir, subfile))
+            assert set(session.listdir(test_dir)) == set((subdir, subfile))
+
         # Check making parent dirs without setting flag
         test_dir = '{}/tmp/i fail/{}'.format(resource_test_dir, uuid.uuid4().hex)
         with pytest.raises(CommandError):

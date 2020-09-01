@@ -210,6 +210,12 @@ class SingularitySession(POSIXSession):
             self.chown(dest_path, uid, gid, remote=False)
 
 
+    def listdir(self, path):
+        cmd = 'singularity exec instance://{} ls -1 {}'
+        (stdout, stderr) = self._runner.run(cmd.format(self.name, path))
+        return [ f for f in stdout.split('\n') if f not in ('', '.', '..') ]
+
+
 @attr.s
 class PTYSingularitySession(SingularitySession):
     """Interactive Singularity Session"""
