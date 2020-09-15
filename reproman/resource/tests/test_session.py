@@ -18,6 +18,7 @@ import uuid
 from ..session import get_updated_env, Session
 from ...support.exceptions import CommandError
 from ...utils import chpwd, swallow_logs
+from ...tests.utils import create_tree
 from ...tests.skip import mark
 from ...tests.fixtures import get_docker_fixture
 from ...tests.fixtures import get_singularity_fixture
@@ -260,11 +261,13 @@ def check_methods(resource_test_dir):
         assert not result
 
         # Create a temporary test file
-        temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
-        with temp_file as f:
-            f.write('ReproMan test content\nline 2\nline 3'.encode('utf8'))
-            f.flush()
-            local_path = temp_file.name
+        with tempfile.TemporaryDirectory(dir=resource_test_dir) as tdir:
+            create_tree(tdir,
+                        {'f0': 'ReproMan test content\nline 2\nline 3',
+                         'f1': 'f1',
+                         'd0': {'f2': 'f2',
+                                'd2': {'f3': 'f3'}}})
+            local_path = os.path.join(tdir, 'f0')
             remote_path = '{}/reproman upload/{}'.format(resource_test_dir,
                 uuid.uuid4().hex)
 
@@ -275,6 +278,13 @@ def check_methods(resource_test_dir):
             result = session.exists(remote_path)
             assert result
             # TODO: Check uid and gid of remote file
+
+            # Check recursive put().
+            remote_path_rec = '{}/recursive-put/{}'.format(
+                resource_test_dir, uuid.uuid4().hex)
+            session.put(tdir, remote_path_rec)
+            assert session.exists(remote_path_rec + "/d0/f2")
+            assert session.exists(remote_path_rec + "/d0/d2/f3")
 
             # We can use a relative name for the target
             basename_put_dir = os.path.join(resource_test_dir, "basename-put")
