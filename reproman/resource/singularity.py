@@ -230,8 +230,13 @@ class SingularitySession(POSIXSession):
             self.chown(dest_path, uid, gid, remote=False, recursive=True)
 
     def listdir(self, path):
-        cmd = 'singularity exec instance://{} ls -1 {}'
-        (stdout, stderr) = self._runner.run(cmd.format(self.name, path))
+        cmd = ['singularity', 
+                'exec', 
+               'instance://{}'.format(self.name), 
+               'ls', 
+               '-1', 
+               path]
+        (stdout, stderr) = self._runner.run(cmd)
         return [ f for f in stdout.split('\n') if f not in ('', '.', '..') ]
 
 
