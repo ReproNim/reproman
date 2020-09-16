@@ -8,6 +8,8 @@
 """Resource sub-class to provide management of a SSH connection."""
 
 import attr
+import os
+import stat
 import getpass
 import uuid
 from ..log import LoggerHelper
@@ -218,18 +220,34 @@ class SSHSession(POSIXSession):
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         dest_path = self._prepare_dest_path(src_path, dest_path, local=False)
-        self.connection.put(src_path, dest_path)
+        sftp = self.connection.sftp()
+        self.transfer_recursive(
+            src_path, 
+            dest_path, 
+            os.path.isdir, 
+            os.listdir, 
+            sftp.mkdir, 
+            self.connection.put
+        )
 
         if uid > -1 or gid > -1:
-            self.chown(dest_path, uid, gid)
+            self.chown(dest_path, uid, gid, recursive=True)
 
     @borrowdoc(Session)
     def get(self, src_path, dest_path=None, uid=-1, gid=-1):
         dest_path = self._prepare_dest_path(src_path, dest_path)
-        self.connection.get(src_path, dest_path)
+        sftp = self.connection.sftp()
+        self.transfer_recursive(
+            src_path, 
+            dest_path, 
+            lambda f: stat.S_ISDIR(sftp.stat(f).st_mode), 
+            sftp.listdir, 
+            os.mkdir, 
+            self.connection.get
+        )
 
         if uid > -1 or gid > -1:
-            self.chown(dest_path, uid, gid, remote=False)
+            self.chown(dest_path, uid, gid, remote=False, recursive=True)
 
 
 @attr.s

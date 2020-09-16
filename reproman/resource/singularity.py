@@ -186,8 +186,7 @@ class SingularitySession(POSIXSession):
 
         return (stdout, stderr)
 
-    @borrowdoc(Session)
-    def put(self, src_path, dest_path, uid=-1, gid=-1):
+    def _put_file(self, src_path, dest_path):
         dest_path = self._prepare_dest_path(src_path, dest_path,
                                             local=False, absolute_only=True)
         cmd = 'cat {} | singularity exec instance://{} tee {} > /dev/null'
@@ -195,19 +194,50 @@ class SingularitySession(POSIXSession):
                                     self.name,
                                     shlex_quote(dest_path)))
 
-        if uid > -1 or gid > -1:
-            self.chown(dest_path, uid, gid)
-
     @borrowdoc(Session)
-    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+    def put(self, src_path, dest_path, uid=-1, gid=-1):
+        self.transfer_recursive(
+            src_path, 
+            dest_path, 
+            os.path.isdir, 
+            os.listdir, 
+            self.mkdir, 
+            self._put_file
+        )
+
+        if uid > -1 or gid > -1:
+            self.chown(dest_path, uid, gid, recursive=True)
+
+    def _get_file(self, src_path, dest_path):
         dest_path = self._prepare_dest_path(src_path, dest_path)
         cmd = 'singularity exec instance://{} cat {} > {}'
         self._runner.run(cmd.format(self.name,
                                     shlex_quote(src_path),
                                     shlex_quote(dest_path)))
 
+    @borrowdoc(Session)
+    def get(self, src_path, dest_path=None, uid=-1, gid=-1):
+        self.transfer_recursive(
+            src_path, 
+            dest_path, 
+            self.isdir, 
+            self.listdir, 
+            os.mkdir, 
+            self._get_file
+        )
+
         if uid > -1 or gid > -1:
-            self.chown(dest_path, uid, gid, remote=False)
+            self.chown(dest_path, uid, gid, remote=False, recursive=True)
+
+    def listdir(self, path):
+        cmd = ['singularity', 
+                'exec', 
+               'instance://{}'.format(self.name), 
+               'ls', 
+               '-1', 
+               path]
+        (stdout, stderr) = self._runner.run(cmd)
+        return [ f for f in stdout.split('\n') if f not in ('', '.', '..') ]
 
 
 @attr.s

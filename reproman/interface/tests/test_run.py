@@ -493,3 +493,28 @@ def test_jobs_orc_error(context):
                 jobs(queries=[], status=True)
             assert "myshell" not in output.out
             assert "resurrection failed" in log.out
+
+
+def test_recursive_transfer(context):
+    run = context["run_fn"]
+    path = context["directory"]
+    jobs = context["jobs_fn"]
+
+    # Our script takes an inventory of the execute directory so we can be 
+    # sure that all of the files have transferred.  It then creates a tree 
+    # that we verify is returned.
+
+    create_tree(path, {"script": "find . > out_file ; mkdir out_dir ; touch out_dir/subfile", 
+                       "in_dir": {"subfile": ""}})
+
+    with swallow_outputs() as output:
+        run(command=["sh", "-e", "script"], 
+            inputs=["script", "in_dir"], 
+            outputs=["out_file", "out_dir"], 
+            resref="myshell")
+        try_fetch(lambda: jobs(queries=[], action="fetch", all_=True))
+        assert op.exists(op.join(path, "out_file"))
+        with open(op.join(path, "out_file")) as fo:
+            lines = [ line.strip() for line in fo ]
+        assert "./in_dir/subfile" in lines
+        assert op.exists(op.join(path, "out_dir", "subfile"))
