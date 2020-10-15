@@ -12,7 +12,7 @@ cache:
 
 matrix:
   include:
-  - python: 3.5
+  - python: 3.6
     env:
     - REPROMAN_TESTS_SSH=1
     - REPROMAN_TESTS_DEPS=full
@@ -31,23 +31,22 @@ matrix:
     # We're assuming a system python version.  Pin the dist so that
     # this run doesn't break when the default distribution changes.
     dist: bionic
-  - python: 3.5
+  - python: 3.6
     # By default no logs will be output. This one is to test with log output at INFO level
     env:
     - REPROMAN_LOGLEVEL=INFO
-  - python: 3.5
+  - python: 3.6
     # By default no logs will be output. This one is to test with low level but dumped to /dev/null
     env:
     - REPROMAN_LOGLEVEL=2
     - REPROMAN_LOGTARGET=/dev/null
-  - python: 3.6
-    # Note: This this no network run appears to hang or otherwise
-    # behave oddly on 3.5.
+  - python: 3.7
     env:
     - REPROMAN_TESTS_NONETWORK=1
     # must operate nicely with those env variables set
     - http_proxy=
     - https_proxy=
+  - python: 3.8
   # Those aren't yet ready since lxml Ibelieve fails to install
   #- python: pypy
   #- python: pypy3

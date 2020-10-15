@@ -154,7 +154,7 @@ setup(
     description="Neuroimaging Computational Environments Manager",
     long_description=long_description,
     packages=reproman_pkgs,
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     install_requires=requires['core'],
     extras_require=requires,
     entry_points={
