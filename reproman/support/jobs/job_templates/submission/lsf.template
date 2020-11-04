@@ -1,0 +1,21 @@
+#!/bin/bash
+
+cat << EOF | bsub -J "reproman[1-{{ _num_subjobs }}]" {{ bsub_opts|default('') }}
+{% if memory is defined %}
+#BSUB -R rusage[mem={{ memory }}]
+{% endif %}
+{% if walltime is defined %}
+#BSUB -W {{ walltime }}
+{% endif %}
+{% if queue is defined %}
+#BSUB -q {{ queue }}
+{% endif %}
+{% if num_process is defined %}
+#BSUB -n {{ num_process }}
+{% endif %}
+#BSUB -o {{ _meta_directory }}/stdout.%I
+#BSUB -e {{ _meta_directory }}/stderr.%I
+
+{{ _meta_directory }}/runscript \$(( \$LSB_JOBINDEX - 1 ))
+EOF
+
