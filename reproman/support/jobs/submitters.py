@@ -399,8 +399,6 @@ class LSFSubmitter(Submitter):
         if parts[2] in ("PEND", "RUN"):
             return ("waiting", parts[2])
         if parts[2] in ("DONE", "EXIT"):
-            import traceback
-            traceback.print_stack()
             return ("completed", parts[2])
         return ("unknown", parts[2])
 
