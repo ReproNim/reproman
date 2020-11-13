@@ -85,7 +85,7 @@ class Submitter(object, metaclass=abc.ABCMeta):
         'waiting', 'completed', and 'unknown'.
 
         The second item should be the status as reported by the batch system or
-        None of one could not be determined.
+        None if one could not be determined.
         """
 
     def follow(self):
