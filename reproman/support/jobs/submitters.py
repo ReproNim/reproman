@@ -381,6 +381,19 @@ class LSFSubmitter(Submitter):
         out = super(LSFSubmitter, self).submit(script, submit_command)
         m = re.search('Job <(\d+)> is submitted to queue', out)
         self.submission_id = m.group(1)
+        # Although LSF may have submitted the job successfully, it might 
+        # not show up in the queue immediately.  We wait here for it to 
+        # appear before returning since other code (like follow()) might 
+        # expect the job to appear.  We use the -a flag to bjobs to make 
+        # sure we see the job, even if it completes immediately.
+        pattern = '^{}'.format(self.submission_id)
+        while True:
+            fmt = "Waiting for job {} to show in the queue"
+            lgr.info(fmt.format(self.submission_id))
+            out, _ = self.session.execute_command("bjobs -noheader -a")
+            if re.search(pattern, out, re.MULTILINE):
+                break
+            time.sleep(1)
         return self.submission_id
 
     @property
