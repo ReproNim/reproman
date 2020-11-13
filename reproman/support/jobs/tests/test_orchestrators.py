@@ -30,6 +30,15 @@ from reproman.tests.skip import skipif
 from reproman.tests.utils import create_tree
 
 
+try:
+    lsf_config = os.environ['REPROMAN_LSF_TEST_CONFIG'].split(':')
+    lsf_config = {"host": lsf_config[0], 
+                  "user": lsf_config[1], 
+                  "tmpdir_root": lsf_config[2]}
+except (KeyError, ValueError):
+    lsf_config = None
+
+
 docker_container = get_docker_fixture(TEST_SSH_DOCKER_DIGEST,
                                       name="testing-container", scope="module")
 
@@ -61,6 +70,15 @@ def ssh_slurm():
     skipif.no_slurm()
     from reproman.resource.ssh import SSH
     return SSH("slurm-res", host="slurm")
+
+
+@pytest.fixture(scope="module")
+def ssh_lsf():
+    skipif.no_ssh()
+    if not lsf_config:
+        pytest.skip("no LSF test configuration")
+    from reproman.resource.ssh import SSH
+    return SSH("lsf-res", host=lsf_config["host"], user=lsf_config["user"])
 
 
 def test_orc_root_directory(shell):
@@ -197,6 +215,13 @@ def check_orc_datalad(job_spec, dataset):
                 assert open("out").read() == "content\nmore\n"
                 return orc
 
+        if sub_type == "lsf":
+            # for the LSF test, reroot the remote temporary directory 
+            # under the directory given in REPROMAN_LSF_TEST_CONFIG
+            rel_dir = op.relpath(job_spec["root_directory"], "/")
+            new_root_directory = op.join(lsf_config["tmpdir_root"], rel_dir)
+            job_spec["root_directory"] = new_root_directory
+
         orc = run_and_check(job_spec)
 
         # Perform another run based on the dumped job spec from the first.
@@ -236,6 +261,11 @@ def test_orc_datalad_run(check_orc_datalad, shell, orc_class, sub_type):
 @pytest.mark.integration
 def test_orc_datalad_slurm(check_orc_datalad, ssh_slurm):
     check_orc_datalad(ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm")
+
+
+@pytest.mark.integration
+def test_orc_datalad_lsf(check_orc_datalad, ssh_lsf):
+    check_orc_datalad(ssh_lsf, orcs.DataladLocalRunOrchestrator, "lsf")
 
 
 @pytest.mark.integration
