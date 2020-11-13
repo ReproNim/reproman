@@ -359,11 +359,69 @@ class LocalSubmitter(Submitter):
         return status
 
 
+class LSFSubmitter(Submitter):
+    """Submit an LSF job.
+    """
+
+    name = "lsf"
+
+    def __init__(self, session):
+        super(LSFSubmitter, self).__init__(session)
+
+    @property
+    @borrowdoc(Submitter)
+    def submit_command(self):
+        # LSF can ignore the #BSUB directives if the script is given on 
+        # the command line rather than in stdin.  So we use /bin/bash here 
+        # and pipe the script to bsub in the submit script.
+        return ["/bin/bash"]
+
+    @borrowdoc(Submitter)
+    def submit(self, script, submit_command=None):
+        out = super(LSFSubmitter, self).submit(script, submit_command)
+        m = re.search('Job <(\d+)> is submitted to queue', out)
+        self.submission_id = m.group(1)
+        # Although LSF may have submitted the job successfully, it might 
+        # not show up in the queue immediately.  We wait here for it to 
+        # appear before returning since other code (like follow()) might 
+        # expect the job to appear.  We use the -a flag to bjobs to make 
+        # sure we see the job, even if it completes immediately.
+        pattern = '^{}'.format(self.submission_id)
+        while True:
+            fmt = "Waiting for job {} to show in the queue"
+            lgr.info(fmt.format(self.submission_id))
+            out, _ = self.session.execute_command("bjobs -noheader -a")
+            if re.search(pattern, out, re.MULTILINE):
+                break
+            time.sleep(1)
+        return self.submission_id
+
+    @property
+    @assert_submission_id
+    @borrowdoc(Submitter)
+    def status(self):
+        out, _ = self.session.execute_command(
+            "bjobs -noheader {}".format(self.submission_id))
+        parts = out.split()
+        if not parts:
+            # bjobs might not know about the job if it is still being queued 
+            # and it won't know about the job if some time has passed since 
+            # it terminated
+            return ("unknown", None)
+        assert parts[0] == self.submission_id
+        if parts[2] in ("PEND", "RUN"):
+            return ("waiting", parts[2])
+        if parts[2] in ("DONE", "EXIT"):
+            return ("completed", parts[2])
+        return ("unknown", parts[2])
+
+
 SUBMITTERS = collections.OrderedDict(
     (o.name, o) for o in [
         PbsSubmitter,
         CondorSubmitter,
         SlurmSubmitter,
         LocalSubmitter,
+        LSFSubmitter, 
     ]
 )
