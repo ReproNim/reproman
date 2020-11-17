@@ -1,5 +1,13 @@
 # ReproMan
 
+[![Supports python version](https://img.shields.io/pypi/pyversions/datalad)](https://pypi.org/project/datalad/)
+[![GitHub release](https://img.shields.io/github/release/ReproNim/reproman.svg)](https://GitHub.com/ReproNim/reproman/releases/)
+[![PyPI version fury.io](https://badge.fury.io/py/reproman.svg)](https://pypi.python.org/pypi/reproman/)
+[![Travis tests status](https://secure.travis-ci.org/ReproNim/reproman.png?branch=master)](https://travis-ci.org/ReproNim/reproman)
+[![codecov.io](https://codecov.io/github/ReproNim/reproman/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/reproman?branch=master)
+[![Documentation](https://readthedocs.org/projects/reproman/badge/?version=latest)](https://reproman.readthedocs.io/en/latest/?badge=latest)
+
+
 ReproMan aims to simplify creation and management of computing environments
 in Neuroimaging.  While concentrating on Neuroimaging use-cases, it is
 by no means is limited to this field of science and tools will find
@@ -16,14 +24,6 @@ considerable reorganization and standardization.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) if you are interested in
 internals and/or contributing to the project.
-
-## Code status:
-
-* [![Travis tests status](https://secure.travis-ci.org/ReproNim/reproman.png?branch=master)](https://travis-ci.org/ReproNim/reproman) travis-ci.org (master branch)
-
-* [![codecov.io](https://codecov.io/github/ReproNim/reproman/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/reproman?branch=master)
-
-* [![Documentation](https://readthedocs.org/projects/ReproMan/badge/?version=latest)](http://reproman.rtfd.org)
 
 # Installation
 
