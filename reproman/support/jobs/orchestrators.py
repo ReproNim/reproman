@@ -527,6 +527,14 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
             _datalad_check_container(self.ds, self.job_spec)
             _datalad_format_command(self.ds, self.job_spec)
 
+        if isinstance(self.session, SSHSession) and resource.key_filename:
+            # Make the identity file available to 'datalad sshrun' even
+            # if it is not configured in .ssh/config. This is
+            # particularly important for AWS keys.
+            os.environ["DATALAD_SSH_IDENTITYFILE"] = resource.key_filename
+            from datalad import cfg
+            cfg.reload(force=True)
+
     @property
     @cached_property
     @borrowdoc(Orchestrator)
@@ -770,14 +778,6 @@ class PrepareRemoteDataladMixin(object):
         inputs = list(self.get_inputs())
         if isinstance(session, (SSHSession, ShellSession)):
             if isinstance(session, SSHSession):
-                if resource.key_filename:
-                    # Make the identity file available to 'datalad sshrun' even
-                    # if it is not configured in .ssh/config. This is
-                    # particularly important for AWS keys.
-                    os.environ["DATALAD_SSH_IDENTITYFILE"] = resource.key_filename
-                    from datalad import cfg
-                    cfg.reload(force=True)
-
                 target_path = _format_ssh_url(
                     resource.user,
                     # AWS resource does not have host attribute.
