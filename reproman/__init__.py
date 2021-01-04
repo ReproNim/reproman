@@ -35,6 +35,16 @@ atexit.register(lgr.log, 5, "Exiting")
 
 from .version import __version__
 
+try:
+    import etelemetry
+
+    etelemetry.check_available_version("repronim/reproman", __version__, lgr=lgr)
+except Exception as exc:
+    lgr.debug(
+        "Failed to check for a more recent version available with etelemetry: %s",
+        exc,
+    )
+
 
 def test(package='reproman', **kwargs):
     """A helper to run reproman's tests.  Requires numpy and pytest

@@ -45,6 +45,7 @@ requires = {
     'core': [
         'appdirs',
         'attrs>=16.3.0',
+        'etelemetry>=0.2.0',
         'humanize',
         'pyyaml',
         'tqdm',
