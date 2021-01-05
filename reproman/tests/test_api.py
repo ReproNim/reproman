@@ -80,9 +80,12 @@ def test_no_heavy_imports():
 
     # new modules brought by import of our .api
     modules = get_modules(', reproman.api').difference(modules0)
-    assert 'requests' not in modules
+    # TODO: add back whenever/if https://github.com/sensein/etelemetry-client/issues/29
+    # is properly addressed
+    #assert 'requests' not in modules
+    # assert len(modules) < 230  # currently 203
     assert 'boto' not in modules
     assert 'jinja2' not in modules
     assert 'paramiko' not in modules
     # and catch it all!  Raise the boundary as needed
-    assert len(modules) < 230  # currently 203
+    assert len(modules) < 550  # currently could be 508 with requests due to etelemetry
