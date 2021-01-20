@@ -85,12 +85,28 @@ def test_venv_identify_distributions(venv_test_dir):
             # ... and relative paths work.
             os.path.join("venv1", libpaths["filters.py"]),
             # A virtualenv file that isn't part of any particular package.
-            os.path.join("venv1", "bin", "python"),
-            # A link to the outside world ...
-            os.path.join("venv1", libpaths["abc.py"]),
-            # or in a directory that is a link to the outside world.
-            os.path.join("venv1", libpaths["machinery.py"])
+            os.path.join("venv1", "bin", "pip")
         ]
+
+        expected_unknown = {
+            COMMON_SYSTEM_PATH,
+            # The editable package was added by VenvTracer as an unknown file.
+            os.path.join(venv_test_dir, "minimal_pymodule")}
+
+        # Unknown files do not include "venv0/bin/pip", which is a link to
+        # another path within venv0, but they do include links to the system
+        # files. However, at some point following Python 3.8.0, such links
+        # appear to no longer be present.
+        abc_path = os.path.join("venv1", libpaths["abc.py"])
+        mach_path = os.path.join("venv1", libpaths["machinery.py"])
+        if op.exists(abc_path) and op.exists(mach_path):
+            path_args.extend([
+                # A link to the outside world ...
+                abc_path,
+                # or in a directory that is a link to the outside world.
+                mach_path])
+            expected_unknown.add(op.realpath(abc_path))
+            expected_unknown.add(op.realpath(mach_path))
         path_args.append(COMMON_SYSTEM_PATH)
 
         tracer = VenvTracer()
@@ -99,16 +115,7 @@ def test_venv_identify_distributions(venv_test_dir):
         assert len(dists) == 1
 
         distributions, unknown_files = dists[0]
-        # Unknown files do not include "venv0/bin/python", which is a link
-        # another path within venv0, but they do include the link to the system
-        # abc.py.
-        assert unknown_files == {
-            COMMON_SYSTEM_PATH,
-            op.realpath(os.path.join("venv1", libpaths["abc.py"])),
-            op.realpath(os.path.join("venv1", libpaths["machinery.py"])),
-            # The editable package was added by VenvTracer as an unknown file.
-            os.path.join(venv_test_dir, "minimal_pymodule")}
-
+        assert unknown_files == expected_unknown
         assert len(distributions.environments) == 2
 
         expect = {"environments":
