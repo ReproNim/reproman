@@ -4,6 +4,16 @@ All notable changes to this project will be documented (for humans) in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2021-01-25
+
+Minor feature and bug fix release
+### Added
+- use of etelemetry
+- initial support for LSF submitted
+### Fixed
+- testing of venv tracking
+- setting of `DATALAD_SSH_IDENTITYFILE` earlier (in `__init__`) for DataLad orchestrator
+
 ## [0.3.0] - 2020-10-21
 Feature and bug fix release after a long release silence.
 ### Added
