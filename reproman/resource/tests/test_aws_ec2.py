@@ -81,7 +81,7 @@ def test_awsec2_class(resman):
         }
         resource = resman.factory(config)
         resource.connect()
-        assert resource.image == 'ami-c8580bdf'
+        assert resource.image == 'ami-0acbd99fe8c84efbb'
         assert resource.id == 'i-00002777d52482d9c'
         assert resource.instance_type == 't2.micro'
         assert resource.key_filename == '/home/me/.ssh/id_rsa'

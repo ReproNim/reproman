@@ -9,9 +9,12 @@
 
 import attr
 import boto3
+import os
+import os.path as op
 import re
 from os import chmod
 from os.path import join
+from time import sleep
 from appdirs import AppDirs
 from botocore.exceptions import ClientError
 
@@ -24,6 +27,7 @@ from ..utils import assure_dir, attrib
 from ..dochelpers import exc_str
 from ..support.exceptions import ResourceError
 from .ssh import SSH
+
 
 @attr.s
 class AwsEc2(Resource):
@@ -46,8 +50,8 @@ class AwsEc2(Resource):
         doc="AWS subscription name of SSH key-pair registered.")  # Name of SSH key registered on AWS.
     key_filename = attrib(
         doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
-    image = attrib(default='ami-c8580bdf',
-        doc="AWS image ID from which to create the running instance")  # Ubuntu 14.04 LTS
+    image = attrib(default='ami-0acbd99fe8c84efbb',
+        doc="AWS image ID from which to create the running instance (Default: NITRC-CE)")  # NITRC-CE bionic for us-east-1
     user = attrib(default='ubuntu',
         doc="Login account to EC2 instance.")
 
@@ -98,16 +102,21 @@ class AwsEc2(Resource):
             )
             instances = list(instances)
 
-        if len(instances) == 1:
+        if len(instances) > 1:
+            lgr.warning("Multiple matches (%s) found for %s in %s region. We will use %s",
+                        ', '.join(map(str, instances)), self.ec2_name, self.region_name, instances[0])
+
+        if instances:
             try:
                 self._ec2_instance = instances[0]
+                if self.id is None:
+                    lgr.debug("Assigning an instance ID %s", self._ec2_instance.instance_id)
                 self.id = self._ec2_instance.instance_id
                 self.status = self._ec2_instance.state['Name']
             except AttributeError:
+                # TODO: WHY?
                 self.id = None
                 self.status = None
-        elif len(instances) > 1:
-            raise ResourceError("Multiple container matches found")
         else:
             self.id = None
             self.status = None
@@ -131,9 +140,27 @@ class AwsEc2(Resource):
             raise ResourceError("Instance '{}' already exists in AWS subscription".format(
                 self.id))
 
+        local_keys = self._get_local_keys()
         if not self.key_name:
-            self.create_key_pair()
+            key_name = self.name  # self._ask_key_name()
+            if key_name not in local_keys:
+                self.create_key_pair(key_name)
+            self.key_name = key_name
 
+        if not self.key_filename:
+            # So we have a key_name but not key_filename.
+            # We can match
+            if self.key_name in local_keys:
+                lgr.debug("No key_filename, but found key %s among local keys", self.key_name)
+                self.key_filename = local_keys[self.key_name]
+            else:
+                raise ValueError("No key_filename is specified, and no match found among locally available for key "
+                                 "name %s" % self.key_name)
+
+        # TODO: key_name might need to be changed if we are to store
+        #  in the key_filename matching the key_name.  So here we need to RF
+        #  to loop (to avoid one attempt in except on create_instances,
+        #  and possibly ask for a new keyname
         create_kwargs = dict(
             ImageId=self.image,
             InstanceType=self.instance_type,
@@ -146,19 +173,19 @@ class AwsEc2(Resource):
             instances = self._ec2_resource.create_instances(**create_kwargs)
         except ClientError as exc:
             if re.search(
-                "The key pair {} does not exist".format(self.key_name),
-                str(exc)
+                    "The key pair {} does not exist".format(self.key_name),
+                    str(exc)
             ):
                 if not ui.yesno(
-                    title="No key %s found in the "
-                          "zone %s" % (self.key_name, self.region_name),
-                    text="Would you like to generate a new key?"
+                        title="No key %s found in the "
+                              "zone %s" % (self.key_name, self.region_name),
+                        text="Would you like to generate a new key?"
                 ):
                     raise
                 self.create_key_pair(self.key_name)
                 instances = self._ec2_resource.create_instances(**create_kwargs)
             if re.search(
-                "parameter groupId is invalid", str(exc)
+                    "parameter groupId is invalid", str(exc)
             ):
                 raise ValueError("Invalid AWS Security Group: '{}'".format(
                     self.security_group))
@@ -174,7 +201,15 @@ class AwsEc2(Resource):
         # Save the EC2 Instance object.
         self._ec2_instance = self._ec2_resource.Instance(instances[0].id)
         self.id = self._ec2_instance.instance_id
-        self.status = self._ec2_instance.state['Name']
+        for t in range(3):
+            try:
+                self.status = self._ec2_instance.state['Name']
+                break
+            except ClientError as exc:
+                if t == 2:
+                    raise
+                lgr.debug('Failed to get state (%s). Will try again', exc)
+                sleep(3)
 
         # Send initial info back to be saved in inventory file.
         yield {
@@ -223,24 +258,18 @@ class AwsEc2(Resource):
         """
         self._ec2_instance.stop()
 
-    def create_key_pair(self, key_name=None):
+    def create_key_pair(self, key_name):
         """
         Walk the user through creating an SSH key pair that is saved to
         the AWS platform.
         """
-
-        if not key_name:
-            prompt = """\
-You did not specify an EC2 SSH key-pair name to use when creating your EC2
-environment.
-Please enter a unique name to create a new key-pair or press [enter] to exit"""
-            key_name = ui.question(prompt)
+        # TODO: check above that if we raise below we do not create instance
 
         # Check to see if key_name already exists. 3 tries allowed.
         for i in range(3):
             # The user wants to exit.
             if not key_name:
-                raise SystemExit("Empty keyname was provided, exiting")
+                raise ValueError("Empty key name was provided, exiting")
 
             key_pair = self._ec2_resource.key_pairs.filter(KeyNames=[key_name])
             try:
@@ -268,10 +297,7 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
                 key_name = ui.question('That key name exists already, try again')
 
         # Create private key file.
-        basedir = join(
-            AppDirs('reproman', 'reproman.org').user_data_dir, 'ec2_keys')
-        assure_dir(basedir)
-        key_filename = join(basedir, key_name + '.pem')
+        key_filename = self._get_matching_key_filename(key_name)
 
         # Generate the key-pair and save to the private key file.
         key_pair = self._ec2_resource.create_key_pair(KeyName=key_name)
@@ -284,6 +310,45 @@ Please enter a unique name to create a new key-pair or press [enter] to exit"""
         # saved to the resource inventory file.
         self.key_name = key_name
         self.key_filename = key_filename
+
+    @classmethod
+    def _ask_key_name(cls):
+        present_keys = cls._get_local_keys()
+        prompt = ["You did not specify an EC2 SSH key-pair name to use when creating your EC2 environment."]
+        if present_keys:
+            prompt += ["%d keys were found locally: %s" % (len(present_keys), ' '.join(sorted(present_keys)))]
+            prompt += ["You can enter one of the above key names to reuse an existing key"]
+            prompt += ["or enter a new unique name to create a new key-pair."]
+        else:
+            prompt += ["Please enter a unique name to create a new key-pair."]
+        prompt += ["Alternatively, press [enter] to exit"]
+        key_name = ui.question((os.linesep + " ").join(prompt))
+        return key_name
+
+    @classmethod
+    def _get_matching_key_filename(cls, key_name):
+        """Helper to establish matching filename for the ssh key given the key name
+        """
+        return join(cls._get_key_directory(), key_name + '.pem')
+
+    @classmethod
+    def _get_local_keys(cls):
+        """Return dict of key_name: key_filename for ssh key files found locally
+        """
+        d = cls._get_key_directory()
+        return {f[:-4]: op.join(d, f)
+                for f in os.listdir(d)
+                if f.endswith('.pem') and op.isfile(op.join(d, f))}
+
+    @classmethod
+    def _get_key_directory(cls):
+        """Return directory with ssh keys.
+
+        It also ensures that the directory with keys exists locally
+        """
+        d = join(AppDirs('reproman', 'reproman.org').user_data_dir, 'ec2_keys')
+        assure_dir(d)
+        return d
 
     def get_session(self, pty=False, shared=None):
         """
