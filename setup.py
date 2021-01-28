@@ -70,9 +70,7 @@ requires = {
         'chardet',  # python-debian misses dependency on it
     ],
     'datalad': [
-        # Drop the rc as soon as we can to avoid installing future
-        # rcs. See https://github.com/datalad/datalad-container/pull/74.
-        'datalad>=0.13.0rc2',
+        'datalad>=0.13.0',
         'datalad-container',
     ],
     'docker': [
