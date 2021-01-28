@@ -158,9 +158,10 @@ class AwsCondor(Resource):
         for i, node in enumerate(self.nodes):
             if not node._ec2_instance.public_ip_address:
                 node._ec2_instance = node._ec2_resource.Instance(node.id)
+            is_central_manager = (i == 0)
             condor_config = Template(
                 central_manager_ip=central_manager_ip,
-                is_central_manager=(i == 0),
+                is_central_manager=is_central_manager,
                 worker_nodes=self.nodes[1:]
             ).render_cluster("condor_config.local.template")
             session = node.get_session()
@@ -168,14 +169,17 @@ class AwsCondor(Resource):
             session.put_text(condor_config, "/etc/condor/config.d/00-nitrcce-cluster")
             session.execute_command(["sudo", "rm", "/etc/condor/config.d/00-minicondor"])
             session.execute_command(["sudo", "systemctl", "restart", "condor"])
-            if i == 0:
-                session.execute_command(["sudo",
-                    "/home/{}/bin/nfs-mount-server.sh".format(self.user),
-                    central_manager_ip])
-            else:
-                session.execute_command(["sudo",
-                    "/home/{}/bin/nfs-mount-client.sh".format(self.user),
-                    central_manager_ip])
+            nfs_file = "/home/{}/bin/nfs-mount-{}.sh".format(self.user, "server" if is_central_manager else "client")
+            # we need to establish shared ~/.reproman to have datasets we operate on
+            # accessible across nodes by default
+            session.execute_command([
+                "bash",
+                "-c",
+                "echo -e '\nmkdir -p ~/nfs-shared/.reproman " +
+                    ("&& chown {} ~/nfs-shared/.reproman ".format(self.user) if is_central_manager else '') +
+                    "&& ln -s ~/nfs-shared/.reproman ~/.reproman' >> '{}'".format(nfs_file)
+            ])
+            session.execute_command(["sudo", nfs_file, central_manager_ip])
 
         yield {
             'status': "Running"
