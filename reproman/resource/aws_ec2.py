@@ -394,6 +394,11 @@ class AwsEc2(Resource, AwsKeyMixin):
             self.connect()
 
         self._ensure_having_a_key()
+        lgr.info("Establishing session. You can also  ssh -i %s %s@%s",
+                 self.key_filename,
+                 self.user,
+                 self._ec2_instance.public_ip_address,
+                 )
         ssh = SSH(
             self.name,
             host=self._ec2_instance.public_ip_address,
