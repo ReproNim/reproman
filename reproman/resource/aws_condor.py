@@ -207,4 +207,5 @@ class AwsCondor(Resource):
         Log into remote HTCondor cluster (i.e. the manager node)
         """
         # Log into the central manager node
+        lgr.info("FYI IPs of all the nodes: %s", ", ".join(n._ec2_instance.public_ip_address for n in self.nodes))
         return self.nodes[0].get_session(pty, shared)
