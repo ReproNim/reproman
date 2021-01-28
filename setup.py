@@ -136,14 +136,8 @@ cmdclass = {
     # 'build_py': DataladBuild
 }
 
-# PyPI doesn't render markdown yet. Workaround for a sane appearance
-# https://github.com/pypa/pypi-legacy/issues/148#issuecomment-227757822
-README = opj(dirname(__file__), 'README.md')
-try:
-    import pypandoc
-    long_description = pypandoc.convert(README, 'rst')
-except ImportError:
-    long_description = open(README).read()
+with open(opj(dirname(__file__), 'README.md')) as f:
+    long_description = f.read()
 
 setup(
     name="reproman",
@@ -152,6 +146,10 @@ setup(
     version=version,
     description="Neuroimaging Computational Environments Manager",
     long_description=long_description,
+    # following https://packaging.python.org/guides/making-a-pypi-friendly-readme/
+    # might need
+    # python3 -m pip install --user --upgrade setuptools wheel twine
+    long_description_content_type='text/markdown',
     packages=reproman_pkgs,
     python_requires='>=3.6',
     install_requires=requires['core'],
