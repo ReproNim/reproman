@@ -751,7 +751,14 @@ class PrepareRemoteDataladMixin(object):
             cwd = res["path"]
             self._assert_clean_repo(cwd=cwd)
             lgr.debug("Adjusting state of %s", cwd)
-            cmds = [["git", "checkout", res["revision"]],
+            # "gitshasum" replaced "revision" in v0.12, with the old name kept
+            # for compatibility until v0.14. Even though the minimum version
+            # for DataLad in setup.py is above 0.12, support both keys until
+            # the minimum version for the _remote_ is specified/checked (see
+            # gh-477).
+            revision = res.get("gitshasum", res.get("revision"))
+            assert revision, "bug: incorrectly assumed revision is in results"
+            cmds = [["git", "checkout", revision],
                     ["git", "annex", "init"]]
             for cmd in cmds:
                 try:
