@@ -4,6 +4,12 @@ All notable changes to this project will be documented (for humans) in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2021-02-01
+
+Just a quick re-release for PyPI ensuring (manually) that setuptools_scm is present
+in the environment while running `sdist` so all auxililary files such as `setup_tools.py`
+are included in the distribution.
+
 ## [0.4.0] - 2021-01-28
 
 ### Added
