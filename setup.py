@@ -177,5 +177,6 @@ setup(
             findsome(opj("support", "jobs", "job_templates", "cluster"),
                      {"template"}) +
             findsome(opj("tests", "files"), {"cfg"})
-    }
+    },
+    setup_requires=['setuptools_scm'],
 )
