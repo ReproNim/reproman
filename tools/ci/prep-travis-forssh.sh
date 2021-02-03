@@ -3,8 +3,18 @@
 set -eu
 
 mkdir -p ~/.ssh
-echo -e "Host localhost\n\tStrictHostKeyChecking no\n\tIdentityFile /tmp/rman-test-ssh-id\n" >> ~/.ssh/config
-echo -e "Host reproman-test\n\tStrictHostKeyChecking no\n\tIdentityFile /tmp/rman-test-ssh-id\n" >> ~/.ssh/config
+
+cat >>~/.ssh/config <<'EOF'
+
+Host localhost
+StrictHostKeyChecking no
+IdentityFile /tmp/rman-test-ssh-id
+
+Host reproman-test
+StrictHostKeyChecking no
+IdentityFile /tmp/rman-test-ssh-id
+EOF
+
 ssh-keygen -f /tmp/rman-test-ssh-id -N ""
 cat /tmp/rman-test-ssh-id.pub >> ~/.ssh/authorized_keys
 eval $(ssh-agent)
