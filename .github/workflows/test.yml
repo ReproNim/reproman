@@ -17,6 +17,11 @@ jobs:
             install_datalad: 1
             reproman_tests_deps: full
             reproman_tests_ssh: 1
+          - python: 3.7
+            # must operate nicely with those env variables set
+            set_http_proxy: true
+            reproman_tests_deps: full-except-datalad
+            reproman_tests_nonetwork: 1
           - python: 3.8
             reproman_tests_deps: full-except-datalad
     steps:
@@ -48,6 +53,13 @@ jobs:
             sudo eatmydata tools/ci/prep-travis-forssh-sudo.sh
             tools/ci/prep-travis-forssh.sh
             echo REPROMAN_TESTS_SSH=1 >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.reproman_tests_nonetwork }}" != "" ]; then
+            echo REPROMAN_TESTS_NONETWORK="${{ matrix.reproman_tests_nonetwork }}" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.set_http_proxy }}" != "" ]; then
+            echo HTTP_PROXY="" >> "$GITHUB_ENV"
+            echo HTTPS_PROXY="" >> "$GITHUB_ENV"
           fi
       - name: Install datalad
         if: matrix.install_datalad != ''
