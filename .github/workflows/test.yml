@@ -14,6 +14,7 @@ jobs:
       matrix:
         include:
           - python: 3.8
+            install_condor: 1
             install_datalad: 1
             reproman_tests_deps: full
             reproman_tests_ssh: 1
@@ -92,6 +93,9 @@ jobs:
       - name: Install datalad
         if: matrix.install_datalad != ''
         run: tools/ci/install_datalad
+      - name: Install condor
+        if: matrix.install_condor != ''
+        run: tools/ci/install_condor
       - name: pip install
         run: |
           pip install --upgrade pip
