@@ -17,6 +17,9 @@ EOF
 
 ssh-keygen -f /tmp/rman-test-ssh-id -N ""
 cat /tmp/rman-test-ssh-id.pub >> ~/.ssh/authorized_keys
+
+chmod og-rw ~
+
 eval $(ssh-agent)
 ssh-add /tmp/rman-test-ssh-id
 
