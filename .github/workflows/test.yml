@@ -17,6 +17,7 @@ jobs:
             install_datalad: 1
             reproman_tests_deps: full
             reproman_tests_ssh: 1
+            setup_slurm: 1
           - python: 3.6
             reproman_tests_deps: core
             reproman_tests_ssh: 1
@@ -85,6 +86,9 @@ jobs:
             echo HTTP_PROXY="" >> "$GITHUB_ENV"
             echo HTTPS_PROXY="" >> "$GITHUB_ENV"
           fi
+      - name: Set up Slurm
+        if: matrix.setup_slurm != ''
+        run: tools/ci/setup-slurm-container.sh
       - name: Install datalad
         if: matrix.install_datalad != ''
         run: tools/ci/install_datalad
