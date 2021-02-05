@@ -17,6 +17,17 @@ jobs:
             install_datalad: 1
             reproman_tests_deps: full
             reproman_tests_ssh: 1
+          - python: 3.6
+            # By default no logs will be output. This one is to test
+            # with low level but dumped to /dev/null
+            reproman_loglevel: INFO
+            reproman_tests_deps: core
+          - python: 3.6
+            # By default no logs will be output. This one is to test
+            # with low level but dumped to /dev/null
+            reproman_loglevel: 2
+            reproman_logtarget: /dev/null
+            reproman_tests_deps: full-except-datalad
           - python: 3.7
             # must operate nicely with those env variables set
             set_http_proxy: true
@@ -56,6 +67,12 @@ jobs:
           fi
           if [ "${{ matrix.reproman_tests_nonetwork }}" != "" ]; then
             echo REPROMAN_TESTS_NONETWORK="${{ matrix.reproman_tests_nonetwork }}" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.reproman_loglevel }}" != "" ]; then
+            echo REPROMAN_LOGLEVEL="${{ matrix.reproman_loglevel }}" >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.reproman_logtarget }}" != "" ]; then
+            echo REPROMAN_LOGTARGET="${{ matrix.reproman_logtarget }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ matrix.set_http_proxy }}" != "" ]; then
             echo HTTP_PROXY="" >> "$GITHUB_ENV"
