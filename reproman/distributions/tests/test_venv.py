@@ -51,8 +51,9 @@ def venv_test_dir():
     runner = Runner(cwd=test_dir)
     pip0 = op.join("venv0", "bin", "pip")
     pip1 = op.join("venv1", "bin", "pip")
-    runner.run(["virtualenv", "--python", PY_VERSION, "venv0"])
-    runner.run(["virtualenv", "--python", PY_VERSION, "venv1"])
+    venv_cmd = [sys.executable, "-m", "virtualenv"]
+    runner.run(venv_cmd + ["--python", PY_VERSION, "venv0"])
+    runner.run(venv_cmd + ["--python", PY_VERSION, "venv1"])
     runner.run([pip0, "install", "pyyaml"])
     runner.run([pip0, "install", "-e", pymod_dir])
     runner.run([pip1, "install", "attrs"])
@@ -62,8 +63,8 @@ def venv_test_dir():
     if ssp:
         # The testing environment supports --system_site_packages.
         pip2 = op.join("venv-nonlocal", "bin", "pip")
-        runner.run(["virtualenv", "--python", PY_VERSION,
-                    "--system-site-packages", "venv-nonlocal"])
+        runner.run(venv_cmd + ["--python", PY_VERSION,
+                               "--system-site-packages", "venv-nonlocal"])
         runner.run([pip2, "install", pymod_dir])
 
     return test_dir
