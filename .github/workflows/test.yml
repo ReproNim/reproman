@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
     env:
       NO_ET: 1
     strategy:
@@ -20,30 +20,36 @@ jobs:
           - python: 3.8
             install_condor: 1
             install_datalad: 1
+            os: ubuntu-16.04
             reproman_tests_deps: full
             reproman_tests_ssh: 1
             setup_slurm: 1
           - python: 3.6
+            os: ubuntu-18.04
             reproman_tests_deps: core
             reproman_tests_ssh: 1
             reproman_tests_assume_ssp: 1
           - python: 3.6
+            os: ubuntu-18.04
             # By default no logs will be output. This one is to test
             # with low level but dumped to /dev/null
             reproman_loglevel: INFO
             reproman_tests_deps: core
           - python: 3.6
+            os: ubuntu-18.04
             # By default no logs will be output. This one is to test
             # with low level but dumped to /dev/null
             reproman_loglevel: 2
             reproman_logtarget: /dev/null
             reproman_tests_deps: full-except-datalad
           - python: 3.7
+            os: ubuntu-18.04
             # must operate nicely with those env variables set
             set_http_proxy: true
             reproman_tests_deps: full-except-datalad
             reproman_tests_nonetwork: 1
           - python: 3.8
+            os: ubuntu-18.04
             reproman_tests_deps: full-except-datalad
     steps:
       - uses: actions/checkout@v2
