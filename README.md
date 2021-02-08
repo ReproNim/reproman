@@ -3,7 +3,7 @@
 [![Supports python version](https://img.shields.io/pypi/pyversions/datalad)](https://pypi.org/project/datalad/)
 [![GitHub release](https://img.shields.io/github/release/ReproNim/reproman.svg)](https://GitHub.com/ReproNim/reproman/releases/)
 [![PyPI version fury.io](https://badge.fury.io/py/reproman.svg)](https://pypi.python.org/pypi/reproman/)
-[![Travis tests status](https://secure.travis-ci.org/ReproNim/reproman.png?branch=master)](https://travis-ci.org/ReproNim/reproman)
+[![Tests](https://github.com/ReproNim/reproman/workflows/Tests/badge.svg)](https://github.com/ReproNim/reproman/actions?query=workflow%3ATests)
 [![codecov.io](https://codecov.io/github/ReproNim/reproman/coverage.svg?branch=master)](https://codecov.io/github/ReproNim/reproman?branch=master)
 [![Documentation](https://readthedocs.org/projects/reproman/badge/?version=latest)](https://reproman.readthedocs.io/en/latest/?badge=latest)
 
