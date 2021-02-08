@@ -18,17 +18,17 @@ jobs:
       matrix:
         include:
           - python: 3.8
-            install_condor: 1
-            install_datalad: 1
+            install_condor: condor
+            install_datalad: datalad
             os: ubuntu-16.04
             reproman_tests_deps: full
-            reproman_tests_ssh: 1
-            setup_slurm: 1
+            reproman_tests_ssh: ssh
+            setup_slurm: slurm
           - python: 3.6
             os: ubuntu-18.04
             reproman_tests_deps: core
-            reproman_tests_ssh: 1
-            reproman_tests_assume_ssp: 1
+            reproman_tests_ssh: ssh
+            reproman_tests_assume_ssp: ssp
           - python: 3.6
             os: ubuntu-18.04
             # By default no logs will be output. This one is to test
@@ -45,9 +45,9 @@ jobs:
           - python: 3.7
             os: ubuntu-18.04
             # must operate nicely with those env variables set
-            set_http_proxy: true
+            set_http_proxy: http_proxy
             reproman_tests_deps: full-except-datalad
-            reproman_tests_nonetwork: 1
+            reproman_tests_nonetwork: nonetwork
           - python: 3.8
             os: ubuntu-18.04
             reproman_tests_deps: full-except-datalad
@@ -85,7 +85,7 @@ jobs:
             echo REPROMAN_TESTS_ASSUME_SSP=1 >> "$GITHUB_ENV"
           fi
           if [ "${{ matrix.reproman_tests_nonetwork }}" != "" ]; then
-            echo REPROMAN_TESTS_NONETWORK="${{ matrix.reproman_tests_nonetwork }}" >> "$GITHUB_ENV"
+            echo REPROMAN_TESTS_NONETWORK=1 >> "$GITHUB_ENV"
           fi
           if [ "${{ matrix.reproman_loglevel }}" != "" ]; then
             echo REPROMAN_LOGLEVEL="${{ matrix.reproman_loglevel }}" >> "$GITHUB_ENV"
