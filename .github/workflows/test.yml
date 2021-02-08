@@ -18,6 +18,10 @@ jobs:
             reproman_tests_deps: full
             reproman_tests_ssh: 1
           - python: 3.6
+            reproman_tests_deps: core
+            reproman_tests_ssh: 1
+            reproman_tests_assume_ssp: 1
+          - python: 3.6
             # By default no logs will be output. This one is to test
             # with low level but dumped to /dev/null
             reproman_loglevel: INFO
@@ -64,6 +68,9 @@ jobs:
             sudo eatmydata tools/ci/prep-travis-forssh-sudo.sh
             tools/ci/prep-travis-forssh.sh
             echo REPROMAN_TESTS_SSH=1 >> "$GITHUB_ENV"
+          fi
+          if [ "${{ matrix.reproman_tests_assume_ssp }}" != "" ]; then
+            echo REPROMAN_TESTS_ASSUME_SSP=1 >> "$GITHUB_ENV"
           fi
           if [ "${{ matrix.reproman_tests_nonetwork }}" != "" ]; then
             echo REPROMAN_TESTS_NONETWORK="${{ matrix.reproman_tests_nonetwork }}" >> "$GITHUB_ENV"
