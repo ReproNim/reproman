@@ -77,8 +77,8 @@ jobs:
       - name: Set up test environment
         run: |
           if [ "${{ matrix.reproman_tests_ssh }}" != "" ]; then
-            sudo eatmydata tools/ci/prep-travis-forssh-sudo.sh
-            tools/ci/prep-travis-forssh.sh
+            sudo eatmydata tools/ci/prep-forssh-sudo.sh
+            tools/ci/prep-forssh.sh
             echo REPROMAN_TESTS_SSH=1 >> "$GITHUB_ENV"
           fi
           if [ "${{ matrix.reproman_tests_assume_ssp }}" != "" ]; then
