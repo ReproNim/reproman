@@ -4,6 +4,11 @@
 
 set -eu
 
+sed -e 's,/debian ,/debian-devel ,g' /etc/apt/sources.list.d/neurodebian.sources.list | \
+    grep -v data | \
+    sudo tee /etc/apt/sources.list.d/neurodebian-devel.sources.list
+sudo apt-get update
+
 sudo debconf-set-selections -v tools/ci/htcondor_dconf_selections
 sudo apt-get install -y htcondor
 sudo service condor start

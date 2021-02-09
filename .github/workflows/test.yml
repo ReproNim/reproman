@@ -20,7 +20,7 @@ jobs:
           - python: 3.6
             install_condor: condor
             install_datalad: datalad
-            os: ubuntu-16.04
+            os: ubuntu-18.04
             reproman_tests_deps: full
             reproman_tests_ssh: ssh
             setup_slurm: slurm
