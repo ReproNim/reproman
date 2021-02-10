@@ -11,6 +11,12 @@ sudo apt-get update
 
 sudo debconf-set-selections -v tools/ci/htcondor_dconf_selections
 sudo apt-get install -y htcondor
+
+# Prevent htcondor from bind-mounting a scratch directory over /tmp and
+# interfering with our test location. This is necessary as of htcondor v8.7.10
+printf "\\nMOUNT_UNDER_SCRATCH = /var/tmp\\n" | \
+    sudo tee -a /etc/condor/condor_config
+
 sudo service condor start
 
 # Try twice to give condor some time to fire up.
