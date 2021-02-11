@@ -200,7 +200,8 @@ def container_dataset(tmpdir_factory):
 @pytest.fixture()
 def check_orc_datalad(job_spec, dataset):
     def fn(resource, orc_class, sub_type):
-        dataset.repo.tag("start-pt")
+        repo = dataset.repo
+        repo.tag("start-pt")
 
         def run_and_check(spec):
             with chpwd(dataset.path):
@@ -211,7 +212,7 @@ def check_orc_datalad(job_spec, dataset):
                 orc.follow()
 
                 orc.fetch()
-                assert dataset.repo.file_has_content("out")
+                assert repo.file_has_content("out")
                 assert open("out").read() == "content\nmore\n"
                 return orc
 
@@ -225,7 +226,7 @@ def check_orc_datalad(job_spec, dataset):
         orc = run_and_check(job_spec)
 
         # Perform another run based on the dumped job spec from the first.
-        assert dataset.repo.get_active_branch() == "master"
+        assert repo.get_active_branch() == "master"
         metadir = op.relpath(orc.meta_directory, orc.working_directory)
         with open(op.join(dataset.path, metadir, "spec.yaml")) as f:
             dumped_spec = yaml.safe_load(f)
@@ -235,8 +236,8 @@ def check_orc_datalad(job_spec, dataset):
             # Our reproman-based copying of data doesn't isn't (yet) OK with
             # data files that already exist.
             dumped_spec["inputs"] = []
-        dataset.repo.call_git(["checkout", "-b", "other", "start-pt"])
-        if dataset.repo.dirty:
+        repo.call_git(["checkout", "-b", "other", "start-pt"])
+        if repo.dirty:
             # The submitter log file is ignored (currently only relevant for
             # condor; see b9277ebc0 for more details). Add the directory to get
             # to a clean state.
@@ -353,6 +354,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     #   |/
     #   o
     ds = dataset
+    repo = ds.repo
     js0 = job_spec
     js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
@@ -376,14 +378,14 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
 
         ref0 = "refs/reproman/{}".format(orc0.jobid)
         ref1 = "refs/reproman/{}".format(orc1.jobid)
-        assert not ds.repo.is_ancestor(ref0, ref1)
-        assert not ds.repo.is_ancestor(ref1, ref0)
+        assert not repo.is_ancestor(ref0, ref1)
+        assert not repo.is_ancestor(ref1, ref0)
 
         # Both runs branched off of master. The first one fetched advanced it.
         # The other one is a side-branch.
-        assert not ds.repo.is_ancestor(ref1, "HEAD")
-        assert ds.repo.get_hexsha(ref0) == ds.repo.get_hexsha("master")
-        assert ds.repo.get_active_branch() == "master"
+        assert not repo.is_ancestor(ref1, "HEAD")
+        assert repo.get_hexsha(ref0) == repo.get_hexsha("master")
+        assert repo.get_active_branch() == "master"
 
 
 @pytest.mark.integration
@@ -417,10 +419,10 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
         ref0 = "refs/reproman/{}".format(orc0.jobid)
         ref1 = "refs/reproman/{}".format(orc1.jobid)
 
-        assert ds.repo.is_ancestor(ref0, ref1)
-        assert ds.repo.get_hexsha(ref0) != ds.repo.get_hexsha(ref1)
-        assert ds.repo.get_hexsha(ref1) == ds.repo.get_hexsha("master")
-        assert ds.repo.get_active_branch() == "master"
+        assert repo.is_ancestor(ref0, ref1)
+        assert repo.get_hexsha(ref0) != repo.get_hexsha(ref1)
+        assert repo.get_hexsha(ref1) == repo.get_hexsha("master")
+        assert repo.get_active_branch() == "master"
 
 
 @pytest.mark.integration
@@ -628,9 +630,10 @@ def test_head_at_unknown_ref(dataset):
 
 
 def test_head_at_empty_branch(dataset):
-    dataset.repo.checkout("orph", options=["--orphan"])
-    dataset.repo.call_git(["reset", "--hard"])
-    assert not dataset.repo.dirty
+    repo = dataset.repo
+    repo.checkout("orph", options=["--orphan"])
+    repo.call_git(["reset", "--hard"])
+    assert not repo.dirty
     with pytest.raises(OrchestratorError) as exc:
         with orcs.head_at(dataset, "master"):
             pass
@@ -638,15 +641,18 @@ def test_head_at_empty_branch(dataset):
 
 
 def test_head_at_no_move(dataset):
+    repo = dataset.repo
     with orcs.head_at(dataset, "master") as moved:
         assert not moved
         create_tree(dataset.path, {"on-master": "on-maser"})
         dataset.save("on-master", message="advance master")
-        assert dataset.repo.get_active_branch() == "master"
-    assert dataset.repo.get_active_branch() == "master"
+        assert repo.get_active_branch() == "master"
+    assert repo.get_active_branch() == "master"
 
 
 def test_head_at_move(dataset):
+    repo = dataset.repo
+
     def dataset_path_exists(path):
         return op.exists(op.join(dataset.path, path))
 
@@ -654,13 +660,13 @@ def test_head_at_move(dataset):
     dataset.save("pre")
     with orcs.head_at(dataset, "master~1") as moved:
         assert moved
-        assert dataset.repo.get_active_branch() is None
+        assert repo.get_active_branch() is None
         assert not dataset_path_exists("pre")
         create_tree(dataset.path, {"at-head": "at-head"})
         dataset.save("at-head", message="advance head (not master)")
     assert dataset_path_exists("pre")
     assert not dataset_path_exists("at-head")
-    assert dataset.repo.get_active_branch() == "master"
+    assert repo.get_active_branch() == "master"
 
 
 def test_dataset_as_dict(shell, dataset, job_spec):
@@ -873,7 +879,8 @@ def test_orc_datalad_pair_new_submodule(job_spec, dataset, shell):
 
 def test_orc_datalad_pair_existing_remote(job_spec, dataset, shell):
     root_directory = job_spec["root_directory"]
-    dataset.repo.add_remote("localshell", "i-dont-match")
+    repo = dataset.repo
+    repo.add_remote("localshell", "i-dont-match")
     with chpwd(dataset.path):
         orc = orcs.DataladPairOrchestrator(
             shell, submission_type="local", job_spec=job_spec)
@@ -882,5 +889,5 @@ def test_orc_datalad_pair_existing_remote(job_spec, dataset, shell):
         with pytest.raises(OrchestratorError):
             orc.prepare_remote()
         # ... and continue if it does.
-        dataset.repo.set_remote_url("localshell", orc.working_directory)
+        repo.set_remote_url("localshell", orc.working_directory)
         orc.prepare_remote()
