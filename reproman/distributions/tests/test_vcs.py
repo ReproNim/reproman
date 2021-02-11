@@ -74,6 +74,19 @@ def assert_distributions(result, expected_length=None, which=0,
         assert_is_subset_recur(expected_subset, attr.asdict(dist), [dict, list])
 
 
+def current_hexsha(runner):
+    return runner(["git", "rev-parse", "HEAD"])[0].strip()
+
+
+def current_branch(runner):
+    try:
+        out = runner(["git", "symbolic-ref", "--short", "HEAD"],
+                     expect_fail=True)
+    except CommandError:
+        return
+    return out[0].strip()
+
+
 def test_git_repo_empty(git_repo_empty):
     tracer = VCSTracer()
     # Should not crash when given path to empty repo.
@@ -304,19 +317,6 @@ def install(git_dist, dest, check=False):
 
         for att in ["hexsha", "root_hexsha", "tracked_remote", "remotes"]:
             assert getattr(git_pkg, att) == getattr(git_pkg_installed, att)
-
-
-def current_hexsha(runner):
-    return runner(["git", "rev-parse", "HEAD"])[0].strip()
-
-
-def current_branch(runner):
-    try:
-        out = runner(["git", "symbolic-ref", "--short", "HEAD"],
-                     expect_fail=True)
-    except CommandError:
-        return
-    return out[0].strip()
 
 
 @pytest.mark.integration
