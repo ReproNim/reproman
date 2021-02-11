@@ -115,8 +115,8 @@ def test_git_repo(git_repo):
         assert dists[0][0].packages[0].hexsha
         assert dists[0][0].packages[0].root_hexsha
 
-        runner = GitRunner()
-        hexshas, _ = runner(["git", "rev-list", "master"], cwd=git_repo)
+        runner = GitRunner(git_repo)
+        hexshas, _ = runner(["git", "rev-list", "master"])
         root_hexsha = hexshas.strip('\n').split('\n')[-1]
         repo = dists[0][0].packages[0]
         assert repo.root_hexsha == root_hexsha
@@ -131,14 +131,13 @@ def test_git_repo(git_repo):
 
 
 def test_git_repo_detached(git_repo):
-    runner = GitRunner()
+    runner = GitRunner(git_repo)
     # If we are in a detached state, we still don't identify the
     # repository itself.
     runner(["git", "checkout", "master^{}", "--"],
-           cwd=git_repo, expect_stderr=True)
+           expect_stderr=True)
 
-    hexsha_master, _ = runner(["git", "rev-parse", "master"],
-                              cwd=git_repo)
+    hexsha_master, _ = runner(["git", "rev-parse", "master"])
     hexsha_master = hexsha_master.strip()
 
     tracer = VCSTracer()
@@ -154,19 +153,17 @@ def test_git_repo_detached(git_repo):
 
 def test_git_repo_remotes(git_repo_pair):
     repo_local, repo_remote = git_repo_pair
-    runner = GitRunner()
+    runner = GitRunner(repo_local)
     tracer = VCSTracer()
 
     # Set remote.pushdefault to a value we know doesn't exist.
     # Otherwise, the test machine may have remote.pushdefault globally
     # configured to point to "origin".
-    runner(["git", "config", "remote.pushdefault", "notexisting"],
-           cwd=repo_local)
+    runner(["git", "config", "remote.pushdefault", "notexisting"])
     # Add another remote that doesn't contain the current commit (in
     # fact doesn't actually exist), so that we test the "listed as
     # remote but doesn't contain" case.
-    runner(["git", "remote", "add", "fakeremote", "fakepath"],
-           cwd=repo_local)
+    runner(["git", "remote", "add", "fakeremote", "fakepath"])
 
     paths = [os.path.join(repo_local, "foo")]
 
@@ -198,8 +195,7 @@ def test_git_repo_remotes(git_repo_pair):
     assert "pushurl" not in list(pkg_nopush.remotes.values())
 
     # If we set the pushurl and retrace, it is included.
-    runner(["git", "config", "remote.origin.pushurl", repo_remote],
-           cwd=repo_local)
+    runner(["git", "config", "remote.origin.pushurl", repo_remote])
     dists_push = list(tracer.identify_distributions(paths))
     pkg_push = dists_push[0][0].packages[0]
     assert pkg_push.remotes["origin"]["pushurl"] == repo_remote
@@ -441,8 +437,7 @@ def test_git_install_add_remotes(traced_repo_copy, tmpdir):
     git_pkg.remotes = {"foo": {"url": url},
                        "bar": {"contains": True, "url": url}}
     install(git_dist, install_dir)
-    installed_remotes = runner(["git", "remote"],
-                               cwd=install_dir)[0].splitlines()
+    installed_remotes = runner(["git", "remote"])[0].splitlines()
     assert set(installed_remotes) == {"foo", "bar"}
 
 
