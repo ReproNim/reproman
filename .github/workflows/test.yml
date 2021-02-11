@@ -74,6 +74,10 @@ jobs:
           sudo eatmydata apt-get install sqlite3 parallel singularity-container
           git config --global user.email "reproman@repronim.org"
           git config --global user.name "ReproMan Tester"
+          # Set defaultBranch to avoid polluting output with repeated
+          # warnings, and set it to something other than "master" to
+          # check that no functionality hard codes the default branch.
+          git config --global init.defaultBranch rman-default-test-branch
       - name: Set up test environment
         run: |
           if [ "${{ matrix.reproman_tests_ssh }}" != "" ]; then
