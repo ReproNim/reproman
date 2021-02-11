@@ -403,6 +403,7 @@ def test_git_install_checkout(traced_repo_copy, tmpdir):
     tmpdir = str(tmpdir)
 
     branch = current_branch(GitRunner(traced_repo_copy["repo_local"]))
+    other_branch = "other_" + branch
 
     install_dir = op.join(tmpdir, "installed")
     runner = GitRunner(cwd=install_dir)
@@ -411,20 +412,20 @@ def test_git_install_checkout(traced_repo_copy, tmpdir):
     # Installing to a non-existing location will be more aggressive, creating a
     # new branch at the recorded hexsha rather than just detaching there.
     git_pkg.path = install_dir
-    git_pkg.branch = "other"
+    git_pkg.branch = other_branch
     install(git_dist, install_dir, check=True)
-    assert current_branch(runner) == "other"
+    assert current_branch(runner) == other_branch
 
     # If the recorded branch is in the existing installation repo and has the
     # same hexsha, we check it out.
     run(["git", "checkout", branch])
-    run(["git", "branch", "--force", "other", git_pkg.hexsha])
+    run(["git", "branch", "--force", other_branch, git_pkg.hexsha])
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
-    assert current_branch(runner) == "other"
+    assert current_branch(runner) == other_branch
     # Otherwise, we detach.
     run(["git", "checkout", branch])
-    run(["git", "branch", "--force", "other", git_pkg.hexsha + "^"])
+    run(["git", "branch", "--force", other_branch, git_pkg.hexsha + "^"])
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
     assert not current_branch(runner)
