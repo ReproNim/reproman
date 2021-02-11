@@ -202,6 +202,7 @@ def check_orc_datalad(job_spec, dataset):
     def fn(resource, orc_class, sub_type):
         repo = dataset.repo
         repo.tag("start-pt")
+        branch_orig = repo.get_active_branch()
 
         def run_and_check(spec):
             with chpwd(dataset.path):
@@ -226,7 +227,7 @@ def check_orc_datalad(job_spec, dataset):
         orc = run_and_check(job_spec)
 
         # Perform another run based on the dumped job spec from the first.
-        assert repo.get_active_branch() == "master"
+        assert repo.get_active_branch() == branch_orig
         metadir = op.relpath(orc.meta_directory, orc.working_directory)
         with open(op.join(dataset.path, metadir, "spec.yaml")) as f:
             dumped_spec = yaml.safe_load(f)
@@ -348,13 +349,15 @@ def test_orc_datalad_run_failed(job_spec, dataset, ssh):
 def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     # Start two orchestrators from the same point:
     #
-    #   orc 0, master
+    #   orc 0, <branch tip>
     #   |
     #   | orc 1
     #   |/
     #   o
     ds = dataset
     repo = ds.repo
+    branch_orig = repo.get_active_branch()
+
     js0 = job_spec
     js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
@@ -381,23 +384,26 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
         assert not repo.is_ancestor(ref0, ref1)
         assert not repo.is_ancestor(ref1, ref0)
 
-        # Both runs branched off of master. The first one fetched advanced it.
-        # The other one is a side-branch.
+        # Both runs branched off of the original branch. The first one fetched
+        # advanced it. The other one is a side-branch.
         assert not repo.is_ancestor(ref1, "HEAD")
-        assert repo.get_hexsha(ref0) == repo.get_hexsha("master")
-        assert repo.get_active_branch() == "master"
+        assert repo.get_hexsha(ref0) == repo.get_hexsha(branch_orig)
+        assert repo.get_active_branch() == branch_orig
 
 
 @pytest.mark.integration
 def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     # Run one orchestrator and fetch, then run another and fetch:
     #
-    #   orc 1, master
+    #   orc 1, <branch tip>
     #   |
     #   o orc 0
     #   |
     #   o
     ds = dataset
+    repo = ds.repo
+    branch_orig = repo.get_active_branch()
+
     create_tree(ds.path, {"in": "content\n"})
     ds.save()
 
@@ -421,8 +427,8 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
 
         assert repo.is_ancestor(ref0, ref1)
         assert repo.get_hexsha(ref0) != repo.get_hexsha(ref1)
-        assert repo.get_hexsha(ref1) == repo.get_hexsha("master")
-        assert repo.get_active_branch() == "master"
+        assert repo.get_hexsha(ref1) == repo.get_hexsha(branch_orig)
+        assert repo.get_active_branch() == branch_orig
 
 
 @pytest.mark.integration
@@ -631,42 +637,46 @@ def test_head_at_unknown_ref(dataset):
 
 def test_head_at_empty_branch(dataset):
     repo = dataset.repo
+    branch_orig = repo.get_active_branch()
     repo.checkout("orph", options=["--orphan"])
     repo.call_git(["reset", "--hard"])
     assert not repo.dirty
     with pytest.raises(OrchestratorError) as exc:
-        with orcs.head_at(dataset, "master"):
+        with orcs.head_at(dataset, branch_orig):
             pass
     assert "No commit" in str(exc.value)
 
 
 def test_head_at_no_move(dataset):
     repo = dataset.repo
-    with orcs.head_at(dataset, "master") as moved:
+    branch_orig = repo.get_active_branch()
+    with orcs.head_at(dataset, branch_orig) as moved:
         assert not moved
-        create_tree(dataset.path, {"on-master": "on-maser"})
-        dataset.save("on-master", message="advance master")
-        assert repo.get_active_branch() == "master"
-    assert repo.get_active_branch() == "master"
+        create_tree(dataset.path, {"f0": "on original branch"})
+        dataset.save("f0", message="advance branch")
+        assert repo.get_active_branch() == branch_orig
+    assert repo.get_active_branch() == branch_orig
 
 
 def test_head_at_move(dataset):
     repo = dataset.repo
+    branch_orig = repo.get_active_branch()
 
     def dataset_path_exists(path):
         return op.exists(op.join(dataset.path, path))
 
     create_tree(dataset.path, {"pre": "pre"})
     dataset.save("pre")
-    with orcs.head_at(dataset, "master~1") as moved:
+    with orcs.head_at(dataset, branch_orig + "~1") as moved:
         assert moved
         assert repo.get_active_branch() is None
         assert not dataset_path_exists("pre")
         create_tree(dataset.path, {"at-head": "at-head"})
-        dataset.save("at-head", message="advance head (not master)")
+        dataset.save("at-head",
+                     message="advance head (not {})".format(branch_orig))
     assert dataset_path_exists("pre")
     assert not dataset_path_exists("at-head")
-    assert repo.get_active_branch() == "master"
+    assert repo.get_active_branch() == branch_orig
 
 
 def test_dataset_as_dict(shell, dataset, job_spec):
@@ -788,15 +798,15 @@ def test_orc_datalad_pair_submodule_conflict(caplog, job_spec, dataset, shell):
     # another job is launched that modifies the same submodule. This creates a
     # change that can't be brought in with `datalad update` because, even with
     # --follow=parentds, the top-level repo still brings in changes from the
-    # remote, whose master branch points to the first job. In a diagram, the
-    # remote state is:
+    # remote, whose branch points to the first job. In a diagram, the remote
+    # state is:
     #
-    #         ---- job 1 (master)
+    #         ---- job 1 (branch)
     #  base --|
     #         ---- job 2 (detached)
     #
     # On fetch of job 2, we merge the job 2 ref. The `datalad update` call
-    # fails trying to merge in master.
+    # fails trying to merge in branch.
     #
     # If this scenario ends up being common enough, we could consider modifying
     # `datalad update` to optionally not try to merge the remote state of the

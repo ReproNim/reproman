@@ -88,6 +88,8 @@ def current_branch(runner):
 
 
 def test_git_repo_empty(git_repo_empty):
+    branch = current_branch(GitRunner(git_repo_empty))
+
     tracer = VCSTracer()
     # Should not crash when given path to empty repo.
     assert_distributions(
@@ -96,7 +98,7 @@ def test_git_repo_empty(git_repo_empty):
         expected_unknown=set(),
         expected_subset={"name": "git",
                          "packages": [{"path": git_repo_empty,
-                                       "branch": "master",
+                                       "branch": branch,
                                        # We do not include repo path itself.
                                        "files": []}]})
 
@@ -111,6 +113,9 @@ def test_git_repo(git_repo):
         os.path.join(git_repo, "subdir/baz")
     ]
 
+    runner = GitRunner(git_repo)
+    branch = current_branch(runner)
+
     tracer = VCSTracer()
 
     with chpwd(git_repo):
@@ -123,13 +128,12 @@ def test_git_repo(git_repo):
                 "name": "git",
                 "packages": [{"files": [op.relpath(p) for p in paths],
                               "path": git_repo,
-                              "branch": "master"}]})
+                              "branch": branch}]})
 
         assert dists[0][0].packages[0].hexsha
         assert dists[0][0].packages[0].root_hexsha
 
-        runner = GitRunner(git_repo)
-        hexshas, _ = runner(["git", "rev-list", "master"])
+        hexshas, _ = runner(["git", "rev-list", branch])
         root_hexsha = hexshas.strip('\n').split('\n')[-1]
         repo = dists[0][0].packages[0]
         assert repo.root_hexsha == root_hexsha
@@ -145,13 +149,14 @@ def test_git_repo(git_repo):
 
 def test_git_repo_detached(git_repo):
     runner = GitRunner(git_repo)
+    branch = current_branch(runner)
     # If we are in a detached state, we still don't identify the
     # repository itself.
-    runner(["git", "checkout", "master^{}", "--"],
+    runner(["git", "checkout", branch + "^{}", "--"],
            expect_stderr=True)
 
-    hexsha_master, _ = runner(["git", "rev-parse", "master"])
-    hexsha_master = hexsha_master.strip()
+    hexsha_branch, _ = runner(["git", "rev-parse", branch])
+    hexsha_branch = hexsha_branch.strip()
 
     tracer = VCSTracer()
     dists = list(tracer.identify_distributions([git_repo]))
@@ -159,7 +164,7 @@ def test_git_repo_detached(git_repo):
     pkg = dists[0][0].packages[0]
     # We do not include repository path itself.
     assert pkg.files == []
-    assert pkg.hexsha == hexsha_master
+    assert pkg.hexsha == hexsha_branch
     assert not pkg.branch
     assert not pkg.remotes
 
@@ -167,6 +172,7 @@ def test_git_repo_detached(git_repo):
 def test_git_repo_remotes(git_repo_pair):
     repo_local, repo_remote = git_repo_pair
     runner = GitRunner(repo_local)
+    branch = current_branch(runner)
     tracer = VCSTracer()
 
     # Set remote.pushdefault to a value we know doesn't exist.
@@ -189,7 +195,7 @@ def test_git_repo_remotes(git_repo_pair):
             "packages": [
                 {"files": [op.relpath(p, repo_local) for p in paths],
                  "path": repo_local,
-                 "branch": "master",
+                 "branch": branch,
                  "tracked_remote": "origin",
                  "remotes": {"origin":
                              {"url": repo_remote,
@@ -366,7 +372,7 @@ def test_git_install_detached(traced_repo_copy, tmpdir):
 
     # We detach if there is no recorded branch.
     git_pkg.branch = None
-    runner(["git", "checkout", "master"], expect_stderr=True)
+    runner(["git", "checkout", current_branch(runner)], expect_stderr=True)
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
     assert not current_branch(runner)
@@ -396,6 +402,8 @@ def test_git_install_checkout(traced_repo_copy, tmpdir):
     git_pkg = git_dist.packages[0]
     tmpdir = str(tmpdir)
 
+    branch = current_branch(GitRunner(traced_repo_copy["repo_local"]))
+
     install_dir = op.join(tmpdir, "installed")
     runner = GitRunner(cwd=install_dir)
     run = partial(runner.run, expect_stderr=True)
@@ -409,13 +417,13 @@ def test_git_install_checkout(traced_repo_copy, tmpdir):
 
     # If the recorded branch is in the existing installation repo and has the
     # same hexsha, we check it out.
-    run(["git", "checkout", "master"])
+    run(["git", "checkout", branch])
     run(["git", "branch", "--force", "other", git_pkg.hexsha])
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
     assert current_branch(runner) == "other"
     # Otherwise, we detach.
-    run(["git", "checkout", "master"])
+    run(["git", "checkout", branch])
     run(["git", "branch", "--force", "other", git_pkg.hexsha + "^"])
     install(git_dist, install_dir)
     assert current_hexsha(runner) == git_pkg.hexsha
