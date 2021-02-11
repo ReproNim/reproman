@@ -53,7 +53,7 @@ def get_spec_from_release_file(content):
     """Provide specification object describing the component of the distribution
     """
     # RegExp to pull a single line "tag: value" pair from a deb822 file
-    re_deb822_single_line_tag = re.compile("""
+    re_deb822_single_line_tag = re.compile(r"""
         ^(?P<tag>[a-zA-Z][^:]*):[\ ]+  # Tag - begins at start of line
         (?P<val>\S.*)$           # Value - after colon to the end of the line
     """, flags=re.VERBOSE + re.MULTILINE)
@@ -82,12 +82,12 @@ def parse_apt_cache_show_pkgs_output(output):
                                     flags=re.MULTILINE))
 
     # RegExp to pull a single line "tag: value" pair from a deb822 file
-    re_deb822_single_line_tag = re.compile("""
+    re_deb822_single_line_tag = re.compile(r"""
         ^(?P<tag>[a-zA-Z][^:]*):[\ ]+  # Tag - begins at start of line
         (?P<val>\S.*)$           # Value - after colon to the end of the line
     """, flags=re.VERBOSE + re.MULTILINE)
     # RegExp to split source into source and version
-    re_source = re.compile("""
+    re_source = re.compile(r"""
         ^(?P<source_name>[^ ]+)                # source name before any space
         ([^(]*\((?P<source_version>[^)]+)\))?  # source version in parentheses
     """, flags=re.VERBOSE)
@@ -116,9 +116,9 @@ def parse_apt_cache_show_pkgs_output(output):
 def parse_apt_cache_policy_pkgs_output(output):
     # findall wasn't greedy enough for some reason, so decided first to
     # split into entries (one per package)
-    entries = filter(bool, re.split('\n(?=\S)', output, flags=re.MULTILINE))
+    entries = filter(bool, re.split(r'\n(?=\S)', output, flags=re.MULTILINE))
     # now we need to parse/match each entry
-    re_pkg = re.compile("""
+    re_pkg = re.compile(r"""
         ^(?P<name>[^\s:]+):((?P<architecture>\S+):)?\s*\n  # package name
         \s+Installed:\s*(?P<installed>\S*)\s*\n    # Installed version
         \s+Candidate:\s*(?P<candidate>\S*)\s*\n    # Candidate version
@@ -126,13 +126,13 @@ def parse_apt_cache_policy_pkgs_output(output):
         (?P<version_table>(\n\s.*)+)
         """, flags=re.VERBOSE)
 
-    re_versions = re.compile("""
+    re_versions = re.compile(r"""
         ^(\s{5}|\s(?P<installed>\*\*\*)\s)
         (?P<version>\S+)\s+
         (?P<priority>\S+)
         (?P<sources>(\n\s{8}.*)+)
     """, flags=re.VERBOSE + re.MULTILINE)
-    re_source = re.compile("""
+    re_source = re.compile(r"""
         ^\s{8}(?P<priority>\S+)\s+
         (?P<source>.*)$
     """, flags=re.VERBOSE + re.MULTILINE)
@@ -160,13 +160,13 @@ def parse_apt_cache_policy_pkgs_output(output):
 
 def parse_apt_cache_policy_source_info(policy_output):
     source_info = {}
-    re_section = re.compile("""
+    re_section = re.compile(r"""
         ^(?P<header_line>\S.*)$[\r\n]*  # Header - non whitespace at the
                                         #          beginning of the line
         (?P<body>(^\ .*$[\r\n]*)*)      # Body - All subsequent lines that
                                         #        begin with a space
         """, flags=re.VERBOSE + re.MULTILINE)
-    re_source = re.compile("""
+    re_source = re.compile(r"""
         ^(\ (?P<priority>[0-9]+)\ +(?P<source>.*)$[\r\n]+
          (^(
             (\ \ +release\ +(?P<release_info>.*))|
@@ -182,7 +182,7 @@ def parse_apt_cache_policy_source_info(policy_output):
                            # The value follows the "=", and include any
                            # non commas, or commas not followed by another tag
         """, flags=re.VERBOSE)
-    re_source_line = re.compile("""
+    re_source_line = re.compile(r"""
         (?P<archive_uri>\S+)        # Archive URI up to the first " "
         (\ (?P<uri_suite>[^/]+))?   # The suite goes up to the first "/"
         """, flags=re.VERBOSE)

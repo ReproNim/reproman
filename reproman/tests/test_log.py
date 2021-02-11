@@ -39,7 +39,7 @@ def test_logging_to_a_file(dst=None):
     # verify that time stamp and level are present in the log line
     # do not want to rely on not having race conditions around date/time changes
     # so matching just with regexp
-    ok_(re.match("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \[ERROR\] %s" % msg,
+    ok_(re.match(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \[ERROR\] %s" % msg,
                  line))
 
 @with_tempfile

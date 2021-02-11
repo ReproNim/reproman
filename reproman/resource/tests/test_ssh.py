@@ -60,7 +60,7 @@ def test_ssh_class(setup_ssh, resource_test_dir, resman):
         resource = resman.factory(config)
         updated_config = merge_dicts(resource.create())
         config.update(updated_config)
-        assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$',
+        assert re.match(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$',
                         resource.id) is not None
         assert resource.status == 'N/A'
 
