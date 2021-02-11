@@ -4,7 +4,7 @@ set -eu
 
 if ! test -f /tmp/rman-test-ssh-id
 then
-    echo "prep-travis-forssh.sh needs to executed before this script" >&2
+    echo "prep-forssh.sh needs to executed before this script" >&2
     exit 1
 fi
 

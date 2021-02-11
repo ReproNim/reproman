@@ -377,5 +377,3 @@ Refer reproman/config.py for information on how to add these environment variabl
   Specify the temporary file system to use as loop device for testing REPROMAN_TESTS_TEMPDIR creation
 - *REPROMAN_TEMP_FS_SIZE*:
   Specify the size of temporary file system to use as loop device for testing REPROMAN_TESTS_TEMPDIR creation
-- *REPROMAN_NONLO*:
-  Specifies network interfaces to bring down/up for testing. Currently used by travis.
