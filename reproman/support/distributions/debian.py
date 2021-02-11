@@ -129,7 +129,7 @@ def parse_apt_cache_policy_pkgs_output(output):
     re_versions = re.compile("""
         ^(\s{5}|\s(?P<installed>\*\*\*)\s)
         (?P<version>\S+)\s+
-        (?P<priority>\S+)\n.*
+        (?P<priority>\S+)
         (?P<sources>(\n\s{8}.*)+)
     """, flags=re.VERBOSE + re.MULTILINE)
     re_source = re.compile("""
