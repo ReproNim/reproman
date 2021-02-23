@@ -185,7 +185,7 @@ class DebianDistribution(Distribution):
             import requests  # OPT
             r = requests.get(url)
             m = re.search(
-                '<a href="/archive/\w*debian/(\w+)/dists/\w+/">next change</a>',
+                r'<a href="/archive/\w*debian/(\w+)/dists/\w+/">next change</a>',
                 r.text)
             if m:
                 source_line = template.format(

@@ -141,7 +141,7 @@ def test_exc_str():
         raise Exception("my bad")
     except Exception as e:
         estr = exc_str(e)
-    assert_re_in("my bad \[test_dochelpers.py:test_exc_str:...\]", estr)
+    assert_re_in(r"my bad \[test_dochelpers.py:test_exc_str:...\]", estr)
 
     def f():
         def f2():
@@ -159,12 +159,12 @@ def test_exc_str():
         with patch.dict('os.environ', {}, clear=True):
             estr_ = exc_str()
 
-    assert_re_in("my bad again \[test_dochelpers.py:test_exc_str:...,test_dochelpers.py:f:...,test_dochelpers.py:f2:...\]", estr3)
-    assert_re_in("my bad again \[test_dochelpers.py:f:...,test_dochelpers.py:f2:...\]", estr2)
-    assert_re_in("my bad again \[test_dochelpers.py:f2:...\]", estr1)
+    assert_re_in(r"my bad again \[test_dochelpers.py:test_exc_str:...,test_dochelpers.py:f:...,test_dochelpers.py:f2:...\]", estr3)
+    assert_re_in(r"my bad again \[test_dochelpers.py:f:...,test_dochelpers.py:f2:...\]", estr2)
+    assert_re_in(r"my bad again \[test_dochelpers.py:f2:...\]", estr1)
     assert_equal(estr_, estr1)
 
     try:
         raise NotImplementedError
     except Exception as e:
-        assert_re_in("NotImplementedError\(\) \[test_dochelpers.py:test_exc_str:...\]", exc_str(e))
+        assert_re_in(r"NotImplementedError\(\) \[test_dochelpers.py:test_exc_str:...\]", exc_str(e))

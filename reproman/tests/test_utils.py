@@ -307,7 +307,7 @@ def test_find_files():
     assert_in(tests_dir, files2)
 
     # now actually matching the path
-    ff3 = find_files('.*/test_.*\.py$', proj_dir, dirs=True)
+    ff3 = find_files(r'.*/test_.*\.py$', proj_dir, dirs=True)
     files3 = list(ff3)
     assert_in(opj(tests_dir, 'test_utils.py'), files3)
     assert_not_in(tests_dir, files3)

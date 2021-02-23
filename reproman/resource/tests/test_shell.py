@@ -135,7 +135,7 @@ def test_shell_resource(resman):
     resource = resman.factory(config)
 
     status = merge_dicts(resource.create())
-    assert re.match('\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
+    assert re.match(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
 
     assert type(resource.connect()) == Shell
     assert resource.delete() is None

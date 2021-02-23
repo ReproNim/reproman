@@ -65,7 +65,7 @@ class HelpAction(argparse.Action):
             opt_args_str = '*Global options*'
             pos_args_str = '*Commands*'
             # tune up usage -- default one is way too heavy
-            helpstr = re.sub('^[uU]sage: .*?\n\s*\n',
+            helpstr = re.sub(r'^[uU]sage: .*?\n\s*\n',
                              'Usage: reproman [global-opts] command [command-opts]\n\n',
                              helpstr,
                              flags=re.MULTILINE | re.DOTALL)

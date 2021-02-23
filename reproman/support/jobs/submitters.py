@@ -379,7 +379,7 @@ class LSFSubmitter(Submitter):
     @borrowdoc(Submitter)
     def submit(self, script, submit_command=None):
         out = super(LSFSubmitter, self).submit(script, submit_command)
-        m = re.search('Job <(\d+)> is submitted to queue', out)
+        m = re.search(r'Job <(\d+)> is submitted to queue', out)
         self.submission_id = m.group(1)
         # Although LSF may have submitted the job successfully, it might 
         # not show up in the queue immediately.  We wait here for it to 

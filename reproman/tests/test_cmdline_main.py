@@ -73,7 +73,7 @@ def test_help_np():
     # enough of bin/reproman and .tox/py27/bin/reproman -- guarantee consistency! ;)
     ok_startswith(stdout, 'Usage: reproman')
     # Sections start/end with * if ran under REPROMAN_HELP2MAN mode
-    sections = [l[1:-1] for l in filter(re.compile('^\*.*\*$').match, stdout.split('\n'))]
+    sections = [l[1:-1] for l in filter(re.compile(r'^\*.*\*$').match, stdout.split('\n'))]
     # but order is still not guaranteed (dict somewhere)! TODO
     # see https://travis-ci.org/reproman/reproman/jobs/80519004
     # thus testing sets

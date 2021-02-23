@@ -23,7 +23,8 @@ if lexists(opj(projdir, '.git')):
         import sys
         from subprocess import Popen, PIPE
         from os.path import dirname
-        git = Popen(['git', 'describe', '--abbrev=4', '--dirty', '--match', '[0-9]*\.*'],
+        git = Popen(['git', 'describe', '--abbrev=4', '--dirty', '--match',
+                     r'[0-9]*\.*'],
                     stdout=PIPE, stderr=PIPE,
                     cwd=projdir)
         if git.wait() != 0:

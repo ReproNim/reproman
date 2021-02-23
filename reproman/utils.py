@@ -184,8 +184,8 @@ def sorted_files(dout):
                        if not '.git' in r], []))
 
 from os.path import sep as dirsep
-_VCS_REGEX = '%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)' % (dirsep, dirsep)
-_REPROMAN_REGEX = '%s\.(?:reproman)(?:%s|$)' % (dirsep, dirsep)
+_VCS_REGEX = r'%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)' % (dirsep, dirsep)
+_REPROMAN_REGEX = r'%s\.(?:reproman)(?:%s|$)' % (dirsep, dirsep)
 
 
 def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_reproman=False, dirs=False):
@@ -333,7 +333,7 @@ def file_basename(name, return_ext=False):
     not a digit, so we could get rid of .tar.gz etc
     """
     bname = basename(name)
-    fbname = re.sub('(\.[a-zA-Z_]\S{1,4}){0,2}$', '', bname)
+    fbname = re.sub(r'(\.[a-zA-Z_]\S{1,4}){0,2}$', '', bname)
     if return_ext:
         return fbname, bname[len(fbname)+1:]
     else:
