@@ -319,6 +319,53 @@ class SlurmSubmitter(Submitter):
         # just taking the first code.
         return our_state, matches[0]
 
+class SlurmLauncherSubmitter(Submitter):
+    """Submit a Slurm Launcher job.
+    """
+    name = "slurm_launcher"
+
+    def __init__(self, session):
+        super(SlurmLauncherSubmitter, self).__init__(session)
+
+    @property
+    @borrowdoc(Submitter)
+    def submit_command(self):
+        return ["sbatch"]
+    @borrowdoc(Submitter)
+    def submit(self, script, submit_command=None):
+        out = super(SlurmLauncherSubmitter, self).submit(script, submit_command)
+        # Output example (v19.05): Submitted batch job 5
+        job_id = out.strip().split()[-1]
+        self.submission_id = job_id
+        return job_id
+
+    @property
+    @assert_submission_id
+    @borrowdoc(Submitter)
+    def status(self):
+        try:
+            stat_out, _ = self.session.execute_command(
+                "scontrol show jobid={}".format(self.submission_id))
+        except CommandError:
+            return "unknown", None
+
+        # Running scontrol with our jobid will show an entry for each subjob.
+        matches = re.findall(r"JobState=([A-Z]+)\b", stat_out)
+        if not matches:
+            lgr.warning("No job status match found in %s", stat_out)
+            return "unknown", None
+
+        # https://github.com/SchedMD/slurm/blob/db82f4eb3d844501b53a72ea313a9166d7a421b2/src/common/slurm_protocol_defs.c#L2656
+        waiting_states = ["PENDING", "RUNNING"]
+        if any(m in waiting_states for m in matches):
+            our_state = "waiting"
+        elif all(m == "COMPLETED" for m in matches):
+            our_state = "completed"
+        else:
+            our_state = "unknown"
+        # FIXME: their status should represent all subjobs, but right now we're
+        # just taking the first code.
+        return our_state, matches[0]
 
 class LocalSubmitter(Submitter):
     """Submit a local job.
@@ -421,6 +468,7 @@ SUBMITTERS = collections.OrderedDict(
         PbsSubmitter,
         CondorSubmitter,
         SlurmSubmitter,
+        SlurmLauncherSubmitter,
         LocalSubmitter,
         LSFSubmitter, 
     ]
