@@ -199,6 +199,8 @@ JOB_PARAMETERS = collections.OrderedDict(
          """Supported by Condor and PBS submitters."""),
         ("num_nodes, walltime",
          """Supported by PBS submitter."""),
+        ("queue",
+         """Supported by Slurm submitters."""),
     ]
 )
 
