@@ -1,0 +1,36 @@
+#!/bin/sh
+
+#SBATCH --output={{ shlex_quote(_meta_directory) }}/stdout.%a
+#SBATCH --error={{ shlex_quote(_meta_directory) }}/stderr.%a
+{#
+  TODO: We need to assess how we treat batch parameters across different
+  submitters---things like whether we should try to expose common names and, if
+  so, what are the discrepancies in the behavior, and how should we deal with
+  that. We should also revisit the goal of making it possible for the caller to
+  extend the submit file template to add stuff like parameters we do not expose
+  and environment modules.
+#}
+{% if memory is defined %}
+#SBATCH --mem {{ memory }}
+{% endif %}
+{% if num_processes is defined %}
+#SBATCH -n {{ num_processes }}
+{% endif %}
+{% if num_nodes is defined %}
+#SBATCH -N {{ num_nodes }}
+{% endif %}
+{% if walltime is defined %}
+#SBATCH -t {{ walltime }}
+{% endif %}
+{% if queue is defined %}
+#SBATCH -p {{ queue }}
+{% endif %}
+
+module load launcher
+export LAUNCHER_JOB_FILE="{{ shlex_quote(_meta_directory) }}/${SLURM_JOB_ID}"
+
+for task_id in {0..{{ _num_subjobs - 1}}}; do
+    echo "{{ shlex_quote(_meta_directory) }}/runscript $task_id" >> $LAUNCHER_JOB_FILE
+done
+
+$LAUNCHER_DIR/paramrun
