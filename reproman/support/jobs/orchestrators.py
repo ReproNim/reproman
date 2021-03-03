@@ -797,6 +797,7 @@ class PrepareRemoteDataladMixin(object):
             # TODO: Add one level deeper with reckless clone per job to deal
             # with concurrent jobs?
             target_exists = session.exists(self.working_directory)
+            need_push = True
             if not target_exists:
                 since = None  # Avoid since="" for non-existing repo.
             else:
@@ -804,6 +805,8 @@ class PrepareRemoteDataladMixin(object):
                     resource.name,
                     repo.get_active_branch())
                 if repo.commit_exists(remote_branch):
+                    need_push = not repo.is_ancestor(repo.get_hexsha(),
+                                                     remote_branch)
                     since = ""
                 else:
                     # If the remote branch doesn't exist yet, publish will fail
@@ -829,10 +832,11 @@ class PrepareRemoteDataladMixin(object):
             self.ds.create_sibling(target_path, name=resource.name,
                                    recursive=True, existing="skip")
 
-            call_check_dl_results(
-                self.ds.publish, "'datalad publish' failed",
-                to=resource.name, since=since,
-                recursive=True, on_failure="ignore")
+            if need_push:
+                call_check_dl_results(
+                    self.ds.publish, "'datalad publish' failed",
+                    to=resource.name, since=since,
+                    recursive=True, on_failure="ignore")
 
             self._fix_up_dataset()
 
