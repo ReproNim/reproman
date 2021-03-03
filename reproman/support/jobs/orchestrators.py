@@ -493,7 +493,7 @@ def call_check_dl_results(fn, failure_msg, *args, **kwds):
     An OrchestratorError if a failure is encountered.
     """
     for res in fn(*args, **kwds):
-        lgr.debug("datalad publish result: %s", res)
+        lgr.debug("datalad push result: %s", res)
         if res["status"] not in ["ok", "notneeded"]:
 
             raise OrchestratorError("{}: {}".format(failure_msg, res))
@@ -739,7 +739,7 @@ class PrepareRemoteDataladMixin(object):
         # dataset hierarchy to a recorded state.
         #
         # fixup 2: Autoenable remotes:
-        # 'datalad publish' does not autoenable remotes, and 'datalad
+        # 'datalad push' does not autoenable remotes, and 'datalad
         # create-sibling' calls 'git annex init' too early to trigger
         # autoenabling. Temporarily work around this issue, though this
         # should very likely be addressed in DataLad. And if this is here
@@ -772,7 +772,8 @@ class PrepareRemoteDataladMixin(object):
         """
         repo = self.ds.repo
         if not repo.get_active_branch():
-            # publish() fails when HEAD is detached.
+            # push() fails when HEAD is detached (assuming no additional
+            # configuration).
             raise OrchestratorError(
                 "You must be on a branch to use the {} orchestrator"
                 .format(self.name))
@@ -799,7 +800,7 @@ class PrepareRemoteDataladMixin(object):
             target_exists = session.exists(self.working_directory)
             need_push = True
             if not target_exists:
-                since = None  # Avoid since="" for non-existing repo.
+                since = None  # Avoid since="^" for non-existing repo.
             else:
                 remote_branch = "{}/{}".format(
                     resource.name,
@@ -807,10 +808,10 @@ class PrepareRemoteDataladMixin(object):
                 if repo.commit_exists(remote_branch):
                     need_push = not repo.is_ancestor(repo.get_hexsha(),
                                                      remote_branch)
-                    since = ""
+                    since = "^"
                 else:
-                    # If the remote branch doesn't exist yet, publish will fail
-                    # with since="".
+                    # If the remote branch doesn't exist yet, push() will fail
+                    # with since="^".
                     since = None
 
             remotes = repo.get_remotes()
@@ -834,8 +835,8 @@ class PrepareRemoteDataladMixin(object):
 
             if need_push:
                 call_check_dl_results(
-                    self.ds.publish, "'datalad publish' failed",
-                    to=resource.name, since=since,
+                    self.ds.push, "'datalad push' failed",
+                    to=resource.name, since=since, data="auto",
                     recursive=True, on_failure="ignore")
 
             self._fix_up_dataset()
@@ -851,8 +852,11 @@ class PrepareRemoteDataladMixin(object):
                 except OrchestratorError:
                     # Should use --since for existing repo, but it doesn't seem
                     # to sync wrt content.
-                    self.ds.publish(to=resource.name, path=inputs,
-                                    recursive=True)
+                    self.ds.push(to=resource.name, path=inputs,
+                                 # Pass "anything" so that `path` overrides any
+                                 # git-annex-wanted configuration.
+                                 data="anything",
+                                 recursive=True)
         else:
             # TODO: Handle more types?
             raise OrchestratorError("Unsupported resource type {}"
@@ -1135,7 +1139,7 @@ class DataladPairOrchestrator(
     fast-forward.
 
     To get inputs on the remote, a `datalad get` call is first tried to
-    retrieve inputs from public sources. If that fails, a `datalad publish ...
+    retrieve inputs from public sources. If that fails, a `datalad push ...
     INPUTS` call from the local dataset to the remote dataset is performed.
 
     **Fetching a completed job** `datalad update` is called to bring in the

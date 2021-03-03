@@ -76,7 +76,7 @@ The main orchestrator choices are ``datalad-pair``,
 ``datalad-pair-run``, and ``datalad-local-run``. If the remote has
 DataLad available, you should go with one of the ``datalad-pair*`` orchestrators.
 These will sync your local dataset with a dataset on the remote machine
-(using `datalad publish`_), creating one if it doesn't already exist
+(using `datalad push`_), creating one if it doesn't already exist
 (using `datalad create-sibling`_).
 
 ``datalad-pair`` differs from the ``datalad-*-run`` orchestrators in the
@@ -275,7 +275,7 @@ spec.yaml
 .. _Datalad Handbook: http://handbook.datalad.org
 .. _datalad create-sibling: https://datalad.readthedocs.io/en/latest/generated/man/datalad-create-sibling.html
 .. _datalad get: https://datalad.readthedocs.io/en/latest/generated/man/datalad-get.html
-.. _datalad publish: https://datalad.readthedocs.io/en/latest/generated/man/datalad-publish.html
+.. _datalad push: https://datalad.readthedocs.io/en/latest/generated/man/datalad-push.html
 .. _datalad rerun: http://docs.datalad.org/en/latest/generated/man/datalad-rerun.html
 .. _datalad run: http://docs.datalad.org/en/latest/generated/man/datalad-run.html
 .. _datalad update: https://datalad.readthedocs.io/en/latest/generated/man/datalad-update.html
