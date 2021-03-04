@@ -1,0 +1,8 @@
+module load launcher
+export LAUNCHER_JOB_FILE="{{ shlex_quote(_meta_directory) }}/launcher"
+
+for task_id in $(seq 0 {{ _num_subjobs - 1}}); do
+    echo "{{ shlex_quote(_meta_directory) }}/runscript $task_id" >> "$LAUNCHER_JOB_FILE"
+done
+
+"$LAUNCHER_DIR"/paramrun
