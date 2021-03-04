@@ -836,7 +836,7 @@ class PrepareRemoteDataladMixin(object):
             if need_push:
                 call_check_dl_results(
                     self.ds.push, "'datalad push' failed",
-                    to=resource.name, since=since, data="auto",
+                    to=resource.name, since=since, data="nothing",
                     recursive=True, on_failure="ignore")
 
             self._fix_up_dataset()
