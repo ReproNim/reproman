@@ -199,6 +199,12 @@ JOB_PARAMETERS = collections.OrderedDict(
          """Supported by Condor and PBS submitters."""),
         ("num_nodes, walltime",
          """Supported by PBS submitter."""),
+        ("queue",
+         """Supported by Slurm submitter."""),
+        ("launcher",
+         """If set to "true", the job will be run using Launcher, rather than 
+        as a job-array. See https://github.com/TACC/launcher for more info. 
+        Supported by Slurm and PBS submitters."""),
     ]
 )
 
