@@ -199,10 +199,14 @@ def container_dataset(tmpdir_factory):
 
 @pytest.fixture()
 def check_orc_datalad(job_spec, dataset):
-    def fn(resource, orc_class, sub_type):
+    def fn(resource, orc_class, sub_type, job_params=None):
         repo = dataset.repo
         repo.tag("start-pt")
         branch_orig = repo.get_active_branch()
+
+        if job_params:
+            for k, v in job_params.items():
+                job_spec[k] = v
 
         def run_and_check(spec):
             with chpwd(dataset.path):
@@ -233,6 +237,14 @@ def check_orc_datalad(job_spec, dataset):
             dumped_spec = yaml.safe_load(f)
             assert "_reproman_version" in dumped_spec
             assert "_spec_version" in dumped_spec
+
+        with open(op.join(dataset.path, metadir, "submit")) as f:
+            submit_contents = f.read()
+            if job_spec.get("launcher") == "true":
+                assert "LAUNCHER" in submit_contents
+            else:
+                assert "LAUNCHER" not in submit_contents
+
         if orc.name == "datalad-local-run":
             # Our reproman-based copying of data doesn't isn't (yet) OK with
             # data files that already exist.
@@ -261,8 +273,11 @@ def test_orc_datalad_run(check_orc_datalad, shell, orc_class, sub_type):
 
 
 @pytest.mark.integration
-def test_orc_datalad_slurm(check_orc_datalad, ssh_slurm):
-    check_orc_datalad(ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm")
+@pytest.mark.parametrize("launcher", [False, True],
+                         ids=["no launcher", "launcher=true"])
+def test_orc_datalad_slurm(check_orc_datalad, ssh_slurm, launcher):
+    check_orc_datalad(ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm",
+                      job_params={"launcher": "true"} if launcher else None)
 
 
 @pytest.mark.integration
@@ -692,13 +707,16 @@ def test_dataset_as_dict(shell, dataset, job_spec):
 
 @pytest.fixture()
 def check_orc_datalad_concurrent(job_spec, dataset):
-    def fn(ssh, orc_class, sub_type):
+    def fn(ssh, orc_class, sub_type, job_params=None):
         names = ["paul", "rosa"]
 
         job_spec["inputs"] = ["{p[name]}.in"]
         job_spec["outputs"] = ["{p[name]}.out"]
         job_spec["_resolved_command_str"] = "sh -c 'cat {inputs} {inputs} >{outputs}'"
         job_spec["_resolved_batch_parameters"] = [{"name": n} for n in names]
+        if job_params:
+            for k, v in job_params.items():
+                job_spec[k] = v
 
         in_files = [n + ".in" for n in names]
         for fname in in_files:
@@ -741,10 +759,14 @@ def test_orc_datalad_concurrent(check_orc_datalad_concurrent,
 
 
 @pytest.mark.integration
-def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm):
+@pytest.mark.parametrize("launcher", [False, True],
+                         ids=["no launcher", "launcher=true"])
+def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm,
+                                      launcher):
     check_orc_datalad_concurrent(ssh_slurm,
                                  orcs.DataladLocalRunOrchestrator,
-                                 "slurm")
+                                 "slurm",
+                                 {"launcher": "true"} if launcher else None)
 
 
 def test_orc_datalad_pair_submodule(job_spec, dataset, shell):
