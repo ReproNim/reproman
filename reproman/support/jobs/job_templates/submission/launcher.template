@@ -4,7 +4,8 @@ module load launcher
 export LAUNCHER_JOB_FILE="$metadir/launcher"
 
 for task_id in $(seq 0 {{ _num_subjobs - 1}}); do
-    echo "$metadir/runscript $task_id" >> "$LAUNCHER_JOB_FILE"
+    printf "$metadir/runscript %d >$metadir/stdout.%d 2>$metadir/stderr.%d\n" \
+      "$task_id" "$task_id" "$task_id" >>"$LAUNCHER_JOB_FILE"
 done
 
 "$LAUNCHER_DIR"/paramrun
