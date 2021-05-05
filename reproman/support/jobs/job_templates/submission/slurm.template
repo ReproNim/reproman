@@ -1,7 +1,13 @@
 #!/bin/sh
 
+{% if launcher is defined and launcher == "true" %}
+#SBATCH --output={{ shlex_quote(_meta_directory) }}/stdout
+#SBATCH --error={{ shlex_quote(_meta_directory) }}/stderr
+{% else %}
 #SBATCH --output={{ shlex_quote(_meta_directory) }}/stdout.%a
 #SBATCH --error={{ shlex_quote(_meta_directory) }}/stderr.%a
+{% endif %}
+
 {#
   TODO: We need to assess how we treat batch parameters across different
   submitters---things like whether we should try to expose common names and, if

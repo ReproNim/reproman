@@ -740,6 +740,11 @@ def check_orc_datalad_concurrent(job_spec, dataset):
                 assert dataset.repo.file_has_content(ofile)
                 with open(ofile) as ofh:
                     assert ofh.read() == ofile[0] * 2
+
+            metadir = op.relpath(orc.meta_directory, orc.working_directory)
+            for idx in range(len(orc.job_spec["_command_array"])):
+                for fname in "status", "stderr", "stdout":
+                    assert op.lexists(op.join(metadir, f"{fname}.{idx}"))
     return fn
 
 
