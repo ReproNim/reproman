@@ -136,6 +136,7 @@ class CondaDistribution(Distribution):
     environments = TypedList(CondaEnvironment)
 
     _cmp_field = ('path',)
+    _collection_attribute = 'packages'
 
     def initiate(self, environment):
         """

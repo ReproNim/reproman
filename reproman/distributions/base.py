@@ -46,8 +46,6 @@ class SpecObject(object):
     _diff_cmp_fields = tuple()
     # Fields of the primary interest when showing diff
     _diff_fields = tuple()
-    # Fields used in determination of comparison (satisfied_by and identical_to)
-    _comparison_fields = tuple()
 
     @property
     def _diff_cmp_id(self):
@@ -60,12 +58,19 @@ class SpecObject(object):
 
     @property
     def _cmp_id(self):
-        if not self._comparison_fields:
+        if not self._diff_cmp_fields:
             # Might need to be gone or some custom exception
             raise RuntimeError(
-                "Cannot establish identity of %r since _comaprison_fields "
+                "Cannot establish identity of %r since _diff_cmp_fields "
                 "are not defined" % self)
-        return tuple(getattr(self, a) for a in self._comparison_fields)
+        if not self._diff_fields:
+            # Might need to be gone or some custom exception
+            raise RuntimeError(
+                "Cannot establish identity of %r since _diff_fields "
+                "are not defined" % self)
+        vals = [ getattr(self, a) for a in self._diff_cmp_fields ]
+        vals.extend([ getattr(self, a) for a in self._diff_fields ])
+        return tuple(vals)
 
     @property
     def _diff_vals(self):
@@ -94,8 +99,8 @@ class SpecObject(object):
 
     @property
     def identity_string(self):
-        """like diff_identity_string, but for _comparison_fields (used in 
-        satisfied_by comparisons)
+        """like diff_identity_string, but for both _diff_cmp_fields and 
+        _diff_fields (used in satisfied_by comparisons)
         """
         return " ".join(str(el) for el in self._cmp_id if el is not None)
 
@@ -137,15 +142,15 @@ class SpecObject(object):
         spec object.
 
         We require that the values of the attributes given by 
-        _comparison_fields are the same.  A specobject with a value of None 
-        for one of these attributes is less specific than one with 
-        a specific value; the former cannot satisfy the latter, 
-        but the latter can satisfy the former.
+        _diff_cmp_fields and _diff_fields are the same.  A specobject 
+        with a value of None for one of these attributes is less specific 
+        than one with a specific value; the former cannot satisfy the 
+        latter, but the latter can satisfy the former.
 
         TODO: Ensure we don't encounter the case where self is completely 
         unspecified (all values are None), in which case satisfied_by() 
         returns True by default.  Perhaps this is done by making 
-        sure that at least one of the _comparison_fields cannot be None.
+        sure that at least one of the _diff_cmp_fields cannot be None.
 
         TODO: derive _collection_type directly from _collection.  This isn't 
         possible at the moment because DebianDistribution.packages is 
@@ -162,9 +167,7 @@ class SpecObject(object):
             raise TypeError('don''t know how to determine if a %s is satisfied by a %s' % (self.__class__, other_collection_type))
         if not isinstance(other, self.__class__):
             raise TypeError('incompatible specobject types')
-        for attr_name in self._comparison_fields:
-            self_value = getattr(self, attr_name)
-            other_value = getattr(other, attr_name)
+        for (self_value, other_value) in zip(self._cmp_id, other._cmp_id):
             if self_value is None:
                 continue
             if self_value != other_value:
@@ -176,14 +179,12 @@ class SpecObject(object):
         """Determine if the other object is identical to the spec object.
 
         We require that the objects are of the same type and that the 
-        values of the attributes given by _comparison_fields are the same.
+        values of the attributes given by _diff_cmp_fields and _diff_fields 
+        (dereferenced in _cmp_id) are the same.
         """
         if not isinstance(other, self.__class__):
             return False
-        for attr_name in self._comparison_fields:
-            if getattr(self, attr_name) != getattr(other, attr_name):
-                return False
-        return True
+        return all(sv==ov for sv, ov in zip(self._cmp_id, other._cmp_id))
 
 
 def _register_with_representer(cls):
@@ -422,4 +423,102 @@ class DistributionTracer(object, metaclass=abc.ABCMeta):
         """Creates implementation-specific Package object using fields
         provided by _get_packagefields_for_files
         """
+        return
+
+
+class SpecDiff:
+
+    """Difference object for SpecObjects.
+
+    Instantiate with SpecDiff(a, b).  a and b must be of the same type 
+    or TypeError is raised.  Either (but not both) may be None.
+
+    Attributes:
+
+        a, b: The two objects being compared.
+
+        If _diff_cmp_fields is defined for the SpecObjects:
+
+            diff_cmp_id: The _diff_cmp_id of the two objects.  If 
+                        _diff_cmp_id are different for the two objects, 
+                        they cannot be compared and ValueError is raised.
+
+            diff_vals_a, diff_vals_b: _diff_vals for a and b, respectively, 
+                                    or None if a or b is None.
+
+        For collection SpecObjects (e.g. DebianDistribution, containing 
+        DEBPackages; these have _collection_attribute defined), we also 
+        have:
+
+            collection: a list of SpecDiff objects for the contained 
+                        SpecObjects.
+
+            a_only: SpecDiff objects from collection that only appear in the 
+                    first passed SpecObject
+
+            b_only: SpecDiff objects from collection that only appear in the 
+                    second passed SpecObject
+
+            a_and_b: SpecDiff objects in collection that appear in both 
+                     passed SpecObjects
+
+    If a and b are lists, they are treated as files specifications, and 
+    self.collection is a list of (fname_a, fname_b) tuples.
+    TODO: give files and file collections their own specobjects
+    """
+
+    def __init__(self, a, b):
+        if not isinstance(a, (SpecObject, list, type(None))) \
+            or not isinstance(b, (SpecObject, list, type(None))):
+            raise TypeError('objects must be SpecObjects or None')
+        if a is None and b is None:
+            raise TypeError('objects cannot both be None')
+        if a and b and type(a) != type(b):
+            raise TypeError('objects must be of the same type')
+        self.cls = type(a) if a is not None else type(b)
+        self.a = a
+        self.b = b
+        if self.cls == list:
+            a_collection = set(a)
+            b_collection = set(b)
+            self.collection = []
+            for fname in set(a_collection).union(b_collection):
+                if fname not in a_collection:
+                    self.collection.append((None, fname))
+                elif fname not in b_collection:
+                    self.collection.append((fname, None))
+                else:
+                    self.collection.append((fname, fname))
+        else:
+            if self.cls._diff_cmp_fields:
+                if a and b and a._diff_cmp_id != b._diff_cmp_id:
+                    raise ValueError('objects\' _diff_cmp_id differ')
+                self.diff_vals_a = a._diff_vals if a else None
+                self.diff_vals_b = b._diff_vals if b else None
+                self.diff_cmp_id = a._diff_cmp_id if a else b._diff_cmp_id
+            if hasattr(self.cls, '_collection_attribute'):
+                self.collection = []
+                a_collection = { c._diff_cmp_id: c for c in a.collection } if a else {}
+                b_collection = { c._diff_cmp_id: c for c in b.collection } if b else {}
+                all_cmp_ids = set(a_collection).union(b_collection)
+                for cmp_id in all_cmp_ids:
+                    ac = a_collection[cmp_id] if cmp_id in a_collection else None
+                    bc = b_collection[cmp_id] if cmp_id in b_collection else None
+                    self.collection.append(SpecDiff(ac, bc))
+        if hasattr(self, 'collection'):
+            self.a_only = []
+            self.b_only = []
+            self.a_and_b = []
+            for pkg_diff in self.collection:
+                if isinstance(pkg_diff, tuple):
+                    (a, b) = pkg_diff
+                else:
+                    a = pkg_diff.a
+                    b = pkg_diff.b
+                if not a:
+                    self.b_only.append(pkg_diff)
+                elif not b:
+                    self.a_only.append(pkg_diff)
+                else:
+                    self.a_and_b.append(pkg_diff)
         return

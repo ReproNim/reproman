@@ -89,7 +89,6 @@ class DEBPackage(Package):
 
     _diff_cmp_fields = ('name', 'architecture')
     _diff_fields = ('version',)
-    _comparison_fields = ('name', 'architecture', 'version')
 
 _register_with_representer(DEBPackage)
 

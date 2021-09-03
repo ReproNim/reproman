@@ -123,6 +123,8 @@ class GitDistribution(VCSDistribution):
     _cmd = "git"
     packages = TypedList(GitRepo)
 
+    _collection_attribute = 'packages'
+
     def initiate(self, session=None):
         pass
 
@@ -293,6 +295,8 @@ class SVNRepo(VCSRepo):
 class SVNDistribution(VCSDistribution):
     _cmd = "svn"
     packages = TypedList(SVNRepo)
+
+    _collection_attribute = 'packages'
 
     def install_packages(self, session, use_version=True):
         raise NotImplementedError
