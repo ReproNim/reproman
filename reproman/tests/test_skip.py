@@ -62,4 +62,4 @@ def test_other_attribute_error():
         with pytest.raises(AttributeError) as exc:
             m = Mark()
             m.skipif_no_confusion
-        assert "don't get confused" in str(exc.value)
+            assert "don't get confused" in str(exc.value)
