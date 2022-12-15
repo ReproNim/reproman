@@ -71,7 +71,8 @@ jobs:
           sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
           # sqlite3: for SVN tests (SVNRepoShim._ls_files_command())
           # parallel: for concurrent jobs with local orchestrator
-          sudo eatmydata apt-get install sqlite3 parallel singularity-container
+          sudo eatmydata apt-get install sqlite3 parallel
+          bash tools/ci/install-singularity.sh
           git config --global user.email "reproman@repronim.org"
           git config --global user.name "ReproMan Tester"
           # Set defaultBranch to avoid polluting output with repeated
