@@ -27,7 +27,8 @@ internals and/or contributing to the project.
 
 # Installation
 
-ReproMan requires Python 3 (>= 3.6).
+TODO(asmacdo) Set up sphinx substitution
+ReproMan requires Python 3 (>= |MinPython|).
 
 ## Linux'es and OSX (Windows yet TODO) - via pip
 

@@ -112,8 +112,12 @@ we outline the workflow used by the developers:
 
 Development environment
 -----------------------
+TODO(asmacdo) include python-devel for header files
+TODO(asmacdo) include sqlite3 (on fedora35 sqlite2, sqlite-devel did the trick)
+TODO(asmacdo) include sqlite3 (on fedora35 sqlite2, sqlite-devel did the trick)
+TODO(asmacdo) install datalad
 
-We support Python 3 (>= 3.6).
+We support Python 3 (>= |MinPython|).
 
 See [README.md:Dependencies](README.md#Dependencies) for basic information
 about installation of reproman itself.
