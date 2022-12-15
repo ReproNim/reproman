@@ -56,7 +56,7 @@ requires = {
         'pytz',
         'scp',
         'pycrypto',
-        'pyOpenSSL==16.2.0',
+        'pyOpenSSL',
         'requests',
         'reprozip; sys_platform=="linux" or sys_platform=="linux2"',
         'rpaths',
