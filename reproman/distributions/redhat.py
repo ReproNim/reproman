@@ -206,8 +206,12 @@ class RPMTracer(DistributionTracer):
             redhat_version = self._session.read('/etc/redhat-release').strip()
             _, _ = self._session.execute_command('ls -ld /etc/yum')
         except CommandError as exc:
-            lgr.debug("Did not detect Redhat (or derivative): %s", exc)
-            return
+            # Newer rpm systems use `dnf`
+            try:
+                _, _ = self._session.execute_command('ls -ld /etc/dnf')
+            except CommandError as exc:
+                lgr.debug("Did not detect Redhat (or derivative): %s", exc)
+                return
 
         packages, remaining_files = self.identify_packages_from_files(files)
         # TODO: add option to report distribution even if no packages/files
@@ -298,8 +302,9 @@ class RPMTracer(DistributionTracer):
         sources = []
         # Get all repo info from the system and store information for each
         # enabled repo in a RPMSource object.
+        # '-y' included in case there are GPG keys to import
         out, _ = self._session.execute_command(['yum', '--verbose',
-            'repolist'])
+            'repolist', '-y'])
         for line in out.splitlines():
             if line.startswith('Repo-'):
                 key, value = line.split(':', 1)
