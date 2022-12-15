@@ -88,6 +88,15 @@ def _get_singularity_version():
     out = _try_run(["singularity", "--version"])[0]
     return out.split(' ')[-1].split("-")[0].split("+")[0]
 
+def _get_apptainer_version():
+    """Return version of available singularity."""
+    # example output:
+    #  "singularity version 3.0.3+ds"
+    #  "2.6.1-dist"
+    out = _try_run(["apptainer", "--version"])[0]
+    return out.split(' ')[-1].split("-")[0].split("+")[0]
+
+
 
 def _get_svn_version():
     """Return version of available SVN."""
@@ -125,6 +134,7 @@ class ExternalVersions(object):
     UNKNOWN = UnknownVersion()
 
     CUSTOM = {
+        'cmd:apptainer': _get_apptainer_version,
         'cmd:annex': _get_annex_version,
         'cmd:git': _get_git_version,
         'cmd:singularity': _get_singularity_version,

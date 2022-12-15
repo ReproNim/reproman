@@ -31,6 +31,7 @@ from reproman.tests.utils import (
 )
 
 
+# TODO(asmacdo) can we skip this whole file for non-deb systems?
 @mark.skipif_no_apt_cache
 def test_dpkg_manager_identify_packages():
     files = [COMMON_SYSTEM_PATH]
@@ -125,6 +126,7 @@ def list_all_files(dir):
 #             fp('oths_d_d_data_non-free_binary-i386_Packages')) is None
 
 
+@mark.skipif_no_apt_cache
 def test_trace_nonexisting_file():
     files = ["/is/not/there/"]
     manager = DebTracer()
@@ -135,6 +137,7 @@ def test_trace_nonexisting_file():
     assert not packages
 
 
+@mark.skipif_no_apt_cache
 def test_utf8_file():
     files = [u"/usr/share/ca-certificates/mozilla/"
              u"TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
