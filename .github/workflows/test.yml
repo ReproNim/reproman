@@ -29,12 +29,12 @@ jobs:
           #   reproman_tests_deps: core
           #   reproman_tests_ssh: ssh
           #   reproman_tests_assume_ssp: ssp
-          # - python: 3.9
-          #   os: ubuntu-22.04
-          #   # By default no logs will be output. This one is to test
-          #   # with low level but dumped to /dev/null
-          #   reproman_loglevel: INFO
-          #   reproman_tests_deps: core
+          - python: 3.9
+            os: ubuntu-22.04
+            # By default no logs will be output. This one is to test
+            # with low level but dumped to /dev/null
+            reproman_loglevel: INFO
+            reproman_tests_deps: core
           # - python: 3.6
           #   os: ubuntu-22.04
           #   # By default no logs will be output. This one is to test
