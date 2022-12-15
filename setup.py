@@ -45,6 +45,7 @@ requires = {
     'core': [
         'appdirs',
         'attrs>=16.3.0',
+        'chardet',
         'etelemetry>=0.2.0',
         'humanize',
         'pyyaml',
@@ -69,7 +70,6 @@ requires = {
         # Origin.codename was introduced in 0.8.9
         # unfortunately not on pypi but needed by python-apt
         #'http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.9.3.5.tar.xz'
-        'chardet',  # python-debian misses dependency on it
     ],
     'datalad': [
         'datalad>=0.13.0',
