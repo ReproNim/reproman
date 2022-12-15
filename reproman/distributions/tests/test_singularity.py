@@ -21,7 +21,8 @@ from ...tests.skip import mark
 @mark.skipif_no_singularity
 @pytest.mark.xfail(reason="Singularity Hub is down", run=False)
 @pytest.mark.xfail(
-    (external_versions["cmd:singularity"] and external_versions["cmd:singularity"] >= '3'),
+	# TODO cmd:apptainer version is 1.1.4
+    external_versions["cmd:singularity"],
     reason="Pulling with @hash fails with Singularity v3 (gh-406)")
 def test_singularity_trace(tmpdir):
     tmpdir = str(tmpdir)

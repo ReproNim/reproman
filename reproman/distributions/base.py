@@ -63,7 +63,7 @@ class SpecObject(object):
         if not self._comparison_fields:
             # Might need to be gone or some custom exception
             raise RuntimeError(
-                "Cannot establish identity of %r since _comaprison_fields "
+                "Cannot establish identity of %r since _comparison_fields "
                 "are not defined" % self)
         return tuple(getattr(self, a) for a in self._comparison_fields)
 

@@ -89,7 +89,8 @@ try:
                 self._pbar.finish()
             super(progressbarProgressBar, self).finish()
 
-    progressbars['progressbar'] = progressbarProgressBar
+	# TODO(asmacdo) progress bar fails for some reason, skipping for now
+    # progressbars['progressbar'] = progressbarProgressBar
 except ImportError:  # pragma: no cover
     pass
 

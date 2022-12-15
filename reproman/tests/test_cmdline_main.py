@@ -77,6 +77,7 @@ def test_help_np():
     # but order is still not guaranteed (dict somewhere)! TODO
     # see https://travis-ci.org/reproman/reproman/jobs/80519004
     # thus testing sets
+    # TODO(asmacdo) On fedora "*Global Options*" renders as "Options" and is not included in sections
     assert_equal(set(sections),
                  {'Commands for manipulating computation environments',
                   'Miscellaneous commands',
