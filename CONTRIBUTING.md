@@ -133,14 +133,14 @@ and additionally, for development we suggest to use tox and new
 versions of dependencies from pypi:
 
 ```sh
-eatmydata apt-get install -y -q python3-{pip,vcr,virtualenv,tox}
+eatmydata apt-get install -y -q python3-{pip,vcr,tox}
 ```
 
 some of which you could also install from PyPi using pip
 (prior installation of those libraries listed above might be necessary)
 
 ```sh
-pip install -e .
+pip install -e .[devel]
 ```
 
 Note that you might need to get an updated pip if above `pip install`
@@ -227,13 +227,13 @@ more tests are provided under corresponding submodules in `tests/`
 subdirectories to simplify re-running the tests concerning that portion
 of the codebase.  To execute many tests, the codebase first needs to be
 "installed" in order to generate scripts for the entry points.  For
-that, the recommended course of action is to use `virtualenv`, e.g.
+that, the recommended course of action is to use `venv` (Python virtual
+environment), e.g.
 
 ```sh
-virtualenv --system-site-packages venvs/tests
-source venvs/tests/bin/activate
-pip install -r requirements.txt
-python setup.py develop
+python3 -m venv venvs/dev3
+source venvs/dev3/bin/activate
+pip install -r requirements-devel.txt
 ```
 
 Then use that virtual environment to run the tests, via
@@ -248,7 +248,7 @@ or just
 pytest
 ```
 
-then to later deactivate the virtualenv just simply enter
+then to later deactivate the venv just simply enter
 
 ```sh
 deactivate
@@ -256,7 +256,7 @@ deactivate
 
 Alternatively, or complimentary to that, you can use `tox` -- there is a `tox.ini`
 file which sets up a few virtual environments for testing locally, which you can
-later reuse like any other regular virtualenv for troubleshooting.
+later reuse like any other regular venv for troubleshooting.
 Additionally, [tools/testing/test_README_in_docker](tools/testing/test_README_in_docker) script can
 be used to establish a clean docker environment (based on any NeuroDebian-supported
 release of Debian or Ubuntu) with all dependencies listed in README.md pre-installed.
