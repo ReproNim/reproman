@@ -31,18 +31,32 @@ def test_get_conda_platform_from_python():
     assert get_conda_platform_from_python("darwin") == "osx"
 
 
+# TODO(matrix for OSX arm64)
+# TODO(need pkg-x64.pkg?)
 def test_get_miniconda_url():
-    assert get_miniconda_url("linux-64", "2.7") == \
-           "https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh"
-    assert get_miniconda_url("linux-32", "3.4") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86.sh"
-    assert get_miniconda_url("osx-64", "3.5.1") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
+    assert get_miniconda_url("linux-32b", "3.7", "4.12.0") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py37_4.12.0-Linux-x86.sh"
+
+    assert get_miniconda_url("osx-32b", "3.8", "4.12.0") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-MacOSX-x86.sh"
+
+    assert get_miniconda_url("osx-64", "3.9", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-MacOSX-x86_64.sh"
+
+    assert get_miniconda_url("linux-64", "3.9", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-Linux-x86_64.sh"
+
+    assert get_miniconda_url("linux-32", "3.10.1", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86.sh"
+
+    assert get_miniconda_url("linux-64", "3.10.1", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86_64.sh"
 
 
 def test_get_simple_python_version():
-    assert CondaDistribution.get_simple_python_version("2.7.12.final.0") == \
-           "2.7.12"
+    # TODO rm usage of python 2
+    # assert CondaDistribution.get_simple_python_version("2.7.12.final.0") == \
+    #        "2.7.12"
     assert CondaDistribution.get_simple_python_version("3.5.1") == \
            "3.5.1"
 
@@ -100,7 +114,6 @@ def test_create_conda_export():
 
 @pytest.mark.integration
 @mark.skipif_no_network
-@pytest.mark.skip(reason="These package versions don't play nice, and do not include python in the env file.")
 def test_conda_init_install_and_detect(tmpdir):
     # Note: We use a subdirectory of tmpdir because `install_packages` decides
     # to install miniconda based on whether the directory exists.
@@ -254,7 +267,6 @@ def test_conda_init_install_and_detect(tmpdir):
     # Smoke test to make sure install_packages doesn't choke on the format that
     # is actually returned by the tracer.
     distributions.initiate(None)
-    # import ipdb; ipdb.set_trace()
     distributions.install_packages()
 
 

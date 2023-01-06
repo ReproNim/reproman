@@ -9,6 +9,7 @@
 import json
 import os
 from collections import defaultdict
+from packaging.version import Version
 
 import attr
 import yaml
@@ -60,7 +61,7 @@ def get_conda_platform_from_python(py_platform):
     return None
 
 
-def get_miniconda_url(conda_platform, python_version):
+def get_miniconda_url(conda_platform, python_version, conda_version):
     """
     Gets the Miniconda install URL given the conda platform and python version
 
@@ -71,6 +72,9 @@ def get_miniconda_url(conda_platform, python_version):
 
     python_version : str
         The python version (e.g. "2.7.1")
+
+    conda_version : str
+        The conda version to use (e.g. "22.11.1")
 
     Returns
     -------
@@ -85,8 +89,8 @@ def get_miniconda_url(conda_platform, python_version):
         raise ValueError("Unsupported platform %s for conda installation" %
                          conda_platform)
     platform += "-x86_64" if ("64" in conda_platform) else "-x86"
-    return "https://repo.anaconda.com/miniconda/Miniconda%s-latest-%s.sh" \
-                    % (python_version[0], platform)
+    py = Version(python_version)
+    return f"https://repo.anaconda.com/miniconda/Miniconda{py.major}-py{py.major}{py.minor}_{conda_version}-{platform}.sh"
 
 
 @attr.s
@@ -166,7 +170,6 @@ class CondaDistribution(Distribution):
         CommandError
             If unexpected error in install commands occurs
         """
-
         if not self.path:  # Permit empty conda config entry
             return
 
@@ -181,14 +184,16 @@ class CondaDistribution(Distribution):
             if not session.isdir(self.path):
                 # TODO: Determine if we can detect miniconda vs anaconad
                 miniconda_url = get_miniconda_url(self.platform,
-                                                  self.python_version)
+                                                  self.python_version,
+                                                  self.conda_version)
                 session.execute_command(
                     "curl --fail --silent --show-error --location "
                     "--output {}/miniconda.sh {}"
                     .format(tmp_dir, miniconda_url))
                 # NOTE: miniconda.sh makes parent directories automatically
-                session.execute_command("bash -b %s/miniconda.sh -b -p %s" %
-                                        (tmp_dir, self.path))
+                session.execute_command(
+                    f"bash -b {tmp_dir}/miniconda.sh -b -p {self.path}"
+                )
             envs = sorted(
                 self.environments,
                 # Create/update the root environment before handling anything
@@ -225,6 +230,7 @@ class CondaDistribution(Distribution):
     def packages(self):
         return [ p for env in self.environments for p in env.packages ]
 
+	# TODO replace with packagin.Version
     @staticmethod
     def get_simple_python_version(python_version):
         # Get the simple python version from the conda info string
