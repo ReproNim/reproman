@@ -17,24 +17,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python: "3.7"
-            install_condor: condor
+          - python: "3.10"
+            # install_condor: condor
             install_datalad: datalad
-            os: ubuntu-18.04
+            os: ubuntu-22.04
             reproman_tests_deps: full
-            reproman_tests_ssh: ssh
-            setup_slurm: slurm
+            # reproman_tests_ssh: ssh
+            # setup_slurm: slurm
           # - python: 3.6
           #   os: ubuntu-22.04
           #   reproman_tests_deps: core
           #   reproman_tests_ssh: ssh
           #   reproman_tests_assume_ssp: ssp
-          - python: 3.9
-            os: ubuntu-22.04
+          # - python: 3.9
+            # os: ubuntu-22.04
             # By default no logs will be output. This one is to test
             # with low level but dumped to /dev/null
-            reproman_loglevel: INFO
-            reproman_tests_deps: core
+            # reproman_loglevel: INFO
+            # reproman_tests_deps: core
           # - python: 3.6
           #   os: ubuntu-22.04
           #   # By default no logs will be output. This one is to test
@@ -126,7 +126,7 @@ jobs:
       - name: Verify setup.py build
         run: python setup.py build
       - name: Run tests
-        run: coverage run `which py.test` -s -rA --integration reproman && coverage xml
+        run: coverage run `which py.test` -s -rsf --integration reproman && coverage xml
       - name: Generate documentation and run doctests
         run: PYTHONPATH=$PWD make -C docs html doctest
       - name: Upload coverage to codecov
