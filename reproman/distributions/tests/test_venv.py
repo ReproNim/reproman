@@ -57,9 +57,11 @@ def venv_test_dir():
     runner.run([pip0, "install", "pyyaml"])
     runner.run([pip0, "install", "-e", pymod_dir])
     runner.run([pip1, "install", "attrs"])
-    # Make sure we're compatible with older pips.
-    runner.run([pip1, "install", "pip==9.0.3"])
-
+    # Pip 21.0 (2021-01-23) dropped python 2 support
+    # Make sure we're compatible with older pips, however pip<20.0 does not work with python3
+    # specifically, it vendors requests -> urllib3 which imports from collections rather than abc
+    # This is the oldest pip we can support.
+    runner.run([pip1, "install", "pip==20.0.1"])
     if ssp:
         # The testing environment supports --system_site_packages.
         pip2 = op.join("venv-nonlocal", "bin", "pip")
@@ -72,7 +74,6 @@ def venv_test_dir():
 
 @pytest.mark.skipif(not on_linux, reason="Test assumes GNU/Linux system")
 @pytest.mark.integration
-@pytest.mark.skip(reason="/usr/lib/python3/dist-packages/pkg_resources/_vendor/pyparsing.py:3226: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3,and in 3.9 it will stop working")
 def test_venv_identify_distributions(venv_test_dir):
     libpaths = {p[-1]: os.path.join("lib", PY_VERSION, *p)
                 for p in [("abc.py",),
@@ -114,7 +115,6 @@ def test_venv_identify_distributions(venv_test_dir):
 
         tracer = VenvTracer()
 
-        import ipdb; ipdb.set_trace()
         dists = list(tracer.identify_distributions(path_args))
         assert len(dists) == 1
 
@@ -158,7 +158,6 @@ def test_venv_system_site_packages(venv_test_dir):
 
 
 @pytest.mark.integration
-@pytest.mark.skip(reason="Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3,and in 3.9 it will stop working")
 def test_venv_install(venv_test_dir, tmpdir):
     tmpdir = str(tmpdir)
     paths = [
@@ -207,7 +206,6 @@ def test_venv_install(venv_test_dir, tmpdir):
 
 
 @pytest.mark.integration
-@pytest.mark.skip(reason="Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3,and in 3.9 it will stop working")
 def test_venv_pyc(venv_test_dir, tmpdir):
     from reproman.api import retrace
     tmpdir = str(tmpdir)
