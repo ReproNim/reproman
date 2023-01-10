@@ -31,8 +31,6 @@ def test_get_conda_platform_from_python():
     assert get_conda_platform_from_python("darwin") == "osx"
 
 
-# TODO(matrix for OSX arm64)
-# TODO(need pkg-x64.pkg?)
 def test_get_miniconda_url():
     assert get_miniconda_url("linux-32b", "3.7", "4.12.0") == \
         "https://repo.anaconda.com/miniconda/Miniconda3-py37_4.12.0-Linux-x86.sh"
@@ -54,11 +52,7 @@ def test_get_miniconda_url():
 
 
 def test_get_simple_python_version():
-    # TODO rm usage of python 2
-    # assert CondaDistribution.get_simple_python_version("2.7.12.final.0") == \
-    #        "2.7.12"
-    assert CondaDistribution.get_simple_python_version("3.5.1") == \
-           "3.5.1"
+    assert CondaDistribution.get_simple_python_version("3.5.1") == "3.5.1"
 
 
 def test_format_conda_package():

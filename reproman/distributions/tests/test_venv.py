@@ -100,7 +100,6 @@ def test_venv_identify_distributions(venv_test_dir):
         # another path within venv0, but they do include links to the system
         # files. However, at some point following Python 3.8.0, such links
         # appear to no longer be present.
-        # TODO(asmacdo) it has happened
         abc_path = os.path.join("venv1", libpaths["abc.py"])
         mach_path = os.path.join("venv1", libpaths["machinery.py"])
         if op.exists(abc_path) and op.exists(mach_path):

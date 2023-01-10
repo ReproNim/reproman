@@ -56,7 +56,6 @@ from reproman.utils import on_windows as _on_windows
 # function to CONDITION_FNS.
 
 
-# TODO(asmacdo) maybe should make new `no_debian`
 def no_apt_cache():
     return ("apt-cache not available",
             not external_versions["cmd:apt-cache"])
@@ -230,5 +229,6 @@ class Mark(Namespace):
                 # error message doesn't confusingly drop "skipif_".
                 pass
         return super(Mark, self).__getattr__(item)
+
 
 mark = Mark()

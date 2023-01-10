@@ -863,7 +863,6 @@ def test_orc_datalad_pair_submodule_conflict(caplog, job_spec, dataset, shell):
         caplog.clear()
         with caplog.at_level(logging.WARNING):
             orc1.fetch()
-        # TODO(REVIEW THIS) AFAICT datalad has changed the output++++++++++++++++++++++++++++++++++
         assert "update failure in subdataset" in caplog.text
         assert dataset.repo.call_git(["ls-files", "--unmerged"]).strip()
 

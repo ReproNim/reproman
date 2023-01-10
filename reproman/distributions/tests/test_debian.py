@@ -31,7 +31,6 @@ from reproman.tests.utils import (
 )
 
 
-# TODO(asmacdo) can we skip this whole file for non-deb systems?
 @mark.skipif_no_apt_cache
 def test_dpkg_manager_identify_packages():
     files = [COMMON_SYSTEM_PATH]
