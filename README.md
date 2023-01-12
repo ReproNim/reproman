@@ -27,8 +27,7 @@ internals and/or contributing to the project.
 
 # Installation
 
-TODO(asmacdo) Set up sphinx substitution
-ReproMan requires Python 3 (>= |MinPython|).
+ReproMan requires Python 3 (>= 3.7).
 
 ## Linux'es and OSX (Windows yet TODO) - via pip
 
@@ -55,7 +54,10 @@ all necessary packages from that repository.
 
 ## Dependencies
 
-Our `setup.py` and corresponding packaging describes all necessary dependencies.
+Python 3.7+ **with .h extensions** This is provided by `python-dev` on
+debian-based systems or `python-devel` on Red Hat systems.
+
+Our `setup.py` and corresponding packaging describes all necessary python dependencies.
 On Debian-based systems we recommend to enable [NeuroDebian](http://neuro.debian.net)
 since we use it to provide backports of recent fixed external modules we
 depend upon.  Additionally, if you would

@@ -219,7 +219,6 @@ class Mark(Namespace):
 
     def attr_value(self, condition_func):
         reason, cond = condition_func()
-
         return pytest.mark.skipif(cond, reason=reason)
 
     def __getattr__(self, item):

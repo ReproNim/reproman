@@ -24,5 +24,4 @@ tmp
 .*.swp
 .travis.yml.evil-bd
 .cache
-
-.vagrant/
+.pytest_cache
