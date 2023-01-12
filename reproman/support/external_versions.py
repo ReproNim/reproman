@@ -131,7 +131,6 @@ class ExternalVersions(object):
     UNKNOWN = UnknownVersion()
 
     CUSTOM = {
-        'cmd:apptainer': _get_apptainer_version,
         'cmd:annex': _get_annex_version,
         'cmd:git': _get_git_version,
         'cmd:singularity': _get_singularity_version,
