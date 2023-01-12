@@ -47,14 +47,6 @@ class Singularity(Resource):
         Open a connection to the environment.
         """
         external_versions.check("cmd:singularity", min_version="2.4")
-        # # TODO(asmacdo) naive attempt but this fails on apptainer with
-        # # reproman.support.exceptions.CommandError: CommandError: command '['singularity', 'instance.start', 'docker://python:2.7', '3a7bf62ebd9']' failed with ex...
-        # try:
-        #     external_versions.check("cmd:singularity", min_version="2.4")
-        # except OutdatedExternalDependency:
-        #     # singularity went back to 1.0 when name changed to apptainer
-        #     external_versions.check("cmd:apptainer", min_version="1.0")
-        # Get instance info if we have one running.
         info = self.get_instance_info()
         if info:
             if not self.name:
