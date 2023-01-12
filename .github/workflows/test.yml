@@ -18,39 +18,39 @@ jobs:
       matrix:
         include:
           - python: "3.10"
-            # install_condor: condor
+            install_condor: condor
             install_datalad: datalad
             os: ubuntu-22.04
             reproman_tests_deps: full
-            # reproman_tests_ssh: ssh
-            # setup_slurm: slurm
-          # - python: 3.6
-          #   os: ubuntu-22.04
-          #   reproman_tests_deps: core
-          #   reproman_tests_ssh: ssh
-          #   reproman_tests_assume_ssp: ssp
-          # - python: 3.9
-            # os: ubuntu-22.04
+            reproman_tests_ssh: ssh
+            setup_slurm: slurm
+          - python: "3.7"
+            os: ubuntu-22.04
+            reproman_tests_deps: core
+            reproman_tests_ssh: ssh
+            reproman_tests_assume_ssp: ssp
+          - python: "3.8"
+            os: ubuntu-22.04
             # By default no logs will be output. This one is to test
             # with low level but dumped to /dev/null
-            # reproman_loglevel: INFO
-            # reproman_tests_deps: core
-          # - python: 3.6
-          #   os: ubuntu-22.04
-          #   # By default no logs will be output. This one is to test
-          #   # with low level but dumped to /dev/null
-          #   reproman_loglevel: 2
-          #   reproman_logtarget: /dev/null
-          #   reproman_tests_deps: full-except-datalad
-          # - python: 3.7
-          #   os: ubuntu-22.04
-          #   # must operate nicely with those env variables set
-          #   set_http_proxy: http_proxy
-          #   reproman_tests_deps: full-except-datalad
-          #   reproman_tests_nonetwork: nonetwork
-          # - python: 3.8
-          #   os: ubuntu-22.04
-          #   reproman_tests_deps: full-except-datalad
+            reproman_loglevel: INFO
+            reproman_tests_deps: core
+          - python: "3.9"
+            os: ubuntu-22.04
+            # By default no logs will be output. This one is to test
+            # with low level but dumped to /dev/null
+            reproman_loglevel: 2
+            reproman_logtarget: /dev/null
+            reproman_tests_deps: full-except-datalad
+          - python: "3.9"
+            os: ubuntu-22.04
+            # must operate nicely with those env variables set
+            set_http_proxy: http_proxy
+            reproman_tests_deps: full-except-datalad
+            reproman_tests_nonetwork: nonetwork
+          - python: 3.8
+            os: ubuntu-22.04
+            reproman_tests_deps: full-except-datalad
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python }}
