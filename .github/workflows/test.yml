@@ -18,17 +18,14 @@ jobs:
       matrix:
         include:
           - python: "3.10"
-            install_condor: condor
             install_datalad: datalad
+            install_condor: condor
+            # 20.04 for condor
             os: ubuntu-20.04
             reproman_tests_deps: full
             reproman_tests_ssh: ssh
-            setup_slurm: slurm
-          - python: "3.7"
-            os: ubuntu-22.04
-            reproman_tests_deps: core
-            reproman_tests_ssh: ssh
             reproman_tests_assume_ssp: ssp
+            setup_slurm: slurm
           - python: "3.8"
             os: ubuntu-22.04
             # By default no logs will be output. This one is to test

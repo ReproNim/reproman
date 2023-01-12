@@ -154,7 +154,7 @@ setup(
     # python3 -m pip install --user --upgrade setuptools wheel twine
     long_description_content_type='text/markdown',
     packages=reproman_pkgs,
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     install_requires=requires['core'],
     extras_require=requires,
     entry_points={

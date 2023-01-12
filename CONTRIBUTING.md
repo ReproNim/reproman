@@ -112,7 +112,6 @@ we outline the workflow used by the developers:
 
 Development environment
 -----------------------
-We support Python 3 (>= |MinPython|).
 
 See [README.md:Dependencies](README.md#Dependencies) for basic information
 about installation of reproman itself.

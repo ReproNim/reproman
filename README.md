@@ -27,7 +27,7 @@ internals and/or contributing to the project.
 
 # Installation
 
-ReproMan requires Python 3 (>= 3.7).
+ReproMan requires Python 3 (>= 3.8).
 
 ## Linux'es and OSX (Windows yet TODO) - via pip
 
