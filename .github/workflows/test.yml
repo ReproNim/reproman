@@ -19,7 +19,7 @@ jobs:
         include:
           - python: "3.10"
             install_datalad: datalad
-            install_condor: condor
+            # install_condor: condor
             # 20.04 for condor
             os: ubuntu-20.04
             reproman_tests_deps: full
