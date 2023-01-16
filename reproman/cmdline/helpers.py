@@ -74,7 +74,7 @@ class HelpAction(argparse.Action):
         else:
             opt_args_str = "*Options*"
             pos_args_str = "*Arguments*"
-        helpstr = re.sub(r'optional arguments:', opt_args_str, helpstr)
+        helpstr = re.sub(r'(optional arguments|options):', opt_args_str, helpstr)
         helpstr = re.sub(r'positional arguments:', pos_args_str, helpstr)
         # convert all headings to have the first character uppercase
         headpat = re.compile(r'^([a-z])(.*):$',  re.MULTILINE)

@@ -36,5 +36,5 @@ def test_run_reproman_help():
     if "OpenSSL version 1.0.1 is no longer supported" in err:
         # Running the test on Travis currently has a warning.
         # https://travis-ci.org/ReproNim/reproman/jobs/499326699#L2162
-        pytest.xfail("err not empty due to OpenSSL warning")
+        pytest.xfail(reason="err not empty due to OpenSSL warning")
     eq_(err, "")

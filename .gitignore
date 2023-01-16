@@ -15,6 +15,7 @@ reproman.build/
 tmp
 .noseids
 *.egg-info
+.eggs/
 *.py[coe]
 *.bak
 .#*
@@ -23,3 +24,4 @@ tmp
 .*.swp
 .travis.yml.evil-bd
 .cache
+.pytest_cache

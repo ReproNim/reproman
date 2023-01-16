@@ -124,6 +124,8 @@ def test_trace_docker(docker_container, trace_info):
 @pytest.mark.integration
 @mark.skipif_no_network
 @mark.skipif_no_apt_cache
+# Error: trace.sqlite3 doesnt exist in the directory https://github.com/VIDA-NYU/reprozip/issues/387
+@pytest.mark.xfail(reason="Our extracted standalone reprozip tracer is currently broken.")
 def test_trace_local(trace_info):
     with patch("reproman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",

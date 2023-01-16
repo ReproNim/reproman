@@ -15,7 +15,7 @@ import attr
 
 from ..cmd import Runner
 from ..dochelpers import borrowdoc
-from ..support.exceptions import CommandError
+from ..support.exceptions import CommandError, OutdatedExternalDependency
 from ..support.external_versions import external_versions
 from .session import POSIXSession, Session
 from .base import Resource
@@ -47,7 +47,6 @@ class Singularity(Resource):
         Open a connection to the environment.
         """
         external_versions.check("cmd:singularity", min_version="2.4")
-        # Get instance info if we have one running.
         info = self.get_instance_info()
         if info:
             if not self.name:

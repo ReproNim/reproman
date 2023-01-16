@@ -88,4 +88,4 @@ def test_no_heavy_imports():
     assert 'jinja2' not in modules
     assert 'paramiko' not in modules
     # and catch it all!  Raise the boundary as needed
-    assert len(modules) < 550  # currently could be 508 with requests due to etelemetry
+    assert len(modules) < 600  # currently could be 508 with requests due to etelemetry

@@ -45,16 +45,19 @@ requires = {
     'core': [
         'appdirs',
         'attrs>=16.3.0',
+        'chardet',
         'etelemetry>=0.2.0',
         'humanize',
         'pyyaml',
         'tqdm',
+        # https://github.com/paramiko/paramiko/issues/1839
+        'paramiko==2.8.1',
         'fabric>=2.3.1',
         'cryptography>=2.5',
         'pytz',
         'scp',
         'pycrypto',
-        'pyOpenSSL==16.2.0',
+        'pyOpenSSL',
         'requests',
         'reprozip; sys_platform=="linux" or sys_platform=="linux2"',
         'rpaths',
@@ -67,7 +70,6 @@ requires = {
         # Origin.codename was introduced in 0.8.9
         # unfortunately not on pypi but needed by python-apt
         #'http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.9.3.5.tar.xz'
-        'chardet',  # python-debian misses dependency on it
     ],
     'datalad': [
         'datalad>=0.13.0',
@@ -152,7 +154,7 @@ setup(
     # python3 -m pip install --user --upgrade setuptools wheel twine
     long_description_content_type='text/markdown',
     packages=reproman_pkgs,
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     install_requires=requires['core'],
     extras_require=requires,
     entry_points={

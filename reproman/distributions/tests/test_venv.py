@@ -57,9 +57,11 @@ def venv_test_dir():
     runner.run([pip0, "install", "pyyaml"])
     runner.run([pip0, "install", "-e", pymod_dir])
     runner.run([pip1, "install", "attrs"])
-    # Make sure we're compatible with older pips.
-    runner.run([pip1, "install", "pip==9.0.3"])
-
+    # Pip 21.0 (2021-01-23) dropped python 2 support
+    # Make sure we're compatible with older pips, however pip<20.0 does not work with python3
+    # specifically, it vendors requests -> urllib3 which imports from collections rather than abc
+    # This is the oldest pip we can support.
+    runner.run([pip1, "install", "pip==20.0.1"])
     if ssp:
         # The testing environment supports --system_site_packages.
         pip2 = op.join("venv-nonlocal", "bin", "pip")

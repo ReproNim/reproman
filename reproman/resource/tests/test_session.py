@@ -394,6 +394,7 @@ def import_resource(mod, cls):
                    cls)
 
 
+@mark.skipif_no_singularity
 @pytest.mark.parametrize(
     "location",
     [   # module, class
@@ -409,6 +410,9 @@ def test_session_singularity(location, singularity_resource, check_methods):
     check_methods(location[1], session)
 
 
+
+# https://github.com/ReproNim/reproman/issues/587
+@pytest.mark.xfail(reason="RSA key treated as DSA", run=False)
 @mark.skipif_no_ssh
 @pytest.mark.parametrize(
     "location",

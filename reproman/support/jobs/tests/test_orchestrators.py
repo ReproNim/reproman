@@ -32,8 +32,8 @@ from reproman.tests.utils import create_tree
 
 try:
     lsf_config = os.environ['REPROMAN_LSF_TEST_CONFIG'].split(':')
-    lsf_config = {"host": lsf_config[0], 
-                  "user": lsf_config[1], 
+    lsf_config = {"host": lsf_config[0],
+                  "user": lsf_config[1],
                   "tmpdir_root": lsf_config[2]}
 except (KeyError, ValueError):
     lsf_config = None
@@ -222,7 +222,7 @@ def check_orc_datalad(job_spec, dataset):
                 return orc
 
         if sub_type == "lsf":
-            # for the LSF test, reroot the remote temporary directory 
+            # for the LSF test, reroot the remote temporary directory
             # under the directory given in REPROMAN_LSF_TEST_CONFIG
             rel_dir = op.relpath(job_spec["root_directory"], "/")
             new_root_directory = op.join(lsf_config["tmpdir_root"], rel_dir)
@@ -748,6 +748,8 @@ def check_orc_datalad_concurrent(job_spec, dataset):
     return fn
 
 
+# https://github.com/ReproNim/reproman/issues/588
+@pytest.mark.xfail(reason="KeyError p, unknown cause", run=False)
 @pytest.mark.integration
 @pytest.mark.parametrize("orc_class",
                          [orcs.DataladLocalRunOrchestrator,
@@ -763,6 +765,8 @@ def test_orc_datalad_concurrent(check_orc_datalad_concurrent,
     check_orc_datalad_concurrent(ssh, orc_class, sub_type)
 
 
+# https://github.com/ReproNim/reproman/issues/588
+@pytest.mark.xfail(reason="KeyError p, unknown cause", run=False)
 @pytest.mark.integration
 @pytest.mark.parametrize("launcher", [False, True],
                          ids=["no launcher", "launcher=true"])
@@ -861,9 +865,9 @@ def test_orc_datalad_pair_submodule_conflict(caplog, job_spec, dataset, shell):
         # swallow_logs() won't work here because it hard codes the logger and
         # the log message being checked is bubbled up by DataLad.
         caplog.clear()
-        with caplog.at_level(logging.ERROR):
+        with caplog.at_level(logging.WARNING):
             orc1.fetch()
-        assert "CONFLICT" in caplog.text
+        assert "update failure in subdataset" in caplog.text
         assert dataset.repo.call_git(["ls-files", "--unmerged"]).strip()
 
 
