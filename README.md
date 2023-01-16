@@ -54,7 +54,7 @@ all necessary packages from that repository.
 
 ## Dependencies
 
-Python 3.7+ **with .h extensions** This is provided by `python-dev` on
+Python 3.8+ **with header files** possibly needed to build some extensions without wheels. They are provided by `python3-dev` on
 debian-based systems or `python-devel` on Red Hat systems.
 
 Our `setup.py` and corresponding packaging describes all necessary python dependencies.
