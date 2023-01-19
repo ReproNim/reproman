@@ -124,8 +124,6 @@ def test_trace_docker(docker_container, trace_info):
 @pytest.mark.integration
 @mark.skipif_no_network
 @mark.skipif_no_apt_cache
-# Error: trace.sqlite3 doesnt exist in the directory https://github.com/VIDA-NYU/reprozip/issues/387
-@pytest.mark.xfail(reason="Our extracted standalone reprozip tracer is currently broken.")
 def test_trace_local(trace_info):
     with patch("reproman.resource.ResourceManager._get_inventory") as get_inv:
         config = {"status": "running",
@@ -136,7 +134,7 @@ def test_trace_local(trace_info):
                    return_value=ResourceManager()):
             with patch("reproman.interface.execute.CMD_CLASSES",
                        {"trace": trace_info["class"]}):
-                execute("ls", ["-l"], trace=True, resref="testing-local")
+                execute("whoami", ["--version"], trace=True, resref="testing-local")
 
     local_dir = trace_info["local"]
     assert set(os.listdir(local_dir)) == {"traces", "tracers"}
@@ -149,7 +147,7 @@ def test_trace_local(trace_info):
                  if dist.name == "debian"]
     assert len(deb_dists) == 1
 
-    expect = {"packages": [{"files": ["/bin/ls"], "name": "coreutils"}]}
+    expect = {"packages": [{"files": ["/usr/bin/whoami"], "name": "coreutils"}]}
     assert_is_subset_recur(expect, attr.asdict(deb_dists[0]), [dict, list])
 
 

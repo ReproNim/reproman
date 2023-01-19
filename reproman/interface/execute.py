@@ -118,7 +118,7 @@ class TracedCommand(CommandAdapter):
             raise MissingExternalDependency("Using --trace requires ReproZip, "
                                             "a Linux-specific dependency")
 
-        self.tracer_md5sum = "d8561c1bc528592b21c0e28d6f32c0a4"
+        self.tracer_md5sum = "b32df0e1e0663f83e99a10502cd8db63"
         # adding two random characters to avoid collisions etc
         # The id for the execution so we could pick up all the log and trace
         # files for local storage
@@ -156,14 +156,15 @@ class TracedCommand(CommandAdapter):
 
             lgr.info("Downloading tracer...")
             resp = requests.get("https://github.com/ReproNim/reprozip/blob"
-                                "/0497b229575c67219c5925360b6e63bf8d4d5eb9"
+                                "/06fefcd438156ad705a47f9ace7f6ba9c73ec1a0"
                                 "/reprozip/native/rztracer.gz?raw=true",
                                 allow_redirects=True)
 
             with open(self.local_tracer_gz, "wb") as stream:
-                if self.tracer_md5sum != hashlib.md5(resp.content).hexdigest():
-                    raise RuntimeError("md5sum for downloaded tracer "
-                                       "does not match the expected one")
+                downloaded_md5sum = hashlib.md5(resp.content).hexdigest()
+                if self.tracer_md5sum != downloaded_md5sum:
+                    raise RuntimeError(f"md5sum for downloaded tracer ({downloaded_md5sum}) "
+                                       f"does not match the expected one ({self.tracer_md5sum})")
                 stream.write(resp.content)
             lgr.info("Tracer downloaded to %s", self.local_tracer_gz)
 
