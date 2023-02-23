@@ -99,7 +99,7 @@ def assure_tuple_or_list(obj):
 
 
 def any_re_search(regexes, value):
-    """Return if any of regexes (list or str) searches succesfully for value"""
+    """Return if any of regexes (list or str) searches successfully for value"""
     for regex in assure_tuple_or_list(regexes):
         if re.search(regex, value):
             return True
@@ -376,7 +376,7 @@ else:
         Runner().run(['touch', '-h', '-t', '%s' % smtime, filepath])
         rfilepath = realpath(filepath)
         if islink(filepath) and exists(rfilepath):
-            # trust noone - adjust also of the target file
+            # trust no one - adjust also of the target file
             # since it seemed like downloading under OSX (was it using curl?)
             # didn't bother with timestamps
             lgr.log(3, "File is a symlink to %s Setting mtime for it to %s",
@@ -567,7 +567,7 @@ def partition(items, predicate=bool):
 
 # Borrowed from pandas
 # Copyright: 2011-2014, Lambda Foundry, Inc. and PyData Development Team
-# Licese: BSD-3
+# License: BSD-3
 def optional_args(decorator):
     """allows a decorator to take optional positional and keyword arguments.
         Assumes that taking a single, callable, positional argument means that

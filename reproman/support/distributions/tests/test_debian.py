@@ -28,7 +28,7 @@ Codename: stretch2
 Date: Thu, 15 Sep 2016 01:30:57 UTC
 Architectures: i386 amd64 sparc
 Components: main non-free contrib
-Description: NeuroDebian repository with perspective, inofficial and backported packages -- mostly neuroscience-related
+Description: NeuroDebian repository with perspective, unofficial and backported packages -- mostly neuroscience-related
 MD5Sum:
  d9650396c56a6f9521d0bbd9f719efbe 482669 main/binary-i386/Packages
  34134c9a64b847d33eeeb3cc7291f855ab9f0969e8ad7c92cd2a0c1aebc19d1e 14199 contrib/Contents-sparc.gz

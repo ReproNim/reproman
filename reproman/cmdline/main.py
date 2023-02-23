@@ -206,7 +206,7 @@ def setup_parser(
         return parser
 
 
-# yoh: arn't used
+# yoh: aren't used
 # def generate_api_call(cmdlineargs=None):
 #     parser = setup_parser()
 #     # parse cmd args
