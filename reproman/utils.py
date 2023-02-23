@@ -176,11 +176,11 @@ def md5sum(filename):
         return hashlib.md5(f.read()).hexdigest()
 
 
-def sorted_files(dout):
-    """Return a (sorted) list of files under dout
+def sorted_files(path):
+    """Return a (sorted) list of files under path
     """
-    return sorted(sum([[opj(r, f)[len(dout)+1:] for f in files]
-                       for r,d,files in os.walk(dout)
+    return sorted(sum([[opj(r, f)[len(path)+1:] for f in files]
+                       for r,d,files in os.walk(path)
                        if not '.git' in r], []))
 
 from os.path import sep as dirsep
