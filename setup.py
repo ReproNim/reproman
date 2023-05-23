@@ -51,6 +51,7 @@ requires = {
         'fabric>=2.3.1',
         'humanize',
         'jinja2',
+        'packaging',
         # https://github.com/paramiko/paramiko/issues/1839
         'paramiko==2.8.1',
         'pycrypto',
