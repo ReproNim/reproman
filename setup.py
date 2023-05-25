@@ -47,6 +47,7 @@ requires = {
         'attrs>=16.3.0',
         'chardet',
         'cryptography>=2.5',
+        'decorator',
         'etelemetry>=0.2.0',
         'fabric>=2.3.1',
         'humanize',
@@ -62,6 +63,7 @@ requires = {
         'requests',
         'rpaths',
         'scp',
+        'six',
         'tqdm',
     ],
     'debian': [
