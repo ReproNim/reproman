@@ -79,7 +79,7 @@ class SpecObject(object):
         """a string describing the identity of the object
 
         this can be overridden if there's a nicer way of expressing the 
-        identity than just stringing the identity keys togeter (e.g. for 
+        identity than just stringing the identity keys together (e.g. for 
         a VCS repository identified by an opaque string, we can include 
         the path of the repository)
         """

@@ -164,10 +164,10 @@ def identify_distributions(files, session=None, tracer_classes=None):
 
 
     # .identify_ functions will have a side-effect of shrinking this list in-place
-    # as they identify files beloning to them
+    # as they identify files belonging to them
     files_to_consider = set(files)
 
-    distibutions = []
+    distributions = []
     files_processed = set()
     files_to_trace = files_to_consider
 
@@ -208,7 +208,7 @@ def identify_distributions(files, session=None, tracer_classes=None):
                 nenvs = 0
                 for env, remaining_files_to_trace in tracer.identify_distributions(
                         files_to_trace):
-                    distibutions.append(env)
+                    distributions.append(env)
                     nenvs += 1
                 files_processed |= files_to_trace - remaining_files_to_trace
                 files_to_trace = remaining_files_to_trace
@@ -228,7 +228,7 @@ def identify_distributions(files, session=None, tracer_classes=None):
             lgr.info("No more changes or files to track.  Exiting the loop")
             break
 
-    return distibutions, files_to_consider
+    return distributions, files_to_consider
 
 
 def get_tracer_classes():

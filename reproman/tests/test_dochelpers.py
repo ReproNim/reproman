@@ -68,12 +68,12 @@ def test_borrow_kwargs():
     class B(object):
 
         @borrowkwargs(A)
-        def met1(self, bu, **kwargs):
+        def met1(self, arg, **kwargs):
             """B.met1 doc
 
             Parameters
             ----------
-            bu
+            arg
               description
             **kwargs
               Same as in A.met1
@@ -131,7 +131,7 @@ def test_borrow_kwargs():
         # indentation should have been squashed properly
         assert_true(not '   ' in docstring)
 
-    # some additional checks to see if we are not loosing anything
+    # some additional checks to see if we are not losing anything
     assert_true('Some postamble' in B.met1.__doc__)
     assert_true('B.met_nodockwargs' in B.met_nodockwargs.__doc__)
     assert_true('boguse' in B.met_excludes.__doc__)

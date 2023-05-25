@@ -324,7 +324,7 @@ class RPMTracer(DistributionTracer):
                 elif key == 'Repo-baseurl':
                     values['baseurl'] = re.match(r'(\S+)', value).groups()[0]
                 else:
-                    # Map the field labels returned by the sytem to the attr
+                    # Map the field labels returned by the system to the attr
                     # fields in the RPMSource class.
                     field = key.split('-')[1]
                     if field in attr_fields:

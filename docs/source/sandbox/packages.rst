@@ -358,7 +358,7 @@ Resource
   customization stage and only then full bootstrap (using one of the available
   tools for AMI provisioning) is used
 
-- docker -- could we export/import an image to get to the same state (possibly loosing overlays etc)
+- docker -- could we export/import an image to get to the same state (possibly losing overlays etc)
 - singularity -- the same
 
 Next ones are more in realm of "exec" or "run" aspect which this discussion is

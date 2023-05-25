@@ -68,7 +68,7 @@ def test_dockercontainer_class(resman):
             ]
         )
 
-        # Test connecting when a resource doens't exist.
+        # Test connecting when a resource doesn't exist.
         config = {
             'name': 'non-existent-resource',
             'type': 'docker-container'

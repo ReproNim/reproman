@@ -514,7 +514,7 @@ def test_recursive_transfer(context):
             resref="myshell")
         try_fetch(lambda: jobs(queries=[], action="fetch", all_=True))
         assert op.exists(op.join(path, "out_file"))
-        with open(op.join(path, "out_file")) as fo:
-            lines = [ line.strip() for line in fo ]
+        with open(op.join(path, "out_file")) as f:
+            lines = [ line.strip() for line in f ]
         assert "./in_dir/subfile" in lines
         assert op.exists(op.join(path, "out_dir", "subfile"))

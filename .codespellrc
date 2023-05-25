@@ -1,0 +1,4 @@
+[codespell]
+skip = .git,*.pdf,*.svg,venvs,usecases,*.yml,*.trig,.eggs,htcondor_dconf_selections
+# doesnt - used in many tests etc as semantic clue, let's just let it be
+ignore-words-list = doesnt
