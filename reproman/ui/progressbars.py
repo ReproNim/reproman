@@ -91,7 +91,7 @@ try:
             self._create()
 
         def finish(self):
-            # be tollerant to bugs in those
+            # be tolerant to bugs in those
             try:
                 if self._pbar is not None:
                     self._pbar.close()
