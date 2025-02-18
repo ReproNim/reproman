@@ -236,7 +236,7 @@ def test_git_repo_remotes(git_repo_pair):
 
 def test_git_install_no_remote():
     dist = GitDistribution(name="git",
-                           packages=[GitRepo(path="/tmp/shouldnt/matter")])
+                           packages=[GitRepo(path="/tmp/shouldn't/matter")])
 
     with swallow_logs(new_level=logging.WARNING) as log:
         dist.initiate()

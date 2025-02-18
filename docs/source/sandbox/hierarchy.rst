@@ -476,7 +476,7 @@ docker:
  packages:
  - image: bids/qa
    tag: latest
-   id: afe...
+   id: safe...
  - "bids/cpac:latest"  # sugaring -- ideally we should use in sugarings native syntax
                        # thus wrapping here into string explicitly
    # TODO -- review docker-compose syntax to what degree we need to implement it

@@ -35,7 +35,7 @@ class Delete(Interface):
 
     _params_ = dict(
         resref=resref_arg,
-        # XXX reenable when we support working with multiple instances at once
+        # XXX re-enable when we support working with multiple instances at once
         # resource_type=Parameter(
         #     args=("-t", "--resource-type"),
         #     doc="""Resource type to work on""",

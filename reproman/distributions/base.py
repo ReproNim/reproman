@@ -63,7 +63,7 @@ class SpecObject(object):
         if not self._comparison_fields:
             # Might need to be gone or some custom exception
             raise RuntimeError(
-                "Cannot establish identity of %r since _comaprison_fields "
+                "Cannot establish identity of %r since _comparison_fields "
                 "are not defined" % self)
         return tuple(getattr(self, a) for a in self._comparison_fields)
 
@@ -79,7 +79,7 @@ class SpecObject(object):
         """a string describing the identity of the object
 
         this can be overridden if there's a nicer way of expressing the 
-        identity than just stringing the identity keys togeter (e.g. for 
+        identity than just stringing the identity keys together (e.g. for 
         a VCS repository identified by an opaque string, we can include 
         the path of the repository)
         """

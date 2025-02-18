@@ -81,7 +81,13 @@ def _get_system_ssh_version():
 
 
 def _get_singularity_version():
-    """Return version of available singularity."""
+    """
+    Return version of available singularity.
+
+    Note: If apptainer is installed, singularity is aliased to apptainer. The
+    versioning scheme for apptainer reverted to 1.0, so the versions are not
+    reliable.  
+    """
     # example output:
     #  "singularity version 3.0.3+ds"
     #  "2.6.1-dist"

@@ -17,44 +17,41 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python: 3.6
-            install_condor: condor
+          - python: "3.10"
             install_datalad: datalad
-            os: ubuntu-18.04
+            # install_condor: condor
+            # 20.04 for condor
+            os: ubuntu-20.04
             reproman_tests_deps: full
             reproman_tests_ssh: ssh
-            setup_slurm: slurm
-          - python: 3.6
-            os: ubuntu-18.04
-            reproman_tests_deps: core
-            reproman_tests_ssh: ssh
             reproman_tests_assume_ssp: ssp
-          - python: 3.9
-            os: ubuntu-18.04
+            setup_slurm: slurm
+          - python: "3.8"
+            os: ubuntu-22.04
             # By default no logs will be output. This one is to test
             # with low level but dumped to /dev/null
             reproman_loglevel: INFO
             reproman_tests_deps: core
-          - python: 3.6
-            os: ubuntu-18.04
+          - python: "3.9"
+            os: ubuntu-22.04
             # By default no logs will be output. This one is to test
             # with low level but dumped to /dev/null
             reproman_loglevel: 2
             reproman_logtarget: /dev/null
             reproman_tests_deps: full-except-datalad
-          - python: 3.7
-            os: ubuntu-18.04
+          - python: "3.9"
+            os: ubuntu-22.04
             # must operate nicely with those env variables set
             set_http_proxy: http_proxy
             reproman_tests_deps: full-except-datalad
             reproman_tests_nonetwork: nonetwork
           - python: 3.8
-            os: ubuntu-18.04
+            os: ubuntu-22.04
             reproman_tests_deps: full-except-datalad
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python }}
       - name: Set up system
@@ -71,7 +68,8 @@ jobs:
           sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
           # sqlite3: for SVN tests (SVNRepoShim._ls_files_command())
           # parallel: for concurrent jobs with local orchestrator
-          sudo eatmydata apt-get install sqlite3 parallel singularity-container
+          sudo eatmydata apt-get install sqlite3 parallel
+          bash tools/ci/install-singularity.sh
           git config --global user.email "reproman@repronim.org"
           git config --global user.name "ReproMan Tester"
           # Set defaultBranch to avoid polluting output with repeated
@@ -125,7 +123,7 @@ jobs:
       - name: Verify setup.py build
         run: python setup.py build
       - name: Run tests
-        run: coverage run `which py.test` -s -rs --integration reproman && coverage xml
+        run: coverage run `which py.test` -s -rsfE --integration reproman && coverage xml
       - name: Generate documentation and run doctests
         run: PYTHONPATH=$PWD make -C docs html doctest
       - name: Upload coverage to codecov

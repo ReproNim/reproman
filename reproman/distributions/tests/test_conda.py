@@ -32,19 +32,27 @@ def test_get_conda_platform_from_python():
 
 
 def test_get_miniconda_url():
-    assert get_miniconda_url("linux-64", "2.7") == \
-           "https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh"
-    assert get_miniconda_url("linux-32", "3.4") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86.sh"
-    assert get_miniconda_url("osx-64", "3.5.1") == \
-           "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
+    assert get_miniconda_url("linux-32b", "3.7", "4.12.0") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py37_4.12.0-Linux-x86.sh"
+
+    assert get_miniconda_url("osx-32b", "3.8", "4.12.0") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-MacOSX-x86.sh"
+
+    assert get_miniconda_url("osx-64", "3.9", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-MacOSX-x86_64.sh"
+
+    assert get_miniconda_url("linux-64", "3.9", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-Linux-x86_64.sh"
+
+    assert get_miniconda_url("linux-32", "3.10.1", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86.sh"
+
+    assert get_miniconda_url("linux-64", "3.10.1", "22.11.1-1") == \
+        "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86_64.sh"
 
 
 def test_get_simple_python_version():
-    assert CondaDistribution.get_simple_python_version("2.7.12.final.0") == \
-           "2.7.12"
-    assert CondaDistribution.get_simple_python_version("3.5.1") == \
-           "3.5.1"
+    assert CondaDistribution.get_simple_python_version("3.5.1") == "3.5.1"
 
 
 def test_format_conda_package():
@@ -128,7 +136,7 @@ def test_conda_init_install_and_detect(tmpdir):
                     CondaPackage(
                         name="pip",
                         installer=None,
-                        version="20.0.2",
+                        version="22.0.2",
                         build=None,
                         channel_name=None,
                         md5=None,
@@ -159,7 +167,7 @@ def test_conda_init_install_and_detect(tmpdir):
                     CondaPackage(
                         name="pip",
                         installer=None,
-                        version="20.0.2",
+                        version="22.0.2",
                         build=None,
                         channel_name=None,
                         md5=None,

@@ -3,25 +3,25 @@ version: 0.0.1
 distributions:
 - name: conda
   path: /home/kyle/miniconda3
-  conda_version: 4.4.10
-  python_version: 3.6.3.final.0
+  conda_version: 4.10
+  python_version: 3.7.5
   platform: linux-64
   environments:
   - name: foo
     path: /home/kyle/miniconda3/envs/foo
     packages:
     - name: c_libbuilddiff
-      build: py36_0
+      build: py37_0
       version: 2.4.6
     - name: c_libversdiff
-      build: py36_0
+      build: py37_0
       version: 2.4.6
   - name: bar
     path: /home/kyle/miniconda3/envs/bar
     packages:
     - name: c_lib1only
-      build: py36_0
+      build: py37_0
       version: 2:1.6.4-3
     - name: c_libsame
-      build: py36_0
+      build: py37_0
       version: 2.4.6

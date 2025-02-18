@@ -7,7 +7,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import collections
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 import re
 
 import builtins
@@ -73,7 +73,7 @@ else:
 
 def get_func_kwargs_doc(func):
     """ Provides args for a function
-    
+
     Parameters
     ----------
     func: str
@@ -99,7 +99,7 @@ def assure_tuple_or_list(obj):
 
 
 def any_re_search(regexes, value):
-    """Return if any of regexes (list or str) searches succesfully for value"""
+    """Return if any of regexes (list or str) searches successfully for value"""
     for regex in assure_tuple_or_list(regexes):
         if re.search(regex, value):
             return True
@@ -176,11 +176,11 @@ def md5sum(filename):
         return hashlib.md5(f.read()).hexdigest()
 
 
-def sorted_files(dout):
-    """Return a (sorted) list of files under dout
+def sorted_files(path):
+    """Return a (sorted) list of files under path
     """
-    return sorted(sum([[opj(r, f)[len(dout)+1:] for f in files]
-                       for r,d,files in os.walk(dout)
+    return sorted(sum([[opj(r, f)[len(path)+1:] for f in files]
+                       for r,d,files in os.walk(path)
                        if not '.git' in r], []))
 
 from os.path import sep as dirsep
@@ -376,7 +376,7 @@ else:
         Runner().run(['touch', '-h', '-t', '%s' % smtime, filepath])
         rfilepath = realpath(filepath)
         if islink(filepath) and exists(rfilepath):
-            # trust noone - adjust also of the target file
+            # trust no one - adjust also of the target file
             # since it seemed like downloading under OSX (was it using curl?)
             # didn't bother with timestamps
             lgr.log(3, "File is a symlink to %s Setting mtime for it to %s",
@@ -567,7 +567,7 @@ def partition(items, predicate=bool):
 
 # Borrowed from pandas
 # Copyright: 2011-2014, Lambda Foundry, Inc. and PyData Development Team
-# Licese: BSD-3
+# License: BSD-3
 def optional_args(decorator):
     """allows a decorator to take optional positional and keyword arguments.
         Assumes that taking a single, callable, positional argument means that
@@ -583,7 +583,7 @@ def optional_args(decorator):
         def dec(f):
             return decorator(f, *args, **kwargs)
 
-        is_decorating = not kwargs and len(args) == 1 and isinstance(args[0], collections.Callable)
+        is_decorating = not kwargs and len(args) == 1 and isinstance(args[0], Callable)
         if is_decorating:
             f = args[0]
             args = []
@@ -1211,19 +1211,19 @@ def execute_command_batch(session, command, args, exception_filter=None):
 
 def items_to_dict(l, attrs='name', ordered=False):
     """Given a list of attr instances, return a dict using specified attrs as keys
-    
+
     Parameters
     ----------
     attrs : str or list of str
       Which attributes of the items to use to group
     ordered : bool, optional
       Either to return an ordered dictionary following the original order of items in the list
-    
+
     Raises
     ------
     ValueError
         If there is a conflict - multiple items with the same attrs used for key
-    
+
     Returns
     -------
     dict or collections.OrderedDict

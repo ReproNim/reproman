@@ -88,7 +88,7 @@ comparisons)
   plate
 
 ## [0.0.6] - 2018-06-17
-Enhancement and fixes primarily targetting better tracing (collecting
+Enhancement and fixes primarily targeting better tracing (collecting
 information about) of the computational components
 ### Added
 - tracing of

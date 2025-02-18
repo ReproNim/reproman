@@ -568,7 +568,7 @@ class POSIXSession(Session):
         try:
             out, err = self.execute_command(self._GET_ENVIRON_CMD)
         except CommandError:
-            # if this fails, we might need the altenative command...
+            # if this fails, we might need the alternative command...
             if self._GET_ENVIRON_CMD == self.__class__._ALT_GET_ENVIRON_CMD:
                 # ...if it's already installed, we fail...
                 raise
@@ -606,7 +606,7 @@ class POSIXSession(Session):
 
     def _prefix_command(self, command, env=None, cwd=None, with_shell=False):
         """Wrap the command in a shell call with ENV vars and CWD prefixed
-        statment to command. Will pass through the command unchanged if env
+        statement to command. Will pass through the command unchanged if env
         and cwd are None
 
         Parameters
@@ -780,7 +780,7 @@ class POSIXSession(Session):
             return True
         else:
             lgr.debug("Standard error was not empty (%r), thus assuming that "
-                      "test for direcory has failed", err)
+                      "test for directory has failed", err)
             return False
 
     def isdir_command(self, path):

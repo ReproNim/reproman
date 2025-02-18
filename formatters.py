@@ -66,7 +66,7 @@ class ManPageFormatter(argparse.HelpFormatter):
 
     def _make_name(self, parser):
         """
-        this method is in consitent with others ... it relies on
+        this method is in consistent with others ... it relies on
         distributions
         """
         return '.SH NAME\n%s \\- %s\n' % (parser.prog,

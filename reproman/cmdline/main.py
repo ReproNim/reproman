@@ -81,7 +81,7 @@ def setup_parser(
     helpers.parser_add_common_opt(
         parser,
         'version',
-        version='reproman %s\n\n%s' % (reproman.__version__, _license_info()))
+        version='reproman %s' % (reproman.__version__))
     if __debug__:
         parser.add_argument(
             '--dbg', action='store_true', dest='common_debug',
@@ -206,7 +206,7 @@ def setup_parser(
         return parser
 
 
-# yoh: arn't used
+# yoh: aren't used
 # def generate_api_call(cmdlineargs=None):
 #     parser = setup_parser()
 #     # parse cmd args

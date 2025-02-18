@@ -59,37 +59,6 @@ try:
             fill_text = fill_text[:min(len(fill_text), int(round(width * pbar.percentage()/100.)))]
             return fill_text + " " + orig[len(fill_text)+1:]
 
-    class progressbarProgressBar(ProgressBarBase):
-        """Adapter for progressbar.ProgressBar"""
-
-        backend = 'progressbar'
-
-        def __init__(self, label='', fill_text=None, maxval=None, unit='B', out=sys.stdout):
-            super(progressbarProgressBar, self).__init__()
-            assert(unit == 'B')  # none other "supported" ATM
-            bar = dict(marker=RotatingMarker())
-            # TODO: RF entire messaging to be able to support multiple progressbars at once
-            widgets = ['%s: ' % label,
-                       BarWithFillText(fill_text=fill_text, marker=RotatingMarker()), ' ',
-                       Percentage(), ' ',
-                       ETA(), ' ',
-                       FileTransferSpeed()]
-            self._pbar = ProgressBar(widgets=widgets, maxval=maxval, fd=out).start()
-
-        def update(self, size, increment=False):
-            self._pbar.update(self._prev_value + size if increment else size)
-            super(progressbarProgressBar, self).update(size, increment=increment)
-
-        def start(self):
-            super(progressbarProgressBar, self).start()
-            self._pbar.start()
-
-        def finish(self):
-            if self._pbar:
-                self._pbar.finish()
-            super(progressbarProgressBar, self).finish()
-
-    progressbars['progressbar'] = progressbarProgressBar
 except ImportError:  # pragma: no cover
     pass
 
@@ -122,7 +91,7 @@ try:
             self._create()
 
         def finish(self):
-            # be tollerant to bugs in those
+            # be tolerant to bugs in those
             try:
                 if self._pbar is not None:
                     self._pbar.close()

@@ -47,6 +47,8 @@ def test_setup_ssh(setup_ssh):
     assert setup_ssh['custom']['host'] == 'localhost'
 
 
+# https://github.com/ReproNim/reproman/issues/587
+@pytest.mark.xfail(reason="RSA key treated as DSA", run=False)
 def test_ssh_class(setup_ssh, resource_test_dir, resman):
     with swallow_logs(new_level=logging.DEBUG) as log:
 
@@ -115,6 +117,8 @@ def test_ssh_class(setup_ssh, resource_test_dir, resman):
             session._execute_command('non-existent-command', cwd='/path')
 
 
+# https://github.com/ReproNim/reproman/issues/587
+@pytest.mark.xfail(reason="RSA key treated as DSA", run=False)
 def test_ssh_resource(setup_ssh, resman):
 
     config = {
