@@ -149,7 +149,7 @@ class SpecObject(object):
 
         TODO: derive _collection_type directly from _collection.  This isn't 
         possible at the moment because DebianDistribution.packages is 
-        overwritten at some point and emerges here (in staisfies()) as a 
+        overwritten at some point and emerges here (in satisfies()) as a 
         list.  We have to go back to the definition of packages in the 
         DebianDistribution class (not an object) to find the type.
         """
