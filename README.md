@@ -27,7 +27,7 @@ internals and/or contributing to the project.
 
 # Installation
 
-ReproMan requires Python 3 (>= 3.8).
+ReproMan requires Python 3 (>= 3.9).
 
 ## Linux'es and OSX (Windows yet TODO) - via pip
 
@@ -54,7 +54,7 @@ all necessary packages from that repository.
 
 ## Dependencies
 
-Python 3.8+ **with header files** possibly needed to build some extensions without wheels. They are provided by `python3-dev` on
+Python 3.9+ **with header files** possibly needed to build some extensions without wheels. They are provided by `python3-dev` on
 debian-based systems or `python-devel` on Red Hat systems.
 
 Our `setup.py` and corresponding packaging describes all necessary python dependencies.

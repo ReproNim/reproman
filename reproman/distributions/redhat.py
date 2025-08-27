@@ -303,8 +303,7 @@ class RPMTracer(DistributionTracer):
         # Get all repo info from the system and store information for each
         # enabled repo in a RPMSource object.
         # '-y' included in case there are GPG keys to import
-        out, _ = self._session.execute_command(['yum', '--verbose',
-            'repolist', '-y'])
+        out, _ = self._session.execute_command(['yum', 'repolist', '-y'])
         for line in out.splitlines():
             if line.startswith('Repo-'):
                 key, value = line.split(':', 1)

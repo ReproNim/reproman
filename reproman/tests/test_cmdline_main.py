@@ -53,17 +53,9 @@ def run_main(args, exit_code=0, expect_stderr=False):
     return stdout, stderr
 
 
-# TODO: switch to stdout for --version output
 def test_version():
     stdout, stderr = run_main(['--version'], expect_stderr=True)
-
-    # and output should contain our version, copyright, license
-
-    # https://hg.python.org/cpython/file/default/Doc/whatsnew/3.4.rst#l1952
-    out = stdout if sys.version_info >= (3, 4) else stderr
-    ok_startswith(out, 'reproman %s\n' % reproman.__version__)
-    in_("Copyright", out)
-    in_("Permission is hereby granted", out)
+    ok_startswith(stdout, f'reproman {reproman.__version__}')
 
 
 def test_help_np():

@@ -17,6 +17,7 @@ tmp
 *.egg-info
 .eggs/
 *.py[coe]
+__pycache__/
 *.bak
 .#*
 .orig
