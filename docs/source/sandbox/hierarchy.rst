@@ -67,7 +67,7 @@ TOL (thoughts out loud):
     of the session or sourcing some env files specific to different distros.
 
 - Q: could/should session be specified at __init__ time or just memorized by
-  'initiate' call, since we unlikely to re-use the same object for different sessions
+  'initiate' call, since we unlikely to reuse the same object for different sessions
 
 
 resource.base.Resource base class

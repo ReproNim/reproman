@@ -4,6 +4,22 @@ All notable changes to this project will be documented (for humans) in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-02-??
+
+A "heartbeat" release after long time without signs of life.
+
+### Added
+- Support for [TACC/launcher](https://github.com/TACC/launcher) use with SLURM and PBS
+- "Support" for codespell with typos fixes and GitHub CI to keep it typo free.
+### Changed
+- Switched to github actions from travis for CI.
+- Switched to use `datalad push` instead of deprecated `datalad publish`.
+- Remove support for Python before 3.8.
+### Fixed
+- Account for git's init.defaultBranch in tests.
+- Invalid escapes in python strings.
+- job_templates: launcher subjob output is now stored in expected files
+
 ## [0.4.1] - 2021-02-01
 
 Just a quick re-release for PyPI ensuring (manually) that setuptools_scm is present

@@ -79,7 +79,7 @@ def get_miniconda_url(conda_platform, python_version, conda_version):
     Returns
     -------
     str
-        The Miniconda insaller URL
+        The Miniconda installer URL
     """
     if conda_platform.startswith("linux"):
         platform = "Linux"
