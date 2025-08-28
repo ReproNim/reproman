@@ -1,6 +1,6 @@
 # ReproMan
 
-[![Supports python version](https://img.shields.io/pypi/pyversions/datalad)](https://pypi.org/project/datalad/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![GitHub release](https://img.shields.io/github/release/ReproNim/reproman.svg)](https://GitHub.com/ReproNim/reproman/releases/)
 [![PyPI version fury.io](https://badge.fury.io/py/reproman.svg)](https://pypi.python.org/pypi/reproman/)
 [![Tests](https://github.com/ReproNim/reproman/workflows/Tests/badge.svg)](https://github.com/ReproNim/reproman/actions?query=workflow%3ATests)
