@@ -12,9 +12,6 @@ Concepts and technologies
 .. toctree::
    :maxdepth: 2
 
-   background
-   related
-   usecases/index
    glossary
    sandbox/packages
 
