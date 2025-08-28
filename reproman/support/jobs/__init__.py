@@ -5,7 +5,6 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Supporting for `reproman run` job management
-"""
+"""Supporting for `reproman run` job management"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"

@@ -26,7 +26,8 @@ from ..support.exceptions import MissingConfigError
 
 
 import logging
-lgr = logging.getLogger('reproman.resource.base')
+
+lgr = logging.getLogger("reproman.resource.base")
 
 
 def discover_types():
@@ -38,65 +39,56 @@ def discover_types():
         List of resource identifiers extracted from file names.
     """
     l = []
-    for f in glob(op.join(op.dirname(__file__), '*.py')):
+    for f in glob(op.join(op.dirname(__file__), "*.py")):
         f_ = op.basename(f)
-        if f_ in ('base.py',) or f_.startswith('_'):
+        if f_ in ("base.py",) or f_.startswith("_"):
             continue
-        l.append(f_[:-3].replace('_', '-'))
+        l.append(f_[:-3].replace("_", "-"))
     return sorted(l)
 
 
 def get_resource_class(name):
-    if '_' in name:
+    if "_" in name:
         known = discover_types()
-        hyph_name = name.replace('_', '-')
+        hyph_name = name.replace("_", "-")
         if name not in known and hyph_name in known:
-            raise ResourceError(
-                "'{}' not a known backend. Did you mean '{}'?"
-                .format(name, hyph_name))
-    module_name = name.replace('-', '_')
+            raise ResourceError("'{}' not a known backend. Did you mean '{}'?".format(name, hyph_name))
+    module_name = name.replace("-", "_")
     try:
-        module = import_module('reproman.resource.{}'.format(module_name))
+        module = import_module("reproman.resource.{}".format(module_name))
     except Exception as exc:
         # Typically it should be an ImportError, but let's catch and recast
         # anything just in case.
         import difflib
+
         try:
             msg = exc_str(exc)
             known = discover_types()
             suggestions = difflib.get_close_matches(name, known)
             if module_name not in known:
-                msg += (
-                    ". {}: {}"
-                    .format("Similar backends" if suggestions else "Known backends",
-                            ', '.join(suggestions or known)))
+                msg += ". {}: {}".format(
+                    "Similar backends" if suggestions else "Known backends", ", ".join(suggestions or known)
+                )
         except Exception as exc2:
             msg += ".  Failed to discover resource types: " + exc_str(exc2)
-        raise ResourceError(
-            "Failed to import resource: {}".format(msg)
-        )
+        raise ResourceError("Failed to import resource: {}".format(msg))
 
-    class_name = ''.join([token.capitalize() for token in name.split('-')])
+    class_name = "".join([token.capitalize() for token in name.split("-")])
     try:
         cls = getattr(module, class_name)
     except AttributeError as exc:
-        raise ResourceError(
-            "Failed to find {} in {}: {}"
-            .format(class_name, module, exc_str(exc)))
+        raise ResourceError("Failed to find {} in {}: {}".format(class_name, module, exc_str(exc)))
     return cls
 
 
 def get_required_fields(cls):
-    """Return the mandatory fields for a resource class.
-    """
+    """Return the mandatory fields for a resource class."""
     return {f.name for f in attr.fields(cls) if f.default is attr.NOTHING}
 
 
 def get_resource_backends(cls):
-    """Return name to documentation mapping of `cls`s backends.
-    """
-    return {b.name: b.metadata["doc"] for b in attr.fields(cls)
-            if "doc" in b.metadata}
+    """Return name to documentation mapping of `cls`s backends."""
+    return {b.name: b.metadata["doc"] for b in attr.fields(cls) if "doc" in b.metadata}
 
 
 def classify_keys(cls, keys):
@@ -149,8 +141,7 @@ def classify_keys(cls, keys):
 
     required_missing = required_params.difference(required_seen)
     if required_missing:
-        raise ResourceError("Missing required backend parameters: {}"
-                            .format(", ".join(sorted(required_missing))))
+        raise ResourceError("Missing required backend parameters: {}".format(", ".join(sorted(required_missing))))
 
     return cats
 
@@ -175,8 +166,7 @@ def backend_check_parameters(cls, keys):
             if known:
                 import difflib
 
-                suggestions = {s: known[s]
-                               for s in difflib.get_close_matches(key, known)}
+                suggestions = {s: known[s] for s in difflib.get_close_matches(key, known)}
                 if suggestions:
                     title = "Did you mean?"
                     params = suggestions
@@ -184,9 +174,8 @@ def backend_check_parameters(cls, keys):
                     title = "Known backend parameters:"
                     params = known
                 help_msg = "\n  {}\n{}\n".format(
-                    title,
-                    "\n".join(["    {} ({})".format(bname, bdoc)
-                               for bname, bdoc in sorted(params.items())]))
+                    title, "\n".join(["    {} ({})".format(bname, bdoc) for bname, bdoc in sorted(params.items())])
+                )
                 msg = "Bad --backend parameter '{}'{}".format(key, help_msg)
             else:
                 msg = "Resource {} has no known parameters".format(cls)
@@ -201,17 +190,18 @@ class ResourceManager(object):
     """
 
     # The keys which are known to be secret and should not be exposed
-    SECRET_KEYS = ('access_key_id', 'secret_access_key')
+    SECRET_KEYS = ("access_key_id", "secret_access_key")
 
     def __init__(self, inventory_path=None):
         # Import here rather than the module-level to allow more flexibility in
         # overriding the configuration.
         from .. import cfg
+
         self.config_manager = cfg
         if inventory_path is None:
             self._inventory_path = self.config_manager.getpath(
-                'general', 'inventory_file',
-                op.join(cfg.dirs.user_config_dir, 'inventory.yml'))
+                "general", "inventory_file", op.join(cfg.dirs.user_config_dir, "inventory.yml")
+            )
         else:
             self._inventory_path = inventory_path
 
@@ -242,10 +232,8 @@ class ResourceManager(object):
             for unk_param in unknown:
                 msg_extra = ""
                 if unk_param in inv_config:
-                    msg_extra = (". Consider removing it from {}"
-                                 .format(self._inventory_path))
-                lgr.warning("%s is not a known %s parameter%s",
-                            unk_param, config["type"], msg_extra)
+                    msg_extra = ". Consider removing it from {}".format(self._inventory_path)
+                lgr.warning("%s is not a known %s parameter%s", unk_param, config["type"], msg_extra)
                 config.pop(unk_param)
         return config
 
@@ -264,10 +252,10 @@ class ResourceManager(object):
         -------
         Resource sub-class instance.
         """
-        if 'type' not in config:
+        if "type" not in config:
             raise MissingConfigError("Resource 'type' parameter missing for resource.")
 
-        type_ = config['type']
+        type_ = config["type"]
         cls = get_resource_class(type_)
 
         if not strict:
@@ -314,15 +302,13 @@ class ResourceManager(object):
     def _get_resource_config(self, resref, resref_type="auto"):
         if not resref:
             raise ValueError("`resref` cannot be empty")
-        results_name, results_id, partial_id = self._find_resources(
-            resref, resref_type)
+        results_name, results_id, partial_id = self._find_resources(resref, resref_type)
         if results_name and results_id and not partial_id:
             raise MultipleResourceMatches(
-                "{} is ambiguous. "
-                "Explicitly specify whether it is a name or id".format(resref))
+                "{} is ambiguous. " "Explicitly specify whether it is a name or id".format(resref)
+            )
         elif not (results_name or results_id):
-            raise ResourceNotFoundError(
-                "Resource matching {} not found".format(resref))
+            raise ResourceNotFoundError("Resource matching {} not found".format(resref))
         elif results_name:
             # Don't bother with partial ID matches when we have a full name
             # match.
@@ -330,16 +316,15 @@ class ResourceManager(object):
         elif results_id and len(results_id) > 1:
             raise MultipleResourceMatches(
                 "ID {} {}matches {} resources. "
-                "Try specifying the {}name instead"
-                .format(resref,
-                        "partially " if partial_id else "",
-                        len(results_id),
-                        "full ID or " if partial_id else ""))
+                "Try specifying the {}name instead".format(
+                    resref, "partially " if partial_id else "", len(results_id), "full ID or " if partial_id else ""
+                )
+            )
 
         name, inventory_config = (results_name or results_id)[0]
-        type_ = inventory_config['type']
+        type_ = inventory_config["type"]
         try:
-            config = dict(self.config_manager.items(type_.split('-')[0]))
+            config = dict(self.config_manager.items(type_.split("-")[0]))
         except NoSectionError:
             config = {}
         config.update(inventory_config)
@@ -362,8 +347,7 @@ class ResourceManager(object):
         -------
         A Resource object
         """
-        return self.factory(self._get_resource_config(resref, resref_type),
-                            strict=False)
+        return self.factory(self._get_resource_config(resref, resref_type), strict=False)
 
     def _get_inventory(self):
         """Return a dict with the config information for all resources.
@@ -376,21 +360,18 @@ class ResourceManager(object):
         """
         inventory_path = self._inventory_path
         if not inventory_path:
-            raise MissingConfigError(
-                "No resource inventory path is known to %s" % self
-            )
+            raise MissingConfigError("No resource inventory path is known to %s" % self)
 
         if not op.isfile(inventory_path):
             inventory = {}
         else:
-            with open(inventory_path, 'r') as fp:
+            with open(inventory_path, "r") as fp:
                 inventory = yaml.safe_load(fp)
 
         return inventory
 
     def save_inventory(self):
-        """Save the resource inventory.
-        """
+        """Save the resource inventory."""
         # Operate on a copy so there is no side-effect of modifying original
         # inventory.
         #
@@ -401,7 +382,7 @@ class ResourceManager(object):
 
             # A resource without an ID has been deleted.
             inventory_item = inventory[key]
-            if 'id' in inventory_item and not inventory_item['id']:
+            if "id" in inventory_item and not inventory_item["id"]:
                 del inventory[key]
 
             # Remove AWS credentials
@@ -415,25 +396,23 @@ class ResourceManager(object):
         if not op.exists(op.dirname(self._inventory_path)):
             os.makedirs(op.dirname(self._inventory_path))
 
-        with open(self._inventory_path, 'w') as fp:
+        with open(self._inventory_path, "w") as fp:
             yaml.safe_dump(inventory, fp, default_flow_style=False)
 
     def create(self, name, resource_type, backend_params=None):
-        results_name, results_id, partial_id = self._find_resources(
-            name, "auto")
+        results_name, results_id, partial_id = self._find_resources(name, "auto")
         if results_name or (results_id and not partial_id):
             raise ResourceAlreadyExistsError(
-                "Resource with {} {} already exists"
-                .format("name" if results_name else "ID", name))
+                "Resource with {} {} already exists".format("name" if results_name else "ID", name)
+            )
 
         try:
-            config = dict(
-                self.config_manager.items(resource_type.split('-')[0]))
+            config = dict(self.config_manager.items(resource_type.split("-")[0]))
         except NoSectionError:
             config = {}
 
-        config['name'] = name
-        config['type'] = resource_type
+        config["name"] = name
+        config["type"] = resource_type
 
         if backend_params:
             config.update(backend_params)
@@ -475,7 +454,7 @@ class ResourceManager(object):
             lgr.info("This resource type does not support the 'start' feature")
             return
 
-        self.inventory[resource.name]['status'] = "running"
+        self.inventory[resource.name]["status"] = "running"
         self.save_inventory()
         lgr.info("Started the environment %s (%s)", resource.name, resource.id)
 
@@ -492,17 +471,16 @@ class ResourceManager(object):
             lgr.info("This resource type does not support the 'stop' feature")
             return
 
-        self.inventory[resource.name]['status'] = "stopped"
+        self.inventory[resource.name]["status"] = "stopped"
         self.save_inventory()
         lgr.info("Stopped the environment %s", resource.name)
 
 
 class Resource(object, metaclass=abc.ABCMeta):
-    """Base class for creating and managing compute resources.
-    """
+    """Base class for creating and managing compute resources."""
 
     def __repr__(self):
-        return 'Resource({})'.format(self.name)
+        return "Resource({})".format(self.name)
 
     def add_command(self, command, env=None):
         """Add a command to the command buffer so that all commands can be
@@ -517,10 +495,10 @@ class Resource(object, metaclass=abc.ABCMeta):
             Additional (or replacement) environment variables which are applied
             only to the current call
         """
-        if not hasattr(self, '_command_buffer'):
+        if not hasattr(self, "_command_buffer"):
             self._command_buffer = []  # Each element is a dictionary in the
-                                       # form {command=[], env={}}
-        self._command_buffer.append({'command': command, 'env': env})
+            # form {command=[], env={}}
+        self._command_buffer.append({"command": command, "env": env})
 
     def execute_command_buffer(self, session=None):
         """Send all the commands in the command buffer to the environment for
@@ -536,8 +514,8 @@ class Resource(object, metaclass=abc.ABCMeta):
         if not session:
             session = self.get_session(pty=False)
         for command in self._command_buffer:
-            lgr.debug("Running command '%s'", command['command'])
-            session.execute_command(command['command'], env=command['env'])
+            lgr.debug("Running command '%s'", command["command"])
+            session.execute_command(command["command"], env=command["env"])
 
     def set_envvar(self, var, value):
         """Save an environment variable for inclusion in the environment
@@ -552,7 +530,7 @@ class Resource(object, metaclass=abc.ABCMeta):
         # TODO: This wouldn't work correctly since pretty much each command
         # then should have its desired env recorded since set_envvar
         # could be interleaved with add_command calls
-        if not hasattr(self, '_env'):
+        if not hasattr(self, "_env"):
             self._env = {}
 
         self._env[var] = value
@@ -571,7 +549,7 @@ class Resource(object, metaclass=abc.ABCMeta):
         dict
             Environment variables merged with additional custom variables.
         """
-        if hasattr(self, '_env'):
+        if hasattr(self, "_env"):
             merged_env = self._env.copy()
             if custom_env:
                 merged_env.update(custom_env)
@@ -589,6 +567,7 @@ class Resource(object, metaclass=abc.ABCMeta):
             Newly created UUID
         """
         import uuid
+
         # just a random uuid for now, TODO: think if we somehow could
         # fingerprint it so to later be able to decide if it is 'ours'? ;)
         return str(uuid.uuid1())

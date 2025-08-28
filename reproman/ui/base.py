@@ -5,11 +5,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Base classes for UI
+"""Base classes for UI"""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 import abc
 
@@ -22,28 +20,20 @@ class InteractiveUI(object, metaclass=abc.ABCMeta):
     """Semi-abstract class for interfaces to implement interactive UI"""
 
     @abc.abstractmethod
-    def question(self, text,
-                 title=None, choices=None,
-                 default=None,
-                 error_message=None,
-                 hidden=False):
+    def question(self, text, title=None, choices=None, default=None, error_message=None, hidden=False):
         pass
 
     def yesno(self, *args, **kwargs):
-        default = kwargs.pop('default', None)
+        default = kwargs.pop("default", None)
         if default:
-            if hasattr(default, 'lower'):
+            if hasattr(default, "lower"):
                 default = default.lower()
             elif isinstance(default, bool):
-                default = {True: 'yes', False: 'no'}[default]
-        response = self.question(
-            *args, choices=['yes', 'no', 'y', 'n'],
-            default=default,
-            **kwargs
-        ).rstrip('\n')
-        if response in ('yes', 'y'):
+                default = {True: "yes", False: "no"}[default]
+        response = self.question(*args, choices=["yes", "no", "y", "n"], default=default, **kwargs).rstrip("\n")
+        if response in ("yes", "y"):
             return True
-        elif response in ('no', 'n'):
+        elif response in ("no", "n"):
             return False
         else:
             raise RuntimeError("must not happen but did")

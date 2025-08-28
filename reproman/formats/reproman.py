@@ -29,9 +29,9 @@ from .. import utils
 from ..distributions import Distribution
 from ..dochelpers import exc_str
 
-lgr = logging.getLogger('reproman.formats.reproman')
+lgr = logging.getLogger("reproman.formats.reproman")
 
-__version__ = '0.0.1'
+__version__ = "0.0.1"
 
 
 class RepromanProvenance(Provenance):
@@ -54,10 +54,10 @@ class RepromanProvenance(Provenance):
         # is listing of distributions. although it is not clear yet
         # either order should matter.  Now in some places then internally
         # sorting alphabetically for consistency
-        if '\n' in source:
+        if "\n" in source:
             return yaml.safe_load(source)
 
-        with open(source, 'r') as stream:
+        with open(source, "r") as stream:
             try:
                 return yaml.safe_load(stream)
             except yaml.YAMLError as exc:
@@ -92,6 +92,7 @@ class RepromanProvenance(Provenance):
             List of Distribution sub-class objects.
         """
         from ..distributions.base import TypedList
+
         return self._load_spec(self._src["distributions"], TypedList(Distribution))
 
     def _load_spec(self, in_value, factory_class=None):
@@ -135,34 +136,30 @@ class RepromanProvenance(Provenance):
         # TODO: may be we need to check if it has a type
         def is_TypedList(cls):
             # since _CountingAttr is protected we do ducktyping
-            return hasattr(cls, 'metadata') \
-                   and cls.metadata.get('type') \
-                   and hasattr(cls, "_default") \
-                   and issubclass(cls._default.factory, list)
+            return (
+                hasattr(cls, "metadata")
+                and cls.metadata.get("type")
+                and hasattr(cls, "_default")
+                and issubclass(cls._default.factory, list)
+            )
 
         from attr import Attribute
 
         if is_TypedList(factory_class) or isinstance(factory_class, Attribute):
             if isinstance(in_value, dict):
                 # normalize compressed presentation into full (sugaring)
-                in_value = [
-                    dict(name=n, **(fields or {}))
-                    for n, fields in sorted(in_value.items())
-                ]
+                in_value = [dict(name=n, **(fields or {})) for n, fields in sorted(in_value.items())]
 
             assert isinstance(in_value, list)
             # We have a factory which is a list of things
-            return [
-                self._load_spec(item, factory_class.metadata['type'])
-                for item in in_value
-            ]
+            return [self._load_spec(item, factory_class.metadata["type"]) for item in in_value]
 
         # A single item case
         assert not isinstance(in_value, (list, tuple))
 
         if hasattr(factory_class, "factory"):
             # "our" factory which we might have defined in our SpecObject classes
-            subclass = in_value['name'].strip('-0123456789')
+            subclass = in_value["name"].strip("-0123456789")
             # Uses our factory decided by the 'name'
             # So it is pretty much some kind of a helper factory
             #   get_instance_by_name('reproman.distributions', in_value['name'])
@@ -195,8 +192,7 @@ class RepromanProvenance(Provenance):
                     # positional argument -- must be known
                     raise ValueError(
                         "%s requires %r field, but was provided only with "
-                        "following fields: %s"
-                        % (spec_class.__name__, name, ', '.join(spec_in.keys()))
+                        "following fields: %s" % (spec_class.__name__, name, ", ".join(spec_in.keys()))
                     )
                 else:
                     # skipping because we have no value and there is a default
@@ -211,13 +207,13 @@ class RepromanProvenance(Provenance):
             # but in general we should be able to use the same logic,
             # just need to know whom to call
             if isinstance(spec_attr.default, Factory):
-                item_type = spec_attr.metadata.get('type')
+                item_type = spec_attr.metadata.get("type")
                 if item_type:
                     # Recurse this whole shebang
                     value_out = self._load_spec(value_in, spec_attr)
                 else:
                     # ATM only files could have a list of untyped entries
-                    assert spec_attr.name in ('files', 'remotes')
+                    assert spec_attr.name in ("files", "remotes")
                     value_out = instantiate_attr_object(spec_attr.default.factory, value_in)
             else:
                 value_out = value_in
@@ -231,16 +227,15 @@ class RepromanProvenance(Provenance):
         if spec_in:
             raise ValueError(
                 "Following input fields were not processed since were not "
-                "known to %s: %s"
-                % (spec_class.__name__, ', '.join(spec_in.keys()))
+                "known to %s: %s" % (spec_class.__name__, ", ".join(spec_in.keys()))
             )
 
         return spec_class(*spec_args, **spec_kwargs)
 
-    def get_files(self, limit='all'):
-        files = self._src.get('files', [])
-        if limit in ('all', 'packaged'):
-            files.append('TODO')
+    def get_files(self, limit="all"):
+        files = self._src.get("files", [])
+        if limit in ("all", "packaged"):
+            files.append("TODO")
             # TODO: we would need to get_distributions first then to traverse
             # all the packages etc...
         return files
@@ -250,18 +245,18 @@ class RepromanProvenance(Provenance):
     @classmethod
     def write(cls, output, spec):
         """Writes an environment config to a stream
-    
+
         Parameters
         ----------
         output
             Output Stream
         spec : dict
             Spec (environment) configuration (input).
-            ??? Might want to code it in a generic fashion so spec 
+            ??? Might want to code it in a generic fashion so spec
             might be at a different level than environment may be.
-            E.g. something which would be above and contain environment(s), 
-            runs, etc 
-    
+            E.g. something which would be above and contain environment(s),
+            runs, etc
+
         """
 
         # Allow yaml to handle OrderedDict
@@ -269,20 +264,21 @@ class RepromanProvenance(Provenance):
         if collections.OrderedDict not in yaml.SafeDumper.yaml_representers:
             yaml.SafeDumper.add_representer(
                 collections.OrderedDict,
-                lambda self, data:
-                self.represent_mapping('tag:yaml.org,2002:map', data.items()))
+                lambda self, data: self.represent_mapping("tag:yaml.org,2002:map", data.items()),
+            )
 
         utils.safe_write(
             output,
-            ("# ReproMan Environment Configuration File\n"
-             "# This file was created by ReproMan {0} on {1}\n").format(
-                reproman.__version__, datetime.datetime.now()))
+            ("# ReproMan Environment Configuration File\n" "# This file was created by ReproMan {0} on {1}\n").format(
+                reproman.__version__, datetime.datetime.now()
+            ),
+        )
 
-        #c = "\n# Runs: Commands and related environment variables\n\n"
-        #write_config_key(output, envconfig, "runs", c)
+        # c = "\n# Runs: Commands and related environment variables\n\n"
+        # write_config_key(output, envconfig, "runs", c)
 
         out = OrderedDict()
-        out['version'] = __version__
+        out["version"] = __version__
         out.update(spec_to_dict(spec))
         write_config(output, out)
         return out
@@ -302,10 +298,7 @@ def spec_to_dict(spec):
             continue
         elif isinstance(value_in, list):
             # might be specs too
-            value_out = value_in.__class__(
-                spec_to_dict(v) if isinstance(v, SpecObject) else v
-                for v in value_in
-            )
+            value_out = value_in.__class__(spec_to_dict(v) if isinstance(v, SpecObject) else v for v in value_in)
         elif isinstance(value_in, SpecObject):
             value_out = spec_to_dict(value_in)
         else:
@@ -315,6 +308,7 @@ def spec_to_dict(spec):
 
         out[attr.name] = value_out
     return out
+
 
 """
         envconfig = dict(spec)  # Shallow copy for destruction
@@ -334,5 +328,3 @@ def spec_to_dict(spec):
                                                     encoding="utf-8",
                                                     allow_unicode=True))
 """
-
-

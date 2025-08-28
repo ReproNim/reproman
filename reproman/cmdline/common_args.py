@@ -5,36 +5,42 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""
-"""
+""" """
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 # argument spec template
-#<name> = (
+# <name> = (
 #    <id_as_positional>, <id_as_option>
 #    {<ArgumentParser.add_arguments_kwargs>}
-#)
+# )
 
 from ..cmdline.helpers import HelpAction, LogLevelAction
 
 help = (
-    'help', ('-h', '--help', '--help-np'),
-    dict(nargs=0, action=HelpAction,
-         help="""show this help message and exit.  --help-np forcefully disables
-                 the use of a pager for displaying the help message""")
+    "help",
+    ("-h", "--help", "--help-np"),
+    dict(
+        nargs=0,
+        action=HelpAction,
+        help="""show this help message and exit.  --help-np forcefully disables
+                 the use of a pager for displaying the help message""",
+    ),
 )
 
 version = (
-    'version', ('--version',),
-    dict(action='version',
-         help="show the program's version and license information and exit")
+    "version",
+    ("--version",),
+    dict(action="version", help="show the program's version and license information and exit"),
 )
 
 log_level = (
-    'log-level', ('-l', '--log-level'),
-    dict(action=LogLevelAction,
-         choices=['critical', 'error', 'warning', 'info', 'debug'] + [str(x) for x in range(1, 10)],
-         default='warning',
-         help="""level of verbosity.  Integers provide even more debugging information""")
+    "log-level",
+    ("-l", "--log-level"),
+    dict(
+        action=LogLevelAction,
+        choices=["critical", "error", "warning", "info", "debug"] + [str(x) for x in range(1, 10)],
+        default="warning",
+        help="""level of verbosity.  Integers provide even more debugging information""",
+    ),
 )

@@ -14,14 +14,12 @@ from ..utils import file_basename
 from ..dochelpers import exc_str
 from ..support.exceptions import SpecLoadingError
 
-_known_formats = ['reprozip', 'reproman', 'trig']
-_known_extensions = {
-    'yml': ['reproman', 'reprozip'],
-    'trig': ['trig']
-}
+_known_formats = ["reprozip", "reproman", "trig"]
+_known_extensions = {"yml": ["reproman", "reprozip"], "trig": ["trig"]}
 
 import logging
-lgr = logging.getLogger('reproman.formats')
+
+lgr = logging.getLogger("reproman.formats")
 
 from ..distributions.base import EnvironmentSpec
 
@@ -30,10 +28,10 @@ from ..distributions.base import EnvironmentSpec
 # to load/store EnvironmentSpec
 class Provenance(object, metaclass=abc.ABCMeta):
     """Base class to handle the collection and management of provenance files.
-    
+
     Main purpose is to provide basic interface to provide adapters
     to generate our EnvironmentSpec object, and possibly later save it.
-    
+
     Also should provide helpers such as `get_files` so we could do retracing.
     """
 
@@ -54,21 +52,21 @@ class Provenance(object, metaclass=abc.ABCMeta):
         return
 
     def get_environment(self):
-        """Return Environment object 
-        
+        """Return Environment object
+
         Returns
         -------
-        EnvironmentSpec 
+        EnvironmentSpec
         """
         return EnvironmentSpec(
             base=self.get_base(),
             distributions=self.get_distributions(),
-            files=self.get_files(limit='loose'),
+            files=self.get_files(limit="loose"),
         )
 
     # XXX should we rename into more obvious from_file/from_files?
     @staticmethod
-    def factory(source, format='reproman'):
+    def factory(source, format="reproman"):
         """
         Factory method for creating the appropriate Provenance sub-class based
         on format type.
@@ -84,8 +82,8 @@ class Provenance(object, metaclass=abc.ABCMeta):
         -------
         Provenance sub-class instance
         """
-        class_name = format.capitalize() + 'Provenance'
-        module = import_module('reproman.formats.' + format)
+        class_name = format.capitalize() + "Provenance"
+        module = import_module("reproman.formats." + format)
         return getattr(module, class_name)(source)
 
     @staticmethod
@@ -105,8 +103,7 @@ class Provenance(object, metaclass=abc.ABCMeta):
         fullspec = None
         for source in sources:
             if fullspec is not None:
-                raise RuntimeError(
-                    "Loading from multiple specifications is not yet supported")
+                raise RuntimeError("Loading from multiple specifications is not yet supported")
 
             # try to guess from the source.  For now just filenames
             _, ext = file_basename(source, return_ext=True)
@@ -118,11 +115,9 @@ class Provenance(object, metaclass=abc.ABCMeta):
                     # of spec would be passed etc
                     fullspec = Provenance.factory(source, format=candidate)
                 except Exception as exc:  # TODO: more specific etc
-                    lgr.debug("Failed to load %s using %s: %s" % (
-                              source, candidate, exc_str(exc)))
+                    lgr.debug("Failed to load %s using %s: %s" % (source, candidate, exc_str(exc)))
             if fullspec is None:
-                raise SpecLoadingError(
-                    "Failed to load %s using any known parser" % source)
+                raise SpecLoadingError("Failed to load %s using any known parser" % source)
         return fullspec
 
     # # @abc.abstractmethod
@@ -156,7 +151,7 @@ class Provenance(object, metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     # @abc.abstractmethod
-    def get_files(self, limit='all'):
+    def get_files(self, limit="all"):
         """
         Retrieve list of files on the system which were mentioned.
 

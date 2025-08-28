@@ -5,5 +5,4 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Tests for support submodules. Majority still resides under reproman.tests
-"""
+"""Tests for support submodules. Majority still resides under reproman.tests"""

@@ -27,7 +27,8 @@ from .base import Resource
 from ..utils import attrib
 
 import logging
-lgr = logging.getLogger('reproman.resource.docker_container')
+
+lgr = logging.getLogger("reproman.resource.docker_container")
 
 
 def _image_latest_default(image):
@@ -51,16 +52,17 @@ class DockerContainer(Resource):
 
     # Container properties
     id = attrib()
-    type = attrib(default='docker-container')
+    type = attrib(default="docker-container")
 
     image = attrib(
-        default='ubuntu:latest',
+        default="ubuntu:latest",
         doc="Docker base image ID from which to create the running instance",
-        converter=_image_latest_default)
-    engine_url = attrib(default='unix:///var/run/docker.sock',
-        doc="Docker server URL where engine is listening for connections")
-    seccomp_unconfined = attrib(default=False,
-        doc="Disable kernel secure computing mode when creating the container")
+        converter=_image_latest_default,
+    )
+    engine_url = attrib(
+        default="unix:///var/run/docker.sock", doc="Docker server URL where engine is listening for connections"
+    )
+    seccomp_unconfined = attrib(default=False, doc="Disable kernel secure computing mode when creating the container")
 
     status = attrib()
 
@@ -82,17 +84,17 @@ class DockerContainer(Resource):
         boolean
         """
         from requests.exceptions import ConnectionError
+
         try:
             session = docker.APIClient(base_url=base_url)
             session.info()
         except docker.errors.InvalidConfigFile as exc:
             lgr.error(
-                "Failed to query Docker due to problem with configuration "
-                "(possibly in ~/.docker/config.json?) %s", exc_str(exc)
+                "Failed to query Docker due to problem with configuration " "(possibly in ~/.docker/config.json?) %s",
+                exc_str(exc),
             )
             return False
-        except (ConnectionError,
-                docker.errors.DockerException) as exc:
+        except (ConnectionError, docker.errors.DockerException) as exc:
             lgr.warning("Failed to query Docker due to %s", exc_str(exc))
             return False
         return True
@@ -109,8 +111,7 @@ class DockerContainer(Resource):
         -------
         boolean
         """
-        stdout, _ = Runner().run(['docker', 'ps', '--quiet', '--filter',
-            'name=^/{}$'.format(container_name)])
+        stdout, _ = Runner().run(["docker", "ps", "--quiet", "--filter", "name=^/{}$".format(container_name)])
         if stdout.strip():
             return True
         return False
@@ -124,27 +125,21 @@ class DockerContainer(Resource):
 
         containers = []
         for container in self._client.containers(all=True):
-            assert self.id or self.name,\
-                "Container name or id must be known"
-            if self.id and not container.get('Id').startswith(self.id):
-                lgr.log(5, "Container %s does not match by id: %s", container,
-                        self.id)
+            assert self.id or self.name, "Container name or id must be known"
+            if self.id and not container.get("Id").startswith(self.id):
+                lgr.log(5, "Container %s does not match by id: %s", container, self.id)
                 continue
-            if self.name and ('/' + self.name) \
-                    not in container.get('Names'):
-                lgr.log(5, "Container %s does not match by name: %s", container,
-                        self.name)
+            if self.name and ("/" + self.name) not in container.get("Names"):
+                lgr.log(5, "Container %s does not match by name: %s", container, self.name)
                 continue
             # TODO: make above more robust and centralize across different resources/backends?
             containers.append(container)
         if len(containers) == 1:
             self._container = containers[0]
-            self.id = self._container.get('Id')
-            self.status = self._container.get('State')
+            self.id = self._container.get("Id")
+            self.status = self._container.get("State")
         elif len(containers) > 1:
-            raise ResourceError(
-                "Multiple container matches found: %s" % str(containers)
-            )
+            raise ResourceError("Multiple container matches found: %s" % str(containers))
         else:
             self.id = None
             self.status = None
@@ -158,40 +153,27 @@ class DockerContainer(Resource):
         dict : config parameters to capture in the inventory file
         """
         if self._container:
-            raise ResourceError(
-                "Container '{}' (ID {}) already exists in Docker".format(
-                    self.name, self.id))
+            raise ResourceError("Container '{}' (ID {}) already exists in Docker".format(self.name, self.id))
         # image might be of the form repository:tag -- pull would split them
         # if needed
         for line in self._client.pull(repository=self.image, stream=True):
             status = json.loads(utils.to_unicode(line, "utf-8"))
-            output = status['status']
-            if 'progress' in status:
-                output += ' ' + status['progress']
+            output = status["status"]
+            if "progress" in status:
+                output += " " + status["progress"]
             lgr.info(output)
-        args = {
-            'name': self.name,
-            'image': self.image,
-            'stdin_open': True,
-            'tty': True,
-            'command': '/bin/bash'
-        }
+        args = {"name": self.name, "image": self.image, "stdin_open": True, "tty": True, "command": "/bin/bash"}
         # When running the rztracer binary in a Docker container, it is
         # necessary to suspend the kernel's security facility when creating
         # the container. Since it is a security issue, the default is to
         # *not* turn it off.
         if self.seccomp_unconfined:
-            args['host_config'] = {
-                'SecurityOpt': ['seccomp:unconfined']
-            }
+            args["host_config"] = {"SecurityOpt": ["seccomp:unconfined"]}
         self._container = self._client.create_container(**args)
-        self.id = self._container.get('Id')
+        self.id = self._container.get("Id")
         self._client.start(container=self.id)
-        self.status = 'running'
-        yield {
-            'id': self.id,
-            'status': self.status
-        }
+        self.status = "running"
+        yield {"id": self.id, "status": self.status}
 
     def delete(self):
         """
@@ -205,14 +187,14 @@ class DockerContainer(Resource):
         Starts a container in the Docker engine.
         """
         if self._container:
-            self._client.start(container=self._container.get('Id'))
+            self._client.start(container=self._container.get("Id"))
 
     def stop(self):
         """
         Stops a container in the Docker engine.
         """
         if self._container:
-            self._client.stop(container=self._container.get('Id'))
+            self._client.stop(container=self._container.get("Id"))
 
     def get_session(self, pty=False, shared=None):
         """
@@ -223,10 +205,7 @@ class DockerContainer(Resource):
 
         if pty and shared is not None and not shared:
             lgr.warning("Cannot do non-shared pty session for docker yet")
-        return (PTYDockerSession if pty else DockerSession)(
-            client=self._client,
-            container=self._container
-        )
+        return (PTYDockerSession if pty else DockerSession)(client=self._client, container=self._container)
 
 
 @attr.s
@@ -236,52 +215,42 @@ class DockerSession(POSIXSession):
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None, with_shell=True):
-        command = self._prefix_command(utils.command_as_string(command),
-                                        env=env, cwd=cwd,
-                                        with_shell=with_shell)
+        command = self._prefix_command(utils.command_as_string(command), env=env, cwd=cwd, with_shell=with_shell)
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
-        lgr.debug('Running command %r', command)
+        lgr.debug("Running command %r", command)
         out = []
         execute = self.client.exec_create(container=self.container, cmd=command)
-        out = ''
-        for i, line in enumerate(
-                self.client.exec_start(exec_id=execute['Id'],
-                stream=True)
-        ):
-            if line.startswith(b'rpc error'):
+        out = ""
+        for i, line in enumerate(self.client.exec_start(exec_id=execute["Id"], stream=True)):
+            if line.startswith(b"rpc error"):
                 raise CommandError(cmd=command, msg="Docker error - %s" % line)
             out += utils.to_unicode(line, "utf-8")
             lgr.debug("exec#%i: %s", i, line.rstrip())
 
-        exit_code = self.client.exec_inspect(execute['Id'])['ExitCode']
+        exit_code = self.client.exec_inspect(execute["Id"])["ExitCode"]
         if exit_code not in [0, None]:
-            msg = "Failed to run %r. Exit code=%d. out=%s err=%s" \
-                % (command, exit_code, out, out)
-            raise CommandError(str(command), msg, exit_code, '', out)
+            msg = "Failed to run %r. Exit code=%d. out=%s err=%s" % (command, exit_code, out, out)
+            raise CommandError(str(command), msg, exit_code, "", out)
         else:
-            lgr.log(8, "Finished running %r with status %s", command,
-                exit_code)
+            lgr.log(8, "Finished running %r with status %s", command, exit_code)
 
-        return (out, '')
+        return (out, "")
 
     # XXX should we start/stop on open/close or just assume that it is running already?
-
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         # To copy one or more files to the container, the API recommends
         # to do so with a tar archive. http://docker-py.readthedocs.io/en/1.5.0/api/#copy
-        dest_path = self._prepare_dest_path(src_path, dest_path,
-                                            local=False, absolute_only=True)
+        dest_path = self._prepare_dest_path(src_path, dest_path, local=False, absolute_only=True)
         dest_dir, dest_basename = os.path.split(dest_path)
         tar_stream = io.BytesIO()
-        tar_file = tarfile.TarFile(fileobj=tar_stream, mode='w')
+        tar_file = tarfile.TarFile(fileobj=tar_stream, mode="w")
         tar_file.add(src_path, arcname=dest_basename)
         tar_file.close()
         tar_stream.seek(0)
-        self.client.put_archive(container=self.container['Id'], path=dest_dir,
-            data=tar_stream)
+        self.client.put_archive(container=self.container["Id"], path=dest_dir, data=tar_stream)
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid)

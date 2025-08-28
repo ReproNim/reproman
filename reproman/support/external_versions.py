@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Module to help maintain a registry of versions for external modules etc
-"""
+"""Module to help maintain a registry of versions for external modules etc"""
 import sys
 from os import linesep
 
@@ -16,13 +15,12 @@ from reproman.dochelpers import exc_str
 from reproman.log import lgr
 from .exceptions import CommandError
 
-__all__ = ['UnknownVersion', 'ExternalVersions', 'external_versions']
+__all__ = ["UnknownVersion", "ExternalVersions", "external_versions"]
 
 
 # To depict an unknown version, which can't be compared by mistake etc
 class UnknownVersion:
-    """For internal use
-    """
+    """For internal use"""
 
     def __str__(self):
         return "UNKNOWN"
@@ -41,6 +39,7 @@ from reproman.support.exceptions import (
     MissingExternalDependency,
     OutdatedExternalDependency,
 )
+
 _runner = Runner()
 
 
@@ -50,31 +49,30 @@ def _try_run(cmd):
 
 def _get_annex_version():
     """Return version of available git-annex"""
-    return _try_run(['git', 'annex', 'version', '--raw'])[0]
+    return _try_run(["git", "annex", "version", "--raw"])[0]
 
 
 def _get_git_version():
     """Return version of available git"""
-    out = _try_run(['git', 'version'])[0]
+    out = _try_run(["git", "version"])[0]
     return out.split()[-1]
 
 
 def _get_apt_cache_version():
     """Return version of available apt-cache."""
-    out = _try_run(['apt-cache', '-v'])[0]
+    out = _try_run(["apt-cache", "-v"])[0]
     return out.split()[1]
 
 
 def _get_system_ssh_version():
-    """Return version of ssh available system-wide
-    """
+    """Return version of ssh available system-wide"""
     try:
-        out, err = _try_run(['ssh', '-V'])
+        out, err = _try_run(["ssh", "-V"])
         # apparently spits out to err but I wouldn't trust it blindly
-        if err.startswith('OpenSSH'):
+        if err.startswith("OpenSSH"):
             out = err
-        assert out.startswith('OpenSSH')  # that is the only one we care about atm
-        return out.split(' ', 1)[0].rstrip(',.').split('_')[1]
+        assert out.startswith("OpenSSH")  # that is the only one we care about atm
+        return out.split(" ", 1)[0].rstrip(",.").split("_")[1]
     except CommandError as exc:
         lgr.debug("Could not determine version of ssh available: %s", exc_str(exc))
         return None
@@ -86,13 +84,13 @@ def _get_singularity_version():
 
     Note: If apptainer is installed, singularity is aliased to apptainer. The
     versioning scheme for apptainer reverted to 1.0, so the versions are not
-    reliable.  
+    reliable.
     """
     # example output:
     #  "singularity version 3.0.3+ds"
     #  "2.6.1-dist"
     out = _try_run(["singularity", "--version"])[0]
-    return out.split(' ')[-1].split("-")[0].split("+")[0]
+    return out.split(" ")[-1].split("-")[0].split("+")[0]
 
 
 def _get_svn_version():
@@ -110,7 +108,7 @@ def _get_condor_version():
     # Example output:
     #
     # $CondorVersion: 8.6.8 Nov 30 2017 BuildID: [...]
-    out = _try_run(['condor_version'])[0]
+    out = _try_run(["condor_version"])[0]
     return out.split()[1]
 
 
@@ -131,19 +129,19 @@ class ExternalVersions(object):
     UNKNOWN = UnknownVersion()
 
     CUSTOM = {
-        'cmd:annex': _get_annex_version,
-        'cmd:git': _get_git_version,
-        'cmd:singularity': _get_singularity_version,
-        'cmd:system-ssh': _get_system_ssh_version,
-        'cmd:svn': _get_svn_version,
-        'cmd:condor': _get_condor_version,
-        'cmd:apt-cache': _get_apt_cache_version
+        "cmd:annex": _get_annex_version,
+        "cmd:git": _get_git_version,
+        "cmd:singularity": _get_singularity_version,
+        "cmd:system-ssh": _get_system_ssh_version,
+        "cmd:svn": _get_svn_version,
+        "cmd:condor": _get_condor_version,
+        "cmd:apt-cache": _get_apt_cache_version,
     }
     INTERESTING = (
-        'appdirs',
-        'humanize',
-        'requests',
-        'six',
+        "appdirs",
+        "humanize",
+        "requests",
+        "six",
     )
 
     def __init__(self):
@@ -154,15 +152,16 @@ class ExternalVersions(object):
         version = None
 
         # see if it is something containing a version
-        for attr in ('__version__', 'version'):
+        for attr in ("__version__", "version"):
             if hasattr(value, attr):
                 version = getattr(value, attr)
                 break
 
         # try pkg_resources
-        if version is None and hasattr(value, '__name__'):
+        if version is None and hasattr(value, "__name__"):
             try:
                 import pkg_resources
+
                 version = pkg_resources.get_distribution(value.__name__).version
             except Exception:
                 pass
@@ -189,7 +188,7 @@ class ExternalVersions(object):
 
     def __getitem__(self, module):
         # when ran straight in its source code -- fails to discover nipy's version.. TODO
-        #if module == 'nipy':
+        # if module == 'nipy':
         #    import pdb; pdb.set_trace()
         if not isinstance(module, str):
             modname = module.__name__
@@ -201,14 +200,13 @@ class ExternalVersions(object):
         # and allow users to install things at run time, so later check
         # doesn't pick it up from the _versions
         if modname not in self._versions:
-            version = None   # by default -- not present
+            version = None  # by default -- not present
             if modname in self.CUSTOM:
                 try:
                     version = self.CUSTOM[modname]()
                     version = self._deduce_version(version)
                 except Exception as exc:
-                    lgr.debug("Failed to deduce version of %s due to %s"
-                              % (modname, exc_str(exc)))
+                    lgr.debug("Failed to deduce version of %s due to %s" % (modname, exc_str(exc)))
                     return None
             else:
                 if module is None:
@@ -219,8 +217,7 @@ class ExternalVersions(object):
                             lgr.debug("Module %s seems to be not present" % modname)
                             return None
                         except Exception as exc:
-                            lgr.warning("Failed to import module %s due to %s",
-                                        modname, exc_str(exc))
+                            lgr.warning("Failed to import module %s due to %s", modname, exc_str(exc))
                             return None
                     else:
                         module = sys.modules[modname]
@@ -259,16 +256,16 @@ class ExternalVersions(object):
         if query:
             [self[k] for k in tuple(self.CUSTOM) + self.INTERESTING]
         if indent and (indent is True):
-            indent = ' '
+            indent = " "
         items = ["%s=%s" % (k, self._versions[k]) for k in sorted(self._versions)]
-        out = "%s" % preamble if preamble else ''
+        out = "%s" % preamble if preamble else ""
         if indent is not None:
             if preamble:
                 preamble += linesep
-            indent = ' ' if indent is True else str(indent)
+            indent = " " if indent is True else str(indent)
             out += (linesep + indent).join(items) + linesep
         else:
-            out += " " + ' '.join(items)
+            out += " " + " ".join(items)
         return out
 
     def check(self, name, min_version=None, msg=""):
@@ -292,11 +289,9 @@ class ExternalVersions(object):
         """
         ver_present = self[name]
         if ver_present is None:
-            raise MissingExternalDependency(
-                name, ver=min_version, msg=msg)
+            raise MissingExternalDependency(name, ver=min_version, msg=msg)
         elif min_version and ver_present < min_version:
-            raise OutdatedExternalDependency(
-                name, ver=min_version, ver_present=ver_present, msg=msg)
+            raise OutdatedExternalDependency(name, ver=min_version, ver_present=ver_present, msg=msg)
 
 
 external_versions = ExternalVersions()

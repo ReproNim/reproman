@@ -31,16 +31,13 @@ from reproman.tests.utils import create_tree
 
 
 try:
-    lsf_config = os.environ['REPROMAN_LSF_TEST_CONFIG'].split(':')
-    lsf_config = {"host": lsf_config[0],
-                  "user": lsf_config[1],
-                  "tmpdir_root": lsf_config[2]}
+    lsf_config = os.environ["REPROMAN_LSF_TEST_CONFIG"].split(":")
+    lsf_config = {"host": lsf_config[0], "user": lsf_config[1], "tmpdir_root": lsf_config[2]}
 except (KeyError, ValueError):
     lsf_config = None
 
 
-docker_container = get_docker_fixture(TEST_SSH_DOCKER_DIGEST,
-                                      name="testing-container", scope="module")
+docker_container = get_docker_fixture(TEST_SSH_DOCKER_DIGEST, name="testing-container", scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -49,6 +46,7 @@ def docker_resource(docker_container):
     # to get_singularity_fixture, which should probably be renamed to include
     # "resource".
     from reproman.resource.docker_container import DockerContainer
+
     return DockerContainer("testing-container")
 
 
@@ -61,6 +59,7 @@ def shell():
 def ssh():
     skipif.no_ssh()
     from reproman.resource.ssh import SSH
+
     return SSH("testssh", host="reproman-test")
 
 
@@ -69,6 +68,7 @@ def ssh_slurm():
     skipif.no_ssh()
     skipif.no_slurm()
     from reproman.resource.ssh import SSH
+
     return SSH("slurm-res", host="slurm")
 
 
@@ -78,6 +78,7 @@ def ssh_lsf():
     if not lsf_config:
         pytest.skip("no LSF test configuration")
     from reproman.resource.ssh import SSH
+
     return SSH("lsf-res", host=lsf_config["host"], user=lsf_config["user"])
 
 
@@ -86,8 +87,7 @@ def test_orc_root_directory(shell):
     assert orc.root_directory == op.expanduser("~/.reproman/run-root")
 
 
-@pytest.mark.parametrize("value", [{}, {"HOME": "rel/path"}],
-                         ids=["no home", "relative"])
+@pytest.mark.parametrize("value", [{}, {"HOME": "rel/path"}], ids=["no home", "relative"])
 def test_orc_root_directory_error(shell, value):
     orc = orcs.PlainOrchestrator(shell, submission_type="local")
     with patch.object(orc.session, "query_envvars", return_value=value):
@@ -97,10 +97,12 @@ def test_orc_root_directory_error(shell, value):
 
 @pytest.fixture()
 def job_spec(tmpdir):
-    return {"root_directory": op.join(str(tmpdir), "nm-run"),
-            "inputs": [op.join("d", "in")],
-            "outputs": ["out"],
-            "_resolved_command_str": 'bash -c "cat d/in >out && echo more >>out"'}
+    return {
+        "root_directory": op.join(str(tmpdir), "nm-run"),
+        "inputs": [op.join("d", "in")],
+        "outputs": ["out"],
+        "_resolved_command_str": 'bash -c "cat d/in >out && echo more >>out"',
+    }
 
 
 @pytest.fixture()
@@ -110,11 +112,9 @@ def check_orc_plain(tmpdir):
     def fn(resource, jspec):
         create_tree(local_dir, {"d": {"in": "content\n"}})
         with chpwd(local_dir):
-            orc = orcs.PlainOrchestrator(resource, submission_type="local",
-                                         job_spec=jspec)
+            orc = orcs.PlainOrchestrator(resource, submission_type="local", job_spec=jspec)
             orc.prepare_remote()
-            assert orc.session.exists(
-                op.join(orc.working_directory, "d", "in"))
+            assert orc.session.exists(op.join(orc.working_directory, "d", "in"))
 
             orc.submit()
             orc.follow()
@@ -123,10 +123,10 @@ def check_orc_plain(tmpdir):
             orc.fetch()
             assert open("out").read() == "content\nmore\n"
 
-            metadir_local = op.relpath(orc.meta_directory,
-                                       orc.working_directory)
+            metadir_local = op.relpath(orc.meta_directory, orc.working_directory)
             for fname in "status", "stderr", "stdout":
                 assert op.exists(op.join(metadir_local, fname + ".0"))
+
     return fn
 
 
@@ -136,8 +136,7 @@ def test_orc_plain_shell(check_orc_plain, shell, job_spec):
 
 def test_orc_resurrection_invalid_job_spec(check_orc_plain, shell):
     with pytest.raises(OrchestratorError):
-        orcs.PlainOrchestrator(shell, submission_type="local",
-                               job_spec={}, resurrection=True)
+        orcs.PlainOrchestrator(shell, submission_type="local", job_spec={}, resurrection=True)
 
 
 @pytest.mark.integration
@@ -169,12 +168,11 @@ def test_orc_no_dataset(tmpdir, shell):
 def dataset(tmpdir_factory):
     skipif.no_datalad()
     import datalad.api as dl
+
     path = str(tmpdir_factory.mktemp("dataset"))
     ds = dl.Dataset(path).create(force=True)
 
-    create_tree(ds.path, {"foo": "foo",
-                          "bar": "bar",
-                          "d": {"in": "content\n"}})
+    create_tree(ds.path, {"foo": "foo", "bar": "bar", "d": {"in": "content\n"}})
     ds.save()
     ds.repo.tag("root")
     return ds
@@ -189,11 +187,10 @@ def container_dataset(tmpdir_factory):
         pytest.skip("datalad-container not installed")
 
     import datalad.api as dl
+
     path = str(tmpdir_factory.mktemp("container_dataset"))
     ds = dl.Dataset(path).create(force=True)
-    ds.containers_add(
-        "dc",
-        url="shub://datalad/datalad-container:testhelper")
+    ds.containers_add("dc", url="shub://datalad/datalad-container:testhelper")
     return ds
 
 
@@ -210,8 +207,7 @@ def check_orc_datalad(job_spec, dataset):
 
         def run_and_check(spec):
             with chpwd(dataset.path):
-                orc = orc_class(resource,
-                                submission_type=sub_type, job_spec=spec)
+                orc = orc_class(resource, submission_type=sub_type, job_spec=spec)
                 orc.prepare_remote()
                 orc.submit()
                 orc.follow()
@@ -256,28 +252,27 @@ def check_orc_datalad(job_spec, dataset):
             # to a clean state.
             dataset.save(".reproman")
         orc = run_and_check(dumped_spec)
+
     return fn
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("orc_class",
-                         [orcs.DataladLocalRunOrchestrator,
-                          orcs.DataladPairRunOrchestrator],
-                         ids=["orc:local", "orc:pair"])
-@pytest.mark.parametrize("sub_type",
-                         ["local",
-                          pytest.param("condor", marks=mark.skipif_no_condor)],
-                         ids=["sub:local", "sub:condor"])
+@pytest.mark.parametrize(
+    "orc_class", [orcs.DataladLocalRunOrchestrator, orcs.DataladPairRunOrchestrator], ids=["orc:local", "orc:pair"]
+)
+@pytest.mark.parametrize(
+    "sub_type", ["local", pytest.param("condor", marks=mark.skipif_no_condor)], ids=["sub:local", "sub:condor"]
+)
 def test_orc_datalad_run(check_orc_datalad, shell, orc_class, sub_type):
     check_orc_datalad(shell, orc_class, sub_type)
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("launcher", [False, True],
-                         ids=["no launcher", "launcher=true"])
+@pytest.mark.parametrize("launcher", [False, True], ids=["no launcher", "launcher=true"])
 def test_orc_datalad_slurm(check_orc_datalad, ssh_slurm, launcher):
-    check_orc_datalad(ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm",
-                      job_params={"launcher": "true"} if launcher else None)
+    check_orc_datalad(
+        ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm", job_params={"launcher": "true"} if launcher else None
+    )
 
 
 @pytest.mark.integration
@@ -288,14 +283,12 @@ def test_orc_datalad_lsf(check_orc_datalad, ssh_lsf):
 @pytest.mark.integration
 def test_orc_datalad_run_change_head(job_spec, dataset, shell):
     with chpwd(dataset.path):
-        orc = orcs.DataladLocalRunOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladLocalRunOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
 
-        create_tree(dataset.path, {"sinceyouvebeengone":
-                                   "imsomovingon,yeahyeah"})
+        create_tree(dataset.path, {"sinceyouvebeengone": "imsomovingon,yeahyeah"})
         dataset.save()
 
         orc.fetch()
@@ -307,13 +300,13 @@ def test_orc_datalad_run_change_head(job_spec, dataset, shell):
             assert open("out").read() == "content\nmore\n"
 
 
-@pytest.mark.parametrize("failed",
-                         [[0],
-                          [0, 10],
-                          list(range(10))],
-                         # ATTN: The id function needs to return a string until
-                         # pytest v4.2.1 (specifically 4c7ddb8d9).
-                         ids=lambda x: str(len(x)))
+@pytest.mark.parametrize(
+    "failed",
+    [[0], [0, 10], list(range(10))],
+    # ATTN: The id function needs to return a string until
+    # pytest v4.2.1 (specifically 4c7ddb8d9).
+    ids=lambda x: str(len(x)),
+)
 def test_orc_log_failed(failed):
     nfailed = len(failed)
     with swallow_logs(new_level=logging.INFO) as log:
@@ -334,8 +327,7 @@ def test_orc_plain_failure(tmpdir, job_spec, shell):
     job_spec["inputs"] = []
     local_dir = str(tmpdir)
     with chpwd(local_dir):
-        orc = orcs.PlainOrchestrator(shell, submission_type="local",
-                                     job_spec=job_spec)
+        orc = orcs.PlainOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -349,8 +341,7 @@ def test_orc_datalad_run_failed(job_spec, dataset, ssh):
     job_spec["inputs"] = []
 
     with chpwd(dataset.path):
-        orc = orcs.DataladPairRunOrchestrator(
-            ssh, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairRunOrchestrator(ssh, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -376,10 +367,7 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     js0 = job_spec
     js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
-        orc0, orc1 = [
-            orcs.DataladPairRunOrchestrator(ssh, submission_type="local",
-                                            job_spec=js)
-            for js in [js0, js1]]
+        orc0, orc1 = [orcs.DataladPairRunOrchestrator(ssh, submission_type="local", job_spec=js) for js in [js0, js1]]
 
         for orc in [orc0, orc1]:
             orc.prepare_remote()
@@ -425,9 +413,9 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
     js0 = job_spec
     js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
+
         def do(js):
-            orc = orcs.DataladPairRunOrchestrator(
-                ssh, submission_type="local", job_spec=js)
+            orc = orcs.DataladPairRunOrchestrator(ssh, submission_type="local", job_spec=js)
             orc.prepare_remote()
             orc.submit()
             orc.follow()
@@ -449,25 +437,21 @@ def test_orc_datalad_pair_run_ontop(job_spec, dataset, ssh):
 @pytest.mark.integration
 def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
     with chpwd(dataset.path):
-        orc = orcs.DataladLocalRunOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladLocalRunOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
-        os.unlink(op.join(orc.root_directory, "outputs",
-                          "{}.tar.gz".format(orc.jobid)))
+        os.unlink(op.join(orc.root_directory, "outputs", "{}.tar.gz".format(orc.jobid)))
         with pytest.raises(OrchestratorError):
             orc.fetch()
 
 
 @pytest.mark.xfail(reason="Singularity Hub is down", run=False)
 @pytest.mark.integration
-@pytest.mark.parametrize("orc_class",
-                         [orcs.DataladPairRunOrchestrator,
-                          orcs.DataladLocalRunOrchestrator],
-                         ids=["orc:pair", "orc:local"])
-def test_orc_datalad_run_container(tmpdir, dataset,
-                                   container_dataset, shell, orc_class):
+@pytest.mark.parametrize(
+    "orc_class", [orcs.DataladPairRunOrchestrator, orcs.DataladLocalRunOrchestrator], ids=["orc:pair", "orc:local"]
+)
+def test_orc_datalad_run_container(tmpdir, dataset, container_dataset, shell, orc_class):
     ds = dataset
     ds.install(path="subds", source=container_dataset)
     if orc_class == orcs.DataladLocalRunOrchestrator:
@@ -476,11 +460,15 @@ def test_orc_datalad_run_container(tmpdir, dataset,
         ds.get(op.join("subds", ".datalad", "environments"))
     with chpwd(ds.path):
         orc = orc_class(
-            shell, submission_type="local",
-            job_spec={"root_directory": op.join(str(tmpdir), "nm-run"),
-                      "outputs": ["out"],
-                      "container": "subds/dc",
-                      "_resolved_command_str": 'sh -c "ls / >out"'})
+            shell,
+            submission_type="local",
+            job_spec={
+                "root_directory": op.join(str(tmpdir), "nm-run"),
+                "outputs": ["out"],
+                "container": "subds/dc",
+                "_resolved_command_str": 'sh -c "ls / >out"',
+            },
+        )
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -490,10 +478,9 @@ def test_orc_datalad_run_container(tmpdir, dataset,
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("orc_class",
-                         [orcs.DataladPairOrchestrator,
-                          orcs.DataladNoRemoteOrchestrator],
-                         ids=["orc:pair", "orc:no-remote"])
+@pytest.mark.parametrize(
+    "orc_class", [orcs.DataladPairOrchestrator, orcs.DataladNoRemoteOrchestrator], ids=["orc:pair", "orc:no-remote"]
+)
 def test_orc_datalad_nonrun(job_spec, dataset, shell, orc_class):
     with chpwd(dataset.path):
         orc = orc_class(shell, submission_type="local", job_spec=job_spec)
@@ -522,11 +509,15 @@ def test_orc_datalad_no_remote_get(tmpdir, shell, should_pass):
     assert not ds_b.repo.file_has_content("foo")
     with chpwd(ds_b.path):
         orc = orcs.DataladNoRemoteOrchestrator(
-            shell, submission_type="local",
-            job_spec={"root_directory": op.join(topdir, "run-root"),
-                      "inputs": ["foo"],
-                      "outputs": ["out"],
-                      "_resolved_command_str": 'sh -c "cat foo foo >out"'})
+            shell,
+            submission_type="local",
+            job_spec={
+                "root_directory": op.join(topdir, "run-root"),
+                "inputs": ["foo"],
+                "outputs": ["out"],
+                "_resolved_command_str": 'sh -c "cat foo foo >out"',
+            },
+        )
         if should_pass:
             orc.prepare_remote()
             orc.submit()
@@ -545,8 +536,7 @@ def test_orc_datalad_no_remote_get(tmpdir, shell, should_pass):
 @pytest.mark.integration
 def test_orc_datalad_no_remote_only_local(dataset, job_spec, ssh):
     with chpwd(dataset.path):
-        orc = orcs.DataladNoRemoteOrchestrator(
-            ssh, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladNoRemoteOrchestrator(ssh, submission_type="local", job_spec=job_spec)
         with pytest.raises(OrchestratorError):
             orc.prepare_remote()
 
@@ -561,9 +551,7 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     job_spec["outputs"] = []
 
     def get_orc(jspec=None):
-        return orcs.DataladPairRunOrchestrator(
-            ssh, submission_type="local",
-            job_spec=jspec or job_spec)
+        return orcs.DataladPairRunOrchestrator(ssh, submission_type="local", job_spec=jspec or job_spec)
 
     def run(**spec_kwds):
         jspec = dict(job_spec, **spec_kwds)
@@ -606,8 +594,7 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     # But we abort if subdataset is actually dirty.
     with chpwd(dataset.path):
         orc2 = get_orc()
-        create_tree(orc2.working_directory,
-                    {"sub": {"subsub": {"subdirt": ""}}})
+        create_tree(orc2.working_directory, {"sub": {"subsub": {"subdirt": ""}}})
         with pytest.raises(OrchestratorError) as exc:
             orc2.prepare_remote()
         assert "dirty" in str(exc.value)
@@ -618,21 +605,17 @@ def test_orc_datalad_abort_if_detached(job_spec, dataset, shell):
     dataset.repo.checkout("HEAD^{}")
 
     with chpwd(dataset.path):
-        orc = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         with pytest.raises(OrchestratorError):
             orc.prepare_remote()
 
 
 def test_orc_datalad_resurrect(job_spec, dataset, shell):
-    for k in ["_jobid",
-              "working_directory", "root_directory", "local_directory"]:
+    for k in ["_jobid", "working_directory", "root_directory", "local_directory"]:
         job_spec[k] = "doesn't matter"
     job_spec["_head"] = "deadbee"
     with chpwd(dataset.path):
-        orc = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec,
-            resurrection=True)
+        orc = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec, resurrection=True)
     assert orc.head == "deadbee"
 
 
@@ -687,8 +670,7 @@ def test_head_at_move(dataset):
         assert repo.get_active_branch() is None
         assert not dataset_path_exists("pre")
         create_tree(dataset.path, {"at-head": "at-head"})
-        dataset.save("at-head",
-                     message="advance head (not {})".format(branch_orig))
+        dataset.save("at-head", message="advance head (not {})".format(branch_orig))
     assert dataset_path_exists("pre")
     assert not dataset_path_exists("at-head")
     assert repo.get_active_branch() == branch_orig
@@ -696,8 +678,7 @@ def test_head_at_move(dataset):
 
 def test_dataset_as_dict(shell, dataset, job_spec):
     with chpwd(dataset.path):
-        orc = orcs.DataladLocalRunOrchestrator(shell, submission_type="local",
-                                               job_spec=job_spec)
+        orc = orcs.DataladLocalRunOrchestrator(shell, submission_type="local", job_spec=job_spec)
     d = orc.as_dict()
     # Check for keys that DataladOrchestrator should extend
     # OrchestratorError.asdict() with.
@@ -745,37 +726,33 @@ def check_orc_datalad_concurrent(job_spec, dataset):
             for idx in range(len(orc.job_spec["_command_array"])):
                 for fname in "status", "stderr", "stdout":
                     assert op.lexists(op.join(metadir, f"{fname}.{idx}"))
+
     return fn
 
 
 # https://github.com/ReproNim/reproman/issues/588
 @pytest.mark.xfail(reason="KeyError p, unknown cause", run=False)
 @pytest.mark.integration
-@pytest.mark.parametrize("orc_class",
-                         [orcs.DataladLocalRunOrchestrator,
-                          orcs.DataladPairOrchestrator,
-                          orcs.DataladPairRunOrchestrator],
-                         ids=["orc:local-run", "orc:pair-run", "orc-pair"])
-@pytest.mark.parametrize("sub_type",
-                         ["local",
-                          pytest.param("condor", marks=mark.skipif_no_condor)],
-                         ids=["sub:local", "sub:condor"])
-def test_orc_datalad_concurrent(check_orc_datalad_concurrent,
-                                ssh, orc_class, sub_type):
+@pytest.mark.parametrize(
+    "orc_class",
+    [orcs.DataladLocalRunOrchestrator, orcs.DataladPairOrchestrator, orcs.DataladPairRunOrchestrator],
+    ids=["orc:local-run", "orc:pair-run", "orc-pair"],
+)
+@pytest.mark.parametrize(
+    "sub_type", ["local", pytest.param("condor", marks=mark.skipif_no_condor)], ids=["sub:local", "sub:condor"]
+)
+def test_orc_datalad_concurrent(check_orc_datalad_concurrent, ssh, orc_class, sub_type):
     check_orc_datalad_concurrent(ssh, orc_class, sub_type)
 
 
 # https://github.com/ReproNim/reproman/issues/588
 @pytest.mark.xfail(reason="KeyError p, unknown cause", run=False)
 @pytest.mark.integration
-@pytest.mark.parametrize("launcher", [False, True],
-                         ids=["no launcher", "launcher=true"])
-def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm,
-                                      launcher):
-    check_orc_datalad_concurrent(ssh_slurm,
-                                 orcs.DataladLocalRunOrchestrator,
-                                 "slurm",
-                                 {"launcher": "true"} if launcher else None)
+@pytest.mark.parametrize("launcher", [False, True], ids=["no launcher", "launcher=true"])
+def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm, launcher):
+    check_orc_datalad_concurrent(
+        ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm", {"launcher": "true"} if launcher else None
+    )
 
 
 def test_orc_datalad_pair_submodule(job_spec, dataset, shell):
@@ -788,8 +765,7 @@ def test_orc_datalad_pair_submodule(job_spec, dataset, shell):
         job_spec["inputs"] = []
         job_spec["outputs"] = []
 
-        orc = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -806,8 +782,7 @@ def test_orc_datalad_pair_need_follow_parent(job_spec, dataset, shell):
         job_spec["inputs"] = []
         job_spec["outputs"] = []
 
-        orc0 = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc0 = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc0.prepare_remote()
         orc0.submit()
         orc0.follow()
@@ -815,8 +790,7 @@ def test_orc_datalad_pair_need_follow_parent(job_spec, dataset, shell):
         job_spec["_resolved_command_str"] = "sh -c 'echo bar >sub/bar'"
         output = op.join("sub", "bar")
         job_spec["outputs"] = [output]
-        orc1 = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc1 = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc1.prepare_remote()
         orc1.submit()
         orc1.follow()
@@ -850,15 +824,13 @@ def test_orc_datalad_pair_submodule_conflict(caplog, job_spec, dataset, shell):
         job_spec["inputs"] = []
         job_spec["outputs"] = []
 
-        orc0 = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc0 = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc0.prepare_remote()
         orc0.submit()
         orc0.follow()
 
         job_spec["_resolved_command_str"] = "sh -c 'echo bar >sub/bar'"
-        orc1 = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc1 = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc1.prepare_remote()
         orc1.submit()
         orc1.follow()
@@ -877,8 +849,7 @@ def test_orc_datalad_pair_merge_conflict(job_spec, dataset, shell):
         job_spec["inputs"] = []
         job_spec["outputs"] = []
 
-        orc0 = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc0 = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc0.prepare_remote()
         orc0.submit()
         orc0.follow()
@@ -893,8 +864,7 @@ def test_orc_datalad_pair_merge_conflict(job_spec, dataset, shell):
 
 def test_orc_datalad_pair_new_submodule(job_spec, dataset, shell):
     with chpwd(dataset.path):
-        orc = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -909,8 +879,7 @@ def test_orc_datalad_pair_new_submodule(job_spec, dataset, shell):
         job_spec["inputs"] = []
         job_spec["outputs"] = []
 
-        orc = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         orc.prepare_remote()
         orc.submit()
         orc.follow()
@@ -923,8 +892,7 @@ def test_orc_datalad_pair_existing_remote(job_spec, dataset, shell):
     repo = dataset.repo
     repo.add_remote("localshell", "i-dont-match")
     with chpwd(dataset.path):
-        orc = orcs.DataladPairOrchestrator(
-            shell, submission_type="local", job_spec=job_spec)
+        orc = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec)
         # If a remote with the resource name exists, we abort if the
         # URL doesn't match the expected target...
         with pytest.raises(OrchestratorError):

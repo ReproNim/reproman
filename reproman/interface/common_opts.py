@@ -5,21 +5,16 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Common interface options
+"""Common interface options"""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from reproman.support.param import Parameter
 from reproman.support.constraints import EnsureChoice
 from reproman.support.constraints import EnsureInt, EnsureNone, EnsureStr
 
 
-trace_opt = Parameter(
-    args=("--trace",),
-    action="store_true",
-    doc="""if set, trace execution within the environment""")
+trace_opt = Parameter(args=("--trace",), action="store_true", doc="""if set, trace execution within the environment""")
 
 
 #
@@ -31,15 +26,20 @@ resref_arg = Parameter(
     metavar="RESOURCE",
     doc="""Name or ID of the resource to operate on. To see available resources, run
     'reproman ls'""",
-    constraints=EnsureStr() | EnsureNone())
+    constraints=EnsureStr() | EnsureNone(),
+)
 
 resref_opt = Parameter(
-    args=("-r", "--resource",),
+    args=(
+        "-r",
+        "--resource",
+    ),
     dest="resref",
     metavar="RESOURCE",
     doc="""Name or ID of the resource to operate on. To see available resources, run
     'reproman ls'""",
-    constraints=EnsureStr() | EnsureNone())
+    constraints=EnsureStr() | EnsureNone(),
+)
 
 resref_type_opt = Parameter(
     args=("--resref-type",),
@@ -47,4 +47,5 @@ resref_type_opt = Parameter(
     doc="""A resource can be referenced by its name or ID.  In the unlikely
     case that a name collides with an ID, explicitly specify 'name' or 'id' to
     disambiguate.""",
-    constraints=EnsureChoice("auto", "name", "id"))
+    constraints=EnsureChoice("auto", "name", "id"),
+)

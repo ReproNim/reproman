@@ -20,9 +20,7 @@ from reproman.tests.skip import skipif
 from reproman.utils import chpwd
 
 
-def get_docker_fixture(image, portmaps={}, name=None,
-                       custom_params={}, scope='function',
-                       seccomp_unconfined=False):
+def get_docker_fixture(image, portmaps={}, name=None, custom_params={}, scope="function", seccomp_unconfined=False):
     """Produce a fixture which starts/stops a docker container
 
     It should be called to produce and assign within the scope under some name,
@@ -70,34 +68,34 @@ def get_docker_fixture(image, portmaps={}, name=None,
         """
         skipif.no_docker_engine()
         skipif.no_network()
-        args = ['docker',
-                'run',
-                '-d',
-                '--rm',
-                ]
+        args = [
+            "docker",
+            "run",
+            "-d",
+            "--rm",
+        ]
         if seccomp_unconfined:
-            args.extend(['--security-opt', 'seccomp=unconfined'])
+            args.extend(["--security-opt", "seccomp=unconfined"])
         params = {}
         if name:
-            args += ['--name', name]
-            params['name'] = name
+            args += ["--name", name]
+            params["name"] = name
 
         if portmaps:
             for from_to in portmaps.items():
-                args += ['-p', '%d:%d' % from_to]
-                params['port'] = from_to[0]
+                args += ["-p", "%d:%d" % from_to]
+                params["port"] = from_to[0]
         args += [image]
         stdout, _ = Runner().run(args, expect_stderr=True)
-        params['container_id'] = container_id = stdout.strip( )
-        params['custom'] = custom_params
+        params["container_id"] = container_id = stdout.strip()
+        params["custom"] = custom_params
         yield params
-        Runner().run(['docker', 'stop', container_id])
+        Runner().run(["docker", "stop", container_id])
 
     return docker_fixture
 
 
-def get_singularity_fixture(name=None, image="docker://python:2.7",
-                            scope="function"):
+def get_singularity_fixture(name=None, image="docker://python:2.7", scope="function"):
     """Produce a fixture for a Singularity resource.
 
     Parameters
@@ -109,6 +107,7 @@ def get_singularity_fixture(name=None, image="docker://python:2.7",
     scope: {'function', 'class', 'module', 'session'}, optional
         A scope for the fixture according to `pytest.fixture` docs
     """
+
     @pytest.fixture(scope=scope)
     def fixture(tmpdir_factory):
         skipif.no_network()
@@ -118,12 +117,13 @@ def get_singularity_fixture(name=None, image="docker://python:2.7",
         # directory with image files.
         with chpwd(str(tmpdir_factory.mktemp("singularity-resource"))):
             from reproman.resource.singularity import Singularity
-            resource = Singularity(name=name or str(uuid.uuid4().hex)[:11],
-                                   image=image)
+
+            resource = Singularity(name=name or str(uuid.uuid4().hex)[:11], image=image)
             resource.connect()
             list(resource.create())
         yield resource
         resource.delete()
+
     return fixture
 
 
@@ -191,17 +191,17 @@ def git_repo_fixture(kind="default", scope="function"):
 
             if kind == "pair":
                 localdir = os.path.realpath(os.path.join(tmpdir, "repo1"))
-                runner.run(["git", "clone", repodir, localdir],
-                           expect_stderr=True)
+                runner.run(["git", "clone", repodir, localdir], expect_stderr=True)
                 with chpwd(localdir):
                     setup_user()
                 retval = localdir, repodir
         yield retval
         shutil.rmtree(tmpdir)
+
     return fixture
 
 
-def svn_repo_fixture(kind='default', scope='function'):
+def svn_repo_fixture(kind="default", scope="function"):
     """Create a SVN repository fixture.
 
     Parameters
@@ -219,24 +219,26 @@ def svn_repo_fixture(kind='default', scope='function'):
     -------
     A fixture function.
     """
+
     @pytest.fixture(scope=scope)
     def fixture():
         skipif.no_svn()
-        repo_name = 'svnrepo'
-        tmpdir = os.path.realpath(tempfile.mkdtemp(prefix='reproman-tests-'))
+        repo_name = "svnrepo"
+        tmpdir = os.path.realpath(tempfile.mkdtemp(prefix="reproman-tests-"))
         root_dir = os.path.join(tmpdir, repo_name)
-        subdir = os.path.join(tmpdir, 'subdir')
+        subdir = os.path.join(tmpdir, "subdir")
         os.mkdir(subdir)
         runner = Runner()
-        runner.run(['svnadmin', 'create', root_dir])
-        runner.run(['svn', 'checkout', 'file://' + root_dir], cwd=subdir)
+        runner.run(["svnadmin", "create", root_dir])
+        runner.run(["svn", "checkout", "file://" + root_dir], cwd=subdir)
         checked_out_dir = os.path.join(subdir, repo_name)
-        if kind != 'empty':
-            runner.run(['touch', 'foo'], cwd=checked_out_dir)
-            runner.run(['svn', 'add', 'foo'], cwd=checked_out_dir)
-            runner.run(['svn', 'commit', '-m', 'bar'], cwd=checked_out_dir)
+        if kind != "empty":
+            runner.run(["touch", "foo"], cwd=checked_out_dir)
+            runner.run(["svn", "add", "foo"], cwd=checked_out_dir)
+            runner.run(["svn", "commit", "-m", "bar"], cwd=checked_out_dir)
         yield (root_dir, checked_out_dir)
         shutil.rmtree(tmpdir)
+
     return fixture
 
 
@@ -259,8 +261,8 @@ def job_registry_fixture(scope="function"):
 
     @pytest.fixture(scope=scope)
     def fixture(tmpdir_factory):
-        return partial(LocalRegistry,
-                       str(tmpdir_factory.mktemp("registry")))
+        return partial(LocalRegistry, str(tmpdir_factory.mktemp("registry")))
+
     return fixture
 
 
@@ -293,4 +295,5 @@ def resource_manager_fixture(resources=None, scope="function"):
         for name, kwargs in resources.items():
             manager.create(name, **kwargs)
         return manager
+
     return fixture

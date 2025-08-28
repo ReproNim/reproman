@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Provides helper to compute digests (md5 etc) on files
-"""
+"""Provides helper to compute digests (md5 etc) on files"""
 
 import sys
 import hashlib
@@ -14,7 +13,8 @@ import hashlib
 from ..utils import auto_repr
 
 import logging
-lgr = logging.getLogger('reproman.support.digests')
+
+lgr = logging.getLogger("reproman.support.digests")
 
 
 @auto_repr
@@ -28,9 +28,9 @@ class Digester(object):
     atm this one is sufficiently speedy
     """
 
-    DEFAULT_DIGESTS = ['md5', 'sha1', 'sha256', 'sha512']
+    DEFAULT_DIGESTS = ["md5", "sha1", "sha256", "sha512"]
 
-    def __init__(self, digests=None, blocksize=1<<16):
+    def __init__(self, digests=None, blocksize=1 << 16):
         self._digests = digests or self.DEFAULT_DIGESTS
         self._digest_funcs = [getattr(hashlib, digest) for digest in self._digests]
         self.blocksize = blocksize
@@ -42,7 +42,7 @@ class Digester(object):
     def __call__(self, fpath):
         lgr.debug("Estimating digests for %s" % fpath)
         digests = [x() for x in self._digest_funcs]
-        with open(fpath, 'rb') as f:
+        with open(fpath, "rb") as f:
             while True:
                 block = f.read(self.blocksize)
                 if not block:

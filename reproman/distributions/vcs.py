@@ -27,7 +27,7 @@ from reproman.resource.session import get_local_session
 
 from reproman.cmd import CommandError, Runner
 
-lgr = getLogger('reproman.distributions.vcs')
+lgr = getLogger("reproman.distributions.vcs")
 
 from reproman.distributions.base import DistributionTracer
 from reproman.distributions.base import SpecObject
@@ -79,22 +79,23 @@ class VCSRepo(SpecObject):
 
     @property
     def diff_identity_string(self):
-        return super(VCSRepo, self).diff_identity_string + ' (%s)' % self.path
+        return super(VCSRepo, self).diff_identity_string + " (%s)" % self.path
 
     @property
     def diff_subidentity_string(self):
-        return super(VCSRepo, self).diff_subidentity_string + ' (%s)' % self.path
+        return super(VCSRepo, self).diff_subidentity_string + " (%s)" % self.path
 
     @property
     def commit(self):
         try:
             return getattr(self, self._commit_attribute)
         except AttributeError:
-            # raised if _commit_attribute is not defined, but this means 
-            # (to the caller) that commit is not defined, so we give the 
+            # raised if _commit_attribute is not defined, but this means
+            # (to the caller) that commit is not defined, so we give the
             # caller a more appropriate error message
             msg = "%s instance has no attribute 'commit'" % self.__class__
             raise AttributeError(msg)
+
 
 @attr.s
 class GitRepo(VCSRepo):
@@ -106,18 +107,17 @@ class GitRepo(VCSRepo):
     tracked_remote = attrib()
     remotes = attrib(default=attr.Factory(dict))
 
-    _diff_cmp_fields = ('root_hexsha',)
-    _diff_fields = ('hexsha', 'branch')
-    _commit_attribute = 'hexsha'
+    _diff_cmp_fields = ("root_hexsha",)
+    _diff_fields = ("hexsha", "branch")
+    _commit_attribute = "hexsha"
 
     @property
     def diff_subidentity_string(self):
-        return 'branch %s, commit %s (%s)' % (self.branch, 
-                                              self.hexsha, 
-                                              self.path)
+        return "branch %s, commit %s (%s)" % (self.branch, self.hexsha, self.path)
+
 
 # Probably generation wouldn't be flexible enough
-#GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
+# GitDistribution = get_vcs_distribution(GitRepo, 'git', 'Git')
 @attr.s
 class GitDistribution(VCSDistribution):
     _cmd = "git"
@@ -158,8 +158,7 @@ class GitDistribution(VCSDistribution):
             clone_url = sources[remote]["url"]
 
             lgr.info("Cloning %s from %s (%s)", repo.path, clone_url, remote)
-            session.execute_command(
-                ["git", "clone", "-o", remote, clone_url, repo.path])
+            session.execute_command(["git", "clone", "-o", remote, clone_url, repo.path])
             shim = GitRepoShim.get_at_dirpath(session, repo.path)
 
         if repo.remotes:
@@ -168,15 +167,12 @@ class GitDistribution(VCSDistribution):
             for remote, remote_info in repo.remotes.items():
                 if remote not in current_remotes:
                     try:
-                        shim._run_git(["remote", "add", "-f",
-                                       remote, remote_info["url"]])
+                        shim._run_git(["remote", "add", "-f", remote, remote_info["url"]])
                     except CommandError:
-                        lgr.warning("Failed to fetch remote %s at %s",
-                                    remote, remote_info["url"])
+                        lgr.warning("Failed to fetch remote %s at %s", remote, remote_info["url"])
 
         if not shim.has_revision(repo.hexsha):
-            lgr.warning("Set up '%s', but the expected hexsha wasn't found",
-                        repo.path)
+            lgr.warning("Set up '%s', but the expected hexsha wasn't found", repo.path)
             return
 
         # Be less aggressive about restoring the revision/branch state if we
@@ -199,21 +195,16 @@ class GitDistribution(VCSDistribution):
         repository), a warning is issued and no value is returned.
         """
         if not session.isdir(repo.path):
-            lgr.warning("'%s' is not a directory; skipping",
-                        repo.path)
+            lgr.warning("'%s' is not a directory; skipping", repo.path)
             return
 
         shim = GitRepoShim.get_at_dirpath(session, repo.path)
         if shim is None:
             # TODO: We could proceed if the directory is empty.
-            lgr.warning("Directory '%s' exists, "
-                        "but is not a Git repository; skipping",
-                        repo.path)
+            lgr.warning("Directory '%s' exists, " "but is not a Git repository; skipping", repo.path)
             return
         if shim.root_hexsha != repo.root_hexsha:
-            lgr.warning("Root hexsha in '%s' doesn't match "
-                        "expected hexsha; skipping",
-                        repo.path)
+            lgr.warning("Root hexsha in '%s' doesn't match " "expected hexsha; skipping", repo.path)
             return
         return shim
 
@@ -233,8 +224,7 @@ class GitDistribution(VCSDistribution):
         """
 
         if shim._run_git(["status", "--porcelain"]).strip():
-            lgr.warning("Not setting HEAD to %s because repository is dirty",
-                        repo.hexsha)
+            lgr.warning("Not setting HEAD to %s because repository is dirty", repo.hexsha)
             return
 
         set_tracking = False
@@ -249,10 +239,11 @@ class GitDistribution(VCSDistribution):
             checkout_args = [repo.hexsha]
         else:
             heads = dict(
-                name_hexsha.split("\0") for name_hexsha in
-                shim._run_git(["for-each-ref", "--format",
-                               "%(refname:short)%00%(objectname)",
-                               "refs/heads"]).splitlines())
+                name_hexsha.split("\0")
+                for name_hexsha in shim._run_git(
+                    ["for-each-ref", "--format", "%(refname:short)%00%(objectname)", "refs/heads"]
+                ).splitlines()
+            )
             if repo.branch in heads and heads[repo.branch] == repo.hexsha:
                 checkout_args = [repo.branch]
                 set_tracking = True
@@ -262,14 +253,14 @@ class GitDistribution(VCSDistribution):
         if checkout_args is not None:
             shim._run_git(["checkout"] + checkout_args)
             if set_tracking and repo.tracked_remote:
-                for var, value in [("remote", repo.tracked_remote),
-                                   # Note: We're assuming that the traced
-                                   # branch has the same name.  GitRepo doesn't
-                                   # actually store this information.
-                                   ("merge", "refs/heads/" + repo.branch)]:
-                    shim._run_git(["config",
-                                   ".".join(["branch", repo.branch, var]),
-                                   value])
+                for var, value in [
+                    ("remote", repo.tracked_remote),
+                    # Note: We're assuming that the traced
+                    # branch has the same name.  GitRepo doesn't
+                    # actually store this information.
+                    ("merge", "refs/heads/" + repo.branch),
+                ]:
+                    shim._run_git(["config", ".".join(["branch", repo.branch, var]), value])
 
 
 GitRepo._distribution = GitDistribution
@@ -284,11 +275,12 @@ class SVNRepo(VCSRepo):
     relative_url = attrib()
     uuid = attrib()
 
-    _diff_cmp_fields = ('uuid',)
-    _diff_fields = ('revision',)
-    _commit_attribute = 'revision'
+    _diff_cmp_fields = ("uuid",)
+    _diff_fields = ("revision",)
+    _commit_attribute = "revision"
 
-#SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
+
+# SVNDistribution = get_vcs_distribution(SVNRepo, 'svn', 'SVN')
 @attr.s
 class SVNDistribution(VCSDistribution):
     _cmd = "svn"
@@ -296,6 +288,8 @@ class SVNDistribution(VCSDistribution):
 
     def install_packages(self, session, use_version=True):
         raise NotImplementedError
+
+
 SVNRepo._distribution = SVNDistribution
 
 
@@ -327,7 +321,7 @@ class GitSVNRepoShim(object):
 
     def _session_execute_command(self, cmd, **kwargs):
         """Run in the session but providing our self.path as the cwd"""
-        if 'cwd' not in kwargs:
+        if "cwd" not in kwargs:
             kwargs = dict(cwd=self.path, **kwargs)
         return self._session.execute_command(cmd, **kwargs)
 
@@ -337,7 +331,7 @@ class GitSVNRepoShim(object):
         if self._all_files is None:
             out, err = self._session_execute_command(self._ls_files_command)
             assert not err
-            self._all_files = set(filter(None, out.split('\n')))
+            self._all_files = set(filter(None, out.split("\n")))
             if self._ls_files_filter:
                 self._all_files = self._ls_files_filter(self._all_files)
             self._all_files = set(self._all_files)  # for efficient lookups
@@ -356,14 +350,13 @@ class GitSVNRepoShim(object):
         #  those which could potentially claim it to belong to the repo?
         #  For now just a strict check, and we would want to request all files
         #  which repo knows about
-        rpath = path[len(self.path)+1:]
+        rpath = path[len(self.path) + 1 :]
         return rpath in self.all_files
 
     @classmethod
     def get_at_dirpath(cls, session, dirpath):
         """Return VCS instance at the given path (if under that VCS control)"""
         raise NotImplementedError
-
 
 
 # Name must be   TYPERepo since used later in the code
@@ -376,19 +369,16 @@ class SVNRepoShim(GitSVNRepoShim):
     @property
     def _ls_files_command(self):
         # tricky -- we need to locate wc.db somewhere upstairs, and filter out paths
-        root_path = self._info['Working Copy Root Path']
-        return 'sqlite3 -noheader "%s/.svn/wc.db" ' \
-            '"select local_relpath from nodes_base"' \
-                    % root_path
+        root_path = self._info["Working Copy Root Path"]
+        return 'sqlite3 -noheader "%s/.svn/wc.db" ' '"select local_relpath from nodes_base"' % root_path
 
     def _ls_files_filter(self, all_files):
-        root_path = self._info['Working Copy Root Path']
+        root_path = self._info["Working Copy Root Path"]
         subdir = os.path.relpath(self.path, root_path)
         if subdir == os.curdir:
             return all_files
         else:
-            return [f[len(subdir)+1:] for f in all_files
-                    if os.path.commonprefix((subdir, f)) == subdir]
+            return [f[len(subdir) + 1 :] for f in all_files if os.path.commonprefix((subdir, f)) == subdir]
 
     def __init__(self, *args, **kwargs):
         super(SVNRepoShim, self).__init__(*args, **kwargs)
@@ -399,27 +389,22 @@ class SVNRepoShim(GitSVNRepoShim):
         # ho ho -- no longer the case that there is .svn in each subfolder:
         # http://stackoverflow.com/a/9070242
         found = False
-        if exists(opj(dirpath, '.svn')):  # early detection
+        if exists(opj(dirpath, ".svn")):  # early detection
             found = True
         # but still might be under SVN
         if not found:
             try:
                 out, err = session.execute_command(
-                    'svn info',
+                    "svn info",
                     # expect_fail=True,
-                    cwd=dirpath
+                    cwd=dirpath,
                 )
             except CommandError as exc:
                 if "Please see the 'svn upgrade' command" in str(exc):
-                    lgr.warning(
-                        "SVN at %s is outdated, needs 'svn upgrade'",
-                        dirpath)
+                    lgr.warning("SVN at %s is outdated, needs 'svn upgrade'", dirpath)
                 else:
                     # we are in SVN but it is outdated and needs an upgrade
-                    lgr.debug(
-                        "Probably %s is not under SVN repo path: %s",
-                        dirpath, exc_str(exc)
-                    )
+                    lgr.debug("Probably %s is not under SVN repo path: %s", dirpath, exc_str(exc))
                     return None
         # for now we treat each directory under SVN independently
         # pros:
@@ -435,11 +420,8 @@ class SVNRepoShim(GitSVNRepoShim):
             # TODO -- outdated repos might need 'svn upgrade' first
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
-            out, err = self._session.execute_command('svn info', cwd=self.path)
-            self.__info = dict(
-                [x.lstrip() for x in l.split(':', 1)]
-                for l in out.splitlines() if l.strip()
-            )
+            out, err = self._session.execute_command("svn info", cwd=self.path)
+            self.__info = dict([x.lstrip() for x in l.split(":", 1)] for l in out.splitlines() if l.strip())
         return self.__info
 
     @property
@@ -447,15 +429,15 @@ class SVNRepoShim(GitSVNRepoShim):
         # svn info doesn't give the current revision
         # (see http://svnbook.red-bean.com/en/1.7/svn.tour.history.html)
         # so we need to run svn log
-        if not hasattr(self, '_revision'):
+        if not hasattr(self, "_revision"):
             runner = Runner()
-            log = runner(['svn', 'log', '^/', '-l', '1'], cwd=self.path)[0]
-            lines = log.strip().split('\n')
+            log = runner(["svn", "log", "^/", "-l", "1"], cwd=self.path)[0]
+            lines = log.strip().split("\n")
             if len(lines) == 1:
                 self._revision = None
             else:
                 revision = lines[1].split()[0]
-                if revision.startswith('r') and revision[1:].isdigit():
+                if revision.startswith("r") and revision[1:].isdigit():
                     self._revision = int(revision[1:])
                 else:
                     self._revision = revision[1:]
@@ -466,24 +448,24 @@ class SVNRepoShim(GitSVNRepoShim):
         # also has similarity to APT in that we could have the top of SVN repo
         # as an 'origin' which might be reused by multiple 'sub-repos'/directories
         # "Repository Root" and "Relative URL"
-        return self._info['URL']
+        return self._info["URL"]
 
     @property
     def root_url(self):
-        return self._info['Repository Root']
+        return self._info["Repository Root"]
 
     @property
     def relative_url(self):
-        return self._info['Relative URL']
+        return self._info["Relative URL"]
 
     @property
     def uuid(self):
-        return self._info['Repository UUID']
+        return self._info["Repository UUID"]
 
 
 class GitRepoShim(GitSVNRepoShim):
 
-    _ls_files_command = 'git ls-files'
+    _ls_files_command = "git ls-files"
 
     _vcs_class = GitRepo
     _vcs_distribution_class = GitDistribution
@@ -492,29 +474,27 @@ class GitRepoShim(GitSVNRepoShim):
     def get_at_dirpath(cls, session, dirpath):
         try:
             out, err = session.execute_command(
-                'git rev-parse --show-toplevel',
+                "git rev-parse --show-toplevel",
                 # expect_fail=True,
-                cwd=dirpath
+                cwd=dirpath,
             )
         except CommandError as exc:
-            lgr.debug(
-                "Probably %s is not under git repo path: %s",
-                dirpath, exc_str(exc)
-            )
+            lgr.debug("Probably %s is not under git repo path: %s", dirpath, exc_str(exc))
             return None
-        topdir = out.rstrip('\n')
+        topdir = out.rstrip("\n")
         lgr.debug("Detected Git repository at %s for %s. Creating a session shim", topdir, dirpath)
         return cls(topdir, session=session)
 
     def _run_git(self, cmd, expect_fail=False, **kwargs):
         """Helper to run git command, and ignore stderr"""
-        cmd = ['git'] + cmd if isinstance(cmd, list) else 'git ' + cmd
+        cmd = ["git"] + cmd if isinstance(cmd, list) else "git " + cmd
         try:
             out, err = self._session.execute_command(
                 cmd,
-                #expect_fail=expect_fail,
+                # expect_fail=expect_fail,
                 cwd=self.path,
-                **kwargs)
+                **kwargs,
+            )
         except CommandError:
             if not expect_fail:
                 raise
@@ -525,7 +505,7 @@ class GitRepoShim(GitSVNRepoShim):
     @property
     def hexsha(self):
         try:
-            return self._run_git('rev-parse HEAD')
+            return self._run_git("rev-parse HEAD")
         except CommandError:
             # might still be the first yet to be committed state in the branch
             return None
@@ -533,7 +513,7 @@ class GitRepoShim(GitSVNRepoShim):
     @property
     def root_hexsha(self):
         try:
-            rev_list = self._run_git('rev-list --max-parents=0 HEAD').split('\n')
+            rev_list = self._run_git("rev-list --max-parents=0 HEAD").split("\n")
             return rev_list[-1]
         except CommandError:
             # might still be the first yet to be committed state in the branch
@@ -543,7 +523,7 @@ class GitRepoShim(GitSVNRepoShim):
     def describe(self):
         """Let's use git describe"""
         try:
-            return self._run_git('describe --tags', expect_fail=True)
+            return self._run_git("describe --tags", expect_fail=True)
         except CommandError:
             return None
 
@@ -564,30 +544,30 @@ class GitRepoShim(GitSVNRepoShim):
         if not hexsha:  # just initialized
             return {}
 
-        remote_branches = self._run_git(
-            ["branch", "-r", "--contains", hexsha]).splitlines()
-                                               # e.g. "origin/HEAD -> origin/master"
+        remote_branches = self._run_git(["branch", "-r", "--contains", hexsha]).splitlines()
+        # e.g. "origin/HEAD -> origin/master"
         remote_branches = [b.strip() for b in remote_branches if " -> " not in b]
 
         if not remote_branches:
             return {}
-        containing_remotes = set(x.split('/', 1)[0] for x in remote_branches)
+        containing_remotes = set(x.split("/", 1)[0] for x in remote_branches)
         remotes = {}
-        for remote in self._run_git('remote').splitlines():
+        for remote in self._run_git("remote").splitlines():
             rec = {}
-            for f in 'url', 'pushurl':
+            for f in "url", "pushurl":
                 try:
-                    v = self._run_git('config remote.%s.%s' % (remote, f)
-                                      , expect_fail=True
-                                      #, expect_stderr=True
-                                     )
+                    v = self._run_git(
+                        "config remote.%s.%s" % (remote, f),
+                        expect_fail=True,
+                        # , expect_stderr=True
+                    )
                     if v is not None:
                         rec[f] = v
                 except CommandError:
                     # must have no value
                     pass
             if remote in containing_remotes:
-                rec['contains'] = True
+                rec["contains"] = True
             remotes[remote] = rec
         return remotes
 
@@ -596,17 +576,21 @@ class GitRepoShim(GitSVNRepoShim):
         branch = self.branch
         if not branch:
             return None
-        return self._run_git(
-                'config branch.%s.remote' % (branch,)
-                #, expect_stderr=True
-                , expect_fail=True
-        ) or None         # want explicit None
+        return (
+            self._run_git(
+                "config branch.%s.remote" % (branch,)
+                # , expect_stderr=True
+                ,
+                expect_fail=True,
+            )
+            or None
+        )  # want explicit None
 
     @property
     def branch(self):
         if self._branch is None:
             try:
-                branch = self._run_git('symbolic-ref --short HEAD')
+                branch = self._run_git("symbolic-ref --short HEAD")
             except CommandError:
                 # We're in a detached state.
                 return None
@@ -614,11 +598,8 @@ class GitRepoShim(GitSVNRepoShim):
         return self._branch
 
     def has_revision(self, revision):
-        """Does the repository have `revision`?
-        """
-        out = self._run_git(
-            ["rev-parse", "--quiet", "--verify", revision + "^{commit}"],
-            expect_fail=True)
+        """Does the repository have `revision`?"""
+        out = self._run_git(["rev-parse", "--quiet", "--verify", revision + "^{commit}"], expect_fail=True)
         return out is not None
 
 
@@ -652,14 +633,12 @@ class VCSTracer(DistributionTracer):
         self._known_repos = {}
 
     def identify_distributions(self, files):
-        repos, remaining_files = self.identify_packages_from_files(
-            files, root_key="path")
+        repos, remaining_files = self.identify_packages_from_files(files, root_key="path")
         pkgs_per_distr = defaultdict(list)
         for repo in repos:
             pkgs_per_distr[repo._distribution].append(repo)
         for dist_class, repos in pkgs_per_distr.items():
-            yield dist_class(name=dist_class._cmd,
-                             packages=repos), remaining_files
+            yield dist_class(name=dist_class._cmd, packages=repos), remaining_files
 
     def _get_packagefields_for_files(self, files):
         out = {}
@@ -675,7 +654,7 @@ class VCSTracer(DistributionTracer):
             #     if a.name not in {'files'}
             # )
             out[f] = {
-                'path': shim.path,
+                "path": shim.path,
                 # 'repo_class': shim._vcs_class,
             }
             # the rest of the attrs will be taken by using _known_repos
@@ -687,8 +666,9 @@ class VCSTracer(DistributionTracer):
         #  files which are dirty.
         shim = self._known_repos[path]
         attrs = dict(
-            (a.name, getattr(shim, a.name)) for a in shim._vcs_class.__attrs_attrs__
-            if a.name not in {'files'}  # those will be populated later
+            (a.name, getattr(shim, a.name))
+            for a in shim._vcs_class.__attrs_attrs__
+            if a.name not in {"files"}  # those will be populated later
         )
         attrs = only_with_values(attrs)
         return instantiate_attr_object(shim._vcs_class, attrs)
@@ -725,8 +705,7 @@ class VCSTracer(DistributionTracer):
         # if there is a repository at that path
         for Shim in self.SHIMS:
             lgr.log(5, "Trying %s for path %s", Shim, path)
-            shim = Shim.get_at_dirpath(self._session, dirpath) \
-                if lexists(dirpath) else None
+            shim = Shim.get_at_dirpath(self._session, dirpath) if lexists(dirpath) else None
             if shim:
                 # so there is one nearby -- record it
                 self._known_repos[shim.path] = shim

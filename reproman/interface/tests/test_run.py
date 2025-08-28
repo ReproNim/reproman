@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Tests for run and jobs interfaces.
-"""
+"""Tests for run and jobs interfaces."""
 
 import contextlib
 import logging
@@ -39,8 +38,7 @@ lgr = logging.getLogger("reproman.interface.tests.test_run")
 # Tests that do not require a resource, registry, or orchestrator.
 
 
-@pytest.mark.parametrize("command", [None, []],
-                         ids=["None", "[]"])
+@pytest.mark.parametrize("command", [None, []], ids=["None", "[]"])
 def test_run_no_command(command):
     with pytest.raises(ValueError) as exc:
         run(command=command)
@@ -53,11 +51,15 @@ def test_run_no_resource():
     assert "No resource" in str(exc.value)
 
 
-@pytest.mark.parametrize("arg,expected",
-                         [("", ["local", "plain", "message"]),
-                          ("submitters", ["local"]),
-                          ("orchestrators", ["plain"]),
-                          ("parameters", ["message"])])
+@pytest.mark.parametrize(
+    "arg,expected",
+    [
+        ("", ["local", "plain", "message"]),
+        ("submitters", ["local"]),
+        ("orchestrators", ["plain"]),
+        ("parameters", ["message"]),
+    ],
+)
 def test_run_list(arg, expected):
     with swallow_outputs() as output:
         run(list_=arg)
@@ -67,61 +69,43 @@ def test_run_list(arg, expected):
 
 @pytest.mark.parametrize(
     "specs,expected",
-    [([], {}),
-     ([{"a": "a"}, {"b": "b"}],
-      {"a": "a", "b": "b"}),
-     ([{"a": "a"}, {"a": "A", "b": "b"}],
-      {"a": "A", "b": "b"}),
-     ([{"a": {"aa": "aa"}}, {"a": "A", "b": "b"}],
-      {"a": "A", "b": "b"}),
-     ([{"a": {"aa": "aa"}}, {"a": {"aa": "AA"}, "b": "b"}],
-      {"a": {"aa": "AA"}, "b": "b"})],
-    ids=["empty", "exclusive", "simple-update",
-         "mapping-to-atom", "atom-to-mapping"])
+    [
+        ([], {}),
+        ([{"a": "a"}, {"b": "b"}], {"a": "a", "b": "b"}),
+        ([{"a": "a"}, {"a": "A", "b": "b"}], {"a": "A", "b": "b"}),
+        ([{"a": {"aa": "aa"}}, {"a": "A", "b": "b"}], {"a": "A", "b": "b"}),
+        ([{"a": {"aa": "aa"}}, {"a": {"aa": "AA"}, "b": "b"}], {"a": {"aa": "AA"}, "b": "b"}),
+    ],
+    ids=["empty", "exclusive", "simple-update", "mapping-to-atom", "atom-to-mapping"],
+)
 def test_combine_specs(specs, expected):
     assert _combine_job_specs(specs) == expected
 
 
 @pytest.mark.parametrize(
     "params,expected",
-    [([], []),
-     (["a=1,2"],
-      [{"a": "1"}, {"a": "2"}]),
-     (["a=1,2", "b=3"],
-      [{"a": "1", "b": "3"},
-       {"a": "2", "b": "3"}]),
-     (["a=1,2", "b=3,4"],
-      [{"a": "1", "b": "3"},
-       {"a": "1", "b": "4"},
-       {"a": "2", "b": "3"},
-       {"a": "2", "b": "4"}]),
-     (["a=1,2=3"],
-      [{"a": "1"},
-       {"a": "2=3"}]),
-     (["a= 1 spaces are preserved   , 2"],
-      [{"a": " 1 spaces are preserved   "},
-       {"a": " 2"}])],
-    ids=["empty", "one", "two, one varying", "two varying", "= in value",
-         "spaces"])
+    [
+        ([], []),
+        (["a=1,2"], [{"a": "1"}, {"a": "2"}]),
+        (["a=1,2", "b=3"], [{"a": "1", "b": "3"}, {"a": "2", "b": "3"}]),
+        (["a=1,2", "b=3,4"], [{"a": "1", "b": "3"}, {"a": "1", "b": "4"}, {"a": "2", "b": "3"}, {"a": "2", "b": "4"}]),
+        (["a=1,2=3"], [{"a": "1"}, {"a": "2=3"}]),
+        (["a= 1 spaces are preserved   , 2"], [{"a": " 1 spaces are preserved   "}, {"a": " 2"}]),
+    ],
+    ids=["empty", "one", "two, one varying", "two varying", "= in value", "spaces"],
+)
 def test_combine_batch_params(params, expected):
-    actual = list(sorted(_combine_batch_params(params),
-                         key=lambda d: (d.get("a"), d.get("b"))))
+    actual = list(sorted(_combine_batch_params(params), key=lambda d: (d.get("a"), d.get("b"))))
     assert len(actual) == len(expected)
     assert actual == expected
 
 
 def test_combine_batch_params_glob(tmpdir):
     tmpdir = str(tmpdir)
-    create_tree(tmpdir, {"aaa": "a",
-                         "subdir": {"b": "b", "c": "c"}})
+    create_tree(tmpdir, {"aaa": "a", "subdir": {"b": "b", "c": "c"}})
     with chpwd(tmpdir):
-        res = sorted(_combine_batch_params(["foo=a*,subdir/*,other"]),
-                     key=lambda d: d["foo"])
-        assert list(res) == [
-            {"foo": "aaa"},
-            {"foo": "other"},
-            {"foo": "subdir/b"},
-            {"foo": "subdir/c"}]
+        res = sorted(_combine_batch_params(["foo=a*,subdir/*,other"]), key=lambda d: d["foo"])
+        assert list(res) == [{"foo": "aaa"}, {"foo": "other"}, {"foo": "subdir/b"}, {"foo": "subdir/c"}]
 
 
 def test_combine_batch_params_repeat_key():
@@ -136,24 +120,30 @@ def test_combine_batch_params_no_equal():
 
 def test_run_batch_spec_and_params():
     with pytest.raises(ValueError):
-        run(command="blahbert",
-            batch_spec="anything", batch_parameters="anything")
+        run(command="blahbert", batch_spec="anything", batch_parameters="anything")
 
 
 @pytest.mark.parametrize(
     "params,spec",
-    [([], ""),
-     (["a=1,2"],
-      """\
+    [
+        ([], ""),
+        (
+            ["a=1,2"],
+            """\
 - a: '1'
-- a: '2'"""),
-     (["a=1,2", "b=3"],
-      """\
+- a: '2'""",
+        ),
+        (
+            ["a=1,2", "b=3"],
+            """\
 - a: '1'
   b: '3'
 - a: '2'
-  b: '3'""")],
-    ids=["empty", "one", "two, one varying"])
+  b: '3'""",
+        ),
+    ],
+    ids=["empty", "one", "two, one varying"],
+)
 def test_resolve_batch_params_eq(tmpdir, params, spec):
     fname = op.join(str(tmpdir), "spec.yml")
     with open(fname, "w") as fh:
@@ -197,25 +187,24 @@ def context(tmpdir, resource_manager, job_registry):
             # Patch home to avoid populating testing machine with jobs when
             # using local shell.
             stack.enter_context(patch.dict(os.environ, {"HOME": home}))
-            stack.enter_context(patch("reproman.interface.run.get_manager",
-                                      return_value=resource_manager))
-            stack.enter_context(patch("reproman.interface.run.LocalRegistry",
-                                      job_registry))
+            stack.enter_context(patch("reproman.interface.run.get_manager", return_value=resource_manager))
+            stack.enter_context(patch("reproman.interface.run.LocalRegistry", job_registry))
             return run(*args, **kwargs)
 
     registry = job_registry()
 
     def jobs_fn(*args, **kwargs):
-        with patch("reproman.interface.jobs.get_manager",
-                   return_value=resource_manager):
+        with patch("reproman.interface.jobs.get_manager", return_value=resource_manager):
             with patch("reproman.interface.jobs.LREG", registry):
                 return jobs(*args, **kwargs)
 
-    return {"directory": path,
-            "registry": registry,
-            "resource_manager": resource_manager,
-            "run_fn": run_fn,
-            "jobs_fn": jobs_fn}
+    return {
+        "directory": path,
+        "registry": registry,
+        "resource_manager": resource_manager,
+        "run_fn": run_fn,
+        "jobs_fn": jobs_fn,
+    }
 
 
 def test_run_resource_specification(context):
@@ -224,32 +213,31 @@ def test_run_resource_specification(context):
 
     create_tree(
         path,
-        tree={"js0.yaml": "resource_name: name-via-js",
-              "js1.yaml": ("resource_id: id-via-js\n"
-                           "resource_name: name-via-js")})
+        tree={
+            "js0.yaml": "resource_name: name-via-js",
+            "js1.yaml": ("resource_id: id-via-js\n" "resource_name: name-via-js"),
+        },
+    )
 
     # Can specify name via job spec.
     with pytest.raises(ResourceNotFoundError) as exc:
-        run(command=["doesnt", "matter"],
-            job_specs=["js0.yaml"])
+        run(command=["doesnt", "matter"], job_specs=["js0.yaml"])
     assert "name-via-js" in str(exc.value)
 
     # If job spec as name and ID, ID takes precedence.
     with pytest.raises(ResourceNotFoundError) as exc:
-        run(command=["doesnt", "matter"],
-            job_specs=["js1.yaml"])
+        run(command=["doesnt", "matter"], job_specs=["js1.yaml"])
     assert "id-via-js" in str(exc.value)
 
     # Command-line overrides job spec.
     with pytest.raises(ResourceNotFoundError) as exc:
-        run(command=["doesnt", "matter"], resref="fromcli",
-            job_specs=["js1.yaml"])
+        run(command=["doesnt", "matter"], resref="fromcli", job_specs=["js1.yaml"])
     assert "fromcli" in str(exc.value)
 
 
 def try_fetch(fetch_fn, ntimes=5):
-    """Helper to test asynchronous fetch.
-    """
+    """Helper to test asynchronous fetch."""
+
     def try_():
         with swallow_logs(new_level=logging.INFO) as log:
             fetch_fn()
@@ -260,9 +248,8 @@ def try_fetch(fetch_fn, ntimes=5):
         if succeeded:
             break
         else:
-            sleep_for = (2 ** i) / 2
-            lgr.info("Job is incomplete. Sleeping for %s seconds",
-                     sleep_for)
+            sleep_for = (2**i) / 2
+            lgr.info("Job is incomplete. Sleeping for %s seconds", sleep_for)
             time.sleep(sleep_for)
     else:
         raise RuntimeError("All fetch attempts failed")
@@ -274,11 +261,7 @@ def test_run_and_fetch(context):
     jobs = context["jobs_fn"]
     registry = context["registry"]
 
-    create_tree(
-        path,
-        tree={"js0.yaml": ("resource_name: myshell\n"
-                           "command_str: 'touch ok'\n"
-                           "outputs: ['ok']")})
+    create_tree(path, tree={"js0.yaml": ("resource_name: myshell\n" "command_str: 'touch ok'\n" "outputs: ['ok']")})
 
     run(job_specs=["js0.yaml"])
 
@@ -298,8 +281,7 @@ def test_run_and_follow(context):
     jobs = context["jobs_fn"]
     registry = context["registry"]
 
-    run(command=["touch", "ok"], outputs=["ok"], resref="myshell",
-        follow=True)
+    run(command=["touch", "ok"], outputs=["ok"], resref="myshell", follow=True)
 
     with swallow_logs(new_level=logging.INFO) as log:
         jobs(queries=[])
@@ -309,16 +291,13 @@ def test_run_and_follow(context):
     assert op.exists(op.join(path, "ok"))
 
 
-@pytest.mark.parametrize("action",
-                         ["stop", "stop-if-success",
-                          "delete", "delete-if-success"])
+@pytest.mark.parametrize("action", ["stop", "stop-if-success", "delete", "delete-if-success"])
 def test_run_and_follow_action(context, action):
     run = context["run_fn"]
     expect = "does not support the 'stop' feature"
     with swallow_logs(new_level=logging.INFO) as log:
         with pytest.raises(JobError) as ecm:
-            run(command=["false"], resref="myshell",
-                follow=action)
+            run(command=["false"], resref="myshell", follow=action)
         assert ecm.value.failed == [0]
         if action.endswith("-if-success"):
             assert expect not in log.out
@@ -327,8 +306,7 @@ def test_run_and_follow_action(context, action):
 
     if action != "delete":
         with swallow_logs(new_level=logging.INFO) as log:
-            run(command=["true"], resref="myshell",
-                follow=action)
+            run(command=["true"], resref="myshell", follow=action)
             assert expect in log.out
 
     if action.startswith("delete"):
@@ -485,11 +463,11 @@ def test_jobs_orc_error(context):
 
     with swallow_outputs() as output:
         with swallow_logs(new_level=logging.ERROR) as log:
+
             def die_orc(*args, **kwargs):
                 raise OrchestratorError("resurrection failed")
 
-            with patch("reproman.interface.jobs.show_oneline",
-                       side_effect=die_orc):
+            with patch("reproman.interface.jobs.show_oneline", side_effect=die_orc):
                 jobs(queries=[], status=True)
             assert "myshell" not in output.out
             assert "resurrection failed" in log.out
@@ -500,21 +478,24 @@ def test_recursive_transfer(context):
     path = context["directory"]
     jobs = context["jobs_fn"]
 
-    # Our script takes an inventory of the execute directory so we can be 
-    # sure that all of the files have transferred.  It then creates a tree 
+    # Our script takes an inventory of the execute directory so we can be
+    # sure that all of the files have transferred.  It then creates a tree
     # that we verify is returned.
 
-    create_tree(path, {"script": "find . > out_file ; mkdir out_dir ; touch out_dir/subfile", 
-                       "in_dir": {"subfile": ""}})
+    create_tree(
+        path, {"script": "find . > out_file ; mkdir out_dir ; touch out_dir/subfile", "in_dir": {"subfile": ""}}
+    )
 
     with swallow_outputs() as output:
-        run(command=["sh", "-e", "script"], 
-            inputs=["script", "in_dir"], 
-            outputs=["out_file", "out_dir"], 
-            resref="myshell")
+        run(
+            command=["sh", "-e", "script"],
+            inputs=["script", "in_dir"],
+            outputs=["out_file", "out_dir"],
+            resref="myshell",
+        )
         try_fetch(lambda: jobs(queries=[], action="fetch", all_=True))
         assert op.exists(op.join(path, "out_file"))
         with open(op.join(path, "out_file")) as f:
-            lines = [ line.strip() for line in f ]
+            lines = [line.strip() for line in f]
         assert "./in_dir/subfile" in lines
         assert op.exists(op.join(path, "out_dir", "subfile"))

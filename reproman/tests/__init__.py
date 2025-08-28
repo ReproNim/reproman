@@ -17,6 +17,4 @@ lgr = getLogger("reproman.tests")
 _TEMP_PATHS_GENERATED = []
 
 # Give a custom template so we could hunt them down easily
-tempfile.template = os.path.join(tempfile.gettempdir(),
-                                 'tmp-page2annex')
-
+tempfile.template = os.path.join(tempfile.gettempdir(), "tmp-page2annex")

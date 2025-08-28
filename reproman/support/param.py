@@ -7,7 +7,7 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##g
 """Parameter representation"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 import re
 import textwrap
@@ -16,17 +16,16 @@ from reproman.utils import getargspec
 
 from .constraints import expand_constraint_spec
 
-_whitespace_re = re.compile(r'\n\s+|^\s+')
+_whitespace_re = re.compile(r"\n\s+|^\s+")
 
 
 class Parameter(object):
-    """This class shall serve as a representation of a parameter.
-    """
+    """This class shall serve as a representation of a parameter."""
 
     # Known keyword arguments which we want to allow to pass over into
     # argparser.add_argument . Mentioned explicitly, since otherwise
     # are not verified while working in Python-only API
-    _KNOWN_ARGS = getargspec(argparse.Action.__init__)[0] + ['action']
+    _KNOWN_ARGS = getargspec(argparse.Action.__init__)[0] + ["action"]
 
     def __init__(self, constraints=None, doc=None, args=None, **kwargs):
         """Add constraints (validator) specifications and a docstring for
@@ -76,7 +75,7 @@ class Parameter(object):
         if unknown_args:
             raise ValueError(
                 "Detected unknown argument(s) for the Parameter: %s.  Known are: %s"
-                % (', '.join(unknown_args), ', '.join(self._KNOWN_ARGS))
+                % (", ".join(unknown_args), ", ".join(self._KNOWN_ARGS))
             )
         self.cmd_kwargs = kwargs
 
@@ -87,15 +86,14 @@ class Parameter(object):
         -------
         string or list of strings (if indent is None)
         """
-        paramsdoc = '%s' % name
+        paramsdoc = "%s" % name
         sdoc = None
         if self.constraints is not None:
             sdoc = self.constraints.short_description()
-        elif 'action' in self.cmd_kwargs \
-                and self.cmd_kwargs['action'] in ("store_true", "store_false"):
-            sdoc = 'bool'
+        elif "action" in self.cmd_kwargs and self.cmd_kwargs["action"] in ("store_true", "store_false"):
+            sdoc = "bool"
         if not sdoc is None:
-            if sdoc[0] == '(' and sdoc[-1] == ')':
+            if sdoc[0] == "(" and sdoc[-1] == ")":
                 sdoc = sdoc[1:-1]
             paramsdoc += " : %s" % sdoc
             if has_default:
@@ -104,25 +102,22 @@ class Parameter(object):
 
         doc = self._doc
         if doc is None:
-            doc = ''
+            doc = ""
         doc.strip()
-        if len(doc) and not doc.endswith('.'):
-            doc += '.'
+        if len(doc) and not doc.endswith("."):
+            doc += "."
         if self.constraints is not None:
             cdoc = self.constraints.long_description()
-            if cdoc[0] == '(' and cdoc[-1] == ')':
+            if cdoc[0] == "(" and cdoc[-1] == ")":
                 cdoc = cdoc[1:-1]
-            addinfo = ''
-            if 'nargs' in self.cmd_kwargs \
-                    and not self.cmd_kwargs['nargs'] == '?':
-                addinfo = 'list expected, each '
-            doc += ' Constraints: %s%s.' % (addinfo, cdoc)
+            addinfo = ""
+            if "nargs" in self.cmd_kwargs and not self.cmd_kwargs["nargs"] == "?":
+                addinfo = "list expected, each "
+            doc += " Constraints: %s%s." % (addinfo, cdoc)
         if has_default:
             doc += " [Default: %r]" % (default,)
         # Explicitly deal with multiple spaces, for some reason
         # replace_whitespace is non-effective
-        doc = _whitespace_re.sub(' ', doc)
-        paramsdoc += [indent + x
-                      for x in textwrap.wrap(doc, width=width - len(indent),
-                                             replace_whitespace=True)]
-        return '\n'.join(paramsdoc)
+        doc = _whitespace_re.sub(" ", doc)
+        paramsdoc += [indent + x for x in textwrap.wrap(doc, width=width - len(indent), replace_whitespace=True)]
+        return "\n".join(paramsdoc)

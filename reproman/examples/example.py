@@ -1,6 +1,6 @@
 """
-    Example script to read a provenance file and then create the environment on the localhost.
-    The provenance files in the reproman/examples directory are used for this example.
+Example script to read a provenance file and then create the environment on the localhost.
+The provenance files in the reproman/examples directory are used for this example.
 """
 
 # # Add current NeuroDebian and archived NeuroDebian repos.
@@ -19,7 +19,8 @@
 # orchestrator.add_task('apt', dict(update_cache='yes'))
 
 import logging
-lgr = logging.getLogger('reproman.examples')
+
+lgr = logging.getLogger("reproman.examples")
 
 
 # Add packages to task list.
@@ -45,13 +46,14 @@ def get_url_for_packages(provenance):
       package: url   for every package found in provenance
 
     """
-    lgr.debug('Finding versioned urls for following provenance info: %s',
-              str(provenance))
+    lgr.debug("Finding versioned urls for following provenance info: %s", str(provenance))
     return {
-        package:  'http://example.com/%s_%s.deb' % (package, version)  # dpm.get_ubuntu_binary_pkg_url(package[0], package[1])
+        package: "http://example.com/%s_%s.deb"
+        % (package, version)  # dpm.get_ubuntu_binary_pkg_url(package[0], package[1])
         for package, version in provenance.items()  # get_packages()
     }
     # orchestrator.add_task('apt', dict(name='%s=%s' % package))
+
 
 # Run the orchestrator against the target host.
 # orchestrator.run()

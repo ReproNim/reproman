@@ -6,10 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Provide information about available backend parameters.
-"""
+"""Provide information about available backend parameters."""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from logging import getLogger
 
@@ -24,7 +23,7 @@ from reproman.support.exceptions import ResourceError
 from reproman.support.param import Parameter
 
 
-lgr = getLogger('reproman.api.backend_parameters')
+lgr = getLogger("reproman.api.backend_parameters")
 
 
 def get_resource_classes(names=None):
@@ -38,14 +37,11 @@ def get_resource_classes(names=None):
         if issubclass(cls, Resource):
             yield name, cls
         else:
-            lgr.debug("Skipping %s because it is not a Resource. "
-                      "Consider moving away",
-                      cls)
+            lgr.debug("Skipping %s because it is not a Resource. " "Consider moving away", cls)
 
 
 class BackendParameters(Interface):
-    """Display available backend parameters.
-    """
+    """Display available backend parameters."""
 
     _params_ = dict(
         backends=Parameter(
@@ -53,7 +49,8 @@ class BackendParameters(Interface):
             metavar="BACKEND",
             doc="""Restrict output to this backend.""",
             constraints=EnsureStr(),
-            nargs="*")
+            nargs="*",
+        )
     )
 
     @staticmethod
@@ -61,11 +58,10 @@ class BackendParameters(Interface):
         backends = backends or discover_types()
         for backend, cls in get_resource_classes(backends):
             param_doc = "\n".join(
-                ["  {}: {}".format(p, pdoc)
-                 for p, pdoc in sorted(get_resource_backends(cls).items())])
+                ["  {}: {}".format(p, pdoc) for p, pdoc in sorted(get_resource_backends(cls).items())]
+            )
             if param_doc:
-                out = "Backend parameters for '{}'\n{}".format(
-                    backend, param_doc)
+                out = "Backend parameters for '{}'\n{}".format(backend, param_doc)
             else:
                 out = "No backend parameters for '{}'".format(backend)
             print(out)

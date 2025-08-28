@@ -15,7 +15,7 @@ import re
 
 from reproman.distributions.base import DistributionTracer
 
-lgr = logging.getLogger('reproman.distributions.redhat')
+lgr = logging.getLogger("reproman.distributions.redhat")
 
 from .base import SpecObject
 from .base import Package
@@ -29,6 +29,7 @@ from ..utils import attrib
 @attr.s(cmp=True)
 class RPMSource(SpecObject):
     """RPM origin information"""
+
     id = attrib(default=attr.NOTHING)
     name = attrib()
     revision = attrib()
@@ -48,6 +49,7 @@ _register_with_representer(RPMSource)
 @attr.s(slots=True, frozen=True)
 class RPMPackage(Package):
     """Redhat package information"""
+
     name = attrib(default=attr.NOTHING)
     pkgid = attrib()
     version = attrib()
@@ -65,7 +67,7 @@ class RPMPackage(Package):
     vendor = attrib()
     url = attrib()
     files = attrib(default=attr.Factory(list), hash=False)
-    _comparison_fields = ('name', 'version', 'architecture')
+    _comparison_fields = ("name", "version", "architecture")
 
 
 _register_with_representer(RPMPackage)
@@ -80,7 +82,7 @@ class RedhatDistribution(Distribution):
     sources = TypedList(RPMSource)
     packages = TypedList(RPMPackage)
     version = attrib()  # version as depicted by /etc/redhat_version
-    _collection_attribute = 'packages'
+    _collection_attribute = "packages"
 
     def initiate(self, session):
         """
@@ -105,16 +107,14 @@ class RedhatDistribution(Distribution):
 
         # TODO: Expand the listing of 3rd party repos as popular ones in the
         # neuroscience community become apparent.
-        third_party_repos = {
-            'epel/x86_64': 'epel-release'
-        }
+        third_party_repos = {"epel/x86_64": "epel-release"}
 
         # Get a list of the enabled repos on the system.
-        out, _ = session.execute_command(['yum', 'repolist'])
+        out, _ = session.execute_command(["yum", "repolist"])
         system_repos = []
         skip = True
         for line in out.splitlines():
-            if line.startswith('repo id'):
+            if line.startswith("repo id"):
                 skip = False
                 continue
             if skip:
@@ -125,11 +125,12 @@ class RedhatDistribution(Distribution):
         for source in self.sources:
             if source.id not in system_repos:
                 if source.id in third_party_repos:
-                    session.execute_command(['yum', 'install', '-y',
-                        third_party_repos[source.id]])
+                    session.execute_command(["yum", "install", "-y", third_party_repos[source.id]])
                 else:
-                    lgr.error("Unable to install source repo \"%s\" found in "
-                        "spec but not in resource environment.", source.id)
+                    lgr.error(
+                        'Unable to install source repo "%s" found in ' "spec but not in resource environment.",
+                        source.id,
+                    )
 
     def install_packages(self, session, use_version=True):
         """
@@ -153,10 +154,10 @@ class RedhatDistribution(Distribution):
 
         # Doing in one shot to fail early if any of the versioned specs
         # couldn't be satisfied
-        lgr.debug("Installing %s", ', '.join(package_specs))
+        lgr.debug("Installing %s", ", ".join(package_specs))
         session.execute_command(
             # TODO: Pull env out of provenance for this command.
-            ['yum', 'install', '-y'] + package_specs,
+            ["yum", "install", "-y"] + package_specs,
             # env={'DEBIAN_FRONTEND': 'noninteractive'}
         )
 
@@ -165,15 +166,14 @@ class RedhatDistribution(Distribution):
         #     what is specified in d1 that is not specified in d2
         #     or how does d2 fall short of d1
         #     or what is in d1 that isn't satisfied by d2
-        return [p for p in self.packages if not p.compare(other, mode='satisfied_by')]
+        return [p for p in self.packages if not p.compare(other, mode="satisfied_by")]
 
 
 _register_with_representer(RedhatDistribution)
 
 
 class RPMTracer(DistributionTracer):
-    """.rpm-based (and using yum and rpm) systems package tracer
-    """
+    """.rpm-based (and using yum and rpm) systems package tracer"""
 
     # The Redhat tracer is not designed to handle directories
     HANDLES_DIRS = False
@@ -203,12 +203,12 @@ class RPMTracer(DistributionTracer):
             return
 
         try:
-            redhat_version = self._session.read('/etc/redhat-release').strip()
-            _, _ = self._session.execute_command('ls -ld /etc/yum')
+            redhat_version = self._session.read("/etc/redhat-release").strip()
+            _, _ = self._session.execute_command("ls -ld /etc/yum")
         except CommandError as exc:
             # Newer rpm systems use `dnf`
             try:
-                _, _ = self._session.execute_command('ls -ld /etc/dnf')
+                _, _ = self._session.execute_command("ls -ld /etc/dnf")
             except CommandError as exc:
                 lgr.debug("Did not detect Redhat (or derivative): %s", exc)
                 return
@@ -220,10 +220,7 @@ class RPMTracer(DistributionTracer):
             return
 
         dist = RedhatDistribution(
-            name="redhat",
-            version=redhat_version,
-            packages=packages,
-            sources=self._find_all_sources()
+            name="redhat", version=redhat_version, packages=packages, sources=self._find_all_sources()
         )
 
         yield dist, remaining_files
@@ -251,8 +248,7 @@ class RPMTracer(DistributionTracer):
         for file in files:
             try:
                 # Get the package identifier that the file is a member.
-                pkgid, err = self._session.execute_command(['rpm', '-qf',
-                    file])
+                pkgid, err = self._session.execute_command(["rpm", "-qf", file])
             except CommandError:
                 continue
             if err:
@@ -261,29 +257,26 @@ class RPMTracer(DistributionTracer):
             pkgids = pkgid.splitlines()
             if len(pkgids) > 1:
                 msg = "Multiple packages found for file {}: {}. Selecting {}"
-                lgr.info(msg.format(file, ', '.join(pkgids), pkgids[0]))
+                lgr.info(msg.format(file, ", ".join(pkgids), pkgids[0]))
             pkgid = pkgids[0].strip()
 
             # Get the package information from the system.
-            package_info, _ = self._session.execute_command(['rpm', '-qi',
-                pkgid])
+            package_info, _ = self._session.execute_command(["rpm", "-qi", pkgid])
             if package_info:
                 # Store the relevant fields of the package in the dict.
                 # The labels of the fields returned by the system are mapped
                 # to the attr fields in the RPMPacakge class.
-                pkg = {'pkgid': pkgid}
+                pkg = {"pkgid": pkgid}
                 for line in package_info.splitlines():
-                    matches = re.match(r'(.*?):(.*)\s{2,}(.*):(.*)', line)
+                    matches = re.match(r"(.*?):(.*)\s{2,}(.*):(.*)", line)
                     if not matches:
-                        matches = re.match(r'(.*?):(.*)', line)
+                        matches = re.match(r"(.*?):(.*)", line)
                     if matches:
                         for i in range(1, len(matches.groups()), 2):
-                            key = matches.group(i).strip().lower().replace(' ',
-                                '_')
+                            key = matches.group(i).strip().lower().replace(" ", "_")
                             if key in package_fields:
-                                pkg[key] = matches.group(i+1).strip()
-                lgr.debug("Identified file %r to belong to package %s",
-                          pkgid, pkg)
+                                pkg[key] = matches.group(i + 1).strip()
+                lgr.debug("Identified file %r to belong to package %s", pkgid, pkg)
                 file_to_package_dict[file] = pkg
         return file_to_package_dict
 
@@ -303,29 +296,29 @@ class RPMTracer(DistributionTracer):
         # Get all repo info from the system and store information for each
         # enabled repo in a RPMSource object.
         # '-y' included in case there are GPG keys to import
-        out, _ = self._session.execute_command(['yum', 'repolist', '-y'])
+        out, _ = self._session.execute_command(["yum", "repolist", "-y"])
         for line in out.splitlines():
-            if line.startswith('Repo-'):
-                key, value = line.split(':', 1)
+            if line.startswith("Repo-"):
+                key, value = line.split(":", 1)
                 key = key.strip()
                 value = value.strip()
-                if key in ['Repo-pkgs', 'Repo-size']:
+                if key in ["Repo-pkgs", "Repo-size"]:
                     continue
-                if key == ('Repo-id'):
-                    values = {'id': value}
-                elif key in ['Repo-pkgs', 'Repo-size']:
+                if key == ("Repo-id"):
+                    values = {"id": value}
+                elif key in ["Repo-pkgs", "Repo-size"]:
                     continue
-                elif key == 'Repo-expire':
-                    delta, last = re.match(r'(\d+) second\(s\) \(last: (.*)\)',
-                        value).groups()
-                    values['expire'] = (datetime.datetime.strptime(last, "%c")
-                        + datetime.timedelta(0, int(delta))).strftime("%c")
-                elif key == 'Repo-baseurl':
-                    values['baseurl'] = re.match(r'(\S+)', value).groups()[0]
+                elif key == "Repo-expire":
+                    delta, last = re.match(r"(\d+) second\(s\) \(last: (.*)\)", value).groups()
+                    values["expire"] = (
+                        datetime.datetime.strptime(last, "%c") + datetime.timedelta(0, int(delta))
+                    ).strftime("%c")
+                elif key == "Repo-baseurl":
+                    values["baseurl"] = re.match(r"(\S+)", value).groups()[0]
                 else:
                     # Map the field labels returned by the system to the attr
                     # fields in the RPMSource class.
-                    field = key.split('-')[1]
+                    field = key.split("-")[1]
                     if field in attr_fields:
                         values[field] = value
                     else:

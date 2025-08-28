@@ -7,4 +7,4 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Examples tests"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"

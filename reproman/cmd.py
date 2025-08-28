@@ -24,12 +24,11 @@ from os.path import abspath, isabs
 
 from .dochelpers import exc_str
 from .support.exceptions import CommandError
-from .support.protocol import NullProtocol, DryRunProtocol, \
-    ExecutionTimeProtocol, ExecutionTimeExternalsProtocol
+from .support.protocol import NullProtocol, DryRunProtocol, ExecutionTimeProtocol, ExecutionTimeExternalsProtocol
 from .utils import on_windows
 from . import cfg
 
-lgr = logging.getLogger('reproman.cmd')
+lgr = logging.getLogger("reproman.cmd")
 
 _TEMP_std = sys.stdout, sys.stderr
 
@@ -48,7 +47,7 @@ class Runner(object):
     able to record calls and allows for dry runs.
     """
 
-    __slots__ = ['commands', 'dry', 'cwd', 'env', 'protocol']
+    __slots__ = ["commands", "dry", "cwd", "env", "protocol"]
 
     def __init__(self, cwd=None, env=None, protocol=None):
         """
@@ -68,19 +67,16 @@ class Runner(object):
         self.env = env
         if protocol is None:
             # TODO: config cmd.protocol = null
-            cfg = os.environ.get('REPROMAN_CMD_PROTOCOL', 'null')
+            cfg = os.environ.get("REPROMAN_CMD_PROTOCOL", "null")
             protocol = {
-                'externals-time': ExecutionTimeExternalsProtocol,
-                'time': ExecutionTimeProtocol,
-                'null': NullProtocol
+                "externals-time": ExecutionTimeExternalsProtocol,
+                "time": ExecutionTimeProtocol,
+                "null": NullProtocol,
             }[cfg]()
-            if cfg != 'null':
+            if cfg != "null":
                 # we need to dump it into a file at the end
                 # TODO: config cmd.protocol_prefix = protocol
-                filename = '%s-%s.log' % (
-                    os.environ.get('REPROMAN_CMD_PROTOCOL_PREFIX', 'protocol'),
-                    id(self)
-                )
+                filename = "%s-%s.log" % (os.environ.get("REPROMAN_CMD_PROTOCOL_PREFIX", "protocol"), id(self))
                 atexit.register(functools.partial(protocol.write_to_file, filename))
 
         self.protocol = protocol
@@ -113,22 +109,18 @@ class Runner(object):
         elif callable(cmd):
             return self.call(cmd, *args, **kwargs)
         else:
-            raise TypeError("Argument 'command' is neither a string, "
-                             "nor a list nor a callable.")
+            raise TypeError("Argument 'command' is neither a string, " "nor a list nor a callable.")
 
     # Two helpers to encapsulate formatting/output
     def _log_out(self, line):
         if line:
-            self.log("stdout| " + line.rstrip('\n'))
+            self.log("stdout| " + line.rstrip("\n"))
 
     def _log_err(self, line, expected=False):
         if line:
-            self.log("stderr| " + line.rstrip('\n'),
-                     level={True: logging.DEBUG,
-                            False: logging.ERROR}[expected])
+            self.log("stderr| " + line.rstrip("\n"), level={True: logging.DEBUG, False: logging.ERROR}[expected])
 
-    def _get_output_online(self, proc, log_stdout, log_stderr,
-                           expect_stderr=False, expect_fail=False):
+    def _get_output_online(self, proc, log_stdout, log_stderr, expect_stderr=False, expect_fail=False):
         stdout, stderr = bytes(), bytes()
         while proc.poll() is None:
             if log_stdout:
@@ -146,8 +138,7 @@ class Runner(object):
                 line = proc.stderr.readline()
                 if line:
                     stderr += line
-                    self._log_err(line.decode(),
-                                  expect_stderr or expect_fail)
+                    self._log_err(line.decode(), expect_stderr or expect_fail)
                     # TODO: what's the proper log level here?
                     # Changes on that should be properly adapted in
                     # test.cmd.test_runner_log_stderr()
@@ -156,9 +147,18 @@ class Runner(object):
 
         return stdout, stderr
 
-    def run(self, cmd, log_stdout=True, log_stderr=True, log_online=False,
-            expect_stderr=False, expect_fail=False,
-            cwd=None, env=None, shell=None):
+    def run(
+        self,
+        cmd,
+        log_stdout=True,
+        log_stderr=True,
+        log_online=False,
+        expect_stderr=False,
+        expect_fail=False,
+        cwd=None,
+        env=None,
+        shell=None,
+    ):
         """Runs the command `cmd` using shell.
 
         In case of dry-mode `cmd` is just added to `commands` and it is
@@ -236,16 +236,13 @@ class Runner(object):
             if self.protocol.records_ext_commands:
                 prot_exc = None
                 prot_id = self.protocol.start_section(
-                    shlex.split(cmd, posix=not on_windows)
-                    if isinstance(cmd, str)
-                    else cmd)
+                    shlex.split(cmd, posix=not on_windows) if isinstance(cmd, str) else cmd
+                )
 
             try:
-                proc = subprocess.Popen(cmd, stdout=outputstream,
-                                        stderr=errstream,
-                                        shell=shell,
-                                        cwd=cwd or self.cwd,
-                                        env=env or self.env)
+                proc = subprocess.Popen(
+                    cmd, stdout=outputstream, stderr=errstream, shell=shell, cwd=cwd or self.cwd, env=env or self.env
+                )
 
             except Exception as e:
                 prot_exc = e
@@ -253,8 +250,7 @@ class Runner(object):
                     logfn = lgr.debug
                 else:
                     logfn = lgr.error
-                logfn("Failed to start %r%r: %s" %
-                      (cmd, " under %r" % cwd if cwd else '', exc_str(e)))
+                logfn("Failed to start %r%r: %s" % (cmd, " under %r" % cwd if cwd else "", exc_str(e)))
                 raise
 
             finally:
@@ -262,15 +258,16 @@ class Runner(object):
                     self.protocol.end_section(prot_id, prot_exc)
 
             if log_online:
-                out = self._get_output_online(proc, log_stdout, log_stderr,
-                                              expect_stderr=expect_stderr,
-                                              expect_fail=expect_fail)
+                out = self._get_output_online(
+                    proc, log_stdout, log_stderr, expect_stderr=expect_stderr, expect_fail=expect_fail
+                )
             else:
                 out = proc.communicate()
 
             # Decoding was delayed to this point
             def decode_if_not_None(x):
                 return "" if x is None else bytes.decode(x)
+
             # TODO: check if we can avoid PY3 specific here
             out = tuple(map(decode_if_not_None, out))
 
@@ -286,20 +283,21 @@ class Runner(object):
                     self._log_err(out[1], expected=expect_stderr)
 
             if status not in [0, None]:
-                msg = "Failed to run %r%s. Exit code=%d. out=%s err=%s" \
-                    % (cmd, " under %r" % (cwd or self.cwd), status, out[0], out[1])
+                msg = "Failed to run %r%s. Exit code=%d. out=%s err=%s" % (
+                    cmd,
+                    " under %r" % (cwd or self.cwd),
+                    status,
+                    out[0],
+                    out[1],
+                )
                 (lgr.debug if expect_fail else lgr.error)(msg)
                 raise CommandError(str(cmd), msg, status, out[0], out[1])
             else:
-                self.log("Finished running %r with status %s" % (cmd, status),
-                         level=8)
+                self.log("Finished running %r with status %s" % (cmd, status), level=8)
 
         else:
             if self.protocol.records_ext_commands:
-                self.protocol.add_section(shlex.split(cmd,
-                                                      posix=not on_windows)
-                                          if isinstance(cmd, str)
-                                          else cmd, None)
+                self.protocol.add_section(shlex.split(cmd, posix=not on_windows) if isinstance(cmd, str) else cmd, None)
             out = ("DRY", "DRY")
 
         return out
@@ -318,9 +316,7 @@ class Runner(object):
         if self.protocol.do_execute_callables:
             if self.protocol.records_callables:
                 prot_exc = None
-                prot_id = self.protocol.start_section([str(f),
-                                                 "args=%s" % str(args),
-                                                 "kwargs=%s" % str(kwargs)])
+                prot_id = self.protocol.start_section([str(f), "args=%s" % str(args), "kwargs=%s" % str(kwargs)])
 
             try:
                 return f(*args, **kwargs)
@@ -332,10 +328,7 @@ class Runner(object):
                     self.protocol.end_section(prot_id, prot_exc)
         else:
             if self.protocol.records_callables:
-                self.protocol.add_section([str(f),
-                                             "args=%s" % str(args),
-                                             "kwargs=%s" % str(kwargs)],
-                                          None)
+                self.protocol.add_section([str(f), "args=%s" % str(args), "kwargs=%s" % str(kwargs)], None)
 
     def log(self, msg, level=logging.DEBUG):
         """log helper
@@ -363,20 +356,20 @@ class GitRunner(Runner):
         """
         Replaces GIT_DIR and GIT_WORK_TREE with absolute paths if relative path and defined
         """
-        git_env = env.copy() if env else os.environ.copy()         # if env set copy else get os environment
+        git_env = env.copy() if env else os.environ.copy()  # if env set copy else get os environment
 
-        for varstring in ['GIT_DIR', 'GIT_WORK_TREE']:
+        for varstring in ["GIT_DIR", "GIT_WORK_TREE"]:
             var = git_env.get(varstring)
-            if var:                                                # if env variable set
-                if not isabs(var):                                 # and it's a relative path
-                    git_env[varstring] = abspath(var)              # convert it to absolute path
+            if var:  # if env variable set
+                if not isabs(var):  # and it's a relative path
+                    git_env[varstring] = abspath(var)  # convert it to absolute path
                     lgr.debug("Updated %s to %s" % (varstring, git_env[varstring]))
 
         return git_env
 
     def run(self, cmd, env=None, *args, **kwargs):
-        return super(GitRunner, self).run(
-            cmd, env=self.get_git_environ_adjusted(), *args, **kwargs)
+        return super(GitRunner, self).run(cmd, env=self.get_git_environ_adjusted(), *args, **kwargs)
+
 
 # ####
 # Preserve from previous version
@@ -384,14 +377,12 @@ class GitRunner(Runner):
 # ####
 # this one might get under Runner for better output/control
 def link_file_load(src, dst, dry_run=False):
-    """Just a little helper to hardlink files's load
-    """
+    """Just a little helper to hardlink files's load"""
     dst_dir = os.path.dirname(dst)
     if not os.path.exists(dst_dir):
         os.makedirs(dst_dir)
     if os.path.lexists(dst):
-        lgr.debug("Destination file %(dst)s exists. Removing it first"
-                  % locals())
+        lgr.debug("Destination file %(dst)s exists. Removing it first" % locals())
         # TODO: how would it interact with git/git-annex
         os.unlink(dst)
     lgr.debug("Hardlinking %(src)s under %(dst)s" % locals())
@@ -409,7 +400,7 @@ def link_file_load(src, dst, dry_run=False):
 
 def get_runner(*args, **kwargs):
     # TODO:  this is all crawl specific -- should be moved away
-    if cfg.getboolean('crawl', 'dryrun', default=False):
+    if cfg.getboolean("crawl", "dryrun", default=False):
         kwargs = kwargs.copy()
-        kwargs['protocol'] = DryRunProtocol()
+        kwargs["protocol"] = DryRunProtocol()
     return Runner(*args, **kwargs)

@@ -6,10 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to install packages
-"""
+"""Helper utility to install packages"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from .base import Interface
 from .common_opts import resref_arg
@@ -20,7 +19,8 @@ from ..formats import Provenance
 from ..resource import get_manager
 
 from logging import getLogger
-lgr = getLogger('reproman.api.install')
+
+lgr = getLogger("reproman.api.install")
 
 
 class Install(Interface):
@@ -38,9 +38,8 @@ class Install(Interface):
         resref_type=resref_type_opt,
         spec=Parameter(
             args=("spec",),
-            doc="file with specifications (in supported formats) of"
-                " packages used in executed environment",
-            metavar='SPEC',
+            doc="file with specifications (in supported formats) of" " packages used in executed environment",
+            metavar="SPEC",
             nargs="+",
             constraints=EnsureStr(),
             # TODO:  here we need to elaborate options for sub-parsers to
@@ -83,7 +82,7 @@ class Install(Interface):
             # TODO: add option to skip initiation
             distribution.initiate(session)
             distribution.install_packages(session)
-        #env_resource.execute_command_buffer()
+        # env_resource.execute_command_buffer()
         # ??? verify that everything was installed according to the specs
         #     so would need pretty much going through the spec and querying
         #     all those packages.  If something differs -- report

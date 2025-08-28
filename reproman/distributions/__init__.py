@@ -5,11 +5,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Facility for installing and managing distributions on targeted servers.
+"""Facility for installing and managing distributions on targeted servers."""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 # Allow base Distribution class to be available directly from the package.
 from reproman.distributions.base import Distribution

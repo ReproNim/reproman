@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utils to deal with various file formats
-"""
+"""Helper utils to deal with various file formats"""
 
 from __future__ import absolute_import
 
@@ -42,10 +41,4 @@ def write_config_key(stream, envconfig, key, intro_comment=""):
 
 def write_config(stream, rec):
     """TODO"""
-    return safe_write(
-        stream,
-        yaml.safe_dump(
-            rec, encoding="utf-8", allow_unicode=True,
-            default_flow_style=False
-        )
-    )
+    return safe_write(stream, yaml.safe_dump(rec, encoding="utf-8", allow_unicode=True, default_flow_style=False))

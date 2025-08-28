@@ -22,7 +22,7 @@ def test_backend_parameters_unknown_resource():
 
 
 def test_backend_parameters_with_arg():
-    with mock.patch('sys.stdout', new_callable=StringIO) as out:
+    with mock.patch("sys.stdout", new_callable=StringIO) as out:
         backend_parameters(["ssh"])
     assert "host:" in out.getvalue()
     assert "image:" not in out.getvalue()
@@ -30,7 +30,7 @@ def test_backend_parameters_with_arg():
 
 
 def test_backend_parameters_all():
-    with mock.patch('sys.stdout', new_callable=StringIO) as out:
+    with mock.patch("sys.stdout", new_callable=StringIO) as out:
         backend_parameters()
     assert "host:" in out.getvalue()
     if "boto3" in external_versions:

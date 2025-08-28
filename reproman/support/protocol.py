@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""" Protocolling  command calls.
-"""
+"""Protocolling  command calls."""
 
 import abc
 from os import linesep
@@ -14,7 +13,7 @@ import logging
 import time
 
 
-lgr = logging.getLogger('reproman.protocol')
+lgr = logging.getLogger("reproman.protocol")
 
 
 class ProtocolInterface(object, metaclass=abc.ABCMeta):
@@ -29,7 +28,7 @@ class ProtocolInterface(object, metaclass=abc.ABCMeta):
 
     def __init__(self):
         self._sections = []
-        self._title = ''
+        self._title = ""
 
     def __iter__(self):
         return self._sections.__iter__()
@@ -159,7 +158,7 @@ class ProtocolInterface(object, metaclass=abc.ABCMeta):
         """
         # TODO: separate protocolling data from presentation since we might want
         # to dump as json
-        with open(file_, 'w') as f:
+        with open(file_, "w") as f:
             f.write(self.__str__())
 
 
@@ -210,13 +209,14 @@ class DryRunProtocol(ProtocolInterface):
     containing only the key 'command'. Its value is the list passed to
     start_section() or add_section() respectively.
     """
+
     def __init__(self):
         super(DryRunProtocol, self).__init__()
         self._title = "Dry run protocol:" + linesep
 
     def start_section(self, cmd):
         id_ = len(self._sections)
-        self._sections.append({'command': cmd})
+        self._sections.append({"command": cmd})
         # TODO: it somewhat duplicates how currently all the dry running is
         # reported... but without it I seems to have no dry run logging at
         # all for e.g. "reproman crawl" command
@@ -252,6 +252,7 @@ class DryRunExternalsProtocol(DryRunProtocol):
     Same as DryRunProtocol, but only affects (and records) external command
     calls.
     """
+
     def __init__(self):
         super(DryRunExternalsProtocol, self).__init__()
 
@@ -283,18 +284,17 @@ class ExecutionTimeProtocol(ProtocolInterface):
     def start_section(self, cmd):
         t_start = time.time()
         id_ = len(self._sections)
-        self._sections.append({'command': cmd, 'start': t_start})
+        self._sections.append({"command": cmd, "start": t_start})
         return id_
 
     def end_section(self, id_, exception):
         t_end = time.time()
-        self._sections[id_]['end'] = t_end
-        self._sections[id_]['duration'] = t_end - self._sections[id_]['start']
-        self._sections[id_]['exception'] = exception
+        self._sections[id_]["end"] = t_end
+        self._sections[id_]["duration"] = t_end - self._sections[id_]["start"]
+        self._sections[id_]["exception"] = exception
 
     def add_section(self, cmd, exception):
-        self._sections.append({'command': cmd, 'start': None, 'end': None,
-                               'duration': None, 'exception': exception})
+        self._sections.append({"command": cmd, "start": None, "end": None, "duration": None, "exception": exception})
 
     @property
     def records_ext_commands(self):

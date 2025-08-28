@@ -13,22 +13,23 @@ class ManPageFormatter(argparse.HelpFormatter):
     # This code was originally distributed
     # under the same License of Python
     # Copyright (c) 2014 Oz Nahum Tiram  <nahumoz@gmail.com>
-    def __init__(self,
-                 prog,
-                 indent_increment=2,
-                 max_help_position=24,
-                 width=None,
-                 section=1,
-                 ext_sections=None,
-                 authors=None,
-                 version=None
-                 ):
+    def __init__(
+        self,
+        prog,
+        indent_increment=2,
+        max_help_position=24,
+        width=None,
+        section=1,
+        ext_sections=None,
+        authors=None,
+        version=None,
+    ):
 
         super(ManPageFormatter, self).__init__(prog)
 
         self._prog = prog
         self._section = 1
-        self._today = datetime.date.today().strftime('%Y\\-%m\\-%d')
+        self._today = datetime.date.today().strftime("%Y\\-%m\\-%d")
         self._ext_sections = ext_sections
         self._version = version
 
@@ -36,59 +37,54 @@ class ManPageFormatter(argparse.HelpFormatter):
         return self.formatter_class(prog=self.prog, **kwargs)
 
     def _markup(self, txt):
-        return txt.replace('-', '\\-')
+        return txt.replace("-", "\\-")
 
     def _underline(self, string):
         return "\\fI\\s-1" + string + "\\s0\\fR"
 
     def _bold(self, string):
-        if not string.strip().startswith('\\fB'):
-            string = '\\fB' + string
-        if not string.strip().endswith('\\fR'):
-            string = string + '\\fR'
+        if not string.strip().startswith("\\fB"):
+            string = "\\fB" + string
+        if not string.strip().endswith("\\fR"):
+            string = string + "\\fR"
         return string
 
     def _mk_synopsis(self, parser):
-        self.add_usage(parser.usage, parser._actions,
-                       parser._mutually_exclusive_groups, prefix='')
-        usage = self._format_usage(None, parser._actions,
-                                   parser._mutually_exclusive_groups, '')
+        self.add_usage(parser.usage, parser._actions, parser._mutually_exclusive_groups, prefix="")
+        usage = self._format_usage(None, parser._actions, parser._mutually_exclusive_groups, "")
 
-        usage = usage.replace('%s ' % self._prog, '')
-        usage = '.SH SYNOPSIS\n \\fB%s\\fR %s\n' % (self._markup(self._prog),
-                                                    usage)
+        usage = usage.replace("%s " % self._prog, "")
+        usage = ".SH SYNOPSIS\n \\fB%s\\fR %s\n" % (self._markup(self._prog), usage)
         return usage
 
     def _mk_title(self, prog):
-        name_version = "\"{0} {1}\"".format(prog, self._version)
-        return '.TH {0} {1} {2} {3}\n'.format(prog, self._section,
-                                              self._today, name_version)
+        name_version = '"{0} {1}"'.format(prog, self._version)
+        return ".TH {0} {1} {2} {3}\n".format(prog, self._section, self._today, name_version)
 
     def _make_name(self, parser):
         """
         this method is in consistent with others ... it relies on
         distributions
         """
-        return '.SH NAME\n%s \\- %s\n' % (parser.prog,
-                                          parser.description)
+        return ".SH NAME\n%s \\- %s\n" % (parser.prog, parser.description)
 
     def _mk_description(self, parser):
         desc = parser.description
         if not desc:
-            return ''
-        desc = desc.replace('\n', '\n.br\n')
-        return '.SH DESCRIPTION\n%s\n' % self._markup(desc)
+            return ""
+        desc = desc.replace("\n", "\n.br\n")
+        return ".SH DESCRIPTION\n%s\n" % self._markup(desc)
 
     def _mk_footer(self, sections):
-        if not hasattr(sections, '__iter__'):
-            return ''
+        if not hasattr(sections, "__iter__"):
+            return ""
 
         footer = []
         for section, value in sections.items():
             part = ".SH {}\n {}".format(section.upper(), value)
             footer.append(part)
 
-        return '\n'.join(footer)
+        return "\n".join(footer)
 
     def format_man_page(self, parser):
         page = []
@@ -98,7 +94,7 @@ class ManPageFormatter(argparse.HelpFormatter):
         page.append(self._mk_options(parser))
         page.append(self._mk_footer(self._ext_sections))
 
-        return ''.join(page)
+        return "".join(page)
 
     def _mk_options(self, parser):
 
@@ -115,11 +111,11 @@ class ManPageFormatter(argparse.HelpFormatter):
         formatter.add_text(parser.epilog)
 
         # determine help from format above
-        return '.SH OPTIONS\n' + formatter.format_help()
+        return ".SH OPTIONS\n" + formatter.format_help()
 
     def _format_action_invocation(self, action):
         if not action.option_strings:
-            metavar, = self._metavar_formatter(action, action.dest)(1)
+            (metavar,) = self._metavar_formatter(action, action.dest)(1)
             return metavar
 
         else:
@@ -128,8 +124,7 @@ class ManPageFormatter(argparse.HelpFormatter):
             # if the Optional doesn't take a value, format is:
             #    -s, --long
             if action.nargs == 0:
-                parts.extend([self._bold(action_str) for action_str in
-                              action.option_strings])
+                parts.extend([self._bold(action_str) for action_str in action.option_strings])
 
             # if the Optional takes a value, format is:
             #    -s ARGS, --long ARGS
@@ -137,10 +132,9 @@ class ManPageFormatter(argparse.HelpFormatter):
                 default = self._underline(action.dest.upper())
                 args_string = self._format_args(action, default)
                 for option_string in action.option_strings:
-                    parts.append('%s %s' % (self._bold(option_string),
-                                            args_string))
+                    parts.append("%s %s" % (self._bold(option_string), args_string))
 
-            return ', '.join(parts)
+            return ", ".join(parts)
 
 
 class RSTManPageFormatter(ManPageFormatter):
@@ -158,44 +152,38 @@ class RSTManPageFormatter(ManPageFormatter):
         return "**{0}**".format(string)
 
     def _mk_synopsis(self, parser):
-        self.add_usage(parser.usage, parser._actions,
-                       parser._mutually_exclusive_groups, prefix='')
-        usage = self._format_usage(None, parser._actions,
-                                   parser._mutually_exclusive_groups, '')
+        self.add_usage(parser.usage, parser._actions, parser._mutually_exclusive_groups, prefix="")
+        usage = self._format_usage(None, parser._actions, parser._mutually_exclusive_groups, "")
 
-        usage = usage.replace('%s ' % self._prog, '')
-        usage = 'Synopsis\n--------\n::\n\n  %s %s\n' \
-                % (self._markup(self._prog), usage)
+        usage = usage.replace("%s " % self._prog, "")
+        usage = "Synopsis\n--------\n::\n\n  %s %s\n" % (self._markup(self._prog), usage)
         return usage
 
     def _mk_title(self, prog):
-        title = ".. _man_{}:\n\n".format(prog.replace(' ', '-'))
+        title = ".. _man_{}:\n\n".format(prog.replace(" ", "-"))
         title += "{0}".format(prog)
-        title += '\n{0}\n\n'.format('=' * len(title))
+        title += "\n{0}\n\n".format("=" * len(title))
         return title
 
     def _make_name(self, parser):
-        return ''
+        return ""
 
     def _mk_description(self, parser):
         desc = parser.description
         if not desc:
-            return ''
-        return 'Description\n-----------\n%s\n' % self._markup(desc)
+            return ""
+        return "Description\n-----------\n%s\n" % self._markup(desc)
 
     def _mk_footer(self, sections):
-        if not hasattr(sections, '__iter__'):
-            return ''
+        if not hasattr(sections, "__iter__"):
+            return ""
 
         footer = []
         for section, value in sections.items():
-            part = "\n{0}\n{1}\n{2}\n".format(
-                section,
-                '-' * len(section),
-                value)
+            part = "\n{0}\n{1}\n{2}\n".format(section, "-" * len(section), value)
             footer.append(part)
 
-        return '\n'.join(footer)
+        return "\n".join(footer)
 
     def _mk_options(self, parser):
 
@@ -215,7 +203,7 @@ class RSTManPageFormatter(ManPageFormatter):
         # determine help from format above
         option_sec = formatter.format_help()
 
-        return '\n\nOptions\n-------\n{0}'.format(option_sec)
+        return "\n\nOptions\n-------\n{0}".format(option_sec)
 
     def _format_action(self, action):
         # determine the required width and the entry label
@@ -224,54 +212,51 @@ class RSTManPageFormatter(ManPageFormatter):
         if action.help:
             help_text = self._expand_help(action)
             help_lines = self._split_lines(help_text, 80)
-            help = ' '.join(help_lines)
+            help = " ".join(help_lines)
         else:
-            help = ''
+            help = ""
 
         # return a single string
-        return '{0}\n{1}\n{2}\n\n'.format(
-            action_header,
-
-            '~' * len(action_header),
-            help)
+        return "{0}\n{1}\n{2}\n\n".format(action_header, "~" * len(action_header), help)
 
 
 def cmdline_example_to_rst(src, out=None, ref=None):
     if out is None:
         from io import StringIO
+
         out = StringIO()
 
     # place header
-    out.write('.. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n')
+    out.write(".. AUTO-GENERATED FILE -- DO NOT EDIT!\n\n")
     if ref:
         # place cross-ref target
-        out.write('.. {0}:\n\n'.format(ref))
+        out.write(".. {0}:\n\n".format(ref))
 
     # parser status vars
     inexample = False
     incodeblock = False
 
     for line in src:
-        if line.startswith('#% EXAMPLE START'):
+        if line.startswith("#% EXAMPLE START"):
             inexample = True
             incodeblock = False
             continue
         if not inexample:
             continue
-        if line.startswith('#% EXAMPLE END'):
+        if line.startswith("#% EXAMPLE END"):
             break
         if not inexample:
             continue
-        if line.startswith('#%'):
+        if line.startswith("#%"):
             incodeblock = not incodeblock
             if incodeblock:
-                out.write('\n.. code-block:: sh\n\n')
+                out.write("\n.. code-block:: sh\n\n")
             continue
-        if not incodeblock and line.startswith('#'):
-            out.write(line[(min(2, len(line) - 1)):])
+        if not incodeblock and line.startswith("#"):
+            out.write(line[(min(2, len(line) - 1)) :])
             continue
         if incodeblock:
-            out.write('  %s' % line)
+            out.write("  %s" % line)
             continue
         if not len(line.strip()):
             continue

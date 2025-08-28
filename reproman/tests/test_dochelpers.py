@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Tests for dochelpers (largely copied from PyMVPA, the same copyright)
-"""
+"""Tests for dochelpers (largely copied from PyMVPA, the same copyright)"""
 
 from unittest.mock import patch
 
@@ -18,10 +17,10 @@ from .utils import assert_re_in
 
 
 def test_basic():
-    assert_equal(single_or_plural('a', 'b', 1), 'a')
-    assert_equal(single_or_plural('a', 'b', 0), 'b')
-    assert_equal(single_or_plural('a', 'b', 123), 'b')
-    assert_equal(single_or_plural('a', 'b', 123, include_count=True), '123 b')
+    assert_equal(single_or_plural("a", "b", 1), "a")
+    assert_equal(single_or_plural("a", "b", 0), "b")
+    assert_equal(single_or_plural("a", "b", 123), "b")
+    assert_equal(single_or_plural("a", "b", 123, include_count=True), "123 b")
 
 
 def test_borrow_doc():
@@ -30,6 +29,7 @@ def test_borrow_doc():
         def met1(self):
             """met1doc"""
             pass  # pragma: no cover
+
         def met2(self):
             """met2doc"""
             pass  # pragma: no cover
@@ -38,7 +38,8 @@ def test_borrow_doc():
         @borrowdoc(A)
         def met1(self):
             pass  # pragma: no cover
-        @borrowdoc(A, 'met1')
+
+        @borrowdoc(A, "met1")
         def met2(self):
             pass  # pragma: no cover
 
@@ -82,7 +83,7 @@ def test_borrow_kwargs():
             """
             pass  # pragma: no cover
 
-        @borrowkwargs(A, 'met1')
+        @borrowkwargs(A, "met1")
         def met_nodoc(self, **kwargs):
             pass  # pragma: no cover
 
@@ -90,7 +91,7 @@ def test_borrow_kwargs():
         def met_anothermet(self, **kwargs):
             pass  # pragma: no cover
 
-        @borrowkwargs(A, 'met1')
+        @borrowkwargs(A, "met1")
         def met_nodockwargs(self, bogus=None, **kwargs):
             """B.met_nodockwargs
 
@@ -103,7 +104,7 @@ def test_borrow_kwargs():
 
         if True:
             # Just so we get different indentation level
-            @borrowkwargs(A, 'met1', ['kp1'])
+            @borrowkwargs(A, "met1", ["kp1"])
             def met_excludes(self, boguse=None, **kwargs):
                 """B.met_excludes
 
@@ -114,27 +115,24 @@ def test_borrow_kwargs():
                 """
                 pass  # pragma: no cover
 
-    assert_true('B.met1 doc' in B.met1.__doc__)
-    for m in (B.met1,
-              B.met_nodoc,
-              B.met_anothermet,
-              B.met_nodockwargs,
-              B.met_excludes):
+    assert_true("B.met1 doc" in B.met1.__doc__)
+    for m in (B.met1, B.met_nodoc, B.met_anothermet, B.met_nodockwargs, B.met_excludes):
         docstring = m.__doc__
-        assert_true('Parameters' in docstring)
-        assert_true(not '*kwargs' in docstring,
-            msg="We shouldn't carry kwargs in docstring now,"
-                "Got %r for %s" % (docstring, m))
-        assert_true('kp2 ' in docstring)
-        assert_true((('kp1 ' in docstring)
-                             ^ (m == B.met_excludes)))
+        assert_true("Parameters" in docstring)
+        assert_true(
+            not "*kwargs" in docstring,
+            msg="We shouldn't carry kwargs in docstring now," "Got %r for %s" % (docstring, m),
+        )
+        assert_true("kp2 " in docstring)
+        assert_true((("kp1 " in docstring) ^ (m == B.met_excludes)))
         # indentation should have been squashed properly
-        assert_true(not '   ' in docstring)
+        assert_true(not "   " in docstring)
 
     # some additional checks to see if we are not losing anything
-    assert_true('Some postamble' in B.met1.__doc__)
-    assert_true('B.met_nodockwargs' in B.met_nodockwargs.__doc__)
-    assert_true('boguse' in B.met_excludes.__doc__)
+    assert_true("Some postamble" in B.met1.__doc__)
+    assert_true("B.met_nodockwargs" in B.met_nodockwargs.__doc__)
+    assert_true("boguse" in B.met_excludes.__doc__)
+
 
 def test_exc_str():
     try:
@@ -146,7 +144,9 @@ def test_exc_str():
     def f():
         def f2():
             raise Exception("my bad again")
+
         f2()
+
     try:
         f()
     except Exception as e:
@@ -154,12 +154,15 @@ def test_exc_str():
         estr2 = exc_str(e, 2)
         estr1 = exc_str(e, 1)
         # and we can control it via environ by default
-        with patch.dict('os.environ', {'REPROMAN_EXC_STR_TBLIMIT': '3'}):
+        with patch.dict("os.environ", {"REPROMAN_EXC_STR_TBLIMIT": "3"}):
             estr3 = exc_str(e)
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             estr_ = exc_str()
 
-    assert_re_in(r"my bad again \[test_dochelpers.py:test_exc_str:...,test_dochelpers.py:f:...,test_dochelpers.py:f2:...\]", estr3)
+    assert_re_in(
+        r"my bad again \[test_dochelpers.py:test_exc_str:...,test_dochelpers.py:f:...,test_dochelpers.py:f2:...\]",
+        estr3,
+    )
     assert_re_in(r"my bad again \[test_dochelpers.py:f:...,test_dochelpers.py:f2:...\]", estr2)
     assert_re_in(r"my bad again \[test_dochelpers.py:f2:...\]", estr1)
     assert_equal(estr_, estr1)

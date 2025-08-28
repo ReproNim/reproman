@@ -20,23 +20,22 @@ from ...tests.skip import skipif
 from ...utils import swallow_logs
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def docker_container():
     skipif.no_network()
     skipif.no_docker_engine()
     name = str(uuid.uuid4())  # Generate a random name for the container.
-    Runner().run(['docker', 'run', '-t', '-d', '--rm', '--name',
-                  name, 'centos:7'],
-                 expect_stderr=True)
+    Runner().run(["docker", "run", "-t", "-d", "--rm", "--name", name, "centos:7"], expect_stderr=True)
     yield name
-    Runner().run(['docker', 'stop', name])
+    Runner().run(["docker", "stop", name])
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def centos_spec():
     tmp = tempfile.NamedTemporaryFile(delete=False)
-    with open(tmp.name, 'w') as f:
-        f.write("""# ReproMan Environment Configuration File
+    with open(tmp.name, "w") as f:
+        f.write(
+            """# ReproMan Environment Configuration File
 # This file was created by ReproMan 0.0.5 on 2018-05-23 22:03:22.820177
 version: 0.0.1
 distributions:
@@ -94,81 +93,83 @@ distributions:
     files:
     - /usr/sbin/fido
   version: CentOS Linux release 7.4.1708 (Core)
-""")
+"""
+        )
     return tmp.name
 
 
 @pytest.fixture
 def setup_packages():
     """set up the package comparison tests"""
-    a = RPMPackage(name='p1')
-    b = RPMPackage(name='p1', version='1.0')
-    c = RPMPackage(name='p1', version='1.1')
-    d = RPMPackage(name='p1', architecture='i386')
-    e = RPMPackage(name='p1', architecture='alpha')
-    f = RPMPackage(name='p1', version='1.1', architecture='i386')
-    g = RPMPackage(name='p2')
+    a = RPMPackage(name="p1")
+    b = RPMPackage(name="p1", version="1.0")
+    c = RPMPackage(name="p1", version="1.1")
+    d = RPMPackage(name="p1", architecture="i386")
+    e = RPMPackage(name="p1", architecture="alpha")
+    f = RPMPackage(name="p1", version="1.1", architecture="i386")
+    g = RPMPackage(name="p2")
     return (a, b, c, d, e, f, g)
 
 
 @pytest.fixture
 def setup_distributions(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    d1 = RedhatDistribution(name='debian 1')
+    d1 = RedhatDistribution(name="debian 1")
     d1.packages = [p1]
-    d2 = RedhatDistribution(name='debian 2')
+    d2 = RedhatDistribution(name="debian 2")
     d2.packages = [p1v11]
     return (d1, d2)
 
 
 def test_package_satisfies(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert p1.compare(p1, mode='satisfied_by')
-    assert p1v10.compare(p1v10, mode='satisfied_by')
-    assert not p1v10.compare(p1, mode='satisfied_by')
-    assert p1.compare(p1v10, mode='satisfied_by')
-    assert not p1v11.compare(p1v10, mode='satisfied_by')
-    assert not p2.compare(p1, mode='satisfied_by')
-    assert not p2.compare(p1v10, mode='satisfied_by')
-    assert not p1v10.compare(p2, mode='satisfied_by')
-    assert not p1aa.compare(p1v10, mode='satisfied_by')
-    assert p1.compare(p1aa, mode='satisfied_by')
-    assert not p1v10.compare(p1aa, mode='satisfied_by')
-    assert not p1ai.compare(p1aa, mode='satisfied_by')
-    assert not p1v11ai.compare(p1v11, mode='satisfied_by')
-    assert p1v11.compare(p1v11ai, mode='satisfied_by')
+    assert p1.compare(p1, mode="satisfied_by")
+    assert p1v10.compare(p1v10, mode="satisfied_by")
+    assert not p1v10.compare(p1, mode="satisfied_by")
+    assert p1.compare(p1v10, mode="satisfied_by")
+    assert not p1v11.compare(p1v10, mode="satisfied_by")
+    assert not p2.compare(p1, mode="satisfied_by")
+    assert not p2.compare(p1v10, mode="satisfied_by")
+    assert not p1v10.compare(p2, mode="satisfied_by")
+    assert not p1aa.compare(p1v10, mode="satisfied_by")
+    assert p1.compare(p1aa, mode="satisfied_by")
+    assert not p1v10.compare(p1aa, mode="satisfied_by")
+    assert not p1ai.compare(p1aa, mode="satisfied_by")
+    assert not p1v11ai.compare(p1v11, mode="satisfied_by")
+    assert p1v11.compare(p1v11ai, mode="satisfied_by")
 
 
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
     (d1, d2) = setup_distributions
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert p1.compare(d1, mode='satisfied_by')
-    assert not p1v10.compare(d1, mode='satisfied_by')
-    assert p1.compare(d2, mode='satisfied_by')
-    assert not p1v10.compare(d2, mode='satisfied_by')
-    assert p1v11.compare(d2, mode='satisfied_by')
+    assert p1.compare(d1, mode="satisfied_by")
+    assert not p1v10.compare(d1, mode="satisfied_by")
+    assert p1.compare(d2, mode="satisfied_by")
+    assert not p1v10.compare(d2, mode="satisfied_by")
+    assert p1v11.compare(d2, mode="satisfied_by")
 
 
 def test_distribution_statisfies(setup_distributions):
     (d1, d2) = setup_distributions
-    assert not d2.compare(d1, mode='satisfied_by')
-    assert d1.compare(d2, mode='satisfied_by')
+    assert not d2.compare(d1, mode="satisfied_by")
+    assert d1.compare(d2, mode="satisfied_by")
 
 
 def test_distribution_sub(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    d1 = RedhatDistribution(name='debian 1')
+    d1 = RedhatDistribution(name="debian 1")
     d1.packages = [p1, p2]
-    d2 = RedhatDistribution(name='debian 2')
+    d2 = RedhatDistribution(name="debian 2")
     d2.packages = [p1v11, p2]
-    assert d1-d2 == []
-    result = d2-d1
+    assert d1 - d2 == []
+    result = d2 - d1
     assert len(result) == 1
     assert result[0] == p1v11
 
 
 def test_tracer(docker_container):
     from ...resource.docker_container import DockerContainer
+
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()
@@ -178,59 +179,58 @@ def test_tracer(docker_container):
 
     # Test sorting through a given set of files and identifying the ones
     # that belong to CentOS.
-    files = ['/usr/bin/ls', 'foo']
+    files = ["/usr/bin/ls", "foo"]
     dist, remaining_files = next(tracer.identify_distributions(files))
-    assert 'foo' in remaining_files
-    assert dist.name == 'redhat'
-    assert dist.version.startswith('CentOS Linux release 7')
+    assert "foo" in remaining_files
+    assert dist.name == "redhat"
+    assert dist.version.startswith("CentOS Linux release 7")
     source_ids = [s.id for s in dist.sources]
-    assert 'base/7/x86_64' in source_ids
-    assert 'extras/7/x86_64' in source_ids
-    assert 'updates/7/x86_64' in source_ids
-    assert dist.packages[0].name == 'coreutils'
-    assert dist.packages[0].group == 'System Environment/Base'
-    assert dist.packages[0].files[0] == '/usr/bin/ls'
+    assert "base/7/x86_64" in source_ids
+    assert "extras/7/x86_64" in source_ids
+    assert "updates/7/x86_64" in source_ids
+    assert dist.packages[0].name == "coreutils"
+    assert dist.packages[0].group == "System Environment/Base"
+    assert dist.packages[0].files[0] == "/usr/bin/ls"
 
     # Test creating RPMPackage objects with files found to be in CentOS.
-    packages = tracer._get_packagefields_for_files(['/usr/bin/ls'])
-    assert packages['/usr/bin/ls']['name'] == 'coreutils'
-    assert packages['/usr/bin/ls']['packager'].startswith('CentOS BuildSystem')
+    packages = tracer._get_packagefields_for_files(["/usr/bin/ls"])
+    assert packages["/usr/bin/ls"]["name"] == "coreutils"
+    assert packages["/usr/bin/ls"]["packager"].startswith("CentOS BuildSystem")
 
 
 def test_distribution(docker_container, centos_spec):
     from ...resource.docker_container import DockerContainer
+
     # Test setup
     resource = DockerContainer(docker_container)
     resource.connect()
     session = resource.get_session()
-    provenance = Provenance.factory(centos_spec, 'reproman')
+    provenance = Provenance.factory(centos_spec, "reproman")
     dist = provenance.get_distributions()[0]
 
     with swallow_logs(new_level=logging.DEBUG) as log:
         dist.initiate(session)
         assert "Running command 'yum repolist'" in log.lines
-        assert "Running command 'yum install -y epel-release'" in \
-            log.lines
+        assert "Running command 'yum install -y epel-release'" in log.lines
 
         dist.install_packages(session)
         assert "Installing fido-1.1.2-1.el7.x86_64" in log.lines
-        assert "Running command 'yum install -y fido-1.1.2-1.el7.x86_64'" \
-            in log.lines
+        assert "Running command 'yum install -y fido-1.1.2-1.el7.x86_64'" in log.lines
 
 
 def test_package_is_identical_to(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert p1.compare(p1, mode='identical_to')
-    assert p1v10.compare(p1v10, mode='identical_to')
-    assert p1v11.compare(p1v11, mode='identical_to')
-    assert p1ai.compare(p1ai, mode='identical_to')
-    assert p1aa.compare(p1aa, mode='identical_to')
-    assert p1v11ai.compare(p1v11ai, mode='identical_to')
-    assert p2.compare(p2, mode='identical_to')
-    assert not p1.compare(p2, mode='identical_to')
-    assert not p1.compare(p1v10, mode='identical_to')
-    assert not p1v10.compare(p1v11, mode='identical_to')
-    assert not p1.compare(p1ai, mode='identical_to')
-    assert not p1.compare(p1aa, mode='identical_to')
-    assert not p1ai.compare(p1aa, mode='identical_to')
-    assert not p1.compare(p1v11ai, mode='identical_to')
+    assert p1.compare(p1, mode="identical_to")
+    assert p1v10.compare(p1v10, mode="identical_to")
+    assert p1v11.compare(p1v11, mode="identical_to")
+    assert p1ai.compare(p1ai, mode="identical_to")
+    assert p1aa.compare(p1aa, mode="identical_to")
+    assert p1v11ai.compare(p1v11ai, mode="identical_to")
+    assert p2.compare(p2, mode="identical_to")
+    assert not p1.compare(p2, mode="identical_to")
+    assert not p1.compare(p1v10, mode="identical_to")
+    assert not p1v10.compare(p1v11, mode="identical_to")
+    assert not p1.compare(p1ai, mode="identical_to")
+    assert not p1.compare(p1aa, mode="identical_to")
+    assert not p1ai.compare(p1aa, mode="identical_to")
+    assert not p1.compare(p1v11ai, mode="identical_to")

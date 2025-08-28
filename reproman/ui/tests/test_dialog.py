@@ -5,9 +5,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""tests for dialog UI """
+"""tests for dialog UI"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from io import StringIO
 import builtins
@@ -27,46 +27,39 @@ from reproman.ui.progressbars import progressbars
 
 def patch_input(**kwargs):
     """A helper to provide mocked cm patching input function which was renamed in PY3"""
-    return patch.object(builtins, 'input', **kwargs)
+    return patch.object(builtins, "input", **kwargs)
 
 
 def patch_getpass(**kwargs):
-    return patch('getpass.getpass', **kwargs)
+    return patch("getpass.getpass", **kwargs)
 
 
 def test_question_choices():
 
     # TODO: come up with a reusable fixture for testing here
 
-    choices = {
-        'a': '[a], b, cc',
-        'b': 'a, [b], cc',
-        'cc': 'a, b, [cc]'
-    }
+    choices = {"a": "[a], b, cc", "b": "a, [b], cc", "cc": "a, b, [cc]"}
 
-    for default_value in ['a', 'b']:
+    for default_value in ["a", "b"]:
         choices_str = choices[default_value]
-        for entered_value, expected_value in [(default_value, default_value),
-                                              ('', default_value),
-                                              ('cc', 'cc')]:
-            with patch_getpass(return_value=entered_value), \
-                patch_getpass(return_value=entered_value):
+        for entered_value, expected_value in [(default_value, default_value), ("", default_value), ("cc", "cc")]:
+            with patch_getpass(return_value=entered_value), patch_getpass(return_value=entered_value):
                 out = StringIO()
                 response = DialogUI(out=out).question("prompt", choices=sorted(choices), default=default_value)
                 eq_(response, expected_value)
                 # getpass doesn't use out -- goes straight to the terminal
-                eq_(out.getvalue(), '')
+                eq_(out.getvalue(), "")
                 # TODO: may be test that the prompt was passed as a part of the getpass arg
-                #eq_(out.getvalue(), 'prompt (choices: %s): ' % choices_str)
+                # eq_(out.getvalue(), 'prompt (choices: %s): ' % choices_str)
 
     # check some expected exceptions to be thrown
     out = StringIO()
     ui = DialogUI(out=out)
-    assert_raises(ValueError, ui.question, "prompt", choices=['a'], default='b')
-    eq_(out.getvalue(), '')
+    assert_raises(ValueError, ui.question, "prompt", choices=["a"], default="b")
+    eq_(out.getvalue(), "")
 
-    with patch_getpass(return_value='incorrect'):
-        assert_raises(RuntimeError, ui.question, "prompt", choices=['a', 'b'])
+    with patch_getpass(return_value="incorrect"):
+        assert_raises(RuntimeError, ui.question, "prompt", choices=["a", "b"])
     assert_re_in(".*ERROR: .incorrect. is not among choices.*", out.getvalue())
 
 
@@ -75,8 +68,8 @@ def test_question_choices():
 @pytest.mark.parametrize("increment", [True, False])
 def test_progress_bar(backend, l, increment):
     out = StringIO()
-    fill_str = ('123456890' * (l//10))[:l]
-    pb = DialogUI(out).get_progressbar('label', fill_str, maxval=10, backend=backend)
+    fill_str = ("123456890" * (l // 10))[:l]
+    pb = DialogUI(out).get_progressbar("label", fill_str, maxval=10, backend=backend)
     pb.start()
     # we can't increment 11 times
     for x in range(11):
@@ -85,9 +78,9 @@ def test_progress_bar(backend, l, increment):
             pb.update(x if not increment else 1, increment=increment)
         out.flush()  # needed atm
         pstr = out.getvalue()
-        ok_startswith(pstr.lstrip('\r'), 'label:')
-        assert_re_in(r'.*\b%d%%.*' % (10*x), pstr)
-        if backend == 'progressbar':
-            assert_in('ETA', pstr)
+        ok_startswith(pstr.lstrip("\r"), "label:")
+        assert_re_in(r".*\b%d%%.*" % (10 * x), pstr)
+        if backend == "progressbar":
+            assert_in("ETA", pstr)
     pb.finish()
-    ok_endswith(out.getvalue(), '\n')
+    ok_endswith(out.getvalue(), "\n")

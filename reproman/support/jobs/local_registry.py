@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Registry of local jobs.
-"""
+"""Registry of local jobs."""
 
 import collections
 import logging
@@ -22,8 +21,7 @@ lgr = logging.getLogger("reproman.support.jobs.local_registry")
 
 
 class LocalRegistry(object):
-    """Registry of local jobs.
-    """
+    """Registry of local jobs."""
 
     def __init__(self, directory=None):
         self._root = directory or op.join(cfg.dirs.user_data_dir, "jobs")
@@ -36,8 +34,7 @@ class LocalRegistry(object):
         OrderedDict mapping job ID to job file.
         """
         files = os.listdir(self._root) if op.exists(self._root) else []
-        return collections.OrderedDict((f, op.join(self._root, f))
-                                       for f in sorted(files))
+        return collections.OrderedDict((f, op.join(self._root, f)) for f in sorted(files))
 
     def register(self, jobid, kwds):
         """Register a job.

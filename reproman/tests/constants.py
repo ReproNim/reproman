@@ -9,5 +9,5 @@
 from os.path import join as opj, dirname
 
 # Configuration file for testing
-REPROMAN_CFG_PATH = opj(dirname(__file__), 'files', 'reproman.cfg')
+REPROMAN_CFG_PATH = opj(dirname(__file__), "files", "reproman.cfg")
 REPROMAN_CFG = open(REPROMAN_CFG_PATH).read()

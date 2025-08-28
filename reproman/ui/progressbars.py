@@ -17,6 +17,7 @@ import sys
 # we will provide our interface and adapters for few popular ones
 #
 
+
 class ProgressBarBase(object):
     def __init__(self):
         self._prev_value = 0
@@ -33,10 +34,10 @@ class ProgressBarBase(object):
     def finish(self):
         self._prev_value = 0
 
+
 progressbars = {}
 try:
-    from progressbar import Bar, ETA, FileTransferSpeed, \
-        Percentage, ProgressBar, RotatingMarker
+    from progressbar import Bar, ETA, FileTransferSpeed, Percentage, ProgressBar, RotatingMarker
 
     # TODO: might better delegate to an arbitrary bar?
     class BarWithFillText(Bar):
@@ -53,11 +54,11 @@ try:
                 # TODO:  make it fancier! That we also at the same time scroll it from
                 # the left so it does end up at the end with the tail but starts with
                 # the beginning
-                fill_text = '...' + self.fill_text[-(width-4):]
+                fill_text = "..." + self.fill_text[-(width - 4) :]
             else:
                 fill_text = self.fill_text
-            fill_text = fill_text[:min(len(fill_text), int(round(width * pbar.percentage()/100.)))]
-            return fill_text + " " + orig[len(fill_text)+1:]
+            fill_text = fill_text[: min(len(fill_text), int(round(width * pbar.percentage() / 100.0)))]
+            return fill_text + " " + orig[len(fill_text) + 1 :]
 
 except ImportError:  # pragma: no cover
     pass
@@ -68,9 +69,9 @@ try:
     class tqdmProgressBar(ProgressBarBase):
         """Adapter for tqdm.ProgressBar"""
 
-        backend = 'tqdm'
+        backend = "tqdm"
 
-        def __init__(self, label='', fill_text=None, maxval=None, unit='B', out=sys.stdout):
+        def __init__(self, label="", fill_text=None, maxval=None, unit="B", out=sys.stdout):
             super(tqdmProgressBar, self).__init__()
             self._pbar_params = dict(desc=label, unit=unit, unit_scale=True, total=maxval, file=out)
             self._pbar = None
@@ -100,12 +101,11 @@ try:
             try:
                 super(tqdmProgressBar, self).finish()
             except Exception as exc:  # pragma: no cover
-                #lgr.debug("Finishing tqdmProgresBar thrown %s", str_exc(exc))
+                # lgr.debug("Finishing tqdmProgresBar thrown %s", str_exc(exc))
                 pass
 
-    progressbars['tqdm'] = tqdmProgressBar
+    progressbars["tqdm"] = tqdmProgressBar
 except ImportError:  # pragma: no cover
     pass
 
 assert len(progressbars), "We need tqdm or progressbar library to report progress"
-

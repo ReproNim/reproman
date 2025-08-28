@@ -6,10 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to delete an environment
-"""
+"""Helper utility to delete an environment"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from .base import Interface
 from .common_opts import resref_arg
@@ -20,7 +19,8 @@ from ..support.constraints import EnsureStr
 from ..resource import get_manager
 
 from logging import getLogger
-lgr = getLogger('reproman.api.delete')
+
+lgr = getLogger("reproman.api.delete")
 
 
 class Delete(Interface):
@@ -43,7 +43,10 @@ class Delete(Interface):
         # ),
         resref_type=resref_type_opt,
         skip_confirmation=Parameter(
-            args=("-y", "--skip-confirmation",),
+            args=(
+                "-y",
+                "--skip-confirmation",
+            ),
             action="store_true",
             doc="Delete resource without prompting user for confirmation",
         ),
@@ -56,8 +59,7 @@ class Delete(Interface):
     )
 
     @staticmethod
-    def __call__(resref, resref_type="auto", skip_confirmation=False,
-                 force=False):
+    def __call__(resref, resref_type="auto", skip_confirmation=False, force=False):
 
         from reproman.ui import ui
 
@@ -68,9 +70,7 @@ class Delete(Interface):
             delete_confirmed = True
         else:
             delete_confirmed = ui.yesno(
-                "Delete the resource '{}'? (ID: {})".format(
-                    resource.name, resource.id[:20]),
-                default="no"
+                "Delete the resource '{}'? (ID: {})".format(resource.name, resource.id[:20]), default="no"
             )
 
         if delete_confirmed:
@@ -79,8 +79,7 @@ class Delete(Interface):
                 manager.delete(resource)
             except Exception as exc:
                 if force:
-                    lgr.warning("Force deleting %s following failure: %s",
-                                resource.name, exc_str(exc))
+                    lgr.warning("Force deleting %s following failure: %s", resource.name, exc_str(exc))
                     manager.delete(resource, inventory_only=True)
                 else:
                     raise

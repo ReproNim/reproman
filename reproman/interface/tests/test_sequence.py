@@ -4,8 +4,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Test sequences of interface commands.
-"""
+"""Test sequences of interface commands."""
 
 import logging
 import os
@@ -29,24 +28,20 @@ def test_create_start_stop(tmpdir):
 
     # Simple smoke test.  We can't easily test the effects of start/stop with
     # shell because those the start and stop methods are noops.
-    with patch("reproman.interface.create.get_manager",
-               return_value=rm):
+    with patch("reproman.interface.create.get_manager", return_value=rm):
         main(["create", "-t", "shell", "testshell"])
 
     with open(inventory_file) as ifh:
         inventory = yaml.safe_load(ifh)
     assert inventory["testshell"]["status"] == "available"
 
-    with patch("reproman.interface.start.get_manager",
-               return_value=rm):
+    with patch("reproman.interface.start.get_manager", return_value=rm):
         main(["start", "testshell"])
 
-    with patch("reproman.interface.stop.get_manager",
-               return_value=rm):
+    with patch("reproman.interface.stop.get_manager", return_value=rm):
         main(["stop", "testshell"])
 
-    with patch("reproman.interface.delete.get_manager",
-               return_value=rm):
+    with patch("reproman.interface.delete.get_manager", return_value=rm):
         main(["delete", "--skip-confirmation", "testshell"])
 
     with open(inventory_file) as ifh:
@@ -64,8 +59,7 @@ def test_create_and_start(tmpdir):
         cfg_fh.write("[general]\ninventory_file = {}\n".format(inventory_file))
 
     def run_reproman(args):
-        runner(["reproman", "--config", cfg_file] + args,
-               expect_stderr=True)
+        runner(["reproman", "--config", cfg_file] + args, expect_stderr=True)
 
     run_reproman(["create", "--resource-type=shell", "myshell"])
 
@@ -81,8 +75,7 @@ def test_create_and_start(tmpdir):
 
     with swallow_logs(new_level=logging.ERROR) as cml:
         with pytest.raises(CommandError):
-            runner(["reproman", "--config", empty_cfg_file,
-                    "start", "myshell"])
+            runner(["reproman", "--config", empty_cfg_file, "start", "myshell"])
         if os.environ.get("REPROMAN_LOGTARGET", "stderr") == "stderr":
             assert "ResourceNotFoundError" in cml.out
     # ... but using the same config works.

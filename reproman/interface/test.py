@@ -8,7 +8,7 @@
 """Run internal ReproMan (unit)tests to verify correct operation on the system"""
 
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 
 import reproman
@@ -20,6 +20,7 @@ class Test(Interface):
 
     This can be used to verify correct operation on the system
     """
+
     @staticmethod
     def __call__():
         reproman.test()

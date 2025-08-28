@@ -5,14 +5,13 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Basic dialog-like interface for interactions in the terminal window
+"""Basic dialog-like interface for interactions in the terminal window"""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from logging import getLogger
-lgr = getLogger('reproman.ui.dialog')
+
+lgr = getLogger("reproman.ui.dialog")
 
 lgr.log(5, "Starting importing ui.dialog")
 
@@ -61,7 +60,6 @@ for i in range(10):
 # reference for ESC codes: http://ascii-table.com/ansi-escape-sequences.php
 
 
-
 @auto_repr
 class ConsoleLog(object):
 
@@ -70,7 +68,7 @@ class ConsoleLog(object):
     def __init__(self, out=sys.stdout):
         self.out = out
 
-    def message(self, msg, cr='\n'):
+    def message(self, msg, cr="\n"):
         self.out.write(msg)
         if cr:
             self.out.write(cr)
@@ -83,17 +81,18 @@ class ConsoleLog(object):
 
         Additional parameter is backend to choose among available
         """
-        backend = kwargs.pop('backend', None)
+        backend = kwargs.pop("backend", None)
         # Delay imports of progressbars until actually needed
         if ConsoleLog.progressbars is None:
             from .progressbars import progressbars
+
             ConsoleLog.progressbars = progressbars
         else:
             progressbars = ConsoleLog.progressbars
 
         if backend is None:
             try:
-                pbar = progressbars['tqdm']
+                pbar = progressbars["tqdm"]
             except KeyError:
                 pbar = progressbars.values()[0]  # any
         else:
@@ -101,9 +100,8 @@ class ConsoleLog(object):
         return pbar(*args, out=self.out, **kwargs)
 
 
-def getpass_echo(prompt='Password: ', stream=None):
-    """Q&D workaround until we have proper 'centralized' UI -- just use getpass BUT enable echo
-    """
+def getpass_echo(prompt="Password: ", stream=None):
+    """Q&D workaround until we have proper 'centralized' UI -- just use getpass BUT enable echo"""
     if on_windows:
         # Can't do anything fancy yet, so just ask the one without echo
         return getpass.getpass(prompt=prompt, stream=stream)
@@ -118,8 +116,9 @@ def getpass_echo(prompt='Password: ', stream=None):
         #         return
         #     stream.write(out)
         from unittest.mock import patch
-        with patch('termios.ECHO', 255**2):
-            #patch.object(stream, 'write', _no_emptyline_write(stream)):
+
+        with patch("termios.ECHO", 255**2):
+            # patch.object(stream, 'write', _no_emptyline_write(stream)):
             return getpass.getpass(prompt=prompt, stream=stream)
 
 
@@ -134,17 +133,12 @@ class DialogUI(ConsoleLog, InteractiveUI):
         self._prev_title = None
         self._prev_title_time = 0
 
-    def question(self, text,
-                 title=None, choices=None,
-                 default=None,
-                 error_message=None,
-                 hidden=False):
+    def question(self, text, title=None, choices=None, default=None, error_message=None, hidden=False):
         # Do initial checks first
         if default and choices and default not in choices:
-            raise ValueError("default value %r is not among choices: %s"
-                             % (default, choices))
+            raise ValueError("default value %r is not among choices: %s" % (default, choices))
 
-        msg = ''
+        msg = ""
         if title and not (title == self._prev_title and time.time() - self._prev_title_time < 5):
             # might not actually get displayed if all in/out redirected
             # self.out.write(title + "\n")
@@ -152,16 +146,14 @@ class DialogUI(ConsoleLog, InteractiveUI):
             msg += title + os.linesep
 
         def mark_default(x):
-            return "[%s]" % x \
-                if default is not None and x == default \
-                else x
+            return "[%s]" % x if default is not None and x == default else x
 
         if choices is not None:
-            msg += "%s (choices: %s)" % (text, ', '.join(map(mark_default, choices)))
+            msg += "%s (choices: %s)" % (text, ", ".join(map(mark_default, choices)))
         else:
             msg += text
             if default:
-                msg += ' ' + mark_default(default)
+                msg += " " + mark_default(default)
         """
         Anaconda format:
 
@@ -193,8 +185,7 @@ Question? [choice1|choice2]
                     raise MissingConfigError(error_message)
 
             if choices and response not in choices:
-                self.error("%r is not among choices: %s. Repeat your answer"
-                           % (response, choices))
+                self.error("%r is not among choices: %s. Repeat your answer" % (response, choices))
                 continue
             break
 
@@ -208,12 +199,12 @@ Question? [choice1|choice2]
 @auto_repr
 class UnderAnnexUI(DialogUI):
     def __init__(self, **kwargs):
-        if 'out' not in kwargs:
+        if "out" not in kwargs:
             # to avoid buffering
             # http://stackoverflow.com/a/181654/1265472
-            #kwargs['out'] = os.fdopen(sys.stderr.fileno(), 'w', 0)
+            # kwargs['out'] = os.fdopen(sys.stderr.fileno(), 'w', 0)
             # but wasn't effective! sp kist straogjt for now
-            kwargs['out'] = sys.stderr
+            kwargs["out"] = sys.stderr
         super(UnderAnnexUI, self).__init__(**kwargs)
 
 
@@ -245,9 +236,7 @@ class UnderTestsUI(DialogUI):
 
     def question(self, *args, **kwargs):
         if not self._responses:
-            raise AssertionError(
-                "We are asked for a response whenever none is left to give"
-            )
+            raise AssertionError("We are asked for a response whenever none is left to give")
         return self._responses.popleft()
 
     # Context manager mode of operation which would also verify that
@@ -259,7 +248,7 @@ class UnderTestsUI(DialogUI):
         responses = copy(self._responses)
         # we should clear the state so there is no side-effect
         self.clear_responses()
-        assert not len(responses), \
-            "Still have some responses left: %s" % repr(self._responses)
+        assert not len(responses), "Still have some responses left: %s" % repr(self._responses)
+
 
 lgr.log(5, "Done importing ui.dialog")

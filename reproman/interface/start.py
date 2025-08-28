@@ -6,15 +6,14 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to delete an environment
-"""
+"""Helper utility to delete an environment"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 import re
 
 from .base import Interface
-import reproman.interface.base # Needed for test patching
+import reproman.interface.base  # Needed for test patching
 from .common_opts import resref_arg
 from .common_opts import resref_type_opt
 from ..support.param import Parameter
@@ -22,7 +21,8 @@ from ..support.constraints import EnsureStr
 from ..resource import get_manager
 
 from logging import getLogger
-lgr = getLogger('reproman.api.start')
+
+lgr = getLogger("reproman.api.start")
 
 
 class Start(Interface):

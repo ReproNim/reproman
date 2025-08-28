@@ -6,9 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Test testing utilities
-
-"""
+"""Test testing utilities"""
 
 import os
 import pytest
@@ -23,9 +21,14 @@ from os.path import dirname, normpath, pardir, basename
 from os.path import isabs, expandvars, expanduser
 from collections import OrderedDict
 
-from ..utils import updated, HashableDict, \
-    get_cmd_batch_len, execute_command_batch, \
-    cmd_err_filter, join_sequence_of_dicts
+from ..utils import (
+    updated,
+    HashableDict,
+    get_cmd_batch_len,
+    execute_command_batch,
+    cmd_err_filter,
+    join_sequence_of_dicts,
+)
 from ..utils import parse_kv_list
 from os.path import join as opj, abspath, exists
 from ..utils import rotree, swallow_outputs, swallow_logs, setup_exceptionhook, md5sum
@@ -73,13 +76,13 @@ from .utils import ok_startswith
 
 @with_tempfile(mkdir=True)
 def __test_rotree(d):  # TODO: redo without AnnexRepo
-    d2 = opj(d, 'd1', 'd2')  # deep nested directory
-    f = opj(d2, 'f1')
+    d2 = opj(d, "d1", "d2")  # deep nested directory
+    f = opj(d2, "f1")
     os.makedirs(d2)
-    with open(f, 'w') as f_:
+    with open(f, "w") as f_:
         f_.write("LOAD")
     with swallow_logs():
-        pass # ar = AnnexRepo(d2)
+        pass  # ar = AnnexRepo(d2)
     rotree(d)
     # we shouldn't be able to delete anything UNLESS in "crippled" situation:
     # root, or filesystem is FAT etc
@@ -100,26 +103,26 @@ def __test_rotree(d):  # TODO: redo without AnnexRepo
 
 def test_swallow_outputs():
     with swallow_outputs() as cm:
-        eq_(cm.out, '')
+        eq_(cm.out, "")
         sys.stdout.write("out normal")
         sys.stderr.write("out error")
-        eq_(cm.out, 'out normal')
+        eq_(cm.out, "out normal")
         sys.stdout.write(" and more")
-        eq_(cm.out, 'out normal and more')  # incremental
-        eq_(cm.err, 'out error')
-        eq_(cm.err, 'out error')  # the same value if multiple times
+        eq_(cm.out, "out normal and more")  # incremental
+        eq_(cm.err, "out error")
+        eq_(cm.err, "out error")  # the same value if multiple times
 
 
 def test_swallow_logs():
-    lgr = logging.getLogger('reproman')
+    lgr = logging.getLogger("reproman")
     with swallow_logs(new_level=9) as cm:
-        eq_(cm.out, '')
+        eq_(cm.out, "")
         lgr.log(8, "very heavy debug")
-        eq_(cm.out, '')  # not even visible at level 9
+        eq_(cm.out, "")  # not even visible at level 9
         lgr.log(9, "debug1")
-        eq_(cm.out, 'debug1\n')  # not even visible at level 9
+        eq_(cm.out, "debug1\n")  # not even visible at level 9
         lgr.info("info")
-        eq_(cm.out, 'debug1\ninfo\n')  # not even visible at level 9
+        eq_(cm.out, "debug1\ninfo\n")  # not even visible at level 9
 
 
 @pytest.mark.parametrize("interactive", [True, False])
@@ -131,13 +134,15 @@ def test_setup_exceptionhook(interactive):
     def our_post_mortem(tb):
         post_mortem_tb.append(tb)
 
-    with patch('sys.excepthook'), \
-            patch('reproman.utils.is_interactive', lambda: interactive), \
-            patch('pdb.post_mortem', our_post_mortem):
+    with (
+        patch("sys.excepthook"),
+        patch("reproman.utils.is_interactive", lambda: interactive),
+        patch("pdb.post_mortem", our_post_mortem),
+    ):
         setup_exceptionhook()
         our_exceptionhook = sys.excepthook
         ok_(old_exceptionhook != our_exceptionhook)
-        #out = sys.stdout
+        # out = sys.stdout
         with swallow_logs() as cml, swallow_outputs() as cmo:
             # we need to call our_exceptionhook explicitly b/c nose
             # swallows all Exceptions and hook never gets executed
@@ -149,8 +154,8 @@ def test_setup_exceptionhook(interactive):
             # Happens under tox environment but not in manually crafted ones -- not yet sure
             # what it is about but --dbg does work with python3 so lettting it skip for now
             pytest.skip("TODO: Not clear why in PY3 calls cleanup if we try to access the beast")
-            assert_in('Traceback (most recent call last)', cmo.err)
-            assert_in('in test_setup_exceptionhook', cmo.err)
+            assert_in("Traceback (most recent call last)", cmo.err)
+            assert_in("in test_setup_exceptionhook", cmo.err)
             if interactive:
                 assert_equal(post_mortem_tb[0], tb_)
             else:
@@ -171,20 +176,21 @@ def test_md5sum():
 #     # just a smoke (encoding/decoding) test for md5sum
 #     _ = md5sum(opj(d, '1.tar.gz'))
 
+
 def test_updated():
     d = {}
     eq_(updated(d, {1: 2}), {1: 2})
     eq_(d, {})
 
-    d = {'a': 'b'}
-    eq_(updated(d, ((0, 1), (2, 3))), {0: 1, 'a': 'b', 2: 3})
-    eq_(d, {'a': 'b'})
+    d = {"a": "b"}
+    eq_(updated(d, ((0, 1), (2, 3))), {0: 1, "a": "b", 2: 3})
+    eq_(d, {"a": "b"})
 
     # and that it would maintain the type
-    d = OrderedDict(((99, 0), ('z', 0), ('a', 0)))
+    d = OrderedDict(((99, 0), ("z", 0), ("a", 0)))
     d_ = updated(d, {0: 1})
     ok_(isinstance(d_, OrderedDict))
-    eq_(d_, OrderedDict(((99, 0), ('z', 0), ('a', 0), (0, 1))))
+    eq_(d_, OrderedDict(((99, 0), ("z", 0), ("a", 0), (0, 1))))
 
 
 def test_get_local_file_url_windows():
@@ -198,7 +204,7 @@ def test_getpwd_basic():
     eq_(os.getcwd(), abspath(pwd))
 
     # that we do not chdir anywhere if None provided
-    with patch('os.chdir') as oschdir:
+    with patch("os.chdir") as oschdir:
         with chpwd(None):
             eq_(getpwd(), pwd)
         assert_false(oschdir.called)
@@ -208,20 +214,20 @@ def test_getpwd_basic():
 @with_tempfile(mkdir=True)
 @assert_cwd_unchanged
 def test_getpwd_symlink(tdir=None):
-    sdir = opj(tdir, 's1')
+    sdir = opj(tdir, "s1")
     pwd_orig = getpwd()
-    os.symlink('.', sdir)
-    s1dir = opj(sdir, 's1')
-    s2dir = opj(sdir, 's2')
+    os.symlink(".", sdir)
+    s1dir = opj(sdir, "s1")
+    s2dir = opj(sdir, "s2")
     try:
         chpwd(sdir)
         pwd = getpwd()
         eq_(pwd, sdir)
-        chpwd('s1')
+        chpwd("s1")
         eq_(getpwd(), s1dir)
-        chpwd('.')
+        chpwd(".")
         eq_(getpwd(), s1dir)
-        chpwd('..')
+        chpwd("..")
         eq_(getpwd(), sdir)
     finally:
         chpwd(pwd_orig)
@@ -262,115 +268,110 @@ def test_auto_repr():
 
 
 def test_assure_list_from_str():
-    assert_equal(assure_list_from_str(''), None)
+    assert_equal(assure_list_from_str(""), None)
     assert_equal(assure_list_from_str([]), None)
-    assert_equal(assure_list_from_str('somestring'), ['somestring'])
-    assert_equal(assure_list_from_str('some\nmultiline\nstring'), ['some', 'multiline', 'string'])
-    assert_equal(assure_list_from_str(['something']), ['something'])
-    assert_equal(assure_list_from_str(['a', 'listof', 'stuff']), ['a', 'listof', 'stuff'])
+    assert_equal(assure_list_from_str("somestring"), ["somestring"])
+    assert_equal(assure_list_from_str("some\nmultiline\nstring"), ["some", "multiline", "string"])
+    assert_equal(assure_list_from_str(["something"]), ["something"])
+    assert_equal(assure_list_from_str(["a", "listof", "stuff"]), ["a", "listof", "stuff"])
 
 
 def test_assure_dict_from_str():
-    assert_equal(assure_dict_from_str(''), None)
+    assert_equal(assure_dict_from_str(""), None)
     assert_equal(assure_dict_from_str({}), None)
-    assert_equal(assure_dict_from_str(
-            '__ac_name={user}\n__ac_password={password}\nsubmit=Log in\ncookies_enabled='), dict(
-             __ac_name='{user}', __ac_password='{password}', cookies_enabled='', submit='Log in'))
-    assert_equal(assure_dict_from_str(
-        dict(__ac_name='{user}', __ac_password='{password}', cookies_enabled='', submit='Log in')), dict(
-             __ac_name='{user}', __ac_password='{password}', cookies_enabled='', submit='Log in'))
+    assert_equal(
+        assure_dict_from_str("__ac_name={user}\n__ac_password={password}\nsubmit=Log in\ncookies_enabled="),
+        dict(__ac_name="{user}", __ac_password="{password}", cookies_enabled="", submit="Log in"),
+    )
+    assert_equal(
+        assure_dict_from_str(dict(__ac_name="{user}", __ac_password="{password}", cookies_enabled="", submit="Log in")),
+        dict(__ac_name="{user}", __ac_password="{password}", cookies_enabled="", submit="Log in"),
+    )
 
 
 def test_any_re_search():
-    assert_true(any_re_search('a', 'a'))
-    assert_true(any_re_search('a', 'bab'))
-    assert_false(any_re_search('^a', 'bab'))
-    assert_true(any_re_search(['b', '.ab'], 'bab'))
-    assert_false(any_re_search(['^b', 'bab'], 'ab'))
+    assert_true(any_re_search("a", "a"))
+    assert_true(any_re_search("a", "bab"))
+    assert_false(any_re_search("^a", "bab"))
+    assert_true(any_re_search(["b", ".ab"], "bab"))
+    assert_false(any_re_search(["^b", "bab"], "ab"))
 
 
 def test_find_files():
     tests_dir = dirname(__file__)
     proj_dir = normpath(opj(dirname(__file__), pardir))
 
-    ff = find_files('.*', proj_dir)
+    ff = find_files(".*", proj_dir)
     ok_generator(ff)
     files = list(ff)
-    assert(len(files) > 10)  # we have more than 10 test files here
-    assert_in(opj(tests_dir, 'test_utils.py'), files)
+    assert len(files) > 10  # we have more than 10 test files here
+    assert_in(opj(tests_dir, "test_utils.py"), files)
     # and no directories should be mentioned
     assert_not_in(tests_dir, files)
 
-    ff2 = find_files('.*', proj_dir, dirs=True)
+    ff2 = find_files(".*", proj_dir, dirs=True)
     files2 = list(ff2)
-    assert_in(opj(tests_dir, 'test_utils.py'), files2)
+    assert_in(opj(tests_dir, "test_utils.py"), files2)
     assert_in(tests_dir, files2)
 
     # now actually matching the path
-    ff3 = find_files(r'.*/test_.*\.py$', proj_dir, dirs=True)
+    ff3 = find_files(r".*/test_.*\.py$", proj_dir, dirs=True)
     files3 = list(ff3)
-    assert_in(opj(tests_dir, 'test_utils.py'), files3)
+    assert_in(opj(tests_dir, "test_utils.py"), files3)
     assert_not_in(tests_dir, files3)
     for f in files3:
-        ok_startswith(basename(f), 'test_')
+        ok_startswith(basename(f), "test_")
 
-@with_tree(tree={
-    '.git': {
-        '1': '2'
-    },
-    'd1': {
-        '.git': 'possibly a link from submodule'
-    },
-    'git': 'just a file'
-})
+
+@with_tree(tree={".git": {"1": "2"}, "d1": {".git": "possibly a link from submodule"}, "git": "just a file"})
 def test_find_files_exclude_vcs(repo=None):
-    ff = find_files('.*', repo, dirs=True)
+    ff = find_files(".*", repo, dirs=True)
     files = list(ff)
-    assert_equal({basename(f) for f in files}, {'d1', 'git'})
-    assert_not_in(opj(repo, '.git'), files)
+    assert_equal({basename(f) for f in files}, {"d1", "git"})
+    assert_not_in(opj(repo, ".git"), files)
 
-    ff = find_files('.*', repo, dirs=True, exclude_vcs=False)
+    ff = find_files(".*", repo, dirs=True, exclude_vcs=False)
     files = list(ff)
-    assert_equal({basename(f) for f in files}, {'d1', 'git', '.git', '1'})
-    assert_in(opj(repo, '.git'), files)
+    assert_equal({basename(f) for f in files}, {"d1", "git", ".git", "1"})
+    assert_in(opj(repo, ".git"), files)
 
 
 def test_not_supported_on_windows():
-    with patch('reproman.utils.on_windows', True):
+    with patch("reproman.utils.on_windows", True):
         assert_raises(NotImplementedError, not_supported_on_windows)
         assert_raises(NotImplementedError, not_supported_on_windows, "msg")
 
-    with patch('reproman.utils.on_windows', False):
+    with patch("reproman.utils.on_windows", False):
         assert_equal(not_supported_on_windows(), None)
         assert_equal(not_supported_on_windows("msg"), None)
 
 
 def test_file_basename():
-    eq_(file_basename('1'), '1')
-    eq_(file_basename('d1/1'), '1')
-    eq_(file_basename('/d1/1'), '1')
-    eq_(file_basename('1.'), '1.')
-    eq_(file_basename('1.tar.gz'), '1')
-    eq_(file_basename('1.Tar.gz'), '1')
-    eq_(file_basename('1._bak.gz'), '1')
-    eq_(file_basename('1.tar.gz', return_ext=True), ('1', 'tar.gz'))
-    eq_(file_basename('/tmp/1.tar.gz'), '1')
-    eq_(file_basename('/tmp/1.longish.gz'), '1.longish')
-    eq_(file_basename('1_R1.1.1.tar.gz'), '1_R1.1.1')
-    eq_(file_basename('ds202_R1.1.1.tgz'), 'ds202_R1.1.1')
+    eq_(file_basename("1"), "1")
+    eq_(file_basename("d1/1"), "1")
+    eq_(file_basename("/d1/1"), "1")
+    eq_(file_basename("1."), "1.")
+    eq_(file_basename("1.tar.gz"), "1")
+    eq_(file_basename("1.Tar.gz"), "1")
+    eq_(file_basename("1._bak.gz"), "1")
+    eq_(file_basename("1.tar.gz", return_ext=True), ("1", "tar.gz"))
+    eq_(file_basename("/tmp/1.tar.gz"), "1")
+    eq_(file_basename("/tmp/1.longish.gz"), "1.longish")
+    eq_(file_basename("1_R1.1.1.tar.gz"), "1_R1.1.1")
+    eq_(file_basename("ds202_R1.1.1.tgz"), "ds202_R1.1.1")
 
 
 def test_expandpath():
-    eq_(expandpath("some", False), expanduser('some'))
-    eq_(expandpath("some", False), expandvars('some'))
-    assert_true(isabs(expandpath('some')))
+    eq_(expandpath("some", False), expanduser("some"))
+    eq_(expandpath("some", False), expandvars("some"))
+    assert_true(isabs(expandpath("some")))
     # this may have to go because of platform issues
-    eq_(expandpath("$HOME"), expanduser('~'))
+    eq_(expandpath("$HOME"), expanduser("~"))
 
 
 def test_is_explicit_path():
     # by default expanded paths are absolute, hence explicit
-    assert_true(is_explicit_path(expandpath('~')))
+    assert_true(is_explicit_path(expandpath("~")))
     assert_false(is_explicit_path("here"))
 
 
@@ -397,44 +398,42 @@ def test_partition():
         left, right = partition(*args, **kwargs)
         return list(left), list(right)
 
-    eq_(fn([False, True, False]),
-        ([False, False], [True]))
+    eq_(fn([False, True, False]), ([False, False], [True]))
 
-    eq_(fn([1, 5, 4, 10], lambda x: x > 4),
-        ([1, 4], [5, 10]))
+    eq_(fn([1, 5, 4, 10], lambda x: x > 4), ([1, 4], [5, 10]))
 
-    eq_(fn([1, 5, 4, 10], lambda x: x < 0),
-        ([1, 5, 4, 10], []))
+    eq_(fn([1, 5, 4, 10], lambda x: x < 0), ([1, 5, 4, 10], []))
 
 
 def test_path_():
-    eq_(_path_('a'), 'a')
+    eq_(_path_("a"), "a")
     if on_windows:
-        eq_(_path_('a/b'), r'a\b')
+        eq_(_path_("a/b"), r"a\b")
     else:
-        p = 'a/b/c'
-        assert(_path_(p) is p)  # nothing is done to it whatsoever
+        p = "a/b/c"
+        assert _path_(p) is p  # nothing is done to it whatsoever
 
 
 @pytest.mark.xfail(
     os.getenv("TRAVIS") and os.getenv("REPROMAN_TESTS_ASSUME_SSP"),
-    reason="Fails on system_site_packages=true run for unknown reason")
+    reason="Fails on system_site_packages=true run for unknown reason",
+)
 def test_assure_unicode():
     ok_(isinstance(assure_unicode("m"), str))
-    ok_(isinstance(assure_unicode('grandchild_äöü東'), str))
-    ok_(isinstance(assure_unicode(u'grandchild_äöü東'), str))
-    eq_(assure_unicode('grandchild_äöü東'), u'grandchild_äöü東')
+    ok_(isinstance(assure_unicode("grandchild_äöü東"), str))
+    ok_(isinstance(assure_unicode("grandchild_äöü東"), str))
+    eq_(assure_unicode("grandchild_äöü東"), "grandchild_äöü東")
     # now, non-utf8
     # Decoding could be deduced with high confidence when the string is
     # really encoded in that codepage
-    mom_koi8r = u"мама".encode('koi8-r')
-    eq_(assure_unicode(mom_koi8r), u"мама")
-    eq_(assure_unicode(mom_koi8r, confidence=0.9), u"мама")
-    mom_iso8859 = u'mamá'.encode('iso-8859-1')
-    eq_(assure_unicode(mom_iso8859), u'mamá')
-    eq_(assure_unicode(mom_iso8859, confidence=0.5), u'mamá')
+    mom_koi8r = "мама".encode("koi8-r")
+    eq_(assure_unicode(mom_koi8r), "мама")
+    eq_(assure_unicode(mom_koi8r, confidence=0.9), "мама")
+    mom_iso8859 = "mamá".encode("iso-8859-1")
+    eq_(assure_unicode(mom_iso8859), "mamá")
+    eq_(assure_unicode(mom_iso8859, confidence=0.5), "mamá")
     # but when we mix, it does still guess something allowing to decode:
-    mixedin = mom_koi8r + u'東'.encode('iso2022_jp') + u'東'.encode('utf-8')
+    mixedin = mom_koi8r + "東".encode("iso2022_jp") + "東".encode("utf-8")
     ok_(isinstance(assure_unicode(mixedin), str))
     # but should fail if we request high confidence result:
 
@@ -451,19 +450,19 @@ def test_unicode_and_binary_conversion():
     s = "Test String"
     s_unicode = to_unicode(s)
     s_binary = to_binarystring(s)
-    assert (is_unicode(s_unicode))
-    assert (not(is_binarystring(s_unicode)))
-    assert (is_binarystring(s_binary))
-    assert (not(is_unicode(s_binary)))
+    assert is_unicode(s_unicode)
+    assert not (is_binarystring(s_unicode))
+    assert is_binarystring(s_binary)
+    assert not (is_unicode(s_binary))
 
 
 def test_generate_unique_set():
     names = set()
     n = generate_unique_name("test_%d", names)
-    assert(n == "test_0")
+    assert n == "test_0"
     names.add(n)
     n = generate_unique_name("test_%d", names)
-    assert(n == "test_1")
+    assert n == "test_1"
 
 
 def test_hashable_dict():
@@ -472,8 +471,8 @@ def test_hashable_dict():
     key_c = HashableDict({"a": "dog", "b": "boo"})
     d = dict()
     d[key_a] = 1
-    assert(key_b in d)
-    assert(key_c not in d)
+    assert key_b in d
+    assert key_c not in d
 
 
 def test_cmd_err_filter():
@@ -484,8 +483,7 @@ def test_cmd_err_filter():
 
 
 def test_join_sequence_of_dicts():
-    assert join_sequence_of_dicts(({"a": 1, "b": 2}, {"c": 3}, {"d": 4})) == \
-           {"a": 1, "b": 2, "c": 3, "d": 4}
+    assert join_sequence_of_dicts(({"a": 1, "b": 2}, {"c": 3}, {"d": 4})) == {"a": 1, "b": 2, "c": 3, "d": 4}
     with pytest.raises(RuntimeError):
         join_sequence_of_dicts(({"a": 1, "b": 2}, {"b": 3}, {"d": 4}))
 
@@ -504,20 +502,20 @@ def test_execute_command_batch():
                 raise ValueError
             else:
                 return (str(len(cmd)), None)
+
     session = DummySession()
     # First let's do a simple test to count the args
     args = list(map(str, range(1, 101)))
     cmd_gen = execute_command_batch(session, [], args, None)
-    for (out, _, _) in cmd_gen:
+    for out, _, _ in cmd_gen:
         assert out == "100"
     # Now let's raise an exception but not list it as handled
     cmd_gen = execute_command_batch(session, ["ValueError"], args, None)
     with pytest.raises(ValueError):
         list(cmd_gen)
     # Now let's raise an exception
-    cmd_gen = execute_command_batch(session, ["ValueError"], args,
-                                    lambda x: isinstance(x, ValueError))
-    for (_, _, err) in cmd_gen:
+    cmd_gen = execute_command_batch(session, ["ValueError"], args, lambda x: isinstance(x, ValueError))
+    for _, _, err in cmd_gen:
         assert isinstance(err, ValueError)
 
 
@@ -551,10 +549,12 @@ def test_is_subpath(tmpdir):
 
 
 def test_parse_semantic_version():
-    for version, expected in [("1.2.3", ("1", "2", "3", "")),
-                              ("12.2.33", ("12", "2", "33", "")),
-                              ("1.2.3.rc1", ("1", "2", "3", ".rc1")),
-                              ("1.2.3-blah", ("1", "2", "3", "-blah"))]:
+    for version, expected in [
+        ("1.2.3", ("1", "2", "3", "")),
+        ("12.2.33", ("12", "2", "33", "")),
+        ("1.2.3.rc1", ("1", "2", "3", ".rc1")),
+        ("1.2.3-blah", ("1", "2", "3", "-blah")),
+    ]:
         assert parse_semantic_version(version) == expected
 
     with pytest.raises(ValueError):
@@ -580,17 +580,18 @@ def test_parse_kv_list_invalid(value):
 
 
 def test_parse_kv_list():
-    for value, expected in [(["a=b"], {"a": "b"}),
-                            (["a="], {"a": ""}),
-                            (["a=c=d"], {"a": "c=d"}),
-                            (["a-b=c d"], {"a-b": "c d"}),
-                            ({"a": "c=d"}, {"a": "c=d"})]:
+    for value, expected in [
+        (["a=b"], {"a": "b"}),
+        (["a="], {"a": ""}),
+        (["a=c=d"], {"a": "c=d"}),
+        (["a-b=c d"], {"a-b": "c d"}),
+        ({"a": "c=d"}, {"a": "c=d"}),
+    ]:
         assert parse_kv_list(value) == expected
 
     # We leave any mapping be, including not converting an empty mapping to an
     # empty dict.
-    assert isinstance(parse_kv_list(OrderedDict({})),
-                      OrderedDict)
+    assert isinstance(parse_kv_list(OrderedDict({})), OrderedDict)
 
 
 @pytest.mark.parametrize("value", [None, False, [], "x"])
@@ -630,31 +631,18 @@ def test_write_update(tmpdir):
 
 @pytest.mark.parametrize(
     "case",
-    [{"label": "full-py2",
-      "value": "/tmp/a/b/c/d.pyc",
-      "expected": "/tmp/a/b/c/d.py"},
-     {"label": "full",
-      "value": "/tmp/a/b/c/__pycache__/d.cpython-35.pyc",
-      "expected": "/tmp/a/b/c/d.py"},
-     {"label": "relative-py2",
-      "value": "d.pyc",
-      "expected": "d.py"},
-     {"label": "relative-py2-pyo",
-      "value": "d.pyo",
-      "expected": "d.py"},
-     {"label": "relative",
-      "value": "__pycache__/d.cpython-35.pyc",
-      "expected": "d.py"},
-     {"label": "relative-pyo",
-      "value": "__pycache__/d.cpython-35.opt-1.pyc",
-      "expected": "d.py"},
-     {"label": "not pyc",
-      "value": "not a pycache",
-      "expected": None},
-     {"label": "empty",
-      "value": "",
-      "expected": None}],
-    ids=itemgetter("label"))
+    [
+        {"label": "full-py2", "value": "/tmp/a/b/c/d.pyc", "expected": "/tmp/a/b/c/d.py"},
+        {"label": "full", "value": "/tmp/a/b/c/__pycache__/d.cpython-35.pyc", "expected": "/tmp/a/b/c/d.py"},
+        {"label": "relative-py2", "value": "d.pyc", "expected": "d.py"},
+        {"label": "relative-py2-pyo", "value": "d.pyo", "expected": "d.py"},
+        {"label": "relative", "value": "__pycache__/d.cpython-35.pyc", "expected": "d.py"},
+        {"label": "relative-pyo", "value": "__pycache__/d.cpython-35.opt-1.pyc", "expected": "d.py"},
+        {"label": "not pyc", "value": "not a pycache", "expected": None},
+        {"label": "empty", "value": "", "expected": None},
+    ],
+    ids=itemgetter("label"),
+)
 def test_pycache_source(case):
     assert pycache_source(case["value"]) == case["expected"]
 
@@ -669,8 +657,9 @@ def test_line_profile():
 
     with swallow_outputs() as cmo:
         assert_equal(f(3), 4)
-        assert_equal(cmo.err, '')
-        assert_in('i = j + 1  # xyz', cmo.out)
+        assert_equal(cmo.err, "")
+        assert_in("i = j + 1  # xyz", cmo.out)
+
 
 # NOTE: test_line_profile must be the last one in the file
 #       since line_profiler obscures the coverage reports.

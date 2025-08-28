@@ -10,17 +10,19 @@ from unittest.mock import patch
 from ..config import ConfigManager
 from .utils import ok_, eq_, assert_raises, assert_greater
 
+
 def test_config_empty():
     # nothing to load
     config = ConfigManager(load_default=False)
     eq_(config._get_file_candidates(), [])
     # nevertheless we should be able to specify variables via env
 
-    assert_raises(ValueError, config.getboolean, 'tests', 'somenonexistingone')
-    with patch.dict('os.environ', {'REPROMAN_TESTS_NONETWORK': '1'}):
+    assert_raises(ValueError, config.getboolean, "tests", "somenonexistingone")
+    with patch.dict("os.environ", {"REPROMAN_TESTS_NONETWORK": "1"}):
         config.reload()
-        ok_(config.getboolean('tests', 'nonetwork'))
-        eq_(config.get_as_dtype('tests', 'nonetwork', int), 1)
+        ok_(config.getboolean("tests", "nonetwork"))
+        eq_(config.get_as_dtype("tests", "nonetwork", int), 1)
+
 
 def test_config_load():
     config = ConfigManager()

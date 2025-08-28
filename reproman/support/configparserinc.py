@@ -11,14 +11,12 @@
 #  ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 
-
 import logging, os, sys
 
-if sys.version_info >= (3,2): # pragma: no cover
+if sys.version_info >= (3, 2):  # pragma: no cover
 
     # SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
-    from configparser import ConfigParser as SafeConfigParser, \
-        BasicInterpolation
+    from configparser import ConfigParser as SafeConfigParser, BasicInterpolation
 
     # And interpolation of __name__ was simply removed, thus we need to
     # decorate default interpolator to handle it
@@ -36,21 +34,23 @@ if sys.version_info >= (3,2): # pragma: no cover
 
         But should be fine to reincarnate for our use case
         """
-        def _interpolate_some(self, parser, option, accum, rest, section, map,
-                                                  depth):
-                if section and not (__name__ in map):
-                        map = map.copy()		  # just to be safe
-                        map['__name__'] = section
-                return super(BasicInterpolationWithName, self)._interpolate_some(
-                        parser, option, accum, rest, section, map, depth)
 
-else: # pragma: no cover
+        def _interpolate_some(self, parser, option, accum, rest, section, map, depth):
+            if section and not (__name__ in map):
+                map = map.copy()  # just to be safe
+                map["__name__"] = section
+            return super(BasicInterpolationWithName, self)._interpolate_some(
+                parser, option, accum, rest, section, map, depth
+            )
+
+else:  # pragma: no cover
     from ConfigParser import SafeConfigParser
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
 
-__all__ = ['SafeConfigParserWithIncludes']
+__all__ = ["SafeConfigParserWithIncludes"]
+
 
 class SafeConfigParserWithIncludes(SafeConfigParser):
     """
@@ -83,66 +83,64 @@ class SafeConfigParserWithIncludes(SafeConfigParser):
 
     SECTION_NAME = "INCLUDES"
 
-    if sys.version_info >= (3,2):
-            # overload constructor only for fancy new Python3's
-            def __init__(self, *args, **kwargs):
-                    kwargs = kwargs.copy()
-                    kwargs['interpolation'] = BasicInterpolationWithName()
-                    super(SafeConfigParserWithIncludes, self).__init__(
-                            *args, **kwargs)
+    if sys.version_info >= (3, 2):
+        # overload constructor only for fancy new Python3's
+        def __init__(self, *args, **kwargs):
+            kwargs = kwargs.copy()
+            kwargs["interpolation"] = BasicInterpolationWithName()
+            super(SafeConfigParserWithIncludes, self).__init__(*args, **kwargs)
 
-    #@staticmethod
-    def getIncludes(resource, seen = []):
-            """
-            Given 1 config resource returns list of included files
-            (recursively) with the original one as well
-            Simple loops are taken care about
-            """
+    # @staticmethod
+    def getIncludes(resource, seen=[]):
+        """
+        Given 1 config resource returns list of included files
+        (recursively) with the original one as well
+        Simple loops are taken care about
+        """
 
-            # Use a short class name ;)
-            SCPWI = SafeConfigParserWithIncludes
+        # Use a short class name ;)
+        SCPWI = SafeConfigParserWithIncludes
 
-            parser = SafeConfigParser()
-            try:
-                    if sys.version_info >= (3,2):  # pragma: no cover
-                            parser.read(resource, encoding='utf-8')
-                    else:
-                            parser.read(resource)
-            except UnicodeDecodeError as e:
-                    logSys.error("Error decoding config file '%s': %s" % (resource, e))
-                    return []
+        parser = SafeConfigParser()
+        try:
+            if sys.version_info >= (3, 2):  # pragma: no cover
+                parser.read(resource, encoding="utf-8")
+            else:
+                parser.read(resource)
+        except UnicodeDecodeError as e:
+            logSys.error("Error decoding config file '%s': %s" % (resource, e))
+            return []
 
-            resourceDir = os.path.dirname(resource)
+        resourceDir = os.path.dirname(resource)
 
-            newFiles = [ ('before', []), ('after', []) ]
-            if SCPWI.SECTION_NAME in parser.sections():
-                    for option_name, option_list in newFiles:
-                            if option_name in parser.options(SCPWI.SECTION_NAME):
-                                    newResources = parser.get(SCPWI.SECTION_NAME, option_name)
-                                    for newResource in newResources.split('\n'):
-                                            if os.path.isabs(newResource):
-                                                    r = newResource
-                                            else:
-                                                    r = os.path.join(resourceDir, newResource)
-                                            if r in seen:
-                                                    continue
-                                            s = seen + [resource]
-                                            option_list += SCPWI.getIncludes(r, s)
-            # combine lists
-            return newFiles[0][1] + [resource] + newFiles[1][1]
-            #print "Includes list for " + resource + " is " + `resources`
+        newFiles = [("before", []), ("after", [])]
+        if SCPWI.SECTION_NAME in parser.sections():
+            for option_name, option_list in newFiles:
+                if option_name in parser.options(SCPWI.SECTION_NAME):
+                    newResources = parser.get(SCPWI.SECTION_NAME, option_name)
+                    for newResource in newResources.split("\n"):
+                        if os.path.isabs(newResource):
+                            r = newResource
+                        else:
+                            r = os.path.join(resourceDir, newResource)
+                        if r in seen:
+                            continue
+                        s = seen + [resource]
+                        option_list += SCPWI.getIncludes(r, s)
+        # combine lists
+        return newFiles[0][1] + [resource] + newFiles[1][1]
+        # print "Includes list for " + resource + " is " + `resources`
+
     getIncludes = staticmethod(getIncludes)
 
-
     def read(self, filenames):
-            fileNamesFull = []
-            if not isinstance(filenames, list):
-                    filenames = [ filenames ]
-            for filename in filenames:
-                    fileNamesFull += SafeConfigParserWithIncludes.getIncludes(filename)
-            logSys.debug("Reading files: %s" % fileNamesFull)
-            if sys.version_info >= (3,2):  # pragma: no cover
-                    return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
-            else:
-                    return SafeConfigParser.read(self, fileNamesFull)
-
+        fileNamesFull = []
+        if not isinstance(filenames, list):
+            filenames = [filenames]
+        for filename in filenames:
+            fileNamesFull += SafeConfigParserWithIncludes.getIncludes(filename)
+        logSys.debug("Reading files: %s" % fileNamesFull)
+        if sys.version_info >= (3, 2):  # pragma: no cover
+            return SafeConfigParser.read(self, fileNamesFull, encoding="utf-8")
+        else:
+            return SafeConfigParser.read(self, fileNamesFull)
