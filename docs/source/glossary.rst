@@ -21,19 +21,19 @@ and API, and provides additional references where to seek more information
   :sorted:
 
   container
-    TODO   Docker_ and Singularity_
+    A lightweight, portable runtime environment that packages an application with its dependencies. ReproMan supports Docker_ and Singularity_ containers for reproducible execution across different systems.
 
   package
-    TODO
+    A software component or library that can be installed and managed within a computational environment. ReproMan can track and reproduce package installations across different resource types.
 
   environment
-    TODO
+    A configured computational context with specific software, libraries, and settings. ReproMan creates and manages environments on various resources to ensure reproducible execution of scientific workflows.
 
   virtual machine
-    TODO
+    A complete operating system running on virtualized hardware, providing strong isolation and reproducibility. ReproMan can create and manage VMs on cloud platforms like AWS.
 
   cloud instance
-    TODO
+    A virtual server running on cloud infrastructure (such as AWS EC2) that can be dynamically created, configured, and destroyed. ReproMan uses cloud instances to provide scalable computational resources.
 
 .. _Docker: http://docker.io
 .. _Singularity: http://singularity.lbl.gov
