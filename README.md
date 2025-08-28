@@ -21,7 +21,7 @@ internals and/or contributing to the project.
 
 ReproMan requires Python 3 (>= 3.9).
 
-## Linux'es and OSX (Windows yet TODO) - via pip
+## Linux and OSX via pip
 
 By default, installation via pip (`pip install reproman`) installs core functionality of reproman
 allowing for managing datasets etc.  Additional installation schemes
