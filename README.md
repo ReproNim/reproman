@@ -13,14 +13,6 @@ in Neuroimaging.  While concentrating on Neuroimaging use-cases, it is
 by no means is limited to this field of science and tools will find
 utility in other fields as well.
 
-# Status
-
-ReproMan is under rapid development. While
-the code base is still growing the focus is increasingly shifting towards
-robust and safe operation with a sensible API. There has been no major public
-release yet, as organization and configuration are still subject of
-considerable reorganization and standardization. 
-
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) if you are interested in
 internals and/or contributing to the project.
