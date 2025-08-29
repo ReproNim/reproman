@@ -14,7 +14,6 @@ Concepts and technologies
    :maxdepth: 2
 
    glossary
-   sandbox/packages
 
 
 Managing resources
