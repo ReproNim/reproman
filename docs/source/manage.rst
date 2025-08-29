@@ -32,7 +32,7 @@ The output above includes an entry for the SSH resource create above,
 
 While most of the ReproMan subcommands have an argument that specifies
 which resource to operate on (e.g., the resource to :ref:`execute
-<execute>` a command on), there are only few more dedicated subcommands
+<execution>` a command on), there are only few more dedicated subcommands
 for managing resources: :ref:`stop <man_reproman-stop>`, :ref:`start
 <man_reproman-start>`, and :ref:`delete <man_reproman-delete>`. Together
 ``stop`` and ``start`` provide a way to suspend and restart a resource
