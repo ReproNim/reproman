@@ -33,13 +33,14 @@ git_repo = git_repo_fixture()
 git_repo_pair = git_repo_fixture(kind="pair")
 git_repo_pair_module = git_repo_fixture(kind="pair", scope="module")
 
-svn_repo_empty = svn_repo_fixture(kind='empty')
+svn_repo_empty = svn_repo_fixture(kind="empty")
 svn_repo = svn_repo_fixture()
 
 
 # TODO: Move to reproman.test.utils and use in other tracer tests.
-def assert_distributions(result, expected_length=None, which=0,
-                         expected_unknown=None, expected_subset=None):
+def assert_distributions(
+    result, expected_length=None, which=0, expected_unknown=None, expected_subset=None
+):
     """Wrap common assertions about identified distributions.
 
     Parameters
@@ -80,8 +81,7 @@ def current_hexsha(runner):
 
 def current_branch(runner):
     try:
-        out = runner(["git", "symbolic-ref", "--short", "HEAD"],
-                     expect_fail=True)
+        out = runner(["git", "symbolic-ref", "--short", "HEAD"], expect_fail=True)
     except CommandError:
         return
     return out[0].strip()
@@ -96,11 +96,18 @@ def test_git_repo_empty(git_repo_empty):
         tracer.identify_distributions([git_repo_empty]),
         expected_length=1,
         expected_unknown=set(),
-        expected_subset={"name": "git",
-                         "packages": [{"path": git_repo_empty,
-                                       "branch": branch,
-                                       # We do not include repo path itself.
-                                       "files": []}]})
+        expected_subset={
+            "name": "git",
+            "packages": [
+                {
+                    "path": git_repo_empty,
+                    "branch": branch,
+                    # We do not include repo path itself.
+                    "files": [],
+                }
+            ],
+        },
+    )
 
 
 def test_git_repo(git_repo):
@@ -110,7 +117,7 @@ def test_git_repo(git_repo):
         # ... and relative paths work.
         "bar",
         # So do paths in subdirectories.
-        os.path.join(git_repo, "subdir/baz")
+        os.path.join(git_repo, "subdir/baz"),
     ]
 
     runner = GitRunner(git_repo)
@@ -126,18 +133,20 @@ def test_git_repo(git_repo):
             expected_unknown={COMMON_SYSTEM_PATH},
             expected_subset={
                 "name": "git",
-                "packages": [{"files": [op.relpath(p) for p in paths],
-                              "path": git_repo,
-                              "branch": branch}]})
+                "packages": [
+                    {"files": [op.relpath(p) for p in paths], "path": git_repo, "branch": branch}
+                ],
+            },
+        )
 
         assert dists[0][0].packages[0].hexsha
         assert dists[0][0].packages[0].root_hexsha
 
         hexshas, _ = runner(["git", "rev-list", branch])
-        root_hexsha = hexshas.strip('\n').split('\n')[-1]
+        root_hexsha = hexshas.strip("\n").split("\n")[-1]
         repo = dists[0][0].packages[0]
         assert repo.root_hexsha == root_hexsha
-        assert repo._diff_cmp_id == (repo.root_hexsha, )
+        assert repo._diff_cmp_id == (repo.root_hexsha,)
         assert repo.commit == repo.hexsha
 
         # Above we identify a subdirectory file, but we should not
@@ -152,8 +161,7 @@ def test_git_repo_detached(git_repo):
     branch = current_branch(runner)
     # If we are in a detached state, we still don't identify the
     # repository itself.
-    runner(["git", "checkout", branch + "^{}", "--"],
-           expect_stderr=True)
+    runner(["git", "checkout", branch + "^{}", "--"], expect_stderr=True)
 
     hexsha_branch, _ = runner(["git", "rev-parse", branch])
     hexsha_branch = hexsha_branch.strip()
@@ -193,15 +201,19 @@ def test_git_repo_remotes(git_repo_pair):
         expected_subset={
             "name": "git",
             "packages": [
-                {"files": [op.relpath(p, repo_local) for p in paths],
-                 "path": repo_local,
-                 "branch": branch,
-                 "tracked_remote": "origin",
-                 "remotes": {"origin":
-                             {"url": repo_remote,
-                              "contains": True},
-                             "fakeremote":
-                             {"url": "fakepath"}}}]})
+                {
+                    "files": [op.relpath(p, repo_local) for p in paths],
+                    "path": repo_local,
+                    "branch": branch,
+                    "tracked_remote": "origin",
+                    "remotes": {
+                        "origin": {"url": repo_remote, "contains": True},
+                        "fakeremote": {"url": "fakepath"},
+                    },
+                }
+            ],
+        },
+    )
     pkg_nopush = dists_nopush[0][0].packages[0]
     assert set(pkg_nopush.remotes.keys()) == {"origin", "fakeremote"}
 
@@ -235,8 +247,7 @@ def test_git_repo_remotes(git_repo_pair):
 
 
 def test_git_install_no_remote():
-    dist = GitDistribution(name="git",
-                           packages=[GitRepo(path="/tmp/shouldn't/matter")])
+    dist = GitDistribution(name="git", packages=[GitRepo(path="/tmp/shouldn't/matter")])
 
     with swallow_logs(new_level=logging.WARNING) as log:
         dist.initiate()
@@ -250,9 +261,9 @@ def test_git_install_skip_existing_nongit(path=None):
         dist_dir = GitDistribution(
             name="git",
             packages=[
-                GitRepo(path=path,
-                        remotes={"origin": {"url": "doesnt-matter",
-                                            "contains": True}})])
+                GitRepo(path=path, remotes={"origin": {"url": "doesnt-matter", "contains": True}})
+            ],
+        )
         dist_dir.install_packages()
         assert "not a Git repository; skipping" in log.out
 
@@ -260,9 +271,12 @@ def test_git_install_skip_existing_nongit(path=None):
         dist_dir = GitDistribution(
             name="git",
             packages=[
-                GitRepo(path=op.join(path, "foo"),
-                        remotes={"origin": {"url": "doesnt-matter",
-                                            "contains": True}})])
+                GitRepo(
+                    path=op.join(path, "foo"),
+                    remotes={"origin": {"url": "doesnt-matter", "contains": True}},
+                )
+            ],
+        )
         dist_dir.install_packages()
         assert "not a directory; skipping" in log.out
 
@@ -272,18 +286,20 @@ def test_git_install_skip_different_git(git_repo):
         dist_dir = GitDistribution(
             name="git",
             packages=[
-                GitRepo(path=git_repo,
-                        root_hexsha="definitely doesn't match",
-                        remotes={"origin": {"url": "doesnt-matter",
-                                            "contains": True}})])
+                GitRepo(
+                    path=git_repo,
+                    root_hexsha="definitely doesn't match",
+                    remotes={"origin": {"url": "doesnt-matter", "contains": True}},
+                )
+            ],
+        )
         dist_dir.install_packages()
         assert "doesn't match expected hexsha; skipping" in log.out
 
 
 @pytest.fixture(scope="module")
 def traced_repo(git_repo_pair_module):
-    """Return a Git repo pair and the traced GitDistribution for the local repo.
-    """
+    """Return a Git repo pair and the traced GitDistribution for the local repo."""
     repo_local, repo_remote = git_repo_pair_module
 
     runner = GitRunner(cwd=repo_local)
@@ -294,9 +310,7 @@ def traced_repo(git_repo_pair_module):
     git_dist = dists[0][0]
     assert len(git_dist.packages) == 1
 
-    return {"repo_local": repo_local,
-            "repo_remote": repo_remote,
-            "git_dist": git_dist}
+    return {"repo_local": repo_local, "repo_remote": repo_remote, "git_dist": git_dist}
 
 
 @pytest.fixture(scope="function")
@@ -314,8 +328,7 @@ def install(git_dist, dest, check=False):
     git_dist.install_packages()
 
     if check:
-        dists_installed = list(
-            tracer.identify_distributions([op.join(dest, "foo")]))
+        dists_installed = list(tracer.identify_distributions([op.join(dest, "foo")]))
         git_dist_installed = dists_installed[0][0]
         assert len(git_dist_installed.packages) == 1
         git_pkg = git_dist.packages[0]
@@ -443,8 +456,7 @@ def test_git_install_add_remotes(traced_repo_copy, tmpdir):
     git_pkg.path = install_dir
     git_pkg.tracked_remote = "foo"
     url = git_pkg.remotes["origin"]["url"]
-    git_pkg.remotes = {"foo": {"url": url},
-                       "bar": {"contains": True, "url": url}}
+    git_pkg.remotes = {"foo": {"url": url}, "bar": {"contains": True, "url": url}}
     install(git_dist, install_dir)
     installed_remotes = runner(["git", "remote"])[0].splitlines()
     assert set(installed_remotes) == {"foo", "bar"}
@@ -452,20 +464,21 @@ def test_git_install_add_remotes(traced_repo_copy, tmpdir):
 
 def test_svn(svn_repo):
     (svn_repo_root, checked_out_dir) = svn_repo
-    svn_file = os.path.join(checked_out_dir, 'foo')
-    uuid_file = os.path.join(svn_repo_root, 'db', 'uuid')
+    svn_file = os.path.join(checked_out_dir, "foo")
+    uuid_file = os.path.join(svn_repo_root, "db", "uuid")
     uuid = open(uuid_file).readlines()[0].strip()
     tracer = VCSTracer()
     assert_distributions(
         tracer.identify_distributions([svn_file]),
         expected_length=1,
-        expected_subset={'name': 'svn'})
+        expected_subset={"name": "svn"},
+    )
     svn_repo = list(tracer.identify_distributions([svn_file]))[0][0].packages[0]
-    assert svn_repo.files == ['foo']
+    assert svn_repo.files == ["foo"]
     assert svn_repo.uuid == uuid
-    assert svn_repo.root_url == 'file://' + svn_repo_root
+    assert svn_repo.root_url == "file://" + svn_repo_root
     assert svn_repo.revision == 1
-    assert svn_repo._diff_cmp_id == (svn_repo.uuid, )
+    assert svn_repo._diff_cmp_id == (svn_repo.uuid,)
     assert svn_repo.commit == svn_repo.revision
 
 

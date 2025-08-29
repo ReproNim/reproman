@@ -5,6 +5,4 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Tests for supporting utilities for various distributions
-
-"""
+"""Tests for supporting utilities for various distributions"""

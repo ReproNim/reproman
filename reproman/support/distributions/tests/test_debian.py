@@ -5,9 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Various supporting utilities for various distributions
-
-"""
+"""Various supporting utilities for various distributions"""
 
 from ..debian import DebianReleaseSpec
 from ..debian import get_spec_from_release_file
@@ -40,21 +38,24 @@ JZ0An0Uoocusvjco1t6RAwxt/y3lQoWV
 =a3Nn
 -----END PGP SIGNATURE-----
 """
-    eq_(get_spec_from_release_file(content),
+    eq_(
+        get_spec_from_release_file(content),
         DebianReleaseSpec(
-            origin='NeuroDebian',
-            label='NeuroDebian2',
-            codename='stretch2',
+            origin="NeuroDebian",
+            label="NeuroDebian2",
+            codename="stretch2",
             version=None,
-            suite='stretch',
-            date='Thu, 15 Sep 2016 01:30:57 UTC',
-            components='main non-free contrib',
-            architectures='i386 amd64 sparc',
-        ))
+            suite="stretch",
+            date="Thu, 15 Sep 2016 01:30:57 UTC",
+            components="main non-free contrib",
+            architectures="i386 amd64 sparc",
+        ),
+    )
 
 
 def test_parse_apt_cache_show_pkgs_output():
     from ..debian import parse_apt_cache_show_pkgs_output
+
     txt1 = """\
 Package: openssl
 Status: install ok installed
@@ -147,27 +148,35 @@ Homepage: http://www.schwardtnet.de/alienblaster/
 Bugs: https://bugs.launchpad.net/ubuntu/+filebug
 Origin: Ubuntu
 """
-    out1 = [{'architecture': 'amd64',
-             'package': 'openssl',
-             'status': 'install ok installed',
-             'version': '1.0.2g-1ubuntu4.5'},
-            {'architecture': 'amd64',
-             'source_name': 'openssl-src',
-             'source_version': '1.0.2g',
-             'package': 'openssl',
-             'version': '1.0.2g-1ubuntu4'},
-            {'architecture': 'amd64',
-             'source_name': 'alienblaster-src',
-             'package': 'alienblaster',
-             'md5': 'e53379fd0d60e0af6304af78aa8ef2b7',
-             'version': '1.1.0-9'},
-            ]
+    out1 = [
+        {
+            "architecture": "amd64",
+            "package": "openssl",
+            "status": "install ok installed",
+            "version": "1.0.2g-1ubuntu4.5",
+        },
+        {
+            "architecture": "amd64",
+            "source_name": "openssl-src",
+            "source_version": "1.0.2g",
+            "package": "openssl",
+            "version": "1.0.2g-1ubuntu4",
+        },
+        {
+            "architecture": "amd64",
+            "source_name": "alienblaster-src",
+            "package": "alienblaster",
+            "md5": "e53379fd0d60e0af6304af78aa8ef2b7",
+            "version": "1.1.0-9",
+        },
+    ]
     out = parse_apt_cache_show_pkgs_output(txt1)
     assert_is_subset_recur(out1, out, [dict, list])
 
 
 def test_parse_apt_cache_policy_pkgs_output():
     from ..debian import parse_apt_cache_policy_pkgs_output
+
     txt1 = """\
 afni:
   Installed: 16.2.07~dfsg.1-2~nd90+1
@@ -224,40 +233,67 @@ skype:i386:
      4.3.0.37-1 -1
         100 /var/lib/dpkg/status
 """
-    out1 = {'openssl': {'architecture': None,
-             'candidate': '1.0.2g-1ubuntu4.8',
-             'installed': '1.0.2g-1ubuntu4.5',
-             'versions': [{'installed': None,
-                           'priority': '500',
-                           'sources': [{'priority': '500',
-                                        'source': 'http://us.archive.ubuntu.com/ubuntu '
-                                                  'xenial-updates/main amd64 '
-                                                  'Packages'}],
-                           'version': '1.0.2g-1ubuntu4.8'},
-                          {'installed': None,
-                           'priority': '500',
-                           'sources': [{'priority': '500',
-                                        'source': 'http://security.ubuntu.com/ubuntu '
-                                                  'xenial-security/main amd64 '
-                                                  'Packages'}],
-                           'version': '1.0.2g-1ubuntu4.6'},
-                          {'installed': '***',
-                           'priority': '100',
-                           'sources': [{'priority': '100',
-                                        'source': '/var/lib/dpkg/status'}],
-                           'version': '1.0.2g-1ubuntu4.5'},
-                          {'installed': None,
-                           'priority': '500',
-                           'sources': [{'priority': '500',
-                                        'source': 'http://us.archive.ubuntu.com/ubuntu '
-                                                  'xenial/main amd64 '
-                                                  'Packages'}],
-                           'version': '1.0.2g-1ubuntu4'}]}}
+    out1 = {
+        "openssl": {
+            "architecture": None,
+            "candidate": "1.0.2g-1ubuntu4.8",
+            "installed": "1.0.2g-1ubuntu4.5",
+            "versions": [
+                {
+                    "installed": None,
+                    "priority": "500",
+                    "sources": [
+                        {
+                            "priority": "500",
+                            "source": "http://us.archive.ubuntu.com/ubuntu "
+                            "xenial-updates/main amd64 "
+                            "Packages",
+                        }
+                    ],
+                    "version": "1.0.2g-1ubuntu4.8",
+                },
+                {
+                    "installed": None,
+                    "priority": "500",
+                    "sources": [
+                        {
+                            "priority": "500",
+                            "source": "http://security.ubuntu.com/ubuntu "
+                            "xenial-security/main amd64 "
+                            "Packages",
+                        }
+                    ],
+                    "version": "1.0.2g-1ubuntu4.6",
+                },
+                {
+                    "installed": "***",
+                    "priority": "100",
+                    "sources": [{"priority": "100", "source": "/var/lib/dpkg/status"}],
+                    "version": "1.0.2g-1ubuntu4.5",
+                },
+                {
+                    "installed": None,
+                    "priority": "500",
+                    "sources": [
+                        {
+                            "priority": "500",
+                            "source": "http://us.archive.ubuntu.com/ubuntu "
+                            "xenial/main amd64 "
+                            "Packages",
+                        }
+                    ],
+                    "version": "1.0.2g-1ubuntu4",
+                },
+            ],
+        }
+    }
     out = parse_apt_cache_policy_pkgs_output(txt1)
     assert_is_subset_recur(out1, out, [dict])
 
+
 def test_parse_apt_cache_policy_source_info():
     from ..debian import parse_apt_cache_policy_source_info
+
     txt = """\
 Package files:
  100 /var/lib/dpkg/status
@@ -299,77 +335,83 @@ Package files:
      origin us.archive.ubuntu.com
 Pinned packages:
 """
-    out1 = {'http://neuro.debian.net/debian xenial/non-free i386 Packages':
-                {'architecture': 'i386',
-                 'archive': 'xenial',
-                 'archive_uri': 'http://neuro.debian.net/debian',
-                 'uri_suite': 'xenial',
-                 'codename': 'xenial',
-                 'component': 'non-free',
-                 'label': 'NeuroDebian',
-                 'origin': 'NeuroDebian',
-                 'site': 'neuro.debian.net'
-                 },
-            'http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages':
-                {'architecture': 'amd64',
-                 'archive': 'xenial-security',
-                 'archive_uri': 'http://security.ubuntu.com/ubuntu',
-                 'uri_suite': 'xenial-security',
-                 'codename': 'xenial',
-                 'component': 'restricted',
-                 'label': 'Ubuntu',
-                 'origin': 'Ubuntu',
-                 'site': 'security.ubuntu.com'
-                 },
-            'http://debproxy:9999/debian/ jessie-backports/contrib Translation-en':
-                {'archive_uri': 'http://debproxy:9999/debian/',
-                 'uri_suite': 'jessie-backports'
-                 },
-            'http://debproxy:9999/debian/ jessie-backports/non-free amd64 Packages':
-                {'archive': 'jessie-backports',
-                 'archive_uri': 'http://debproxy:9999/debian/',
-                 'codename': 'jessie-backports',
-                 'component': 'non-free',
-                 'label': 'Debian Backports',
-                 'origin': 'Debian Backports',
-                 'site': 'debproxy',
-                 'uri_suite': 'jessie-backports'
-                 },
-            }
+    out1 = {
+        "http://neuro.debian.net/debian xenial/non-free i386 Packages": {
+            "architecture": "i386",
+            "archive": "xenial",
+            "archive_uri": "http://neuro.debian.net/debian",
+            "uri_suite": "xenial",
+            "codename": "xenial",
+            "component": "non-free",
+            "label": "NeuroDebian",
+            "origin": "NeuroDebian",
+            "site": "neuro.debian.net",
+        },
+        "http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages": {
+            "architecture": "amd64",
+            "archive": "xenial-security",
+            "archive_uri": "http://security.ubuntu.com/ubuntu",
+            "uri_suite": "xenial-security",
+            "codename": "xenial",
+            "component": "restricted",
+            "label": "Ubuntu",
+            "origin": "Ubuntu",
+            "site": "security.ubuntu.com",
+        },
+        "http://debproxy:9999/debian/ jessie-backports/contrib Translation-en": {
+            "archive_uri": "http://debproxy:9999/debian/",
+            "uri_suite": "jessie-backports",
+        },
+        "http://debproxy:9999/debian/ jessie-backports/non-free amd64 Packages": {
+            "archive": "jessie-backports",
+            "archive_uri": "http://debproxy:9999/debian/",
+            "codename": "jessie-backports",
+            "component": "non-free",
+            "label": "Debian Backports",
+            "origin": "Debian Backports",
+            "site": "debproxy",
+            "uri_suite": "jessie-backports",
+        },
+    }
     out = parse_apt_cache_policy_source_info(txt)
     assert_is_subset_recur(out1, out, [dict])
 
 
 def test_get_apt_release_file_names():
     from ..debian import get_apt_release_file_names
-    fn = get_apt_release_file_names('http://us.archive.ubuntu.com/ubuntu',
-                                    'xenial-backports')
+
+    fn = get_apt_release_file_names("http://us.archive.ubuntu.com/ubuntu", "xenial-backports")
     assert "/var/lib/apt/lists/us.archive.ubuntu.com_ubuntu_dists_xenial-backports_InRelease" in fn
     assert "/var/lib/apt/lists/us.archive.ubuntu.com_ubuntu_dists_xenial-backports_Release" in fn
-    fn = get_apt_release_file_names('file:/my/repo2/ubuntu',None)
+    fn = get_apt_release_file_names("file:/my/repo2/ubuntu", None)
     assert "/var/lib/apt/lists/_my_repo2_ubuntu_InRelease" in fn
     assert "/var/lib/apt/lists/_my_repo2_ubuntu_Release" in fn
 
 
 def test_parse_dpkgquery_line():
     for line, expected in [
-            ('zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8',
-             {'name': 'zlib1g',
-              'architecture': 'i386',
-              'path': '/lib/i386-linux-gnu/libz.so.1.2.8',
-              'pkgs_rest': None}),
-            ('fail2ban: /usr/bin/fail2ban-client',
-             {'name': 'fail2ban',
-              'path': '/usr/bin/fail2ban-client',
-              'pkgs_rest': None}),
-            ('fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0',
-             {'name': 'fsl-5.0-eddy-nonfree',
-              'path': '/usr/lib/fsl/5.0',
-              'pkgs_rest': ', fsl-5.0-core'}),
-            ('pkg: path,with,commas',
-             {'name': 'pkg',
-              'path': 'path,with,commas',
-              'pkgs_rest': None}),
-            ('diversion by dash from: /bin/sh', None)
+        (
+            "zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8",
+            {
+                "name": "zlib1g",
+                "architecture": "i386",
+                "path": "/lib/i386-linux-gnu/libz.so.1.2.8",
+                "pkgs_rest": None,
+            },
+        ),
+        (
+            "fail2ban: /usr/bin/fail2ban-client",
+            {"name": "fail2ban", "path": "/usr/bin/fail2ban-client", "pkgs_rest": None},
+        ),
+        (
+            "fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0",
+            {
+                "name": "fsl-5.0-eddy-nonfree",
+                "path": "/usr/lib/fsl/5.0",
+                "pkgs_rest": ", fsl-5.0-core",
+            },
+        ),
+        ("pkg: path,with,commas", {"name": "pkg", "path": "path,with,commas", "pkgs_rest": None}),
+        ("diversion by dash from: /bin/sh", None),
     ]:
         assert parse_dpkgquery_line(line) == expected

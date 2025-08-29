@@ -10,7 +10,9 @@
 from reproman.distributions.debian import DebianDistribution
 
 import logging
-lgr = logging.getLogger('reproman.distributions.neurodebian')
+
+lgr = logging.getLogger("reproman.distributions.neurodebian")
+
 
 class NeurodebianDistribution(DebianDistribution):
     """
@@ -27,7 +29,6 @@ class NeurodebianDistribution(DebianDistribution):
             Provenance information for the distribution.
         """
         super(NeurodebianDistribution, self).__init__(provenance)
-
 
     def initiate(self, environment):
         """

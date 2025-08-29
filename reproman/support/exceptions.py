@@ -5,13 +5,11 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""" reproman exceptions
-"""
+"""reproman exceptions"""
 
 
 class CommandError(RuntimeError):
-    """Thrown if a command call fails.
-    """
+    """Thrown if a command call fails."""
 
     def __init__(self, cmd="", msg="", code=None, stdout="", stderr=""):
         RuntimeError.__init__(self, msg)
@@ -32,13 +30,14 @@ class CommandError(RuntimeError):
 
 
 class CommandNotAvailableError(CommandError):
-    """Thrown if a command is not available due to certain circumstances.
-    """
+    """Thrown if a command is not available due to certain circumstances."""
+
     pass
 
 
 class InsufficientArgumentsError(ValueError):
     """To be raise instead of `ValueError` when use help output is desired"""
+
     pass
 
 
@@ -63,7 +62,8 @@ class MissingExternalDependency(RuntimeError):
 
 class DeprecatedError(RuntimeError):
     """To raise whenever a deprecated entirely feature is used"""
-    def __init__(self, new=None, version=None, msg=''):
+
+    def __init__(self, new=None, version=None, msg=""):
         """
 
         Parameters
@@ -80,7 +80,7 @@ class DeprecatedError(RuntimeError):
         self.msg = msg
 
     def __str__(self):
-        s = self.msg if self.msg else ''
+        s = self.msg if self.msg else ""
         if self.version:
             s += (" is deprecated" if s else "Deprecated") + " since version %s." % self.version
         if self.new:
@@ -97,29 +97,35 @@ class OutdatedExternalDependency(MissingExternalDependency):
 
     def __str__(self):
         to_str = super(OutdatedExternalDependency, self).__str__()
-        to_str += ". You have version %s" % self.ver_present \
-            if self.ver_present else \
-            " Some unknown version of dependency found."
+        to_str += (
+            ". You have version %s" % self.ver_present
+            if self.ver_present
+            else " Some unknown version of dependency found."
+        )
         return to_str
 
 
 class SpecLoadingError(IOError):
     """To be raised when spec file fails to load"""
+
     pass
 
 
 class MissingConfigError(RuntimeError):
     """To be raised when missing configuration a parameter"""
+
     pass
 
 
 class MissingConfigFileError(RuntimeError):
     """To be raised when missing the configuration file"""
+
     pass
 
 
 class MultipleReleaseFileMatch(RuntimeError):
     """Multiple release files were matched while retracing on Debian"""
+
     pass
 
 
@@ -130,11 +136,13 @@ class MultipleReleaseFileMatch(RuntimeError):
 
 class ResourceError(RuntimeError):
     """To be raised when there is a problem with a reproman resource"""
+
     pass
 
 
 class ResourceNotFoundError(ResourceError):
     """To be raised whenever specified resource was not found"""
+
     pass
 
 
@@ -150,19 +158,20 @@ class MultipleResourceMatches(ReferenceError):
 class SessionRuntimeError(RuntimeError):
     pass
 
+
 # Orchestrator errors
 
 
 class OrchestratorError(RuntimeError):
-    """Base class for Orchestrator-related errors.
-    """
+    """Base class for Orchestrator-related errors."""
+
     pass
 
 
 # Job errors
 class JobError(RuntimeError):
-    """`reproman run` execution related error.
-    """
+    """`reproman run` execution related error."""
+
     def __init__(self, *args, failed=None):
         super().__init__(*args)
         self.failed = failed
@@ -171,8 +180,8 @@ class JobError(RuntimeError):
         s = super().__str__()
         if self.failed:
             if s:
-                s += ' '
-            s += 'Failed subjobs: %s' % ', '.join(map(str, self.failed))
+                s += " "
+            s += "Failed subjobs: %s" % ", ".join(map(str, self.failed))
         return s
 
 
@@ -180,8 +189,10 @@ class JobError(RuntimeError):
 # SSH support errors, largely adopted from starcluster
 #
 
+
 class SSHError(Exception):
     """Base class for all SSH related errors"""
+
     def __init__(self, *args):
         self.args = args
         self.msg = args[0]
@@ -195,15 +206,16 @@ class SSHError(Exception):
 
 class SSHConnectionError(SSHError):
     """Raised when ssh fails to to connect to a host (socket error)"""
+
     def __init__(self, host, port):
         self.msg = "failed to connect to host %s on port %s" % (host, port)
 
 
 class SSHAuthException(SSHError):
     """Raised when an ssh connection fails to authenticate"""
+
     def __init__(self, user, host):
-        self.msg = "failed to authenticate to host %s as user %s" % (host,
-                                                                     user)
+        self.msg = "failed to authenticate to host %s as user %s" % (host, user)
 
 
 class SSHAccessDeniedViaAuthKeys(BaseException):
@@ -212,5 +224,6 @@ class SSHAccessDeniedViaAuthKeys(BaseException):
     authorized_keys (common approach on UEC AMIs to allow root SSH access to be
     'toggled' via cloud-init)
     """
+
     def __init__(self, user):
         self.msg = "access for user '%s' denied via authorized_keys" % user

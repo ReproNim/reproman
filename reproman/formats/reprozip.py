@@ -17,15 +17,16 @@ import yaml
 from .base import Provenance
 
 import logging
-lgr = logging.getLogger('reproman.formats.reprozip')
+
+lgr = logging.getLogger("reproman.formats.reprozip")
 
 
 class ReprozipProvenance(Provenance):
-    """Parser for ReproZip file format (YAML specification) """
+    """Parser for ReproZip file format (YAML specification)"""
 
     @classmethod
     def _load(cls, source):
-        with io.open(source, encoding='utf-8') as stream:
+        with io.open(source, encoding="utf-8") as stream:
             config = yaml.safe_load(stream)
             # TODO: Check version of ReproZip file and warn if unknown
             return config
@@ -50,20 +51,20 @@ class ReprozipProvenance(Provenance):
     # def get_commandline(self):
     #     return self.yaml['runs'][0]['argv']
 
-    def get_files(self, limit='all'):
+    def get_files(self, limit="all"):
         """Pulls the system files from a ReproZip configuration into a set
-    
+
         Given a ReproZip configuration (read into a dictionary) it pulls
         the list of files from "packages" and "other files" sections into a
         set. It excludes files from "input_output".
-    
+
         Parameters
         ----------
         config : dict
             ReproZip configuration
         other_files : bool, optional
             Either to return also other_files
-    
+
         Return
         ------
         set
@@ -73,12 +74,12 @@ class ReprozipProvenance(Provenance):
         files = set()
 
         src_yaml = self._src
-        if limit in {'all', 'packaged'}:
-            for package in src_yaml.get('packages', []) or []:
-                if 'files' in package:
-                    files.update(package.get('files', []))
+        if limit in {"all", "packaged"}:
+            for package in src_yaml.get("packages", []) or []:
+                if "files" in package:
+                    files.update(package.get("files", []))
 
-        if limit in {'all', 'loose'} and 'other_files' in src_yaml:
+        if limit in {"all", "loose"} and "other_files" in src_yaml:
             files.update(src_yaml.get("other_files", []))
 
         return files

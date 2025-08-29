@@ -39,14 +39,16 @@ def test_resource_manager_factory_missing_required(resman):
 
 @pytest.mark.parametrize("type_", ["shell", "ssh"])
 def test_resource_manager_factory_invalid_param(resman, type_):
-    config = {"type": type_,
-              "id": "id",
-              "name": "name",
-              # All of the below are invalid in the case of shell. For ssh,
-              # "other" is invalid.
-              "host": "host",
-              "port": "port",
-              "other": "doesntmatter"}
+    config = {
+        "type": type_,
+        "id": "id",
+        "name": "name",
+        # All of the below are invalid in the case of shell. For ssh,
+        # "other" is invalid.
+        "host": "host",
+        "port": "port",
+        "other": "doesntmatter",
+    }
 
     with pytest.raises(ResourceError):
         resman.factory(config)
@@ -57,9 +59,7 @@ def test_resource_manager_factory_invalid_param(resman, type_):
 
 def test_backend_check_parameters_no_known():
     with pytest.raises(ResourceError) as exc:
-        backend_check_parameters(Shell,
-                                 {"name": "name",
-                                  "unknown_key": "value"})
+        backend_check_parameters(Shell, {"name": "name", "unknown_key": "value"})
     assert "no known parameters" in str(exc.value)
 
 
@@ -68,9 +68,7 @@ def test_backend_check_parameters_nowhere_close():
     from reproman.resource.docker_container import DockerContainer
 
     with pytest.raises(ResourceError) as exc:
-        backend_check_parameters(DockerContainer,
-                                 {"name": "name",
-                                  "unknown_key": "value"})
+        backend_check_parameters(DockerContainer, {"name": "name", "unknown_key": "value"})
     assert "Known backend parameters" in str(exc.value)
 
 
@@ -79,9 +77,7 @@ def test_backend_check_parameters_close_match():
     from reproman.resource.docker_container import DockerContainer
 
     with pytest.raises(ResourceError) as exc:
-        backend_check_parameters(DockerContainer,
-                                 {"name": "name",
-                                  "imagee": "value"})
+        backend_check_parameters(DockerContainer, {"name": "name", "imagee": "value"})
     assert "Did you mean?" in str(exc.value)
 
 
@@ -109,16 +105,15 @@ def test_resource_manager_save(tmpdir):
     inventory = op.join(str(tmpdir), "subdir", "inventory.yml")
     manager = ResourceManager(inventory)
     manager.inventory = {
-        "plain": {"name": "plain",
-                  "type": "foo-type",
-                  "id": "foo_id"},
-        "with-secret": {"name": "with-secret",
-                        "type": "bar-type",
-                        "secret_access_key": "SECRET",
-                        "id": "bar_id"},
-        "null-id": {"name": "null-id",
-                    "id": None,
-                    "type": "baz-type"}}
+        "plain": {"name": "plain", "type": "foo-type", "id": "foo_id"},
+        "with-secret": {
+            "name": "with-secret",
+            "type": "bar-type",
+            "secret_access_key": "SECRET",
+            "id": "bar_id",
+        },
+        "null-id": {"name": "null-id", "id": None, "type": "baz-type"},
+    }
     manager.save_inventory()
     assert op.exists(inventory)
     with open(inventory) as fh:
@@ -130,9 +125,7 @@ def test_resource_manager_save(tmpdir):
 
     # Reload that inventory, add another item, and save again.
     manager_reborn = ResourceManager(inventory)
-    manager_reborn.inventory["added"] = {"name": "added",
-                                         "type": "added-type",
-                                         "id": "added-id"}
+    manager_reborn.inventory["added"] = {"name": "added", "type": "added-type", "id": "added-id"}
     manager_reborn.save_inventory()
     with open(inventory) as fh:
         content_reread = fh.read()
@@ -149,27 +142,13 @@ def test_get_resources_empty_resref():
 def test_get_resources():
     manager = ResourceManager()
     manager.inventory = {
-        "myshell": {"name": "myshell",
-                    "type": "shell",
-                    "id": "0-myshell-id"},
-        "ambig-id0": {"name": "ambig-id0",
-                      "type": "shell",
-                      "id": "ambig-id"},
-        "ambig-id1": {"name": "ambig-id1",
-                      "type": "shell",
-                      "id": "ambig-id"},
-        "id-name-same": {"name": "id-name-same",
-                         "type": "shell",
-                         "id": "0-uniq-id"},
-        "same-id": {"name": "same-id",
-                    "type": "shell",
-                    "id": "id-name-same"},
-        "00": {"name": "00",
-               "type": "shell",
-               "id": "00s-id"},
-        "partial-is-other": {"name": "partial-is-other",
-                             "type": "shell",
-                             "id": "00-rest-of-id"}
+        "myshell": {"name": "myshell", "type": "shell", "id": "0-myshell-id"},
+        "ambig-id0": {"name": "ambig-id0", "type": "shell", "id": "ambig-id"},
+        "ambig-id1": {"name": "ambig-id1", "type": "shell", "id": "ambig-id"},
+        "id-name-same": {"name": "id-name-same", "type": "shell", "id": "0-uniq-id"},
+        "same-id": {"name": "same-id", "type": "shell", "id": "id-name-same"},
+        "00": {"name": "00", "type": "shell", "id": "00s-id"},
+        "partial-is-other": {"name": "partial-is-other", "type": "shell", "id": "00-rest-of-id"},
     }
 
     with pytest.raises(ResourceError):
@@ -208,8 +187,7 @@ def test_get_resources():
 
 def test_create_conflict():
     manager = ResourceManager()
-    manager.inventory = {"already-exists": {"name": "already-exists",
-                                            "type": "shell"}}
+    manager.inventory = {"already-exists": {"name": "already-exists", "type": "shell"}}
     with pytest.raises(ResourceAlreadyExistsError):
         manager.create("already-exists", "type-doesnt-matter")
 
@@ -225,12 +203,12 @@ def test_create_includes_config(tmpdir):
     with patch.object(manager, "config_manager", config):
         with patch.object(manager, "factory") as factory:
             manager.create("myssh", "ssh")
-            factory.assert_called_with(
-                {"host": "myhost", "name": "myssh", "type": "ssh"})
+            factory.assert_called_with({"host": "myhost", "name": "myssh", "type": "ssh"})
 
 
 def test_get_resource_class():
     from reproman.resource.shell import Shell
+
     assert get_resource_class("shell") == Shell
 
     # If we can't find the resource, we suggest near-hits.
@@ -241,10 +219,11 @@ def test_get_resource_class():
     # We raise a resource error if some other failure happens while trying to
     # discover resource types.
     with pytest.raises(ResourceError) as exc:
+
         def fail():
             raise Exception("some failure")
-        with patch("reproman.resource.base.discover_types",
-                   fail):
+
+        with patch("reproman.resource.base.discover_types", fail):
             get_resource_class("shll")
     assert "Failed to discover" in str(exc.value)
 

@@ -15,7 +15,7 @@ import tempfile
 import uuid
 
 
-lgr = logging.getLogger('reproman.distributions.singularity')
+lgr = logging.getLogger("reproman.distributions.singularity")
 
 from .base import Package
 from .base import Distribution
@@ -29,6 +29,7 @@ from ..utils import attrib, md5sum, chpwd
 @attr.s(slots=True, frozen=True)
 class SingularityImage(Package):
     """Singularity image information"""
+
     md5 = attrib(default=attr.NOTHING)
     # Optional
     bootstrap = attrib()
@@ -67,7 +68,7 @@ class SingularityDistribution(Distribution):
 
         # Raise reproman.support.exceptions.CommandError exception if
         # Singularity is not to be found.
-        session.execute_command(['singularity', 'selftest'])
+        session.execute_command(["singularity", "selftest"])
 
     def install_packages(self, session):
         """
@@ -107,58 +108,56 @@ class SingularityTracer(DistributionTracer):
 
         for file_path in files:
             try:
-                if file_path.startswith('shub:/'):
+                if file_path.startswith("shub:/"):
                     # Correct file path for path normalization in retrace.py
-                    if not file_path.startswith('shub://'):
-                        file_path = file_path.replace('shub:/', 'shub://')
+                    if not file_path.startswith("shub://"):
+                        file_path = file_path.replace("shub:/", "shub://")
                     temp_path = "{}.simg".format(uuid.uuid4())
                     with chpwd(tempfile.gettempdir()):
                         msg = "Downloading Singularity image {} for tracing"
                         lgr.info(msg.format(file_path))
-                        self._session.execute_command(['singularity', 'pull',
-                            '--name', temp_path, file_path])
-                        image = json.loads(self._session.execute_command(
-                            ['singularity', 'inspect', temp_path])[0])
+                        self._session.execute_command(
+                            ["singularity", "pull", "--name", temp_path, file_path]
+                        )
+                        image = json.loads(
+                            self._session.execute_command(["singularity", "inspect", temp_path])[0]
+                        )
                         url = file_path
                         md5 = md5sum(temp_path)
                         os.remove(temp_path)
                 else:
                     path = os.path.abspath(file_path)
-                    image = json.loads(self._session.execute_command(
-                        ['singularity', 'inspect', file_path])[0])
+                    image = json.loads(
+                        self._session.execute_command(["singularity", "inspect", file_path])[0]
+                    )
                     md5 = md5sum(file_path)
 
-                images.append(SingularityImage(
-                    md5=md5,
-                    bootstrap=image.get(
-                        'org.label-schema.usage.singularity.deffile.bootstrap'),
-                    maintainer=image.get('MAINTAINER'),
-                    deffile=image.get(
-                        'org.label-schema.usage.singularity.deffile'),
-                    schema_version=image.get('org.label-schema.schema-version'),
-                    build_date=image.get('org.label-schema.build-date'),
-                    build_size=image.get('org.label-schema.build-size'),
-                    singularity_version=image.get(
-                        'org.label-schema.usage.singularity.version'),
-                    base_image=image.get(
-                        'org.label-schema.usage.singularity.deffile.from'),
-                    mirror_url=image.get(
-                        'org.label-schema.usage.singularity.deffile.mirrorurl'),
-                    url=url,
-                    path=path
-                ))
+                images.append(
+                    SingularityImage(
+                        md5=md5,
+                        bootstrap=image.get("org.label-schema.usage.singularity.deffile.bootstrap"),
+                        maintainer=image.get("MAINTAINER"),
+                        deffile=image.get("org.label-schema.usage.singularity.deffile"),
+                        schema_version=image.get("org.label-schema.schema-version"),
+                        build_date=image.get("org.label-schema.build-date"),
+                        build_size=image.get("org.label-schema.build-size"),
+                        singularity_version=image.get("org.label-schema.usage.singularity.version"),
+                        base_image=image.get("org.label-schema.usage.singularity.deffile.from"),
+                        mirror_url=image.get(
+                            "org.label-schema.usage.singularity.deffile.mirrorurl"
+                        ),
+                        url=url,
+                        path=path,
+                    )
+                )
             except Exception as exc:
-                lgr.debug("Probably %s is not a Singularity image: %s",
-                    file_path, exc_str(exc))
+                lgr.debug("Probably %s is not a Singularity image: %s", file_path, exc_str(exc))
                 remaining_files.add(file_path)
 
         if not images:
             return
 
-        dist = SingularityDistribution(
-            name="singularity",
-            images=images
-        )
+        dist = SingularityDistribution(name="singularity", images=images)
 
         yield dist, remaining_files
 

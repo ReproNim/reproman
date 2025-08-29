@@ -7,4 +7,4 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Distribution tests"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"

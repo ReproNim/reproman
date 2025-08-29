@@ -38,9 +38,9 @@ _TEMP_PATHS_CLONES = set()
 
 # The path to be used while retracing and expecting it to be
 # provided by some system package
-COMMON_SYSTEM_PATH = '/bin/bash'
+COMMON_SYSTEM_PATH = "/bin/bash"
 # Package it should belong to (to avoid guessing or assuming matching the name)
-COMMON_SYSTEM_PACKAGE = 'bash'
+COMMON_SYSTEM_PACKAGE = "bash"
 
 # pytest variants for nose.tools commands.  These exist to avoid unnecessary
 # churn in tests that already use these names.  New code should use plain
@@ -72,13 +72,11 @@ def assert_false(x, msg=None):
 
 
 def assert_in(x, collection, msg=None):
-    assert x in collection, \
-        msg or "{!r} not found in {!r}".format(x, collection)
+    assert x in collection, msg or "{!r} not found in {!r}".format(x, collection)
 
 
 def assert_not_in(x, collection, msg=None):
-    assert x not in collection, \
-        msg or "{!r} unexpectedly found in {!r}".format(x, collection)
+    assert x not in collection, msg or "{!r} unexpectedly found in {!r}".format(x, collection)
 
 
 def assert_is(a, b, msg=None):
@@ -86,8 +84,7 @@ def assert_is(a, b, msg=None):
 
 
 def assert_is_instance(a, b, msg=None):
-    assert isinstance(a, b), \
-        msg or "{!r} is not an instance of {!r}".format(a, b)
+    assert isinstance(a, b), msg or "{!r} is not an instance of {!r}".format(a, b)
 
 
 # additional shortcuts
@@ -138,13 +135,14 @@ def create_tree(path, tree, archives_leading_dir=True):
             # if name.endswith('.tar.gz') or name.endswith('.tar'):
             #     create_tree_archive(path, name, load, archives_leading_dir=archives_leading_dir)
             # else:
-                create_tree(full_name, load, archives_leading_dir=archives_leading_dir)
+            create_tree(full_name, load, archives_leading_dir=archives_leading_dir)
         else:
-            #encoding = sys.getfilesystemencoding()
-            #if isinstance(full_name, str):
+            # encoding = sys.getfilesystemencoding()
+            # if isinstance(full_name, str):
             #    import pydb; pydb.debugger()
-            with open(full_name, 'w') as f:
+            with open(full_name, "w") as f:
                 f.write(load)
+
 
 #
 # Addition "checkers"
@@ -153,6 +151,7 @@ def create_tree(path, tree, archives_leading_dir=True):
 #
 # Helpers to test symlinks
 #
+
 
 def ok_symlink(path):
     """Checks whether path is either a working or broken symlink"""
@@ -164,32 +163,28 @@ def ok_symlink(path):
 def ok_good_symlink(path):
     ok_symlink(path)
     rpath = realpath(path)
-    ok_(exists(rpath),
-        msg="Path {} seems to be missing.  Symlink {} is broken".format(
-                rpath, path))
+    ok_(exists(rpath), msg="Path {} seems to be missing.  Symlink {} is broken".format(rpath, path))
 
 
 def ok_broken_symlink(path):
     ok_symlink(path)
     rpath = realpath(path)
-    assert_false(exists(rpath),
-            msg="Path {} seems to be present.  Symlink {} is not broken".format(
-                    rpath, path))
+    assert_false(
+        exists(rpath),
+        msg="Path {} seems to be present.  Symlink {} is not broken".format(rpath, path),
+    )
 
 
 def ok_startswith(s, prefix):
-    ok_(s.startswith(prefix),
-        msg="String %r doesn't start with %r" % (s, prefix))
+    ok_(s.startswith(prefix), msg="String %r doesn't start with %r" % (s, prefix))
 
 
 def ok_endswith(s, suffix):
-    ok_(s.endswith(suffix),
-        msg="String %r doesn't end with %r" % (s, suffix))
+    ok_(s.endswith(suffix), msg="String %r doesn't end with %r" % (s, suffix))
 
 
 def nok_startswith(s, prefix):
-    assert_false(s.startswith(prefix),
-        msg="String %r starts with %r" % (s, prefix))
+    assert_false(s.startswith(prefix), msg="String %r starts with %r" % (s, prefix))
 
 
 def ok_generator(gen):
@@ -198,8 +193,8 @@ def ok_generator(gen):
 
 def ok_file_has_content(path, content):
     """Verify that file exists and has expected content"""
-    assert(exists(path))
-    with open(path, 'r') as f:
+    assert exists(path)
+    with open(path, "r") as f:
         assert_equal(f.read(), content)
 
 
@@ -210,9 +205,11 @@ def assert_in_in(substr, lst):
             return
     assert False, '"%s" is not in "%s"' % (substr, str(lst))
 
+
 #
 # Decorators
 #
+
 
 @optional_args
 def with_tree(t, tree=None, archives_leading_dir=True, delete=True, **tkwargs):
@@ -227,15 +224,16 @@ def with_tree(t, tree=None, archives_leading_dir=True, delete=True, **tkwargs):
         finally:
             if delete:
                 rmtemp(d)
+
     return newfunc
 
 
-lgr = logging.getLogger('reproman.tests')
+lgr = logging.getLogger("reproman.tests")
 
 
 class SilentHTTPHandler(SimpleHTTPRequestHandler):
-    """A little adapter to silence the handler
-    """
+    """A little adapter to silence the handler"""
+
     def __init__(self, *args, **kwargs):
         self._silent = lgr.getEffectiveLevel() > logging.DEBUG
         SimpleHTTPRequestHandler.__init__(self, *args, **kwargs)
@@ -246,7 +244,7 @@ class SilentHTTPHandler(SimpleHTTPRequestHandler):
         lgr.debug("HTTP: " + format % args)
 
 
-def _multiproc_serve_path_via_http(hostname, path_to_serve_from, queue): # pragma: no cover
+def _multiproc_serve_path_via_http(hostname, path_to_serve_from, queue):  # pragma: no cover
     chpwd(path_to_serve_from)
     httpd = HTTPServer((hostname, 0), SilentHTTPHandler)
     queue.put(httpd.server_port)
@@ -255,8 +253,7 @@ def _multiproc_serve_path_via_http(hostname, path_to_serve_from, queue): # pragm
 
 @optional_args
 def serve_path_via_http(tfunc, *targs):
-    """Decorator which serves content of a directory via http url
-    """
+    """Decorator which serves content of a directory via http url"""
 
     @wraps(tfunc)
     def newfunc(*args, **kwargs):
@@ -277,24 +274,24 @@ def serve_path_via_http(tfunc, *targs):
         # is not that straightforward, although see
         # http://jasonincode.com/customizing-hosts-file-in-docker/
         # so we just force to use 127.0.0.1 while on wheezy
-        #hostname = '127.0.0.1' if on_debian_wheezy else 'localhost'
-        hostname = '127.0.0.1'
+        # hostname = '127.0.0.1' if on_debian_wheezy else 'localhost'
+        hostname = "127.0.0.1"
 
         queue = multiprocessing.Queue()
         multi_proc = multiprocessing.Process(
-            target=_multiproc_serve_path_via_http,
-            args=(hostname, path, queue))
+            target=_multiproc_serve_path_via_http, args=(hostname, path, queue)
+        )
         multi_proc.start()
         port = queue.get(timeout=300)
-        url = 'http://{}:{}/'.format(hostname, port)
+        url = "http://{}:{}/".format(hostname, port)
         lgr.debug("HTTP: serving {} under {}".format(path, url))
 
         try:
             # Such tests don't require real network so if http_proxy settings were
             # provided, we remove them from the env for the duration of this run
             env = os.environ.copy()
-            env.pop('http_proxy', None)
-            with patch.dict('os.environ', env, clear=True):
+            env.pop("http_proxy", None)
+            with patch.dict("os.environ", env, clear=True):
                 return tfunc(*(args + (path, url)), **kwargs)
         finally:
             lgr.debug("HTTP: stopping server under %s" % path)
@@ -305,17 +302,16 @@ def serve_path_via_http(tfunc, *targs):
 
 @optional_args
 def without_http_proxy(tfunc):
-    """Decorator to remove http*_proxy env variables for the duration of the test
-    """
+    """Decorator to remove http*_proxy env variables for the duration of the test"""
 
     @wraps(tfunc)
     def newfunc(*args, **kwargs):
         # Such tests don't require real network so if http_proxy settings were
         # provided, we remove them from the env for the duration of this run
         env = os.environ.copy()
-        env.pop('http_proxy', None)
-        env.pop('https_proxy', None)
-        with patch.dict('os.environ', env, clear=True):
+        env.pop("http_proxy", None)
+        env.pop("https_proxy", None)
+        with patch.dict("os.environ", env, clear=True):
             return tfunc(*args, **kwargs)
 
     return newfunc
@@ -382,13 +378,15 @@ def assert_cwd_unchanged(func, ok_to_chdir=False):
             if not ok_to_chdir:
                 lgr.warning(
                     "%s changed cwd to %s. Mitigating and changing back to %s"
-                    % (func, cwd_after, pwd_before))
+                    % (func, cwd_after, pwd_before)
+                )
                 # If there was already exception raised, we better re-raise
                 # that one since it must be more important, so not masking it
                 # here with our assertion
                 if exc_info is None:
-                    assert_equal(cwd_before, cwd_after,
-                                 "CWD changed from %s to %s" % (cwd_before, cwd_after))
+                    assert_equal(
+                        cwd_before, cwd_after, "CWD changed from %s to %s" % (cwd_before, cwd_after)
+                    )
 
         if exc_info is not None:
             raise exc_info[1].with_traceback(exc_info[2])
@@ -397,7 +395,7 @@ def assert_cwd_unchanged(func, ok_to_chdir=False):
 
 
 @optional_args
-def run_under_dir(func, newdir='.'):
+def run_under_dir(func, newdir="."):
     """Decorator to run tests under another directory
 
     It is somewhat ugly since we can't really chdir
@@ -419,13 +417,11 @@ def run_under_dir(func, newdir='.'):
         finally:
             chpwd(pwd_before)
 
-
     return newfunc
 
 
 def assert_re_in(regex, c, flags=0):
-    """Assert that container (list, str, etc) contains entry matching the regex
-    """
+    """Assert that container (list, str, etc) contains entry matching the regex"""
     if not isinstance(c, (list, tuple)):
         c = [c]
     for e in c:
@@ -450,6 +446,7 @@ OBSCURE_FILENAMES = (
     " abc d.dat ",  # they all should at least support spaces and dots
 )
 
+
 @with_tempfile(mkdir=True)
 def get_most_obscure_supported_name(tdir):
     """Return the most obscure filename that the filesystem would support under TEMPDIR
@@ -460,15 +457,17 @@ def get_most_obscure_supported_name(tdir):
         if on_windows and filename.rstrip() != filename:
             continue
         try:
-            with open(opj(tdir, filename), 'w') as f:
+            with open(opj(tdir, filename), "w") as f:
                 f.write("TEST LOAD")
             return filename  # it will get removed as a part of wiping up the directory
         except:
-            lgr.debug("Filename %r is not supported on %s under %s",
-                      filename, platform.system(), tdir)
+            lgr.debug(
+                "Filename %r is not supported on %s under %s", filename, platform.system(), tdir
+            )
             pass
-    raise RuntimeError("Could not create any of the files under %s among %s"
-                       % (tdir, OBSCURE_FILENAMES))
+    raise RuntimeError(
+        "Could not create any of the files under %s among %s" % (tdir, OBSCURE_FILENAMES)
+    )
 
 
 @optional_args
@@ -478,20 +477,25 @@ def with_testsui(t, responses=None):
     @wraps(t)
     def newfunc(*args, **kwargs):
         from reproman.ui import ui
+
         old_backend = ui.backend
         try:
-            ui.set_backend('tests')
+            ui.set_backend("tests")
             if responses:
                 ui.add_responses(responses)
             ret = t(*args, **kwargs)
             if responses:
                 responses_left = ui.get_responses()
-                assert not len(responses_left), "Some responses were left not used: %s" % str(responses_left)
+                assert not len(responses_left), "Some responses were left not used: %s" % str(
+                    responses_left
+                )
             return ret
         finally:
             ui.set_backend(old_backend)
 
     return newfunc
+
+
 with_testsui.__test__ = False
 
 
@@ -507,7 +511,7 @@ def assert_is_subset_recur(a, b, subset_types=[]):
     subset_types : list
         List of classes (from list, dict) that allow subsets. Otherwise
         we use strict matching.
-"""
+    """
     # Currently we only allow lists and dicts
     assert {list, dict}.issuperset(subset_types)
     # For dictionaries recursively check children that are in a
@@ -544,12 +548,14 @@ def create_pymodule(directory):
     """
     os.makedirs(directory)
     with open(os.path.join(directory, "setup.py"), "w") as ofh:
-        ofh.write("""\
+        ofh.write(
+            """\
 from setuptools import setup
 
 setup(name='nmtest',
       version='0.1.0',
-      py_modules=['nmtest'])""")
+      py_modules=['nmtest'])"""
+        )
 
     with open(os.path.join(directory, "nmtest"), "w") as ofh:
         ofh.write("")

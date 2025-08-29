@@ -14,6 +14,7 @@ from datetime import datetime
 
 import attr
 from collections import defaultdict
+
 # OPT: requests is imported at the point of use
 
 import pytz
@@ -25,18 +26,26 @@ from email.utils import mktime_tz, parsedate_tz
 
 import logging
 
-from reproman.support.distributions.debian import \
-    parse_apt_cache_show_pkgs_output, parse_apt_cache_policy_pkgs_output, \
-    parse_apt_cache_policy_source_info, get_apt_release_file_names, \
-    get_spec_from_release_file, parse_dpkgquery_line
+from reproman.support.distributions.debian import (
+    parse_apt_cache_show_pkgs_output,
+    parse_apt_cache_policy_pkgs_output,
+    parse_apt_cache_policy_source_info,
+    get_apt_release_file_names,
+    get_spec_from_release_file,
+    parse_dpkgquery_line,
+)
 
 # Pick a conservative max command-line
-from reproman.utils import get_cmd_batch_len, execute_command_batch, \
-    cmd_err_filter, join_sequence_of_dicts
+from reproman.utils import (
+    get_cmd_batch_len,
+    execute_command_batch,
+    cmd_err_filter,
+    join_sequence_of_dicts,
+)
 
 from reproman.distributions.base import DistributionTracer
 
-lgr = logging.getLogger('reproman.distributions.debian')
+lgr = logging.getLogger("reproman.distributions.debian")
 
 from ..dochelpers import single_or_plural
 from .base import SpecObject
@@ -45,17 +54,19 @@ from .base import Distribution
 from .base import TypedList
 from .base import _register_with_representer
 from ..support.exceptions import CommandError
+
 #
 # Models
 #
 
+
 # TODO: flyweight/singleton ?
 # To make them hashable we need to freeze them... not sure if we are ready:
-#@attr.s(cmp=True, frozen=True)
+# @attr.s(cmp=True, frozen=True)
 @attr.s
 class APTSource(SpecObject):
-    """APT origin information
-    """
+    """APT origin information"""
+
     name = attrib(default=attr.NOTHING)
     component = attrib()
     archive = attrib()
@@ -66,12 +77,15 @@ class APTSource(SpecObject):
     site = attrib()
     archive_uri = attrib()
     date = attrib()
+
+
 _register_with_representer(APTSource)
 
 
 @attr.s(slots=True, frozen=True)
 class DEBPackage(Package):
     """Debian package information"""
+
     name = attrib(default=attr.NOTHING)
     # Optional
     upstream_name = attrib()
@@ -87,11 +101,13 @@ class DEBPackage(Package):
     install_date = attrib(hash=False)
     files = attrib(default=attr.Factory(list), hash=False)
 
-    _diff_cmp_fields = ('name', 'architecture')
-    _diff_fields = ('version',)
-    _comparison_fields = ('name', 'architecture', 'version')
+    _diff_cmp_fields = ("name", "architecture")
+    _diff_fields = ("version",)
+    _comparison_fields = ("name", "architecture", "version")
+
 
 _register_with_representer(DEBPackage)
+
 
 @attr.s
 class DebianDistribution(Distribution):
@@ -103,8 +119,7 @@ class DebianDistribution(Distribution):
     packages = TypedList(DEBPackage)
     version = attrib()  # version as depicted by /etc/debian_version
 
-    _collection_attribute = 'packages'
-
+    _collection_attribute = "packages"
 
     def initiate(self, session):
         """
@@ -121,13 +136,13 @@ class DebianDistribution(Distribution):
         # call OR apt-cache policy output is empty
         # TODO: make Check-Valid-Until  not default
         lgr.info("Updating list of available via APT packages")
-        session.execute_command(['apt-get', '-o',
-            'Acquire::Check-Valid-Until=false', 'update'])
-        #session.execute_command(['apt-get', 'install', '-y', 'python-pip'])
+        session.execute_command(["apt-get", "-o", "Acquire::Check-Valid-Until=false", "update"])
+        # session.execute_command(['apt-get', 'install', '-y', 'python-pip'])
         # session.set_env(DEBIAN_FRONTEND='noninteractive', this_session_only=True)
 
-    def _init_apt_sources(self, session,
-        apt_source_file='/etc/apt/sources.list.d/reproman.sources.list'):
+    def _init_apt_sources(
+        self, session, apt_source_file="/etc/apt/sources.list.d/reproman.sources.list"
+    ):
         """
         Update /etc/apt/sources if necessary based on source date.
 
@@ -143,64 +158,66 @@ class DebianDistribution(Distribution):
         """
 
         repo_info = {
-            'Debian': {
-                'url': 'snapshot.debian.org',
-                'keyserver': None,
-                'key': None
+            "Debian": {"url": "snapshot.debian.org", "keyserver": None, "key": None},
+            "NeuroDebian": {
+                "url": "snapshot-neuro.debian.net:5002",
+                "keyserver": "hkp://pool.sks-keyservers.net:80",
+                "key": "0xA5D32F012649A5A9",
             },
-            'NeuroDebian': {
-                'url': 'snapshot-neuro.debian.net:5002',
-                'keyserver': 'hkp://pool.sks-keyservers.net:80',
-                'key': '0xA5D32F012649A5A9'
-            }
         }
 
         sources = [s for s in self.apt_sources if s.origin in repo_info]
         # Create a new apt sources file if needed.
         if sources and not session.exists(apt_source_file):
             session.execute_command(
-                "sh -c 'echo \"# ReproMan repo sources\" > {}'"
-                .format(apt_source_file))
+                "sh -c 'echo \"# ReproMan repo sources\" > {}'".format(apt_source_file)
+            )
 
         for source in sources:
             # Write snapshot repo to apt sources file.
-            date = datetime.strptime(source.date.split('+')[0], "%Y-%m-%d %X")
-            template = 'deb http://{}/archive/{}/{}/ {} main contrib non-free'
+            date = datetime.strptime(source.date.split("+")[0], "%Y-%m-%d %X")
+            template = "deb http://{}/archive/{}/{}/ {} main contrib non-free"
             source_line = template.format(
-                repo_info[source.origin]['url'],
+                repo_info[source.origin]["url"],
                 source.origin.lower(),
                 date.strftime("%Y%m%dT%H%M%SZ"),
-                source.codename
+                source.codename,
             )
             self._write_apt_sources(session, apt_source_file, source_line)
 
             # Write "next" snapshot repo to apt sources file.
-            template_list_page = 'http://{}/archive/{}/{}/dists/{}/'
+            template_list_page = "http://{}/archive/{}/{}/dists/{}/"
             url = template_list_page.format(
-                repo_info[source.origin]['url'],
+                repo_info[source.origin]["url"],
                 source.origin.lower(),
                 date.strftime("%Y%m%dT%H%M%SZ"),
-                source.codename
+                source.codename,
             )
             import requests  # OPT
+
             r = requests.get(url)
-            m = re.search(
-                r'<a href="/archive/\w*debian/(\w+)/dists/\w+/">next change</a>',
-                r.text)
+            m = re.search(r'<a href="/archive/\w*debian/(\w+)/dists/\w+/">next change</a>', r.text)
             if m:
                 source_line = template.format(
-                    repo_info[source.origin]['url'],
+                    repo_info[source.origin]["url"],
                     source.origin.lower(),
                     m.group(1),
-                    source.codename
+                    source.codename,
                 )
                 self._write_apt_sources(session, apt_source_file, source_line)
 
             # Add keyserver if needed.
-            if repo_info[source.origin]['keyserver']:
-                session.execute_command(['apt-key', 'adv', '--recv-keys',
-                    '--keyserver', repo_info[source.origin]['keyserver'],
-                    repo_info[source.origin]['key']])
+            if repo_info[source.origin]["keyserver"]:
+                session.execute_command(
+                    [
+                        "apt-key",
+                        "adv",
+                        "--recv-keys",
+                        "--keyserver",
+                        repo_info[source.origin]["keyserver"],
+                        repo_info[source.origin]["key"],
+                    ]
+                )
         return sources
 
     def _write_apt_sources(self, session, apt_source_file, source_line):
@@ -214,13 +231,10 @@ class DebianDistribution(Distribution):
         source_line: string
         """
         command = "grep -q '{}' {}"
-        out, line_not_found = session.execute_command(command.format(
-            source_line, apt_source_file))
+        out, line_not_found = session.execute_command(command.format(source_line, apt_source_file))
         if line_not_found:
-            lgr.debug("Adding line '{}' to {}".format(source_line,
-                apt_source_file))
-            session.execute_command("sh -c 'echo {} >> {}'".format(
-                source_line, apt_source_file))
+            lgr.debug("Adding line '{}' to {}".format(source_line, apt_source_file))
+            session.execute_command("sh -c 'echo {} >> {}'".format(source_line, apt_source_file))
 
     def install_packages(self, session, use_version=True):
         """
@@ -233,28 +247,27 @@ class DebianDistribution(Distribution):
         use_version : bool, optional
           Use version information if provided.
           TODO: support outside or deprecate
-            
+
         """
         package_specs = []
 
         for package in self.packages:
             package_spec = package.name
             if use_version and package.version:
-                package_spec += '=%s' % package.version
+                package_spec += "=%s" % package.version
             package_specs.append(package_spec)
 
         # Doing in one shot to fail early if any of the versioned specs
         # couldn't be satisfied
         lgr.info(
             "Installing %s via APT",
-            single_or_plural("package", "packages", len(package_specs),
-                             include_count=True)
+            single_or_plural("package", "packages", len(package_specs), include_count=True),
         )
-        lgr.debug("Installing %s", ', '.join(package_specs))
+        lgr.debug("Installing %s", ", ".join(package_specs))
         session.execute_command(
             # TODO: Pull env out of provenance for this command.
-            ['apt-get', 'install', '-y'] + package_specs
-            , env={'DEBIAN_FRONTEND': 'noninteractive'}
+            ["apt-get", "install", "-y"] + package_specs,
+            env={"DEBIAN_FRONTEND": "noninteractive"},
         )
         # TODO: react on message   asking to run   dpkg --configure -a
 
@@ -265,13 +278,12 @@ class DebianDistribution(Distribution):
         #   would make us require supporting flexible typing -- string or a list
         pass
 
-
     def __sub__(self, other):
         # the semantics of distribution subtraction are, for d1 - d2:
         #     what is specified in d1 that is not specified in d2
         #     or how does d2 fall short of d1
         #     or what is in d1 that isn't satisfied by d2
-        return [ p for p in self.packages if not p.compare(other, mode='satisfied_by') ]
+        return [p for p in self.packages if not p.compare(other, mode="satisfied_by")]
 
     # to grow:
     #  def __iadd__(self, another_instance or DEBPackage, or APTSource)
@@ -279,12 +291,12 @@ class DebianDistribution(Distribution):
     # but for the checks we should get away from a plain "list of" to some
     # structure to help identify on presence
 
+
 _register_with_representer(DebianDistribution)
 
 
 class DebTracer(DistributionTracer):
-    """.deb-based (and using apt and dpkg) systems package tracer
-    """
+    """.deb-based (and using apt and dpkg) systems package tracer"""
 
     # The Debian tracer is not designed to handle directories
     HANDLES_DIRS = False
@@ -301,17 +313,16 @@ class DebTracer(DistributionTracer):
     def identify_distributions(self, files):
         if not files:
             return
-        
+
         try:
-            debian_version = self._session.read('/etc/debian_version').strip()
-            self._session.exists('/etc/os-release')
+            debian_version = self._session.read("/etc/debian_version").strip()
+            self._session.exists("/etc/os-release")
             # for now would also match Ubuntu -- there it would have
             # ID=ubuntu and ID_LIKE=debian
             # TODO: load/parse /etc/os-release into a dict and better use
             # VERSION_ID and then ID (to decide if Debian or Ubuntu or ...)
-            _, _ = self._session.execute_command('grep -i "^ID.*=debian"'
-                                                     ' /etc/os-release')
-            _, _ = self._session.execute_command('ls -ld /etc/apt')
+            _, _ = self._session.execute_command('grep -i "^ID.*=debian"' " /etc/os-release")
+            _, _ = self._session.execute_command("ls -ld /etc/apt")
         except CommandError as exc:
             lgr.debug("Did not detect Debian (or derivative): %s", exc)
             return
@@ -332,7 +343,7 @@ class DebTracer(DistributionTracer):
             version=debian_version,
             packages=packages,
             # TODO: helper to go from list -> dict based on the name, since must be unique
-            apt_sources=list(self._apt_sources.values())
+            apt_sources=list(self._apt_sources.values()),
         )  # the one and only!
         dist.normalize()
         #   similar to DBs should take care about identifying/grouping etc
@@ -342,11 +353,14 @@ class DebTracer(DistributionTracer):
     def _get_packagefields_for_files(self, files):
         # Call dpkg query in batches
         exec_gen = execute_command_batch(
-            self._session, ['dpkg-query', '-S'], files,
-            cmd_err_filter('no path found matching pattern'))
+            self._session,
+            ["dpkg-query", "-S"],
+            files,
+            cmd_err_filter("no path found matching pattern"),
+        )
         # Parse and accumulate stat results in a dict
         file_to_package_dict = {}
-        for (out, _, exc) in exec_gen:
+        for out, _, exc in exec_gen:
             if exc:
                 out = exc.stdout  # One file not found, so continue
             # Now go through the output and assign packages to files
@@ -358,23 +372,18 @@ class DebTracer(DistributionTracer):
                     lgr.debug("Skipping line %s", outline)
                     continue
                 # Pull the found path from the dictionary
-                found_name = outdict.pop('path')
+                found_name = outdict.pop("path")
                 if not found_name:
-                    raise ValueError(
-                        "Record %s got no path defined... skipping"
-                        % repr(outdict)
-                    )
+                    raise ValueError("Record %s got no path defined... skipping" % repr(outdict))
                 # Associate the file to the package name (and architecture)
                 pkg = outdict
-                lgr.debug("Identified file %r to belong to package %s",
-                          found_name, pkg)
+                lgr.debug("Identified file %r to belong to package %s", found_name, pkg)
                 file_to_package_dict[found_name] = pkg
         return file_to_package_dict
 
     def _get_apt_source_name(self, src):
         # Create a unique name for the origin
-        name_fmt = "apt_%s_%s_%s_%%d" % (src.origin or "", src.archive or "",
-                                         src.component or "")
+        name_fmt = "apt_%s_%s_%s_%%d" % (src.origin or "", src.archive or "", src.component or "")
         name = utils.generate_unique_name(name_fmt, self._apt_source_names)
         # Remember the created name
         self._apt_source_names.add(name)
@@ -421,54 +430,50 @@ class DebTracer(DistributionTracer):
 
     def _find_all_sources(self):
         # Use apt-cache policy to get all sources
-        out, _ = self._session.execute_command(
-            ['apt-cache', 'policy']
-        )
+        out, _ = self._session.execute_command(["apt-cache", "policy"])
         out = utils.to_unicode(out, "utf-8")
 
         src_info = parse_apt_cache_policy_source_info(out)
         for src_name in src_info:
             src_vals = src_info[src_name]
             date = self._get_date_from_release_file(
-                src_vals.get("archive_uri"), src_vals.get("uri_suite"))
-            self._all_apt_sources[src_name] = \
-                APTSource(
-                    name=src_name,
-                    component=src_vals.get("component"),
-                    codename=src_vals.get("codename"),
-                    archive=src_vals.get("archive"),
-                    architecture=src_vals.get("architecture"),
-                    origin=src_vals.get("origin"),
-                    label=src_vals.get("label"),
-                    site=src_vals.get("site"),
-                    date=date,
-                    archive_uri=src_vals.get("archive_uri"))
+                src_vals.get("archive_uri"), src_vals.get("uri_suite")
+            )
+            self._all_apt_sources[src_name] = APTSource(
+                name=src_name,
+                component=src_vals.get("component"),
+                codename=src_vals.get("codename"),
+                archive=src_vals.get("archive"),
+                architecture=src_vals.get("architecture"),
+                origin=src_vals.get("origin"),
+                label=src_vals.get("label"),
+                site=src_vals.get("site"),
+                date=date,
+                archive_uri=src_vals.get("archive_uri"),
+            )
 
     def _get_pkgs_arch_and_version(self, pkg_dicts):
         # Convert package names to name:arch format
         # Use "dpkg -s pkg" to get the installed version and arch
         # Note: "architecture" is in the dict, but may be null
-        queries = [(p["name"] if not p["architecture"]
-                    else "%(name)s:%(architecture)s" % p)
-                   for p in pkg_dicts]
+        queries = [
+            (p["name"] if not p["architecture"] else "%(name)s:%(architecture)s" % p)
+            for p in pkg_dicts
+        ]
         # Call "dpkg -s" in batches
-        exec_gen = execute_command_batch(self._session, ['dpkg', '-s'],
-                                         queries)
+        exec_gen = execute_command_batch(self._session, ["dpkg", "-s"], queries)
         # Parse and accumulate "dpkg -s" results
         # dpkg -s uses the same output as apt-cache show pkg
-        results = (parse_apt_cache_show_pkgs_output(out)
-                   for (out, _, _) in exec_gen)
+        results = (parse_apt_cache_show_pkgs_output(out) for (out, _, _) in exec_gen)
         # Combine sequence of lists
         results = itertools.chain.from_iterable(results)
         # Turn dpkg -s results into a lookup table by package name
         results = self.create_lookup_from_apt_cache_show(results)
         # Loop through each package and find the respective dpkg results
         for p in pkg_dicts:
-            r = results.get(p["name"] if not p["architecture"]
-                            else "%(name)s:%(architecture)s" % p)
+            r = results.get(p["name"] if not p["architecture"] else "%(name)s:%(architecture)s" % p)
             if not r:
-                lgr.warning("Was unable to run dpkg -s for %s" %
-                            p["name"])
+                lgr.warning("Was unable to run dpkg -s for %s" % p["name"])
                 continue
             # Update the dictionary with found results
             p["architecture"] = r["architecture"]
@@ -484,14 +489,11 @@ class DebTracer(DistributionTracer):
 
     def _get_pkgs_details_from_apt_cache_show(self, pkg_dicts):
         # Convert package names to name:arch=version format
-        queries = ["%(name)s:%(architecture)s=%(version)s" % p
-                   for p in pkg_dicts]
+        queries = ["%(name)s:%(architecture)s=%(version)s" % p for p in pkg_dicts]
         # Call "apt-cache show" in batches
-        exec_gen = execute_command_batch(self._session, ['apt-cache', 'show'],
-                                         queries)
+        exec_gen = execute_command_batch(self._session, ["apt-cache", "show"], queries)
         # Parse and accumulate "apt-cache show" results
-        results = (parse_apt_cache_show_pkgs_output(out)
-                   for (out, _, _) in exec_gen)
+        results = (parse_apt_cache_show_pkgs_output(out) for (out, _, _) in exec_gen)
         # Combine sequence of lists
         results = itertools.chain.from_iterable(results)
         # Turn apt-cache show results into a lookup table by package name
@@ -500,34 +502,32 @@ class DebTracer(DistributionTracer):
         for p in pkg_dicts:
             r = results.get("%(name)s:%(architecture)s" % p)
             if not r:
-                lgr.warning("Was unable to run apt-cache show for %s" %
-                            p["name"])
+                lgr.warning("Was unable to run apt-cache show for %s" % p["name"])
                 continue
             # Update the dictionary with found results (if present)
-            for f in ("source_name", "source_version", "size", "md5",
-                      "sha1", "sha256"):
+            for f in ("source_name", "source_version", "size", "md5", "sha1", "sha256"):
                 if f in r:
                     p[f] = r[f]
 
     def _get_pkgs_install_date(self, pkg_dicts):
         # Convert package names to dpkg list filenames
-        queries = [self._pkg_name_to_dpkg_list_file(p["name"])
-                   for p in pkg_dicts]
+        queries = [self._pkg_name_to_dpkg_list_file(p["name"]) for p in pkg_dicts]
         # Call stat in batches
         exec_gen = execute_command_batch(
-            self._session, ['stat', '-c', '%n: %Y'], queries,
-            cmd_err_filter('No such file or directory'))
+            self._session,
+            ["stat", "-c", "%n: %Y"],
+            queries,
+            cmd_err_filter("No such file or directory"),
+        )
         # Parse and accumulate stat results in a dict
         results = {}
-        for (out, _, exc) in exec_gen:
+        for out, _, exc in exec_gen:
             if exc:
                 out = exc.stdout  # One file not found, so continue
             # Parse the output and store by filename
             for outlines in out.splitlines():
                 (fname, ftime) = outlines.split(": ")
-                results[fname] = str(
-                    pytz.utc.localize(
-                        datetime.utcfromtimestamp(float(ftime))))
+                results[fname] = str(pytz.utc.localize(datetime.utcfromtimestamp(float(ftime))))
 
         # Now lookup the packages in the results
         for p in pkg_dicts:
@@ -544,12 +544,9 @@ class DebTracer(DistributionTracer):
         # Convert package names to name:arch format
         queries = ["%(name)s:%(architecture)s" % p for p in pkg_dicts]
         # Call apt-cache policy in batches
-        exec_gen = execute_command_batch(self._session,
-                                         ['apt-cache', 'policy'],
-                                         queries)
+        exec_gen = execute_command_batch(self._session, ["apt-cache", "policy"], queries)
         # Parse results into a single generator
-        results = (parse_apt_cache_policy_pkgs_output(out)
-                   for (out, _, _) in exec_gen)
+        results = (parse_apt_cache_policy_pkgs_output(out) for (out, _, _) in exec_gen)
         # Combine sequence of dicts
         results = join_sequence_of_dicts(results)
         # Loop through each package and find the respective apt-cache results
@@ -558,8 +555,7 @@ class DebTracer(DistributionTracer):
             if not ver:
                 ver = results.get(p["name"])
             if not ver:
-                lgr.warning("Was unable to get version table for %s" %
-                            p["name"])
+                lgr.warning("Was unable to get version table for %s" % p["name"])
                 continue
             # Now construct the version table
             ver_dict = {}
@@ -583,8 +579,7 @@ class DebTracer(DistributionTracer):
                         # add the name for easy future lookup
                         self._source_line_to_name_map[s] = src_name
                     # Look up and add the short name for the source
-                    ver_dict[key].append(
-                        self._source_line_to_name_map[s])
+                    ver_dict[key].append(self._source_line_to_name_map[s])
             p["versions"] = ver_dict
 
     def _get_date_from_release_file(self, archive_uri, uri_suite):
@@ -593,9 +588,9 @@ class DebTracer(DistributionTracer):
             try:
                 out = self._session.read(filename)
                 spec = get_spec_from_release_file(out)
-                date = str(pytz.utc.localize(
-                    datetime.utcfromtimestamp(
-                        mktime_tz(parsedate_tz(spec.date)))))
+                date = str(
+                    pytz.utc.localize(datetime.utcfromtimestamp(mktime_tz(parsedate_tz(spec.date))))
+                )
             except CommandError as _:
                 # NOTE: We will be trying release files that end in
                 # "Release" and "InRelease", so we expect to fail in opening

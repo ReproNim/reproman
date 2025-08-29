@@ -26,7 +26,7 @@ from ...utils import swallow_logs
 
 def test_singularity_resource_image_required():
     with pytest.raises(TypeError):
-        Singularity(name='foo')
+        Singularity(name="foo")
 
 
 @pytest.mark.xfail(reason="Singularity Hub is down", run=False)
@@ -36,12 +36,12 @@ def test_singularity_resource_class(tmpdir):
     tmpdir = str(tmpdir)
     with swallow_logs(new_level=logging.DEBUG) as log:
         Runner(cwd=tmpdir).run(
-            ['singularity', 'pull', '--name', 'img',
-             'shub://truatpasteurdotfr/singularity-alpine'])
+            ["singularity", "pull", "--name", "img", "shub://truatpasteurdotfr/singularity-alpine"]
+        )
 
         # ATTN: Apparently an instance name can't contain a hyphen.
         name = "reproman_test_{}".format(str(uuid.uuid4())[:4])
-        image = op.join(tmpdir, 'img')
+        image = op.join(tmpdir, "img")
         # Test creating a new singularity container instance.
         resource = Singularity(name=name, image=image)
         assert resource.name == name
@@ -53,13 +53,13 @@ def test_singularity_resource_class(tmpdir):
         to_delete = [resource]
         try:
             assert resource.id.startswith(name + "-")
-            assert resource.status == 'running'
+            assert resource.status == "running"
 
             # Test trying to create an already running instance.
             resource_duplicate = Singularity(name=name, image=image)
             resource_duplicate.connect()
             assert resource_duplicate.id.startswith(name + "-")
-            assert resource_duplicate.status == 'running'
+            assert resource_duplicate.status == "running"
             list(resource_duplicate.create())
             assert "Resource '{}' already exists".format(name) in log.out
 
@@ -71,8 +71,8 @@ def test_singularity_resource_class(tmpdir):
 
             # Test retrieving instance info.
             info = resource.get_instance_info()
-            assert info['name'] == name
-            assert re.match(r'^\d+$', info['pid'])
+            assert info["name"] == name
+            assert re.match(r"^\d+$", info["pid"])
 
             info["image"] = image
 

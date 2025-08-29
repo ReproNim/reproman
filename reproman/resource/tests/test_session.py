@@ -27,16 +27,14 @@ from ...consts import TEST_SSH_DOCKER_DIGEST
 
 testing_container = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST,
-    name='testing-container',
-    portmaps={
-        49000: 22
-    },
+    name="testing-container",
+    portmaps={49000: 22},
     custom_params={
-        'host': 'localhost',
-        'user': 'root',
-        'port': 49000,
+        "host": "localhost",
+        "user": "root",
+        "port": 49000,
     },
-    scope='module'
+    scope="module",
 )
 
 
@@ -47,12 +45,7 @@ singularity_resource = get_singularity_fixture()
 def ssh_connection(testing_container, request):
     # Initialize SSH connection to testing Docker container.
     connection = Connection(
-        'localhost',
-        user='root',
-        port=49000,
-        connect_kwargs={
-            'password': 'root'
-        }
+        "localhost", user="root", port=49000, connect_kwargs={"password": "root"}
     )
     connection.open()
     return connection
@@ -70,15 +63,15 @@ def test_check_envvars_handling():
 def check_session_passing_envvars(session):
     # TODO: do not set/pass any env variables, test that PATH is set within remote
     default_envvars = session.query_envvars()
-    assert default_envvars['PATH']
+    assert default_envvars["PATH"]
 
-    assert 'EXPORTED' not in session.query_envvars()
-    session.set_envvar('EXPORTED_NOT_PERMANENT', 'VALUE')
-    assert session.query_envvars()['EXPORTED_NOT_PERMANENT'] == 'VALUE'
+    assert "EXPORTED" not in session.query_envvars()
+    session.set_envvar("EXPORTED_NOT_PERMANENT", "VALUE")
+    assert session.query_envvars()["EXPORTED_NOT_PERMANENT"] == "VALUE"
 
-    session.set_envvar('EXPORTED_PERMANENT', 'VALUE2')
-    assert session.query_envvars()['EXPORTED_NOT_PERMANENT'] == 'VALUE'
-    assert session.query_envvars()['EXPORTED_PERMANENT'] == 'VALUE2'
+    session.set_envvar("EXPORTED_PERMANENT", "VALUE2")
+    assert session.query_envvars()["EXPORTED_NOT_PERMANENT"] == "VALUE"
+    assert session.query_envvars()["EXPORTED_PERMANENT"] == "VALUE2"
 
     # TODO: we should add functionality to record the state of the env
     # upon finishing create (or install? login?) and here could test
@@ -90,17 +83,23 @@ def check_session_passing_envvars(session):
 
 
 def test_get_updated_env():
-    assert get_updated_env({'a': 1}, {'a': 2}) == {'a': 2}
-    assert get_updated_env({'a': None}, {'a': 2}) == {'a': 2}
-    assert get_updated_env({'a': 1}, {'a': None}) == {}
-    assert get_updated_env({'a': 1, 'b': 2}, {'a': None}) == {'b': 2}
-    assert get_updated_env({'a': 1, 'b': 2}, {'a': None, 'b': 3}) == {'b': 3}
-    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:$a', 'b': 3}) \
-        == {'a': '/bar:/foo', 'b': 3}
-    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:$ab', 'b': 3}) \
-        == {'a': '/bar:$ab', 'b': 3}
-    assert get_updated_env({'a': '/foo', 'b': 2}, {'a': '/bar:${a}:/blee', 'b': 3}) \
-        == {'a': '/bar:/foo:/blee', 'b': 3}
+    assert get_updated_env({"a": 1}, {"a": 2}) == {"a": 2}
+    assert get_updated_env({"a": None}, {"a": 2}) == {"a": 2}
+    assert get_updated_env({"a": 1}, {"a": None}) == {}
+    assert get_updated_env({"a": 1, "b": 2}, {"a": None}) == {"b": 2}
+    assert get_updated_env({"a": 1, "b": 2}, {"a": None, "b": 3}) == {"b": 3}
+    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:$a", "b": 3}) == {
+        "a": "/bar:/foo",
+        "b": 3,
+    }
+    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:$ab", "b": 3}) == {
+        "a": "/bar:$ab",
+        "b": 3,
+    }
+    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:${a}:/blee", "b": 3}) == {
+        "a": "/bar:/foo:/blee",
+        "b": 3,
+    }
 
 
 def test_get_local_session():
@@ -117,54 +116,53 @@ def test_session_class():
 
         # Check __call__ is passing through to _execute_command()
         with pytest.raises(NotImplementedError):
-            stdout, stderr = session(['ls'], env={'ENV_VAR': 'ENV_VALUE'})
+            stdout, stderr = session(["ls"], env={"ENV_VAR": "ENV_VALUE"})
 
-        session._env = { 'VAR': 'VAR_VALUE' }
-        session._env_permanent = { 'PERM_VAR': 'PERM_VAR_VALUE' }
+        session._env = {"VAR": "VAR_VALUE"}
+        session._env_permanent = {"PERM_VAR": "PERM_VAR_VALUE"}
 
         # Check we can read _envs properly
         envvars = session.get_envvars()
-        assert envvars['VAR'] == 'VAR_VALUE'
-        assert 'PERM_VAR' not in envvars
+        assert envvars["VAR"] == "VAR_VALUE"
+        assert "PERM_VAR" not in envvars
 
         # Check we can read permanent envs
         envvars = session.get_envvars(permanent=True)
-        assert envvars['PERM_VAR'] == 'PERM_VAR_VALUE'
-        assert 'VAR' not in envvars
+        assert envvars["PERM_VAR"] == "PERM_VAR_VALUE"
+        assert "VAR" not in envvars
 
         # Check we can add an env through the setter
-        session.set_envvar('NEW_VAR', value='NEW_VAR_VALUE')
+        session.set_envvar("NEW_VAR", value="NEW_VAR_VALUE")
         envvars = session.get_envvars()
-        assert envvars['NEW_VAR'] == 'NEW_VAR_VALUE'
-        assert envvars['VAR'] == 'VAR_VALUE'
+        assert envvars["NEW_VAR"] == "NEW_VAR_VALUE"
+        assert envvars["VAR"] == "VAR_VALUE"
 
         # Check we can set an env var by passing a dict
-        session.set_envvar({'DICT_VAR': 'DICT_VAR_VALUE'})
+        session.set_envvar({"DICT_VAR": "DICT_VAR_VALUE"})
         envvars = session.get_envvars()
-        assert envvars['DICT_VAR'] == 'DICT_VAR_VALUE'
-        assert envvars['VAR'] == 'VAR_VALUE'
+        assert envvars["DICT_VAR"] == "DICT_VAR_VALUE"
+        assert envvars["VAR"] == "VAR_VALUE"
 
         # Check we can delete an existing env var
-        session.set_envvar('DICT_VAR', None)
+        session.set_envvar("DICT_VAR", None)
         envvars = session.get_envvars()
-        assert 'DICT_VAR' not in envvars
-        assert envvars['VAR'] == 'VAR_VALUE'
+        assert "DICT_VAR" not in envvars
+        assert envvars["VAR"] == "VAR_VALUE"
 
         # Check formatting of env values
-        session.set_envvar('VAR', 'FORMATTED {}', format=True)
+        session.set_envvar("VAR", "FORMATTED {}", format=True)
         envvars = session.get_envvars()
-        assert envvars['VAR'] == 'FORMATTED VAR_VALUE' 
-        assert envvars['NEW_VAR'] == 'NEW_VAR_VALUE'
+        assert envvars["VAR"] == "FORMATTED VAR_VALUE"
+        assert envvars["NEW_VAR"] == "NEW_VAR_VALUE"
 
         # At this time, setting permanent env vars is not supported
         with pytest.raises(NotImplementedError):
-            session.set_envvar('NEW_VAR', value='NEW_VAR_VALUE',
-                permanent=True)
+            session.set_envvar("NEW_VAR", value="NEW_VAR_VALUE", permanent=True)
 
         # Check we raise an exception if user tries to set an env value while
         # passing a dict
         with pytest.raises(AssertionError):
-            session.set_envvar({'WILL': 'FAIL'}, value='!')
+            session.set_envvar({"WILL": "FAIL"}, value="!")
 
         # Check query_envvars() method not implemented
         with pytest.raises(NotImplementedError):
@@ -172,42 +170,42 @@ def test_session_class():
 
         # Check source_script() method not implemented
         with pytest.raises(NotImplementedError):
-            session.source_script(['ls'])
+            session.source_script(["ls"])
 
         # Check unauthorized commands raise CommandError exception
         with pytest.raises(CommandError):
-            session.reproman_exec('sudo', ['rm', '-r', '/'])
+            session.reproman_exec("sudo", ["rm", "-r", "/"])
 
         # Check mangled arg raises exception
         with pytest.raises(CommandError):
-            session.reproman_exec('mkdir', ['bad=passed=argument'])
+            session.reproman_exec("mkdir", ["bad=passed=argument"])
 
         # Check exec command to valid method passes through to not implemented
         # exception
         with pytest.raises(NotImplementedError):
-            session.reproman_exec('mkdir', ['/my/new/dir', 'parents=True'])
+            session.reproman_exec("mkdir", ["/my/new/dir", "parents=True"])
 
         # Check abstract methods raise NotImplementedError
         with pytest.raises(NotImplementedError):
-            session.exists('/path')
+            session.exists("/path")
         with pytest.raises(NotImplementedError):
-            session.put('src_path', 'dest_path')
+            session.put("src_path", "dest_path")
         with pytest.raises(NotImplementedError):
-            session.get('src_path', 'dest_path')
+            session.get("src_path", "dest_path")
         with pytest.raises(NotImplementedError):
-            session.get_mtime('path')
+            session.get_mtime("path")
         with pytest.raises(NotImplementedError):
-            session.read('path')
+            session.read("path")
         with pytest.raises(NotImplementedError):
-            session.mkdir('path')
+            session.mkdir("path")
         with pytest.raises(NotImplementedError):
             session.mktmpdir()
         with pytest.raises(NotImplementedError):
-            session.isdir('path')
+            session.isdir("path")
         with pytest.raises(NotImplementedError):
-            session.chmod('path', 'mode')
+            session.chmod("path", "mode")
         with pytest.raises(NotImplementedError):
-            session.chown('path', 100)
+            session.chown("path", 100)
 
 
 @pytest.fixture
@@ -215,61 +213,61 @@ def check_methods(resource_test_dir):
     def fn(cls_name, session):
         # Check the validity of the env vars
         envs = session.query_envvars()
-        assert 'HOME' in envs
-        assert 'PATH' in envs
+        assert "HOME" in envs
+        assert "PATH" in envs
 
         # Check sourcing new env variables
         # new_envs = session.source_script(['export', 'SCRIPT_VAR=SCRIPT_VALUE'])
         # assert 'SCRIPT_VAR' in new_envs
 
         # Check _execute_command by checking file system
-        out, err = session._execute_command(['cat', '/etc/hosts'])
-        assert '127.0.0.1' in out
-        assert 'localhost' in out
-        assert err == ''
+        out, err = session._execute_command(["cat", "/etc/hosts"])
+        assert "127.0.0.1" in out
+        assert "localhost" in out
+        assert err == ""
 
         # Check _execute_command failure
         with pytest.raises(CommandError):
-            session._execute_command(['cat', '/no/such/file'])
+            session._execute_command(["cat", "/no/such/file"])
 
         # Check _execute_command with env set
-        out, err = session._execute_command(['env'],
-            env={'NEW_VAR': 'NEW_VAR_VALUE'})
-        assert 'NEW_VAR=NEW_VAR_VALUE' in out
+        out, err = session._execute_command(["env"], env={"NEW_VAR": "NEW_VAR_VALUE"})
+        assert "NEW_VAR=NEW_VAR_VALUE" in out
 
         # Check _execute_command with cwd set
-        out, err = session._execute_command(['pwd'],
-            cwd='/var')
-        assert '/var' == out.rstrip("\n")
+        out, err = session._execute_command(["pwd"], cwd="/var")
+        assert "/var" == out.rstrip("\n")
 
         # Check exists() method
-        result = session.exists('/etc')
+        result = session.exists("/etc")
         assert result
-        result = session.exists('/etc/hosts')
+        result = session.exists("/etc/hosts")
         assert result
-        result = session.exists('/no/such/file')
+        result = session.exists("/no/such/file")
         assert not result
         # exists() doesn't get confused by an empty string.
-        assert not session.exists('')
+        assert not session.exists("")
 
         # Check isdir() method
-        result = session.isdir('/etc')
+        result = session.isdir("/etc")
         assert result
-        result = session.isdir('/etc/hosts')  # A file, not a dir
+        result = session.isdir("/etc/hosts")  # A file, not a dir
         assert not result
-        result = session.isdir('/no/such/dir')
+        result = session.isdir("/no/such/dir")
         assert not result
 
         # Create a temporary test file
         with tempfile.TemporaryDirectory(dir=resource_test_dir) as tdir:
-            create_tree(tdir,
-                        {'f0': 'ReproMan test content\nline 2\nline 3',
-                         'f1': 'f1',
-                         'd0': {'f2': 'f2',
-                                'd2': {'f3': 'f3'}}})
-            local_path = os.path.join(tdir, 'f0')
-            remote_path = '{}/reproman upload/{}'.format(resource_test_dir,
-                uuid.uuid4().hex)
+            create_tree(
+                tdir,
+                {
+                    "f0": "ReproMan test content\nline 2\nline 3",
+                    "f1": "f1",
+                    "d0": {"f2": "f2", "d2": {"f3": "f3"}},
+                },
+            )
+            local_path = os.path.join(tdir, "f0")
+            remote_path = "{}/reproman upload/{}".format(resource_test_dir, uuid.uuid4().hex)
 
             # Check put() method
             # session.put(local_path, remote_path, uid=3, gid=3) # UID for sys, GID for sys
@@ -280,8 +278,7 @@ def check_methods(resource_test_dir):
             # TODO: Check uid and gid of remote file
 
             # Check recursive put().
-            remote_path_rec = '{}/recursive-put/{}'.format(
-                resource_test_dir, uuid.uuid4().hex)
+            remote_path_rec = "{}/recursive-put/{}".format(resource_test_dir, uuid.uuid4().hex)
             session.put(tdir, remote_path_rec)
             assert session.exists(remote_path_rec + "/d0/f2")
             assert session.exists(remote_path_rec + "/d0/d2/f3")
@@ -299,26 +296,23 @@ def check_methods(resource_test_dir):
                     assert "Docker" in cls_name or "Singularity" in cls_name
 
         # Check get_mtime() method by checking new file has today's date
-        result = int(session.get_mtime(remote_path).split('.')[0])
-        assert datetime.datetime.fromtimestamp(result).month == \
-            datetime.date.today().month
-        assert datetime.datetime.fromtimestamp(result).day == \
-            datetime.date.today().day
+        result = int(session.get_mtime(remote_path).split(".")[0])
+        assert datetime.datetime.fromtimestamp(result).month == datetime.date.today().month
+        assert datetime.datetime.fromtimestamp(result).day == datetime.date.today().day
 
         # Check read() method
-        output = session.read(remote_path).split('\n')
-        assert output[0] == 'ReproMan test content'
-        assert output[1] == 'line 2'
+        output = session.read(remote_path).split("\n")
+        assert output[0] == "ReproMan test content"
+        assert output[1] == "line 2"
 
         # Check get() method
-        local_path = '{}/download/{}'.format(resource_test_dir,
-            uuid.uuid4().hex)
+        local_path = "{}/download/{}".format(resource_test_dir, uuid.uuid4().hex)
         session.get(remote_path, local_path)
         # TODO: In some cases, updating uid and gid does not work if not root
         assert os.path.isfile(local_path)
-        with open(local_path, 'r') as f:
-            content = f.read().split('\n')
-            assert content[0] == 'ReproMan test content'
+        with open(local_path, "r") as f:
+            content = f.read().split("\n")
+            assert content[0] == "ReproMan test content"
         os.remove(local_path)
         os.rmdir(os.path.dirname(local_path))
 
@@ -335,27 +329,27 @@ def check_methods(resource_test_dir):
             assert os.path.exists(os.path.join("subdir", remote_basename))
 
         # Check mkdir() method
-        test_dir = '{}/{}'.format(resource_test_dir, uuid.uuid4().hex)
+        test_dir = "{}/{}".format(resource_test_dir, uuid.uuid4().hex)
         session.mkdir(test_dir)
         result = session.isdir(test_dir)
         assert result
 
         # Check listdir() method
-        if hasattr(session, 'listdir'):
+        if hasattr(session, "listdir"):
             subdir = uuid.uuid4().hex
             subfile = uuid.uuid4().hex
             session.mkdir(os.path.join(test_dir, subdir))
-            session.put('/etc/hosts', os.path.join(test_dir, subfile))
+            session.put("/etc/hosts", os.path.join(test_dir, subfile))
             assert set(session.listdir(test_dir)) == set((subdir, subfile))
 
         # Check making parent dirs without setting flag
-        test_dir = '{}/tmp/i fail/{}'.format(resource_test_dir, uuid.uuid4().hex)
+        test_dir = "{}/tmp/i fail/{}".format(resource_test_dir, uuid.uuid4().hex)
         with pytest.raises(CommandError):
             session.mkdir(test_dir, parents=False)
         result = session.isdir(test_dir)
         assert not result
         # Check making parent dirs when parents flag set
-        test_dir = '{}/i succeed/{}'.format(resource_test_dir, uuid.uuid4().hex)
+        test_dir = "{}/i succeed/{}".format(resource_test_dir, uuid.uuid4().hex)
         session.mkdir(test_dir, parents=True)
         result = session.isdir(test_dir)
         assert result
@@ -366,14 +360,12 @@ def check_methods(resource_test_dir):
         assert result, "The path %s is not a directory" % test_dir
 
         # All sessions will take the command in string form...
-        output_string = "{}/stringtest {}".format(
-            resource_test_dir, session.__class__.__name__)
+        output_string = "{}/stringtest {}".format(resource_test_dir, session.__class__.__name__)
         assert not session.exists(output_string)
         session.execute_command("touch '{}'".format(output_string))
         assert session.exists(output_string)
         # and the list form.
-        output_list = "{}/listtest {}".format(
-            resource_test_dir, session.__class__.__name__)
+        output_list = "{}/listtest {}".format(resource_test_dir, session.__class__.__name__)
         assert not session.exists(output_list)
         session.execute_command(["touch", output_list])
         assert session.exists(output_list)
@@ -381,34 +373,34 @@ def check_methods(resource_test_dir):
         # TODO: How to test chmod and chown? Need to be able to read remote file attributes
         # session.chmod(self, path, mode, recursive=False):
         # session.chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
+
     return fn
 
 
 def test_session_shell(check_methods):
     from reproman.resource.shell import ShellSession
+
     check_methods("ShellSession", ShellSession())
 
 
 def import_resource(mod, cls):
-    return getattr(import_module("reproman.resource." + mod),
-                   cls)
+    return getattr(import_module("reproman.resource." + mod), cls)
 
 
 @mark.skipif_no_singularity
 @pytest.mark.parametrize(
     "location",
-    [   # module, class
+    [
         ("singularity", "SingularitySession"),
-        ("singularity", "PTYSingularitySession")
-    ],
-    ids=lambda x: x[1])
+        ("singularity", "PTYSingularitySession"),
+    ],  # module, class
+    ids=lambda x: x[1],
+)
 def test_session_singularity(location, singularity_resource, check_methods):
-    """Test sessions that depend on `singularity_resource` fixture.
-    """
+    """Test sessions that depend on `singularity_resource` fixture."""
     cls = import_resource(*location)
     session = cls(singularity_resource.name)
     check_methods(location[1], session)
-
 
 
 # https://github.com/ReproNim/reproman/issues/587
@@ -416,32 +408,32 @@ def test_session_singularity(location, singularity_resource, check_methods):
 @mark.skipif_no_ssh
 @pytest.mark.parametrize(
     "location",
-    [   # module, class
+    [  # module, class
         ("ssh", "SSHSession"),
         ("ssh", "PTYSSHSession"),
     ],
-    ids=lambda x: x[1])
+    ids=lambda x: x[1],
+)
 def test_session_ssh(location, ssh_connection, check_methods):
-    """Test sessions that depend on `ssh_connection` fixture.
-    """
+    """Test sessions that depend on `ssh_connection` fixture."""
     cls = import_resource(*location)
     check_methods(location[1], cls(ssh_connection))
 
 
 @pytest.mark.parametrize(
     "location",
-    [   # module, class
+    [  # module, class
         ("docker_container", "DockerSession"),
         ("docker_container", "PTYDockerSession"),
     ],
-    ids=lambda x: x[1])
+    ids=lambda x: x[1],
+)
 def test_session_container(location, testing_container, check_methods):
-    """Test sessions that depend on `testing_container` fixture.
-    """
+    """Test sessions that depend on `testing_container` fixture."""
     cls = import_resource(*location)
     import docker
+
     client = docker.APIClient()
-    container = next(c for c in client.containers()
-                     if '/testing-container' in c['Names'])
+    container = next(c for c in client.containers() if "/testing-container" in c["Names"])
     assert container
     check_methods(location[1], cls(client, container))

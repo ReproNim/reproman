@@ -11,7 +11,7 @@ import attr
 import json
 import logging
 
-lgr = logging.getLogger('reproman.distributions.docker')
+lgr = logging.getLogger("reproman.distributions.docker")
 
 from .base import Package
 from .base import Distribution
@@ -26,6 +26,7 @@ from ..utils import attrib
 @attr.s(slots=True, frozen=True)
 class DockerImage(Package):
     """Docker image information"""
+
     id = attrib(default=attr.NOTHING)
     # Optional
     architecture = attrib()
@@ -35,7 +36,9 @@ class DockerImage(Package):
     repo_tags = attrib()
     created = attrib()
 
+
 _register_with_representer(DockerImage)
+
 
 @attr.s
 class DockerDistribution(Distribution):
@@ -56,9 +59,9 @@ class DockerDistribution(Distribution):
             The Session to work in
         """
 
-        # Raise reproman.support.exceptions.CommandError exception if Docker 
+        # Raise reproman.support.exceptions.CommandError exception if Docker
         # engine is not to be found.
-        session.execute_command(['docker', 'info'])
+        session.execute_command(["docker", "info"])
 
     def install_packages(self, session):
         """
@@ -75,8 +78,7 @@ class DockerDistribution(Distribution):
 
             # First, look in local Docker engine.
             try:
-                session.execute_command(['docker', 'image', 'inspect',
-                    image.id])
+                session.execute_command(["docker", "image", "inspect", image.id])
                 continue
             except CommandError:
                 pass
@@ -85,9 +87,8 @@ class DockerDistribution(Distribution):
             found = False
             for digest in image.repo_digests:
                 try:
-                    session.execute_command(['docker', 'pull', digest])
-                    session.execute_command(['docker', 'tag', image.id,
-                        image.repo_tags[0]])
+                    session.execute_command(["docker", "pull", digest])
+                    session.execute_command(["docker", "tag", image.id, image.repo_tags[0]])
                     found = True
                     break
                 except CommandError:
@@ -95,8 +96,11 @@ class DockerDistribution(Distribution):
 
             # Can't find the image, so complain.
             if not found:
-                raise CommandError(cmd='docker pull {}'.format(digest),
-                    msg="Unable to locate Docker image {}".format(image.id))
+                raise CommandError(
+                    cmd="docker pull {}".format(digest),
+                    msg="Unable to locate Docker image {}".format(image.id),
+                )
+
 
 _register_with_representer(DockerDistribution)
 
@@ -116,7 +120,7 @@ class DockerTracer(DistributionTracer):
             return
 
         # Punt if Docker daemon to found
-        if self._session.execute_command('ps -e')[0].find('dockerd') == -1:
+        if self._session.execute_command("ps -e")[0].find("dockerd") == -1:
             return
 
         images = []
@@ -124,25 +128,31 @@ class DockerTracer(DistributionTracer):
 
         for file in files:
             try:
-                image = json.loads(self._session.execute_command(['docker',
-                    'image', 'inspect', file])[0])[0]
+                image = json.loads(
+                    self._session.execute_command(["docker", "image", "inspect", file])[0]
+                )[0]
 
                 # Warn user if the image does not have any RepoDigest entries.
-                if not image['RepoDigests']:
-                    lgr.warning("The Docker image '%s' does not have any "
-                        "repository IDs associated with it", file)
+                if not image["RepoDigests"]:
+                    lgr.warning(
+                        "The Docker image '%s' does not have any "
+                        "repository IDs associated with it",
+                        file,
+                    )
 
-                images.append(DockerImage(
-                    id=image['Id'],
-                    architecture=image['Architecture'],
-                    operating_system=image['Os'],
-                    docker_version=image['DockerVersion'],
-                    repo_digests=image['RepoDigests'],
-                    repo_tags=image['RepoTags'],
-                    created=image['Created']
-                ))
+                images.append(
+                    DockerImage(
+                        id=image["Id"],
+                        architecture=image["Architecture"],
+                        operating_system=image["Os"],
+                        docker_version=image["DockerVersion"],
+                        repo_digests=image["RepoDigests"],
+                        repo_tags=image["RepoTags"],
+                        created=image["Created"],
+                    )
+                )
             except CommandError as exc:
-                if exc.stderr.startswith('Cannot connect to the Docker daemon'):
+                if exc.stderr.startswith("Cannot connect to the Docker daemon"):
                     lgr.debug("Did not detect Docker engine: %s", exc)
                     return
                 remaining_files.add(file)
@@ -153,10 +163,7 @@ class DockerTracer(DistributionTracer):
         if not images:
             return
 
-        dist = DockerDistribution(
-            name="docker",
-            images=images
-        )
+        dist = DockerDistribution(name="docker", images=images)
 
         yield dist, remaining_files
 

@@ -6,10 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Helper utility to create an environment
-"""
+"""Helper utility to create an environment"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from .base import Interface
 from ..support.param import Parameter
@@ -19,12 +18,12 @@ from ..utils import parse_kv_list
 
 
 from logging import getLogger
-lgr = getLogger('reproman.api.create')
+
+lgr = getLogger("reproman.api.create")
 
 
 class Create(Interface):
-    """Create a computation environment
-    """
+    """Create a computation environment"""
 
     _params_ = dict(
         # specs=Parameter(
@@ -65,10 +64,10 @@ class Create(Interface):
         backend_parameters=Parameter(
             metavar="PARAM",
             args=("-b", "--backend-parameters"),
-            action="append", 
+            action="append",
             doc="""One or more backend parameters in the form KEY=VALUE. Use
             the command `reproman backend-parameters` to see the list of
-            available backend parameters."""
+            available backend parameters.""",
         ),
     )
 
@@ -99,17 +98,13 @@ class Create(Interface):
         from reproman.ui import ui
 
         if not resource_type:
-            resource_type = ui.question(
-                "Enter a resource type",
-                default="docker-container"
-            )
+            resource_type = ui.question("Enter a resource type", default="docker-container")
         # if only_env:
         #     raise NotImplementedError
 
         # TODO: Add ability to clone a resource.
 
-        get_manager().create(name, resource_type,
-                             parse_kv_list(backend_parameters))
+        get_manager().create(name, resource_type, parse_kv_list(backend_parameters))
         lgr.info("Created the environment %s", name)
 
         # TODO: at the end install packages using install and created env

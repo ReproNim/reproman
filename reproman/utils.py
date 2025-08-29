@@ -15,7 +15,19 @@ from shlex import quote as shlex_quote
 import time
 
 import os.path as op
-from os.path import curdir, basename, exists, realpath, islink, join as opj, isabs, normpath, expandvars, expanduser, abspath
+from os.path import (
+    curdir,
+    basename,
+    exists,
+    realpath,
+    islink,
+    join as opj,
+    isabs,
+    normpath,
+    expandvars,
+    expanduser,
+    abspath,
+)
 from urllib.parse import quote as urlquote, unquote as urlunquote, urlsplit
 
 import logging
@@ -44,14 +56,14 @@ lgr.log(5, "Importing reproman.utils")
 # Some useful variables
 #
 _platform_system = platform.system().lower()
-on_windows = _platform_system == 'windows'
-on_osx = _platform_system == 'darwin'
-on_linux = _platform_system == 'linux'
+on_windows = _platform_system == "windows"
+on_osx = _platform_system == "darwin"
+on_linux = _platform_system == "linux"
 try:
     linux_distribution = platform.linux_distribution()
-    on_debian_wheezy = on_linux \
-                       and linux_distribution[0] == 'debian' \
-                       and linux_distribution[1].startswith('7.')
+    on_debian_wheezy = (
+        on_linux and linux_distribution[0] == "debian" and linux_distribution[1].startswith("7.")
+    )
 except:  # pragma: no cover
     on_debian_wheezy = False
 
@@ -61,18 +73,19 @@ except:  # pragma: no cover
 
 # `getargspec` has been deprecated in Python 3.
 if hasattr(inspect, "getfullargspec"):
+
     def getargspec(func):
-        """Backward-compatibility wrapper for inspect.getargspec.
-        """
+        """Backward-compatibility wrapper for inspect.getargspec."""
         # The first four elements in getfullargspec's return value match
         # getargspec's.
         return inspect.getfullargspec(func)[:4]
+
 else:
     getargspec = inspect.getargspec
 
 
 def get_func_kwargs_doc(func):
-    """ Provides args for a function
+    """Provides args for a function
 
     Parameters
     ----------
@@ -91,8 +104,7 @@ def get_func_kwargs_doc(func):
 
 
 def assure_tuple_or_list(obj):
-    """Given an object, wrap into a tuple if not list or tuple
-    """
+    """Given an object, wrap into a tuple if not list or tuple"""
     if isinstance(obj, list) or isinstance(obj, tuple):
         return obj
     return (obj,)
@@ -111,44 +123,47 @@ def not_supported_on_windows(msg=None):
     not supported (yet) on Windows
     """
     if on_windows:
-        raise NotImplementedError("This functionality is not yet implemented for Windows OS"
-                                  + (": %s" % msg if msg else ""))
+        raise NotImplementedError(
+            "This functionality is not yet implemented for Windows OS"
+            + (": %s" % msg if msg else "")
+        )
 
 
 def shortened_repr(value, l=30):
     try:
-        if hasattr(value, '__repr__') and (value.__repr__ is not object.__repr__):
+        if hasattr(value, "__repr__") and (value.__repr__ is not object.__repr__):
             value_repr = repr(value)
-            if not value_repr.startswith('<') and len(value_repr) > l:
-                value_repr = "<<%s...>>" % (value_repr[:l-8])
-            elif value_repr.startswith('<') and value_repr.endswith('>') and ' object at 0x':
+            if not value_repr.startswith("<") and len(value_repr) > l:
+                value_repr = "<<%s...>>" % (value_repr[: l - 8])
+            elif value_repr.startswith("<") and value_repr.endswith(">") and " object at 0x":
                 raise ValueError("I hate those useless long reprs")
         else:
             raise ValueError("gimme class")
     except Exception as e:
-        value_repr = "<%s>" % value.__class__.__name__.split('.')[-1]
+        value_repr = "<%s>" % value.__class__.__name__.split(".")[-1]
     return value_repr
 
 
 def __auto_repr__(obj):
     attr_names = tuple()
-    if hasattr(obj, '__dict__'):
+    if hasattr(obj, "__dict__"):
         attr_names += tuple(obj.__dict__.keys())
-    if hasattr(obj, '__slots__'):
+    if hasattr(obj, "__slots__"):
         attr_names += tuple(obj.__slots__)
 
     items = []
     for attr in sorted(set(attr_names)):
-        if attr.startswith('_'):
+        if attr.startswith("_"):
             continue
         value = getattr(obj, attr)
         # TODO:  should we add this feature to minimize some talktative reprs
         # such as of URL?
-        #if value is None:
+        # if value is None:
         #    continue
         items.append("%s=%s" % (attr, shortened_repr(value)))
 
-    return "%s(%s)" % (obj.__class__.__name__, ', '.join(items))
+    return "%s(%s)" % (obj.__class__.__name__, ", ".join(items))
+
 
 def auto_repr(cls):
     """Decorator for a class to assign it an automagic quick and dirty __repr__
@@ -161,6 +176,7 @@ def auto_repr(cls):
     cls.__repr__ = __auto_repr__
     return cls
 
+
 def is_interactive():
     """Return True if all in/outs are tty"""
     # TODO: check on windows if hasattr check would work correctly and add value:
@@ -172,23 +188,33 @@ import hashlib
 
 
 def md5sum(filename):
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         return hashlib.md5(f.read()).hexdigest()
 
 
 def sorted_files(path):
-    """Return a (sorted) list of files under path
-    """
-    return sorted(sum([[opj(r, f)[len(path)+1:] for f in files]
-                       for r,d,files in os.walk(path)
-                       if not '.git' in r], []))
+    """Return a (sorted) list of files under path"""
+    return sorted(
+        sum(
+            [
+                [opj(r, f)[len(path) + 1 :] for f in files]
+                for r, d, files in os.walk(path)
+                if not ".git" in r
+            ],
+            [],
+        )
+    )
+
 
 from os.path import sep as dirsep
-_VCS_REGEX = r'%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)' % (dirsep, dirsep)
-_REPROMAN_REGEX = r'%s\.(?:reproman)(?:%s|$)' % (dirsep, dirsep)
+
+_VCS_REGEX = r"%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)" % (dirsep, dirsep)
+_REPROMAN_REGEX = r"%s\.(?:reproman)(?:%s|$)" % (dirsep, dirsep)
 
 
-def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_reproman=False, dirs=False):
+def find_files(
+    regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_reproman=False, dirs=False
+):
     """Generator to find files matching regex
 
     Parameters
@@ -221,6 +247,8 @@ def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_rep
             if exclude_reproman and re.search(_REPROMAN_REGEX, path):
                 continue
             yield path
+
+
 find_files.__doc__ %= (_VCS_REGEX, _REPROMAN_REGEX)
 
 
@@ -242,9 +270,8 @@ def is_explicit_path(path):
     './' is assumed to indicate a location on the filesystem. Any other
     path format is not considered explicit."""
     path = expandpath(path, force_absolute=False)
-    return isabs(path) \
-        or path.startswith(os.curdir + os.sep) \
-        or path.startswith(os.pardir + os.sep)
+    return isabs(path) or path.startswith(os.curdir + os.sep) or path.startswith(os.pardir + os.sep)
+
 
 def rotree(path, ro=True, chmod_files=True):
     """To make tree read-only or writable
@@ -273,7 +300,7 @@ def rotree(path, ro=True, chmod_files=True):
         chmod(root)
 
 
-def rmtree(path, chmod_files='auto', *args, **kwargs):
+def rmtree(path, chmod_files="auto", *args, **kwargs):
     """To remove git-annex .git it is needed to make all files and directories writable again first
 
     Parameters
@@ -287,7 +314,7 @@ def rmtree(path, chmod_files='auto', *args, **kwargs):
        Passed into shutil.rmtree call
     """
     # Give W permissions back only to directories, no need to bother with files
-    if chmod_files == 'auto':
+    if chmod_files == "auto":
         chmod_files = on_windows
 
     if not os.path.islink(path):
@@ -304,7 +331,7 @@ def rmtemp(f, *args, **kwargs):
     It will not remove the temporary file/directory if REPROMAN_TESTS_KEEPTEMP
     environment variable is defined
     """
-    if not os.environ.get('REPROMAN_TESTS_KEEPTEMP'):
+    if not os.environ.get("REPROMAN_TESTS_KEEPTEMP"):
         if not os.path.lexists(f):
             lgr.debug("Path %s does not exist, so can't be removed" % f)
             return
@@ -333,35 +360,36 @@ def file_basename(name, return_ext=False):
     not a digit, so we could get rid of .tar.gz etc
     """
     bname = basename(name)
-    fbname = re.sub(r'(\.[a-zA-Z_]\S{1,4}){0,2}$', '', bname)
+    fbname = re.sub(r"(\.[a-zA-Z_]\S{1,4}){0,2}$", "", bname)
     if return_ext:
-        return fbname, bname[len(fbname)+1:]
+        return fbname, bname[len(fbname) + 1 :]
     else:
         return fbname
 
 
 def escape_filename(filename):
-    """Surround filename in "" and escape " in the filename
-    """
-    filename = filename.replace('"', r'\"').replace('`', r'\`')
+    """Surround filename in "" and escape " in the filename"""
+    filename = filename.replace('"', r"\"").replace("`", r"\`")
     filename = '"%s"' % filename
     return filename
 
 
 def encode_filename(filename):
-    """Encode unicode filename
-    """
+    """Encode unicode filename"""
     if isinstance(filename, str):
         return filename.encode(sys.getfilesystemencoding())
     else:
         return filename
 
+
 if on_windows:
+
     def lmtime(filepath, mtime):
-        """Set mtime for files.  On Windows a merely adapter to os.utime
-        """
+        """Set mtime for files.  On Windows a merely adapter to os.utime"""
         os.utime(filepath, (time.time(), mtime))
+
 else:
+
     def lmtime(filepath, mtime):
         """Set mtime for files, while not de-referencing symlinks.
 
@@ -370,17 +398,17 @@ else:
         Works only on linux and OSX ATM
         """
         from .cmd import Runner
+
         # convert mtime to format touch understands [[CC]YY]MMDDhhmm[.SS]
         smtime = time.strftime("%Y%m%d%H%M.%S", time.localtime(mtime))
         lgr.log(3, "Setting mtime for %s to %s == %s", filepath, mtime, smtime)
-        Runner().run(['touch', '-h', '-t', '%s' % smtime, filepath])
+        Runner().run(["touch", "-h", "-t", "%s" % smtime, filepath])
         rfilepath = realpath(filepath)
         if islink(filepath) and exists(rfilepath):
             # trust no one - adjust also of the target file
             # since it seemed like downloading under OSX (was it using curl?)
             # didn't bother with timestamps
-            lgr.log(3, "File is a symlink to %s Setting mtime for it to %s",
-                    rfilepath, mtime)
+            lgr.log(3, "File is a symlink to %s Setting mtime for it to %s", rfilepath, mtime)
             os.utime(rfilepath, (time.time(), mtime))
         # doesn't work on OSX
         # Runner().run(['touch', '-h', '-d', '@%s' % mtime, filepath])
@@ -402,7 +430,7 @@ def assure_list(s):
         return [s]
 
 
-def assure_list_from_str(s, sep='\n'):
+def assure_list_from_str(s, sep="\n"):
     """Given a multiline string convert it to a list of return None if empty
 
     Parameters
@@ -436,21 +464,25 @@ def assure_dict_from_str(s, **kwargs):
 
     out = {}
     for value_str in assure_list_from_str(s, **kwargs):
-        if '=' not in value_str:
+        if "=" not in value_str:
             raise ValueError("{} is not in key=value format".format(repr(value_str)))
-        k, v = value_str.split('=', 1)
+        k, v = value_str.split("=", 1)
         if k in out:
-            err  = "key {} was already defined in {}, but new value {} was provided".format(k, out, v)
+            err = "key {} was already defined in {}, but new value {} was provided".format(
+                k, out, v
+            )
             raise ValueError(err)
         out[k] = v
     return out
 
+
 def only_with_values(d):
     """Given a dictionary, return the one only with entries which had non-null values"""
     # to maintain OrderedDict do explicit d.__class__
-    return d.__class__((k, v) for k,v in d.items() if v)
+    return d.__class__((k, v) for k, v in d.items() if v)
 
-def assure_bytes(s, encoding='utf-8'):
+
+def assure_bytes(s, encoding="utf-8"):
     """Convert/encode unicode to bytes if of 'str'
 
     Parameters
@@ -481,27 +513,27 @@ def assure_unicode(s, encoding=None, confidence=None):
         # Figure out encoding, defaulting to 'utf-8' which is our common
         # target in contemporary digital society
         try:
-            return s.decode('utf-8')
+            return s.decode("utf-8")
         except UnicodeDecodeError as exc:
             from .dochelpers import exc_str
+
             lgr.debug("Failed to decode a string as utf-8: %s", exc_str(exc))
         # And now we could try to guess
         from chardet import detect
+
         enc = detect(s)
-        denc = enc.get('encoding', None)
+        denc = enc.get("encoding", None)
         if denc:
-            denc_confidence = enc.get('confidence', 0)
-            if confidence is not None and  denc_confidence < confidence:
+            denc_confidence = enc.get("confidence", 0)
+            if confidence is not None and denc_confidence < confidence:
                 raise ValueError(
                     "Failed to auto-detect encoding with high enough "
-                    "confidence. Highest confidence was %s for %s"
-                    % (denc_confidence, denc)
+                    "confidence. Highest confidence was %s for %s" % (denc_confidence, denc)
                 )
             return s.decode(denc)
         else:
             raise ValueError(
-                "Could not decode value as utf-8, or to guess its encoding: %s"
-                % repr(s)
+                "Could not decode value as utf-8, or to guess its encoding: %s" % repr(s)
             )
     else:
         return s.decode(encoding)
@@ -557,26 +589,26 @@ def partition(items, predicate=bool):
     https://nedbatchelder.com/blog/201306/filter_a_list_into_two_parts.html
     """
     a, b = tee((predicate(item), item) for item in items)
-    return ((item for pred, item in a if not pred),
-            (item for pred, item in b if pred))
+    return ((item for pred, item in a if not pred), (item for pred, item in b if pred))
 
 
 #
 # Decorators
 #
 
+
 # Borrowed from pandas
 # Copyright: 2011-2014, Lambda Foundry, Inc. and PyData Development Team
 # License: BSD-3
 def optional_args(decorator):
     """allows a decorator to take optional positional and keyword arguments.
-        Assumes that taking a single, callable, positional argument means that
-        it is decorating a function, i.e. something like this::
+    Assumes that taking a single, callable, positional argument means that
+    it is decorating a function, i.e. something like this::
 
-            @my_decorator
-            def function(): pass
+        @my_decorator
+        def function(): pass
 
-        Calls decorator with decorator(f, `*args`, `**kwargs`)"""
+    Calls decorator with decorator(f, `*args`, `**kwargs`)"""
 
     @wraps(decorator)
     def wrapper(*args, **kwargs):
@@ -596,31 +628,31 @@ def optional_args(decorator):
 
 # TODO: just provide decorators for tempfile.mk* functions. This is ugly!
 def get_tempfile_kwargs(tkwargs={}, prefix="", wrapped=None):
-    """Updates kwargs to be passed to tempfile. calls depending on env vars
-    """
+    """Updates kwargs to be passed to tempfile. calls depending on env vars"""
     # operate on a copy of tkwargs to avoid any side-effects
     tkwargs_ = tkwargs.copy()
 
     # TODO: don't remember why I had this one originally
     # if len(targs)<2 and \
-    if not 'prefix' in tkwargs_:
-        tkwargs_['prefix'] = '_'.join(
-            ['reproman_temp'] +
-            ([prefix] if prefix else []) +
-            ([''] if (on_windows or not wrapped)
-                  else [wrapped.__name__]))
+    if not "prefix" in tkwargs_:
+        tkwargs_["prefix"] = "_".join(
+            ["reproman_temp"]
+            + ([prefix] if prefix else [])
+            + ([""] if (on_windows or not wrapped) else [wrapped.__name__])
+        )
 
-    directory = os.environ.get('REPROMAN_TESTS_TEMPDIR')
-    if directory and 'dir' not in tkwargs_:
-        tkwargs_['dir'] = directory
+    directory = os.environ.get("REPROMAN_TESTS_TEMPDIR")
+    if directory and "dir" not in tkwargs_:
+        tkwargs_["dir"] = directory
 
     return tkwargs_
 
+
 @optional_args
 def line_profile(func):
-    """Q&D helper to line profile the function and spit out stats
-    """
+    """Q&D helper to line profile the function and spit out stats"""
     import line_profiler
+
     prof = line_profiler.LineProfiler()
 
     @wraps(func)
@@ -630,6 +662,7 @@ def line_profile(func):
             return pfunc(*args, **kwargs)
         finally:
             prof.print_stats()
+
     return newfunc
 
 
@@ -659,6 +692,7 @@ def cached_property(prop):
         except KeyError:
             x = self._property_cache[prop] = prop(self)
             return x
+
     return wrapped
 
 
@@ -667,6 +701,7 @@ def cached_property(prop):
 #
 
 from contextlib import contextmanager
+
 
 @contextmanager
 def swallow_outputs():
@@ -683,14 +718,15 @@ def swallow_outputs():
     """
 
     debugout = sys.stdout
+
     class StringIOAdapter(object):
-        """Little adapter to help getting out/err values
-        """
+        """Little adapter to help getting out/err values"""
+
         def __init__(self):
             kw = get_tempfile_kwargs({}, prefix="outputs")
 
-            self._out = open(tempfile.mktemp(**kw), 'w')
-            self._err = open(tempfile.mktemp(**kw), 'w')
+            self._out = open(tempfile.mktemp(**kw), "w")
+            self._err = open(tempfile.mktemp(**kw), "w")
 
         def _read(self, h):
             with open(h.name) as f:
@@ -721,12 +757,10 @@ def swallow_outputs():
             rmtemp(out_name)
             rmtemp(err_name)
 
-
-
     def fake_print(*args, **kwargs):
-        sep = kwargs.pop('sep', ' ')
-        end = kwargs.pop('end', '\n')
-        file = kwargs.pop('file', sys.stdout)
+        sep = kwargs.pop("sep", " ")
+        end = kwargs.pop("end", "\n")
+        file = kwargs.pop("file", sys.stdout)
 
         if file in (oldout, olderr, sys.stdout, sys.stderr):
             # we mock
@@ -736,8 +770,9 @@ def swallow_outputs():
             oldprint(*args, sep=sep, end=end, file=file)
 
     from .ui import ui
+
     # preserve -- they could have been mocked already
-    oldprint = getattr(builtins, 'print')
+    oldprint = getattr(builtins, "print")
     oldout, olderr = sys.stdout, sys.stderr
     olduiout = ui.out
     adapter = StringIOAdapter()
@@ -745,20 +780,18 @@ def swallow_outputs():
     try:
         sys.stdout, sys.stderr = adapter.handles
         ui.out = adapter.handles[0]
-        setattr(builtins, 'print', fake_print)
+        setattr(builtins, "print", fake_print)
 
         yield adapter
     finally:
         sys.stdout, sys.stderr, ui.out = oldout, olderr, olduiout
-        setattr(builtins, 'print',  oldprint)
+        setattr(builtins, "print", oldprint)
         adapter.cleanup()
 
 
 @contextmanager
 def swallow_logs(new_level=None):
-    """Context manager to consume all logs.
-
-    """
+    """Context manager to consume all logs."""
     lgr = logging.getLogger("reproman")
 
     # Keep old settings
@@ -772,11 +805,12 @@ def swallow_logs(new_level=None):
 
         And to stay consistent with how swallow_outputs behaves
         """
+
         def __init__(self):
             kw = dict()
             get_tempfile_kwargs(kw, prefix="logs")
 
-            self._out = open(tempfile.mktemp(**kw), 'w')
+            self._out = open(tempfile.mktemp(**kw), "w")
 
         def _read(self, h):
             with open(h.name) as f:
@@ -789,7 +823,7 @@ def swallow_logs(new_level=None):
 
         @property
         def lines(self):
-            return self.out.split('\n')
+            return self.out.split("\n")
 
         @property
         def handle(self):
@@ -824,26 +858,33 @@ def swallow_logs(new_level=None):
 # Additional handlers
 #
 _sys_excepthook = sys.excepthook  # Just in case we ever need original one
+
+
 def setup_exceptionhook(ipython=False):
     """Overloads default sys.excepthook with our exceptionhook handler.
 
-       If interactive, our exceptionhook handler will invoke
-       pdb.post_mortem; if not interactive, then invokes default handler.
+    If interactive, our exceptionhook handler will invoke
+    pdb.post_mortem; if not interactive, then invokes default handler.
     """
 
     def _reproman_pdb_excepthook(type, value, tb):
         import traceback
+
         traceback.print_exception(type, value, tb)
         print()
         if is_interactive():
             import pdb
+
             pdb.post_mortem(tb)
 
     if ipython:
         from IPython.core import ultratb
-        sys.excepthook = ultratb.FormattedTB(mode='Verbose',
-                                             # color_scheme='Linux',
-                                             call_pdb=is_interactive())
+
+        sys.excepthook = ultratb.FormattedTB(
+            mode="Verbose",
+            # color_scheme='Linux',
+            call_pdb=is_interactive(),
+        )
     else:
         sys.excepthook = _reproman_pdb_excepthook
 
@@ -859,6 +900,7 @@ def assure_dir(*args):
         os.makedirs(dirname)
     return dirname
 
+
 def updated(d, update):
     """Return a copy of the input with the 'update'
 
@@ -868,15 +910,17 @@ def updated(d, update):
     d.update(update)
     return d
 
+
 def getpwd():
     """Try to return a CWD without dereferencing possible symlinks
 
     If no PWD found in the env, output of getcwd() is returned
     """
     try:
-        return os.environ['PWD']
+        return os.environ["PWD"]
     except KeyError:
         return os.getcwd()
+
 
 class chpwd(object):
     """Wrapper around os.chdir which also adjusts environ['PWD']
@@ -888,7 +932,8 @@ class chpwd(object):
     If used as a context manager it allows to temporarily change directory
     to the given path
     """
-    def __init__(self, path, mkdir=False, logsuffix=''):
+
+    def __init__(self, path, mkdir=False, logsuffix=""):
 
         if path:
             pwd = getpwd()
@@ -906,7 +951,7 @@ class chpwd(object):
             self._mkdir = False
         lgr.debug("chdir %r -> %r %s", self._prev_pwd, path, logsuffix)
         os.chdir(path)  # for grep people -- ok, to chdir here!
-        os.environ['PWD'] = path
+        os.environ["PWD"] = path
 
     def __enter__(self):
         # nothing more to do really, chdir was in the constructor
@@ -929,10 +974,12 @@ def knows_annex(path):
     even the presence of a remote annex branch.
     """
     from os.path import exists
+
     if not exists(path):
         lgr.debug("No annex: test path {0} doesn't exist".format(path))
         return False
     from reproman.support.gitrepo import GitRepo
+
     return GitRepo(path, init=False, create=False).is_with_annex()
 
 
@@ -970,7 +1017,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
         ...    assert open(fname).read() == "blah"
     """
 
-    if tkwargs.get('mkdir', None) and content is not None:
+    if tkwargs.get("mkdir", None) and content is not None:
         raise ValueError("mkdir=True while providing content makes no sense")
 
     tkwargs_ = get_tempfile_kwargs(tkwargs, wrapped=wrapped)
@@ -978,14 +1025,13 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
     # if REPROMAN_TESTS_TEMPDIR is set, use that as directory,
     # let mktemp handle it otherwise. However, an explicitly provided
     # dir=... will override this.
-    mkdir = tkwargs_.pop('mkdir', False)
+    mkdir = tkwargs_.pop("mkdir", False)
 
-    filename = {False: tempfile.mktemp,
-                True: tempfile.mkdtemp}[mkdir](**tkwargs_)
+    filename = {False: tempfile.mktemp, True: tempfile.mkdtemp}[mkdir](**tkwargs_)
     filename = realpath(filename)
 
     if content:
-        with open(filename, 'w' + ('b' if isinstance(content, bytes) else '')) as f:
+        with open(filename, "w" + ("b" if isinstance(content, bytes) else "")) as f:
             f.write(content)
 
     if __debug__:
@@ -997,13 +1043,15 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
         # glob here for all files with the same name (-suffix)
         # would be useful whenever we requested .img filename,
         # and function creates .hdr as well
-        lsuffix = len(tkwargs_.get('suffix', ''))
+        lsuffix = len(tkwargs_.get("suffix", ""))
         filename_ = lsuffix and filename[:-lsuffix] or filename
-        filenames = glob.glob(filename_ + '*')
+        filenames = glob.glob(filename_ + "*")
         if len(filename_) < 3 or len(filenames) > 5:
             # For paranoid yoh who stepped into this already ones ;-)
-            lgr.warning("It is unlikely that it was intended to remove all"
-                        " files matching %r. Skipping" % filename_)
+            lgr.warning(
+                "It is unlikely that it was intended to remove all"
+                " files matching %r. Skipping" % filename_
+            )
             return
         for f in filenames:
             try:
@@ -1015,7 +1063,7 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
 def _path_(p):
     """Given a path in POSIX" notation, regenerate one in native to the env one"""
     if on_windows:
-        return opj(p.split('/'))
+        return opj(p.split("/"))
     else:
         # Assume that all others as POSIX compliant so nothing to be done
         return p
@@ -1083,6 +1131,7 @@ def generate_unique_name(pattern, nameset):
 # http://stackoverflow.com/questions/1151658/python-hashable-dicts
 class HashableDict(dict):
     """Dict that can be used as keys"""
+
     def __hash__(self):
         return hash(frozenset(self.values()))
 
@@ -1140,8 +1189,7 @@ def join_sequence_of_dicts(seq):
     for d in seq:
         for k, v in d.items():
             if k in r:
-                raise RuntimeError("Duplicate key %r (new value: %r, "
-                                   "was: %r)" % (k, v, r[k]))
+                raise RuntimeError("Duplicate key %r (new value: %r, " "was: %r)" % (k, v, r[k]))
             r[k] = v
     return r
 
@@ -1159,8 +1207,7 @@ def cmd_err_filter(err_string):
     -------
     func object -> boolean
     """
-    return (lambda x: isinstance(x, CommandError) and
-            err_string in to_unicode(x.stderr, "utf-8"))
+    return lambda x: isinstance(x, CommandError) and err_string in to_unicode(x.stderr, "utf-8")
 
 
 def execute_command_batch(session, command, args, exception_filter=None):
@@ -1197,9 +1244,7 @@ def execute_command_batch(session, command, args, exception_filter=None):
     while args:
         batch, args = args[:num_args], args[num_args:]
         try:
-            out, err = session.execute_command(
-                command + batch
-            )
+            out, err = session.execute_command(command + batch)
             out = to_unicode(out, "utf-8")
             yield (out, err, None)
         except Exception as e:
@@ -1209,7 +1254,7 @@ def execute_command_batch(session, command, args, exception_filter=None):
                 raise
 
 
-def items_to_dict(l, attrs='name', ordered=False):
+def items_to_dict(l, attrs="name", ordered=False):
     """Given a list of attr instances, return a dict using specified attrs as keys
 
     Parameters
@@ -1233,16 +1278,14 @@ def items_to_dict(l, attrs='name', ordered=False):
     for i in l:
         k = tuple(getattr(i, a) for a in attrs) if many else getattr(i, attrs)
         if k in out:
-            raise ValueError(
-                "We already saw entry for %s: %s.  Not adding %s",
-                k, out[k], i
-            )
+            raise ValueError("We already saw entry for %s: %s.  Not adding %s", k, out[k], i)
         out[k] = i
     return out
 
 
 # TODO: just absorb into SpecObject __init__ but would require more handling
 # to allow *args as well
+
 
 def instantiate_attr_object(item_type, items):
     """Instantiate item_type given items (for a list or dict)
@@ -1264,9 +1307,11 @@ def instantiate_attr_object(item_type, items):
                 raise TypeError(
                     "Following provided arguments are not known to %s: %s.  "
                     "Known but not yet provided are: %s"
-                    % (item_type.__name__,
-                       ', '.join(incorrect_kws),
-                       ', '.join(sorted(set(known_kws).difference(items))))
+                    % (
+                        item_type.__name__,
+                        ", ".join(incorrect_kws),
+                        ", ".join(sorted(set(known_kws).difference(items))),
+                    )
                 )
         # if couldn't figure it out -- just raise original
         raise
@@ -1282,13 +1327,13 @@ def attrib(*args, **kwargs):
     Also, when the `default` argument of attr.ib is unspecified, set it to
     None.
     """
-    doc = kwargs.pop('doc', None)
-    metadata = kwargs.get('metadata', {})
+    doc = kwargs.pop("doc", None)
+    metadata = kwargs.get("metadata", {})
     if doc:
-        metadata['doc'] = doc
+        metadata["doc"] = doc
     if metadata:
-        kwargs['metadata'] = metadata
-    return attr.ib(*args, default=kwargs.pop('default', None), **kwargs)
+        kwargs["metadata"] = metadata
+    return attr.ib(*args, default=kwargs.pop("default", None), **kwargs)
 
 
 class PathRoot(object):
@@ -1302,6 +1347,7 @@ class PathRoot(object):
         A callable that will be passed a path and should return true
         if that path should be considered a root.
     """
+
     def __init__(self, predicate):
         self._pred = predicate
         self._cache = {}  # path -> root
@@ -1356,8 +1402,7 @@ def is_subpath(path, directory):
     return not os.path.relpath(path, directory).startswith(os.path.pardir)
 
 
-SemanticVersion = collections.namedtuple("SemanticVersion",
-                                         ["major", "minor", "patch", "tag"])
+SemanticVersion = collections.namedtuple("SemanticVersion", ["major", "minor", "patch", "tag"])
 
 
 def parse_semantic_version(version):
@@ -1373,14 +1418,11 @@ def parse_semantic_version(version):
     -------
     A namedtuple with the form (major, minor, patch, tag).
     """
-    m = re.match(r"(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)"
-                 r"(?P<tag>.*)",
-                 version)
+    m = re.match(r"(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)" r"(?P<tag>.*)", version)
     if m:
         return SemanticVersion(*m.groups())
     else:
-        raise ValueError(
-            "{} does not appear to follow semantic versioning".format(version))
+        raise ValueError("{} does not appear to follow semantic versioning".format(version))
 
 
 def command_as_string(command):
@@ -1436,11 +1478,10 @@ def parse_kv_list(params):
     if isinstance(params, Mapping):
         res = params
     elif params:
+
         def check_fmt(item):
             if "=" not in item:
-                raise ValueError(
-                    "Expected 'key=value' format but got '{}'"
-                    .format(item))
+                raise ValueError("Expected 'key=value' format but got '{}'".format(item))
             return item
 
         res = dict(p.split("=", 1) for p in map(check_fmt, params))
@@ -1473,9 +1514,7 @@ def write_update(fname, content, encoding=None):
     if content == existing_content:
         lgr.debug("File already has matching content: %s", fname)
     else:
-        lgr.debug("%s content in %s",
-                  "Updating" if existing_content else "Creating",
-                  fname)
+        lgr.debug("%s content in %s", "Updating" if existing_content else "Creating", fname)
         os.makedirs(op.dirname(fname), exist_ok=True)
         with open(fname, "w", encoding=encoding) as fh:
             fh.write(content)
@@ -1505,9 +1544,8 @@ def pycache_source(path):
         # or "__pycache__/f.cpython-35.opt-2.pyc".
         leading, base = op.split(path)
         name = base.split(".", 1)[0]
-        pyfile = op.join(leading[:-len("__pycache__")], name + ".py")
-    lgr.debug("Converted pycache file %s to source file %s",
-              path, pyfile)
+        pyfile = op.join(leading[: -len("__pycache__")], name + ".py")
+    lgr.debug("Converted pycache file %s to source file %s", path, pyfile)
     return pyfile
 
 

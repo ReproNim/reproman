@@ -16,9 +16,7 @@ REPROMAN_SPECS = [
     # REPROZIP_SPEC1
 ]
 
-REPROZIP_SPEC2 = [
-    REPROZIP_SPEC2_YML_FILENAME
-]
+REPROZIP_SPEC2 = [REPROZIP_SPEC2_YML_FILENAME]
 
 
 # Let's make a convenience fixture to run tests against demo1 file(s)
@@ -30,4 +28,3 @@ def demo1_spec(request):
 @pytest.fixture(params=REPROZIP_SPEC2)
 def reprozip_spec2(request):
     yield request.param
-

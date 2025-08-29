@@ -10,7 +10,7 @@
 
 def _generate_func_api():
     """Auto detect all available interfaces and generate a function-based
-       API from them
+    API from them
     """
     from importlib import import_module
     from .interface.base import update_docstring_with_parameters
@@ -21,20 +21,20 @@ def _generate_func_api():
     for grp_name, grp_descr, interfaces in get_interface_groups():
         for intfspec in interfaces:
             # turn the interface spec into an instance
-            mod = import_module(intfspec[0], package='reproman')
+            mod = import_module(intfspec[0], package="reproman")
             intf = getattr(mod, intfspec[1])
-            spec = getattr(intf, '_params_', dict())
+            spec = getattr(intf, "_params_", dict())
 
             # FIXME no longer using an interface class instance
             # convert the parameter SPEC into a docstring for the function
             update_docstring_with_parameters(
-                intf.__call__, spec,
-                prefix=alter_interface_docs_for_api(
-                    intf.__doc__),
-                suffix=alter_interface_docs_for_api(
-                    intf.__call__.__doc__)
+                intf.__call__,
+                spec,
+                prefix=alter_interface_docs_for_api(intf.__doc__),
+                suffix=alter_interface_docs_for_api(intf.__call__.__doc__),
             )
             globals()[get_api_name(intfspec)] = intf.__call__
+
 
 # Invoke above helpers
 _generate_func_api()

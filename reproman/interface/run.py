@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Run a command/job on a remote resource.
-"""
+"""Run a command/job on a remote resource."""
 
 from argparse import REMAINDER
 import collections
@@ -82,21 +81,19 @@ def _parse_batch_params(params):
     -------
     A generator that, for each key, yields a list of key-value tuple pairs.
     """
+
     def maybe_glob(x):
         return glob.glob(x) if glob.has_magic(x) else [x]
 
     seen_keys = set()
     for param in params:
         if "=" not in param:
-            raise ValueError(
-                "param value should be formatted as 'key=value,...'")
+            raise ValueError("param value should be formatted as 'key=value,...'")
         key, value_str = param.split("=", maxsplit=1)
         if key in seen_keys:
             raise ValueError("Key '{}' was given more than once".format(key))
         seen_keys.add(key)
-        yield [(key, v)
-               for v_unexpanded in value_str.split(",")
-               for v in maybe_glob(v_unexpanded)]
+        yield [(key, v) for v_unexpanded in value_str.split(",") for v in maybe_glob(v_unexpanded)]
 
 
 def _combine_batch_params(params):
@@ -146,8 +143,7 @@ def _resolve_batch_parameters(spec_file, params):
     List of records or None if neither `spec_file` or `params` is specified.
     """
     if spec_file and params:
-        raise ValueError(
-            "Batch parameters cannot be provided with a batch spec")
+        raise ValueError("Batch parameters cannot be provided with a batch spec")
 
     resolved = None
     if spec_file:
@@ -162,49 +158,61 @@ JOB_PARAMETERS = collections.OrderedDict(
     [
         ("root_directory", Orchestrator.root_directory),
         ("working_directory", Orchestrator.working_directory),
-        ("command_str, command",
-         """Command to run (string and list form). A command will usually be
+        (
+            "command_str, command",
+            """Command to run (string and list form). A command will usually be
          set from the command line, but it can also be set in the job spec. If
-         string and list forms are defined, the string form is used."""),
-        ("submitter",
-         """Name of submitter. The submitter controls how the command should be
-         submitted on the resource (e.g., with `condor_submit`)."""),
-        ("orchestrator",
-         """Name of orchestrator. The orchestrator performs pre- and
+         string and list forms are defined, the string form is used.""",
+        ),
+        (
+            "submitter",
+            """Name of submitter. The submitter controls how the command should be
+         submitted on the resource (e.g., with `condor_submit`).""",
+        ),
+        (
+            "orchestrator",
+            """Name of orchestrator. The orchestrator performs pre- and
          post-command steps like setting up the directory for command execution
-         and storing the results."""),
-        ("batch_spec",
-         """YAML file that defines a series of records with parameters for
+         and storing the results.""",
+        ),
+        (
+            "batch_spec",
+            """YAML file that defines a series of records with parameters for
          commands. A command will be constructed for each record, with record
          values available in the command as well as the inputs and outputs as
-         `{p[KEY]}`."""),
-        ("batch_parameters",
-         """Define batch parameters with 'KEY=val1,val2,...'. Different keys
+         `{p[KEY]}`.""",
+        ),
+        (
+            "batch_parameters",
+            """Define batch parameters with 'KEY=val1,val2,...'. Different keys
          can be specified by giving multiple values, in which case the product
          of the values are taken. For example, 'subj=mei,satsuki' and 'day=1,2'
          would expand to four records, pairing each subj with each day. Values
          can be a glob pattern to match against the current working
-         directory."""),
-        ("inputs, outputs",
-         """Input and output files (list) to the command."""),
-        ("message",
-         """Message to use when saving the run. The details depend on the orchestator,
-         but in general this message will be used in the commit message."""),
-        ("container",
-         """Container to use for execution. This should match the name of a container
+         directory.""",
+        ),
+        ("inputs, outputs", """Input and output files (list) to the command."""),
+        (
+            "message",
+            """Message to use when saving the run. The details depend on the orchestator,
+         but in general this message will be used in the commit message.""",
+        ),
+        (
+            "container",
+            """Container to use for execution. This should match the name of a container
          registered with the datalad-container extension. This option is valid
-         only for DataLad run orchestrators."""),
+         only for DataLad run orchestrators.""",
+        ),
         # TODO: Add more information for the rest of these.
-        ("memory, num_processes",
-         """Supported by Condor and PBS submitters."""),
-        ("num_nodes, walltime",
-         """Supported by PBS submitter."""),
-        ("queue",
-         """Supported by Slurm submitter."""),
-        ("launcher",
-         """If set to "true", the job will be run using Launcher, rather than 
+        ("memory, num_processes", """Supported by Condor and PBS submitters."""),
+        ("num_nodes, walltime", """Supported by PBS submitter."""),
+        ("queue", """Supported by Slurm submitter."""),
+        (
+            "launcher",
+            """If set to "true", the job will be run using Launcher, rather than 
         as a job-array. See https://github.com/TACC/launcher for more info. 
-        Supported by Slurm and PBS submitters."""),
+        Supported by Slurm and PBS submitters.""",
+        ),
     ]
 )
 
@@ -225,42 +233,55 @@ class Run(Interface):
     Unless --follow is specified, the job is started and detached. Use
     `reproman jobs` to list and fetch detached jobs.
     """
+
     _params_ = dict(
         resref=resref_opt,
         resref_type=resref_type_opt,
         list_=Parameter(
             args=("--list",),
             dest="list_",
-            choices=('submitters', 'orchestrators', 'parameters', ''),
+            choices=("submitters", "orchestrators", "parameters", ""),
             doc="""Show available submitters, orchestrators, or job parameters.
-            If an empty string is given, show all."""),
+            If an empty string is given, show all.""",
+        ),
         submitter=Parameter(
             args=("--submitter", "--sub"),
             metavar="NAME",
             constraints=EnsureChoice(None, *SUBMITTERS),
-            doc=(JOB_PARAMETERS["submitter"] +
-                 "[CMD:  Use --list to see available submitters CMD]")),
+            doc=(
+                JOB_PARAMETERS["submitter"] + "[CMD:  Use --list to see available submitters CMD]"
+            ),
+        ),
         orchestrator=Parameter(
             args=("--orchestrator", "--orc"),
             metavar="NAME",
             constraints=EnsureChoice(None, *ORCHESTRATORS),
-            doc=(JOB_PARAMETERS["orchestrator"] +
-                 "[CMD:  Use --list to see available orchestrators CMD]")),
+            doc=(
+                JOB_PARAMETERS["orchestrator"]
+                + "[CMD:  Use --list to see available orchestrators CMD]"
+            ),
+        ),
         batch_spec=Parameter(
             args=("--batch-spec", "--bs"),
             dest="batch_spec",
             metavar="PATH",
-            doc=(JOB_PARAMETERS["batch_spec"] +
-                 " See [CMD: --batch-parameter CMD][PY: `batch_parameters` PY]"
-                 " for an alternative method for simple combinations.")),
+            doc=(
+                JOB_PARAMETERS["batch_spec"]
+                + " See [CMD: --batch-parameter CMD][PY: `batch_parameters` PY]"
+                " for an alternative method for simple combinations."
+            ),
+        ),
         batch_parameters=Parameter(
             args=("--batch-parameter", "--bp"),
             dest="batch_parameters",
             action="append",
             metavar="PATH",
-            doc=(JOB_PARAMETERS["batch_parameters"] +
-                 " See [CMD: --batch-spec CMD][PY: `batch_spec` PY]"
-                 " for specifying more complex records." + _more_than_once_doc)),
+            doc=(
+                JOB_PARAMETERS["batch_parameters"]
+                + " See [CMD: --batch-spec CMD][PY: `batch_spec` PY]"
+                " for specifying more complex records." + _more_than_once_doc
+            ),
+        ),
         job_specs=Parameter(
             args=("--job-spec", "--js"),
             dest="job_specs",
@@ -269,7 +290,9 @@ class Run(Interface):
             doc="""YAML files that define job parameters. Multiple paths can be
             given. If a parameter is defined in multiple specs, the value from
             the last path that defines it is used[CMD: . Use --list to see
-            available parameters for the built-in templates CMD].""" + _more_than_once_doc),
+            available parameters for the built-in templates CMD]."""
+            + _more_than_once_doc,
+        ),
         job_parameters=Parameter(
             metavar="PARAM",
             dest="job_parameters",
@@ -282,7 +305,9 @@ class Run(Interface):
             The values are available as fields in the templates used to
             generate both the run script and submission script[CMD: . Use
             --list to see available parameters for the built-in templates
-            CMD].""" + _more_than_once_doc),
+            CMD]."""
+            + _more_than_once_doc,
+        ),
         inputs=Parameter(
             args=("-i", "--input"),
             dest="inputs",
@@ -291,47 +316,56 @@ class Run(Interface):
             doc="""An input path to the command. How input paths are used
             depends on the orchestrator, but, at the very least, the
             orchestrator should try to make these paths available on the
-            resource.""" + _more_than_once_doc),
+            resource."""
+            + _more_than_once_doc,
+        ),
         outputs=Parameter(
             args=("-o", "--output"),
             dest="outputs",
             metavar="PATH",
             action="append",
             doc="""An output path to the command. How output paths are handled
-            depends on the orchestrator.""" + _more_than_once_doc),
+            depends on the orchestrator."""
+            + _more_than_once_doc,
+        ),
         follow=Parameter(
             args=("--follow",),
             metavar="ACTION",
             const=True,
             nargs="?",
-            constraints=EnsureChoice(False, True,
-                                     "stop", "stop-if-success",
-                                     "delete", "delete-if-success"),
+            constraints=EnsureChoice(
+                False, True, "stop", "stop-if-success", "delete", "delete-if-success"
+            ),
             doc="""Continue to follow the submitted command instead of
-            submitting it and detaching."""),
+            submitting it and detaching.""",
+        ),
         command=Parameter(
-            args=("command",),
-            nargs=REMAINDER,
-            metavar="COMMAND",
-            doc="command for execution"),
+            args=("command",), nargs=REMAINDER, metavar="COMMAND", doc="command for execution"
+        ),
         message=Parameter(
-            args=("-m", "--message"),
-            metavar="MESSAGE",
-            doc=JOB_PARAMETERS["message"]),
+            args=("-m", "--message"), metavar="MESSAGE", doc=JOB_PARAMETERS["message"]
+        ),
     )
 
     @staticmethod
-    def __call__(command=None, message=None,
-                 resref=None, resref_type="auto",
-                 list_=None, submitter=None, orchestrator=None,
-                 batch_spec=None, batch_parameters=None,
-                 job_specs=None, job_parameters=None,
-                 inputs=None, outputs=None,
-                 follow=False):
+    def __call__(
+        command=None,
+        message=None,
+        resref=None,
+        resref_type="auto",
+        list_=None,
+        submitter=None,
+        orchestrator=None,
+        batch_spec=None,
+        batch_parameters=None,
+        job_specs=None,
+        job_parameters=None,
+        inputs=None,
+        outputs=None,
+        follow=False,
+    ):
         if list_ is not None:
-            wrapper = textwrap.TextWrapper(
-                initial_indent="    ",
-                subsequent_indent="    ")
+            wrapper = textwrap.TextWrapper(initial_indent="    ", subsequent_indent="    ")
 
             def get_doc(x):
                 doc = x if isinstance(x, str) else x.__doc__
@@ -341,8 +375,7 @@ class Run(Interface):
                 return "\n\n".join(wrapper.fill(p) for p in paragraphs)
 
             def fmt(d):
-                return ["  {}\n{}".format(k, get_doc(v))
-                        for k, v in d.items()]
+                return ["  {}\n{}".format(k, get_doc(v)) for k, v in d.items()]
 
             # FIXME: We shouldn't bother calling fmt on items that aren't
             # selected by list=X.
@@ -364,8 +397,8 @@ class Run(Interface):
 
         # CLI things that can also be specified in spec.
         cli_spec = {
-            k: v for k, v in
-            {
+            k: v
+            for k, v in {
                 "message": message,
                 "submitter": submitter,
                 "orchestrator": orchestrator,
@@ -380,19 +413,18 @@ class Run(Interface):
         job_parameters = parse_kv_list(job_parameters)
 
         # Precedence: CLI option > CLI job parameter > spec file
-        spec = _combine_job_specs(_load_specs(job_specs or []) +
-                                  [job_parameters, cli_spec])
+        spec = _combine_job_specs(_load_specs(job_specs or []) + [job_parameters, cli_spec])
 
         spec["_resolved_batch_parameters"] = _resolve_batch_parameters(
-            spec.get("batch_spec"), spec.get("batch_parameters"))
+            spec.get("batch_spec"), spec.get("batch_parameters")
+        )
 
         # Treat "command" as a special case because it's a list and the
         # template expects a string.
         if not command and "command_str" in spec:
             spec["_resolved_command_str"] = spec["command_str"]
         elif not command and "command" not in spec:
-            raise InsufficientArgumentsError(
-                "No command specified via CLI or job spec")
+            raise InsufficientArgumentsError("No command specified via CLI or job spec")
         else:
             command = command or spec["command"]
             # Unlike datalad run, we're only accepting a list form for now.
@@ -437,18 +469,22 @@ class Run(Interface):
 
                 def remote_fn(res, failed):
                     if failed and only_on_success:
-                        lgr.info("Not stopping%s resource '%s' "
-                                 "because there were failed jobs",
-                                 " or deleting" if do_delete else "",
-                                 res.name)
+                        lgr.info(
+                            "Not stopping%s resource '%s' " "because there were failed jobs",
+                            " or deleting" if do_delete else "",
+                            res.name,
+                        )
                     else:
-                        lgr.info("Stopping%s resource '%s' after %s run",
-                                 " and deleting" if do_delete else "",
-                                 res.name,
-                                 "failed" if failed else "successful")
+                        lgr.info(
+                            "Stopping%s resource '%s' after %s run",
+                            " and deleting" if do_delete else "",
+                            res.name,
+                            "failed" if failed else "successful",
+                        )
                         manager.stop(res)
                         if do_delete:
                             manager.delete(res)
+
             orc.fetch(on_remote_finish=remote_fn)
             lreg.unregister(orc.jobid)
             # TODO: this would duplicate what is done in each .fetch

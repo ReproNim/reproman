@@ -21,7 +21,8 @@ from appdirs import AppDirs
 from botocore.exceptions import ClientError
 
 import logging
-lgr = logging.getLogger('reproman.resource.aws_ec2')
+
+lgr = logging.getLogger("reproman.resource.aws_ec2")
 
 from .base import Resource
 from ..ui import ui
@@ -66,15 +67,15 @@ class AwsKeyMixin(object):
                 lgr.error(
                     "Caught some unknown exception while checking key %s: %s",
                     key_pair,
-                    exc_str(exc)
+                    exc_str(exc),
                 )
                 # reraising
                 raise
 
             if i == 2:
-                raise SystemExit('That key name exists already, exiting.')
+                raise SystemExit("That key name exists already, exiting.")
             else:
-                key_name = self._ask('That key name exists already, try again')
+                key_name = self._ask("That key name exists already, try again")
 
         # Create private key file.
         if not key_filename:
@@ -82,10 +83,10 @@ class AwsKeyMixin(object):
 
         # Generate the key-pair and save to the private key file.
         key_pair = self._ec2_resource.create_key_pair(KeyName=key_name)
-        with open(key_filename, 'w') as key_file:
+        with open(key_filename, "w") as key_file:
             key_file.write(key_pair.key_material)
         chmod(key_filename, 0o400)
-        lgr.info('Created private key file %s', key_filename)
+        lgr.info("Created private key file %s", key_filename)
 
         # Save the new info to the resource. This is later picked up and
         # saved to the resource inventory file.
@@ -107,8 +108,9 @@ class AwsKeyMixin(object):
             if self.key_name in local_keys and not self.key_filename:
                 self.key_filename = local_keys[self.key_name]
 
-            if self.key_name not in local_keys \
-                    and (not self.key_filename or not os.path.lexists(self.key_filename)):
+            if self.key_name not in local_keys and (
+                not self.key_filename or not os.path.lexists(self.key_filename)
+            ):
                 self.create_key_pair(self.key_name, self.key_filename)
 
             assert self.key_name
@@ -119,7 +121,10 @@ class AwsKeyMixin(object):
         present_keys = cls._get_local_keys()
         prompt = []
         if present_keys:
-            prompt += ["%d keys were found locally: %s" % (len(present_keys), ' '.join(sorted(present_keys)))]
+            prompt += [
+                "%d keys were found locally: %s"
+                % (len(present_keys), " ".join(sorted(present_keys)))
+            ]
             prompt += ["You can enter one of the above key names to reuse an existing key"]
             prompt += ["or enter a new unique name to create a new key-pair."]
         else:
@@ -127,26 +132,26 @@ class AwsKeyMixin(object):
         prompt += ["Alternatively, press [enter] to exit"]
         key_name = ui.question(
             (os.linesep + " ").join(prompt),
-            title="Specify an EC2 SSH key-pair name to use for EC2 environment."
+            title="Specify an EC2 SSH key-pair name to use for EC2 environment.",
         )
         if not key_name:
-            raise SystemExit('Empty key_name was provided, exiting.')
+            raise SystemExit("Empty key_name was provided, exiting.")
         return key_name
 
     @classmethod
     def _get_matching_key_filename(cls, key_name):
-        """Helper to establish matching filename for the ssh key given the key name
-        """
-        return join(cls._get_key_directory(), key_name + '.pem')
+        """Helper to establish matching filename for the ssh key given the key name"""
+        return join(cls._get_key_directory(), key_name + ".pem")
 
     @classmethod
     def _get_local_keys(cls):
-        """Return dict of key_name: key_filename for ssh key files found locally
-        """
+        """Return dict of key_name: key_filename for ssh key files found locally"""
         d = cls._get_key_directory()
-        return {f[:-4]: op.join(d, f)
-                for f in os.listdir(d)
-                if f.endswith('.pem') and op.isfile(op.join(d, f))}
+        return {
+            f[:-4]: op.join(d, f)
+            for f in os.listdir(d)
+            if f.endswith(".pem") and op.isfile(op.join(d, f))
+        }
 
     @classmethod
     def _get_key_directory(cls):
@@ -154,7 +159,7 @@ class AwsKeyMixin(object):
 
         It also ensures that the directory with keys exists locally
         """
-        d = join(AppDirs('reproman', 'reproman.org').user_data_dir, 'ec2_keys')
+        d = join(AppDirs("reproman", "reproman.org").user_data_dir, "ec2_keys")
         assure_dir(d)
         return d
 
@@ -166,31 +171,38 @@ class AwsEc2(Resource, AwsKeyMixin):
     name = attrib(default=attr.NOTHING)
 
     # Configurable options for each "instance"
-    access_key_id = attrib(
-        doc="AWS access key for remote access to your Amazon subscription.")
+    access_key_id = attrib(doc="AWS access key for remote access to your Amazon subscription.")
     secret_access_key = attrib(
-        doc="AWS secret access key for remote access to your Amazon subscription")
-    instance_type = attrib(default='t2.micro',
-        doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)")  # EC2 instance type
-    security_group = attrib(default='default',
-        doc="AWS security group to assign to the EC2 instance.")  # AWS security group
-    region_name = attrib(default='us-east-1',
-        doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)")  # AWS region
+        doc="AWS secret access key for remote access to your Amazon subscription"
+    )
+    instance_type = attrib(
+        default="t2.micro", doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)"
+    )  # EC2 instance type
+    security_group = attrib(
+        default="default", doc="AWS security group to assign to the EC2 instance."
+    )  # AWS security group
+    region_name = attrib(
+        default="us-east-1",
+        doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)",
+    )  # AWS region
     key_name = attrib(
-        doc="AWS subscription name of SSH key-pair registered.  If not specified, 'name' is used.")  # Name of SSH key registered on AWS.
+        doc="AWS subscription name of SSH key-pair registered.  If not specified, 'name' is used."
+    )  # Name of SSH key registered on AWS.
     key_filename = attrib(
-        doc="Path to SSH private key file matched with AWS key name parameter.") # SSH private key filename on local machine.
-    image = attrib(default='ami-0acbd99fe8c84efbb',
-        doc="AWS image ID from which to create the running instance (Default: NITRC-CE)")  # NITRC-CE bionic for us-east-1
-    user = attrib(default='ubuntu',
-        doc="Login account to EC2 instance.")
+        doc="Path to SSH private key file matched with AWS key name parameter."
+    )  # SSH private key filename on local machine.
+    image = attrib(
+        default="ami-0acbd99fe8c84efbb",
+        doc="AWS image ID from which to create the running instance (Default: NITRC-CE)",
+    )  # NITRC-CE bionic for us-east-1
+    user = attrib(default="ubuntu", doc="Login account to EC2 instance.")
 
     # Interesting one -- should we allow for it to be specified or should
     # it just become a property?  may be base class could
     id = attrib()  # EC2 instance ID
 
     # TODO: shouldn't be hardcoded???
-    type = attrib(default='aws-ec2')  # Resource type
+    type = attrib(default="aws-ec2")  # Resource type
 
     # Current instance properties, to be set by us, not augmented by user
     status = attrib()
@@ -202,7 +214,7 @@ class AwsEc2(Resource, AwsKeyMixin):
     @property
     def ec2_name(self):
         if self.name:
-            return 'reproman-' + self.name
+            return "reproman-" + self.name
         return self.name
 
     def connect(self):
@@ -214,30 +226,31 @@ class AwsEc2(Resource, AwsKeyMixin):
         """
 
         self._ec2_resource = boto3.resource(
-            'ec2',
+            "ec2",
             aws_access_key_id=self.access_key_id,
             aws_secret_access_key=self.secret_access_key,
-            region_name=self.region_name
+            region_name=self.region_name,
         )
         instances = []
         if self.id:
             instances.append(self._ec2_resource.Instance(self.id))
         elif self.name:
             instances = self._ec2_resource.instances.filter(
-                Filters=[{
-                        'Name': 'tag:Name',
-                        'Values': [self.ec2_name]
-                    },
-                    {
-                        'Name': 'instance-state-name',
-                        'Values': ['running']
-                    }]
+                Filters=[
+                    {"Name": "tag:Name", "Values": [self.ec2_name]},
+                    {"Name": "instance-state-name", "Values": ["running"]},
+                ]
             )
             instances = list(instances)
 
         if len(instances) > 1:
-            lgr.warning("Multiple matches (%s) found for %s in %s region. We will use %s",
-                        ', '.join(map(str, instances)), self.ec2_name, self.region_name, instances[0])
+            lgr.warning(
+                "Multiple matches (%s) found for %s in %s region. We will use %s",
+                ", ".join(map(str, instances)),
+                self.ec2_name,
+                self.region_name,
+                instances[0],
+            )
 
         if instances:
             try:
@@ -245,7 +258,7 @@ class AwsEc2(Resource, AwsKeyMixin):
                 if self.id is None:
                     lgr.debug("Assigning an instance ID %s", self._ec2_instance.instance_id)
                 self.id = self._ec2_instance.instance_id
-                self.status = self._ec2_instance.state['Name']
+                self.status = self._ec2_instance.state["Name"]
             except AttributeError:
                 # TODO: WHY?
                 self.id = None
@@ -257,7 +270,7 @@ class AwsEc2(Resource, AwsKeyMixin):
     def create(self):
         """
         Create an EC2 instance.
-        
+
         There are 2 yields for the AWS create method. The first yield occurs
         immediately after the AWS service is sent the EC2 instance run command
         so that the instance details can immediately be saved to the
@@ -270,8 +283,7 @@ class AwsEc2(Resource, AwsKeyMixin):
         dict : config and state parameters to capture in the inventory file
         """
         if self.id:
-            raise ResourceError("Instance '{}' already exists in AWS subscription".format(
-                self.id))
+            raise ResourceError("Instance '{}' already exists in AWS subscription".format(self.id))
 
         instances = []
         attempt = 0
@@ -280,8 +292,10 @@ class AwsEc2(Resource, AwsKeyMixin):
             if attempt > 5:
                 # To avoid somehow inflicted infinite loop and breeding gzillions of instances
                 # Don't ask Yarik why he decided to do this ;)
-                raise RuntimeError("Safety measure: We have tried to create instance %d times and failed."
-                                   % (attempt - 1))
+                raise RuntimeError(
+                    "Safety measure: We have tried to create instance %d times and failed."
+                    % (attempt - 1)
+                )
             self._ensure_having_a_key()
 
             create_kwargs = dict(
@@ -290,30 +304,23 @@ class AwsEc2(Resource, AwsKeyMixin):
                 KeyName=self.key_name,
                 MinCount=1,
                 MaxCount=1,
-                SecurityGroups=[self.security_group]
+                SecurityGroups=[self.security_group],
             )
             try:
                 instances = self._ec2_resource.create_instances(**create_kwargs)
-                lgr.info("Started new EC2 instance(s): %s", str(instances) )
+                lgr.info("Started new EC2 instance(s): %s", str(instances))
             except ClientError as exc:
-                if re.search(
-                        "The key pair {} does not exist".format(self.key_name),
-                        str(exc)
-                ):
+                if re.search("The key pair {} does not exist".format(self.key_name), str(exc)):
                     if ui.yesno(
-                            title="No key %s found in the zone %s"
-                                  % (self.key_name, self.region_name),
-                            text="Would you like to choose another key or generate a new key?"
+                        title="No key %s found in the zone %s" % (self.key_name, self.region_name),
+                        text="Would you like to choose another key or generate a new key?",
                     ):
                         self.key_name = self._ask_key_name()
                         continue
                     else:
                         raise
-                if re.search(
-                        "parameter groupId is invalid", str(exc)
-                ):
-                    raise ValueError("Invalid AWS Security Group: '{}'".format(
-                        self.security_group))
+                if re.search("parameter groupId is invalid", str(exc)):
+                    raise ValueError("Invalid AWS Security Group: '{}'".format(self.security_group))
                 else:
                     raise  # re-raise
             break
@@ -322,8 +329,7 @@ class AwsEc2(Resource, AwsKeyMixin):
 
         # Give the instance a tag name.
         self._ec2_resource.create_tags(
-            Resources=[instances[0].id],
-            Tags=[{'Key': 'Name', 'Value': self.ec2_name}]
+            Resources=[instances[0].id], Tags=[{"Key": "Name", "Value": self.ec2_name}]
         )
 
         # Save the EC2 Instance object.
@@ -331,42 +337,36 @@ class AwsEc2(Resource, AwsKeyMixin):
         self.id = self._ec2_instance.instance_id
         for t in range(3):
             try:
-                self.status = self._ec2_instance.state['Name']
+                self.status = self._ec2_instance.state["Name"]
                 break
             except ClientError as exc:
                 if t == 2:
                     raise
-                lgr.debug('Failed to get state (%s). Will try again', exc)
+                lgr.debug("Failed to get state (%s). Will try again", exc)
                 sleep(3)
 
         # Send initial info back to be saved in inventory file.
         yield {
-            'id': self.id,
-            'status': self.status,
-            'key_name': self.key_name,
-            'key_filename': self.key_filename
+            "id": self.id,
+            "status": self.status,
+            "key_name": self.key_name,
+            "key_filename": self.key_filename,
         }
 
         lgr.info("Waiting for EC2 instance %s to start running...", self.id)
         self._ec2_instance.wait_until_running(
             Filters=[
-                {
-                    'Name': 'instance-id',
-                    'Values': [self.id]
-                },
+                {"Name": "instance-id", "Values": [self.id]},
             ]
         )
         lgr.info("EC2 instance %s is running!", self.id)
 
-        lgr.info("Waiting for EC2 instance %s to complete initialization...",
-                 self.id)
-        waiter = self._ec2_instance.meta.client.get_waiter('instance_status_ok')
+        lgr.info("Waiting for EC2 instance %s to complete initialization...", self.id)
+        waiter = self._ec2_instance.meta.client.get_waiter("instance_status_ok")
         waiter.wait(InstanceIds=[self.id])
         lgr.info("EC2 instance %s initialized!", self.id)
-        self.status = self._ec2_instance.state['Name']
-        yield {
-            'status': self.status
-        }
+        self.status = self._ec2_instance.state["Name"]
+        yield {"status": self.status}
 
     def delete(self):
         """
@@ -394,16 +394,17 @@ class AwsEc2(Resource, AwsKeyMixin):
             self.connect()
 
         self._ensure_having_a_key()
-        lgr.info("Establishing session. You can also  ssh -i %s %s@%s",
-                 self.key_filename,
-                 self.user,
-                 self._ec2_instance.public_ip_address,
-                 )
+        lgr.info(
+            "Establishing session. You can also  ssh -i %s %s@%s",
+            self.key_filename,
+            self.user,
+            self._ec2_instance.public_ip_address,
+        )
         ssh = SSH(
             self.name,
             host=self._ec2_instance.public_ip_address,
             user=self.user,
-            key_filename=self.key_filename
+            key_filename=self.key_filename,
         )
 
         return ssh.get_session(pty=pty, shared=shared)

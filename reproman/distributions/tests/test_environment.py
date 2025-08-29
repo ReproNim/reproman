@@ -12,9 +12,10 @@ from reproman.formats.reproman import RepromanProvenance
 from reproman.distributions.debian import DebianDistribution
 from reproman.distributions.conda import CondaDistribution
 
-yaml_dir = opj(dirname(__file__), pardir, pardir, 'interface', 'tests', 'files')
-multi_debian_yaml = opj(yaml_dir, 'multi_debian.yaml')
-diff_1_yaml = opj(yaml_dir, 'diff_1.yaml')
+yaml_dir = opj(dirname(__file__), pardir, pardir, "interface", "tests", "files")
+multi_debian_yaml = opj(yaml_dir, "multi_debian.yaml")
+diff_1_yaml = opj(yaml_dir, "diff_1.yaml")
+
 
 def test_get_distributions():
     env = RepromanProvenance(multi_debian_yaml).get_environment()

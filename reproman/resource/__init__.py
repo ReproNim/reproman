@@ -5,11 +5,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Facility for managing compute resources.
+"""Facility for managing compute resources."""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from .base import Resource, ResourceManager
 

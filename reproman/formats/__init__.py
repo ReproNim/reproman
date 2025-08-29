@@ -5,11 +5,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Facility for collecting and managing provenance information needed to replicate environments.
+"""Facility for collecting and managing provenance information needed to replicate environments."""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 # Allow the base Provenance class to be available directly from the package.
 from .base import Provenance

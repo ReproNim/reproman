@@ -35,10 +35,9 @@ from reproman.tests.utils import (
 def test_dpkg_manager_identify_packages():
     files = [COMMON_SYSTEM_PATH]
     tracer = DebTracer()
-    (packages, unknown_files) = \
-        tracer.identify_packages_from_files(files)
+    (packages, unknown_files) = tracer.identify_packages_from_files(files)
     # Make sure that our common path was identified
-    assert (not unknown_files), "%s should be identified" % COMMON_SYSTEM_PATH
+    assert not unknown_files, "%s should be identified" % COMMON_SYSTEM_PATH
     assert len(packages) == 1
     pkg = packages[0]
     assert pkg.name == COMMON_SYSTEM_PACKAGE
@@ -52,8 +51,7 @@ def test_dpkg_manager_identify_packages():
     for o in distribution.apt_sources:
         if o.site:
             # Loop over mandatory attributes
-            for a in ["name", "component", "origin",
-                      "label", "site", "archive_uri"]:
+            for a in ["name", "component", "origin", "label", "site", "archive_uri"]:
                 assert getattr(o, a), "A non-local origin needs a " + a
             # Note: date and architecture are not mandatory (and not found on
             # travis)
@@ -75,8 +73,7 @@ def test_check_bin_packages():
     assert len(non_local_origins) > 0, "A non-local origin must be found"
     for o in non_local_origins:
         # Loop over mandatory attributes
-        for a in ["name", "component", "origin",
-                  "label", "site", "archive_uri"]:
+        for a in ["name", "component", "origin", "label", "site", "archive_uri"]:
             try:
                 assert getattr(o, a), "A non-local origin needs a " + a
             except AssertionError:
@@ -86,19 +83,24 @@ def test_check_bin_packages():
                 # APTSource(name='apt_obs://build.opensuse.org/devel:kubic:...',
                 # component='', archive=None, architecture=None,
                 # codename='xUbuntu_18.04', ...)
-                if getattr(o, "label") == "devel:kubic:libcontainers:stable" \
-                   and a == "component" and "GITHUB_WORKFLOW" in os.environ:
+                if (
+                    getattr(o, "label") == "devel:kubic:libcontainers:stable"
+                    and a == "component"
+                    and "GITHUB_WORKFLOW" in os.environ
+                ):
                     continue
                 raise
+
+
 # Allow bin files to be not associated with a specific package
 #    assert len(unknown_files) == 0, "Files not found in packages: " + \
 #                                    str(unknown_files)
 
 
 def list_all_files(dir):
-    files = [join(dir, f) for f in os.listdir(dir)
-             if (isfile(join(dir, f)) and
-                 not islink(join(dir, f)))]
+    files = [
+        join(dir, f) for f in os.listdir(dir) if (isfile(join(dir, f)) and not islink(join(dir, f)))
+    ]
     return files
 
 
@@ -138,12 +140,13 @@ def test_trace_nonexisting_file():
 
 @mark.skipif_no_apt_cache
 def test_utf8_file():
-    files = [u"/usr/share/ca-certificates/mozilla/"
-             u"TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
+    files = [
+        "/usr/share/ca-certificates/mozilla/"
+        "TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"
+    ]
     manager = DebTracer()
     # Simple sanity check that the pipeline works with utf-8
-    (packages, unknown_files) = \
-        manager.identify_packages_from_files(files)
+    (packages, unknown_files) = manager.identify_packages_from_files(files)
     packages = manager.get_details_for_packages(packages)
     # If the file exists, it should be in ca-certificates
     if os.path.isfile(files[0]):
@@ -155,18 +158,22 @@ def test_utf8_file():
 def test_get_packagefields_for_files():
     manager = DebTracer()
     # TODO: mock! and bring back afni and fail2ban
-    files = ['/bin/sh',  # the tricky one with alternatives etc, on my system - provided by dash
-             '/lib/i386-linux-gnu/libz.so.1.2.8', '/lib/x86_64-linux-gnu/libz.so.1.2.8',  # multiarch
-             '/usr/lib/afni/bin/afni',  # from contrib
-             '/usr/bin/fail2ban-server', '/usr/bin/fail2ban-server', # arch all and multiple
-             '/bogus'
-             ]
+    files = [
+        "/bin/sh",  # the tricky one with alternatives etc, on my system - provided by dash
+        "/lib/i386-linux-gnu/libz.so.1.2.8",
+        "/lib/x86_64-linux-gnu/libz.so.1.2.8",  # multiarch
+        "/usr/lib/afni/bin/afni",  # from contrib
+        "/usr/bin/fail2ban-server",
+        "/usr/bin/fail2ban-server",  # arch all and multiple
+        "/bogus",
+    ]
 
     def exec_cmd_batch_mock(session, cmd, subfiles, exc_classes):
         assert subfiles == files  # we get all of the passed in
-        assert cmd == ['dpkg-query', '-S']
+        assert cmd == ["dpkg-query", "-S"]
 
-        yield ("""\
+        yield (
+            """\
 diversion by dash from: /bin/sh
 diversion by dash to: /bin/sh.distrib
 dash: /bin/sh
@@ -175,17 +182,20 @@ zlib1g:amd64: /lib/x86_64-linux-gnu/libz.so.1.2.8
 afni: /usr/lib/afni/bin/afni
 fail2ban: /usr/bin/fail2ban-server
 fail2ban: /usr/bin/fail2ban-server
-""", None, None)
-    with mock.patch('reproman.distributions.debian.execute_command_batch',
-                    exec_cmd_batch_mock):
+""",
+            None,
+            None,
+        )
+
+    with mock.patch("reproman.distributions.debian.execute_command_batch", exec_cmd_batch_mock):
         out = manager._get_packagefields_for_files(files)
 
     assert out == {
-        '/lib/i386-linux-gnu/libz.so.1.2.8': {'name': u'zlib1g', 'architecture': u'i386'},
-        '/lib/x86_64-linux-gnu/libz.so.1.2.8': {'name': u'zlib1g', 'architecture': u'amd64'},
-        '/usr/bin/fail2ban-server': {'name': u'fail2ban'},
-        '/usr/lib/afni/bin/afni': {'name': u'afni'},
-        '/bin/sh': {'name': u'dash'}
+        "/lib/i386-linux-gnu/libz.so.1.2.8": {"name": "zlib1g", "architecture": "i386"},
+        "/lib/x86_64-linux-gnu/libz.so.1.2.8": {"name": "zlib1g", "architecture": "amd64"},
+        "/usr/bin/fail2ban-server": {"name": "fail2ban"},
+        "/usr/lib/afni/bin/afni": {"name": "afni"},
+        "/bin/sh": {"name": "dash"},
     }
 
 
@@ -193,65 +203,56 @@ def test_parse_dpkgquery_line():
     parse = DebTracer()._parse_dpkgquery_line
 
     mock_values = {
-        "unique": {"name": "pkg",
-                   "path": "/path/to/file",
-                   "pkgs_rest": None},
-        "multi_dir": {"name": "pkg",
-                      "path": os.getcwd(),
-                      "pkgs_rest": ", more, packages"},
-        "multi_file": {"name": "pkg",
-                       "path": __file__,
-                       "pkgs_rest": ", more, packages"}
+        "unique": {"name": "pkg", "path": "/path/to/file", "pkgs_rest": None},
+        "multi_dir": {"name": "pkg", "path": os.getcwd(), "pkgs_rest": ", more, packages"},
+        "multi_file": {"name": "pkg", "path": __file__, "pkgs_rest": ", more, packages"},
     }
 
-    with mock.patch("reproman.distributions.debian.parse_dpkgquery_line",
-                    mock_values.get):
-        assert parse("unique") == {"name": "pkg",
-                                   "path": "/path/to/file"}
+    with mock.patch("reproman.distributions.debian.parse_dpkgquery_line", mock_values.get):
+        assert parse("unique") == {"name": "pkg", "path": "/path/to/file"}
         assert parse("multi_dir") is None
         with swallow_logs(new_level=logging.WARNING) as log:
-            assert parse("multi_file") == {"name": "pkg",
-                                           "path": __file__}
+            assert parse("multi_file") == {"name": "pkg", "path": __file__}
             assert any("multiple packages " in ln for ln in log.lines)
 
 
 @pytest.fixture
 def setup_packages():
     """set up the package comparison tests"""
-    p1 = DEBPackage(name='p1')
-    p1v10 = DEBPackage(name='p1', version='1.0')
-    p1v11 = DEBPackage(name='p1', version='1.1')
-    p1ai = DEBPackage(name='p1', architecture='i386')
-    p1aa = DEBPackage(name='p1', architecture='alpha')
-    p1v11ai = DEBPackage(name='p1', version='1.1', architecture='i386')
-    p2 = DEBPackage(name='p2')
+    p1 = DEBPackage(name="p1")
+    p1v10 = DEBPackage(name="p1", version="1.0")
+    p1v11 = DEBPackage(name="p1", version="1.1")
+    p1ai = DEBPackage(name="p1", architecture="i386")
+    p1aa = DEBPackage(name="p1", architecture="alpha")
+    p1v11ai = DEBPackage(name="p1", version="1.1", architecture="i386")
+    p2 = DEBPackage(name="p2")
     return (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2)
 
 
 def test_package_satisfies(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert p1.compare(p1, mode='satisfied_by')
-    assert p1v10.compare(p1v10, mode='satisfied_by')
-    assert not p1v10.compare(p1, mode='satisfied_by')
-    assert p1.compare(p1v10, mode='satisfied_by')
-    assert not p1v11.compare(p1v10, mode='satisfied_by')
-    assert not p2.compare(p1, mode='satisfied_by')
-    assert not p2.compare(p1v10, mode='satisfied_by')
-    assert not p1v10.compare(p2, mode='satisfied_by')
-    assert not p1aa.compare(p1v10, mode='satisfied_by')
-    assert p1.compare(p1aa, mode='satisfied_by')
-    assert not p1v10.compare(p1aa, mode='satisfied_by')
-    assert not p1ai.compare(p1aa, mode='satisfied_by')
-    assert not p1v11ai.compare(p1v11, mode='satisfied_by')
-    assert p1v11.compare(p1v11ai, mode='satisfied_by')
+    assert p1.compare(p1, mode="satisfied_by")
+    assert p1v10.compare(p1v10, mode="satisfied_by")
+    assert not p1v10.compare(p1, mode="satisfied_by")
+    assert p1.compare(p1v10, mode="satisfied_by")
+    assert not p1v11.compare(p1v10, mode="satisfied_by")
+    assert not p2.compare(p1, mode="satisfied_by")
+    assert not p2.compare(p1v10, mode="satisfied_by")
+    assert not p1v10.compare(p2, mode="satisfied_by")
+    assert not p1aa.compare(p1v10, mode="satisfied_by")
+    assert p1.compare(p1aa, mode="satisfied_by")
+    assert not p1v10.compare(p1aa, mode="satisfied_by")
+    assert not p1ai.compare(p1aa, mode="satisfied_by")
+    assert not p1v11ai.compare(p1v11, mode="satisfied_by")
+    assert p1v11.compare(p1v11ai, mode="satisfied_by")
 
 
 @pytest.fixture
 def setup_distributions(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    d1 = DebianDistribution(name='debian 1')
+    d1 = DebianDistribution(name="debian 1")
     d1.packages = [p1]
-    d2 = DebianDistribution(name='debian 2')
+    d2 = DebianDistribution(name="debian 2")
     d2.packages = [p1v11]
     return (d1, d2)
 
@@ -259,44 +260,44 @@ def setup_distributions(setup_packages):
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
     (d1, d2) = setup_distributions
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert p1.compare(d1, mode='satisfied_by')
-    assert not p1v10.compare(d1, mode='satisfied_by')
-    assert p1.compare(d2, mode='satisfied_by')
-    assert not p1v10.compare(d2, mode='satisfied_by')
-    assert p1v11.compare(d2, mode='satisfied_by')
+    assert p1.compare(d1, mode="satisfied_by")
+    assert not p1v10.compare(d1, mode="satisfied_by")
+    assert p1.compare(d2, mode="satisfied_by")
+    assert not p1v10.compare(d2, mode="satisfied_by")
+    assert p1v11.compare(d2, mode="satisfied_by")
 
 
 def test_distribution_statisfies(setup_distributions):
     (d1, d2) = setup_distributions
-    assert not d2.compare(d1, mode='satisfied_by')
-    assert d1.compare(d2, mode='satisfied_by')
+    assert not d2.compare(d1, mode="satisfied_by")
+    assert d1.compare(d2, mode="satisfied_by")
 
 
 def test_distribution_sub(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    d1 = DebianDistribution(name='debian 1')
+    d1 = DebianDistribution(name="debian 1")
     d1.packages = [p1, p2]
-    d2 = DebianDistribution(name='debian 2')
+    d2 = DebianDistribution(name="debian 2")
     d2.packages = [p1v11, p2]
-    assert d1-d2 == []
-    result = d2-d1
+    assert d1 - d2 == []
+    result = d2 - d1
     assert len(result) == 1
     assert result[0] == p1v11
 
 
 def test_package_is_identical_to(setup_packages):
     (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
-    assert p1.compare(p1, mode='identical_to')
-    assert p1v10.compare(p1v10, mode='identical_to')
-    assert p1v11.compare(p1v11, mode='identical_to')
-    assert p1ai.compare(p1ai, mode='identical_to')
-    assert p1aa.compare(p1aa, mode='identical_to')
-    assert p1v11ai.compare(p1v11ai, mode='identical_to')
-    assert p2.compare(p2, mode='identical_to')
-    assert not p1.compare(p2, mode='identical_to')
-    assert not p1.compare(p1v10, mode='identical_to')
-    assert not p1v10.compare(p1v11, mode='identical_to')
-    assert not p1.compare(p1ai, mode='identical_to')
-    assert not p1.compare(p1aa, mode='identical_to')
-    assert not p1ai.compare(p1aa, mode='identical_to')
-    assert not p1.compare(p1v11ai, mode='identical_to')
+    assert p1.compare(p1, mode="identical_to")
+    assert p1v10.compare(p1v10, mode="identical_to")
+    assert p1v11.compare(p1v11, mode="identical_to")
+    assert p1ai.compare(p1ai, mode="identical_to")
+    assert p1aa.compare(p1aa, mode="identical_to")
+    assert p1v11ai.compare(p1v11ai, mode="identical_to")
+    assert p2.compare(p2, mode="identical_to")
+    assert not p1.compare(p2, mode="identical_to")
+    assert not p1.compare(p1v10, mode="identical_to")
+    assert not p1v10.compare(p1v11, mode="identical_to")
+    assert not p1.compare(p1ai, mode="identical_to")
+    assert not p1.compare(p1aa, mode="identical_to")
+    assert not p1ai.compare(p1aa, mode="identical_to")
+    assert not p1.compare(p1v11ai, mode="identical_to")

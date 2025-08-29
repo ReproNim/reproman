@@ -24,25 +24,24 @@ from .test_session import check_session_passing_envvars
 
 def test_shell_class(resman):
 
-    with patch.object(Runner, 'run', return_value='installed package') as runner, \
-            swallow_logs(new_level=logging.DEBUG) as log:
+    with (
+        patch.object(Runner, "run", return_value="installed package") as runner,
+        swallow_logs(new_level=logging.DEBUG) as log,
+    ):
 
         # Test running some install commands.
-        config = {
-            'name': 'my-shell',
-            'type': 'shell'
-        }
+        config = {"name": "my-shell", "type": "shell"}
         shell = resman.factory(config)
 
-        command = ['apt-get', 'install', 'bc']
+        command = ["apt-get", "install", "bc"]
         shell.add_command(command)
-        command = ['apt-get', 'install', 'xeyes']
+        command = ["apt-get", "install", "xeyes"]
         shell.add_command(command)
         shell.execute_command_buffer()
         common_kwargs = dict(cwd=None, expect_fail=True, expect_stderr=True)
         calls = [
-            call(['apt-get', 'install', 'xeyes'], **common_kwargs),
-            call(['apt-get', 'install', 'bc'], **common_kwargs),
+            call(["apt-get", "install", "xeyes"], **common_kwargs),
+            call(["apt-get", "install", "bc"], **common_kwargs),
         ]
         runner.assert_has_calls(calls, any_order=True)
         assert_in("Running command '['apt-get', 'install', 'bc']'", log.lines)
@@ -54,7 +53,8 @@ def test_source_file(resource_test_dir):
     # Create a temporary test file
     temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
     with temp_file as f:
-        f.write("""
+        f.write(
+            """
 echo "Enabling special environment"
 echo "We could even spit out an stderr output">&2
 export EXPORTED_VAR="
@@ -62,21 +62,24 @@ multiline
 "
 export PATH=/custom:$PATH
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-    """.encode('utf8'))
+    """.encode(
+                "utf8"
+            )
+        )
         f.flush()
         script = temp_file.name
         session = ShellSession()
         assert session.get_envvars() == {}
         new_env_diff = session.source_script(script, diff=True)
-        assert 'EXPORTED_VAR' in new_env_diff
-        assert new_env_diff['PATH'].startswith('/custom:')
-        assert new_env_diff['EXPORTED_VAR'] == "\nmultiline\n"
+        assert "EXPORTED_VAR" in new_env_diff
+        assert new_env_diff["PATH"].startswith("/custom:")
+        assert new_env_diff["EXPORTED_VAR"] == "\nmultiline\n"
 
 
 def test_source_file_crash(resource_test_dir):
     temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
     with temp_file as f:
-        f.write('exit 1'.encode('utf8'))
+        f.write("exit 1".encode("utf8"))
         f.flush()
         script = temp_file.name
         session = ShellSession()
@@ -102,23 +105,26 @@ def test_exists():
 def test_source_file_param(resource_test_dir):
     temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
     with temp_file as f:
-        f.write("""
+        f.write(
+            """
 if ! [ "$1" = "test" ]; then
    exit 1
 fi
 export EXPORTED_VAR=${1}1
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-    """.encode('utf8'))
+    """.encode(
+                "utf8"
+            )
+        )
         f.flush()
         script = temp_file.name
         session = ShellSession()
         assert session.get_envvars() == {}
         new_env_diff = session.source_script([script, "test"])
-        assert 'EXPORTED_VAR' in new_env_diff
-        assert new_env_diff['EXPORTED_VAR'] == 'test1'
+        assert "EXPORTED_VAR" in new_env_diff
+        assert new_env_diff["EXPORTED_VAR"] == "test1"
 
-        new_env_diff = session.source_script([script, "test"],
-                                         shell="/bin/bash")
+        new_env_diff = session.source_script([script, "test"], shell="/bin/bash")
         assert new_env_diff == {}
 
 
@@ -128,14 +134,11 @@ def test_session_passing_envvars():
 
 def test_shell_resource(resman):
 
-    config = {
-        'name': 'test-ssh-resource',
-        'type': 'shell'
-    }
+    config = {"name": "test-ssh-resource", "type": "shell"}
     resource = resman.factory(config)
 
     status = merge_dicts(resource.create())
-    assert re.match(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$', status['id']) is not None
+    assert re.match(r"\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$", status["id"]) is not None
 
     assert type(resource.connect()) == Shell
     assert resource.delete() is None

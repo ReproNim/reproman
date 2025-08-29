@@ -21,9 +21,15 @@ from reproman.tests.utils import create_pymodule
 from reproman.tests.utils import assert_is_subset_recur
 from reproman.tests.skip import mark
 
-from reproman.distributions.conda import CondaTracer, CondaDistribution, \
-    CondaEnvironment, CondaPackage, CondaChannel, \
-    get_conda_platform_from_python, get_miniconda_url
+from reproman.distributions.conda import (
+    CondaTracer,
+    CondaDistribution,
+    CondaEnvironment,
+    CondaPackage,
+    CondaChannel,
+    get_conda_platform_from_python,
+    get_miniconda_url,
+)
 
 
 def test_get_conda_platform_from_python():
@@ -32,23 +38,35 @@ def test_get_conda_platform_from_python():
 
 
 def test_get_miniconda_url():
-    assert get_miniconda_url("linux-32b", "3.7", "4.12.0") == \
-        "https://repo.anaconda.com/miniconda/Miniconda3-py37_4.12.0-Linux-x86.sh"
+    assert (
+        get_miniconda_url("linux-32b", "3.7", "4.12.0")
+        == "https://repo.anaconda.com/miniconda/Miniconda3-py37_4.12.0-Linux-x86.sh"
+    )
 
-    assert get_miniconda_url("osx-32b", "3.8", "4.12.0") == \
-        "https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-MacOSX-x86.sh"
+    assert (
+        get_miniconda_url("osx-32b", "3.8", "4.12.0")
+        == "https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-MacOSX-x86.sh"
+    )
 
-    assert get_miniconda_url("osx-64", "3.9", "22.11.1-1") == \
-        "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-MacOSX-x86_64.sh"
+    assert (
+        get_miniconda_url("osx-64", "3.9", "22.11.1-1")
+        == "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-MacOSX-x86_64.sh"
+    )
 
-    assert get_miniconda_url("linux-64", "3.9", "22.11.1-1") == \
-        "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-Linux-x86_64.sh"
+    assert (
+        get_miniconda_url("linux-64", "3.9", "22.11.1-1")
+        == "https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-Linux-x86_64.sh"
+    )
 
-    assert get_miniconda_url("linux-32", "3.10.1", "22.11.1-1") == \
-        "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86.sh"
+    assert (
+        get_miniconda_url("linux-32", "3.10.1", "22.11.1-1")
+        == "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86.sh"
+    )
 
-    assert get_miniconda_url("linux-64", "3.10.1", "22.11.1-1") == \
-        "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86_64.sh"
+    assert (
+        get_miniconda_url("linux-64", "3.10.1", "22.11.1-1")
+        == "https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86_64.sh"
+    )
 
 
 def test_get_simple_python_version():
@@ -81,7 +99,8 @@ def test_create_conda_export():
                 md5="f4e0d30b3caf631be7973cba1cf6f601",
                 size="874292",
                 url="https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
-                files=["bin/xz"]),
+                files=["bin/xz"],
+            ),
             CondaPackage(
                 name="rpaths",
                 installer="pip",
@@ -91,17 +110,19 @@ def test_create_conda_export():
                 md5=None,
                 size=None,
                 url=None,
-                files=["lib/python3.7/site-packages/rpaths.py"])],
+                files=["lib/python3.7/site-packages/rpaths.py"],
+            ),
+        ],
         channels=[
-            CondaChannel(
-                name="conda-forge",
-                url="https://conda.anaconda.org/conda-forge/linux-64")])
-    out = {"name": "mytest",
-           "channels": ["conda-forge"],
-           "dependencies": ["xz=5.2.3=0",
-                            {"pip": ["rpaths==0.13"]}],
-           "prefix": "/home/butch/.cache/reproman/conda_test/miniconda/envs/mytest"
-           }
+            CondaChannel(name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64")
+        ],
+    )
+    out = {
+        "name": "mytest",
+        "channels": ["conda-forge"],
+        "dependencies": ["xz=5.2.3=0", {"pip": ["rpaths==0.13"]}],
+        "prefix": "/home/butch/.cache/reproman/conda_test/miniconda/envs/mytest",
+    }
     export = yaml.safe_load(CondaDistribution.create_conda_export(env))
     assert export == out
 
@@ -132,7 +153,8 @@ def test_conda_init_install_and_detect(tmpdir):
                         md5=None,
                         size=None,
                         url=None,
-                        files=None),
+                        files=None,
+                    ),
                     CondaPackage(
                         name="pip",
                         installer=None,
@@ -142,7 +164,8 @@ def test_conda_init_install_and_detect(tmpdir):
                         md5=None,
                         size=None,
                         url=None,
-                        files=None),
+                        files=None,
+                    ),
                     CondaPackage(
                         name="pytest",
                         installer="pip",
@@ -152,14 +175,18 @@ def test_conda_init_install_and_detect(tmpdir):
                         md5=None,
                         size=None,
                         url=None,
-                        files=None)],
+                        files=None,
+                    ),
+                ],
                 channels=[
                     CondaChannel(
-                        name="conda-forge",
-                        url="https://conda.anaconda.org/conda-forge/linux-64"),
+                        name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64"
+                    ),
                     CondaChannel(
-                        name="defaults",
-                        url="https://repo.continuum.io/pkgs/main/linux-64")]),
+                        name="defaults", url="https://repo.continuum.io/pkgs/main/linux-64"
+                    ),
+                ],
+            ),
             CondaEnvironment(
                 name="mytest",
                 path=os.path.join(test_dir, "envs/mytest"),
@@ -173,7 +200,8 @@ def test_conda_init_install_and_detect(tmpdir):
                         md5=None,
                         size=None,
                         url=None,
-                        files=None),
+                        files=None,
+                    ),
                     CondaPackage(
                         name="xz",
                         installer=None,
@@ -183,7 +211,10 @@ def test_conda_init_install_and_detect(tmpdir):
                         md5="f4e0d30b3caf631be7973cba1cf6f601",
                         size="874292",
                         url="https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.3-0.tar.bz2",
-                        files=["bin/xz", ]),
+                        files=[
+                            "bin/xz",
+                        ],
+                    ),
                     CondaPackage(
                         name="rpaths",
                         installer="pip",
@@ -193,32 +224,36 @@ def test_conda_init_install_and_detect(tmpdir):
                         md5=None,
                         size=None,
                         url=None,
-                        files=["lib/python3.8/site-packages/rpaths.py"])],
+                        files=["lib/python3.8/site-packages/rpaths.py"],
+                    ),
+                ],
                 channels=[
                     CondaChannel(
-                        name="conda-forge",
-                        url="https://conda.anaconda.org/conda-forge/linux-64")])])
+                        name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64"
+                    )
+                ],
+            ),
+        ],
+    )
     # First install the environment in the temporary directory.
     dist.initiate(None)
     dist.install_packages()
     # Add an empty environment to test detection of them
     if not os.path.exists(os.path.join(test_dir, "envs/empty")):
-        call("cd " + test_dir + "; " +
-             "./bin/conda create -y -n empty; ",
-             shell=True)
+        call("cd " + test_dir + "; " + "./bin/conda create -y -n empty; ", shell=True)
 
     # Test that editable packages are detected
     pymod_dir = os.path.join(test_dir, "minimal_pymodule")
     if not os.path.exists(pymod_dir):
         create_pymodule(pymod_dir)
-        call([os.path.join(test_dir, "envs/mytest/bin/pip"),
-              "install", "-e", pymod_dir])
+        call([os.path.join(test_dir, "envs/mytest/bin/pip"), "install", "-e", pymod_dir])
 
     # Now pick some files we know are in the conda install and detect them
-    files = [os.path.join(test_dir, "bin/pip"),
-             os.path.join(test_dir, "envs/mytest/bin/xz"),
-             os.path.join(test_dir, "envs/empty/conda-meta/history"),
-             ]
+    files = [
+        os.path.join(test_dir, "bin/pip"),
+        os.path.join(test_dir, "envs/mytest/bin/xz"),
+        os.path.join(test_dir, "envs/empty/conda-meta/history"),
+    ]
     tracer = CondaTracer()
     dists = list(tracer.identify_distributions(files))
 
@@ -229,27 +264,25 @@ def test_conda_init_install_and_detect(tmpdir):
     # RepromanProvenance.write(sys.stdout, distributions)
 
     assert distributions.platform.startswith(
-        get_conda_platform_from_python(sys.platform)), \
-        "A conda platform is expected."
+        get_conda_platform_from_python(sys.platform)
+    ), "A conda platform is expected."
 
-    assert len(distributions.environments) == 3, \
-        "Three conda environments are expected."
+    assert len(distributions.environments) == 3, "Three conda environments are expected."
 
-    out = {'environments': [{'name': 'root',
-                             'packages': [{'name': 'pip'}]},
-                            {'name': 'mytest',
-                             'packages': [{'name': 'xz'},
-                                          {'name': 'pip'},
-                                          {'name': 'rpaths',
-                                           'installer': 'pip',
-                                           'editable': False},
-                                          {'name': 'nmtest',
-                                           'files': [],
-                                           'installer': 'pip',
-                                           'editable': True}]
-                             }
-                            ]
-           }
+    out = {
+        "environments": [
+            {"name": "root", "packages": [{"name": "pip"}]},
+            {
+                "name": "mytest",
+                "packages": [
+                    {"name": "xz"},
+                    {"name": "pip"},
+                    {"name": "rpaths", "installer": "pip", "editable": False},
+                    {"name": "nmtest", "files": [], "installer": "pip", "editable": True},
+                ],
+            },
+        ]
+    }
     assert_is_subset_recur(out, attr.asdict(distributions), [dict, list])
 
     # conda packages are not repeated as "pip" packages.
@@ -271,8 +304,7 @@ def test_get_conda_env_export_exceptions():
 
     # Mock to throw unrecognized argument exception
     def raise_unrec_args(_):
-        raise Exception("conda-env: error: unrecognized arguments: -p"
-                        "/home/butch/old_conda/")
+        raise Exception("conda-env: error: unrecognized arguments: -p" "/home/butch/old_conda/")
 
     # Mock to raise some other exception
     def raise_other(_):
@@ -281,19 +313,23 @@ def test_get_conda_env_export_exceptions():
     from reproman.distributions.conda import lgr
 
     tracer = CondaTracer()
-    with mock.patch.object(tracer._session, "execute_command",
-                           raise_unrec_args), \
-         mock.patch.object(lgr, "warning", log_warning):
+    with (
+        mock.patch.object(tracer._session, "execute_command", raise_unrec_args),
+        mock.patch.object(lgr, "warning", log_warning),
+    ):
         tracer._get_conda_env_export("", "/conda")
         assert "Please use Conda 4.3.19" in log_warning.val
 
-    with mock.patch.object(tracer._session, "execute_command",
-                           raise_other), \
-        mock.patch.object(lgr, "warning", log_warning):
+    with (
+        mock.patch.object(tracer._session, "execute_command", raise_other),
+        mock.patch.object(lgr, "warning", log_warning),
+    ):
         tracer._get_conda_env_export("", "/conda")
         assert "unknown" in log_warning.val
 
-conda_yaml = os.path.join(os.path.dirname(__file__), 'files', 'conda.yaml')
+
+conda_yaml = os.path.join(os.path.dirname(__file__), "files", "conda.yaml")
+
 
 def test_conda_packages():
     env = RepromanProvenance(conda_yaml).get_environment()

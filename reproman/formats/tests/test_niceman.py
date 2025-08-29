@@ -37,7 +37,7 @@ def test_write():
     env = file_format.get_environment()
     # just a basic test that we loaded stuff correctly
     assert len(env.distributions) == 2
-    assert env.distributions[0].name == 'conda'
+    assert env.distributions[0].name == "conda"
     assert len(env.distributions[1].apt_sources) == 3
     # and save
     RepromanProvenance.write(output, env)
@@ -66,7 +66,9 @@ def test_spec_round_trip():
                         label="Debian",
                         site="ftp.us.debian.org",
                         archive_uri="http://ftp.us.debian.org/debian",
-                        date="2018-03-10 10:21:19+00:00")],
+                        date="2018-03-10 10:21:19+00:00",
+                    )
+                ],
                 packages=[
                     DEBPackage(name="debpackage"),
                     DEBPackage(
@@ -80,12 +82,16 @@ def test_spec_round_trip():
                         md5="3b9aaa83b5253895b8e13509659662e4",
                         sha1=None,
                         sha256="aaa",
-                        versions={"2.24-11+deb9u1": ["apt_Debian_stable_foo"],
-                                  "2.24-11+deb9u3": ["apt_Debian_stable_bar",
-                                                     "apt__now__0"]},
+                        versions={
+                            "2.24-11+deb9u1": ["apt_Debian_stable_foo"],
+                            "2.24-11+deb9u3": ["apt_Debian_stable_bar", "apt__now__0"],
+                        },
                         install_date="2018-03-12 10:55:13+00:00",
-                        files=["/usr/bin/zdump"])],
-                version="9.4"),
+                        files=["/usr/bin/zdump"],
+                    ),
+                ],
+                version="9.4",
+            ),
             CondaDistribution(
                 name="conda",
                 path="/path/to/miniconda3",
@@ -103,22 +109,20 @@ def test_spec_round_trip():
                                 build="py36he42e2e1_0",
                                 name="setuptools",
                                 md5="cb1383539629db998105faf7e91e2bc7",
-                                url="https://somewhere")],
-                        channels=[
-                            CondaChannel(
-                                name="defaults",
-                                url="https://somewhere")]),
+                                url="https://somewhere",
+                            ),
+                        ],
+                        channels=[CondaChannel(name="defaults", url="https://somewhere")],
+                    ),
                     CondaEnvironment(
                         name="other",
                         path="/path/to/miniconda3",
-                        packages=[
-                            CondaPackage(name="condapkg2")])]),
-            GitDistribution(
-                name="git",
-                packages=[GitRepo(path="/path/to/repo")]),
-            SVNDistribution(
-                name="svn",
-                packages=[SVNRepo(path="/path/to/repo")]),
+                        packages=[CondaPackage(name="condapkg2")],
+                    ),
+                ],
+            ),
+            GitDistribution(name="git", packages=[GitRepo(path="/path/to/repo")]),
+            SVNDistribution(name="svn", packages=[SVNRepo(path="/path/to/repo")]),
             VenvDistribution(
                 name="venv0",
                 path="/usr/bin/virtualenv",
@@ -132,8 +136,15 @@ def test_spec_round_trip():
                                 version="3.12",
                                 name="PyYAML",
                                 location="/path/to/venv/site-packages",
-                                local=True)])]),
-            VenvDistribution(name="venv1")])
+                                local=True,
+                            )
+                        ],
+                    )
+                ],
+            ),
+            VenvDistribution(name="venv1"),
+        ]
+    )
 
     output = io.StringIO()
     RepromanProvenance.write(output, spec)

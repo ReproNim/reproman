@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Utilities for working with pip.
-"""
+"""Utilities for working with pip."""
 import itertools
 import json
 import os
@@ -19,23 +18,23 @@ def parse_pip_show(out):
     pip_info = {}
     list_tag = None
     for line in out.splitlines():
-        if line.startswith("#"):   # Skip if comment
+        if line.startswith("#"):  # Skip if comment
             continue
         if line.startswith("  "):  # List item
             item = line[2:].strip()
             if list_tag and item:  # Add the item to the existing list
                 pip_info[list_tag].append(item)
             continue
-        if ":" in line:            # List tag or tag/value
+        if ":" in line:  # List tag or tag/value
             split_line = line.split(":", 1)
             tag = split_line[0].strip()
             value = None
             if len(split_line) > 1:  # Parse the value if there
                 value = split_line[1].strip()
-            if value:                # We have both a tag and a value
+            if value:  # We have both a tag and a value
                 pip_info[tag] = value
-                list_tag = None      # A new tag stops the previous list
-            else:                    # We have just a list_tag so start it
+                list_tag = None  # A new tag stops the previous list
+            else:  # We have just a list_tag so start it
                 list_tag = tag
                 pip_info[list_tag] = []
 
@@ -76,13 +75,10 @@ def pip_show(session, which_pip, pkgs):
     show_entries = _pip_batched_show(session, which_pip, pkgs)
 
     for pkg, info in show_entries:
-        details = {"name": info["Name"],
-                   "version": info["Version"],
-                   "location": info["Location"]}
+        details = {"name": info["Name"], "version": info["Version"], "location": info["Location"]}
         packages[pkg] = details
         for path in info["Files"]:
-            full_path = os.path.normpath(
-                os.path.join(info["Location"], path))
+            full_path = os.path.normpath(os.path.join(info["Location"], path))
             file_to_pkg[full_path] = pkg
     return packages, file_to_pkg
 
@@ -117,8 +113,7 @@ def get_pip_packages(session, which_pip, restriction=None):
     return (p["name"] for p in json.loads(out))
 
 
-def get_package_details(session, which_pip, packages=None,
-                        editable_packages=None):
+def get_package_details(session, which_pip, packages=None, editable_packages=None):
     """Get package details from `pip show` and `pip list`.
 
     This is similar to `pip_show`, but it uses `pip list` to get information
@@ -145,8 +140,7 @@ def get_package_details(session, which_pip, packages=None,
     if packages is None:
         packages = list(get_pip_packages(session, which_pip))
     if editable_packages is None:
-        editable_packages = set(
-            get_pip_packages(session, which_pip, restriction="editable"))
+        editable_packages = set(get_pip_packages(session, which_pip, restriction="editable"))
     details, file_to_pkg = pip_show(session, which_pip, packages)
 
     for pkg in details:

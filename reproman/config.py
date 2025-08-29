@@ -10,7 +10,7 @@
 TODO: integration with cmdline etc
 """
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 import os.path
 from appdirs import AppDirs
@@ -80,7 +80,7 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
     dirs = AppDirs("reproman", "reproman.org")
 
     # things we want to count on to be available
-    _DEFAULTS = {'general': {'verbose': '1'}}
+    _DEFAULTS = {"general": {"verbose": "1"}}
 
     def __init__(self, filenames=None, load_default=True):
         """Initialization reads settings from config files and env. variables.
@@ -115,23 +115,23 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         # list of filenames to parse (custom plus some standard ones),
         # they are listed in the order they need to be parsed to
         # guarantee a sane configuration file cascade
-        homedir = os.path.expanduser('~')  # seems to be useless ???
+        homedir = os.path.expanduser("~")  # seems to be useless ???
         cfg_file_candidates = [
             # shipped-with config
             # opj(os.path.dirname(__file__), 'reproman.cfg'),
             # system config
-            '/etc/reproman/reproman.cfg']
+            "/etc/reproman/reproman.cfg"
+        ]
         # XDG system config
-        cfg_file_candidates.append(opj(self.dirs.site_config_dir,
-                                       'reproman.cfg'))
+        cfg_file_candidates.append(opj(self.dirs.site_config_dir, "reproman.cfg"))
 
         # XDG user config
         home_cfg_base_path = self.dirs.user_config_dir
         if os.path.isabs(home_cfg_base_path):
-            cfg_file_candidates.append(opj(home_cfg_base_path, 'reproman.cfg'))
+            cfg_file_candidates.append(opj(home_cfg_base_path, "reproman.cfg"))
 
         # current dir config
-        cfg_file_candidates.append(opj('.reproman', 'reproman.cfg'))
+        cfg_file_candidates.append(opj(".reproman", "reproman.cfg"))
         return cfg_file_candidates
 
     def _get_file_candidates(self):
@@ -140,10 +140,8 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         cfg_file_candidates += self.__cfg_filenames
         return cfg_file_candidates
 
-
     def reload(self, filenames=None):
-        """Re-read settings from all configured locations.
-        """
+        """Re-read settings from all configured locations."""
         # store additional config file names
         if not filenames is None:
             self.__cfg_filenames = filenames
@@ -152,18 +150,18 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
         self.read(self._get_file_candidates())
 
         # now look for variables in the environment
-        pref = 'REPROMAN_'
+        pref = "REPROMAN_"
         for var in [v for v in os.environ.keys() if v.startswith(pref)]:
             # strip leading 'REPROMAN_' and lower case entries
-            svar = var[len(pref):].lower()
+            svar = var[len(pref) :].lower()
 
             # section is next element in name (or 'general' if simple name)
-            if not svar.count('_'):
-                sec = 'general'
+            if not svar.count("_"):
+                sec = "general"
             else:
-                cut = svar.find('_')
+                cut = svar.find("_")
                 sec = svar[:cut]
-                svar = svar[cut + 1:].replace('_', ' ')
+                svar = svar[cut + 1 :].replace("_", " ")
 
             # check if section is already known and add it if not
             if not self.has_section(sec):
@@ -188,7 +186,8 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
             # provide somewhat descriptive error
             raise ValueError(
                 "Failed to obtain value from configuration for %s.%s. "
-                "Original exception was: %s" % (section, option, e))
+                "Original exception was: %s" % (section, option, e)
+            )
 
     def getpath(self, *args, **kwargs):
         """Wrapper around get to do additional path treatments such as expanduser
@@ -210,12 +209,12 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
                 return default
             else:
                 # compatibility layer for py3 version of ConfigParser
-                if hasattr(self, '_boolean_states'):
+                if hasattr(self, "_boolean_states"):
                     boolean_states = self._boolean_states
                 else:
                     boolean_states = self.BOOLEAN_STATES  # there is no BOOLEAN_STATES ???
                 if default is None or (default.lower() not in boolean_states):
-                    raise ValueError('Not a boolean: %s' % default)
+                    raise ValueError("Not a boolean: %s" % default)
                 return boolean_states[default.lower()]
 
         return self._super.getboolean(section, option)
@@ -240,4 +239,5 @@ class ConfigManager(SafeConfigParserWithIncludes, object):
             # provide somewhat descriptive error
             raise ValueError(
                 "Failed to obtain value from configuration for %s.%s. "
-                "Original exception was: %s" % (section, option, e))
+                "Original exception was: %s" % (section, option, e)
+            )

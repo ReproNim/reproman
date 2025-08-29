@@ -5,9 +5,6 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""cmdline tests
+"""cmdline tests"""
 
-"""
-
-__docformat__ = 'restructuredtext'
-
+__docformat__ = "restructuredtext"

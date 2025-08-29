@@ -5,8 +5,6 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Provenance tests 
+"""Provenance tests"""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"

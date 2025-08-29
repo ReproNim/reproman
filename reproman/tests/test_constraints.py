@@ -5,7 +5,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-'''Unit tests for basic constraints functionality.'''
+"""Unit tests for basic constraints functionality."""
 
 
 import sys
@@ -19,14 +19,14 @@ def test_int():
     # this should always work
     assert_equal(c(7), 7)
     assert_equal(c(7.0), 7)
-    assert_equal(c('7'), 7)
+    assert_equal(c("7"), 7)
     assert_equal(c([7, 3]), [7, 3])
     # this should always fail
-    assert_raises(ValueError, lambda: c('fail'))
-    assert_raises(ValueError, lambda: c([3, 'fail']))
+    assert_raises(ValueError, lambda: c("fail"))
+    assert_raises(ValueError, lambda: c([3, "fail"]))
     # this will also fail
-    assert_raises(ValueError, lambda: c('17.0'))
-    assert_equal(c.short_description(), 'int')
+    assert_raises(ValueError, lambda: c("17.0"))
+    assert_equal(c.short_description(), "int")
 
 
 def test_float():
@@ -34,11 +34,11 @@ def test_float():
     # this should always work
     assert_equal(c(7.0), 7.0)
     assert_equal(c(7), 7.0)
-    assert_equal(c('7'), 7.0)
-    assert_equal(c([7.0, '3.0']), [7.0, 3.0])
+    assert_equal(c("7"), 7.0)
+    assert_equal(c([7.0, "3.0"]), [7.0, 3.0])
     # this should always fail
-    assert_raises(ValueError, lambda: c('fail'))
-    assert_raises(ValueError, lambda: c([3.0, 'fail']))
+    assert_raises(ValueError, lambda: c("fail"))
+    assert_raises(ValueError, lambda: c([3.0, "fail"]))
 
 
 def test_bool():
@@ -47,19 +47,19 @@ def test_bool():
     assert_equal(c(True), True)
     assert_equal(c(False), False)
     # all that results in True
-    assert_equal(c('True'), True)
-    assert_equal(c('true'), True)
-    assert_equal(c('1'), True)
-    assert_equal(c('yes'), True)
-    assert_equal(c('on'), True)
-    assert_equal(c('enable'), True)
+    assert_equal(c("True"), True)
+    assert_equal(c("true"), True)
+    assert_equal(c("1"), True)
+    assert_equal(c("yes"), True)
+    assert_equal(c("on"), True)
+    assert_equal(c("enable"), True)
     # all that results in False
-    assert_equal(c('false'), False)
-    assert_equal(c('False'), False)
-    assert_equal(c('0'), False)
-    assert_equal(c('no'), False)
-    assert_equal(c('off'), False)
-    assert_equal(c('disable'), False)
+    assert_equal(c("false"), False)
+    assert_equal(c("False"), False)
+    assert_equal(c("0"), False)
+    assert_equal(c("no"), False)
+    assert_equal(c("off"), False)
+    assert_equal(c("disable"), False)
     # this should always fail
     assert_raises(ValueError, c, 0)
     assert_raises(ValueError, c, 1)
@@ -68,25 +68,26 @@ def test_bool():
 def test_str():
     c = ct.EnsureStr()
     # this should always work
-    assert_equal(c('hello'), 'hello')
-    assert_equal(c('7.0'), '7.0')
+    assert_equal(c("hello"), "hello")
+    assert_equal(c("7.0"), "7.0")
     # this should always fail
-    assert_raises(ValueError, lambda: c(['ab']))
-    assert_raises(ValueError, lambda: c(['a', 'b']))
-    assert_raises(ValueError, lambda: c(('a', 'b')))
+    assert_raises(ValueError, lambda: c(["ab"]))
+    assert_raises(ValueError, lambda: c(["a", "b"]))
+    assert_raises(ValueError, lambda: c(("a", "b")))
     # no automatic conversion attempted
     assert_raises(ValueError, lambda: c(7.0))
-    assert_equal(c.short_description(), 'str')
+    assert_equal(c.short_description(), "str")
+
 
 def test_str_min_len():
     c = ct.EnsureStr(min_len=1)
-    assert_equal(c('hello'), 'hello')
-    assert_equal(c('h'), 'h')
-    assert_raises(ValueError, c, '')
+    assert_equal(c("hello"), "hello")
+    assert_equal(c("h"), "h")
+    assert_raises(ValueError, c, "")
 
     c = ct.EnsureStr(min_len=2)
-    assert_equal(c('hello'), 'hello')
-    assert_raises(ValueError, c, 'h')
+    assert_equal(c("hello"), "hello")
+    assert_raises(ValueError, c, "h")
 
 
 def test_none():
@@ -94,18 +95,18 @@ def test_none():
     # this should always work
     assert_equal(c(None), None)
     # this should always fail
-    assert_raises(ValueError, lambda: c('None'))
+    assert_raises(ValueError, lambda: c("None"))
     assert_raises(ValueError, lambda: c([]))
 
 
 def test_choice():
-    c = ct.EnsureChoice('choice1', 'choice2', None)
+    c = ct.EnsureChoice("choice1", "choice2", None)
     # this should always work
-    assert_equal(c('choice1'), 'choice1')
+    assert_equal(c("choice1"), "choice1")
     assert_equal(c(None), None)
     # this should always fail
-    assert_raises(ValueError, lambda: c('fail'))
-    assert_raises(ValueError, lambda: c('None'))
+    assert_raises(ValueError, lambda: c("fail"))
+    assert_raises(ValueError, lambda: c("None"))
 
 
 def test_range():
@@ -120,30 +121,30 @@ def test_range():
     # this should always fail
     assert_raises(ValueError, lambda: c(2.9999999))
     assert_raises(ValueError, lambda: c(77))
-    assert_raises(type_error, lambda: c('fail'))
+    assert_raises(type_error, lambda: c("fail"))
     assert_raises(type_error, lambda: c((3, 4)))
     # since no type checks are performed
-    assert_raises(type_error, lambda: c('7'))
+    assert_raises(type_error, lambda: c("7"))
 
     # Range doesn't have to be numeric
     c = ct.EnsureRange(min="e", max="qqq")
-    assert_equal(c('e'), 'e')
-    assert_equal(c('fa'), 'fa')
-    assert_equal(c('qq'), 'qq')
-    assert_raises(ValueError, c, 'a')
-    assert_raises(ValueError, c, 'qqqa')
+    assert_equal(c("e"), "e")
+    assert_equal(c("fa"), "fa")
+    assert_equal(c("qq"), "qq")
+    assert_raises(ValueError, c, "a")
+    assert_raises(ValueError, c, "qqqa")
 
 
 def test_listof():
     c = ct.EnsureListOf(str)
-    assert_equal(c(['a', 'b']), ['a', 'b'])
-    assert_equal(c(['a1', 'b2']), ['a1', 'b2'])
+    assert_equal(c(["a", "b"]), ["a", "b"])
+    assert_equal(c(["a1", "b2"]), ["a1", "b2"])
 
 
 def test_tupleof():
     c = ct.EnsureTupleOf(str)
-    assert_equal(c(('a', 'b')), ('a', 'b'))
-    assert_equal(c(('a1', 'b2')), ('a1', 'b2'))
+    assert_equal(c(("a", "b")), ("a", "b"))
+    assert_equal(c(("a1", "b2")), ("a1", "b2"))
 
 
 def test_constraints():
@@ -176,7 +177,7 @@ def test_altconstraints():
     c = ct.AltConstraints(ct.EnsureFloat())
     assert_equal(c(7.0), 7.0)
     c = ct.AltConstraints(ct.EnsureFloat(), ct.EnsureNone())
-    assert_equal(c.short_description(), '(float or None)')
+    assert_equal(c.short_description(), "(float or None)")
     assert_equal(c(7.0), 7.0)
     assert_equal(c(None), None)
     # __or__ form
@@ -197,14 +198,13 @@ def test_altconstraints():
 def test_both():
     # this should always work
     c = ct.AltConstraints(
-        ct.Constraints(
-            ct.EnsureFloat(),
-            ct.EnsureRange(min=7.0, max=44.0)),
-        ct.EnsureNone())
+        ct.Constraints(ct.EnsureFloat(), ct.EnsureRange(min=7.0, max=44.0)), ct.EnsureNone()
+    )
     assert_equal(c(7.0), 7.0)
     assert_equal(c(None), None)
     # this should always fail
     assert_raises(ValueError, lambda: c(77.0))
 
+
 def test_type_str():
-    assert_equal(ct._type_str((str,)), 'str')
+    assert_equal(ct._type_str((str,)), "str")

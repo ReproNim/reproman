@@ -13,7 +13,6 @@ from .constants import REPROZIP_SPEC2_YML_FILENAME
 def test_load_config():
     config = ReprozipProvenance(REPROZIP_SPEC2_YML_FILENAME)
     files_all = config.get_files()
-    files_noother = config.get_files(limit='other')
+    files_noother = config.get_files(limit="other")
     assert len(files_noother) < len(files_all)
     # TODO: more testing
-

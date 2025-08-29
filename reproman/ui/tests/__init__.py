@@ -5,8 +5,6 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""UI tests
+"""UI tests"""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"

@@ -16,6 +16,7 @@ from reproman.tests.skip import skipif
 
 
 with patch.dict("os.environ", {"REPROMAN_TESTS_NONETWORK": "1"}):
+
     @mark.skipif_no_network
     def test_mark_skipif_always_skip():
         assert False, "This test should never run"
@@ -57,8 +58,7 @@ def test_other_attribute_error():
     def no_confusion():
         raise AttributeError("don't get confused")
 
-    with patch("reproman.tests.skip.Namespace.fns",
-               {"no_confusion": no_confusion}):
+    with patch("reproman.tests.skip.Namespace.fns", {"no_confusion": no_confusion}):
         with pytest.raises(AttributeError) as exc:
             m = Mark()
             m.skipif_no_confusion

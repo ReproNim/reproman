@@ -5,11 +5,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""High-level interface generation
+"""High-level interface generation"""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 import attr
 import sys
@@ -18,7 +16,8 @@ import textwrap
 
 from ..ui import ui
 from logging import getLogger
-lgr = getLogger('reproman.interface')
+
+lgr = getLogger("reproman.interface")
 
 
 def get_api_name(intfspec):
@@ -26,7 +25,7 @@ def get_api_name(intfspec):
     if len(intfspec) > 3:
         name = intfspec[3]
     else:
-        name = intfspec[0].split('.')[-1]
+        name = intfspec[0].split(".")[-1]
     return name
 
 
@@ -35,7 +34,7 @@ def get_cmdline_command_name(intfspec):
     if len(intfspec) > 2:
         name = intfspec[2]
     else:
-        name = intfspec[0].split('.')[-1].replace('_', '-')
+        name = intfspec[0].split(".")[-1].replace("_", "-")
     return name
 
 
@@ -46,7 +45,7 @@ def get_interface_groups():
     # auto detect all available interfaces and generate a function-based
     # API from them
     for _item in _interfaces.__dict__:
-        if not _item.startswith('_group_'):
+        if not _item.startswith("_group_"):
             continue
         grp_name = _item[7:]
         grp = getattr(_interfaces, _item)
@@ -60,12 +59,12 @@ def dedent_docstring(text):
     # need to be ignored from dedent call
     if text is None:
         return None
-    if not text.startswith(' '):
-        lines = text.split('\n')
+    if not text.startswith(" "):
+        lines = text.split("\n")
         if len(lines) == 1:
             # single line, no indentation, nothing to do
             return text
-        text2 = '\n'.join(lines[1:])
+        text2 = "\n".join(lines[1:])
         return lines[0] + "\n" + textwrap.dedent(text2)
     else:
         return textwrap.dedent(text)
@@ -79,32 +78,24 @@ def alter_interface_docs_for_api(docs):
         return docs
     docs = dedent_docstring(docs)
     # clean cmdline sections
-    docs = re.sub(
-        r'\|\| CMDLINE \>\>.*\<\< CMDLINE \|\|',
-        '',
-        docs,
-        flags=re.MULTILINE | re.DOTALL)
+    docs = re.sub(r"\|\| CMDLINE \>\>.*\<\< CMDLINE \|\|", "", docs, flags=re.MULTILINE | re.DOTALL)
     # clean cmdline in-line bits
+    docs = re.sub(r"\[CMD:\s[^\[\]]*\sCMD\]", "", docs, flags=re.MULTILINE | re.DOTALL)
     docs = re.sub(
-        r'\[CMD:\s[^\[\]]*\sCMD\]',
-        '',
-        docs,
-        flags=re.MULTILINE | re.DOTALL)
+        r"\[PY:\s([^\[\]]*)\sPY\]", lambda match: match.group(1), docs, flags=re.MULTILINE
+    )
     docs = re.sub(
-        r'\[PY:\s([^\[\]]*)\sPY\]',
+        r"\|\| PYTHON \>\>(.*)\<\< PYTHON \|\|",
         lambda match: match.group(1),
         docs,
-        flags=re.MULTILINE)
+        flags=re.MULTILINE | re.DOTALL,
+    )
     docs = re.sub(
-        r'\|\| PYTHON \>\>(.*)\<\< PYTHON \|\|',
-        lambda match: match.group(1),
-        docs,
-        flags=re.MULTILINE | re.DOTALL)
-    docs = re.sub(
-        r'\|\| REFLOW \>\>\n(.*)\<\< REFLOW \|\|',
+        r"\|\| REFLOW \>\>\n(.*)\<\< REFLOW \|\|",
         lambda match: textwrap.fill(match.group(1)),
         docs,
-        flags=re.MULTILINE | re.DOTALL)
+        flags=re.MULTILINE | re.DOTALL,
+    )
     return docs
 
 
@@ -116,63 +107,44 @@ def alter_interface_docs_for_cmdline(docs):
         return docs
     docs = dedent_docstring(docs)
     # clean cmdline sections
-    docs = re.sub(
-        r'\|\| PYTHON \>\>.*\<\< PYTHON \|\|',
-        '',
-        docs,
-        flags=re.MULTILINE | re.DOTALL)
+    docs = re.sub(r"\|\| PYTHON \>\>.*\<\< PYTHON \|\|", "", docs, flags=re.MULTILINE | re.DOTALL)
     # clean cmdline in-line bits
+    docs = re.sub(r"\[PY:\s[^\[\]]*\sPY\]", "", docs, flags=re.MULTILINE | re.DOTALL)
     docs = re.sub(
-        r'\[PY:\s[^\[\]]*\sPY\]',
-        '',
-        docs,
-        flags=re.MULTILINE | re.DOTALL)
+        r"\[CMD:\s([^\[\]]*)\sCMD\]", lambda match: match.group(1), docs, flags=re.MULTILINE
+    )
     docs = re.sub(
-        r'\[CMD:\s([^\[\]]*)\sCMD\]',
+        r"\|\| CMDLINE \>\>(.*)\<\< CMDLINE \|\|",
         lambda match: match.group(1),
         docs,
-        flags=re.MULTILINE)
-    docs = re.sub(
-        r'\|\| CMDLINE \>\>(.*)\<\< CMDLINE \|\|',
-        lambda match: match.group(1),
-        docs,
-        flags=re.MULTILINE | re.DOTALL)
+        flags=re.MULTILINE | re.DOTALL,
+    )
     # remove :role:`...` RST markup for cmdline docs
     docs = re.sub(
-        r':\S+:`[^`]*`[\\]*',
-        lambda match: ':'.join(match.group(0).split(':')[2:]).strip('`\\'),
+        r":\S+:`[^`]*`[\\]*",
+        lambda match: ":".join(match.group(0).split(":")[2:]).strip("`\\"),
         docs,
-        flags=re.MULTILINE | re.DOTALL)
+        flags=re.MULTILINE | re.DOTALL,
+    )
     # remove None constraint. In general, `None` on the cmdline means don't
     # give option at all, but specifying `None` explicitly is practically
     # impossible
-    docs = re.sub(
-        r',\sor\svalue\smust\sbe\s`None`',
-        '',
-        docs,
-        flags=re.MULTILINE | re.DOTALL)
+    docs = re.sub(r",\sor\svalue\smust\sbe\s`None`", "", docs, flags=re.MULTILINE | re.DOTALL)
     # capitalize variables and remove backticks to uniformize with
     # argparse output
-    docs = re.sub(
-        r'`\S*`',
-        lambda match: match.group(0).strip('`').upper(),
-        docs)
+    docs = re.sub(r"`\S*`", lambda match: match.group(0).strip("`").upper(), docs)
     # clean up sphinx API refs
-    docs = re.sub(
-        r'\~reproman\.api\.\S*',
-        lambda match: "`{0}`".format(match.group(0)[13:]),
-        docs)
+    docs = re.sub(r"\~reproman\.api\.\S*", lambda match: "`{0}`".format(match.group(0)[13:]), docs)
     # Remove RST paragraph markup
     docs = re.sub(
-        r'^.. \S+::',
-        lambda match: match.group(0)[3:-2].upper(),
-        docs,
-        flags=re.MULTILINE)
+        r"^.. \S+::", lambda match: match.group(0)[3:-2].upper(), docs, flags=re.MULTILINE
+    )
     docs = re.sub(
-        r'\|\| REFLOW \>\>\n(.*)\<\< REFLOW \|\|',
+        r"\|\| REFLOW \>\>\n(.*)\<\< REFLOW \|\|",
         lambda match: textwrap.fill(match.group(1)),
         docs,
-        flags=re.MULTILINE | re.DOTALL)
+        flags=re.MULTILINE | re.DOTALL,
+    )
     return docs
 
 
@@ -184,19 +156,20 @@ def update_docstring_with_parameters(func, params, prefix=None, suffix=None):
     the number and names of the callables arguments.
     """
     from reproman.utils import getargspec
+
     # get the signature
     ndefaults = 0
     args, varargs, varkw, defaults = getargspec(func)
     if not defaults is None:
         ndefaults = len(defaults)
     # start documentation with what the callable brings with it
-    doc = prefix if prefix else u''
+    doc = prefix if prefix else ""
     if len(args) > 1:
         if len(doc):
-            doc += '\n'
+            doc += "\n"
         doc += "Parameters\n----------\n"
         for i, arg in enumerate(args):
-            if arg == 'self':
+            if arg == "self":
                 continue
             # we need a parameter spec for each argument
             if not arg in params:
@@ -213,10 +186,11 @@ def update_docstring_with_parameters(func, params, prefix=None, suffix=None):
             doc += param.get_autodoc(
                 arg,
                 default=defaults[defaults_idx] if defaults_idx >= 0 else None,
-                has_default=defaults_idx >= 0)
+                has_default=defaults_idx >= 0,
+            )
             param._doc = orig_docs
-            doc += '\n'
-    doc += suffix if suffix else u""
+            doc += "\n"
+    doc += suffix if suffix else ""
     # assign the amended docs
     func.__doc__ = doc
     return func
@@ -231,13 +205,14 @@ class Interface(object):
         # XXX allow for parser kwargs customization
         parser_kwargs = {}
         from reproman.utils import getargspec
+
         # get the signature
         ndefaults = 0
         args, varargs, varkw, defaults = getargspec(cls.__call__)
         if not defaults is None:
             ndefaults = len(defaults)
         for i, arg in enumerate(args):
-            if arg == 'self':
+            if arg == "self":
                 continue
             param = cls._params_[arg]
             defaults_idx = ndefaults - len(args) + i
@@ -247,42 +222,41 @@ class Interface(object):
             if not len(cmd_args):
                 if defaults_idx >= 0:
                     # dealing with a kwarg
-                    template = '--%s'
+                    template = "--%s"
                 else:
                     # positional arg
-                    template = '%s'
+                    template = "%s"
                 # use parameter name as default argument name
-                parser_args = (template % arg.replace('_', '-'),)
+                parser_args = (template % arg.replace("_", "-"),)
             else:
-                parser_args = [c.replace('_', '-') for c in cmd_args]
+                parser_args = [c.replace("_", "-") for c in cmd_args]
             parser_kwargs = param.cmd_kwargs
             if defaults_idx >= 0:
-                parser_kwargs['default'] = defaults[defaults_idx]
+                parser_kwargs["default"] = defaults[defaults_idx]
             help = alter_interface_docs_for_cmdline(param._doc)
-            if help and help[-1] != '.':
-                help += '.'
+            if help and help[-1] != ".":
+                help += "."
             if param.constraints is not None:
-                parser_kwargs['type'] = param.constraints
+                parser_kwargs["type"] = param.constraints
                 # include value constraint description and default
                 # into the help string
-                cdoc = alter_interface_docs_for_cmdline(
-                    param.constraints.long_description())
-                if cdoc[0] == '(' and cdoc[-1] == ')':
+                cdoc = alter_interface_docs_for_cmdline(param.constraints.long_description())
+                if cdoc[0] == "(" and cdoc[-1] == ")":
                     cdoc = cdoc[1:-1]
-                help += '  Constraints: %s' % cdoc
+                help += "  Constraints: %s" % cdoc
             if defaults_idx >= 0:
                 help += " [Default: %r]" % (defaults[defaults_idx],)
             # create the parameter, using the constraint instance for type
             # conversion
-            parser.add_argument(*parser_args, help=help,
-                                **parser_kwargs)
+            parser.add_argument(*parser_args, help=help, **parser_kwargs)
 
     @classmethod
     def call_from_parser(cls, args):
         # XXX needs safety check for name collisions
         from reproman.utils import getargspec
+
         argnames = getargspec(cls.__call__)[0]
-        kwargs = {k: getattr(args, k) for k in argnames if k != 'self'}
+        kwargs = {k: getattr(args, k) for k in argnames if k != "self"}
         try:
             return cls.__call__(**kwargs)
         except KeyboardInterrupt:

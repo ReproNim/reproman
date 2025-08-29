@@ -57,8 +57,7 @@ from reproman.utils import on_windows as _on_windows
 
 
 def no_apt_cache():
-    return ("apt-cache not available",
-            not external_versions["cmd:apt-cache"])
+    return ("apt-cache not available", not external_versions["cmd:apt-cache"])
 
 
 def no_aws_dependencies():
@@ -68,19 +67,16 @@ def no_aws_dependencies():
 def no_condor():
     def is_running():
         try:
-            Runner().run(["condor_status"],
-                         expect_fail=True, expect_stderr=True)
+            Runner().run(["condor_status"], expect_fail=True, expect_stderr=True)
         except (CommandError, FileNotFoundError):
             return False
         return True
 
-    return ("condor not available",
-            not (external_versions["cmd:condor"] and is_running()))
+    return ("condor not available", not (external_versions["cmd:condor"] and is_running()))
 
 
 def no_datalad():
-    return ("datalad not available",
-            not external_versions["datalad"])
+    return ("datalad not available", not external_versions["datalad"])
 
 
 def no_docker_dependencies():
@@ -95,6 +91,7 @@ def no_docker_dependencies():
 def no_docker_engine():
     def is_engine_running():
         from reproman.resource.docker_container import DockerContainer
+
         return DockerContainer.is_engine_running()
 
     # DockerContainer depends on docker.
@@ -105,13 +102,11 @@ def no_docker_engine():
 
 
 def no_network():
-    return ("no network settings",
-            os.environ.get('REPROMAN_TESTS_NONETWORK'))
+    return ("no network settings", os.environ.get("REPROMAN_TESTS_NONETWORK"))
 
 
 def no_singularity():
-    return ("singularity not available",
-            not external_versions["cmd:singularity"])
+    return ("singularity not available", not external_versions["cmd:singularity"])
 
 
 def no_slurm():
@@ -119,11 +114,12 @@ def no_slurm():
         # Does it look like tools/ci/setup-slurm-container.sh was called?
         try:
             out, _ = Runner().run(
-                ["docker", "port", "reproman-slurm-container"],
-                expect_fail=True, expect_stderr=True)
+                ["docker", "port", "reproman-slurm-container"], expect_fail=True, expect_stderr=True
+            )
         except (CommandError, FileNotFoundError):
             return False
         return out.strip()
+
     return "slurm container is not running", not is_running()
 
 
@@ -132,13 +128,11 @@ def no_ssh():
         reason = "no ssh on windows"
     else:
         reason = "no ssh (REPROMAN_TESTS_SSH unset)"
-    return (reason,
-            _on_windows or not os.environ.get('REPROMAN_TESTS_SSH'))
+    return (reason, _on_windows or not os.environ.get("REPROMAN_TESTS_SSH"))
 
 
 def no_svn():
-    return ("subversion not available",
-            not external_versions["cmd:svn"])
+    return ("subversion not available", not external_versions["cmd:svn"])
 
 
 def on_windows():
@@ -173,15 +167,13 @@ class NamespaceAttributeError(AttributeError):
 
 
 class Namespace(object, metaclass=abc.ABCMeta):
-    """Provide namespace skip conditions in CONDITION_FNS.
-    """
+    """Provide namespace skip conditions in CONDITION_FNS."""
 
     fns = {c.__name__: c for c in CONDITION_FNS}
 
     @abc.abstractmethod
     def attr_value(self, condition_func):
-        """Given a condition function, return an attribute value.
-        """
+        """Given a condition function, return an attribute value."""
 
     def __getattr__(self, item):
         try:
@@ -203,6 +195,7 @@ class SkipIf(Namespace):
             reason, cond = condition_func()
             if cond:
                 pytest.skip(reason, allow_module_level=True)
+
         return fn
 
 
@@ -223,7 +216,7 @@ class Mark(Namespace):
     def __getattr__(self, item):
         if item.startswith("skipif_"):
             try:
-                return super(Mark, self).__getattr__(item[len("skipif_"):])
+                return super(Mark, self).__getattr__(item[len("skipif_") :])
             except NamespaceAttributeError:
                 # Fall back to the original item name so that the attribute
                 # error message doesn't confusingly drop "skipif_".

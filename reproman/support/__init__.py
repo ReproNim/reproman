@@ -5,9 +5,6 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Various supporting utilities usually to interface other toolkits etc
+"""Various supporting utilities usually to interface other toolkits etc"""
 
-"""
-
-__docformat__ = 'restructuredtext'
-
+__docformat__ = "restructuredtext"

@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Analyze existing spec or session file system to gather more detailed information
-"""
+"""Analyze existing spec or session file system to gather more detailed information"""
 
 from os.path import normpath
 import sys
@@ -27,10 +26,11 @@ from ..utils import pycache_source
 from ..utils import to_unicode
 from ..resource import get_manager
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from logging import getLogger
-lgr = getLogger('reproman.api.retrace')
+
+lgr = getLogger("reproman.api.retrace")
 
 
 class Retrace(Interface):
@@ -47,7 +47,7 @@ class Retrace(Interface):
         spec=Parameter(
             args=("--spec",),
             doc="ReproZip YML file to be analyzed",
-            metavar='SPEC',
+            metavar="SPEC",
             # nargs="+",
             constraints=EnsureStr() | EnsureNone(),
         ),
@@ -57,41 +57,47 @@ class Retrace(Interface):
             doc="""path(s) to be traced.  If spec is provided, would trace them
             after tracing the spec""",
             nargs="*",
-            constraints=EnsureStr() | EnsureNone()),
+            constraints=EnsureStr() | EnsureNone(),
+        ),
         output_file=Parameter(
-            args=("-o", "--output-file",),
+            args=(
+                "-o",
+                "--output-file",
+            ),
             doc="Output file.  If not specified - printed to stdout",
-            metavar='output_file',
+            metavar="output_file",
             constraints=EnsureStr() | EnsureNone(),
         ),
         resref=Parameter(
-            args=("-r", "--resource",),
+            args=(
+                "-r",
+                "--resource",
+            ),
             dest="resref",
             metavar="RESOURCE",
             doc="""Name or ID of the resource to operate on. To see available
             resources, run 'reproman ls'.[PY: Note: As a special case, a session
             instance can be passed as the value for `resref`.  PY]""",
-            constraints=EnsureStr() | EnsureNone()),
+            constraints=EnsureStr() | EnsureNone(),
+        ),
         resref_type=resref_type_opt,
     )
 
     # TODO: add a session/resource so we could trace within
     # arbitrary sessions
     @staticmethod
-    def __call__(path=None, spec=None, output_file=None,
-                 resref=None, resref_type="auto"):
+    def __call__(path=None, spec=None, output_file=None, resref=None, resref_type="auto"):
         # heavy import -- should be delayed until actually used
 
         if not (spec or path):
-            raise InsufficientArgumentsError(
-                "Need at least a single --spec or a file"
-            )
+            raise InsufficientArgumentsError("Need at least a single --spec or a file")
 
         paths = assure_list(path)
         if spec:
             lgr.info("reading spec file %s", spec)
             # TODO: generic loader to auto-detect formats etc
             from reproman.formats.reprozip import ReprozipProvenance
+
             spec = ReprozipProvenance(spec)
             paths += spec.get_files() or []
 
@@ -117,11 +123,9 @@ class Retrace(Interface):
         #       Generalize
         # TODO: RF so that only the above portion is reprozip specific.
         # If we are to reuse their layout largely -- the rest should stay as is
-        (distributions, files) = identify_distributions(
-            paths,
-            session=session
-        )
+        (distributions, files) = identify_distributions(paths, session=session)
         from reproman.distributions.base import EnvironmentSpec
+
         spec = EnvironmentSpec(
             distributions=distributions,
         )
@@ -130,11 +134,13 @@ class Retrace(Interface):
 
         # TODO: generic writer!
         from reproman.formats.reproman import RepromanProvenance
+
         stream = open(output_file, "w") if output_file else sys.stdout
         RepromanProvenance.write(stream, spec)
         if stream is not sys.stdout:
             stream.close()
         return distributions, files
+
 
 # TODO: session should be with a state.  Idea is that if we want
 #  to trace while inheriting all custom PATHs which that run might have
@@ -162,7 +168,6 @@ def identify_distributions(files, session=None, tracer_classes=None):
     # TODO: should operate in the session, might be given additional information
     #       not just files
 
-
     # .identify_ functions will have a side-effect of shrinking this list in-place
     # as they identify files belonging to them
     files_to_consider = set(files)
@@ -179,9 +184,7 @@ def identify_distributions(files, session=None, tracer_classes=None):
         nfiles_to_trace = len(files_to_trace)
         lgr.info("Entering iteration #%d over Tracers", niter)
         if niter > max_niter:
-            lgr.error(
-                "We did %s iterations already, something is not right"
-                % max_niter)
+            lgr.error("We did %s iterations already, something is not right" % max_niter)
             break
 
         for Tracer in tracer_classes:
@@ -206,25 +209,27 @@ def identify_distributions(files, session=None, tracer_classes=None):
             if files_to_trace:
                 remaining_files_to_trace = files_to_trace
                 nenvs = 0
-                for env, remaining_files_to_trace in tracer.identify_distributions(
-                        files_to_trace):
+                for env, remaining_files_to_trace in tracer.identify_distributions(files_to_trace):
                     distributions.append(env)
                     nenvs += 1
                 files_processed |= files_to_trace - remaining_files_to_trace
                 files_to_trace = remaining_files_to_trace
-                lgr.info("%s: %d envs with %d other files remaining",
-                         Tracer.__name__,
-                         nenvs,
-                         len(files_to_trace))
+                lgr.info(
+                    "%s: %d envs with %d other files remaining",
+                    Tracer.__name__,
+                    nenvs,
+                    len(files_to_trace),
+                )
 
             # Re-combine any files that were skipped
             files_to_consider = files_to_trace | files_skipped
 
-            lgr.debug("Assigning files to packages by %s took %f seconds",
-                      tracer, time.time() - begin)
+            lgr.debug(
+                "Assigning files to packages by %s took %f seconds", tracer, time.time() - begin
+            )
         if len(files_to_trace) == 0 or (
-            nfiles_processed == len(files_processed) and
-            nfiles_to_trace == len(files_to_trace)):
+            nfiles_processed == len(files_processed) and nfiles_to_trace == len(files_to_trace)
+        ):
             lgr.info("No more changes or files to track.  Exiting the loop")
             break
 
@@ -244,6 +249,14 @@ def get_tracer_classes():
     from reproman.distributions.vcs import VCSTracer
     from reproman.distributions.docker import DockerTracer
     from reproman.distributions.singularity import SingularityTracer
-    Tracers = [DebTracer, RPMTracer, CondaTracer, VenvTracer, VCSTracer,
-        DockerTracer, SingularityTracer]
+
+    Tracers = [
+        DebTracer,
+        RPMTracer,
+        CondaTracer,
+        VenvTracer,
+        VCSTracer,
+        DockerTracer,
+        SingularityTracer,
+    ]
     return Tracers

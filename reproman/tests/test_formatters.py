@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover
     # must be running from installed version where formatters is not present
     # These tests can be ran only with formatters, which is outside of the
     # reproman module space in the root of the sourcebase
-    if not exists('formatters.py'):
+    if not exists("formatters.py"):
         pytestmark = pytest.mark.skip("can't locate formatters")
 
 from reproman.cmdline.main import setup_parser
@@ -66,41 +66,40 @@ reproman imagine --too \\
 
 def test_cmdline_example_to_rst():
     # don't puke on nothing
-    out = fmt.cmdline_example_to_rst(SIO(''))
+    out = fmt.cmdline_example_to_rst(SIO(""))
     out.seek(0)
-    ok_startswith(out.read(), '.. AUTO-GENERATED')
-    out = fmt.cmdline_example_to_rst(SIO(''), ref='dummy')
+    ok_startswith(out.read(), ".. AUTO-GENERATED")
+    out = fmt.cmdline_example_to_rst(SIO(""), ref="dummy")
     out.seek(0)
-    assert_in('.. dummy:', out.read())
+    assert_in(".. dummy:", out.read())
     # full scale test
-    out = fmt.cmdline_example_to_rst(
-        SIO(demo_example), ref='mydemo')
+    out = fmt.cmdline_example_to_rst(SIO(demo_example), ref="mydemo")
     out.seek(0)
-    assert_in('.. code-block:: sh', out.read())
+    assert_in(".. code-block:: sh", out.read())
+
 
 def test_parser_access():
     parsers = setup_parser(return_subparsers=True)
     # we have a bunch
     ok_(len(parsers) > 3)
-    assert_in('create', parsers.keys())
+    assert_in("create", parsers.keys())
 
 
 def test_manpage_formatter():
-    addonsections = {'mytest': "uniquedummystring"}
+    addonsections = {"mytest": "uniquedummystring"}
 
     parsers = setup_parser(return_subparsers=True)
     for p in parsers:
-        mp = fmt.ManPageFormatter(
-            p, ext_sections=addonsections).format_man_page(parsers[p])
-        for section in ('SYNOPSIS', 'DESCRIPTION', 'OPTIONS', 'MYTEST'):
-            assert_in('.SH {0}'.format(section), mp)
-        assert_in('uniquedummystring', mp)
+        mp = fmt.ManPageFormatter(p, ext_sections=addonsections).format_man_page(parsers[p])
+        for section in ("SYNOPSIS", "DESCRIPTION", "OPTIONS", "MYTEST"):
+            assert_in(".SH {0}".format(section), mp)
+        assert_in("uniquedummystring", mp)
 
 
 def test_rstmanpage_formatter():
     parsers = setup_parser(return_subparsers=True)
     for p in parsers:
         mp = fmt.RSTManPageFormatter(p).format_man_page(parsers[p])
-        for section in ('Synopsis', 'Description', 'Options'):
-            assert_in('\n{0}'.format(section), mp)
-        assert_in('{0}\n{1}'.format(p, '=' * len(p)), mp)
+        for section in ("Synopsis", "Description", "Options"):
+            assert_in("\n{0}".format(section), mp)
+        assert_in("{0}\n{1}".format(p, "=" * len(p)), mp)

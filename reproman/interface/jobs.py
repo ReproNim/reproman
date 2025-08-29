@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Operate on `reproman run` jobs.
-"""
+"""Operate on `reproman run` jobs."""
 
 from functools import partial
 import operator
@@ -66,8 +65,7 @@ def match(query_id, jobids):
             return matches[0]
         elif matches:
             # TODO: Use custom exception.
-            raise ValueError("ID {} matches multiple jobs: {}"
-                             .format(query_id, ", ".join(matches)))
+            raise ValueError("ID {} matches multiple jobs: {}".format(query_id, ", ".join(matches)))
 
 
 def _resurrect_orc(job):
@@ -78,13 +76,14 @@ def _resurrect_orc(job):
         cd = chpwd(job["local_directory"])
     except FileNotFoundError:
         raise OrchestratorError(
-            "local directory for job {} no longer exists: {}"
-            .format(job["_jobid"], job["local_directory"]))
+            "local directory for job {} no longer exists: {}".format(
+                job["_jobid"], job["local_directory"]
+            )
+        )
 
     with cd:
         orchestrator_class = ORCHESTRATORS[job["orchestrator"]]
-        orc = orchestrator_class(resource, job["submitter"], job,
-                                 resurrection=True)
+        orc = orchestrator_class(resource, job["submitter"], job, resurrection=True)
         orc.submitter.submission_id = job.get("_submission_id")
     return orc
 
@@ -93,8 +92,7 @@ def _resurrect_orc(job):
 
 
 def show_oneline(job, status=False):
-    """Display `job` as a single summary line.
-    """
+    """Display `job` as a single summary line."""
     fmt = "{status}{j[_jobid]} on {j[resource_name]} via {j[submitter]}$ {cmd}"
     if status:
         orc = _resurrect_orc(job)
@@ -103,46 +101,39 @@ def show_oneline(job, status=False):
         if orc_status == queried_status:
             # Drop repeated status (e.g., our and condor's "running").
             queried_status = None
-        stat = "[status: {}{}] ".format(
-            orc_status,
-            ", " + queried_status if queried_status else "")
+        stat = "[status: {}{}] ".format(orc_status, ", " + queried_status if queried_status else "")
     else:
         stat = ""
     try:
         cmd = job["_resolved_command_str"]
-        print(fmt
-              .format(status=stat, j=job,
-                      cmd=cmd[:47] + "..." if len(cmd) > 50 else cmd))
+        print(fmt.format(status=stat, j=job, cmd=cmd[:47] + "..." if len(cmd) > 50 else cmd))
     except KeyError as exc:
-        lgr.warning(
-            "Skipping following job record missing %s: %s",
-            exc, job
-        )
+        lgr.warning("Skipping following job record missing %s: %s", exc, job)
 
 
 def show(job, status=False):
-    """Display detailed information about `job`.
-    """
+    """Display detailed information about `job`."""
     if status:
         orc = _resurrect_orc(job)
         queried_normalized, queried = orc.submitter.status
-        job["status"] = {"orchestrator": orc.status,
-                         "queried": queried,
-                         "queried_normalized": queried_normalized}
+        job["status"] = {
+            "orchestrator": orc.status,
+            "queried": queried,
+            "queried_normalized": queried_normalized,
+        }
     print(yaml.safe_dump(job))
 
 
 def fetch(job):
-    """Fetch `job` locally.
-    """
+    """Fetch `job` locally."""
     orc = _resurrect_orc(job)
     if orc.has_completed:
         orc.fetch()
         LREG.unregister(orc.jobid)
     else:
-        lgr.warning("Not fetching incomplete job %s [status: %s]",
-                    job["_jobid"],
-                    orc.status or "unknown")
+        lgr.warning(
+            "Not fetching incomplete job %s [status: %s]", job["_jobid"], orc.status or "unknown"
+        )
 
 
 class Jobs(Interface):
@@ -163,27 +154,22 @@ class Jobs(Interface):
     """
 
     _params_ = dict(
-        queries=Parameter(
-            metavar="JOB",
-            nargs="*",
-            doc="""A full job ID or a unique substring."""),
+        queries=Parameter(metavar="JOB", nargs="*", doc="""A full job ID or a unique substring."""),
         action=Parameter(
             args=("-a", "--action"),
-            constraints=EnsureChoice(
-                "auto", "list", "show",
-                "delete", "fetch"),
-            doc="""Operation to perform on the job(s)."""),
+            constraints=EnsureChoice("auto", "list", "show", "delete", "fetch"),
+            doc="""Operation to perform on the job(s).""",
+        ),
         all_=Parameter(
-            dest="all_",
-            args=("--all",),
-            action="store_true",
-            doc="Operate on all jobs"),
+            dest="all_", args=("--all",), action="store_true", doc="Operate on all jobs"
+        ),
         status=Parameter(
             dest="status",
             args=("-s", "--status"),
             action="store_true",
             doc="""Query the resource for status information when listing or
-            showing jobs"""),
+            showing jobs""",
+        ),
         # TODO: Add ability to restrict to resource.
     )
 
@@ -233,5 +219,8 @@ class Jobs(Interface):
                 except OrchestratorError as exc:
                     lgr.error("job %s failed: %s", job["_jobid"], exc_str(exc))
                 except ResourceNotFoundError:
-                    lgr.error("Resource %s (%s) no longer exists",
-                              job["resource_id"], job["resource_name"])
+                    lgr.error(
+                        "Resource %s (%s) no longer exists",
+                        job["resource_id"],
+                        job["resource_name"],
+                    )

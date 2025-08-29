@@ -10,12 +10,14 @@
 import attr
 import concurrent.futures
 import logging
-lgr = logging.getLogger('reproman.resource.aws_condor')
+
+lgr = logging.getLogger("reproman.resource.aws_condor")
 
 from .base import Resource
 from ..resource import get_manager
 from ..support.jobs.template import Template
 from ..utils import attrib
+
 # from .aws_ec2 import AwsKeyMixin
 
 
@@ -26,30 +28,33 @@ class AwsCondor(Resource):
     name = attrib(default=attr.NOTHING)
 
     # Configurable options
-    size = attrib(
-        default=2,
-        doc="Number of EC2 instances in the HTCondor cluster.",
-        converter=int
-    )
-    access_key_id = attrib(
-        doc="AWS access key for remote access to your Amazon subscription.")
+    size = attrib(default=2, doc="Number of EC2 instances in the HTCondor cluster.", converter=int)
+    access_key_id = attrib(doc="AWS access key for remote access to your Amazon subscription.")
     secret_access_key = attrib(
-        doc="AWS secret access key for remote access to your Amazon subscription.")
-    instance_type = attrib(default="t2.medium",
-        doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)")  # EC2 instance type
-    security_group = attrib(default="default",
-        doc="AWS security group to assign to the EC2 instance.")  # AWS security group
-    region_name = attrib(default="us-east-1",
-        doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)")  # AWS region
+        doc="AWS secret access key for remote access to your Amazon subscription."
+    )
+    instance_type = attrib(
+        default="t2.medium", doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)"
+    )  # EC2 instance type
+    security_group = attrib(
+        default="default", doc="AWS security group to assign to the EC2 instance."
+    )  # AWS security group
+    region_name = attrib(
+        default="us-east-1",
+        doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)",
+    )  # AWS region
     key_name = attrib(
-        doc="AWS subscription name of SSH key-pair registered. If not specified, 'name' is used.")  # Name of SSH key
+        doc="AWS subscription name of SSH key-pair registered. If not specified, 'name' is used."
+    )  # Name of SSH key
     # registered on AWS.
     key_filename = attrib(
-        doc="Path to SSH private key file matched with AWS key_name parameter.")  # SSH private key filename on local machine.
-    image = attrib(default="ami-0399c674414cb6007",
-        doc="AWS image ID from which to create the running instance.")  # NITRC-CE v0.52.0-LITE
-    user = attrib(default='ubuntu',
-        doc="Login account to EC2 instance.")
+        doc="Path to SSH private key file matched with AWS key_name parameter."
+    )  # SSH private key filename on local machine.
+    image = attrib(
+        default="ami-0399c674414cb6007",
+        doc="AWS image ID from which to create the running instance.",
+    )  # NITRC-CE v0.52.0-LITE
+    user = attrib(default="ubuntu", doc="Login account to EC2 instance.")
 
     id = attrib()
     nodes = attrib()  # Node 0 is the master node
@@ -82,25 +87,27 @@ class AwsCondor(Resource):
             self.nodes = []
             node_configs = []
             for i in range(self.size):
-                node_configs.append({
-                    "type": "aws-ec2",
-                    "name": self.name + "_{}".format(i),
-                    "instance_type": self.instance_type,
-                    "security_group": self.security_group,
-                    "region_name": self.region_name,
-                    # All nodes will reuse this key
-                    "key_name": self.key_name,
-                    "key_filename": self.key_filename,
-                    "image": self.image
-                })
+                node_configs.append(
+                    {
+                        "type": "aws-ec2",
+                        "name": self.name + "_{}".format(i),
+                        "instance_type": self.instance_type,
+                        "security_group": self.security_group,
+                        "region_name": self.region_name,
+                        # All nodes will reuse this key
+                        "key_name": self.key_name,
+                        "key_filename": self.key_filename,
+                        "image": self.image,
+                    }
+                )
         else:
             node_configs = self.nodes
             self.nodes = []
 
         # in either case we need to populate them with secrets
         for node in node_configs:
-            node['access_key_id'] = self.access_key_id
-            node['secret_access_key'] = self.secret_access_key
+            node["access_key_id"] = self.access_key_id
+            node["secret_access_key"] = self.secret_access_key
 
         # Create a connection for each node in the cluster.
         for i in range(self.size):
@@ -128,10 +135,10 @@ class AwsCondor(Resource):
             "key_name": self.key_name,
             "key_filename": self.key_filename,
             "image": self.image,
-            "nodes": [{
-                "type": "aws-ec2",
-                "name": "{}_{}".format(self.name, i)
-            } for i in range(len(self.nodes))]
+            "nodes": [
+                {"type": "aws-ec2", "name": "{}_{}".format(self.name, i)}
+                for i in range(len(self.nodes))
+            ],
         }
 
         yield inventory
@@ -149,7 +156,7 @@ class AwsCondor(Resource):
                 inventory["nodes"][i].update(node_inventory)
                 if not self.key_filename:
                     # node (likely 0) must have assigned/produced one
-                    inventory['key_filename'] = self.key_filename = node_inventory['key_filename']
+                    inventory["key_filename"] = self.key_filename = node_inventory["key_filename"]
                 yield inventory
 
         lgr.info("Cluster %s is up and running!", self.name)
@@ -158,32 +165,38 @@ class AwsCondor(Resource):
         for i, node in enumerate(self.nodes):
             if not node._ec2_instance.public_ip_address:
                 node._ec2_instance = node._ec2_resource.Instance(node.id)
-            is_central_manager = (i == 0)
+            is_central_manager = i == 0
             condor_config = Template(
                 central_manager_ip=central_manager_ip,
                 is_central_manager=is_central_manager,
-                worker_nodes=self.nodes[1:]
+                worker_nodes=self.nodes[1:],
             ).render_cluster("condor_config.local.template")
             session = node.get_session()
             session.execute_command(["sudo", "chmod", "0777", "/etc/condor/config.d"])
             session.put_text(condor_config, "/etc/condor/config.d/00-nitrcce-cluster")
             session.execute_command(["sudo", "rm", "/etc/condor/config.d/00-minicondor"])
             session.execute_command(["sudo", "systemctl", "restart", "condor"])
-            nfs_file = "/home/{}/bin/nfs-mount-{}.sh".format(self.user, "server" if is_central_manager else "client")
+            nfs_file = "/home/{}/bin/nfs-mount-{}.sh".format(
+                self.user, "server" if is_central_manager else "client"
+            )
             # we need to establish shared ~/.reproman to have datasets we operate on
             # accessible across nodes by default
-            session.execute_command([
-                "bash",
-                "-c",
-                "echo -e '\nmkdir -p ~/nfs-shared/.reproman " +
-                    ("&& chown {} ~/nfs-shared/.reproman ".format(self.user) if is_central_manager else '') +
-                    "&& ln -s ~/nfs-shared/.reproman ~/.reproman' >> '{}'".format(nfs_file)
-            ])
+            session.execute_command(
+                [
+                    "bash",
+                    "-c",
+                    "echo -e '\nmkdir -p ~/nfs-shared/.reproman "
+                    + (
+                        "&& chown {} ~/nfs-shared/.reproman ".format(self.user)
+                        if is_central_manager
+                        else ""
+                    )
+                    + "&& ln -s ~/nfs-shared/.reproman ~/.reproman' >> '{}'".format(nfs_file),
+                ]
+            )
             session.execute_command(["sudo", nfs_file, central_manager_ip])
 
-        yield {
-            'status': "Running"
-        }
+        yield {"status": "Running"}
 
     def delete(self):
         """
@@ -211,5 +224,8 @@ class AwsCondor(Resource):
         Log into remote HTCondor cluster (i.e. the manager node)
         """
         # Log into the central manager node
-        lgr.info("FYI IPs of all the nodes: %s", ", ".join(n._ec2_instance.public_ip_address for n in self.nodes))
+        lgr.info(
+            "FYI IPs of all the nodes: %s",
+            ", ".join(n._ec2_instance.public_ip_address for n in self.nodes),
+        )
         return self.nodes[0].get_session(pty, shared)

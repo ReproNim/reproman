@@ -6,8 +6,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Render for orchestrator templates.
-"""
+"""Render for orchestrator templates."""
 
 import os.path as op
 import logging
@@ -33,12 +32,15 @@ class Template(object):
 
     def _render(self, template_name, subdir):
         import jinja2
+
         lgr.debug("Using template %s", template_name)
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(
-                [op.join(op.dirname(__file__), "job_templates", subdir)]),
+                [op.join(op.dirname(__file__), "job_templates", subdir)]
+            ),
             undefined=jinja2.StrictUndefined,
-            trim_blocks=True)
+            trim_blocks=True,
+        )
         env.globals["shlex_quote"] = shlex_quote
         return env.get_template(template_name).render(**self.kwds)
 

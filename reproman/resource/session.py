@@ -9,7 +9,7 @@
 
 import logging
 
-lgr = logging.getLogger('reproman.resource.session')
+lgr = logging.getLogger("reproman.resource.session")
 
 import attr
 from functools import partial
@@ -29,14 +29,15 @@ from reproman.support.exceptions import (
 from reproman.utils import updated, to_unicode
 
 import logging
-lgr = logging.getLogger('reproman.session')
+
+lgr = logging.getLogger("reproman.session")
 
 
 @attr.s
 class Session(object):
     """Interface for Resources to provide interaction within that environment"""
 
-    INTERNAL_COMMANDS = ['mkdir', 'isdir', 'put', 'get', 'chown', 'chmod']
+    INTERNAL_COMMANDS = ["mkdir", "isdir", "put", "get", "chown", "chmod"]
 
     def __attrs_post_init__(self):
         """
@@ -45,8 +46,10 @@ class Session(object):
         For persistent resources, we will save the environment information
         to make it available for sessions beyond the current one.
         """
-        self._env = {}           # environment which would be in-effect only for this session
-        self._env_permanent = {}  # environment variables which would be in-effect in future sessions if resource is persistent
+        self._env = {}  # environment which would be in-effect only for this session
+        self._env_permanent = (
+            {}
+        )  # environment variables which would be in-effect in future sessions if resource is persistent
 
     def __enter__(self):
         self.open()
@@ -195,13 +198,9 @@ class Session(object):
         command_env = dict(self._env, **(env or {}))
         run_kw = {}
         if command_env:
-            run_kw['env'] = command_env
+            run_kw["env"] = command_env
 
-        return self._execute_command(
-            command,
-            cwd=cwd,
-            with_shell=with_shell,
-            **run_kw)
+        return self._execute_command(command, cwd=cwd, with_shell=with_shell, **run_kw)
 
     def _execute_command(self, command, env=None, cwd=None, with_shell=False):
         """
@@ -258,14 +257,13 @@ class Session(object):
         if command not in self.INTERNAL_COMMANDS:
             raise CommandError(cmd=command, msg="Invalid command")
 
-        pargs = [] # positional args to pass to session command
-        kwargs = {} # key word args to pass to session command
+        pargs = []  # positional args to pass to session command
+        kwargs = {}  # key word args to pass to session command
         for arg in args:
-            if '=' in arg:
-                parts = arg.split('=')
+            if "=" in arg:
+                parts = arg.split("=")
                 if len(parts) != 2:
-                    raise CommandError(cmd=command,
-                                       msg="Invalid command line parameter")
+                    raise CommandError(cmd=command, msg="Invalid command line parameter")
                 kwargs[parts[0]] = parts[1]
             else:
                 pargs.append(arg)
@@ -287,8 +285,7 @@ class Session(object):
         """
         raise NotImplementedError
 
-    def _prepare_dest_path(self, src_path, dest_path,
-                           local=True, absolute_only=False):
+    def _prepare_dest_path(self, src_path, dest_path, local=True, absolute_only=False):
         """Do common handling for the destination target of `get` and `put`.
 
         Parameters
@@ -315,8 +312,7 @@ class Session(object):
             mkdir = partial(self.mkdir, parents=True)
 
         if absolute_only and not op.isabs(dest_path):
-            raise ValueError(
-                "Destination path must be absolute, got {}".format(dest_path))
+            raise ValueError("Destination path must be absolute, got {}".format(dest_path))
 
         dest_dir = dest_base = None
         if dest_path:
@@ -364,7 +360,7 @@ class Session(object):
         executable : boolean, optional
             Whether to mark file as executable.
         """
-        with NamedTemporaryFile('w', prefix="reproman-", delete=False) as tfh:
+        with NamedTemporaryFile("w", prefix="reproman-", delete=False) as tfh:
             tfh.write(text)
         if executable:
             os.chmod(tfh.name, 0o775)
@@ -414,7 +410,7 @@ class Session(object):
     #
     # Somewhat optional since could be implemented with native "POSIX" commands
     #
-    def read(self, path, mode='r'):
+    def read(self, path, mode="r"):
         """Return content of a file
 
         Parameters
@@ -507,12 +503,11 @@ class Session(object):
         """
         raise NotImplementedError
 
-
     def transfer_recursive(self, src_path, dest_path, isdir_fct, listdir_fct, mkdir_fct, cp_fct):
         """Recursively transfer files and directories.
 
-        Traversing the source tree contains a lot of the same logic whether 
-        we're putting or getting, so we abstract that out here.  The cost is 
+        Traversing the source tree contains a lot of the same logic whether
+        we're putting or getting, so we abstract that out here.  The cost is
         that we need to pass the functions needed for the operation:
 
             isdir_fct(src_path)
@@ -523,7 +518,7 @@ class Session(object):
 
             cp_fct(src_path, dest_path)
 
-        We unwrap the recursion so we can calculate the relative path names 
+        We unwrap the recursion so we can calculate the relative path names
         from the base source path.
         """
 
@@ -539,8 +534,8 @@ class Session(object):
             src_relpath = os.path.relpath(path, src_path)
             dest_fullpath = os.path.join(dest_path, src_relpath)
             if isdir_fct(path):
-                # For src_path, relpath() gives '.', so dest_fullpath ends 
-                # with "/.".  mkdir doesn't like this, so we handle src_path 
+                # For src_path, relpath() gives '.', so dest_fullpath ends
+                # with "/.".  mkdir doesn't like this, so we handle src_path
                 # as a special case.
                 if path == src_path:
                     mkdir_fct(dest_path)
@@ -554,14 +549,12 @@ class Session(object):
 
 @attr.s
 class POSIXSession(Session):
-    """A Session which relies on commands present in any POSIX-compliant env
-
-    """
+    """A Session which relies on commands present in any POSIX-compliant env"""
 
     # -0 is not provided by busybox's env command.  So if we decide to make it
     # even more portable - something to be done
-    _GET_ENVIRON_CMD = ['env', '-0']
-    _ALT_GET_ENVIRON_CMD = ['perl', '-e', r'foreach (keys %ENV) {print "$_=$ENV{$_}\0";}']
+    _GET_ENVIRON_CMD = ["env", "-0"]
+    _ALT_GET_ENVIRON_CMD = ["perl", "-e", r'foreach (keys %ENV) {print "$_=$ENV{$_}\0";}']
 
     @borrowdoc(Session)
     def query_envvars(self):
@@ -593,13 +586,12 @@ class POSIXSession(Session):
             Decoded representation of the JSON string
         """
         output = {}
-        for line in to_unicode(out).split('\0'):
+        for line in to_unicode(out).split("\0"):
             if not line:
                 continue
-            split = line.split('=', 1)
+            split = line.split("=", 1)
             if len(split) != 2:
-                lgr.warning(
-                    "Failed to split envvar definition into key=value. Got %s", line)
+                lgr.warning("Failed to split envvar definition into key=value. Got %s", line)
                 continue
             output[split[0]] = split[1]
         return output
@@ -629,8 +621,7 @@ class POSIXSession(Session):
         prefix = []
         if env:
             prefix = ["export"]
-            prefix += ["{}={}".format(shlex_quote(k[0]), shlex_quote(k[1]))
-                        for k in env.items()]
+            prefix += ["{}={}".format(shlex_quote(k[0]), shlex_quote(k[1])) for k in env.items()]
             prefix += ["&&"]
         if cwd:
             prefix += ["cd", cwd, "&&"]
@@ -657,7 +648,7 @@ class POSIXSession(Session):
         marker = "== =ReproMan == ="  # unique marker to be able to split away
         # possible output from the sourced script
         get_env_command = " ".join("'%s'" % s for s in self._GET_ENVIRON_CMD)
-        shell = shell or self.query_envvars().get('SHELL', None)
+        shell = shell or self.query_envvars().get("SHELL", None)
         if not isinstance(command, list):
             command = [command]
             shell = shell or "/bin/sh"
@@ -674,15 +665,13 @@ class POSIXSession(Session):
             [
                 # Possibly use SHELL which was already set within the environment
                 shell,
-                '-c',
-                '. {command}; echo "{marker}"; {get_env_command}'.format(**locals())
+                "-c",
+                '. {command}; echo "{marker}"; {get_env_command}'.format(**locals()),
             ]
         )
         # stderr is ok -- above call might issue a warning
         # assert not err
-        new_env = self._parse_envvars_output(
-            re.sub('.*%s\n*' % marker, '', out, flags=re.DOTALL)
-        )
+        new_env = self._parse_envvars_output(re.sub(".*%s\n*" % marker, "", out, flags=re.DOTALL))
 
         # TODO: deal with possible removals, so we should prune them from
         # local envs as well, warning if some variable wasn't even explicitly
@@ -691,11 +680,11 @@ class POSIXSession(Session):
         # Apparently whenever it is a "parametric" command then shells insert
         # some "goodness" which I think we shouldn't care about
         if shell in ["zsh", "/bin/zsh"]:
-            new_env.pop('_')
-            new_env.pop('OLDPWD')
+            new_env.pop("_")
+            new_env.pop("OLDPWD")
         elif shell in ["bash", "/bin/bash"]:
-            new_env.pop('_')
-            new_env.pop('SHLVL')
+            new_env.pop("_")
+            new_env.pop("SHLVL")
 
         if diff:
             # minimize by dropping the same as before
@@ -712,22 +701,24 @@ class POSIXSession(Session):
     def exists(self, path):
         """Return if file exists"""
         try:
-            out, err = self.execute_command(self.exists_command(path),
-                                            with_shell=False)
+            out, err = self.execute_command(self.exists_command(path), with_shell=False)
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for file presence failed: %s", exc_str(exc))
             return False
-        if out == 'Found\n':
+        if out == "Found\n":
             return True
         else:
-            lgr.debug("Standard error was not empty (%r), thus assuming that "
-                      "test for file presence has failed", err)
+            lgr.debug(
+                "Standard error was not empty (%r), thus assuming that "
+                "test for file presence has failed",
+                err,
+            )
             return False
 
     def exists_command(self, path):
         """Return the command to run for the exists method."""
-        command = ['test', '-e', shlex_quote(path), '&&', 'echo', 'Found']
-        return ['bash', '-c', ' '.join(command)]
+        command = ["test", "-e", shlex_quote(path), "&&", "echo", "Found"]
+        return ["bash", "-c", " ".join(command)]
 
     # def lexists(self, path):
     #     """Return if file (or just a broken symlink) exists"""
@@ -743,12 +734,12 @@ class POSIXSession(Session):
     def get_mtime_command(self, path):
         """Return the command to run for the get_mtime method."""
         command = "import os, sys; print(os.path.getmtime(sys.argv[1]))"
-        return ['python', '-c', command, path]
+        return ["python", "-c", command, path]
 
     #
     # Somewhat optional since could be implemented with native "POSIX" commands
     #
-    def read(self, path, mode='r'):
+    def read(self, path, mode="r"):
         """Return context manager to open files for reading or editing"""
         out, err = self.execute_command(["cat", path])
         if err:
@@ -756,15 +747,15 @@ class POSIXSession(Session):
         return out
 
     def mkdir(self, path, parents=False):
-        """Create a directory
-        """
+        """Create a directory"""
         command = ["mkdir"]
-        if parents: command.append("-p")
+        if parents:
+            command.append("-p")
         command += [path]
         self.execute_command(command)
 
         if not self.isdir(path):
-            raise CommandError(cmd='mkdir', msg="Failed to create directory")
+            raise CommandError(cmd="mkdir", msg="Failed to create directory")
 
     def mktmpdir(self):
         path, _ = self.execute_command(["mktemp", "-d"])
@@ -776,42 +767,52 @@ class POSIXSession(Session):
         except Exception as exc:  # TODO: More specific exception?
             lgr.debug("Check for directory failed: %s", exc_str(exc))
             return False
-        if out == 'Found\n':
+        if out == "Found\n":
             return True
         else:
-            lgr.debug("Standard error was not empty (%r), thus assuming that "
-                      "test for directory has failed", err)
+            lgr.debug(
+                "Standard error was not empty (%r), thus assuming that "
+                "test for directory has failed",
+                err,
+            )
             return False
 
     def isdir_command(self, path):
         """Return the command to run for the isdir method."""
-        command = ['test', '-d', shlex_quote(path), '&&', 'echo', 'Found']
-        return ['bash', '-c', ' '.join(command)]
+        command = ["test", "-d", shlex_quote(path), "&&", "echo", "Found"]
+        return ["bash", "-c", " ".join(command)]
 
     def chmod(self, path, mode, recursive=False):
-        """Set the mode of a remote path
-        """
-        command = ['chmod']
-        if recursive: command += ["-R"]
+        """Set the mode of a remote path"""
+        command = ["chmod"]
+        if recursive:
+            command += ["-R"]
         command += [mode] + [path]
         self.execute_command(command)
 
     def chown(self, path, uid=-1, gid=-1, recursive=False, remote=True):
-        """Set the user and gid of a path
-        """
-        uid = int(uid) # Command line parameters getting passed as type str
+        """Set the user and gid of a path"""
+        uid = int(uid)  # Command line parameters getting passed as type str
         gid = int(gid)
 
         if uid == -1 and gid > -1:
-            command = ['chgrp']
+            command = ["chgrp"]
         else:
-            command = ['chown']
-        if recursive: command += ["-R"]
-        if uid > -1 and gid > -1: command += ["{}.{}".format(uid, gid)]
-        elif uid > -1: command += [uid]
-        elif gid > -1: command += [gid]
-        else: raise CommandError(cmd='chown', msg="Invalid command \
-            parameters.")
+            command = ["chown"]
+        if recursive:
+            command += ["-R"]
+        if uid > -1 and gid > -1:
+            command += ["{}.{}".format(uid, gid)]
+        elif uid > -1:
+            command += [uid]
+        elif gid > -1:
+            command += [gid]
+        else:
+            raise CommandError(
+                cmd="chown",
+                msg="Invalid command \
+            parameters.",
+            )
         command += [path]
         if remote:
             self.execute_command(command)
@@ -820,12 +821,13 @@ class POSIXSession(Session):
             Runner().run(command)
 
 
-def get_local_session(env={'LC_ALL': 'C'}, pty=False, shared=None):
+def get_local_session(env={"LC_ALL": "C"}, pty=False, shared=None):
     """A shortcut to get a local session"""
     # TODO: support arbitrary session as obtained from a resource
     # TODO:  Shell needs a name -- should we request from manager
     #        which would assume some magical name for reuse??
     from reproman.resource.shell import Shell
+
     session = Shell("localshell").get_session(pty=pty, shared=shared)
     # or we shouldn't set it ? XXXX
     if env:
@@ -842,11 +844,9 @@ def get_updated_env(env, update):
     # into the update value.
     # (This is to somewhat generalize the "PATH=/foo:$PATH" special case.)
     for k in update:
-        if k not in env or not isinstance(update[k], str) or \
-                not isinstance(env[k], str):
+        if k not in env or not isinstance(update[k], str) or not isinstance(env[k], str):
             continue
-        update[k] = re.sub(r"\${?" + k + r"}?(:|\s|$)", env[k] + r"\1",
-                            update[k])
+        update[k] = re.sub(r"\${?" + k + r"}?(:|\s|$)", env[k] + r"\1", update[k])
     env_ = updated(env, update)
     # pop those explicitly set to None
     for e in list(env_):

@@ -7,10 +7,11 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """"""
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 import logging
-lgr = logging.getLogger('reproman.cmdline')
+
+lgr = logging.getLogger("reproman.cmdline")
 
 lgr.log(5, "Importing cmdline.main")
 
@@ -56,53 +57,70 @@ THE SOFTWARE.
 # even though it might not be necessary to know about all the commands etc.
 # I wondered if it could somehow decide on what commands to worry about etc
 # by going through sys.args first
-def setup_parser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        return_subparsers=False):
+def setup_parser(formatter_class=argparse.RawDescriptionHelpFormatter, return_subparsers=False):
 
     lgr.log(5, "Starting to setup_parser")
     # delay since it can be a heavy import
-    from ..interface.base import dedent_docstring, get_interface_groups, \
-        get_cmdline_command_name, alter_interface_docs_for_cmdline
+    from ..interface.base import (
+        dedent_docstring,
+        get_interface_groups,
+        get_cmdline_command_name,
+        alter_interface_docs_for_cmdline,
+    )
+
     # setup cmdline args parser
     parts = {}
     # main parser
     parser = argparse.ArgumentParser(
-        fromfile_prefix_chars='@',
-        description=dedent_docstring("""\
+        fromfile_prefix_chars="@",
+        description=dedent_docstring(
+            """\
             ReproMan aims to ease construction and execution of computation environments
-            based on collected provenance data."""),
+            based on collected provenance data."""
+        ),
         epilog='"Reproducibly Manage Your Environments"',
         formatter_class=formatter_class,
-        add_help=False)
+        add_help=False,
+    )
     # common options
-    helpers.parser_add_common_opt(parser, 'help')
-    helpers.parser_add_common_opt(parser, 'log_level')
-    helpers.parser_add_common_opt(
-        parser,
-        'version',
-        version='reproman %s' % (reproman.__version__))
+    helpers.parser_add_common_opt(parser, "help")
+    helpers.parser_add_common_opt(parser, "log_level")
+    helpers.parser_add_common_opt(parser, "version", version="reproman %s" % (reproman.__version__))
     if __debug__:
         parser.add_argument(
-            '--dbg', action='store_true', dest='common_debug',
-            help="enter Python debugger when uncaught exception happens")
+            "--dbg",
+            action="store_true",
+            dest="common_debug",
+            help="enter Python debugger when uncaught exception happens",
+        )
         parser.add_argument(
-            '--idbg', action='store_true', dest='common_idebug',
-            help="enter IPython debugger when uncaught exception happens")
+            "--idbg",
+            action="store_true",
+            dest="common_idebug",
+            help="enter IPython debugger when uncaught exception happens",
+        )
     parser.add_argument(
-        '-C', action='append', dest='change_path', metavar='PATH',
+        "-C",
+        action="append",
+        dest="change_path",
+        metavar="PATH",
         help="""run as if reproman were started in <path> instead
         of the current working directory.  When multiple -C options are given,
         each subsequent non-absolute -C <path> is interpreted relative to the
         preceding -C <path>.  This option affects the interpretations of the
         path names in that they are made relative to the working directory
-        caused by the -C option""")
+        caused by the -C option""",
+    )
 
     parser.add_argument(
-        "-c", "--config", metavar="CONFIG", action="append",
+        "-c",
+        "--config",
+        metavar="CONFIG",
+        action="append",
         help="""path to ReproMan configuration file.  This option can be given
         multiple times, in which case values in the later files override
-        previous ones.""")
+        previous ones.""",
+    )
 
     # yoh: atm we only dump to console.  Might adopt the same separation later on
     #      and for consistency will call it --verbose-level as well for now
@@ -112,7 +130,7 @@ def setup_parser(
     #                     dest='common_log_level',
     #                     help="""level of verbosity in log files. By default
     #                          everything, including debug messages is logged.""")
-    #parser.add_argument('-l', '--verbose-level',
+    # parser.add_argument('-l', '--verbose-level',
     #                    choices=('critical', 'error', 'warning', 'info', 'debug'),
     #                    dest='common_verbose_level',
     #                    help="""level of verbosity of console output. By default
@@ -132,27 +150,27 @@ def setup_parser(
         for _intfspec in _interfaces:
             # turn the interface spec into an instance
             lgr.log(5, "Importing module %s " % _intfspec[0])
-            _mod = import_module(_intfspec[0], package='reproman')
+            _mod = import_module(_intfspec[0], package="reproman")
             _intf = getattr(_mod, _intfspec[1])
             cmd_name = get_cmdline_command_name(_intfspec)
             # deal with optional parser args
-            if hasattr(_intf, 'parser_args'):
+            if hasattr(_intf, "parser_args"):
                 parser_args = _intf.parser_args
             else:
                 parser_args = dict(formatter_class=formatter_class)
-            # use class description, if no explicit description is available
-                parser_args['description'] = alter_interface_docs_for_cmdline(
-                    _intf.__doc__)
+                # use class description, if no explicit description is available
+                parser_args["description"] = alter_interface_docs_for_cmdline(_intf.__doc__)
             # create subparser, use module suffix as cmd name
             subparser = subparsers.add_parser(cmd_name, add_help=False, **parser_args)
             # all subparser can report the version
             helpers.parser_add_common_opt(
-                subparser, 'version',
-                version='reproman %s %s\n\n%s' % (cmd_name, reproman.__version__,
-                                                 _license_info()))
+                subparser,
+                "version",
+                version="reproman %s %s\n\n%s" % (cmd_name, reproman.__version__, _license_info()),
+            )
             # our own custom help for all commands
-            helpers.parser_add_common_opt(subparser, 'help')
-            helpers.parser_add_common_opt(subparser, 'log_level')
+            helpers.parser_add_common_opt(subparser, "help")
+            helpers.parser_add_common_opt(subparser, "log_level")
             # let module configure the parser
             _intf.setup_parser(subparser)
             # logger for command
@@ -161,13 +179,13 @@ def setup_parser(
             plumbing_args = dict(
                 func=_intf.call_from_parser,
                 logger=logging.getLogger(_intf.__module__),
-                subparser=subparser)
-            if hasattr(_intf, 'result_renderer_cmdline'):
-                plumbing_args['result_renderer'] = _intf.result_renderer_cmdline
+                subparser=subparser,
+            )
+            if hasattr(_intf, "result_renderer_cmdline"):
+                plumbing_args["result_renderer"] = _intf.result_renderer_cmdline
             subparser.set_defaults(**plumbing_args)
             # store short description for later
-            sdescr = getattr(_intf, 'short_description',
-                             parser_args['description'].split('\n')[0])
+            sdescr = getattr(_intf, "short_description", parser_args["description"].split("\n")[0])
             cmd_short_descriptions.append((cmd_name, sdescr))
             parts[cmd_name] = subparser
         grp_short_descriptions.append(cmd_short_descriptions)
@@ -178,27 +196,39 @@ def setup_parser(
         grp_descr = grp[1]
         grp_cmds = grp_short_descriptions[i]
 
-        cmd_summary.append('\n*%s*\n' % (grp_descr,))
+        cmd_summary.append("\n*%s*\n" % (grp_descr,))
         for cd in grp_cmds:
-            cmd_summary.append('  - %s:  %s'
-                               % (cd[0],
-                                  textwrap.fill(
-                                      cd[1].rstrip(' .'),
-                                      75,
-                                      #initial_indent=' ' * 4,
-                                      subsequent_indent=' ' * 8)))
+            cmd_summary.append(
+                "  - %s:  %s"
+                % (
+                    cd[0],
+                    textwrap.fill(
+                        cd[1].rstrip(" ."),
+                        75,
+                        # initial_indent=' ' * 4,
+                        subsequent_indent=" " * 8,
+                    ),
+                )
+            )
     # we need one last formal section to not have the trailed be
     # confused with the last command group
-    cmd_summary.append('\n*General information*\n')
-    parser.description = '%s\n%s\n\n%s' \
-        % (parser.description,
-           '\n'.join(cmd_summary),
-           textwrap.fill(dedent_docstring("""\
+    cmd_summary.append("\n*General information*\n")
+    parser.description = "%s\n%s\n\n%s" % (
+        parser.description,
+        "\n".join(cmd_summary),
+        textwrap.fill(
+            dedent_docstring(
+                """\
     Detailed usage information for individual commands is
     available via command-specific --help, i.e.:
-    reproman <command> --help"""),
-                         75, initial_indent='', subsequent_indent=''))
-    parts['reproman'] = parser
+    reproman <command> --help"""
+            ),
+            75,
+            initial_indent="",
+            subsequent_indent="",
+        ),
+    )
+    parts["reproman"] = parser
     lgr.log(5, "Finished setup_parser")
     if return_subparsers:
         return parts
@@ -222,6 +252,7 @@ def main(args=None):
     parser = setup_parser()
     try:
         import argcomplete
+
         argcomplete.autocomplete(parser)
     except ImportError:
         pass
@@ -237,9 +268,10 @@ def main(args=None):
         # at import and now, but it might not be worth the effort to
         # restructure things to delay the import.
         from reproman.config import ConfigManager
+
         reproman.cfg = ConfigManager(cmdlineargs.config, load_default=False)
 
-    if not hasattr(cmdlineargs, 'func'):
+    if not hasattr(cmdlineargs, "func"):
         lgr.info("No command given, returning")
         return
 
@@ -255,18 +287,19 @@ def main(args=None):
             ret = cmdlineargs.func(cmdlineargs)
         except InsufficientArgumentsError as exc:
             # if the func reports inappropriate usage, give help output
-            lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
+            lgr.error("%s (%s)" % (exc_str(exc), exc.__class__.__name__))
             cmdlineargs.subparser.print_usage()
             sys.exit(1)
         except MissingConfigFileError as exc:
             # TODO: ConfigManager is not finding files in the default locations.
-            lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
+            lgr.error("%s (%s)" % (exc_str(exc), exc.__class__.__name__))
             sys.exit(1)
         except Exception as exc:
             # print('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
-            lgr.error('%s (%s)' % (exc_str(exc), exc.__class__.__name__))
+            lgr.error("%s (%s)" % (exc_str(exc), exc.__class__.__name__))
             sys.exit(1)
-    if hasattr(cmdlineargs, 'result_renderer'):
+    if hasattr(cmdlineargs, "result_renderer"):
         return cmdlineargs.result_renderer(ret)
+
 
 lgr.log(5, "Done importing cmdline.main")

@@ -20,7 +20,7 @@ class TrigProvenance(Provenance):
     @classmethod
     def _load(cls, source):
         graph = ConjunctiveGraph()
-        graph.parse(source, format='trig')
+        graph.parse(source, format="trig")
         return graph
 
     # def get_os(self):
@@ -51,7 +51,8 @@ class TrigProvenance(Provenance):
             ?x nipype:command ?full_command .
             bind( strbefore( $full_command, " " ) as ?command ) .
             ?x nipype:version ?version .
-            }""")
+            }"""
+        )
 
         return results
 
@@ -62,5 +63,5 @@ class TrigProvenance(Provenance):
         # definition on how they were obtained
         raise NotImplementedError()
 
-    def get_files(self, limit='all'):
-        raise NotImplementedError('TODO')
+    def get_files(self, limit="all"):
+        raise NotImplementedError("TODO")

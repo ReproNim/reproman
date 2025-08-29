@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Wrapper for globbing paths.
-"""
+"""Wrapper for globbing paths."""
 
 import glob
 import logging
@@ -17,7 +16,7 @@ from reproman.utils import chpwd
 from reproman.utils import getpwd
 from reproman.utils import partition
 
-lgr = logging.getLogger('reproman.support.globbedpaths')
+lgr = logging.getLogger("reproman.support.globbedpaths")
 
 
 class GlobbedPaths(object):
@@ -48,9 +47,9 @@ class GlobbedPaths(object):
             patterns, dots = partition(patterns, lambda i: i.strip() == ".")
             self._maybe_dot = ["."] if list(dots) else []
             self._paths = {
-                "patterns": [op.relpath(p, start=pwd) if op.isabs(p) else p
-                             for p in patterns],
-                "sub_patterns": {}}
+                "patterns": [op.relpath(p, start=pwd) if op.isabs(p) else p for p in patterns],
+                "sub_patterns": {},
+            }
 
     def __bool__(self):
         return bool(self._maybe_dot or self.expand())
@@ -109,8 +108,7 @@ class GlobbedPaths(object):
                     for sub_pattern in self._get_sub_patterns(pattern):
                         sub_hits = glob.glob(sub_pattern)
                         if sub_hits:
-                            expanded.extend(
-                                sorted(map(normalize_hit, sub_hits)))
+                            expanded.extend(sorted(map(normalize_hit, sub_hits)))
                             break
                     # ... but we still want to retain the original pattern
                     # because we don't know for sure at this point, and it

@@ -5,14 +5,13 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Interactive User Interface (as Dialog/GUI/etc) support
+"""Interactive User Interface (as Dialog/GUI/etc) support"""
 
-"""
-
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 from logging import getLogger
-lgr = getLogger('reproman.ui')
+
+lgr = getLogger("reproman.ui")
 
 lgr.log(5, "Starting importing ui")
 
@@ -26,11 +25,13 @@ from ..utils import is_interactive
 # user by proxying some other appropriate (cmdline or GUI) UI, while others, such
 # as reporting on progress etc -- should get back to the annex
 
+
 # TODO: singleton
 class _UI_Switcher(object):
     """
     Poor man helper to switch between different backends at run-time.
     """
+
     def __init__(self, backend=None):
         self._backend = None
         self._ui = None
@@ -41,13 +42,13 @@ class _UI_Switcher(object):
             lgr.debug("not changing backend since the same %s" % backend)
             return
         if backend is None:
-            backend = 'console' if not is_interactive() else 'dialog'
+            backend = "console" if not is_interactive() else "dialog"
         self._ui = {
-                'console': ConsoleLog,
-                'dialog': DialogUI,
-                'annex': UnderAnnexUI,
-                'tests': UnderTestsUI,
-            }[backend]()
+            "console": ConsoleLog,
+            "dialog": DialogUI,
+            "annex": UnderAnnexUI,
+            "tests": UnderTestsUI,
+        }[backend]()
         lgr.debug("UI set to %s" % self._ui)
         self._backend = backend
 
@@ -61,14 +62,15 @@ class _UI_Switcher(object):
 
     # Delegate other methods to the actual UI
     def __getattribute__(self, key):
-        if key.startswith('_') or key in {'set_backend', 'backend', 'ui'}:
+        if key.startswith("_") or key in {"set_backend", "backend", "ui"}:
             return super(_UI_Switcher, self).__getattribute__(key)
         return getattr(self._ui, key)
 
     def __setattr__(self, key, value):
-        if key.startswith('_') or key in {'set_backend', 'backend', 'ui'}:
+        if key.startswith("_") or key in {"set_backend", "backend", "ui"}:
             return super(_UI_Switcher, self).__setattr__(key, value)
         return setattr(self._ui, key, value)
+
 
 lgr.log(5, "Initiating UI switcher")
 

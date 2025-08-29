@@ -5,8 +5,7 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Common tests configuration for resources
-"""
+"""Common tests configuration for resources"""
 
 from appdirs import AppDirs
 import os
@@ -16,9 +15,9 @@ import shutil
 
 @pytest.fixture(scope="module")
 def resource_test_dir():
-	dirs = AppDirs('reproman')
-	test_dir = os.path.join(dirs.user_cache_dir, 'resource_test')
-	if not os.path.exists(test_dir):
-		os.makedirs(test_dir)
-	yield test_dir
-	shutil.rmtree(test_dir)
+    dirs = AppDirs("reproman")
+    test_dir = os.path.join(dirs.user_cache_dir, "resource_test")
+    if not os.path.exists(test_dir):
+        os.makedirs(test_dir)
+    yield test_dir
+    shutil.rmtree(test_dir)
