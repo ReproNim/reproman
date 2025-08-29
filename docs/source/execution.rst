@@ -1,7 +1,7 @@
-.. _execute:
+.. _execution:
 
-Execute
-*******
+Execution on Resources
+*********************
 
 Once a resource is present in your inventory (see :ref:`Managing
 resources <manage>`), ReproMan provides a few ways to execute command(s)
