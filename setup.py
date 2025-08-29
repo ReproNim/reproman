@@ -30,7 +30,9 @@ def findsome(subdir, extensions):
     Leading directory (reproman) gets stripped
     """
     return [
-        f.split(pathsep, 1)[1] for f in findall(opj("reproman", subdir)) if splitext(f)[-1].lstrip(".") in extensions
+        f.split(pathsep, 1)[1]
+        for f in findall(opj("reproman", subdir))
+        if splitext(f)[-1].lstrip(".") in extensions
     ]
 
 

@@ -66,7 +66,9 @@ class BuildManPage(Command):
         fromlist = mod_name.split(".")
         try:
             mod = __import__(mod_name, fromlist=fromlist)
-            self._parser = getattr(mod, func_name)(formatter_class=fmt.ManPageFormatter, return_subparsers=True)
+            self._parser = getattr(mod, func_name)(
+                formatter_class=fmt.ManPageFormatter, return_subparsers=True
+            )
 
         except ImportError as err:
             raise err
@@ -82,7 +84,9 @@ class BuildManPage(Command):
         appname = "reproman"
 
         sections = {
-            "Authors": """{0} is developed by {1} <{2}>.""".format(appname, dist.get_author(), dist.get_author_email()),
+            "Authors": """{0} is developed by {1} <{2}>.""".format(
+                appname, dist.get_author(), dist.get_author_email()
+            ),
         }
 
         dist = self.distribution
@@ -132,7 +136,9 @@ class BuildRSTExamplesFromScripts(Command):
         for example in glob(opj(self.expath, "*.sh")):
             exname = os.path.basename(example)[:-3]
             with open(opj(opath, "{0}.rst".format(exname)), "w") as out:
-                fmt.cmdline_example_to_rst(open(example), out=out, ref="_example_{0}".format(exname))
+                fmt.cmdline_example_to_rst(
+                    open(example), out=out, ref="_example_{0}".format(exname)
+                )
 
 
 """
