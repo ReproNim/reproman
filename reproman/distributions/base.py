@@ -55,14 +55,18 @@ class SpecObject(object):
     def _diff_cmp_id(self):
         if not self._diff_cmp_fields:
             # Might need to be gone or some custom exception
-            raise RuntimeError("Cannot establish identity of %r since _diff_cmp_fields " "are not defined" % self)
+            raise RuntimeError(
+                "Cannot establish identity of %r since _diff_cmp_fields " "are not defined" % self
+            )
         return tuple(getattr(self, a) for a in self._diff_cmp_fields)
 
     @property
     def _cmp_id(self):
         if not self._comparison_fields:
             # Might need to be gone or some custom exception
-            raise RuntimeError("Cannot establish identity of %r since _comparison_fields " "are not defined" % self)
+            raise RuntimeError(
+                "Cannot establish identity of %r since _comparison_fields " "are not defined" % self
+            )
         return tuple(getattr(self, a) for a in self._comparison_fields)
 
     @property
@@ -150,13 +154,15 @@ class SpecObject(object):
         if hasattr(other, "collection"):
             if hasattr(self, "collection"):
                 return all(obj.compare(other, mode="satisfied_by") for obj in self.collection)
-            other_collection_type = getattr(other.__class__.__attrs_attrs__, other._collection_attribute).metadata[
-                "type"
-            ]
+            other_collection_type = getattr(
+                other.__class__.__attrs_attrs__, other._collection_attribute
+            ).metadata["type"]
             if isinstance(self, other_collection_type):
                 return any(self.compare(obj, mode="satisfied_by") for obj in other.collection)
             raise TypeError(
-                "don" "t know how to determine if a %s is satisfied by a %s" % (self.__class__, other_collection_type)
+                "don"
+                "t know how to determine if a %s is satisfied by a %s"
+                % (self.__class__, other_collection_type)
             )
         if not isinstance(other, self.__class__):
             raise TypeError("incompatible specobject types")

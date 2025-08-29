@@ -53,7 +53,10 @@ class HelpAction(argparse.Action):
             except (subprocess.CalledProcessError, IOError, OSError, IndexError, ValueError) as e:
                 lgr.debug("Did not use manpage since %s", exc_str(e))
         if option_string == "-h":
-            helpstr = "%s\n%s" % (parser.format_usage(), "Use '--help' to get more comprehensive information.")
+            helpstr = "%s\n%s" % (
+                parser.format_usage(),
+                "Use '--help' to get more comprehensive information.",
+            )
         else:
             helpstr = parser.format_help()
         # better for help2man
@@ -78,7 +81,11 @@ class HelpAction(argparse.Action):
         helpstr = re.sub(r"positional arguments:", pos_args_str, helpstr)
         # convert all headings to have the first character uppercase
         headpat = re.compile(r"^([a-z])(.*):$", re.MULTILINE)
-        helpstr = re.subn(headpat, lambda match: r"{0}{1}:".format(match.group(1).upper(), match.group(2)), helpstr)[0]
+        helpstr = re.subn(
+            headpat,
+            lambda match: r"{0}{1}:".format(match.group(1).upper(), match.group(2)),
+            helpstr,
+        )[0]
         # usage is on the same line
         helpstr = re.sub(r"^usage:", "Usage:", helpstr)
 
@@ -221,7 +228,16 @@ def get_repo_instance(path=curdir, class_=None):
     RuntimeError, in case cwd is not inside a known repository.
     """
 
-    from os.path import join as opj, ismount, exists, abspath, expanduser, expandvars, normpath, isabs
+    from os.path import (
+        join as opj,
+        ismount,
+        exists,
+        abspath,
+        expanduser,
+        expandvars,
+        normpath,
+        isabs,
+    )
     from git.exc import InvalidGitRepositoryError
     from ..utils import expandpath
     from ..support.gitrepo import GitRepo

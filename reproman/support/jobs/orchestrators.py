@@ -97,7 +97,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
             important_keys = ["_jobid", "root_directory", "working_directory", "local_directory"]
             for key in important_keys:
                 if key not in self.job_spec:
-                    raise OrchestratorError("Job spec must have key '{}' to resurrect orchestrator".format(key))
+                    raise OrchestratorError(
+                        "Job spec must have key '{}' to resurrect orchestrator".format(key)
+                    )
 
             self.jobid = self.job_spec["_jobid"]
         else:
@@ -117,9 +119,13 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
     def _find_root(self):
         root_directory = op.join(self.home, ".reproman", "run-root")
-        lgr.info("No root directory supplied for %s; using '%s'", self.resource.name, root_directory)
+        lgr.info(
+            "No root directory supplied for %s; using '%s'", self.resource.name, root_directory
+        )
         if not op.isabs(root_directory):
-            raise OrchestratorError("Root directory is not an absolute path: {}".format(root_directory))
+            raise OrchestratorError(
+                "Root directory is not an absolute path: {}".format(root_directory)
+            )
         return root_directory
 
     @property
@@ -189,7 +195,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
         spec = self.job_spec
         if spec.get("_resolved_batch_parameters"):
-            raise OrchestratorError("Batch parameters are currently only supported " "in DataLad orchestrators")
+            raise OrchestratorError(
+                "Batch parameters are currently only supported " "in DataLad orchestrators"
+            )
 
         for key in ["inputs", "outputs"]:
             if key in spec:
@@ -237,19 +245,30 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
 
         submission_file = op.join(self.meta_directory, "submit")
         self.session.put_text(
-            templ.render_submission("{}.template".format(self.submitter.name)), submission_file, executable=True
+            templ.render_submission("{}.template".format(self.submitter.name)),
+            submission_file,
+            executable=True,
         )
 
-        self.session.put_text("\0".join(self.job_spec["_command_array"]), op.join(self.meta_directory, "command-array"))
+        self.session.put_text(
+            "\0".join(self.job_spec["_command_array"]),
+            op.join(self.meta_directory, "command-array"),
+        )
 
-        self.session.put_text(yaml.safe_dump(self.as_dict()), op.join(self.meta_directory, "spec.yaml"))
+        self.session.put_text(
+            yaml.safe_dump(self.as_dict()), op.join(self.meta_directory, "spec.yaml")
+        )
 
-        subm_id = self.submitter.submit(submission_file, submit_command=self.job_spec.get("submit_command"))
+        subm_id = self.submitter.submit(
+            submission_file, submit_command=self.job_spec.get("submit_command")
+        )
         if subm_id is None:
             lgr.warning("No submission ID obtained for %s", self.jobid)
         else:
             lgr.info("Job %s submitted as %s job %s", self.jobid, self.submitter.name, subm_id)
-            self.session.execute_command("echo {} >{}".format(subm_id, op.join(self.meta_directory, "idmap")))
+            self.session.execute_command(
+                "echo {} >{}".format(subm_id, op.join(self.meta_directory, "idmap"))
+            )
 
     def get_status(self, subjob=0):
         status_file = op.join(self.meta_directory, "status.{:d}".format(subjob))
@@ -285,7 +304,12 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
     def _log_failed(jobid, metadir, failed):
         failed = list(sorted(failed))
         num_failed = len(failed)
-        lgr.warning("%d subjob%s failed. Check files in %s", num_failed, "" if num_failed == 1 else "s", metadir)
+        lgr.warning(
+            "%d subjob%s failed. Check files in %s",
+            num_failed,
+            "" if num_failed == 1 else "s",
+            metadir,
+        )
 
         if num_failed == 1:
             stderr_suffix = str(failed[0])
@@ -312,7 +336,9 @@ class Orchestrator(object, metaclass=abc.ABCMeta):
         failed = failed or self.get_failed_subjobs()
         if failed:
             local_metadir = op.join(
-                self.local_directory, op.relpath(op.join(self.meta_directory), self.working_directory), ""
+                self.local_directory,
+                op.relpath(op.join(self.meta_directory), self.working_directory),
+                "",
             )
             self._log_failed(self.jobid, local_metadir, failed)
             if func:
@@ -468,7 +494,9 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
 
     def __init__(self, resource, submission_type, job_spec=None, resurrection=False):
         external_versions.check("datalad", min_version="0.13")
-        super(DataladOrchestrator, self).__init__(resource, submission_type, job_spec, resurrection=resurrection)
+        super(DataladOrchestrator, self).__init__(
+            resource, submission_type, job_spec, resurrection=resurrection
+        )
 
         from datalad.api import Dataset
 
@@ -481,7 +509,8 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
         else:
             if self.ds.repo.dirty:
                 raise OrchestratorError(
-                    "Local dataset {} is dirty. " "Save or discard uncommitted changes".format(self.ds.path)
+                    "Local dataset {} is dirty. "
+                    "Save or discard uncommitted changes".format(self.ds.path)
                 )
             self._configure_repo()
             self.head = self.ds.repo.get_hexsha()
@@ -529,7 +558,10 @@ class DataladOrchestrator(Orchestrator, metaclass=abc.ABCMeta):
 
     def _configure_repo(self):
         gitignore = op.join(self.ds.path, ".reproman", "jobs", ".gitignore")
-        write_update(gitignore, ("# Automatically created by ReproMan.\n" "# Do not change manually.\n" "log.*\n"))
+        write_update(
+            gitignore,
+            ("# Automatically created by ReproMan.\n" "# Do not change manually.\n" "log.*\n"),
+        )
 
         gitattrs = op.join(self.ds.path, ".reproman", "jobs", ".gitattributes")
         write_update(
@@ -570,7 +602,10 @@ class PrepareRemotePlainMixin(object):
 
 def _format_ssh_url(user, host, port, path):
     return "ssh://{user}{host}{port}{path}".format(
-        user=user + "@" if user else "", host=host, port=":" + str(port) if port is not None else "", path=path
+        user=user + "@" if user else "",
+        host=host,
+        port=":" + str(port) if port is not None else "",
+        path=path,
     )
 
 
@@ -615,7 +650,9 @@ class PrepareRemoteDataladMixin(object):
                     "git cat-file -p {}:{}".format(
                         self.job_refname,
                         # FIXME: How to handle subjobs?
-                        op.relpath(op.join(self.meta_directory, "status.0"), self.working_directory),
+                        op.relpath(
+                            op.join(self.meta_directory, "status.0"), self.working_directory
+                        ),
                     )
                 )
             except OrchestratorError as exc:
@@ -630,9 +667,13 @@ class PrepareRemoteDataladMixin(object):
         """Like Orchestrator.get_failed_subjobs, but inspect the job's git ref if needed."""
         failed = super(DataladOrchestrator, self).get_failed_subjobs()
         if not failed:
-            meta_tree = "{}:{}".format(self.job_refname, op.relpath(self.meta_directory, self.working_directory))
+            meta_tree = "{}:{}".format(
+                self.job_refname, op.relpath(self.meta_directory, self.working_directory)
+            )
             try:
-                failed_ref = self._execute_in_wdir("git ls-tree {}".format(op.join(meta_tree, "failed")))
+                failed_ref = self._execute_in_wdir(
+                    "git ls-tree {}".format(op.join(meta_tree, "failed"))
+                )
             except OrchestratorError as exc:
                 # Most likely, there were no failed subjobs and the "failed"
                 # tree just doesn't exist. Let's see if we can find the meta
@@ -648,26 +689,42 @@ class PrepareRemoteDataladMixin(object):
         return failed
 
     def _assert_clean_repo(self, cwd=None):
-        cmd = ["git", "status", "--porcelain", "--ignore-submodules=all", "--untracked-files=normal"]
+        cmd = [
+            "git",
+            "status",
+            "--porcelain",
+            "--ignore-submodules=all",
+            "--untracked-files=normal",
+        ]
         out, _ = self.session.execute_command(cmd, cwd=cwd or self.working_directory)
         if out:
-            raise OrchestratorError("Remote repository {} is dirty".format(cwd or self.working_directory))
+            raise OrchestratorError(
+                "Remote repository {} is dirty".format(cwd or self.working_directory)
+            )
 
     def _checkout_target(self):
         self._assert_clean_repo()
         target_commit = self.head
         self._execute_in_wdir(
             "git rev-parse --verify {}^{{commit}}".format(target_commit),
-            err_msg=("Target commit wasn't found in remote repository {}".format(self.working_directory)),
+            err_msg=(
+                "Target commit wasn't found in remote repository {}".format(self.working_directory)
+            ),
         )
 
         head_commit = self._execute_in_wdir(
             "git rev-parse HEAD",
-            err_msg=("Could not find current commit in remote repository {}".format(self.working_directory)),
+            err_msg=(
+                "Could not find current commit in remote repository {}".format(
+                    self.working_directory
+                )
+            ),
         )
 
         if target_commit != head_commit.strip():
-            lgr.info("Checking out %s in remote repository %s", target_commit, self.working_directory)
+            lgr.info(
+                "Checking out %s in remote repository %s", target_commit, self.working_directory
+            )
             self._execute_in_wdir("git checkout {}".format(target_commit))
 
     def _fix_up_dataset(self):
@@ -689,7 +746,9 @@ class PrepareRemoteDataladMixin(object):
         # to stay, we should avoid this call for non-annex datasets.
         lgr.info("Adjusting state of remote dataset")
         self._execute_in_wdir(["git", "annex", "init"])
-        for res in self._execute_datalad_json_command(["subdatasets", "--fulfilled=true", "--recursive"]):
+        for res in self._execute_datalad_json_command(
+            ["subdatasets", "--fulfilled=true", "--recursive"]
+        ):
             cwd = res["path"]
             self._assert_clean_repo(cwd=cwd)
             lgr.debug("Adjusting state of %s", cwd)
@@ -713,7 +772,9 @@ class PrepareRemoteDataladMixin(object):
         if not repo.get_active_branch():
             # push() fails when HEAD is detached (assuming no additional
             # configuration).
-            raise OrchestratorError("You must be on a branch to use the {} orchestrator".format(self.name))
+            raise OrchestratorError(
+                "You must be on a branch to use the {} orchestrator".format(self.name)
+            )
         if not self.session.exists(self.root_directory):
             self.session.mkdir(self.root_directory, parents=True)
 
@@ -836,7 +897,11 @@ class FetchPlainMixin(object):
             for f in ["status", "stdout", "stderr"]:
                 self.session.get(
                     op.join(self.meta_directory, "{}.{:d}".format(f, idx)),
-                    op.join(self.local_directory, op.relpath(self.meta_directory, self.working_directory), ""),
+                    op.join(
+                        self.local_directory,
+                        op.relpath(self.meta_directory, self.working_directory),
+                        "",
+                    ),
                 )
 
         failed = self.get_failed_subjobs()
@@ -888,7 +953,8 @@ def head_at(dataset, commit):
             # relies on plain .git/ directories.
             if dataset.repo.dirty:
                 raise OrchestratorError(
-                    "Refusing to move HEAD due to submodule state change " "within {}".format(dataset.path)
+                    "Refusing to move HEAD due to submodule state change "
+                    "within {}".format(dataset.path)
                 )
             yield moved
         finally:
@@ -1029,7 +1095,13 @@ class FetchDataladRunMixin(object):
 
                 ref = self.job_refname
                 if moved:
-                    lgr.info("Results stored on %s. " "Bring them into this branch with " "'git merge %s'", ref, ref)
+                    lgr.info(
+                        "Results stored on %s. "
+                        "Bring them into this branch with "
+                        "'git merge %s'",
+                        ref,
+                        ref,
+                    )
                 self.ds.repo.update_ref(ref, "HEAD")
 
 
@@ -1061,7 +1133,9 @@ class PlainOrchestrator(PrepareRemotePlainMixin, FetchPlainMixin, Orchestrator):
         return wdir or op.join(self.root_directory, self.jobid)
 
 
-class DataladPairOrchestrator(PrepareRemoteDataladMixin, FetchDataladPairMixin, DataladOrchestrator):
+class DataladPairOrchestrator(
+    PrepareRemoteDataladMixin, FetchDataladPairMixin, DataladOrchestrator
+):
     """Execute command on remote dataset sibling.
 
     **Preparing the remote dataset** The default `working_directory` is the a
@@ -1108,7 +1182,9 @@ class DataladNoRemoteOrchestrator(DataladOrchestrator):
         if not isinstance(self.session, ShellSession):
             raise OrchestratorError(
                 "The {} orchestrator must be used with a local session, "
-                "but session for resource {} is {}".format(self.name, self.resource.name, type(self.session).__name__)
+                "but session for resource {} is {}".format(
+                    self.name, self.resource.name, type(self.session).__name__
+                )
             )
 
         inputs = list(self.get_inputs())
@@ -1123,7 +1199,9 @@ class DataladNoRemoteOrchestrator(DataladOrchestrator):
             on_remote_finish(self.resource, failed)
 
 
-class DataladPairRunOrchestrator(PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator):
+class DataladPairRunOrchestrator(
+    PrepareRemoteDataladMixin, FetchDataladRunMixin, DataladOrchestrator
+):
     """Execute command in remote dataset sibling and capture results locally as
     run record.
 
@@ -1139,7 +1217,9 @@ class DataladPairRunOrchestrator(PrepareRemoteDataladMixin, FetchDataladRunMixin
     name = "datalad-pair-run"
 
 
-class DataladLocalRunOrchestrator(PrepareRemotePlainMixin, FetchDataladRunMixin, DataladOrchestrator):
+class DataladLocalRunOrchestrator(
+    PrepareRemotePlainMixin, FetchDataladRunMixin, DataladOrchestrator
+):
     """Execute command in a plain remote directory and capture results locally
     as run record.
 

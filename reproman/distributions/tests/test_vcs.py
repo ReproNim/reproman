@@ -38,7 +38,9 @@ svn_repo = svn_repo_fixture()
 
 
 # TODO: Move to reproman.test.utils and use in other tracer tests.
-def assert_distributions(result, expected_length=None, which=0, expected_unknown=None, expected_subset=None):
+def assert_distributions(
+    result, expected_length=None, which=0, expected_unknown=None, expected_subset=None
+):
     """Wrap common assertions about identified distributions.
 
     Parameters
@@ -131,7 +133,9 @@ def test_git_repo(git_repo):
             expected_unknown={COMMON_SYSTEM_PATH},
             expected_subset={
                 "name": "git",
-                "packages": [{"files": [op.relpath(p) for p in paths], "path": git_repo, "branch": branch}],
+                "packages": [
+                    {"files": [op.relpath(p) for p in paths], "path": git_repo, "branch": branch}
+                ],
             },
         )
 
@@ -202,7 +206,10 @@ def test_git_repo_remotes(git_repo_pair):
                     "path": repo_local,
                     "branch": branch,
                     "tracked_remote": "origin",
-                    "remotes": {"origin": {"url": repo_remote, "contains": True}, "fakeremote": {"url": "fakepath"}},
+                    "remotes": {
+                        "origin": {"url": repo_remote, "contains": True},
+                        "fakeremote": {"url": "fakepath"},
+                    },
                 }
             ],
         },
@@ -252,7 +259,10 @@ def test_git_install_no_remote():
 def test_git_install_skip_existing_nongit(path=None):
     with swallow_logs(new_level=logging.WARNING) as log:
         dist_dir = GitDistribution(
-            name="git", packages=[GitRepo(path=path, remotes={"origin": {"url": "doesnt-matter", "contains": True}})]
+            name="git",
+            packages=[
+                GitRepo(path=path, remotes={"origin": {"url": "doesnt-matter", "contains": True}})
+            ],
         )
         dist_dir.install_packages()
         assert "not a Git repository; skipping" in log.out
@@ -261,7 +271,10 @@ def test_git_install_skip_existing_nongit(path=None):
         dist_dir = GitDistribution(
             name="git",
             packages=[
-                GitRepo(path=op.join(path, "foo"), remotes={"origin": {"url": "doesnt-matter", "contains": True}})
+                GitRepo(
+                    path=op.join(path, "foo"),
+                    remotes={"origin": {"url": "doesnt-matter", "contains": True}},
+                )
             ],
         )
         dist_dir.install_packages()
@@ -455,7 +468,11 @@ def test_svn(svn_repo):
     uuid_file = os.path.join(svn_repo_root, "db", "uuid")
     uuid = open(uuid_file).readlines()[0].strip()
     tracer = VCSTracer()
-    assert_distributions(tracer.identify_distributions([svn_file]), expected_length=1, expected_subset={"name": "svn"})
+    assert_distributions(
+        tracer.identify_distributions([svn_file]),
+        expected_length=1,
+        expected_subset={"name": "svn"},
+    )
     svn_repo = list(tracer.identify_distributions([svn_file]))[0][0].packages[0]
     assert svn_repo.files == ["foo"]
     assert svn_repo.uuid == uuid

@@ -17,4 +17,7 @@ from ...tests.utils import eq_
 def test_strip_arg_from_argv():
     eq_(strip_arg_from_argv(["-s", "value"], "value", ("-s",)), [])
     eq_(strip_arg_from_argv(["-s", "value"], "value", ("-s", "--long-s")), [])
-    eq_(strip_arg_from_argv(["cmd", "-s", "value", "--more"], "value", ("-s", "--long-s")), ["cmd", "--more"])
+    eq_(
+        strip_arg_from_argv(["cmd", "-s", "value", "--more"], "value", ("-s", "--long-s")),
+        ["cmd", "--more"],
+    )

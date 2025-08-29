@@ -63,7 +63,11 @@ class Singularity(Resource):
         """Singularity 3.x changed from "instance.cmd" to just "instance cmd"
         This is a helper to centralize execution
         """
-        cmd = ["instance.%s" % cmd] if external_versions["cmd:singularity"] < "3" else ["instance", cmd]
+        cmd = (
+            ["instance.%s" % cmd]
+            if external_versions["cmd:singularity"] < "3"
+            else ["instance", cmd]
+        )
         return self._runner.run(["singularity"] + cmd + (args or []), **kwargs)
 
     def create(self):
@@ -82,7 +86,9 @@ class Singularity(Resource):
             # Start the container instance.
             # NOTE: Logging stdout and stderr hangs the run call, so we
             # disable the logging in the run call below.
-            self._run_instance_command("start", [self.image, self.name], log_stdout=False, log_stderr=False)
+            self._run_instance_command(
+                "start", [self.image, self.name], log_stdout=False, log_stderr=False
+            )
             info = self.get_instance_info()
 
         # Update status
@@ -166,7 +172,9 @@ class SingularitySession(POSIXSession):
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None, with_shell=True):
-        command = self._prefix_command(command_as_string(command), env=env, cwd=cwd, with_shell=with_shell)
+        command = self._prefix_command(
+            command_as_string(command), env=env, cwd=cwd, with_shell=with_shell
+        )
         lgr.debug("Running command %r", command)
         stdout, stderr = self._runner.run(
             "singularity exec instance://{} {}".format(self.name, command), expect_fail=True
@@ -181,7 +189,9 @@ class SingularitySession(POSIXSession):
 
     @borrowdoc(Session)
     def put(self, src_path, dest_path, uid=-1, gid=-1):
-        self.transfer_recursive(src_path, dest_path, os.path.isdir, os.listdir, self.mkdir, self._put_file)
+        self.transfer_recursive(
+            src_path, dest_path, os.path.isdir, os.listdir, self.mkdir, self._put_file
+        )
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, recursive=True)
@@ -193,7 +203,9 @@ class SingularitySession(POSIXSession):
 
     @borrowdoc(Session)
     def get(self, src_path, dest_path=None, uid=-1, gid=-1):
-        self.transfer_recursive(src_path, dest_path, self.isdir, self.listdir, os.mkdir, self._get_file)
+        self.transfer_recursive(
+            src_path, dest_path, self.isdir, self.listdir, os.mkdir, self._get_file
+        )
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, remote=False, recursive=True)

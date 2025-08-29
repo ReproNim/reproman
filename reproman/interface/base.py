@@ -81,9 +81,14 @@ def alter_interface_docs_for_api(docs):
     docs = re.sub(r"\|\| CMDLINE \>\>.*\<\< CMDLINE \|\|", "", docs, flags=re.MULTILINE | re.DOTALL)
     # clean cmdline in-line bits
     docs = re.sub(r"\[CMD:\s[^\[\]]*\sCMD\]", "", docs, flags=re.MULTILINE | re.DOTALL)
-    docs = re.sub(r"\[PY:\s([^\[\]]*)\sPY\]", lambda match: match.group(1), docs, flags=re.MULTILINE)
     docs = re.sub(
-        r"\|\| PYTHON \>\>(.*)\<\< PYTHON \|\|", lambda match: match.group(1), docs, flags=re.MULTILINE | re.DOTALL
+        r"\[PY:\s([^\[\]]*)\sPY\]", lambda match: match.group(1), docs, flags=re.MULTILINE
+    )
+    docs = re.sub(
+        r"\|\| PYTHON \>\>(.*)\<\< PYTHON \|\|",
+        lambda match: match.group(1),
+        docs,
+        flags=re.MULTILINE | re.DOTALL,
     )
     docs = re.sub(
         r"\|\| REFLOW \>\>\n(.*)\<\< REFLOW \|\|",
@@ -105,9 +110,14 @@ def alter_interface_docs_for_cmdline(docs):
     docs = re.sub(r"\|\| PYTHON \>\>.*\<\< PYTHON \|\|", "", docs, flags=re.MULTILINE | re.DOTALL)
     # clean cmdline in-line bits
     docs = re.sub(r"\[PY:\s[^\[\]]*\sPY\]", "", docs, flags=re.MULTILINE | re.DOTALL)
-    docs = re.sub(r"\[CMD:\s([^\[\]]*)\sCMD\]", lambda match: match.group(1), docs, flags=re.MULTILINE)
     docs = re.sub(
-        r"\|\| CMDLINE \>\>(.*)\<\< CMDLINE \|\|", lambda match: match.group(1), docs, flags=re.MULTILINE | re.DOTALL
+        r"\[CMD:\s([^\[\]]*)\sCMD\]", lambda match: match.group(1), docs, flags=re.MULTILINE
+    )
+    docs = re.sub(
+        r"\|\| CMDLINE \>\>(.*)\<\< CMDLINE \|\|",
+        lambda match: match.group(1),
+        docs,
+        flags=re.MULTILINE | re.DOTALL,
     )
     # remove :role:`...` RST markup for cmdline docs
     docs = re.sub(
@@ -126,7 +136,9 @@ def alter_interface_docs_for_cmdline(docs):
     # clean up sphinx API refs
     docs = re.sub(r"\~reproman\.api\.\S*", lambda match: "`{0}`".format(match.group(0)[13:]), docs)
     # Remove RST paragraph markup
-    docs = re.sub(r"^.. \S+::", lambda match: match.group(0)[3:-2].upper(), docs, flags=re.MULTILINE)
+    docs = re.sub(
+        r"^.. \S+::", lambda match: match.group(0)[3:-2].upper(), docs, flags=re.MULTILINE
+    )
     docs = re.sub(
         r"\|\| REFLOW \>\>\n(.*)\<\< REFLOW \|\|",
         lambda match: textwrap.fill(match.group(1)),
@@ -172,7 +184,9 @@ def update_docstring_with_parameters(func, params, prefix=None, suffix=None):
             orig_docs = param._doc
             param._doc = alter_interface_docs_for_api(param._doc)
             doc += param.get_autodoc(
-                arg, default=defaults[defaults_idx] if defaults_idx >= 0 else None, has_default=defaults_idx >= 0
+                arg,
+                default=defaults[defaults_idx] if defaults_idx >= 0 else None,
+                has_default=defaults_idx >= 0,
             )
             param._doc = orig_docs
             doc += "\n"

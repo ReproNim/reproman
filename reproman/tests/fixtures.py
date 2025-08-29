@@ -20,7 +20,9 @@ from reproman.tests.skip import skipif
 from reproman.utils import chpwd
 
 
-def get_docker_fixture(image, portmaps={}, name=None, custom_params={}, scope="function", seccomp_unconfined=False):
+def get_docker_fixture(
+    image, portmaps={}, name=None, custom_params={}, scope="function", seccomp_unconfined=False
+):
     """Produce a fixture which starts/stops a docker container
 
     It should be called to produce and assign within the scope under some name,

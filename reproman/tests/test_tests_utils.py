@@ -277,7 +277,9 @@ def test_assert_Xwd_unchanged_ok_chdir(func):
 
     with swallow_logs() as cml:
         do_chdir_value_error()
-        eq_(orig_cwd, os.getcwd(), "assert_cwd_unchanged didn't return us back to cwd %s" % orig_cwd)
+        eq_(
+            orig_cwd, os.getcwd(), "assert_cwd_unchanged didn't return us back to cwd %s" % orig_cwd
+        )
         eq_(orig_pwd, getpwd(), "assert_cwd_unchanged didn't return us back to cwd %s" % orig_pwd)
         assert_not_in("Mitigating and changing back", cml.out)
 
@@ -394,7 +396,9 @@ def test_without_http_proxy():
 
     with patch.dict("os.environ", {"https_proxy": "http://127.0.0.1:9/"}):
         check(1)
-    with patch.dict("os.environ", {"http_proxy": "http://127.0.0.1:9/", "https_proxy": "http://127.0.0.1:9/"}):
+    with patch.dict(
+        "os.environ", {"http_proxy": "http://127.0.0.1:9/", "https_proxy": "http://127.0.0.1:9/"}
+    ):
         check(1)
 
 
@@ -446,11 +450,17 @@ def test_assert_is_subset_recur():
     assert_is_subset_recur({}, {"a": 1}, [dict])
     assert_raises(AssertionError, assert_is_subset_recur, {"a": 1}, {"b": 2}, [dict])
     assert_is_subset_recur({"a": {"z": 1}}, {"a": {"y": 2, "z": 1}}, [dict])
-    assert_raises(AssertionError, assert_is_subset_recur, {"a": {"y": 2, "z": 1}}, {"a": {"z": 1}}, [dict])
+    assert_raises(
+        AssertionError, assert_is_subset_recur, {"a": {"y": 2, "z": 1}}, {"a": {"z": 1}}, [dict]
+    )
     assert_is_subset_recur({"a": {"z": [1]}}, {"a": {"y": 2, "z": [1]}}, [dict])
-    assert_raises(AssertionError, assert_is_subset_recur, {"a": {"y": 2, "z": [1]}}, {"a": {"z": [1]}}, [dict])
+    assert_raises(
+        AssertionError, assert_is_subset_recur, {"a": {"y": 2, "z": [1]}}, {"a": {"z": [1]}}, [dict]
+    )
     assert_is_subset_recur({"a": {"z": [1]}}, {"a": {"z": [1]}}, [])
-    assert_raises(AssertionError, assert_is_subset_recur, {"a": {"z": [1]}}, {"a": {"y": 2, "z": [1]}}, [])
+    assert_raises(
+        AssertionError, assert_is_subset_recur, {"a": {"z": [1]}}, {"a": {"y": 2, "z": [1]}}, []
+    )
     assert_is_subset_recur([1, 2], [3, 2, 1], [list])
     assert_raises(AssertionError, assert_is_subset_recur, [3, 2, 1], [1, 2], [list])
     assert_is_subset_recur([3, [2]], [3, [2, 1]], [list])

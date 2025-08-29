@@ -58,7 +58,10 @@ class BackendParameters(Interface):
         backends = backends or discover_types()
         for backend, cls in get_resource_classes(backends):
             param_doc = "\n".join(
-                ["  {}: {}".format(p, pdoc) for p, pdoc in sorted(get_resource_backends(cls).items())]
+                [
+                    "  {}: {}".format(p, pdoc)
+                    for p, pdoc in sorted(get_resource_backends(cls).items())
+                ]
             )
             if param_doc:
                 out = "Backend parameters for '{}'\n{}".format(backend, param_doc)

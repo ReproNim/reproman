@@ -151,7 +151,10 @@ class Diff(Interface):
                 if not pkg.compare(dist_1, mode="satisfied_by"):
                     unsatisfied_packages.append(pkg)
             if unsatisfied_packages:
-                dist_res = {"pkg_type": supported_distributions[dist_type], "packages": unsatisfied_packages}
+                dist_res = {
+                    "pkg_type": supported_distributions[dist_type],
+                    "packages": unsatisfied_packages,
+                }
                 result["distributions"].append(dist_res)
 
         files1 = set(env_1.files)

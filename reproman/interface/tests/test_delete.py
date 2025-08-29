@@ -45,7 +45,9 @@ def mock_get_manager():
 def mock_docker_client():
     mock = MagicMock()
     mock.return_value = MagicMock(
-        containers=lambda all: [{"Id": "326b0fdfbf838", "Names": ["/my-resource"], "State": "running"}]
+        containers=lambda all: [
+            {"Id": "326b0fdfbf838", "Names": ["/my-resource"], "State": "running"}
+        ]
     )
     return mock
 
@@ -66,7 +68,9 @@ def test_delete_interface():
 
         calls = [
             call(base_url="tcp://127.0.0.1:2375"),
-            call().remove_container({"State": "running", "Id": "326b0fdfbf838", "Names": ["/my-resource"]}, force=True),
+            call().remove_container(
+                {"State": "running", "Id": "326b0fdfbf838", "Names": ["/my-resource"]}, force=True
+            ),
         ]
         client.assert_has_calls(calls, any_order=True)
         assert_in("Deleted the environment my-resource", log.lines)

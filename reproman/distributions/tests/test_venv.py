@@ -137,7 +137,9 @@ def test_venv_identify_distributions(venv_test_dir):
                     "system_site_packages": False,
                 },
                 {
-                    "packages": [{"files": [libpaths["filters.py"]], "name": "attrs", "editable": False}],
+                    "packages": [
+                        {"files": [libpaths["filters.py"]], "name": "attrs", "editable": False}
+                    ],
                     "system_site_packages": False,
                 },
             ]
@@ -160,7 +162,11 @@ def test_venv_system_site_packages(venv_test_dir):
         # We won't do detailed inspection of this because its structure depends
         # on a system we don't control, but we still want to make sure that
         # VenvEnvironment's system_site_packages attribute is set correctly.
-        expect = {"environments": [{"packages": [{"files": [], "name": "nmtest"}], "system_site_packages": True}]}
+        expect = {
+            "environments": [
+                {"packages": [{"files": [], "name": "nmtest"}], "system_site_packages": True}
+            ]
+        }
         assert_is_subset_recur(expect, attr.asdict(vdist), [dict, list])
 
 
@@ -189,7 +195,9 @@ def test_venv_install(venv_test_dir, tmpdir):
     dist.install_packages()
 
     dists_installed = list(
-        tracer.identify_distributions([op.join(tmpdir, "venv0", paths[0]), op.join(tmpdir, "venv1", paths[1])])
+        tracer.identify_distributions(
+            [op.join(tmpdir, "venv0", paths[0]), op.join(tmpdir, "venv1", paths[1])]
+        )
     )
     assert len(dists_installed) == 1
     dist_installed = dists_installed[0][0]
@@ -229,7 +237,15 @@ def test_venv_pyc(venv_test_dir, tmpdir):
     assert len(distributions) == 1
     expect = {
         "environments": [
-            {"packages": [{"files": [op.join(venv_path, "exceptions.py")], "name": "attrs", "editable": False}]}
+            {
+                "packages": [
+                    {
+                        "files": [op.join(venv_path, "exceptions.py")],
+                        "name": "attrs",
+                        "editable": False,
+                    }
+                ]
+            }
         ]
     }
     assert_is_subset_recur(expect, attr.asdict(distributions[0]), [dict, list])
@@ -244,7 +260,9 @@ def test_venv_install_noop():
             VenvEnvironment(
                 path="/tmp/doesnt/matter/venv",
                 python_version="3.7",
-                packages=[VenvPackage(name="imeditable", version="0.1.0", editable=True, local=True)],
+                packages=[
+                    VenvPackage(name="imeditable", version="0.1.0", editable=True, local=True)
+                ],
             )
         ],
     )

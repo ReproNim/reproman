@@ -280,11 +280,17 @@ def test_assure_dict_from_str():
     assert_equal(assure_dict_from_str(""), None)
     assert_equal(assure_dict_from_str({}), None)
     assert_equal(
-        assure_dict_from_str("__ac_name={user}\n__ac_password={password}\nsubmit=Log in\ncookies_enabled="),
+        assure_dict_from_str(
+            "__ac_name={user}\n__ac_password={password}\nsubmit=Log in\ncookies_enabled="
+        ),
         dict(__ac_name="{user}", __ac_password="{password}", cookies_enabled="", submit="Log in"),
     )
     assert_equal(
-        assure_dict_from_str(dict(__ac_name="{user}", __ac_password="{password}", cookies_enabled="", submit="Log in")),
+        assure_dict_from_str(
+            dict(
+                __ac_name="{user}", __ac_password="{password}", cookies_enabled="", submit="Log in"
+            )
+        ),
         dict(__ac_name="{user}", __ac_password="{password}", cookies_enabled="", submit="Log in"),
     )
 
@@ -323,7 +329,13 @@ def test_find_files():
         ok_startswith(basename(f), "test_")
 
 
-@with_tree(tree={".git": {"1": "2"}, "d1": {".git": "possibly a link from submodule"}, "git": "just a file"})
+@with_tree(
+    tree={
+        ".git": {"1": "2"},
+        "d1": {".git": "possibly a link from submodule"},
+        "git": "just a file",
+    }
+)
 def test_find_files_exclude_vcs(repo=None):
     ff = find_files(".*", repo, dirs=True)
     files = list(ff)
@@ -483,7 +495,12 @@ def test_cmd_err_filter():
 
 
 def test_join_sequence_of_dicts():
-    assert join_sequence_of_dicts(({"a": 1, "b": 2}, {"c": 3}, {"d": 4})) == {"a": 1, "b": 2, "c": 3, "d": 4}
+    assert join_sequence_of_dicts(({"a": 1, "b": 2}, {"c": 3}, {"d": 4})) == {
+        "a": 1,
+        "b": 2,
+        "c": 3,
+        "d": 4,
+    }
     with pytest.raises(RuntimeError):
         join_sequence_of_dicts(({"a": 1, "b": 2}, {"b": 3}, {"d": 4}))
 
@@ -514,7 +531,9 @@ def test_execute_command_batch():
     with pytest.raises(ValueError):
         list(cmd_gen)
     # Now let's raise an exception
-    cmd_gen = execute_command_batch(session, ["ValueError"], args, lambda x: isinstance(x, ValueError))
+    cmd_gen = execute_command_batch(
+        session, ["ValueError"], args, lambda x: isinstance(x, ValueError)
+    )
     for _, _, err in cmd_gen:
         assert isinstance(err, ValueError)
 
@@ -633,11 +652,19 @@ def test_write_update(tmpdir):
     "case",
     [
         {"label": "full-py2", "value": "/tmp/a/b/c/d.pyc", "expected": "/tmp/a/b/c/d.py"},
-        {"label": "full", "value": "/tmp/a/b/c/__pycache__/d.cpython-35.pyc", "expected": "/tmp/a/b/c/d.py"},
+        {
+            "label": "full",
+            "value": "/tmp/a/b/c/__pycache__/d.cpython-35.pyc",
+            "expected": "/tmp/a/b/c/d.py",
+        },
         {"label": "relative-py2", "value": "d.pyc", "expected": "d.py"},
         {"label": "relative-py2-pyo", "value": "d.pyo", "expected": "d.py"},
         {"label": "relative", "value": "__pycache__/d.cpython-35.pyc", "expected": "d.py"},
-        {"label": "relative-pyo", "value": "__pycache__/d.cpython-35.opt-1.pyc", "expected": "d.py"},
+        {
+            "label": "relative-pyo",
+            "value": "__pycache__/d.cpython-35.opt-1.pyc",
+            "expected": "d.py",
+        },
         {"label": "not pyc", "value": "not a pycache", "expected": None},
         {"label": "empty", "value": "", "expected": None},
     ],

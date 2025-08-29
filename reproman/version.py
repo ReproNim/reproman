@@ -24,7 +24,10 @@ if lexists(opj(projdir, ".git")):
         from os.path import dirname
 
         git = Popen(
-            ["git", "describe", "--abbrev=4", "--dirty", "--match", r"[0-9]*\.*"], stdout=PIPE, stderr=PIPE, cwd=projdir
+            ["git", "describe", "--abbrev=4", "--dirty", "--match", r"[0-9]*\.*"],
+            stdout=PIPE,
+            stderr=PIPE,
+            cwd=projdir,
         )
         if git.wait() != 0:
             raise OSError("Could not run git describe")

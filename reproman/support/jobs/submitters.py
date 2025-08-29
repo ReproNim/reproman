@@ -294,7 +294,9 @@ class SlurmSubmitter(Submitter):
     @borrowdoc(Submitter)
     def status(self):
         try:
-            stat_out, _ = self.session.execute_command("scontrol show jobid={}".format(self.submission_id))
+            stat_out, _ = self.session.execute_command(
+                "scontrol show jobid={}".format(self.submission_id)
+            )
         except CommandError:
             return "unknown", None
 

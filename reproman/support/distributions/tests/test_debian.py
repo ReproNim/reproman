@@ -245,7 +245,9 @@ skype:i386:
                     "sources": [
                         {
                             "priority": "500",
-                            "source": "http://us.archive.ubuntu.com/ubuntu " "xenial-updates/main amd64 " "Packages",
+                            "source": "http://us.archive.ubuntu.com/ubuntu "
+                            "xenial-updates/main amd64 "
+                            "Packages",
                         }
                     ],
                     "version": "1.0.2g-1ubuntu4.8",
@@ -256,7 +258,9 @@ skype:i386:
                     "sources": [
                         {
                             "priority": "500",
-                            "source": "http://security.ubuntu.com/ubuntu " "xenial-security/main amd64 " "Packages",
+                            "source": "http://security.ubuntu.com/ubuntu "
+                            "xenial-security/main amd64 "
+                            "Packages",
                         }
                     ],
                     "version": "1.0.2g-1ubuntu4.6",
@@ -273,7 +277,9 @@ skype:i386:
                     "sources": [
                         {
                             "priority": "500",
-                            "source": "http://us.archive.ubuntu.com/ubuntu " "xenial/main amd64 " "Packages",
+                            "source": "http://us.archive.ubuntu.com/ubuntu "
+                            "xenial/main amd64 "
+                            "Packages",
                         }
                     ],
                     "version": "1.0.2g-1ubuntu4",
@@ -386,7 +392,12 @@ def test_parse_dpkgquery_line():
     for line, expected in [
         (
             "zlib1g:i386: /lib/i386-linux-gnu/libz.so.1.2.8",
-            {"name": "zlib1g", "architecture": "i386", "path": "/lib/i386-linux-gnu/libz.so.1.2.8", "pkgs_rest": None},
+            {
+                "name": "zlib1g",
+                "architecture": "i386",
+                "path": "/lib/i386-linux-gnu/libz.so.1.2.8",
+                "pkgs_rest": None,
+            },
         ),
         (
             "fail2ban: /usr/bin/fail2ban-client",
@@ -394,7 +405,11 @@ def test_parse_dpkgquery_line():
         ),
         (
             "fsl-5.0-eddy-nonfree, fsl-5.0-core: /usr/lib/fsl/5.0",
-            {"name": "fsl-5.0-eddy-nonfree", "path": "/usr/lib/fsl/5.0", "pkgs_rest": ", fsl-5.0-core"},
+            {
+                "name": "fsl-5.0-eddy-nonfree",
+                "path": "/usr/lib/fsl/5.0",
+                "pkgs_rest": ", fsl-5.0-core",
+            },
         ),
         ("pkg: path,with,commas", {"name": "pkg", "path": "path,with,commas", "pkgs_rest": None}),
         ("diversion by dash from: /bin/sh", None),

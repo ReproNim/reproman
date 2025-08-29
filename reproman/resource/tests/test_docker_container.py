@@ -21,7 +21,9 @@ from reproman.tests.fixtures import get_docker_fixture
 from pytest import raises
 
 
-setup_ubuntu = get_docker_fixture(TEST_SSH_DOCKER_DIGEST, scope="module", name="reproman-test-ssh-container")
+setup_ubuntu = get_docker_fixture(
+    TEST_SSH_DOCKER_DIGEST, scope="module", name="reproman-test-ssh-container"
+)
 
 
 @mark.skipif_no_docker_dependencies
@@ -45,7 +47,11 @@ def test_dockercontainer_class(resman):
             ],
             create_container=lambda name, image, stdin_open, tty, command: {"Id": "18b31b30e3a5"},
             exec_inspect=lambda id: {"ExitCode": 0},
-            exec_start=lambda exec_id, stream: [b"stdout line 1", b"stdout line 2", b"stdout line 3"],
+            exec_start=lambda exec_id, stream: [
+                b"stdout line 1",
+                b"stdout line 2",
+                b"stdout line 3",
+            ],
         )
 
         # Test connecting when a resource doesn't exist.
@@ -82,10 +88,17 @@ def test_dockercontainer_class(resman):
         try:
             list(resource.create())
         except Exception as e:
-            assert e.args[0] == "Container 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
+            assert (
+                e.args[0]
+                == "Container 'existing-test-resource' (ID 326b0fdfbf83) already exists in Docker"
+            )
 
         # Test creating resource.
-        config = {"name": "new-test-resource", "type": "docker-container", "engine_url": "tcp://127.0.0.1:2375"}
+        config = {
+            "name": "new-test-resource",
+            "type": "docker-container",
+            "engine_url": "tcp://127.0.0.1:2375",
+        }
         resource = resman.factory(config)
         resource.connect()
         results = merge_dicts(resource.create())

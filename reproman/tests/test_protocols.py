@@ -13,7 +13,15 @@ Note: DryRunProtocol and NullProtocol are already (kind of) tested within
 
 import os
 from os.path import normpath
-from .utils import ok_, assert_is, assert_equal, assert_in, assert_is_instance, assert_true, assert_false
+from .utils import (
+    ok_,
+    assert_is,
+    assert_equal,
+    assert_in,
+    assert_is_instance,
+    assert_true,
+    assert_false,
+)
 
 from ..support.protocol import (
     DryRunProtocol,
@@ -112,8 +120,14 @@ def test_ExecutionTimeProtocol(path1=None, path2=None):
 
     # kwargs needs to be in protocol, but order isn't relevant:
     ok_(
-        ("kwargs={'odbt': <class 'git.db.GitCmdObjectDB'>, 'mkdir': True}" in timer_protocol[2]["command"][2])
-        or ("kwargs={'mkdir': True, 'odbt': <class 'git.db.GitCmdObjectDB'>}" in timer_protocol[2]["command"][2])
+        (
+            "kwargs={'odbt': <class 'git.db.GitCmdObjectDB'>, 'mkdir': True}"
+            in timer_protocol[2]["command"][2]
+        )
+        or (
+            "kwargs={'mkdir': True, 'odbt': <class 'git.db.GitCmdObjectDB'>}"
+            in timer_protocol[2]["command"][2]
+        )
     )
 
     ok_(timer_protocol[2]["end"] >= timer_protocol[2]["start"])

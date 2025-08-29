@@ -59,7 +59,9 @@ def ls_fn(resource_manager):
         skipif.no_docker_dependencies()
         with contextlib.ExitStack() as stack:
             stack.enter_context(patch("docker.APIClient"))
-            stack.enter_context(patch("reproman.interface.ls.get_manager", return_value=resource_manager))
+            stack.enter_context(
+                patch("reproman.interface.ls.get_manager", return_value=resource_manager)
+            )
             return ls(*args, **kwargs)
 
     return fn

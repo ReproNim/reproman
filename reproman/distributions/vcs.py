@@ -201,7 +201,9 @@ class GitDistribution(VCSDistribution):
         shim = GitRepoShim.get_at_dirpath(session, repo.path)
         if shim is None:
             # TODO: We could proceed if the directory is empty.
-            lgr.warning("Directory '%s' exists, " "but is not a Git repository; skipping", repo.path)
+            lgr.warning(
+                "Directory '%s' exists, " "but is not a Git repository; skipping", repo.path
+            )
             return
         if shim.root_hexsha != repo.root_hexsha:
             lgr.warning("Root hexsha in '%s' doesn't match " "expected hexsha; skipping", repo.path)
@@ -370,7 +372,10 @@ class SVNRepoShim(GitSVNRepoShim):
     def _ls_files_command(self):
         # tricky -- we need to locate wc.db somewhere upstairs, and filter out paths
         root_path = self._info["Working Copy Root Path"]
-        return 'sqlite3 -noheader "%s/.svn/wc.db" ' '"select local_relpath from nodes_base"' % root_path
+        return (
+            'sqlite3 -noheader "%s/.svn/wc.db" '
+            '"select local_relpath from nodes_base"' % root_path
+        )
 
     def _ls_files_filter(self, all_files):
         root_path = self._info["Working Copy Root Path"]
@@ -378,7 +383,11 @@ class SVNRepoShim(GitSVNRepoShim):
         if subdir == os.curdir:
             return all_files
         else:
-            return [f[len(subdir) + 1 :] for f in all_files if os.path.commonprefix((subdir, f)) == subdir]
+            return [
+                f[len(subdir) + 1 :]
+                for f in all_files
+                if os.path.commonprefix((subdir, f)) == subdir
+            ]
 
     def __init__(self, *args, **kwargs):
         super(SVNRepoShim, self).__init__(*args, **kwargs)
@@ -421,7 +430,9 @@ class SVNRepoShim(GitSVNRepoShim):
             # so not sure -- if we should copy them somewhere first and run
             # update there or ask user to update them on his behalf?!
             out, err = self._session.execute_command("svn info", cwd=self.path)
-            self.__info = dict([x.lstrip() for x in l.split(":", 1)] for l in out.splitlines() if l.strip())
+            self.__info = dict(
+                [x.lstrip() for x in l.split(":", 1)] for l in out.splitlines() if l.strip()
+            )
         return self.__info
 
     @property
@@ -599,7 +610,9 @@ class GitRepoShim(GitSVNRepoShim):
 
     def has_revision(self, revision):
         """Does the repository have `revision`?"""
-        out = self._run_git(["rev-parse", "--quiet", "--verify", revision + "^{commit}"], expect_fail=True)
+        out = self._run_git(
+            ["rev-parse", "--quiet", "--verify", revision + "^{commit}"], expect_fail=True
+        )
         return out is not None
 
 

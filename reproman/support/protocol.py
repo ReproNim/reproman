@@ -294,7 +294,9 @@ class ExecutionTimeProtocol(ProtocolInterface):
         self._sections[id_]["exception"] = exception
 
     def add_section(self, cmd, exception):
-        self._sections.append({"command": cmd, "start": None, "end": None, "duration": None, "exception": exception})
+        self._sections.append(
+            {"command": cmd, "start": None, "end": None, "duration": None, "exception": exception}
+        )
 
     @property
     def records_ext_commands(self):

@@ -31,7 +31,9 @@ def test_login_interface():
     ):
 
         client.return_value = MagicMock(
-            containers=lambda all: [{"Id": "18b31b30e3a5", "Names": ["/my-test-resource"], "State": "running"}],
+            containers=lambda all: [
+                {"Id": "18b31b30e3a5", "Names": ["/my-test-resource"], "State": "running"}
+            ],
         )
 
         get_inventory.return_value = {

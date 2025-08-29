@@ -214,12 +214,19 @@ def identify_distributions(files, session=None, tracer_classes=None):
                     nenvs += 1
                 files_processed |= files_to_trace - remaining_files_to_trace
                 files_to_trace = remaining_files_to_trace
-                lgr.info("%s: %d envs with %d other files remaining", Tracer.__name__, nenvs, len(files_to_trace))
+                lgr.info(
+                    "%s: %d envs with %d other files remaining",
+                    Tracer.__name__,
+                    nenvs,
+                    len(files_to_trace),
+                )
 
             # Re-combine any files that were skipped
             files_to_consider = files_to_trace | files_skipped
 
-            lgr.debug("Assigning files to packages by %s took %f seconds", tracer, time.time() - begin)
+            lgr.debug(
+                "Assigning files to packages by %s took %f seconds", tracer, time.time() - begin
+            )
         if len(files_to_trace) == 0 or (
             nfiles_processed == len(files_processed) and nfiles_to_trace == len(files_to_trace)
         ):
@@ -243,5 +250,13 @@ def get_tracer_classes():
     from reproman.distributions.docker import DockerTracer
     from reproman.distributions.singularity import SingularityTracer
 
-    Tracers = [DebTracer, RPMTracer, CondaTracer, VenvTracer, VCSTracer, DockerTracer, SingularityTracer]
+    Tracers = [
+        DebTracer,
+        RPMTracer,
+        CondaTracer,
+        VenvTracer,
+        VCSTracer,
+        DockerTracer,
+        SingularityTracer,
+    ]
     return Tracers

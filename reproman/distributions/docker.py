@@ -97,7 +97,8 @@ class DockerDistribution(Distribution):
             # Can't find the image, so complain.
             if not found:
                 raise CommandError(
-                    cmd="docker pull {}".format(digest), msg="Unable to locate Docker image {}".format(image.id)
+                    cmd="docker pull {}".format(digest),
+                    msg="Unable to locate Docker image {}".format(image.id),
                 )
 
 
@@ -127,11 +128,17 @@ class DockerTracer(DistributionTracer):
 
         for file in files:
             try:
-                image = json.loads(self._session.execute_command(["docker", "image", "inspect", file])[0])[0]
+                image = json.loads(
+                    self._session.execute_command(["docker", "image", "inspect", file])[0]
+                )[0]
 
                 # Warn user if the image does not have any RepoDigest entries.
                 if not image["RepoDigests"]:
-                    lgr.warning("The Docker image '%s' does not have any " "repository IDs associated with it", file)
+                    lgr.warning(
+                        "The Docker image '%s' does not have any "
+                        "repository IDs associated with it",
+                        file,
+                    )
 
                 images.append(
                     DockerImage(

@@ -148,7 +148,9 @@ class RepromanProvenance(Provenance):
         if is_TypedList(factory_class) or isinstance(factory_class, Attribute):
             if isinstance(in_value, dict):
                 # normalize compressed presentation into full (sugaring)
-                in_value = [dict(name=n, **(fields or {})) for n, fields in sorted(in_value.items())]
+                in_value = [
+                    dict(name=n, **(fields or {})) for n, fields in sorted(in_value.items())
+                ]
 
             assert isinstance(in_value, list)
             # We have a factory which is a list of things
@@ -192,7 +194,8 @@ class RepromanProvenance(Provenance):
                     # positional argument -- must be known
                     raise ValueError(
                         "%s requires %r field, but was provided only with "
-                        "following fields: %s" % (spec_class.__name__, name, ", ".join(spec_in.keys()))
+                        "following fields: %s"
+                        % (spec_class.__name__, name, ", ".join(spec_in.keys()))
                     )
                 else:
                     # skipping because we have no value and there is a default
@@ -269,9 +272,10 @@ class RepromanProvenance(Provenance):
 
         utils.safe_write(
             output,
-            ("# ReproMan Environment Configuration File\n" "# This file was created by ReproMan {0} on {1}\n").format(
-                reproman.__version__, datetime.datetime.now()
-            ),
+            (
+                "# ReproMan Environment Configuration File\n"
+                "# This file was created by ReproMan {0} on {1}\n"
+            ).format(reproman.__version__, datetime.datetime.now()),
         )
 
         # c = "\n# Runs: Commands and related environment variables\n\n"
@@ -298,7 +302,9 @@ def spec_to_dict(spec):
             continue
         elif isinstance(value_in, list):
             # might be specs too
-            value_out = value_in.__class__(spec_to_dict(v) if isinstance(v, SpecObject) else v for v in value_in)
+            value_out = value_in.__class__(
+                spec_to_dict(v) if isinstance(v, SpecObject) else v for v in value_in
+            )
         elif isinstance(value_in, SpecObject):
             value_out = spec_to_dict(value_in)
         else:

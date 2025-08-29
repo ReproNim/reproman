@@ -110,7 +110,13 @@ def test_ssh_class(setup_ssh, resource_test_dir, resman):
 @pytest.mark.xfail(reason="RSA key treated as DSA", run=False)
 def test_ssh_resource(setup_ssh, resman):
 
-    config = {"name": "ssh-test-resource", "type": "ssh", "host": "localhost", "user": "root", "port": 49000}
+    config = {
+        "name": "ssh-test-resource",
+        "type": "ssh",
+        "host": "localhost",
+        "user": "root",
+        "port": 49000,
+    }
     resource = resman.factory(config)
     resource.connect(password="root")
 

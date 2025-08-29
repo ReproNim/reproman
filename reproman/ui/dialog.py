@@ -133,7 +133,9 @@ class DialogUI(ConsoleLog, InteractiveUI):
         self._prev_title = None
         self._prev_title_time = 0
 
-    def question(self, text, title=None, choices=None, default=None, error_message=None, hidden=False):
+    def question(
+        self, text, title=None, choices=None, default=None, error_message=None, hidden=False
+    ):
         # Do initial checks first
         if default and choices and default not in choices:
             raise ValueError("default value %r is not among choices: %s" % (default, choices))

@@ -44,7 +44,9 @@ singularity_resource = get_singularity_fixture()
 @pytest.fixture(scope="module")
 def ssh_connection(testing_container, request):
     # Initialize SSH connection to testing Docker container.
-    connection = Connection("localhost", user="root", port=49000, connect_kwargs={"password": "root"})
+    connection = Connection(
+        "localhost", user="root", port=49000, connect_kwargs={"password": "root"}
+    )
     connection.open()
     return connection
 
@@ -86,9 +88,18 @@ def test_get_updated_env():
     assert get_updated_env({"a": 1}, {"a": None}) == {}
     assert get_updated_env({"a": 1, "b": 2}, {"a": None}) == {"b": 2}
     assert get_updated_env({"a": 1, "b": 2}, {"a": None, "b": 3}) == {"b": 3}
-    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:$a", "b": 3}) == {"a": "/bar:/foo", "b": 3}
-    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:$ab", "b": 3}) == {"a": "/bar:$ab", "b": 3}
-    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:${a}:/blee", "b": 3}) == {"a": "/bar:/foo:/blee", "b": 3}
+    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:$a", "b": 3}) == {
+        "a": "/bar:/foo",
+        "b": 3,
+    }
+    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:$ab", "b": 3}) == {
+        "a": "/bar:$ab",
+        "b": 3,
+    }
+    assert get_updated_env({"a": "/foo", "b": 2}, {"a": "/bar:${a}:/blee", "b": 3}) == {
+        "a": "/bar:/foo:/blee",
+        "b": 3,
+    }
 
 
 def test_get_local_session():
@@ -249,7 +260,11 @@ def check_methods(resource_test_dir):
         with tempfile.TemporaryDirectory(dir=resource_test_dir) as tdir:
             create_tree(
                 tdir,
-                {"f0": "ReproMan test content\nline 2\nline 3", "f1": "f1", "d0": {"f2": "f2", "d2": {"f3": "f3"}}},
+                {
+                    "f0": "ReproMan test content\nline 2\nline 3",
+                    "f1": "f1",
+                    "d0": {"f2": "f2", "d2": {"f3": "f3"}},
+                },
             )
             local_path = os.path.join(tdir, "f0")
             remote_path = "{}/reproman upload/{}".format(resource_test_dir, uuid.uuid4().hex)
@@ -375,7 +390,10 @@ def import_resource(mod, cls):
 @mark.skipif_no_singularity
 @pytest.mark.parametrize(
     "location",
-    [("singularity", "SingularitySession"), ("singularity", "PTYSingularitySession")],  # module, class
+    [
+        ("singularity", "SingularitySession"),
+        ("singularity", "PTYSingularitySession"),
+    ],  # module, class
     ids=lambda x: x[1],
 )
 def test_session_singularity(location, singularity_resource, check_methods):

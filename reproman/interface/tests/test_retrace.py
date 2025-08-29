@@ -127,7 +127,10 @@ def test_retrace_loop_over_tracers():
                 [],  # finale
             ],
             [  # Tracer passes
-                [("Env2", {"file3", "file4", "file5"}), ("Env2.1", {"file3", "file4"})],  # what to yield
+                [
+                    ("Env2", {"file3", "file4", "file5"}),
+                    ("Env2.1", {"file3", "file4"}),
+                ],  # what to yield
                 [],
                 [],  # finale
             ],

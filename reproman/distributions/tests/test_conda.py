@@ -113,7 +113,9 @@ def test_create_conda_export():
                 files=["lib/python3.7/site-packages/rpaths.py"],
             ),
         ],
-        channels=[CondaChannel(name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64")],
+        channels=[
+            CondaChannel(name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64")
+        ],
     )
     out = {
         "name": "mytest",
@@ -177,8 +179,12 @@ def test_conda_init_install_and_detect(tmpdir):
                     ),
                 ],
                 channels=[
-                    CondaChannel(name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64"),
-                    CondaChannel(name="defaults", url="https://repo.continuum.io/pkgs/main/linux-64"),
+                    CondaChannel(
+                        name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64"
+                    ),
+                    CondaChannel(
+                        name="defaults", url="https://repo.continuum.io/pkgs/main/linux-64"
+                    ),
                 ],
             ),
             CondaEnvironment(
@@ -221,7 +227,11 @@ def test_conda_init_install_and_detect(tmpdir):
                         files=["lib/python3.8/site-packages/rpaths.py"],
                     ),
                 ],
-                channels=[CondaChannel(name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64")],
+                channels=[
+                    CondaChannel(
+                        name="conda-forge", url="https://conda.anaconda.org/conda-forge/linux-64"
+                    )
+                ],
             ),
         ],
     )

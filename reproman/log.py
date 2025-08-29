@@ -66,7 +66,9 @@ class TraceBack(object):
 
     def __call__(self):
         ftb = self._extract_stack(limit=100)[:-2]
-        entries = [[mbasename(x[0]), str(x[1])] for x in ftb if mbasename(x[0]) != "logging.__init__"]
+        entries = [
+            [mbasename(x[0]), str(x[1])] for x in ftb if mbasename(x[0]) != "logging.__init__"
+        ]
         entries = [e for e in entries if e[0] != "unittest"]
 
         # lets make it more consize
@@ -120,7 +122,11 @@ class ColorFormatter(logging.Formatter):
     def _get_format(self, log_name=False, log_pid=False):
         # TODO: config log.timestamp=True
         return (
-            ("" if not int(os.environ.get("REPROMAN_LOG_TIMESTAMP", True)) else "$BOLD%(asctime)-15s$RESET ")
+            (
+                ""
+                if not int(os.environ.get("REPROMAN_LOG_TIMESTAMP", True))
+                else "$BOLD%(asctime)-15s$RESET "
+            )
             + ("%(name)-15s " if log_name else "")
             + ("{%(process)d}" if log_pid else "")
             + "[%(levelname)s] "

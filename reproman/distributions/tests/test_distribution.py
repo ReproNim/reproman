@@ -67,7 +67,9 @@ def test_distributions(demo1_spec):
     with patch("requests.get") as requests, swallow_logs(new_level=logging.DEBUG) as log:
 
         requests.return_value = type("TestObject", (object,), {})()
-        requests.return_value.text = '<a href="/archive/debian/20171208T032012Z/dists/sid/">next change</a>'
+        requests.return_value.text = (
+            '<a href="/archive/debian/20171208T032012Z/dists/sid/">next change</a>'
+        )
 
         debian_distribution.initiate(environment)
         debian_distribution.install_packages(environment)

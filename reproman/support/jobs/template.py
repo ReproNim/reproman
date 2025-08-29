@@ -35,7 +35,9 @@ class Template(object):
 
         lgr.debug("Using template %s", template_name)
         env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader([op.join(op.dirname(__file__), "job_templates", subdir)]),
+            loader=jinja2.FileSystemLoader(
+                [op.join(op.dirname(__file__), "job_templates", subdir)]
+            ),
             undefined=jinja2.StrictUndefined,
             trim_blocks=True,
         )

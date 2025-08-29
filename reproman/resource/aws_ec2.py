@@ -64,7 +64,11 @@ class AwsKeyMixin(object):
                     # We have no clue what it is
                     raise
             except Exception as exc:
-                lgr.error("Caught some unknown exception while checking key %s: %s", key_pair, exc_str(exc))
+                lgr.error(
+                    "Caught some unknown exception while checking key %s: %s",
+                    key_pair,
+                    exc_str(exc),
+                )
                 # reraising
                 raise
 
@@ -104,7 +108,9 @@ class AwsKeyMixin(object):
             if self.key_name in local_keys and not self.key_filename:
                 self.key_filename = local_keys[self.key_name]
 
-            if self.key_name not in local_keys and (not self.key_filename or not os.path.lexists(self.key_filename)):
+            if self.key_name not in local_keys and (
+                not self.key_filename or not os.path.lexists(self.key_filename)
+            ):
                 self.create_key_pair(self.key_name, self.key_filename)
 
             assert self.key_name
@@ -115,14 +121,18 @@ class AwsKeyMixin(object):
         present_keys = cls._get_local_keys()
         prompt = []
         if present_keys:
-            prompt += ["%d keys were found locally: %s" % (len(present_keys), " ".join(sorted(present_keys)))]
+            prompt += [
+                "%d keys were found locally: %s"
+                % (len(present_keys), " ".join(sorted(present_keys)))
+            ]
             prompt += ["You can enter one of the above key names to reuse an existing key"]
             prompt += ["or enter a new unique name to create a new key-pair."]
         else:
             prompt += ["Please enter a unique name to create a new key-pair."]
         prompt += ["Alternatively, press [enter] to exit"]
         key_name = ui.question(
-            (os.linesep + " ").join(prompt), title="Specify an EC2 SSH key-pair name to use for EC2 environment."
+            (os.linesep + " ").join(prompt),
+            title="Specify an EC2 SSH key-pair name to use for EC2 environment.",
         )
         if not key_name:
             raise SystemExit("Empty key_name was provided, exiting.")
@@ -137,7 +147,11 @@ class AwsKeyMixin(object):
     def _get_local_keys(cls):
         """Return dict of key_name: key_filename for ssh key files found locally"""
         d = cls._get_key_directory()
-        return {f[:-4]: op.join(d, f) for f in os.listdir(d) if f.endswith(".pem") and op.isfile(op.join(d, f))}
+        return {
+            f[:-4]: op.join(d, f)
+            for f in os.listdir(d)
+            if f.endswith(".pem") and op.isfile(op.join(d, f))
+        }
 
     @classmethod
     def _get_key_directory(cls):
@@ -158,7 +172,9 @@ class AwsEc2(Resource, AwsKeyMixin):
 
     # Configurable options for each "instance"
     access_key_id = attrib(doc="AWS access key for remote access to your Amazon subscription.")
-    secret_access_key = attrib(doc="AWS secret access key for remote access to your Amazon subscription")
+    secret_access_key = attrib(
+        doc="AWS secret access key for remote access to your Amazon subscription"
+    )
     instance_type = attrib(
         default="t2.micro", doc="The type of Amazon EC2 instance to run. (e.g. t2.medium)"
     )  # EC2 instance type
@@ -166,7 +182,8 @@ class AwsEc2(Resource, AwsKeyMixin):
         default="default", doc="AWS security group to assign to the EC2 instance."
     )  # AWS security group
     region_name = attrib(
-        default="us-east-1", doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)"
+        default="us-east-1",
+        doc="AWS availability zone to run the EC2 instance in. (e.g. us-east-1)",
     )  # AWS region
     key_name = attrib(
         doc="AWS subscription name of SSH key-pair registered.  If not specified, 'name' is used."
@@ -276,7 +293,8 @@ class AwsEc2(Resource, AwsKeyMixin):
                 # To avoid somehow inflicted infinite loop and breeding gzillions of instances
                 # Don't ask Yarik why he decided to do this ;)
                 raise RuntimeError(
-                    "Safety measure: We have tried to create instance %d times and failed." % (attempt - 1)
+                    "Safety measure: We have tried to create instance %d times and failed."
+                    % (attempt - 1)
                 )
             self._ensure_having_a_key()
 
@@ -310,7 +328,9 @@ class AwsEc2(Resource, AwsKeyMixin):
         assert instances
 
         # Give the instance a tag name.
-        self._ec2_resource.create_tags(Resources=[instances[0].id], Tags=[{"Key": "Name", "Value": self.ec2_name}])
+        self._ec2_resource.create_tags(
+            Resources=[instances[0].id], Tags=[{"Key": "Name", "Value": self.ec2_name}]
+        )
 
         # Save the EC2 Instance object.
         self._ec2_instance = self._ec2_resource.Instance(instances[0].id)
@@ -326,7 +346,12 @@ class AwsEc2(Resource, AwsKeyMixin):
                 sleep(3)
 
         # Send initial info back to be saved in inventory file.
-        yield {"id": self.id, "status": self.status, "key_name": self.key_name, "key_filename": self.key_filename}
+        yield {
+            "id": self.id,
+            "status": self.status,
+            "key_name": self.key_name,
+            "key_filename": self.key_filename,
+        }
 
         lgr.info("Waiting for EC2 instance %s to start running...", self.id)
         self._ec2_instance.wait_until_running(
@@ -375,6 +400,11 @@ class AwsEc2(Resource, AwsKeyMixin):
             self.user,
             self._ec2_instance.public_ip_address,
         )
-        ssh = SSH(self.name, host=self._ec2_instance.public_ip_address, user=self.user, key_filename=self.key_filename)
+        ssh = SSH(
+            self.name,
+            host=self._ec2_instance.public_ip_address,
+            user=self.user,
+            key_filename=self.key_filename,
+        )
 
         return ssh.get_session(pty=pty, shared=shared)

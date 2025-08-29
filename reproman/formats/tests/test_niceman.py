@@ -115,7 +115,9 @@ def test_spec_round_trip():
                         channels=[CondaChannel(name="defaults", url="https://somewhere")],
                     ),
                     CondaEnvironment(
-                        name="other", path="/path/to/miniconda3", packages=[CondaPackage(name="condapkg2")]
+                        name="other",
+                        path="/path/to/miniconda3",
+                        packages=[CondaPackage(name="condapkg2")],
                     ),
                 ],
             ),
@@ -131,7 +133,10 @@ def test_spec_round_trip():
                         python_version="3.5.3",
                         packages=[
                             VenvPackage(
-                                version="3.12", name="PyYAML", location="/path/to/venv/site-packages", local=True
+                                version="3.12",
+                                name="PyYAML",
+                                location="/path/to/venv/site-packages",
+                                local=True,
                             )
                         ],
                     )

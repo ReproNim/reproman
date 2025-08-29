@@ -106,7 +106,12 @@ def test_resource_manager_save(tmpdir):
     manager = ResourceManager(inventory)
     manager.inventory = {
         "plain": {"name": "plain", "type": "foo-type", "id": "foo_id"},
-        "with-secret": {"name": "with-secret", "type": "bar-type", "secret_access_key": "SECRET", "id": "bar_id"},
+        "with-secret": {
+            "name": "with-secret",
+            "type": "bar-type",
+            "secret_access_key": "SECRET",
+            "id": "bar_id",
+        },
         "null-id": {"name": "null-id", "id": None, "type": "baz-type"},
     }
     manager.save_inventory()

@@ -708,7 +708,11 @@ class POSIXSession(Session):
         if out == "Found\n":
             return True
         else:
-            lgr.debug("Standard error was not empty (%r), thus assuming that " "test for file presence has failed", err)
+            lgr.debug(
+                "Standard error was not empty (%r), thus assuming that "
+                "test for file presence has failed",
+                err,
+            )
             return False
 
     def exists_command(self, path):
@@ -766,7 +770,11 @@ class POSIXSession(Session):
         if out == "Found\n":
             return True
         else:
-            lgr.debug("Standard error was not empty (%r), thus assuming that " "test for directory has failed", err)
+            lgr.debug(
+                "Standard error was not empty (%r), thus assuming that "
+                "test for directory has failed",
+                err,
+            )
             return False
 
     def isdir_command(self, path):

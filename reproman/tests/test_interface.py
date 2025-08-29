@@ -95,7 +95,9 @@ def test_interface():
         assert_raises(SystemExit, parser.parse_args, [""])
         # PY2|PY3
         assert_re_in(
-            ".*error: (too few arguments|the following arguments are required: demoposarg)", cmo.err, re.DOTALL
+            ".*error: (too few arguments|the following arguments are required: demoposarg)",
+            cmo.err,
+            re.DOTALL,
         )
 
 
@@ -106,6 +108,13 @@ def test_name_generation():
         get_api_name(("some.module", "SomeClass", "cmdline_override", "api_override-dont-touch")),
         "api_override-dont-touch",
     )
-    assert_equal(get_cmdline_command_name(("some.module_something", "SomeClass")), "module-something")
-    assert_equal(get_cmdline_command_name(("some.module_something", "SomeClass", "override")), "override")
-    assert_equal(get_cmdline_command_name(("some.module_something", "SomeClass", "override", "api_ignore")), "override")
+    assert_equal(
+        get_cmdline_command_name(("some.module_something", "SomeClass")), "module-something"
+    )
+    assert_equal(
+        get_cmdline_command_name(("some.module_something", "SomeClass", "override")), "override"
+    )
+    assert_equal(
+        get_cmdline_command_name(("some.module_something", "SomeClass", "override", "api_ignore")),
+        "override",
+    )

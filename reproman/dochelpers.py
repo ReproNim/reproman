@@ -332,7 +332,11 @@ def exc_str(exc=None, limit=None):
             assert exc is value
         entries = traceback.extract_tb(tb)
         if entries:
-            out += " [%s]" % (",".join(["%s:%s:%d" % (os.path.basename(x[0]), x[2], x[1]) for x in entries[-limit:]]))
+            out += " [%s]" % (
+                ",".join(
+                    ["%s:%s:%d" % (os.path.basename(x[0]), x[2], x[1]) for x in entries[-limit:]]
+                )
+            )
     except:  # MIH: TypeError?
         return out  # To the best of our abilities
     finally:

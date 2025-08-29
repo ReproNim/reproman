@@ -37,7 +37,9 @@ except (KeyError, ValueError):
     lsf_config = None
 
 
-docker_container = get_docker_fixture(TEST_SSH_DOCKER_DIGEST, name="testing-container", scope="module")
+docker_container = get_docker_fixture(
+    TEST_SSH_DOCKER_DIGEST, name="testing-container", scope="module"
+)
 
 
 @pytest.fixture(scope="module")
@@ -258,10 +260,14 @@ def check_orc_datalad(job_spec, dataset):
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "orc_class", [orcs.DataladLocalRunOrchestrator, orcs.DataladPairRunOrchestrator], ids=["orc:local", "orc:pair"]
+    "orc_class",
+    [orcs.DataladLocalRunOrchestrator, orcs.DataladPairRunOrchestrator],
+    ids=["orc:local", "orc:pair"],
 )
 @pytest.mark.parametrize(
-    "sub_type", ["local", pytest.param("condor", marks=mark.skipif_no_condor)], ids=["sub:local", "sub:condor"]
+    "sub_type",
+    ["local", pytest.param("condor", marks=mark.skipif_no_condor)],
+    ids=["sub:local", "sub:condor"],
 )
 def test_orc_datalad_run(check_orc_datalad, shell, orc_class, sub_type):
     check_orc_datalad(shell, orc_class, sub_type)
@@ -271,7 +277,10 @@ def test_orc_datalad_run(check_orc_datalad, shell, orc_class, sub_type):
 @pytest.mark.parametrize("launcher", [False, True], ids=["no launcher", "launcher=true"])
 def test_orc_datalad_slurm(check_orc_datalad, ssh_slurm, launcher):
     check_orc_datalad(
-        ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm", job_params={"launcher": "true"} if launcher else None
+        ssh_slurm,
+        orcs.DataladLocalRunOrchestrator,
+        "slurm",
+        job_params={"launcher": "true"} if launcher else None,
     )
 
 
@@ -367,7 +376,10 @@ def test_orc_datalad_pair_run_multiple_same_point(job_spec, dataset, ssh):
     js0 = job_spec
     js1 = dict(job_spec, _resolved_command_str='bash -c "echo other >other"')
     with chpwd(ds.path):
-        orc0, orc1 = [orcs.DataladPairRunOrchestrator(ssh, submission_type="local", job_spec=js) for js in [js0, js1]]
+        orc0, orc1 = [
+            orcs.DataladPairRunOrchestrator(ssh, submission_type="local", job_spec=js)
+            for js in [js0, js1]
+        ]
 
         for orc in [orc0, orc1]:
             orc.prepare_remote()
@@ -449,7 +461,9 @@ def test_orc_datalad_run_results_missing(job_spec, dataset, shell):
 @pytest.mark.xfail(reason="Singularity Hub is down", run=False)
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "orc_class", [orcs.DataladPairRunOrchestrator, orcs.DataladLocalRunOrchestrator], ids=["orc:pair", "orc:local"]
+    "orc_class",
+    [orcs.DataladPairRunOrchestrator, orcs.DataladLocalRunOrchestrator],
+    ids=["orc:pair", "orc:local"],
 )
 def test_orc_datalad_run_container(tmpdir, dataset, container_dataset, shell, orc_class):
     ds = dataset
@@ -479,7 +493,9 @@ def test_orc_datalad_run_container(tmpdir, dataset, container_dataset, shell, or
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "orc_class", [orcs.DataladPairOrchestrator, orcs.DataladNoRemoteOrchestrator], ids=["orc:pair", "orc:no-remote"]
+    "orc_class",
+    [orcs.DataladPairOrchestrator, orcs.DataladNoRemoteOrchestrator],
+    ids=["orc:pair", "orc:no-remote"],
 )
 def test_orc_datalad_nonrun(job_spec, dataset, shell, orc_class):
     with chpwd(dataset.path):
@@ -551,7 +567,9 @@ def test_orc_datalad_abort_if_dirty(job_spec, dataset, ssh):
     job_spec["outputs"] = []
 
     def get_orc(jspec=None):
-        return orcs.DataladPairRunOrchestrator(ssh, submission_type="local", job_spec=jspec or job_spec)
+        return orcs.DataladPairRunOrchestrator(
+            ssh, submission_type="local", job_spec=jspec or job_spec
+        )
 
     def run(**spec_kwds):
         jspec = dict(job_spec, **spec_kwds)
@@ -615,7 +633,9 @@ def test_orc_datalad_resurrect(job_spec, dataset, shell):
         job_spec[k] = "doesn't matter"
     job_spec["_head"] = "deadbee"
     with chpwd(dataset.path):
-        orc = orcs.DataladPairOrchestrator(shell, submission_type="local", job_spec=job_spec, resurrection=True)
+        orc = orcs.DataladPairOrchestrator(
+            shell, submission_type="local", job_spec=job_spec, resurrection=True
+        )
     assert orc.head == "deadbee"
 
 
@@ -735,11 +755,17 @@ def check_orc_datalad_concurrent(job_spec, dataset):
 @pytest.mark.integration
 @pytest.mark.parametrize(
     "orc_class",
-    [orcs.DataladLocalRunOrchestrator, orcs.DataladPairOrchestrator, orcs.DataladPairRunOrchestrator],
+    [
+        orcs.DataladLocalRunOrchestrator,
+        orcs.DataladPairOrchestrator,
+        orcs.DataladPairRunOrchestrator,
+    ],
     ids=["orc:local-run", "orc:pair-run", "orc-pair"],
 )
 @pytest.mark.parametrize(
-    "sub_type", ["local", pytest.param("condor", marks=mark.skipif_no_condor)], ids=["sub:local", "sub:condor"]
+    "sub_type",
+    ["local", pytest.param("condor", marks=mark.skipif_no_condor)],
+    ids=["sub:local", "sub:condor"],
 )
 def test_orc_datalad_concurrent(check_orc_datalad_concurrent, ssh, orc_class, sub_type):
     check_orc_datalad_concurrent(ssh, orc_class, sub_type)
@@ -751,7 +777,10 @@ def test_orc_datalad_concurrent(check_orc_datalad_concurrent, ssh, orc_class, su
 @pytest.mark.parametrize("launcher", [False, True], ids=["no launcher", "launcher=true"])
 def test_orc_datalad_concurrent_slurm(check_orc_datalad_concurrent, ssh_slurm, launcher):
     check_orc_datalad_concurrent(
-        ssh_slurm, orcs.DataladLocalRunOrchestrator, "slurm", {"launcher": "true"} if launcher else None
+        ssh_slurm,
+        orcs.DataladLocalRunOrchestrator,
+        "slurm",
+        {"launcher": "true"} if launcher else None,
     )
 
 

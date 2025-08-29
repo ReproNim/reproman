@@ -24,7 +24,12 @@ from os.path import abspath, isabs
 
 from .dochelpers import exc_str
 from .support.exceptions import CommandError
-from .support.protocol import NullProtocol, DryRunProtocol, ExecutionTimeProtocol, ExecutionTimeExternalsProtocol
+from .support.protocol import (
+    NullProtocol,
+    DryRunProtocol,
+    ExecutionTimeProtocol,
+    ExecutionTimeExternalsProtocol,
+)
 from .utils import on_windows
 from . import cfg
 
@@ -76,7 +81,10 @@ class Runner(object):
             if cfg != "null":
                 # we need to dump it into a file at the end
                 # TODO: config cmd.protocol_prefix = protocol
-                filename = "%s-%s.log" % (os.environ.get("REPROMAN_CMD_PROTOCOL_PREFIX", "protocol"), id(self))
+                filename = "%s-%s.log" % (
+                    os.environ.get("REPROMAN_CMD_PROTOCOL_PREFIX", "protocol"),
+                    id(self),
+                )
                 atexit.register(functools.partial(protocol.write_to_file, filename))
 
         self.protocol = protocol
@@ -118,9 +126,14 @@ class Runner(object):
 
     def _log_err(self, line, expected=False):
         if line:
-            self.log("stderr| " + line.rstrip("\n"), level={True: logging.DEBUG, False: logging.ERROR}[expected])
+            self.log(
+                "stderr| " + line.rstrip("\n"),
+                level={True: logging.DEBUG, False: logging.ERROR}[expected],
+            )
 
-    def _get_output_online(self, proc, log_stdout, log_stderr, expect_stderr=False, expect_fail=False):
+    def _get_output_online(
+        self, proc, log_stdout, log_stderr, expect_stderr=False, expect_fail=False
+    ):
         stdout, stderr = bytes(), bytes()
         while proc.poll() is None:
             if log_stdout:
@@ -241,7 +254,12 @@ class Runner(object):
 
             try:
                 proc = subprocess.Popen(
-                    cmd, stdout=outputstream, stderr=errstream, shell=shell, cwd=cwd or self.cwd, env=env or self.env
+                    cmd,
+                    stdout=outputstream,
+                    stderr=errstream,
+                    shell=shell,
+                    cwd=cwd or self.cwd,
+                    env=env or self.env,
                 )
 
             except Exception as e:
@@ -250,7 +268,9 @@ class Runner(object):
                     logfn = lgr.debug
                 else:
                     logfn = lgr.error
-                logfn("Failed to start %r%r: %s" % (cmd, " under %r" % cwd if cwd else "", exc_str(e)))
+                logfn(
+                    "Failed to start %r%r: %s" % (cmd, " under %r" % cwd if cwd else "", exc_str(e))
+                )
                 raise
 
             finally:
@@ -259,7 +279,11 @@ class Runner(object):
 
             if log_online:
                 out = self._get_output_online(
-                    proc, log_stdout, log_stderr, expect_stderr=expect_stderr, expect_fail=expect_fail
+                    proc,
+                    log_stdout,
+                    log_stderr,
+                    expect_stderr=expect_stderr,
+                    expect_fail=expect_fail,
                 )
             else:
                 out = proc.communicate()
@@ -297,7 +321,9 @@ class Runner(object):
 
         else:
             if self.protocol.records_ext_commands:
-                self.protocol.add_section(shlex.split(cmd, posix=not on_windows) if isinstance(cmd, str) else cmd, None)
+                self.protocol.add_section(
+                    shlex.split(cmd, posix=not on_windows) if isinstance(cmd, str) else cmd, None
+                )
             out = ("DRY", "DRY")
 
         return out
@@ -316,7 +342,9 @@ class Runner(object):
         if self.protocol.do_execute_callables:
             if self.protocol.records_callables:
                 prot_exc = None
-                prot_id = self.protocol.start_section([str(f), "args=%s" % str(args), "kwargs=%s" % str(kwargs)])
+                prot_id = self.protocol.start_section(
+                    [str(f), "args=%s" % str(args), "kwargs=%s" % str(kwargs)]
+                )
 
             try:
                 return f(*args, **kwargs)
@@ -328,7 +356,9 @@ class Runner(object):
                     self.protocol.end_section(prot_id, prot_exc)
         else:
             if self.protocol.records_callables:
-                self.protocol.add_section([str(f), "args=%s" % str(args), "kwargs=%s" % str(kwargs)], None)
+                self.protocol.add_section(
+                    [str(f), "args=%s" % str(args), "kwargs=%s" % str(kwargs)], None
+                )
 
     def log(self, msg, level=logging.DEBUG):
         """log helper
@@ -356,7 +386,9 @@ class GitRunner(Runner):
         """
         Replaces GIT_DIR and GIT_WORK_TREE with absolute paths if relative path and defined
         """
-        git_env = env.copy() if env else os.environ.copy()  # if env set copy else get os environment
+        git_env = (
+            env.copy() if env else os.environ.copy()
+        )  # if env set copy else get os environment
 
         for varstring in ["GIT_DIR", "GIT_WORK_TREE"]:
             var = git_env.get(varstring)

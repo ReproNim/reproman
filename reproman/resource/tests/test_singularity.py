@@ -35,7 +35,9 @@ def test_singularity_resource_image_required():
 def test_singularity_resource_class(tmpdir):
     tmpdir = str(tmpdir)
     with swallow_logs(new_level=logging.DEBUG) as log:
-        Runner(cwd=tmpdir).run(["singularity", "pull", "--name", "img", "shub://truatpasteurdotfr/singularity-alpine"])
+        Runner(cwd=tmpdir).run(
+            ["singularity", "pull", "--name", "img", "shub://truatpasteurdotfr/singularity-alpine"]
+        )
 
         # ATTN: Apparently an instance name can't contain a hyphen.
         name = "reproman_test_{}".format(str(uuid.uuid4())[:4])

@@ -88,7 +88,15 @@ def test_combine_specs(specs, expected):
         ([], []),
         (["a=1,2"], [{"a": "1"}, {"a": "2"}]),
         (["a=1,2", "b=3"], [{"a": "1", "b": "3"}, {"a": "2", "b": "3"}]),
-        (["a=1,2", "b=3,4"], [{"a": "1", "b": "3"}, {"a": "1", "b": "4"}, {"a": "2", "b": "3"}, {"a": "2", "b": "4"}]),
+        (
+            ["a=1,2", "b=3,4"],
+            [
+                {"a": "1", "b": "3"},
+                {"a": "1", "b": "4"},
+                {"a": "2", "b": "3"},
+                {"a": "2", "b": "4"},
+            ],
+        ),
         (["a=1,2=3"], [{"a": "1"}, {"a": "2=3"}]),
         (["a= 1 spaces are preserved   , 2"], [{"a": " 1 spaces are preserved   "}, {"a": " 2"}]),
     ],
@@ -105,7 +113,12 @@ def test_combine_batch_params_glob(tmpdir):
     create_tree(tmpdir, {"aaa": "a", "subdir": {"b": "b", "c": "c"}})
     with chpwd(tmpdir):
         res = sorted(_combine_batch_params(["foo=a*,subdir/*,other"]), key=lambda d: d["foo"])
-        assert list(res) == [{"foo": "aaa"}, {"foo": "other"}, {"foo": "subdir/b"}, {"foo": "subdir/c"}]
+        assert list(res) == [
+            {"foo": "aaa"},
+            {"foo": "other"},
+            {"foo": "subdir/b"},
+            {"foo": "subdir/c"},
+        ]
 
 
 def test_combine_batch_params_repeat_key():
@@ -187,7 +200,9 @@ def context(tmpdir, resource_manager, job_registry):
             # Patch home to avoid populating testing machine with jobs when
             # using local shell.
             stack.enter_context(patch.dict(os.environ, {"HOME": home}))
-            stack.enter_context(patch("reproman.interface.run.get_manager", return_value=resource_manager))
+            stack.enter_context(
+                patch("reproman.interface.run.get_manager", return_value=resource_manager)
+            )
             stack.enter_context(patch("reproman.interface.run.LocalRegistry", job_registry))
             return run(*args, **kwargs)
 
@@ -261,7 +276,12 @@ def test_run_and_fetch(context):
     jobs = context["jobs_fn"]
     registry = context["registry"]
 
-    create_tree(path, tree={"js0.yaml": ("resource_name: myshell\n" "command_str: 'touch ok'\n" "outputs: ['ok']")})
+    create_tree(
+        path,
+        tree={
+            "js0.yaml": ("resource_name: myshell\n" "command_str: 'touch ok'\n" "outputs: ['ok']")
+        },
+    )
 
     run(job_specs=["js0.yaml"])
 
@@ -483,7 +503,11 @@ def test_recursive_transfer(context):
     # that we verify is returned.
 
     create_tree(
-        path, {"script": "find . > out_file ; mkdir out_dir ; touch out_dir/subfile", "in_dir": {"subfile": ""}}
+        path,
+        {
+            "script": "find . > out_file ; mkdir out_dir ; touch out_dir/subfile",
+            "in_dir": {"subfile": ""},
+        },
     )
 
     with swallow_outputs() as output:

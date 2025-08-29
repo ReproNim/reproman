@@ -29,7 +29,9 @@ def test_install_interface(demo1_spec):
     ):
 
         client.return_value = MagicMock(
-            containers=lambda all: [{"Id": "326b0fdfbf838", "Names": ["/my-resource"], "State": "running"}],
+            containers=lambda all: [
+                {"Id": "326b0fdfbf838", "Names": ["/my-resource"], "State": "running"}
+            ],
             exec_inspect=lambda id: {"ExitCode": 0},
         )
 
@@ -44,7 +46,9 @@ def test_install_interface(demo1_spec):
         }
 
         requests.return_value = type("TestObject", (object,), {})()
-        requests.return_value.text = '<a href="/archive/debian/20171208T032012Z/dists/sid/">next change</a>'
+        requests.return_value.text = (
+            '<a href="/archive/debian/20171208T032012Z/dists/sid/">next change</a>'
+        )
 
         args = [
             "install",
@@ -56,7 +60,8 @@ def test_install_interface(demo1_spec):
 
         def container_call(cmd):
             return call().exec_create(
-                cmd=cmd, container={"State": "running", "Id": "326b0fdfbf838", "Names": ["/my-resource"]}
+                cmd=cmd,
+                container={"State": "running", "Id": "326b0fdfbf838", "Names": ["/my-resource"]},
             )
 
         calls = [

@@ -70,7 +70,8 @@ class Delete(Interface):
             delete_confirmed = True
         else:
             delete_confirmed = ui.yesno(
-                "Delete the resource '{}'? (ID: {})".format(resource.name, resource.id[:20]), default="no"
+                "Delete the resource '{}'? (ID: {})".format(resource.name, resource.id[:20]),
+                default="no",
             )
 
         if delete_confirmed:
@@ -79,7 +80,9 @@ class Delete(Interface):
                 manager.delete(resource)
             except Exception as exc:
                 if force:
-                    lgr.warning("Force deleting %s following failure: %s", resource.name, exc_str(exc))
+                    lgr.warning(
+                        "Force deleting %s following failure: %s", resource.name, exc_str(exc)
+                    )
                     manager.delete(resource, inventory_only=True)
                 else:
                     raise

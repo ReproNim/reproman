@@ -52,7 +52,9 @@ def get_resource_class(name):
         known = discover_types()
         hyph_name = name.replace("_", "-")
         if name not in known and hyph_name in known:
-            raise ResourceError("'{}' not a known backend. Did you mean '{}'?".format(name, hyph_name))
+            raise ResourceError(
+                "'{}' not a known backend. Did you mean '{}'?".format(name, hyph_name)
+            )
     module_name = name.replace("-", "_")
     try:
         module = import_module("reproman.resource.{}".format(module_name))
@@ -67,7 +69,8 @@ def get_resource_class(name):
             suggestions = difflib.get_close_matches(name, known)
             if module_name not in known:
                 msg += ". {}: {}".format(
-                    "Similar backends" if suggestions else "Known backends", ", ".join(suggestions or known)
+                    "Similar backends" if suggestions else "Known backends",
+                    ", ".join(suggestions or known),
                 )
         except Exception as exc2:
             msg += ".  Failed to discover resource types: " + exc_str(exc2)
@@ -141,7 +144,9 @@ def classify_keys(cls, keys):
 
     required_missing = required_params.difference(required_seen)
     if required_missing:
-        raise ResourceError("Missing required backend parameters: {}".format(", ".join(sorted(required_missing))))
+        raise ResourceError(
+            "Missing required backend parameters: {}".format(", ".join(sorted(required_missing)))
+        )
 
     return cats
 
@@ -174,7 +179,13 @@ def backend_check_parameters(cls, keys):
                     title = "Known backend parameters:"
                     params = known
                 help_msg = "\n  {}\n{}\n".format(
-                    title, "\n".join(["    {} ({})".format(bname, bdoc) for bname, bdoc in sorted(params.items())])
+                    title,
+                    "\n".join(
+                        [
+                            "    {} ({})".format(bname, bdoc)
+                            for bname, bdoc in sorted(params.items())
+                        ]
+                    ),
                 )
                 msg = "Bad --backend parameter '{}'{}".format(key, help_msg)
             else:
@@ -233,7 +244,9 @@ class ResourceManager(object):
                 msg_extra = ""
                 if unk_param in inv_config:
                     msg_extra = ". Consider removing it from {}".format(self._inventory_path)
-                lgr.warning("%s is not a known %s parameter%s", unk_param, config["type"], msg_extra)
+                lgr.warning(
+                    "%s is not a known %s parameter%s", unk_param, config["type"], msg_extra
+                )
                 config.pop(unk_param)
         return config
 
@@ -317,7 +330,10 @@ class ResourceManager(object):
             raise MultipleResourceMatches(
                 "ID {} {}matches {} resources. "
                 "Try specifying the {}name instead".format(
-                    resref, "partially " if partial_id else "", len(results_id), "full ID or " if partial_id else ""
+                    resref,
+                    "partially " if partial_id else "",
+                    len(results_id),
+                    "full ID or " if partial_id else "",
                 )
             )
 

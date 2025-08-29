@@ -114,7 +114,9 @@ class TracedCommand(CommandAdapter):
         super(TracedCommand, self).__init__(resource, command, cmd_args)
 
         if not external_versions["reprozip"]:
-            raise MissingExternalDependency("Using --trace requires ReproZip, " "a Linux-specific dependency")
+            raise MissingExternalDependency(
+                "Using --trace requires ReproZip, " "a Linux-specific dependency"
+            )
 
         self.tracer_md5sum = "b32df0e1e0663f83e99a10502cd8db63"
         # adding two random characters to avoid collisions etc
@@ -189,7 +191,10 @@ class TracedCommand(CommandAdapter):
                 self.session.put(self.local_tracer_gz, remote_tracer_gz)
 
             self.session.execute_command(
-                "zcat {} >{}".format(shlex_quote(remote_tracer_gz), shlex_quote(self.remote_tracer)), with_shell=True
+                "zcat {} >{}".format(
+                    shlex_quote(remote_tracer_gz), shlex_quote(self.remote_tracer)
+                ),
+                with_shell=True,
             )
             self.session.chmod(self.remote_tracer, "755")
         # TODO: might want to add also a "marker" so within the trace
@@ -233,16 +238,23 @@ class TracedCommand(CommandAdapter):
             if self.session.exists(op.join(self.remote_trace_dir, self.extra_trace_file)):
                 remote_files.append(self.extra_trace_file)
             for fname in remote_files:
-                self.session.get(op.join(self.remote_trace_dir, fname), op.join(self.local_trace_dir, fname))
+                self.session.get(
+                    op.join(self.remote_trace_dir, fname), op.join(self.local_trace_dir, fname)
+                )
             lgr.info("Copied tracing artifacts under %s", self.local_trace_dir)
         else:
-            lgr.debug("Not copying %s from remote session " "since already exists locally", self.local_trace_dir)
+            lgr.debug(
+                "Not copying %s from remote session " "since already exists locally",
+                self.local_trace_dir,
+            )
 
         from reprozip.tracer.trace import write_configuration
         from rpaths import Path
 
         # we rely on hardcoded paths in reprozip
-        write_configuration(directory=Path(self.local_trace_dir), sort_packages=False, find_inputs_outputs=True)
+        write_configuration(
+            directory=Path(self.local_trace_dir), sort_packages=False, find_inputs_outputs=True
+        )
 
         local_extra_trace_file = op.join(self.local_trace_dir, self.extra_trace_file)
         if op.exists(local_extra_trace_file):
@@ -302,7 +314,8 @@ class Execute(Interface):
             args=("--internal",),
             action="store_true",
             doc="Instead of running a generic/any command, execute the internal"
-            " ReproMan command available within sessions.  Known are: %s" % ", ".join(Session.INTERNAL_COMMANDS),
+            " ReproMan command available within sessions.  Known are: %s"
+            % ", ".join(Session.INTERNAL_COMMANDS),
         ),
         trace=trace_opt,
     )
@@ -315,7 +328,9 @@ class Execute(Interface):
             raise NotImplementedError("No --trace for --internal commands")
 
         if not resref:
-            resref = ui.question("Enter a resource name or ID", error_message="Missing resource name or ID")
+            resref = ui.question(
+                "Enter a resource name or ID", error_message="Missing resource name or ID"
+            )
 
         env_resource = get_manager().get_resource(resref, resref_type)
         env_resource.connect()

@@ -38,7 +38,8 @@ class Install(Interface):
         resref_type=resref_type_opt,
         spec=Parameter(
             args=("spec",),
-            doc="file with specifications (in supported formats) of" " packages used in executed environment",
+            doc="file with specifications (in supported formats) of"
+            " packages used in executed environment",
             metavar="SPEC",
             nargs="+",
             constraints=EnsureStr(),

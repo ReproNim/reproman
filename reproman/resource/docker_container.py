@@ -60,9 +60,12 @@ class DockerContainer(Resource):
         converter=_image_latest_default,
     )
     engine_url = attrib(
-        default="unix:///var/run/docker.sock", doc="Docker server URL where engine is listening for connections"
+        default="unix:///var/run/docker.sock",
+        doc="Docker server URL where engine is listening for connections",
     )
-    seccomp_unconfined = attrib(default=False, doc="Disable kernel secure computing mode when creating the container")
+    seccomp_unconfined = attrib(
+        default=False, doc="Disable kernel secure computing mode when creating the container"
+    )
 
     status = attrib()
 
@@ -90,7 +93,8 @@ class DockerContainer(Resource):
             session.info()
         except docker.errors.InvalidConfigFile as exc:
             lgr.error(
-                "Failed to query Docker due to problem with configuration " "(possibly in ~/.docker/config.json?) %s",
+                "Failed to query Docker due to problem with configuration "
+                "(possibly in ~/.docker/config.json?) %s",
                 exc_str(exc),
             )
             return False
@@ -111,7 +115,9 @@ class DockerContainer(Resource):
         -------
         boolean
         """
-        stdout, _ = Runner().run(["docker", "ps", "--quiet", "--filter", "name=^/{}$".format(container_name)])
+        stdout, _ = Runner().run(
+            ["docker", "ps", "--quiet", "--filter", "name=^/{}$".format(container_name)]
+        )
         if stdout.strip():
             return True
         return False
@@ -153,7 +159,9 @@ class DockerContainer(Resource):
         dict : config parameters to capture in the inventory file
         """
         if self._container:
-            raise ResourceError("Container '{}' (ID {}) already exists in Docker".format(self.name, self.id))
+            raise ResourceError(
+                "Container '{}' (ID {}) already exists in Docker".format(self.name, self.id)
+            )
         # image might be of the form repository:tag -- pull would split them
         # if needed
         for line in self._client.pull(repository=self.image, stream=True):
@@ -162,7 +170,13 @@ class DockerContainer(Resource):
             if "progress" in status:
                 output += " " + status["progress"]
             lgr.info(output)
-        args = {"name": self.name, "image": self.image, "stdin_open": True, "tty": True, "command": "/bin/bash"}
+        args = {
+            "name": self.name,
+            "image": self.image,
+            "stdin_open": True,
+            "tty": True,
+            "command": "/bin/bash",
+        }
         # When running the rztracer binary in a Docker container, it is
         # necessary to suspend the kernel's security facility when creating
         # the container. Since it is a security issue, the default is to
@@ -205,7 +219,9 @@ class DockerContainer(Resource):
 
         if pty and shared is not None and not shared:
             lgr.warning("Cannot do non-shared pty session for docker yet")
-        return (PTYDockerSession if pty else DockerSession)(client=self._client, container=self._container)
+        return (PTYDockerSession if pty else DockerSession)(
+            client=self._client, container=self._container
+        )
 
 
 @attr.s
@@ -215,7 +231,9 @@ class DockerSession(POSIXSession):
 
     @borrowdoc(Session)
     def _execute_command(self, command, env=None, cwd=None, with_shell=True):
-        command = self._prefix_command(utils.command_as_string(command), env=env, cwd=cwd, with_shell=with_shell)
+        command = self._prefix_command(
+            utils.command_as_string(command), env=env, cwd=cwd, with_shell=with_shell
+        )
         # The following call may throw the following exception:
         #    docker.errors.APIError - If the server returns an error.
         lgr.debug("Running command %r", command)

@@ -62,11 +62,16 @@ def get_spec_from_release_file(content):
     content = content.split("-----BEGIN PGP SIGNATURE-----")[0]
 
     # Parse the content for tags and values into a dictionary
-    release = {match.group("tag"): match.group("val") for match in re_deb822_single_line_tag.finditer(content)}
+    release = {
+        match.group("tag"): match.group("val")
+        for match in re_deb822_single_line_tag.finditer(content)
+    }
 
     # TODO: redo with conversions of components and architectures in into lists
     # and date in machine-readable presentation
-    return DebianReleaseSpec(**{a.name: release.get(a.name.title(), None) for a in attr.fields(DebianReleaseSpec)})
+    return DebianReleaseSpec(
+        **{a.name: release.get(a.name.title(), None) for a in attr.fields(DebianReleaseSpec)}
+    )
 
 
 def parse_apt_cache_show_pkgs_output(output):
@@ -94,7 +99,10 @@ def parse_apt_cache_show_pkgs_output(output):
     # For each package entry, collect single line tag/value pairs into a
     # dictionary
     for entry in entries:
-        pkg = {match.group("tag").lower(): match.group("val") for match in re_deb822_single_line_tag.finditer(entry)}
+        pkg = {
+            match.group("tag").lower(): match.group("val")
+            for match in re_deb822_single_line_tag.finditer(entry)
+        }
         # Process the package if one was found
         if "package" in pkg:
             # Parse source line to get source version (if present)
@@ -152,7 +160,9 @@ def parse_apt_cache_policy_pkgs_output(output):
         info["versions"] = []
         for version in re_versions.finditer(info.pop("version_table")):
             version_dict = version.groupdict()
-            version_dict["sources"] = [source.groupdict() for source in re_source.finditer(version.group("sources"))]
+            version_dict["sources"] = [
+                source.groupdict() for source in re_source.finditer(version.group("sources"))
+            ]
             info["versions"].append(version_dict)
         # process version_table
     return pkgs
@@ -202,7 +212,14 @@ def parse_apt_cache_policy_source_info(policy_output):
     )
     # The release line has a terse tag=value format. This maps
     # the release tags to more meaningful values
-    tag_map = {"c": "component", "n": "codename", "a": "archive", "b": "architecture", "o": "origin", "l": "label"}
+    tag_map = {
+        "c": "component",
+        "n": "codename",
+        "a": "archive",
+        "b": "architecture",
+        "o": "origin",
+        "l": "label",
+    }
 
     sections = re_section.finditer(policy_output)
     for section in sections:
@@ -239,11 +256,16 @@ def get_apt_release_file_names(url, url_suite):
         filename = url + "_dists_" + url_suite
     else:
         filename = url
-    return ["/var/lib/apt/lists/" + filename + "_Release", "/var/lib/apt/lists/" + filename + "_InRelease"]
+    return [
+        "/var/lib/apt/lists/" + filename + "_Release",
+        "/var/lib/apt/lists/" + filename + "_InRelease",
+    ]
 
 
 def parse_dpkgquery_line(line):
-    result_re = re.compile("(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(?P<pkgs_rest>,.*)?:" " (?P<path>.*)$")
+    result_re = re.compile(
+        "(?P<name>[^,:]+)(:(?P<architecture>[^,:]+))?(?P<pkgs_rest>,.*)?:" " (?P<path>.*)$"
+    )
     if line.startswith("diversion "):
         return None  # we are ignoring diversion details ATM  TODO
 

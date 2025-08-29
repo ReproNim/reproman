@@ -217,7 +217,9 @@ class ExternalVersions(object):
                             lgr.debug("Module %s seems to be not present" % modname)
                             return None
                         except Exception as exc:
-                            lgr.warning("Failed to import module %s due to %s", modname, exc_str(exc))
+                            lgr.warning(
+                                "Failed to import module %s due to %s", modname, exc_str(exc)
+                            )
                             return None
                     else:
                         module = sys.modules[modname]
@@ -291,7 +293,9 @@ class ExternalVersions(object):
         if ver_present is None:
             raise MissingExternalDependency(name, ver=min_version, msg=msg)
         elif min_version and ver_present < min_version:
-            raise OutdatedExternalDependency(name, ver=min_version, ver_present=ver_present, msg=msg)
+            raise OutdatedExternalDependency(
+                name, ver=min_version, ver_present=ver_present, msg=msg
+            )
 
 
 external_versions = ExternalVersions()

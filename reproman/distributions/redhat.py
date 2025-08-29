@@ -128,7 +128,8 @@ class RedhatDistribution(Distribution):
                     session.execute_command(["yum", "install", "-y", third_party_repos[source.id]])
                 else:
                     lgr.error(
-                        'Unable to install source repo "%s" found in ' "spec but not in resource environment.",
+                        'Unable to install source repo "%s" found in '
+                        "spec but not in resource environment.",
                         source.id,
                     )
 
@@ -220,7 +221,10 @@ class RPMTracer(DistributionTracer):
             return
 
         dist = RedhatDistribution(
-            name="redhat", version=redhat_version, packages=packages, sources=self._find_all_sources()
+            name="redhat",
+            version=redhat_version,
+            packages=packages,
+            sources=self._find_all_sources(),
         )
 
         yield dist, remaining_files

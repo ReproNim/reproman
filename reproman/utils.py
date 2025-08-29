@@ -61,7 +61,9 @@ on_osx = _platform_system == "darwin"
 on_linux = _platform_system == "linux"
 try:
     linux_distribution = platform.linux_distribution()
-    on_debian_wheezy = on_linux and linux_distribution[0] == "debian" and linux_distribution[1].startswith("7.")
+    on_debian_wheezy = (
+        on_linux and linux_distribution[0] == "debian" and linux_distribution[1].startswith("7.")
+    )
 except:  # pragma: no cover
     on_debian_wheezy = False
 
@@ -122,7 +124,8 @@ def not_supported_on_windows(msg=None):
     """
     if on_windows:
         raise NotImplementedError(
-            "This functionality is not yet implemented for Windows OS" + (": %s" % msg if msg else "")
+            "This functionality is not yet implemented for Windows OS"
+            + (": %s" % msg if msg else "")
         )
 
 
@@ -192,7 +195,14 @@ def md5sum(filename):
 def sorted_files(path):
     """Return a (sorted) list of files under path"""
     return sorted(
-        sum([[opj(r, f)[len(path) + 1 :] for f in files] for r, d, files in os.walk(path) if not ".git" in r], [])
+        sum(
+            [
+                [opj(r, f)[len(path) + 1 :] for f in files]
+                for r, d, files in os.walk(path)
+                if not ".git" in r
+            ],
+            [],
+        )
     )
 
 
@@ -202,7 +212,9 @@ _VCS_REGEX = r"%s\.(?:git|gitattributes|svn|bzr|hg)(?:%s|$)" % (dirsep, dirsep)
 _REPROMAN_REGEX = r"%s\.(?:reproman)(?:%s|$)" % (dirsep, dirsep)
 
 
-def find_files(regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_reproman=False, dirs=False):
+def find_files(
+    regex, topdir=curdir, exclude=None, exclude_vcs=True, exclude_reproman=False, dirs=False
+):
     """Generator to find files matching regex
 
     Parameters
@@ -456,7 +468,9 @@ def assure_dict_from_str(s, **kwargs):
             raise ValueError("{} is not in key=value format".format(repr(value_str)))
         k, v = value_str.split("=", 1)
         if k in out:
-            err = "key {} was already defined in {}, but new value {} was provided".format(k, out, v)
+            err = "key {} was already defined in {}, but new value {} was provided".format(
+                k, out, v
+            )
             raise ValueError(err)
         out[k] = v
     return out
@@ -518,7 +532,9 @@ def assure_unicode(s, encoding=None, confidence=None):
                 )
             return s.decode(denc)
         else:
-            raise ValueError("Could not decode value as utf-8, or to guess its encoding: %s" % repr(s))
+            raise ValueError(
+                "Could not decode value as utf-8, or to guess its encoding: %s" % repr(s)
+            )
     else:
         return s.decode(encoding)
 
@@ -1032,7 +1048,10 @@ def make_tempfile(content=None, wrapped=None, **tkwargs):
         filenames = glob.glob(filename_ + "*")
         if len(filename_) < 3 or len(filenames) > 5:
             # For paranoid yoh who stepped into this already ones ;-)
-            lgr.warning("It is unlikely that it was intended to remove all" " files matching %r. Skipping" % filename_)
+            lgr.warning(
+                "It is unlikely that it was intended to remove all"
+                " files matching %r. Skipping" % filename_
+            )
             return
         for f in filenames:
             try:

@@ -197,7 +197,9 @@ def test_altconstraints():
 
 def test_both():
     # this should always work
-    c = ct.AltConstraints(ct.Constraints(ct.EnsureFloat(), ct.EnsureRange(min=7.0, max=44.0)), ct.EnsureNone())
+    c = ct.AltConstraints(
+        ct.Constraints(ct.EnsureFloat(), ct.EnsureRange(min=7.0, max=44.0)), ct.EnsureNone()
+    )
     assert_equal(c(7.0), 7.0)
     assert_equal(c(None), None)
     # this should always fail

@@ -44,7 +44,9 @@ class VenvPackage(Package):
 class VenvEnvironment(SpecObject):
     path = attrib()
     python_version = attrib()
-    system_site_packages = attrib(default=False, doc="Are any non-local packages present in the environment?")
+    system_site_packages = attrib(
+        default=False, doc="Are any non-local packages present in the environment?"
+    )
     packages = TypedList(VenvPackage)
 
 
@@ -64,7 +66,11 @@ class VenvDistribution(Distribution):
         session = session or get_local_session()
         for env in self.environments:
             # TODO: Deal with system and editable packages.
-            to_install = ["{p.name}=={p.version}".format(p=p) for p in env.packages if p.local and not p.editable]
+            to_install = [
+                "{p.name}=={p.version}".format(p=p)
+                for p in env.packages
+                if p.local and not p.editable
+            ]
             if not to_install:
                 lgr.info("No local, non-editable packages found")
                 continue
@@ -102,13 +108,17 @@ class VenvTracer(DistributionTracer):
         try:
             packages, file_to_pkg = piputils.get_package_details(self._session, pip)
         except Exception as exc:
-            lgr.warning("Could not determine pip package details for %s: %s", venv_path, exc_str(exc))
+            lgr.warning(
+                "Could not determine pip package details for %s: %s", venv_path, exc_str(exc)
+            )
             return {}, {}
         return packages, file_to_pkg
 
     def _is_venv_directory(self, path):
         try:
-            self._session.execute_command(["grep", "-q", "VIRTUAL_ENV", "{}/bin/activate".format(path)])
+            self._session.execute_command(
+                ["grep", "-q", "VIRTUAL_ENV", "{}/bin/activate".format(path)]
+            )
         except Exception as exc:
             lgr.debug("Did not detect virtualenv at the path %s: %s", path, exc_str(exc))
             return False
@@ -127,7 +137,11 @@ class VenvTracer(DistributionTracer):
         venvs = []
         for venv_path in venv_paths:
             package_details, file_to_pkg = self._get_package_details(venv_path)
-            local_pkgs = set(piputils.get_pip_packages(self._session, venv_path + "/bin/pip", restriction="local"))
+            local_pkgs = set(
+                piputils.get_pip_packages(
+                    self._session, venv_path + "/bin/pip", restriction="local"
+                )
+            )
             pkg_to_found_files = defaultdict(list)
             for path in set(unknown_files):  # Clone the set
                 # The supplied path may be relative or absolute, but
@@ -135,7 +149,9 @@ class VenvTracer(DistributionTracer):
                 fullpath = os.path.abspath(path)
                 if fullpath in file_to_pkg:
                     unknown_files.remove(path)
-                    pkg_to_found_files[file_to_pkg[fullpath]].append(os.path.relpath(path, venv_path))
+                    pkg_to_found_files[file_to_pkg[fullpath]].append(
+                        os.path.relpath(path, venv_path)
+                    )
 
             # Some virtualenv files are links to system files. Files themselves
             # may be linked or they may be in a linked directory. We need to
@@ -181,7 +197,10 @@ class VenvTracer(DistributionTracer):
         if venvs:
             yield (
                 VenvDistribution(
-                    name="venv", venv_version=self._venv_version(), path=self._venv_exe_path(), environments=venvs
+                    name="venv",
+                    venv_version=self._venv_version(),
+                    path=self._venv_exe_path(),
+                    environments=venvs,
                 ),
                 unknown_files,
             )

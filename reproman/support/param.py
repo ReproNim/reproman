@@ -90,7 +90,10 @@ class Parameter(object):
         sdoc = None
         if self.constraints is not None:
             sdoc = self.constraints.short_description()
-        elif "action" in self.cmd_kwargs and self.cmd_kwargs["action"] in ("store_true", "store_false"):
+        elif "action" in self.cmd_kwargs and self.cmd_kwargs["action"] in (
+            "store_true",
+            "store_false",
+        ):
             sdoc = "bool"
         if not sdoc is None:
             if sdoc[0] == "(" and sdoc[-1] == ")":
@@ -119,5 +122,8 @@ class Parameter(object):
         # Explicitly deal with multiple spaces, for some reason
         # replace_whitespace is non-effective
         doc = _whitespace_re.sub(" ", doc)
-        paramsdoc += [indent + x for x in textwrap.wrap(doc, width=width - len(indent), replace_whitespace=True)]
+        paramsdoc += [
+            indent + x
+            for x in textwrap.wrap(doc, width=width - len(indent), replace_whitespace=True)
+        ]
         return "\n".join(paramsdoc)

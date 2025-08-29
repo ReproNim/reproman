@@ -59,11 +59,17 @@ def test_runner(tempfile=None):
     runner = Runner()
     cmd = "echo Testing real run > %s" % tempfile
     ret = runner.run(cmd)
-    assert_true(os.path.exists(tempfile), "Run of: %s resulted with non-existing file %s" % (cmd, tempfile))
+    assert_true(
+        os.path.exists(tempfile), "Run of: %s resulted with non-existing file %s" % (cmd, tempfile)
+    )
 
     # test non-dry python function call
     output = runner.call(os.path.join, "foo", "bar")
-    assert_equal(os.path.join("foo", "bar"), output, "Call of: os.path.join, 'foo', 'bar' returned %s" % output)
+    assert_equal(
+        os.path.join("foo", "bar"),
+        output,
+        "Call of: os.path.join, 'foo', 'bar' returned %s" % output,
+    )
 
 
 def test_runner_instance_callable_dry():
@@ -76,14 +82,18 @@ def test_runner_instance_callable_dry():
         # (stdout, stderr) is returned.  But in dry -- ("DRY","DRY")
         eq_(ret, ("DRY", "DRY"))
         assert_equal(
-            cmd_, dry[0]["command"], "Dry run of Runner.__call__ didn't record command: %s.\n" "Buffer: %s" % (cmd, dry)
+            cmd_,
+            dry[0]["command"],
+            "Dry run of Runner.__call__ didn't record command: %s.\n" "Buffer: %s" % (cmd, dry),
         )
 
     ret = runner(os.path.join, "foo", "bar")
     eq_(ret, None)
 
     assert_in(
-        "join", dry[1]["command"][0], "Dry run of Runner.__call__ didn't record function join()." "Buffer: %s" % dry
+        "join",
+        dry[1]["command"][0],
+        "Dry run of Runner.__call__ didn't record function join()." "Buffer: %s" % dry,
     )
     assert_equal(
         "args=('foo', 'bar')",

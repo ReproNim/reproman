@@ -52,7 +52,10 @@ class Ls(Interface):
             doc="Refresh the status of the resources listed",
         ),
         resrefs=Parameter(
-            args=("resrefs",), metavar="RESOURCE", nargs="*", doc="Restrict the output to this resource name or ID"
+            args=("resrefs",),
+            metavar="RESOURCE",
+            nargs="*",
+            doc="Restrict the output to this resource name or ID",
         ),
         resref_type=resref_type_opt,
     )
@@ -109,5 +112,7 @@ class Ls(Interface):
             ui.message("Use --refresh option to view updated status.")
 
         if unknown_resrefs:
-            raise ResourceNotFoundError("Could not find the following resources: {}".format(", ".join(unknown_resrefs)))
+            raise ResourceNotFoundError(
+                "Could not find the following resources: {}".format(", ".join(unknown_resrefs))
+            )
         return results

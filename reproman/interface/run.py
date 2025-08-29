@@ -248,20 +248,26 @@ class Run(Interface):
             args=("--submitter", "--sub"),
             metavar="NAME",
             constraints=EnsureChoice(None, *SUBMITTERS),
-            doc=(JOB_PARAMETERS["submitter"] + "[CMD:  Use --list to see available submitters CMD]"),
+            doc=(
+                JOB_PARAMETERS["submitter"] + "[CMD:  Use --list to see available submitters CMD]"
+            ),
         ),
         orchestrator=Parameter(
             args=("--orchestrator", "--orc"),
             metavar="NAME",
             constraints=EnsureChoice(None, *ORCHESTRATORS),
-            doc=(JOB_PARAMETERS["orchestrator"] + "[CMD:  Use --list to see available orchestrators CMD]"),
+            doc=(
+                JOB_PARAMETERS["orchestrator"]
+                + "[CMD:  Use --list to see available orchestrators CMD]"
+            ),
         ),
         batch_spec=Parameter(
             args=("--batch-spec", "--bs"),
             dest="batch_spec",
             metavar="PATH",
             doc=(
-                JOB_PARAMETERS["batch_spec"] + " See [CMD: --batch-parameter CMD][PY: `batch_parameters` PY]"
+                JOB_PARAMETERS["batch_spec"]
+                + " See [CMD: --batch-parameter CMD][PY: `batch_parameters` PY]"
                 " for an alternative method for simple combinations."
             ),
         ),
@@ -271,7 +277,8 @@ class Run(Interface):
             action="append",
             metavar="PATH",
             doc=(
-                JOB_PARAMETERS["batch_parameters"] + " See [CMD: --batch-spec CMD][PY: `batch_spec` PY]"
+                JOB_PARAMETERS["batch_parameters"]
+                + " See [CMD: --batch-spec CMD][PY: `batch_spec` PY]"
                 " for specifying more complex records." + _more_than_once_doc
             ),
         ),
@@ -326,12 +333,18 @@ class Run(Interface):
             metavar="ACTION",
             const=True,
             nargs="?",
-            constraints=EnsureChoice(False, True, "stop", "stop-if-success", "delete", "delete-if-success"),
+            constraints=EnsureChoice(
+                False, True, "stop", "stop-if-success", "delete", "delete-if-success"
+            ),
             doc="""Continue to follow the submitted command instead of
             submitting it and detaching.""",
         ),
-        command=Parameter(args=("command",), nargs=REMAINDER, metavar="COMMAND", doc="command for execution"),
-        message=Parameter(args=("-m", "--message"), metavar="MESSAGE", doc=JOB_PARAMETERS["message"]),
+        command=Parameter(
+            args=("command",), nargs=REMAINDER, metavar="COMMAND", doc="command for execution"
+        ),
+        message=Parameter(
+            args=("-m", "--message"), metavar="MESSAGE", doc=JOB_PARAMETERS["message"]
+        ),
     )
 
     @staticmethod

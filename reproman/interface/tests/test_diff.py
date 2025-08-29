@@ -31,12 +31,16 @@ def test_multi_debian_files():
         args = ["diff", multi_debian_yaml, diff_1_yaml]
         with raises(SystemExit):
             main(args)
-        assert_in_in("multiple <class 'reproman.distributions.debian.DebianDistribution'> found", log.lines)
+        assert_in_in(
+            "multiple <class 'reproman.distributions.debian.DebianDistribution'> found", log.lines
+        )
     with swallow_logs() as log:
         args = ["diff", diff_1_yaml, multi_debian_yaml]
         with raises(SystemExit):
             main(args)
-        assert_in_in("multiple <class 'reproman.distributions.debian.DebianDistribution'> found", log.lines)
+        assert_in_in(
+            "multiple <class 'reproman.distributions.debian.DebianDistribution'> found", log.lines
+        )
 
 
 def test_same():
@@ -126,8 +130,12 @@ def test_diff_git():
         assert_equal(rv, 3)
         assert_equal(outputs.err, "")
         assert_in("Git repositories:", outputs.out)
-        assert_in("< 43e8e6577c7bf493ddb01ea7d49bef7dc7a6643b (/path/to/git/repo/1/only)", outputs.out)
-        assert_in("> 64b1865267891fdd1a45251ca6f32df213dc546e (/path/to/git/repo/2/only)", outputs.out)
+        assert_in(
+            "< 43e8e6577c7bf493ddb01ea7d49bef7dc7a6643b (/path/to/git/repo/1/only)", outputs.out
+        )
+        assert_in(
+            "> 64b1865267891fdd1a45251ca6f32df213dc546e (/path/to/git/repo/2/only)", outputs.out
+        )
         assert_in("Git repository 5b8267181f6cae8dc37aeef21ea54171bd932522", outputs.out)
         assert_in(
             "< branch None, commit 3e3aaa73a9c0ca061c7679af5fa7318e70f528ac (/path/1/to/different/git/commit)",
@@ -164,10 +172,22 @@ def test_diff_satisfies_unsupported_distribution():
     # that raises an exception in main(), so it doesn't return and we
     # can't catch its return value
     with swallow_outputs() as outputs:
-        args = ["reproman", "diff", "--satisfies", diff_satisfies_unsupported_yaml, diff_satisfies_2_yaml]
+        args = [
+            "reproman",
+            "diff",
+            "--satisfies",
+            diff_satisfies_unsupported_yaml,
+            diff_satisfies_2_yaml,
+        ]
         rv = subprocess.call(args)
         assert_equal(rv, 1)
-        args = ["reproman", "diff", "--satisfies", diff_satisfies_1_yaml, diff_satisfies_unsupported_yaml]
+        args = [
+            "reproman",
+            "diff",
+            "--satisfies",
+            diff_satisfies_1_yaml,
+            diff_satisfies_unsupported_yaml,
+        ]
         rv = subprocess.call(args)
         assert_equal(rv, 1)
 

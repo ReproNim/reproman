@@ -36,7 +36,12 @@ from reproman.support.distributions.debian import (
 )
 
 # Pick a conservative max command-line
-from reproman.utils import get_cmd_batch_len, execute_command_batch, cmd_err_filter, join_sequence_of_dicts
+from reproman.utils import (
+    get_cmd_batch_len,
+    execute_command_batch,
+    cmd_err_filter,
+    join_sequence_of_dicts,
+)
 
 from reproman.distributions.base import DistributionTracer
 
@@ -135,7 +140,9 @@ class DebianDistribution(Distribution):
         # session.execute_command(['apt-get', 'install', '-y', 'python-pip'])
         # session.set_env(DEBIAN_FRONTEND='noninteractive', this_session_only=True)
 
-    def _init_apt_sources(self, session, apt_source_file="/etc/apt/sources.list.d/reproman.sources.list"):
+    def _init_apt_sources(
+        self, session, apt_source_file="/etc/apt/sources.list.d/reproman.sources.list"
+    ):
         """
         Update /etc/apt/sources if necessary based on source date.
 
@@ -162,21 +169,29 @@ class DebianDistribution(Distribution):
         sources = [s for s in self.apt_sources if s.origin in repo_info]
         # Create a new apt sources file if needed.
         if sources and not session.exists(apt_source_file):
-            session.execute_command("sh -c 'echo \"# ReproMan repo sources\" > {}'".format(apt_source_file))
+            session.execute_command(
+                "sh -c 'echo \"# ReproMan repo sources\" > {}'".format(apt_source_file)
+            )
 
         for source in sources:
             # Write snapshot repo to apt sources file.
             date = datetime.strptime(source.date.split("+")[0], "%Y-%m-%d %X")
             template = "deb http://{}/archive/{}/{}/ {} main contrib non-free"
             source_line = template.format(
-                repo_info[source.origin]["url"], source.origin.lower(), date.strftime("%Y%m%dT%H%M%SZ"), source.codename
+                repo_info[source.origin]["url"],
+                source.origin.lower(),
+                date.strftime("%Y%m%dT%H%M%SZ"),
+                source.codename,
             )
             self._write_apt_sources(session, apt_source_file, source_line)
 
             # Write "next" snapshot repo to apt sources file.
             template_list_page = "http://{}/archive/{}/{}/dists/{}/"
             url = template_list_page.format(
-                repo_info[source.origin]["url"], source.origin.lower(), date.strftime("%Y%m%dT%H%M%SZ"), source.codename
+                repo_info[source.origin]["url"],
+                source.origin.lower(),
+                date.strftime("%Y%m%dT%H%M%SZ"),
+                source.codename,
             )
             import requests  # OPT
 
@@ -184,7 +199,10 @@ class DebianDistribution(Distribution):
             m = re.search(r'<a href="/archive/\w*debian/(\w+)/dists/\w+/">next change</a>', r.text)
             if m:
                 source_line = template.format(
-                    repo_info[source.origin]["url"], source.origin.lower(), m.group(1), source.codename
+                    repo_info[source.origin]["url"],
+                    source.origin.lower(),
+                    m.group(1),
+                    source.codename,
                 )
                 self._write_apt_sources(session, apt_source_file, source_line)
 
@@ -242,7 +260,8 @@ class DebianDistribution(Distribution):
         # Doing in one shot to fail early if any of the versioned specs
         # couldn't be satisfied
         lgr.info(
-            "Installing %s via APT", single_or_plural("package", "packages", len(package_specs), include_count=True)
+            "Installing %s via APT",
+            single_or_plural("package", "packages", len(package_specs), include_count=True),
         )
         lgr.debug("Installing %s", ", ".join(package_specs))
         session.execute_command(
@@ -334,7 +353,10 @@ class DebTracer(DistributionTracer):
     def _get_packagefields_for_files(self, files):
         # Call dpkg query in batches
         exec_gen = execute_command_batch(
-            self._session, ["dpkg-query", "-S"], files, cmd_err_filter("no path found matching pattern")
+            self._session,
+            ["dpkg-query", "-S"],
+            files,
+            cmd_err_filter("no path found matching pattern"),
         )
         # Parse and accumulate stat results in a dict
         file_to_package_dict = {}
@@ -414,7 +436,9 @@ class DebTracer(DistributionTracer):
         src_info = parse_apt_cache_policy_source_info(out)
         for src_name in src_info:
             src_vals = src_info[src_name]
-            date = self._get_date_from_release_file(src_vals.get("archive_uri"), src_vals.get("uri_suite"))
+            date = self._get_date_from_release_file(
+                src_vals.get("archive_uri"), src_vals.get("uri_suite")
+            )
             self._all_apt_sources[src_name] = APTSource(
                 name=src_name,
                 component=src_vals.get("component"),
@@ -432,7 +456,10 @@ class DebTracer(DistributionTracer):
         # Convert package names to name:arch format
         # Use "dpkg -s pkg" to get the installed version and arch
         # Note: "architecture" is in the dict, but may be null
-        queries = [(p["name"] if not p["architecture"] else "%(name)s:%(architecture)s" % p) for p in pkg_dicts]
+        queries = [
+            (p["name"] if not p["architecture"] else "%(name)s:%(architecture)s" % p)
+            for p in pkg_dicts
+        ]
         # Call "dpkg -s" in batches
         exec_gen = execute_command_batch(self._session, ["dpkg", "-s"], queries)
         # Parse and accumulate "dpkg -s" results
@@ -487,7 +514,10 @@ class DebTracer(DistributionTracer):
         queries = [self._pkg_name_to_dpkg_list_file(p["name"]) for p in pkg_dicts]
         # Call stat in batches
         exec_gen = execute_command_batch(
-            self._session, ["stat", "-c", "%n: %Y"], queries, cmd_err_filter("No such file or directory")
+            self._session,
+            ["stat", "-c", "%n: %Y"],
+            queries,
+            cmd_err_filter("No such file or directory"),
         )
         # Parse and accumulate stat results in a dict
         results = {}
@@ -558,7 +588,9 @@ class DebTracer(DistributionTracer):
             try:
                 out = self._session.read(filename)
                 spec = get_spec_from_release_file(out)
-                date = str(pytz.utc.localize(datetime.utcfromtimestamp(mktime_tz(parsedate_tz(spec.date)))))
+                date = str(
+                    pytz.utc.localize(datetime.utcfromtimestamp(mktime_tz(parsedate_tz(spec.date))))
+                )
             except CommandError as _:
                 # NOTE: We will be trying release files that end in
                 # "Release" and "InRelease", so we expect to fail in opening

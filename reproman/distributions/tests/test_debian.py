@@ -98,7 +98,9 @@ def test_check_bin_packages():
 
 
 def list_all_files(dir):
-    files = [join(dir, f) for f in os.listdir(dir) if (isfile(join(dir, f)) and not islink(join(dir, f)))]
+    files = [
+        join(dir, f) for f in os.listdir(dir) if (isfile(join(dir, f)) and not islink(join(dir, f)))
+    ]
     return files
 
 
@@ -138,7 +140,10 @@ def test_trace_nonexisting_file():
 
 @mark.skipif_no_apt_cache
 def test_utf8_file():
-    files = ["/usr/share/ca-certificates/mozilla/" "TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"]
+    files = [
+        "/usr/share/ca-certificates/mozilla/"
+        "TÜBİTAK_UEKAE_Kök_Sertifika_Hizmet_Sağlayıcısı_-_Sürüm_3.crt"
+    ]
     manager = DebTracer()
     # Simple sanity check that the pipeline works with utf-8
     (packages, unknown_files) = manager.identify_packages_from_files(files)

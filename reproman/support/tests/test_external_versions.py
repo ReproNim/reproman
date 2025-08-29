@@ -95,7 +95,8 @@ def test_external_versions_smoke():
 
 
 @pytest.mark.parametrize(
-    "modname", ["scipy", "numpy", "mvpa2", "sklearn", "statsmodels", "pandas", "matplotlib", "psychopy"]
+    "modname",
+    ["scipy", "numpy", "mvpa2", "sklearn", "statsmodels", "pandas", "matplotlib", "psychopy"],
 )
 def test_external_versions_popular_packages(modname):
     ev = ExternalVersions()
@@ -137,7 +138,9 @@ class thing_with_list_version:
     __version__ = [0, 1]
 
 
-@pytest.mark.parametrize("thing", [thing_with_tuple_version, thing_with_list_version, "0.1", (0, 1), [0, 1]])
+@pytest.mark.parametrize(
+    "thing", [thing_with_tuple_version, thing_with_list_version, "0.1", (0, 1), [0, 1]]
+)
 def test_list_tuple(thing):
     version = ExternalVersions._deduce_version(thing)
     assert_greater(version, "0.0.1")

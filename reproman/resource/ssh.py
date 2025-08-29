@@ -89,7 +89,9 @@ class SSH(Resource):
         if password:
             connect_kwargs["password"] = password
 
-        self._connection = Connection(self.host, user=self.user, port=self.port, connect_kwargs=connect_kwargs)
+        self._connection = Connection(
+            self.host, user=self.user, port=self.port, connect_kwargs=connect_kwargs
+        )
 
         if self.key_filename:
             auth = self.key_filename
@@ -170,22 +172,32 @@ class SSHSession(POSIXSession):
     connection = attrib(default=attr.NOTHING)
 
     @borrowdoc(Session)
-    def _execute_command(self, command, env=None, cwd=None, with_shell=False, handle_permission_denied=True):
+    def _execute_command(
+        self, command, env=None, cwd=None, with_shell=False, handle_permission_denied=True
+    ):
         # TODO -- command_env is not used etc...
         # command_env = self.get_updated_env(env)
         from invoke.exceptions import UnexpectedExit
 
-        command = self._prefix_command(command_as_string(command), env=env, cwd=cwd, with_shell=with_shell)
+        command = self._prefix_command(
+            command_as_string(command), env=env, cwd=cwd, with_shell=with_shell
+        )
         try:
             result = self.connection.run(command, hide=True)
         except UnexpectedExit as e:
             if "permission denied" in e.result.stderr.lower() and handle_permission_denied:
                 # Issue warning once
                 if not getattr(self, "_use_sudo_warning", False):
-                    lgr.warning("Permission is denied for %s. From now on will use 'sudo' " "in such cases", command)
+                    lgr.warning(
+                        "Permission is denied for %s. From now on will use 'sudo' " "in such cases",
+                        command,
+                    )
                     self._use_sudo_warning = True
                 return self._execute_command(
-                    "sudo " + command, env=env, cwd=cwd, handle_permission_denied=False  # there was command_as_string
+                    "sudo " + command,
+                    env=env,
+                    cwd=cwd,
+                    handle_permission_denied=False,  # there was command_as_string
                 )
             else:
                 result = e.result
@@ -207,7 +219,9 @@ class SSHSession(POSIXSession):
     def put(self, src_path, dest_path, uid=-1, gid=-1):
         dest_path = self._prepare_dest_path(src_path, dest_path, local=False)
         sftp = self.connection.sftp()
-        self.transfer_recursive(src_path, dest_path, os.path.isdir, os.listdir, sftp.mkdir, self.connection.put)
+        self.transfer_recursive(
+            src_path, dest_path, os.path.isdir, os.listdir, sftp.mkdir, self.connection.put
+        )
 
         if uid > -1 or gid > -1:
             self.chown(dest_path, uid, gid, recursive=True)

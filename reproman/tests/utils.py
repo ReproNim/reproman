@@ -169,7 +169,10 @@ def ok_good_symlink(path):
 def ok_broken_symlink(path):
     ok_symlink(path)
     rpath = realpath(path)
-    assert_false(exists(rpath), msg="Path {} seems to be present.  Symlink {} is not broken".format(rpath, path))
+    assert_false(
+        exists(rpath),
+        msg="Path {} seems to be present.  Symlink {} is not broken".format(rpath, path),
+    )
 
 
 def ok_startswith(s, prefix):
@@ -275,7 +278,9 @@ def serve_path_via_http(tfunc, *targs):
         hostname = "127.0.0.1"
 
         queue = multiprocessing.Queue()
-        multi_proc = multiprocessing.Process(target=_multiproc_serve_path_via_http, args=(hostname, path, queue))
+        multi_proc = multiprocessing.Process(
+            target=_multiproc_serve_path_via_http, args=(hostname, path, queue)
+        )
         multi_proc.start()
         port = queue.get(timeout=300)
         url = "http://{}:{}/".format(hostname, port)
@@ -371,12 +376,17 @@ def assert_cwd_unchanged(func, ok_to_chdir=False):
         if cwd_after != cwd_before:
             chpwd(pwd_before)
             if not ok_to_chdir:
-                lgr.warning("%s changed cwd to %s. Mitigating and changing back to %s" % (func, cwd_after, pwd_before))
+                lgr.warning(
+                    "%s changed cwd to %s. Mitigating and changing back to %s"
+                    % (func, cwd_after, pwd_before)
+                )
                 # If there was already exception raised, we better re-raise
                 # that one since it must be more important, so not masking it
                 # here with our assertion
                 if exc_info is None:
-                    assert_equal(cwd_before, cwd_after, "CWD changed from %s to %s" % (cwd_before, cwd_after))
+                    assert_equal(
+                        cwd_before, cwd_after, "CWD changed from %s to %s" % (cwd_before, cwd_after)
+                    )
 
         if exc_info is not None:
             raise exc_info[1].with_traceback(exc_info[2])
@@ -451,9 +461,13 @@ def get_most_obscure_supported_name(tdir):
                 f.write("TEST LOAD")
             return filename  # it will get removed as a part of wiping up the directory
         except:
-            lgr.debug("Filename %r is not supported on %s under %s", filename, platform.system(), tdir)
+            lgr.debug(
+                "Filename %r is not supported on %s under %s", filename, platform.system(), tdir
+            )
             pass
-    raise RuntimeError("Could not create any of the files under %s among %s" % (tdir, OBSCURE_FILENAMES))
+    raise RuntimeError(
+        "Could not create any of the files under %s among %s" % (tdir, OBSCURE_FILENAMES)
+    )
 
 
 @optional_args
@@ -472,7 +486,9 @@ def with_testsui(t, responses=None):
             ret = t(*args, **kwargs)
             if responses:
                 responses_left = ui.get_responses()
-                assert not len(responses_left), "Some responses were left not used: %s" % str(responses_left)
+                assert not len(responses_left), "Some responses were left not used: %s" % str(
+                    responses_left
+                )
             return ret
         finally:
             ui.set_backend(old_backend)

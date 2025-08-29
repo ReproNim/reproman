@@ -113,7 +113,9 @@ def no_slurm():
     def is_running():
         # Does it look like tools/ci/setup-slurm-container.sh was called?
         try:
-            out, _ = Runner().run(["docker", "port", "reproman-slurm-container"], expect_fail=True, expect_stderr=True)
+            out, _ = Runner().run(
+                ["docker", "port", "reproman-slurm-container"], expect_fail=True, expect_stderr=True
+            )
         except (CommandError, FileNotFoundError):
             return False
         return out.strip()

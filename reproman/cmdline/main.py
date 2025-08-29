@@ -164,7 +164,9 @@ def setup_parser(formatter_class=argparse.RawDescriptionHelpFormatter, return_su
             subparser = subparsers.add_parser(cmd_name, add_help=False, **parser_args)
             # all subparser can report the version
             helpers.parser_add_common_opt(
-                subparser, "version", version="reproman %s %s\n\n%s" % (cmd_name, reproman.__version__, _license_info())
+                subparser,
+                "version",
+                version="reproman %s %s\n\n%s" % (cmd_name, reproman.__version__, _license_info()),
             )
             # our own custom help for all commands
             helpers.parser_add_common_opt(subparser, "help")
@@ -175,7 +177,9 @@ def setup_parser(formatter_class=argparse.RawDescriptionHelpFormatter, return_su
 
             # configure 'run' function for this command
             plumbing_args = dict(
-                func=_intf.call_from_parser, logger=logging.getLogger(_intf.__module__), subparser=subparser
+                func=_intf.call_from_parser,
+                logger=logging.getLogger(_intf.__module__),
+                subparser=subparser,
             )
             if hasattr(_intf, "result_renderer_cmdline"):
                 plumbing_args["result_renderer"] = _intf.result_renderer_cmdline

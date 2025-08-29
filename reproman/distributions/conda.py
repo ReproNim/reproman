@@ -90,9 +90,7 @@ def get_miniconda_url(conda_platform, python_version, conda_version):
         raise ValueError("Unsupported platform %s for conda installation" % conda_platform)
     platform += "-x86_64" if ("64" in conda_platform) else "-x86"
     py = Version(python_version)
-    return (
-        f"https://repo.anaconda.com/miniconda/Miniconda{py.major}-py{py.major}{py.minor}_{conda_version}-{platform}.sh"
-    )
+    return f"https://repo.anaconda.com/miniconda/Miniconda{py.major}-py{py.major}{py.minor}_{conda_version}-{platform}.sh"
 
 
 @attr.s
@@ -186,7 +184,9 @@ class CondaDistribution(Distribution):
             # See if Conda root path exists and if not, install Conda
             if not session.isdir(self.path):
                 # TODO: Determine if we can detect miniconda vs anaconad
-                miniconda_url = get_miniconda_url(self.platform, self.python_version, self.conda_version)
+                miniconda_url = get_miniconda_url(
+                    self.platform, self.python_version, self.conda_version
+                )
                 session.execute_command(
                     "curl --fail --silent --show-error --location "
                     "--output {}/miniconda.sh {}".format(tmp_dir, miniconda_url)
@@ -207,16 +207,19 @@ class CondaDistribution(Distribution):
                     if not session.isdir(env.path):
                         try:
                             session.execute_command(
-                                "%s/bin/conda-env create -p %s -f %s " % (self.path, env.path, remote_config)
+                                "%s/bin/conda-env create -p %s -f %s "
+                                % (self.path, env.path, remote_config)
                             )
                         except CommandError:
                             # Some conda versions seg fault so try to update
                             session.execute_command(
-                                "%s/bin/conda-env update -p %s -f %s " % (self.path, env.path, remote_config)
+                                "%s/bin/conda-env update -p %s -f %s "
+                                % (self.path, env.path, remote_config)
                             )
                     else:
                         session.execute_command(
-                            "%s/bin/conda-env update -p %s -f %s " % (self.path, env.path, remote_config)
+                            "%s/bin/conda-env update -p %s -f %s "
+                            % (self.path, env.path, remote_config)
                         )
 
         finally:
@@ -269,7 +272,9 @@ class CondaDistribution(Distribution):
         #            p.get("name"), p.get("version"), p.get("build"))
         # Collect pip-installed dependencies
         pip_deps = [
-            CondaDistribution.format_pip_package(p.name, p.version) for p in env.packages if p.installer == "pip"
+            CondaDistribution.format_pip_package(p.name, p.version)
+            for p in env.packages
+            if p.installer == "pip"
         ]
         if pip_deps:
             d["dependencies"].append({"pip": pip_deps})
@@ -297,7 +302,9 @@ class CondaTracer(DistributionTracer):
             out, _ = self._session.execute_command("ls %s/conda-meta/*.json" % conda_path)
             return iter(out.splitlines())
         except Exception as exc:  # Empty conda environment (unusual situation)
-            lgr.warning("Could not retrieve conda-meta files in path %s: %s", conda_path, exc_str(exc))
+            lgr.warning(
+                "Could not retrieve conda-meta files in path %s: %s", conda_path, exc_str(exc)
+            )
             return iter(())
 
     def _get_conda_package_details(self, conda_path):
@@ -313,14 +320,20 @@ class CondaTracer(DistributionTracer):
                     lgr.debug("Found conda package %s", details["name"])
                     # Packages are recorded in the conda environment as
                     # name=version=build
-                    conda_package_name = "%s=%s=%s" % (details["name"], details["version"], details["build"])
+                    conda_package_name = "%s=%s=%s" % (
+                        details["name"],
+                        details["version"],
+                        details["build"],
+                    )
                     packages[conda_package_name] = details
                     # Now map the package files to the package
                     for f in details["files"]:
                         full_path = os.path.normpath(os.path.join(conda_path, f))
                         file_to_package_map[full_path] = conda_package_name
             except Exception as exc:
-                lgr.warning("Could not retrieve conda info in path %s: %s", conda_path, exc_str(exc))
+                lgr.warning(
+                    "Could not retrieve conda info in path %s: %s", conda_path, exc_str(exc)
+                )
 
         return packages, file_to_package_map
 
@@ -359,7 +372,9 @@ class CondaTracer(DistributionTracer):
         try:
             # NOTE: We need to call conda-env directly.  Conda has problems
             # calling conda-env without a PATH being set...
-            out, err = self._session.execute_command("%s/bin/conda-env export -p %s" % (root_prefix, conda_path))
+            out, err = self._session.execute_command(
+                "%s/bin/conda-env export -p %s" % (root_prefix, conda_path)
+            )
             export = yaml.safe_load(out)
         except Exception as exc:
             if "unrecognized arguments: -p" in exc_str(exc):
@@ -370,7 +385,11 @@ class CondaTracer(DistributionTracer):
                     conda_path,
                 )
             else:
-                lgr.warning("Could not retrieve conda environment " "export from path %s: %s", conda_path, exc_str(exc))
+                lgr.warning(
+                    "Could not retrieve conda environment " "export from path %s: %s",
+                    conda_path,
+                    exc_str(exc),
+                )
         return export
 
     def _get_conda_info(self, conda_path):
@@ -421,7 +440,9 @@ class CondaTracer(DistributionTracer):
             # Retrieve the environment details
             env_export = self._get_conda_env_export(root_path, conda_path)
             (conda_package_details, file_to_pkg) = self._get_conda_package_details(conda_path)
-            (conda_pip_package_details, file_to_pip_pkg) = self._get_conda_pip_package_details(env_export, conda_path)
+            (conda_pip_package_details, file_to_pip_pkg) = self._get_conda_pip_package_details(
+                env_export, conda_path
+            )
             # Join our conda and pip packages
             conda_package_details.update(conda_pip_package_details)
             file_to_pkg.update(file_to_pip_pkg)
@@ -491,7 +512,9 @@ class CondaTracer(DistributionTracer):
             found_package_count += len(packages)
 
             # Create the conda environment (works with root environments too)
-            conda_env = CondaEnvironment(name=env_name, path=conda_path, packages=packages, channels=channels)
+            conda_env = CondaEnvironment(
+                name=env_name, path=conda_path, packages=packages, channels=channels
+            )
             root_to_envs[root_path].append(conda_env)
 
         lgr.debug(

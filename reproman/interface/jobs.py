@@ -76,7 +76,9 @@ def _resurrect_orc(job):
         cd = chpwd(job["local_directory"])
     except FileNotFoundError:
         raise OrchestratorError(
-            "local directory for job {} no longer exists: {}".format(job["_jobid"], job["local_directory"])
+            "local directory for job {} no longer exists: {}".format(
+                job["_jobid"], job["local_directory"]
+            )
         )
 
     with cd:
@@ -114,7 +116,11 @@ def show(job, status=False):
     if status:
         orc = _resurrect_orc(job)
         queried_normalized, queried = orc.submitter.status
-        job["status"] = {"orchestrator": orc.status, "queried": queried, "queried_normalized": queried_normalized}
+        job["status"] = {
+            "orchestrator": orc.status,
+            "queried": queried,
+            "queried_normalized": queried_normalized,
+        }
     print(yaml.safe_dump(job))
 
 
@@ -125,7 +131,9 @@ def fetch(job):
         orc.fetch()
         LREG.unregister(orc.jobid)
     else:
-        lgr.warning("Not fetching incomplete job %s [status: %s]", job["_jobid"], orc.status or "unknown")
+        lgr.warning(
+            "Not fetching incomplete job %s [status: %s]", job["_jobid"], orc.status or "unknown"
+        )
 
 
 class Jobs(Interface):
@@ -152,7 +160,9 @@ class Jobs(Interface):
             constraints=EnsureChoice("auto", "list", "show", "delete", "fetch"),
             doc="""Operation to perform on the job(s).""",
         ),
-        all_=Parameter(dest="all_", args=("--all",), action="store_true", doc="Operate on all jobs"),
+        all_=Parameter(
+            dest="all_", args=("--all",), action="store_true", doc="Operate on all jobs"
+        ),
         status=Parameter(
             dest="status",
             args=("-s", "--status"),
@@ -209,4 +219,8 @@ class Jobs(Interface):
                 except OrchestratorError as exc:
                     lgr.error("job %s failed: %s", job["_jobid"], exc_str(exc))
                 except ResourceNotFoundError:
-                    lgr.error("Resource %s (%s) no longer exists", job["resource_id"], job["resource_name"])
+                    lgr.error(
+                        "Resource %s (%s) no longer exists",
+                        job["resource_id"],
+                        job["resource_name"],
+                    )

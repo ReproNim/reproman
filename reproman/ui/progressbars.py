@@ -57,7 +57,9 @@ try:
                 fill_text = "..." + self.fill_text[-(width - 4) :]
             else:
                 fill_text = self.fill_text
-            fill_text = fill_text[: min(len(fill_text), int(round(width * pbar.percentage() / 100.0)))]
+            fill_text = fill_text[
+                : min(len(fill_text), int(round(width * pbar.percentage() / 100.0)))
+            ]
             return fill_text + " " + orig[len(fill_text) + 1 :]
 
 except ImportError:  # pragma: no cover

@@ -116,14 +116,20 @@ class SingularityTracer(DistributionTracer):
                     with chpwd(tempfile.gettempdir()):
                         msg = "Downloading Singularity image {} for tracing"
                         lgr.info(msg.format(file_path))
-                        self._session.execute_command(["singularity", "pull", "--name", temp_path, file_path])
-                        image = json.loads(self._session.execute_command(["singularity", "inspect", temp_path])[0])
+                        self._session.execute_command(
+                            ["singularity", "pull", "--name", temp_path, file_path]
+                        )
+                        image = json.loads(
+                            self._session.execute_command(["singularity", "inspect", temp_path])[0]
+                        )
                         url = file_path
                         md5 = md5sum(temp_path)
                         os.remove(temp_path)
                 else:
                     path = os.path.abspath(file_path)
-                    image = json.loads(self._session.execute_command(["singularity", "inspect", file_path])[0])
+                    image = json.loads(
+                        self._session.execute_command(["singularity", "inspect", file_path])[0]
+                    )
                     md5 = md5sum(file_path)
 
                 images.append(
@@ -137,7 +143,9 @@ class SingularityTracer(DistributionTracer):
                         build_size=image.get("org.label-schema.build-size"),
                         singularity_version=image.get("org.label-schema.usage.singularity.version"),
                         base_image=image.get("org.label-schema.usage.singularity.deffile.from"),
-                        mirror_url=image.get("org.label-schema.usage.singularity.deffile.mirrorurl"),
+                        mirror_url=image.get(
+                            "org.label-schema.usage.singularity.deffile.mirrorurl"
+                        ),
                         url=url,
                         path=path,
                     )

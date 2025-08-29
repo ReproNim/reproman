@@ -44,7 +44,9 @@ def get_interface_specs():
 
             # figure out which of the specs are "positional"
             spec_posargs = {
-                name for name, param in spec.items() if param.cmd_args and not param.cmd_args[0].startswith("-")
+                name
+                for name, param in spec.items()
+                if param.cmd_args and not param.cmd_args[0].startswith("-")
             }
             # we have information about positional args
             yield intf, spec_posargs
@@ -53,7 +55,9 @@ def get_interface_specs():
 interface_specs = list(get_interface_specs())
 
 
-@pytest.mark.parametrize("intf,spec_posargs", interface_specs, ids=[x[0].__name__ for x in interface_specs])
+@pytest.mark.parametrize(
+    "intf,spec_posargs", interface_specs, ids=[x[0].__name__ for x in interface_specs]
+)
 def test_consistent_order_of_args(intf, spec_posargs):
     f = getattr(intf, "__call__")
     args, varargs, varkw, defaults = getargspec(f)
@@ -66,7 +70,9 @@ def test_consistent_order_of_args(intf, spec_posargs):
 def test_no_heavy_imports():
 
     def get_modules(extra=""):
-        out, err = Runner().run([sys.executable, "-c", "import os, sys%s; print(os.linesep.join(sys.modules))" % extra])
+        out, err = Runner().run(
+            [sys.executable, "-c", "import os, sys%s; print(os.linesep.join(sys.modules))" % extra]
+        )
         return set(out.split(os.linesep))
 
     # Establish baseline

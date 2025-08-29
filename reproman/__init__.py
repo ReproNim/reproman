@@ -127,7 +127,10 @@ def teardown_package():
     from reproman.tests.utils import rmtemp
 
     if len(_TEMP_PATHS_GENERATED):
-        msg = "Removing %d dirs/files: %s" % (len(_TEMP_PATHS_GENERATED), ", ".join(_TEMP_PATHS_GENERATED))
+        msg = "Removing %d dirs/files: %s" % (
+            len(_TEMP_PATHS_GENERATED),
+            ", ".join(_TEMP_PATHS_GENERATED),
+        )
     else:
         msg = "Nothing to remove"
     lgr.debug("Teardown tests. " + msg)
