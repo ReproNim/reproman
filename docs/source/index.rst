@@ -4,6 +4,7 @@ ReproMan |---| tools for reproducible neuroimaging
 .. toctree::
    :maxdepth: 1
 
+   overview
    acknowledgements
 
 Concepts and technologies
@@ -31,7 +32,7 @@ Executing commands on resources
 .. toctree::
    :maxdepth: 1
 
-   execute
+   execution
 
 
 Commands and API
