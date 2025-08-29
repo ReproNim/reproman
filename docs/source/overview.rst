@@ -48,7 +48,7 @@ Resource Management
 Unified interface for diverse computing resources:
 
 - Local environments (Docker containers, shell)
-- Remote systems (SSH, HPC clusters) 
+- Remote systems (SSH, HPC clusters)
 - Cloud platforms (AWS, with batch processing support)
 - Consistent commands across all resource types
 
