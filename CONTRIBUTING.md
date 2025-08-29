@@ -21,7 +21,7 @@ Files organization
       interactive dialogs
     - `support/` - various support modules, e.g. for git/git-annex interfaces,
       constraints for the `interface/`, etc
-- `docs/` - yet to be heavily populated documentation
+- `docs/` - sphinx documentation
     - `bash-completions` - bash and zsh completion setup for reproman (just
       `source` it)
 - `tools/` contains helper utilities used during development, testing, and

@@ -1,6 +1,6 @@
 # ReproMan
 
-[![Supports python version](https://img.shields.io/pypi/pyversions/datalad)](https://pypi.org/project/datalad/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![GitHub release](https://img.shields.io/github/release/ReproNim/reproman.svg)](https://GitHub.com/ReproNim/reproman/releases/)
 [![PyPI version fury.io](https://badge.fury.io/py/reproman.svg)](https://pypi.python.org/pypi/reproman/)
 [![Tests](https://github.com/ReproNim/reproman/workflows/Tests/badge.svg)](https://github.com/ReproNim/reproman/actions?query=workflow%3ATests)
@@ -13,14 +13,6 @@ in Neuroimaging.  While concentrating on Neuroimaging use-cases, it is
 by no means is limited to this field of science and tools will find
 utility in other fields as well.
 
-# Status
-
-ReproMan is under rapid development. While
-the code base is still growing the focus is increasingly shifting towards
-robust and safe operation with a sensible API. There has been no major public
-release yet, as organization and configuration are still subject of
-considerable reorganization and standardization. 
-
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) if you are interested in
 internals and/or contributing to the project.
@@ -29,7 +21,7 @@ internals and/or contributing to the project.
 
 ReproMan requires Python 3 (>= 3.9).
 
-## Linux'es and OSX (Windows yet TODO) - via pip
+## Linux and OSX via pip (Windows not supported)
 
 By default, installation via pip (`pip install reproman`) installs core functionality of reproman
 allowing for managing datasets etc.  Additional installation schemes
@@ -54,7 +46,7 @@ all necessary packages from that repository.
 
 ## Dependencies
 
-Python 3.9+ **with header files** possibly needed to build some extensions without wheels. They are provided by `python3-dev` on
+Python **with header files** possibly needed to build some extensions without wheels. They are provided by `python3-dev` on
 debian-based systems or `python-devel` on Red Hat systems.
 
 Our `setup.py` and corresponding packaging describes all necessary python dependencies.
