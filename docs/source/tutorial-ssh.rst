@@ -110,9 +110,13 @@ Create a new DataLad dataset for our analysis::
 
 Install input data (using a demo BIDS dataset)::
 
-  # TODO does this have to be fetched locally? i think no?
   # Install demo neuroimaging dataset  
   datalad install -d . -s https://github.com/ReproNim/ds000003-demo sourcedata/raw
+
+.. note::
+   This only installs the dataset structure - the actual data files are not 
+   downloaded locally. DataLad will automatically fetch any data specified 
+   by `--input` when the analysis runs.
 
 
 Set up working directory to be ignored::
