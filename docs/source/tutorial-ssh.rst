@@ -15,22 +15,28 @@ We'll cover two workflows:
 
 **Part 1: Hello World Example**
 
-1. Create a ReproMan SSH resource  
+1. Create a ReproMan SSH resource
 2. Execute a simple command remotely
 3. Fetch and examine results
 
 **Part 2: Dataset Analysis Example**
 
 1. Set up a DataLad dataset with input data
-2. Execute MRIQC quality control analysis remotely  
+2. Execute MRIQC quality control analysis remotely
 3. Collect and examine results with full provenance
 
 Prerequisites
 =============
 
-- ReproMan installed (``pip install reproman``) 
+For Part 1:
+
+- ReproMan installed on local machine (``pip install reproman``)
 - Access to a remote server via SSH
-- For Part 2: DataLad support (``pip install 'reproman[full]'``)
+
+For Part 2:
+
+- DataLad support (``pip install 'reproman[full]'``)
+- DataLad installed on remote server
 
 Part 1: Hello World Example
 ============================
@@ -63,7 +69,7 @@ Let's start with a simple test to verify our setup works. Create a working direc
 
   mkdir -p hello-world
   cd hello-world
-  
+
   reproman run --resource myserver \
     --submitter local \
     --orchestrator plain \
@@ -85,7 +91,7 @@ The job will execute on the remote. To check status and fetch results::
 When you run ``reproman jobs JOB_ID``, ReproMan will automatically:
 
 - Fetch the output files from the remote to your local working directory
-- Display job information and logs  
+- Display job information and logs
 - Unregister the completed job
 
 You should now see the results locally::
@@ -96,7 +102,7 @@ You should now see the results locally::
 
    ReproMan creates a working directory on the remote resource automatically. By default, it uses ``~/.reproman/run-root`` on the remote. You can verify the file exists there with ``reproman login myserver``.
 
-Part 2: Dataset Analysis Example  
+Part 2: Dataset Analysis Example
 =================================
 
 Now let's try a more realistic example with DataLad dataset management and neuroimaging analysis.
@@ -112,12 +118,12 @@ Create a new DataLad dataset for our analysis::
 
 Install input data (using a demo BIDS dataset)::
 
-  # Install demo neuroimaging dataset  
+  # Install demo neuroimaging dataset
   datalad install -d . -s https://github.com/ReproNim/ds000003-demo sourcedata/raw
 
 .. note::
-   This only installs the dataset structure - the actual data files are not 
-   downloaded locally. DataLad will automatically fetch any data specified 
+   This only installs the dataset structure - the actual data files are not
+   downloaded locally. DataLad will automatically fetch any data specified
    by `--input` when the analysis runs.
 
 
@@ -138,7 +144,7 @@ For full provenance tracking with DataLad::
     bash -c 'podman run --rm -v "$(pwd):/work:rw" nipreps/mriqc:latest /work/sourcedata/raw /work/results participant group --participant-label 02'
 
 .. note::
-   The ``-v "$(pwd):/work:rw"`` part mounts your current directory into the 
+   The ``-v "$(pwd):/work:rw"`` part mounts your current directory into the
    container at ``/work``, allowing the containerized software to access the
    top level dataset.
 
