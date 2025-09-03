@@ -1,7 +1,7 @@
-.. _execute:
+.. _execution:
 
-Execute
-*******
+Execution on Resources
+*********************
 
 Once a resource is present in your inventory (see :ref:`Managing
 resources <manage>`), ReproMan provides a few ways to execute command(s)
@@ -23,16 +23,11 @@ Run
 
 .. _rr-tasks:
 
-``reproman run`` is concerned with three high-level tasks:
+``reproman run`` is concerned with running "jobs" on remote resources. It is executed from the *local* machine and handles three high-level tasks:
 
-  1. Starting from a call on the *local* machine, prepare the remote
-     resource for command execution (e.g., copying input files to the
-     remote).
-  2. Execute the command on the remote resource, typically through a
-     batch system.
-  3. Fetch the results to the local machine. The results include command
-     output as well as information about the execution (e.g., batch
-     system submit files).
+  1. **Prepare**: Move data to the remote resource and set up the execution environment.
+  2. **Execute Job**: Submit the job to a batch system or run the command directly.
+  3. **Collect**: Gather results and finalize the workflow, including retrieving outputs, collecting metadata and logs, and bringing everything together locally to complete the full workflow.
 
 
 .. _rr-refex:
@@ -55,22 +50,21 @@ data/f0.csv cleaned/f0.csv``), where the first is a data file to process
 and the second is a path to write the output (creating directories if
 necessary).
 
+Choosing an orchestrator
+------------------------
+
+Before running a command, we need to decide on an orchestrator. The
+orchestrator is responsible for the first and third :ref:`tasks above
+<rr-tasks>`, preparing the remote and collecting the results. The complete
+set of orchestrators, accompanied by descriptions, can be seen by
+calling ``reproman run --list=orchestrators``.
+
 .. note::
 
    Although DataLad is not a strict requirement, having it installed on
    at least the local machine is strongly recommended, and without it
    only a limited set of functionality is available. If you are new to
    DataLad, consider reading the `DataLad handbook`_.
-
-
-Choosing an orchestrator
-------------------------
-
-Before running a command, we need to decide on an orchestrator. The
-orchestrator is responsible for the first and third :ref:`tasks above
-<rr-tasks>`, preparing the remote and fetching the results. The complete
-set of orchestrators, accompanied by descriptions, can be seen by
-calling ``reproman run --list=orchestrators``.
 
 The main orchestrator choices are ``datalad-pair``,
 ``datalad-pair-run``, and ``datalad-local-run``. If the remote has
