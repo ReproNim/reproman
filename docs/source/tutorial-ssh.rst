@@ -135,6 +135,11 @@ For full provenance tracking with DataLad::
     --output . \
     bash -c 'podman run --rm -v "$(pwd):/work:rw" nipreps/mriqc:latest /work/sourcedata/raw /work/results participant group --participant-label 02'
 
+.. note::
+   The ``-v "$(pwd):/work:rw"`` part mounts your current directory into the 
+   container at ``/work``, allowing the containerized software to access the
+   top level dataset.
+
 Step 3: Monitor Execution
 -------------------------
 
