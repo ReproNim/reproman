@@ -53,10 +53,8 @@ necessary).
 Choosing an orchestrator
 ------------------------
 
-Before running a command, we need to decide on an orchestrator. The
-orchestrator is responsible for the first and third :ref:`tasks above
-<rr-tasks>`, preparing the remote and collecting the results. The complete
-set of orchestrators, accompanied by descriptions, can be seen by
+Orchestrators are responsible for preparing the remote and collecting the results.
+ The complete set of orchestrators, accompanied by descriptions, can be seen by
 calling ``reproman run --list=orchestrators``.
 
 .. note::
@@ -66,29 +64,47 @@ calling ``reproman run --list=orchestrators``.
    only a limited set of functionality is available. If you are new to
    DataLad, consider reading the `DataLad handbook`_.
 
-The main orchestrator choices are ``datalad-pair``,
-``datalad-pair-run``, and ``datalad-local-run``. If the remote has
-DataLad available, you should go with one of the ``datalad-pair*`` orchestrators.
-These will sync your local dataset with a dataset on the remote machine
-(using `datalad push`_), creating one if it doesn't already exist
-(using `datalad create-sibling`_).
+Choose the orchestrator based on your setup and needs:
 
-``datalad-pair`` differs from the ``datalad-*-run`` orchestrators in the
-way it captures results. After execution has completed, ``datalad-pair``
-commits the result *on the remote* via DataLad. On fetch, it will pull
-that commit down with `datalad update`_. Outputs (specified via
-``--outputs`` or as a job parameter) are retrieved with `datalad get`_.
+**For remote resources with DataLad (recommended):**
 
-``datalad-pair-run`` and ``datalad-local-run``, on the other hand,
-determine a list of output files based on modification times and
-packages these files in a tarball. (This approach is inspired by
-`datalad-htcondor`_.) On fetch, this tarball is downloaded locally and
-used to create a `datalad run`_ commit in the *local* repository.
+- **``datalad-pair``** - Best for persistent remote datasets
+  
+  - Creates and maintains DataLad datasets on the remote
+  - Commits results directly on the remote with full provenance
+  - Retrieves results using `datalad update`_ and `datalad get`_
+  - Marks completed jobs with git refs (refs/reproman/JOBID)
 
-There is one more orchestrator, ``datalad-no-remote``, that is designed
-to work only with a local shell resource. It is similar to
-``datalad-pair``, except that the command is executed in the same
-directory from which ``reproman run`` is invoked.
+- **``datalad-pair-run``** - Best for capturing runs in local dataset
+  
+  - Prepares remote dataset like ``datalad-pair``
+  - Packages results in tarball based on file modification times  
+  - Creates a `datalad run`_ commit in your *local* repository
+  - Marks local commit with git ref (refs/reproman/JOBID)
+
+**For remote resources without DataLad:**
+
+- **``datalad-local-run``** - Remote execution, local DataLad integration
+  
+  - Uses plain remote directory (no DataLad on remote required)
+  - Captures results as `datalad run`_ commit locally
+  - Good when remote lacks DataLad but you want local provenance
+
+- **``plain``** - Simple remote execution
+  
+  - Basic file transfer using session.put() and session.get()
+  - No DataLad integration or provenance tracking
+  - Creates working directory named with job ID
+  - Sufficient for simple tasks but DataLad orchestrators recommended
+
+**For local execution:**
+
+- **``datalad-no-remote``** - Local dataset execution
+  
+  - Executes in current local dataset directory
+  - Behaves like ``datalad-pair`` but stays local
+  - Available for local shell resources only
+  - Good for testing workflows locally
 
 Revisiting :ref:`our concrete example <rr-refex>` and assuming we have
 an SSH resource named "foo" in our inventory, here's how we could

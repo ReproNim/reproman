@@ -131,7 +131,7 @@ For full provenance tracking with DataLad::
     --orc datalad-pair-run \
     --input sourcedata/raw \
     --output . \
-    bash -c 'podman run --rm -v "$(pwd):/work:rw" poldracklab/mriqc:latest /work/sourcedata/raw /work/results participant group --participant-label 02'
+    bash -c 'podman run --rm -v "$(pwd):/work:rw" nipreps/mriqc:latest /work/sourcedata/raw /work/results participant group --participant-label 02'
 
 Step 3: Monitor Execution
 -------------------------
