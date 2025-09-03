@@ -45,15 +45,6 @@ Configuration management
 
    config
 
-Test infrastructure
-===================
-
-.. currentmodule:: reproman
-.. autosummary::
-   :toctree: generated
-
-   tests.utils
-
 Command line interface infrastructure
 =====================================
 
