@@ -117,9 +117,7 @@ Install input data (using a demo BIDS dataset)::
 
 Set up working directory to be ignored::
 
-  # TODO oneline with datalad run
-  echo "workdir/" > .gitignore
-  datalad save -m "Ignore processing workdir" .gitignore
+  datalad run -m "Ignore processing workdir" 'echo "workdir/" > .gitignore'
 
 Step 2: Execute Analysis with DataLad Integration
 -------------------------------------------------
