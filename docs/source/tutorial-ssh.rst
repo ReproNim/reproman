@@ -14,11 +14,13 @@ Overview
 We'll cover two workflows:
 
 **Part 1: Hello World Example**
+
 1. Create a ReproMan SSH resource  
 2. Execute a simple command remotely
 3. Fetch and examine results
 
 **Part 2: Dataset Analysis Example**
+
 1. Set up a DataLad dataset with input data
 2. Execute MRIQC quality control analysis remotely  
 3. Collect and examine results with full provenance
