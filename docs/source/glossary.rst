@@ -35,5 +35,14 @@ and API, and provides additional references where to seek more information
   cloud instance
     A virtual server running on cloud infrastructure (such as AWS EC2) that can be dynamically created, configured, and destroyed. ReproMan uses cloud instances to provide scalable computational resources.
 
+  resource
+    A computational target where ReproMan can execute commands and manage environments. Resources represent different types of compute infrastructure including local machines, virtual machines, cloud instances, and containers.
+
+  orchestrator
+    A component responsible for staging input data and handling results before and after running commands on resources. Examples include plain orchestrators for simple tasks and DataLad-based orchestrators for reproducible workflows.
+
+  submitter
+    A component that handles the actual submission of jobs to execution systems on a resource. Submitters manage different job scheduling systems such as local execution, batch systems (SLURM, PBS), or container orchestration platforms.
+
 .. _Docker: http://docker.io
 .. _Singularity: http://singularity.lbl.gov
