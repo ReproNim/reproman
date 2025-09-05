@@ -123,7 +123,7 @@ jobs:
       - name: Verify setup.py build
         run: python setup.py build
       - name: Run tests
-        run: coverage run `which py.test` -s -rsfE --integration reproman && coverage xml
+        run: coverage run `which py.test` -s -v -rsfE --integration reproman && coverage xml
       - name: Generate documentation and run doctests
         run: PYTHONPATH=$PWD make -C docs html doctest
       - name: Upload coverage to codecov
