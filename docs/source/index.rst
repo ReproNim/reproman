@@ -5,6 +5,7 @@ ReproMan |---| tools for reproducible neuroimaging
    :maxdepth: 1
 
    overview
+   tutorial-ssh
    acknowledgements
 
 Concepts and technologies
