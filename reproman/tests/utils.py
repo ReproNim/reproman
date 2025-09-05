@@ -38,9 +38,9 @@ _TEMP_PATHS_CLONES = set()
 
 # The path to be used while retracing and expecting it to be
 # provided by some system package
-COMMON_SYSTEM_PATH = "/bin/bash"
+COMMON_SYSTEM_PATH = "/usr/bin/env"
 # Package it should belong to (to avoid guessing or assuming matching the name)
-COMMON_SYSTEM_PACKAGE = "bash"
+COMMON_SYSTEM_PACKAGE = "coreutils"
 
 # pytest variants for nose.tools commands.  These exist to avoid unnecessary
 # churn in tests that already use these names.  New code should use plain
