@@ -186,10 +186,11 @@ def test_tracer(docker_container):
     assert "foo" in remaining_files
     assert dist.name == "redhat"
     assert dist.version.startswith("CentOS Linux release 7")
-    source_ids = [s.id for s in dist.sources]
-    assert "base/7/x86_64" in source_ids
-    assert "extras/7/x86_64" in source_ids
-    assert "updates/7/x86_64" in source_ids
+    # XFAIL disabled for centos7 -- see the other xfail in this file
+    # source_ids = [s.id for s in dist.sources]
+    # assert "base/7/x86_64" in source_ids
+    # assert "extras/7/x86_64" in source_ids
+    # assert "updates/7/x86_64" in source_ids
     assert dist.packages[0].name == "coreutils"
     assert dist.packages[0].group == "System Environment/Base"
     assert dist.packages[0].files[0] == "/usr/bin/ls"
@@ -200,6 +201,7 @@ def test_tracer(docker_container):
     assert packages["/usr/bin/ls"]["packager"].startswith("CentOS BuildSystem")
 
 
+@pytest.mark.xfail(reason="centos:7 needs now gone mirrorlist.centos.org")
 def test_distribution(docker_container, centos_spec):
     from ...resource.docker_container import DockerContainer
 
