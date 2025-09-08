@@ -61,7 +61,7 @@ jobs:
           sudo sed -i -e '/mongodb/d' /etc/apt/sources.list /etc/apt/sources.list.d/*list
           # The ultimate one-liner setup for NeuroDebian repository
           bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
-          sudo apt-get update -qq
+          sudo apt-get update
           sudo apt-get install -y eatmydata
           # So we could test under sudo -E with PATH pointing to
           # installed location
@@ -123,7 +123,7 @@ jobs:
       - name: Verify setup.py build
         run: python setup.py build
       - name: Run tests
-        run: coverage run `which py.test` -s -v -rsfE --integration reproman && coverage xml
+        run: python -m pytest -s -v -rsfE --integration --cov=reproman --cov-report=xml reproman
       - name: Generate documentation and run doctests
         run: PYTHONPATH=$PWD make -C docs html doctest
       - name: Upload coverage to codecov

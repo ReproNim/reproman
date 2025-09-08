@@ -91,6 +91,7 @@ requires = {
     ],
     "tests": [
         "pytest>=3.3.0",
+        "pytest-cov",
         "virtualenv",
     ],
 }
