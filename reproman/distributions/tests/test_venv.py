@@ -95,9 +95,9 @@ def test_venv_identify_distributions(venv_test_dir):
 
         expected_unknown = {
             COMMON_SYSTEM_PATH,
-            # The editable package was added by VenvTracer as an unknown file.
-            os.path.join(venv_test_dir, "minimal_pymodule"),
         }
+        # The editable package potentially added by VenvTracer as an unknown file.
+        opt_min_pymodule = os.path.join(venv_test_dir, "minimal_pymodule")
 
         # Unknown files do not include "venv0/bin/pip", which is a link to
         # another path within venv0, but they do include links to the system
@@ -124,6 +124,8 @@ def test_venv_identify_distributions(venv_test_dir):
         assert len(dists) == 1
 
         distributions, unknown_files = dists[0]
+        # it only might be there
+        expected_unknown.discard(opt_min_pymodule)
         assert unknown_files == expected_unknown
         assert len(distributions.environments) == 2
 
