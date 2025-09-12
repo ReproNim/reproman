@@ -54,7 +54,7 @@ Choosing an orchestrator
 ------------------------
 
 Orchestrators are responsible for preparing the remote and collecting the results.
- The complete set of orchestrators, accompanied by descriptions, can be seen by
+The complete set of orchestrators, accompanied by descriptions, can be seen by
 calling ``reproman run --list=orchestrators``.
 
 .. note::
