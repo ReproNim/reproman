@@ -4,21 +4,32 @@ All notable changes to this project will be documented (for humans) in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2025-02-??
+## [0.5.0] - 2025-09-27
 
 A "heartbeat" release after long time without signs of life.
 
 ### Added
 - Support for [TACC/launcher](https://github.com/TACC/launcher) use with SLURM and PBS
-- "Support" for codespell with typos fixes and GitHub CI to keep it typo free.
+- "Support" for codespell with typos fixes and GitHub CI to keep it typo free
+- Tutorial documentation with hello-world and basic datalad-pair examples
+- Black code formatter configuration and CI integration
+- Documentation build test in CI
+- Support for DNF package manager on RedHat-based systems
 ### Changed
-- Switched to github actions from travis for CI.
-- Switched to use `datalad push` instead of deprecated `datalad publish`.
-- Remove support for Python before 3.8.
+- Switched to GitHub Actions from Travis for CI
+- Switched to use `datalad push` instead of deprecated `datalad publish`
+- Removed support for Python before 3.8
+- Documentation improvements and reorganization
+- Updated dependencies: removed pycrypto, unpinned pyOpenSSL
+- Switched to pytest-cov for test coverage
 ### Fixed
-- Account for git's init.defaultBranch in tests.
-- Invalid escapes in python strings.
+- Account for git's init.defaultBranch in tests
+- Invalid escapes in Python strings
 - job_templates: launcher subjob output is now stored in expected files
+- Debian tracer version regexp handling
+- Tests compatibility with newer Ubuntu images
+- Singularity detection and test handling
+- Condor and SLURM test configurations
 
 ## [0.4.1] - 2021-02-01
 
