@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python: "3.9"
+          - python: "3.10"
             install_datalad: datalad
             # install_condor: condor
             # TODO 20.04 may be needed for condor
@@ -49,9 +49,9 @@ jobs:
             os: ubuntu-22.04
             reproman_tests_deps: full-except-datalad
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
       - name: Set up system
@@ -120,9 +120,7 @@ jobs:
           pip install -e .[tests]
           pip install -e .[devel-docs]
           pip install -e .[devel-utils]
-      - name: Verify setup.py build
-        run: python setup.py build
       - name: Run tests
         run: python -m pytest -s -v -rsfE --integration --cov=reproman --cov-report=xml reproman
       - name: Upload coverage to codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
