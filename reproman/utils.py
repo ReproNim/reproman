@@ -495,6 +495,22 @@ def assure_bytes(s, encoding="utf-8"):
     return s.encode(encoding)
 
 
+def _chardet_detect(s: bytes) -> dict:
+    """Wrapper around chardet.detect with encoding_era=ALL for chardet >= 6.
+
+    chardet 6 defaults to encoding_era=MODERN_WEB which excludes legacy
+    encodings like KOI8-R. We need to consider ALL eras for backward
+    compatibility.
+    """
+    from chardet import detect
+    from reproman.support.external_versions import external_versions
+
+    if external_versions['chardet'] >= '6':
+        from chardet.enums import EncodingEra
+        return detect(s, encoding_era=EncodingEra.ALL)
+    return detect(s)
+
+
 def assure_unicode(s, encoding=None, confidence=None):
     """Convert/decode to str if of 'bytes'
 
@@ -519,9 +535,7 @@ def assure_unicode(s, encoding=None, confidence=None):
 
             lgr.debug("Failed to decode a string as utf-8: %s", exc_str(exc))
         # And now we could try to guess
-        from chardet import detect
-
-        enc = detect(s)
+        enc = _chardet_detect(s)
         denc = enc.get("encoding", None)
         if denc:
             denc_confidence = enc.get("confidence", 0)
@@ -530,7 +544,12 @@ def assure_unicode(s, encoding=None, confidence=None):
                     "Failed to auto-detect encoding with high enough "
                     "confidence. Highest confidence was %s for %s" % (denc_confidence, denc)
                 )
-            return s.decode(denc)
+            try:
+                return s.decode(denc)
+            except (UnicodeDecodeError, LookupError) as exc:
+                raise ValueError(
+                    "Failed to decode with guessed encoding %s: %s" % (denc, exc)
+                )
         else:
             raise ValueError(
                 "Could not decode value as utf-8, or to guess its encoding: %s" % repr(s)
