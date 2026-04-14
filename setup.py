@@ -29,6 +29,7 @@ def findsome(subdir, extensions):
     Leading directory (reproman) gets stripped
     """
     import glob
+
     top = opj("reproman", subdir)
     return [
         f.split(pathsep, 1)[1]

@@ -85,8 +85,7 @@ def test_ls_interface(ls_fn):
     # (connect() raises) or "NOT FOUND" (connect() succeeds but sets id=None),
     # depending on boto3/botocore version behavior.
     for ec2_id in ("i-22221ddf096c22bb0", "i-3333f40de2b9b8967"):
-        assert ("CONNECTION ERROR" in results[ec2_id]
-                or "NOT FOUND" in results[ec2_id])
+        assert "CONNECTION ERROR" in results[ec2_id] or "NOT FOUND" in results[ec2_id]
 
 
 def test_ls_interface_limited(ls_fn):

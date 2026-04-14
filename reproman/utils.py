@@ -505,8 +505,9 @@ def _chardet_detect(s: bytes) -> dict:
     from chardet import detect
     from reproman.support.external_versions import external_versions
 
-    if external_versions['chardet'] >= '6':
+    if external_versions["chardet"] >= "6":
         from chardet.enums import EncodingEra
+
         return detect(s, encoding_era=EncodingEra.ALL)
     return detect(s)
 
@@ -547,9 +548,7 @@ def assure_unicode(s, encoding=None, confidence=None):
             try:
                 return s.decode(denc)
             except (UnicodeDecodeError, LookupError) as exc:
-                raise ValueError(
-                    "Failed to decode with guessed encoding %s: %s" % (denc, exc)
-                )
+                raise ValueError("Failed to decode with guessed encoding %s: %s" % (denc, exc))
         else:
             raise ValueError(
                 "Could not decode value as utf-8, or to guess its encoding: %s" % repr(s)

@@ -6,6 +6,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Module to help maintain a registry of versions for external modules etc"""
+
 import sys
 from importlib.metadata import version as get_distribution_version, PackageNotFoundError
 from os import linesep
