@@ -14,7 +14,6 @@ import os
 import tempfile
 import uuid
 
-
 lgr = logging.getLogger("reproman.distributions.singularity")
 
 from .base import Package

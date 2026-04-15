@@ -36,8 +36,7 @@ def docker_container():
 def centos_spec():
     tmp = tempfile.NamedTemporaryFile(delete=False)
     with open(tmp.name, "w") as f:
-        f.write(
-            """# ReproMan Environment Configuration File
+        f.write("""# ReproMan Environment Configuration File
 # This file was created by ReproMan 0.0.5 on 2018-05-23 22:03:22.820177
 version: 0.0.1
 distributions:
@@ -95,8 +94,7 @@ distributions:
     files:
     - /usr/sbin/fido
   version: CentOS Linux release 7.4.1708 (Core)
-"""
-        )
+""")
     return tmp.name
 
 
@@ -115,7 +113,7 @@ def setup_packages():
 
 @pytest.fixture
 def setup_distributions(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     d1 = RedhatDistribution(name="debian 1")
     d1.packages = [p1]
     d2 = RedhatDistribution(name="debian 2")
@@ -124,7 +122,7 @@ def setup_distributions(setup_packages):
 
 
 def test_package_satisfies(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     assert p1.compare(p1, mode="satisfied_by")
     assert p1v10.compare(p1v10, mode="satisfied_by")
     assert not p1v10.compare(p1, mode="satisfied_by")
@@ -142,8 +140,8 @@ def test_package_satisfies(setup_packages):
 
 
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
-    (d1, d2) = setup_distributions
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    d1, d2 = setup_distributions
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     assert p1.compare(d1, mode="satisfied_by")
     assert not p1v10.compare(d1, mode="satisfied_by")
     assert p1.compare(d2, mode="satisfied_by")
@@ -152,13 +150,13 @@ def test_distribution_satisfies_package(setup_distributions, setup_packages):
 
 
 def test_distribution_statisfies(setup_distributions):
-    (d1, d2) = setup_distributions
+    d1, d2 = setup_distributions
     assert not d2.compare(d1, mode="satisfied_by")
     assert d1.compare(d2, mode="satisfied_by")
 
 
 def test_distribution_sub(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     d1 = RedhatDistribution(name="debian 1")
     d1.packages = [p1, p2]
     d2 = RedhatDistribution(name="debian 2")
@@ -223,7 +221,7 @@ def test_distribution(docker_container, centos_spec):
 
 
 def test_package_is_identical_to(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     assert p1.compare(p1, mode="identical_to")
     assert p1v10.compare(p1v10, mode="identical_to")
     assert p1v11.compare(p1v11, mode="identical_to")

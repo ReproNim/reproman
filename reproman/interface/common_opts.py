@@ -13,7 +13,6 @@ from reproman.support.param import Parameter
 from reproman.support.constraints import EnsureChoice
 from reproman.support.constraints import EnsureInt, EnsureNone, EnsureStr
 
-
 trace_opt = Parameter(
     args=("--trace",), action="store_true", doc="""if set, trace execution within the environment"""
 )

@@ -12,7 +12,6 @@ from os import linesep
 import logging
 import time
 
-
 lgr = logging.getLogger("reproman.protocol")
 
 

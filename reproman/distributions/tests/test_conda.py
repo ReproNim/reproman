@@ -259,7 +259,7 @@ def test_conda_init_install_and_detect(tmpdir):
 
     assert len(dists) == 1, "Exactly one Conda distribution expected."
 
-    (distributions, unknown_files) = dists[0]
+    distributions, unknown_files = dists[0]
 
     # RepromanProvenance.write(sys.stdout, distributions)
 

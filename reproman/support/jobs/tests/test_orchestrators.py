@@ -29,7 +29,6 @@ from reproman.tests.skip import mark
 from reproman.tests.skip import skipif
 from reproman.tests.utils import create_tree
 
-
 try:
     lsf_config = os.environ["REPROMAN_LSF_TEST_CONFIG"].split(":")
     lsf_config = {"host": lsf_config[0], "user": lsf_config[1], "tmpdir_root": lsf_config[2]}

@@ -18,7 +18,6 @@ import os
 import sys
 import traceback
 
-
 lgr = logging.getLogger("reproman.docutils")
 
 __add_init2doc = False

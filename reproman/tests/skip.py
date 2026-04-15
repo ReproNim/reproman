@@ -40,6 +40,7 @@ Doing that will make the skip condition available in two places:
 `mark.skipif_NAME` and `skipif.NAME`. So, for the above example, there would
 now be `mark.skipif_windows` and `skipif.windows`.
 """
+
 import abc
 import os
 

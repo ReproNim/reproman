@@ -171,8 +171,7 @@ def run_via_pbs(args, pbs):
         # TODO: we might need better way to join them, escaping spaces etc.  There must be a stock helper
         # exe_args = ' '.join(map(repr, args[1:])) if len(args) > 1 else ''
         exe_args = " ".join(args[1:]) if len(args) > 1 else ""
-        f.write(
-            """\
+        f.write("""\
 Executable = %(exe)s
 Initialdir = %(pwd)s
 Output = %(logs)s
@@ -181,9 +180,7 @@ getenv = True
 
 arguments = %(exe_args)s
 queue
-"""
-            % locals()
-        )
+""" % locals())
         f.close()
         Runner().run(["condor_submit", f.name])
         lgr.info("Scheduled execution via %s.  Logs will be stored under %s" % (pbs, logs))

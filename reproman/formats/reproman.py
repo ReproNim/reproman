@@ -9,6 +9,7 @@
 Plugin support for provenance YAML files following ReproMan spec.
 
 """
+
 from __future__ import absolute_import
 
 import collections

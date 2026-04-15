@@ -6,6 +6,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Orchestrator sub-class to provide management of the localhost environment."""
+
 import json
 import os
 from collections import defaultdict
@@ -439,8 +440,8 @@ class CondaTracer(DistributionTracer):
                 continue
             # Retrieve the environment details
             env_export = self._get_conda_env_export(root_path, conda_path)
-            (conda_package_details, file_to_pkg) = self._get_conda_package_details(conda_path)
-            (conda_pip_package_details, file_to_pip_pkg) = self._get_conda_pip_package_details(
+            conda_package_details, file_to_pkg = self._get_conda_package_details(conda_path)
+            conda_pip_package_details, file_to_pip_pkg = self._get_conda_pip_package_details(
                 env_export, conda_path
             )
             # Join our conda and pip packages

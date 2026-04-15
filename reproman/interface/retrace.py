@@ -123,7 +123,7 @@ class Retrace(Interface):
         #       Generalize
         # TODO: RF so that only the above portion is reprozip specific.
         # If we are to reuse their layout largely -- the rest should stay as is
-        (distributions, files) = identify_distributions(paths, session=session)
+        distributions, files = identify_distributions(paths, session=session)
         from reproman.distributions.base import EnvironmentSpec
 
         spec = EnvironmentSpec(

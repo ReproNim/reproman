@@ -548,14 +548,12 @@ def create_pymodule(directory):
     """
     os.makedirs(directory)
     with open(os.path.join(directory, "setup.py"), "w") as ofh:
-        ofh.write(
-            """\
+        ofh.write("""\
 from setuptools import setup
 
 setup(name='nmtest',
       version='0.1.0',
-      py_modules=['nmtest'])"""
-        )
+      py_modules=['nmtest'])""")
 
     with open(os.path.join(directory, "nmtest"), "w") as ofh:
         ofh.write("")

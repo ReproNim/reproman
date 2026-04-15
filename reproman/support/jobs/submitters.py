@@ -20,7 +20,6 @@ import time
 from reproman.cmd import CommandError
 from reproman.dochelpers import borrowdoc
 
-
 lgr = logging.getLogger("reproman.support.jobs.submitters")
 
 
