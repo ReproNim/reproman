@@ -75,13 +75,10 @@ Requires: six, funcsigs
 """
 
     # Check parsing of show output for a "standard" package.
-    out_files = (
-        out_base
-        + """\
+    out_files = out_base + """\
 Files:
   pkg-0.3.0.dist-info/DESCRIPTION.rst
   pkg/__init__.py"""
-    )
     info_files = piputils.parse_pip_show(out_files)
 
     fields = {
@@ -103,12 +100,9 @@ Files:
 
     # Check parsing of show output for an editable packages that lacks
     # files.
-    out_no_files = (
-        out_base
-        + """\
+    out_no_files = out_base + """\
 Files:
 Cannot locate installed-files.txt"""
-    )
     info_nofiles = piputils.parse_pip_show(out_no_files)
     assert set(info_nofiles.keys()) == fields
     assert info_nofiles["Files"] == []

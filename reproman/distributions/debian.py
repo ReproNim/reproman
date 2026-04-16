@@ -6,6 +6,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Debian(-based) distribution(s)."""
+
 import os
 import re
 
@@ -526,7 +527,7 @@ class DebTracer(DistributionTracer):
                 out = exc.stdout  # One file not found, so continue
             # Parse the output and store by filename
             for outlines in out.splitlines():
-                (fname, ftime) = outlines.split(": ")
+                fname, ftime = outlines.split(": ")
                 results[fname] = str(pytz.utc.localize(datetime.utcfromtimestamp(float(ftime))))
 
         # Now lookup the packages in the results

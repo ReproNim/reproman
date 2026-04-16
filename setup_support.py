@@ -9,8 +9,8 @@
 import os
 from os.path import dirname, join as opj
 
-from distutils.core import Command
-from distutils.errors import DistutilsOptionError
+from setuptools import Command
+from setuptools.errors import OptionError as DistutilsOptionError
 import datetime
 import formatters as fmt
 

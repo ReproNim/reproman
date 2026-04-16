@@ -212,7 +212,7 @@ class SingularitySession(POSIXSession):
 
     def listdir(self, path):
         cmd = ["singularity", "exec", "instance://{}".format(self.name), "ls", "-1", path]
-        (stdout, stderr) = self._runner.run(cmd)
+        stdout, stderr = self._runner.run(cmd)
         return [f for f in stdout.split("\n") if f not in ("", ".", "..")]
 
 

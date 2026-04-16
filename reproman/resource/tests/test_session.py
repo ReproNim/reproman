@@ -24,7 +24,6 @@ from ...tests.fixtures import get_docker_fixture
 from ...tests.fixtures import get_singularity_fixture
 from ...consts import TEST_SSH_DOCKER_DIGEST
 
-
 testing_container = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST,
     name="testing-container",

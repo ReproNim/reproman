@@ -13,7 +13,6 @@ from os.path import join as opj
 from os.path import splitext
 from os.path import dirname
 
-from setuptools import findall
 from setuptools import setup, find_packages
 
 # manpage build imports
@@ -29,9 +28,12 @@ def findsome(subdir, extensions):
 
     Leading directory (reproman) gets stripped
     """
+    import glob
+
+    top = opj("reproman", subdir)
     return [
         f.split(pathsep, 1)[1]
-        for f in findall(opj("reproman", subdir))
+        for f in glob.glob(opj(top, "**"), recursive=True)
         if splitext(f)[-1].lstrip(".") in extensions
     ]
 
@@ -55,6 +57,7 @@ requires = {
         "fabric>=2.3.1",
         "humanize",
         "jinja2",
+        "looseversion",
         "packaging",
         "paramiko",
         "pyOpenSSL",
@@ -160,7 +163,7 @@ setup(
     # python3 -m pip install --user --upgrade setuptools wheel twine
     long_description_content_type="text/markdown",
     packages=reproman_pkgs,
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     install_requires=requires["core"],
     extras_require=requires,
     entry_points={

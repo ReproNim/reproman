@@ -7,7 +7,6 @@
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Unit tests for basic constraints functionality."""
 
-
 import sys
 
 from ..support import constraints as ct

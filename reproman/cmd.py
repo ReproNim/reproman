@@ -10,7 +10,6 @@ Wrapper for command and function calls, allowing for dry runs and output handlin
 
 """
 
-
 import subprocess
 import sys
 import logging

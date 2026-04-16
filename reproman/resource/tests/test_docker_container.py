@@ -20,7 +20,6 @@ from reproman.tests.fixtures import get_docker_fixture
 
 from pytest import raises
 
-
 setup_ubuntu = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST, scope="module", name="reproman-test-ssh-container"
 )

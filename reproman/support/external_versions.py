@@ -6,10 +6,12 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Module to help maintain a registry of versions for external modules etc"""
+
 import sys
+from importlib.metadata import version as get_distribution_version, PackageNotFoundError
 from os import linesep
 
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from reproman.dochelpers import exc_str
 from reproman.log import lgr
@@ -118,10 +120,9 @@ class ExternalVersions(object):
     To avoid collision between names of python modules and command line tools,
     prepend names for command line tools with `cmd:`.
 
-    It maintains a dictionary of `distuil.version.LooseVersion`s to make
-    comparisons easy. Note that even if version string conform the StrictVersion
-    "standard", LooseVersion will be used.  If version can't be deduced for the
-    external, `UnknownVersion()` is assigned.  If external is not present (can't
+    It maintains a dictionary of `LooseVersion`s to make
+    comparisons easy.  If version can't be deduced for the external,
+    `UnknownVersion()` is assigned.  If external is not present (can't
     be imported, or custom check throws exception), None is returned without
     storing it, so later call will re-evaluate fully.
     """
@@ -157,13 +158,11 @@ class ExternalVersions(object):
                 version = getattr(value, attr)
                 break
 
-        # try pkg_resources
+        # try importlib.metadata
         if version is None and hasattr(value, "__name__"):
             try:
-                import pkg_resources
-
-                version = pkg_resources.get_distribution(value.__name__).version
-            except Exception:
+                version = get_distribution_version(value.__name__)
+            except PackageNotFoundError:
                 pass
 
         # assume that value is the version

@@ -463,7 +463,7 @@ def test_git_install_add_remotes(traced_repo_copy, tmpdir):
 
 
 def test_svn(svn_repo):
-    (svn_repo_root, checked_out_dir) = svn_repo
+    svn_repo_root, checked_out_dir = svn_repo
     svn_file = os.path.join(checked_out_dir, "foo")
     uuid_file = os.path.join(svn_repo_root, "db", "uuid")
     uuid = open(uuid_file).readlines()[0].strip()
@@ -483,7 +483,7 @@ def test_svn(svn_repo):
 
 
 def test_empty_svn(svn_repo_empty):
-    (svn_repo_root, checked_out_dir) = svn_repo_empty
+    svn_repo_root, checked_out_dir = svn_repo_empty
     tracer = VCSTracer()
     distributions = list(tracer.identify_distributions([checked_out_dir]))
     svn_repo = distributions[0][0].packages[0]

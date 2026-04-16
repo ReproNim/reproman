@@ -35,7 +35,7 @@ from reproman.tests.utils import (
 def test_dpkg_manager_identify_packages():
     files = [COMMON_SYSTEM_PATH]
     tracer = DebTracer()
-    (packages, unknown_files) = tracer.identify_packages_from_files(files)
+    packages, unknown_files = tracer.identify_packages_from_files(files)
     # Make sure that our common path was identified
     assert not unknown_files, "%s should be identified" % COMMON_SYSTEM_PATH
     assert len(packages) == 1
@@ -148,7 +148,7 @@ def test_utf8_file():
     ]
     manager = DebTracer()
     # Simple sanity check that the pipeline works with utf-8
-    (packages, unknown_files) = manager.identify_packages_from_files(files)
+    packages, unknown_files = manager.identify_packages_from_files(files)
     packages = manager.get_details_for_packages(packages)
     # If the file exists, it should be in ca-certificates
     if os.path.isfile(files[0]):
@@ -232,7 +232,7 @@ def setup_packages():
 
 
 def test_package_satisfies(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     assert p1.compare(p1, mode="satisfied_by")
     assert p1v10.compare(p1v10, mode="satisfied_by")
     assert not p1v10.compare(p1, mode="satisfied_by")
@@ -251,7 +251,7 @@ def test_package_satisfies(setup_packages):
 
 @pytest.fixture
 def setup_distributions(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     d1 = DebianDistribution(name="debian 1")
     d1.packages = [p1]
     d2 = DebianDistribution(name="debian 2")
@@ -260,8 +260,8 @@ def setup_distributions(setup_packages):
 
 
 def test_distribution_satisfies_package(setup_distributions, setup_packages):
-    (d1, d2) = setup_distributions
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    d1, d2 = setup_distributions
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     assert p1.compare(d1, mode="satisfied_by")
     assert not p1v10.compare(d1, mode="satisfied_by")
     assert p1.compare(d2, mode="satisfied_by")
@@ -270,13 +270,13 @@ def test_distribution_satisfies_package(setup_distributions, setup_packages):
 
 
 def test_distribution_statisfies(setup_distributions):
-    (d1, d2) = setup_distributions
+    d1, d2 = setup_distributions
     assert not d2.compare(d1, mode="satisfied_by")
     assert d1.compare(d2, mode="satisfied_by")
 
 
 def test_distribution_sub(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     d1 = DebianDistribution(name="debian 1")
     d1.packages = [p1, p2]
     d2 = DebianDistribution(name="debian 2")
@@ -288,7 +288,7 @@ def test_distribution_sub(setup_packages):
 
 
 def test_package_is_identical_to(setup_packages):
-    (p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2) = setup_packages
+    p1, p1v10, p1v11, p1ai, p1aa, p1v11ai, p2 = setup_packages
     assert p1.compare(p1, mode="identical_to")
     assert p1v10.compare(p1v10, mode="identical_to")
     assert p1v11.compare(p1v11, mode="identical_to")

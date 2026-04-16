@@ -53,8 +53,7 @@ def test_source_file(resource_test_dir):
     # Create a temporary test file
     temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
     with temp_file as f:
-        f.write(
-            """
+        f.write("""
 echo "Enabling special environment"
 echo "We could even spit out an stderr output">&2
 export EXPORTED_VAR="
@@ -62,10 +61,7 @@ multiline
 "
 export PATH=/custom:$PATH
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-    """.encode(
-                "utf8"
-            )
-        )
+    """.encode("utf8"))
         f.flush()
         script = temp_file.name
         session = ShellSession()
@@ -95,7 +91,7 @@ def test_isdir():
 
 def test_exists():
     session = ShellSession()
-    (_, name) = tempfile.mkstemp()
+    _, name = tempfile.mkstemp()
     assert session.exists(name)
     os.remove(name)
     assert not session.exists(name)
@@ -105,17 +101,13 @@ def test_exists():
 def test_source_file_param(resource_test_dir):
     temp_file = tempfile.NamedTemporaryFile(dir=resource_test_dir)
     with temp_file as f:
-        f.write(
-            """
+        f.write("""
 if ! [ "$1" = "test" ]; then
    exit 1
 fi
 export EXPORTED_VAR=${1}1
 NON_EXPORTED_VAR=2         # but may be those should be handled??
-    """.encode(
-                "utf8"
-            )
-        )
+    """.encode("utf8"))
         f.flush()
         script = temp_file.name
         session = ShellSession()

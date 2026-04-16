@@ -14,7 +14,6 @@ from reproman.tests.skip import Mark
 from reproman.tests.skip import mark
 from reproman.tests.skip import skipif
 
-
 with patch.dict("os.environ", {"REPROMAN_TESTS_NONETWORK": "1"}):
 
     @mark.skipif_no_network

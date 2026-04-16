@@ -290,8 +290,7 @@ class Run(Interface):
             doc="""YAML files that define job parameters. Multiple paths can be
             given. If a parameter is defined in multiple specs, the value from
             the last path that defines it is used[CMD: . Use --list to see
-            available parameters for the built-in templates CMD]."""
-            + _more_than_once_doc,
+            available parameters for the built-in templates CMD].""" + _more_than_once_doc,
         ),
         job_parameters=Parameter(
             metavar="PARAM",
@@ -305,8 +304,7 @@ class Run(Interface):
             The values are available as fields in the templates used to
             generate both the run script and submission script[CMD: . Use
             --list to see available parameters for the built-in templates
-            CMD]."""
-            + _more_than_once_doc,
+            CMD].""" + _more_than_once_doc,
         ),
         inputs=Parameter(
             args=("-i", "--input"),
@@ -316,8 +314,7 @@ class Run(Interface):
             doc="""An input path to the command. How input paths are used
             depends on the orchestrator, but, at the very least, the
             orchestrator should try to make these paths available on the
-            resource."""
-            + _more_than_once_doc,
+            resource.""" + _more_than_once_doc,
         ),
         outputs=Parameter(
             args=("-o", "--output"),
@@ -325,8 +322,7 @@ class Run(Interface):
             metavar="PATH",
             action="append",
             doc="""An output path to the command. How output paths are handled
-            depends on the orchestrator."""
-            + _more_than_once_doc,
+            depends on the orchestrator.""" + _more_than_once_doc,
         ),
         follow=Parameter(
             args=("--follow",),

@@ -73,11 +73,9 @@ def setup_parser(formatter_class=argparse.RawDescriptionHelpFormatter, return_su
     # main parser
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars="@",
-        description=dedent_docstring(
-            """\
+        description=dedent_docstring("""\
             ReproMan aims to ease construction and execution of computation environments
-            based on collected provenance data."""
-        ),
+            based on collected provenance data."""),
         epilog='"Reproducibly Manage Your Environments"',
         formatter_class=formatter_class,
         add_help=False,
@@ -217,12 +215,10 @@ def setup_parser(formatter_class=argparse.RawDescriptionHelpFormatter, return_su
         parser.description,
         "\n".join(cmd_summary),
         textwrap.fill(
-            dedent_docstring(
-                """\
+            dedent_docstring("""\
     Detailed usage information for individual commands is
     available via command-specific --help, i.e.:
-    reproman <command> --help"""
-            ),
+    reproman <command> --help"""),
             75,
             initial_indent="",
             subsequent_indent="",

@@ -6,6 +6,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Support for Redhat(-based) distribution(s)."""
+
 import attr
 
 

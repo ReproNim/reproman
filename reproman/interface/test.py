@@ -7,7 +7,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Run internal ReproMan (unit)tests to verify correct operation on the system"""
 
-
 __docformat__ = "restructuredtext"
 
 

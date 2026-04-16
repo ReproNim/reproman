@@ -13,7 +13,8 @@ from os import linesep
 from ... import __version__
 from ...dochelpers import exc_str
 from ...version import __version__
-from ..external_versions import ExternalVersions, LooseVersion
+from looseversion import LooseVersion
+from ..external_versions import ExternalVersions
 from ...tests.utils import assert_true, assert_false
 from ...tests.utils import assert_equal, assert_greater_equal, assert_greater
 from ..exceptions import CommandError

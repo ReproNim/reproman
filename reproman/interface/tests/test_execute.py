@@ -33,7 +33,6 @@ from ...consts import TEST_SSH_DOCKER_DIGEST
 from ...cmd import Runner
 from ...utils import swallow_logs
 
-
 docker_container = get_docker_fixture(
     TEST_SSH_DOCKER_DIGEST, name="testing-container", scope="module", seccomp_unconfined=True
 )

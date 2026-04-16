@@ -45,14 +45,12 @@ class TrigProvenance(Provenance):
 
     def get_packages(self):
 
-        results = self._src.query(
-            """SELECT DISTINCT ?command ?version
+        results = self._src.query("""SELECT DISTINCT ?command ?version
             WHERE {
             ?x nipype:command ?full_command .
             bind( strbefore( $full_command, " " ) as ?command ) .
             ?x nipype:version ?version .
-            }"""
-        )
+            }""")
 
         return results
 

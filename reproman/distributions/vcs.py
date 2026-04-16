@@ -34,7 +34,6 @@ from reproman.distributions.base import SpecObject
 from reproman.distributions.base import Distribution
 from reproman.distributions.base import TypedList
 
-
 # # TODO: use metaclass I guess... ?
 # def get_vcs_distribution(RepoClass, name, Name):
 #     """A helper to generate VCS distribution classes"""
